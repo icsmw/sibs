@@ -1,0 +1,25 @@
+#[defaults]
+    build [
+        /// Building application
+        :app:build
+    ]
+    lint($target: rust | ts | all) [
+        /// Linting
+        /// [rust] run clippy for all rust modules
+        /// [ts] run eslint for all TypeScript modules
+        /// [all] check all modules of application
+        $target == rust => [
+            :module:lint
+            :binding:lint
+        ]
+        $target == ts => [
+            :client:lint
+            :shared:lint
+            :wrapper:lint
+            :app:lint
+        ]
+        $target == all => [
+            :self:lint(rust)
+            :self:lint(ts)
+        ]
+    ]

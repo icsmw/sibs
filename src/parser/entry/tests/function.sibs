@@ -1,0 +1,11 @@
+@import ./common.sibs;
+@import ./tasks.sibs;
+@hash 
+    [./path ./path/to ./path\ with\ spaces :componentA :componentB :componentC]
+    [build(dev)];
+@remove? ./some_path/to_something;
+@noArgFn;
+@copy ../from ./to;
+@copy ../path\ with\ spaces ./node_modules;
+@toLowerCase SoMe\;TeXt\;;
+@toLowerCase SoMe\;TeXt\;;
