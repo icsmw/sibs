@@ -4,31 +4,54 @@ use uuid::Uuid;
 use crate::parser::{chars, E};
 
 #[derive(Debug)]
-pub struct Reader {
-    pub content: String,
-    pub pos: usize,
+pub struct Mapper {
     pub map: HashMap<Uuid, (usize, usize)>,
 }
 
-impl Reader {
-    pub fn new(content: String) -> Self {
+impl Mapper {
+    pub fn new() -> Self {
+        Self {
+            map: HashMap::new(),
+        }
+    }
+    fn add(&mut self, pos: (usize, usize)) -> Uuid {
+        let uuid = Uuid::new_v4();
+        self.map.insert(uuid, pos);
+        uuid
+    }
+}
+#[derive(Debug)]
+pub struct Reader<'a> {
+    pub content: String,
+    pub pos: usize,
+    pub mapper: &'a mut Mapper,
+    pub offset: usize,
+}
+
+impl<'a> Reader<'a> {
+    pub fn new(content: String, mapper: &'a mut Mapper, offset: usize) -> Self {
         Self {
             content,
             pos: 0,
-            map: HashMap::new(),
+            mapper,
+            offset,
         }
+    }
+    pub fn inherit(&mut self, content: String) -> Reader<'_> {
+        Reader::new(content, self.mapper, self.pos)
     }
     pub fn rest(&self) -> &str {
         &self.content[self.pos..]
     }
-    pub fn to_end(&mut self) -> String {
+    pub fn to_end(&mut self) -> (Uuid, String) {
         let rest = self.rest().to_string();
+        let start = self.pos;
         self.pos = if !self.content.is_empty() {
             self.content.len()
         } else {
             0
         };
-        rest
+        (self.add_to_map((start, self.pos)), rest)
     }
     pub fn move_to_char(&mut self, target: char) -> Result<bool, E> {
         let content = &self.content[self.pos..];
@@ -55,9 +78,10 @@ impl Reader {
         &mut self,
         stop_on: &[char],
         stay_on_stop_char: bool,
-    ) -> Result<Option<(String, char)>, E> {
+    ) -> Result<Option<(String, char, Uuid)>, E> {
         let mut pos: usize = 0;
         let mut str: String = String::new();
+        let start = self.pos;
         let content = &self.content[self.pos..];
         for char in content.chars() {
             pos += 1;
@@ -69,7 +93,7 @@ impl Reader {
                     Ok(None)
                 } else {
                     self.pos += pos - if stay_on_stop_char { 0 } else { 1 };
-                    Ok(Some((str, char)))
+                    Ok(Some((str, char, self.add_to_map((start, self.pos)))))
                 };
             }
             if !char.is_alphabetic() {
@@ -142,23 +166,23 @@ impl Reader {
         &mut self,
         stop_on: &[char],
         cursor_after_stop_char: bool,
-    ) -> Result<Option<(String, char)>, E> {
+    ) -> Result<Option<(String, char, Uuid)>, E> {
         let mut pos: usize = 0;
         let mut str: String = String::new();
         let mut serialized: bool = false;
+        let start = self.pos;
         let content = &self.content[self.pos..];
         for char in content.chars() {
             pos += 1;
             if !char.is_ascii() {
                 Err(E::NotAscii(char))?;
             }
-
             if !serialized && stop_on.contains(&char) {
                 return if str.is_empty() {
                     Ok(None)
                 } else {
                     self.pos += pos - if cursor_after_stop_char { 0 } else { 1 };
-                    Ok(Some((str, char)))
+                    Ok(Some((str, char, self.add_to_map((start, self.pos)))))
                 };
             }
             serialized = char == chars::SERIALIZING;
@@ -170,10 +194,11 @@ impl Reader {
     pub fn read_until_wt(
         &mut self,
         cursor_after_stop_char: bool,
-    ) -> Result<Option<(String, char)>, E> {
+    ) -> Result<Option<(String, char, Uuid)>, E> {
         let mut pos: usize = 0;
         let mut str: String = String::new();
         let mut serialized: bool = false;
+        let start = self.pos;
         let content = &self.content[self.pos..];
         for char in content.chars() {
             pos += 1;
@@ -185,7 +210,7 @@ impl Reader {
                     Ok(None)
                 } else {
                     self.pos += pos - if cursor_after_stop_char { 0 } else { 1 };
-                    Ok(Some((str, char)))
+                    Ok(Some((str, char, self.add_to_map((start, self.pos)))))
                 };
             }
             serialized = char == chars::SERIALIZING;
@@ -202,5 +227,8 @@ impl Reader {
             }
         }
         str.trim().to_string()
+    }
+    fn add_to_map(&mut self, pos: (usize, usize)) -> Uuid {
+        self.mapper.add((self.offset + pos.0, self.offset + pos.1))
     }
 }

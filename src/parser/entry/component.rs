@@ -8,8 +8,8 @@ pub struct Component {
 }
 
 impl Component {
-    pub fn new(group: Group) -> Result<Self, E> {
-        let mut reader = Reader::new(group.inner);
+    pub fn new(group: Group, parent: &mut Reader) -> Result<Self, E> {
+        let mut reader = parent.inherit(group.inner);
         let (name, stopped) = reader
             .read_letters_to_end(&[chars::COLON], false)?
             .ok_or(E::NoComponentContext)?;

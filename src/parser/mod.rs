@@ -4,7 +4,7 @@ mod error;
 mod reader;
 
 use error::E;
-pub use reader::Reader;
+pub use reader::{Mapper, Reader};
 
 pub struct Parser {
     content: String,

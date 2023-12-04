@@ -65,7 +65,7 @@ impl Entry {
     pub fn component(reader: &mut Reader) -> Result<Option<Self>, E> {
         if reader.move_to_char(chars::POUND_SIGN)? {
             if let Some(Self::Group(group)) = Self::group(reader)? {
-                Ok(Some(Self::Component(Component::new(group)?)))
+                Ok(Some(Self::Component(Component::new(group, reader)?)))
             } else {
                 Err(E::NoGroup)
             }
@@ -84,7 +84,7 @@ impl Entry {
     }
     pub fn variable_name(reader: &mut Reader) -> Result<Option<Self>, E> {
         if reader.move_to_char(chars::DOLLAR)? {
-            if let Some((word, _)) = reader.read_letters(&[chars::COLON], false)? {
+            if let Some((word, _, uuid)) = reader.read_letters(&[chars::COLON], false)? {
                 Ok(Some(Self::VariableName(VariableName::new(word))))
             } else {
                 Ok(None)
@@ -124,7 +124,7 @@ impl Entry {
     }
 
     pub fn values(reader: &mut Reader) -> Result<Option<Self>, E> {
-        if let Some((variants, _stopped_on)) =
+        if let Some((variants, _stopped_on, _uuid)) =
             reader.read_until(&[chars::SEMICOLON, chars::CLOSE_BRACKET], true)?
         {
             Ok(Some(Self::Values(Values::new(variants)?)))

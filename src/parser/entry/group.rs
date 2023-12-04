@@ -11,7 +11,7 @@ pub struct Group {
 impl Reading<Group> for Group {
     fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
         if reader.move_to_char(chars::OPEN_SQ_BRACKET)? {
-            if let Some((inner, _)) = reader.read_until(&[chars::CLOSE_SQ_BRACKET], true)? {
+            if let Some((inner, _, uuid)) = reader.read_until(&[chars::CLOSE_SQ_BRACKET], true)? {
                 Ok(Some(Group::new(inner)?))
             } else {
                 Err(E::NotClosedGroup)
