@@ -5,9 +5,15 @@ use crate::parser::{
 };
 
 #[derive(Debug)]
+pub enum Injection {
+    VariableName(VariableName),
+    Function(Function),
+}
+
+#[derive(Debug)]
 pub struct ValueString {
     pub pattern: String,
-    pub injections: Vec<VariableName>,
+    pub injections: Vec<Injection>,
 }
 
 impl Reading<ValueString> for ValueString {
@@ -27,14 +33,14 @@ impl Reading<ValueString> for ValueString {
 impl ValueString {
     pub fn new(pattern: String, parent: &mut Reader) -> Result<Self, E> {
         let mut reader = parent.inherit(pattern.clone());
-        let mut injections: Vec<VariableName> = vec![];
+        let mut injections: Vec<Injection> = vec![];
         while reader.stop_on_char(chars::TYPE_OPEN, &[chars::QUOTES])? {
             if let Some((inner, _, _uuid)) = reader.read_until(&[chars::TYPE_CLOSE], true, false)? {
                 let mut inner_reader = reader.inherit(inner);
                 if let Some(variable_name) = VariableName::read(&mut inner_reader)? {
-                    injections.push(variable_name);
+                    injections.push(Injection::VariableName(variable_name));
                 } else if let Some(func) = Function::read(&mut inner_reader)? {
-                    println!("{func:?}");
+                    injections.push(Injection::Function(func));
                 } else {
                     Err(E::NoVariableReference)?
                 }

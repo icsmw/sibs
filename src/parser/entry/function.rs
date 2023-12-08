@@ -21,19 +21,20 @@ impl Reading<Function> for Function {
                 &[chars::CARET, chars::QUESTION, chars::SEMICOLON],
                 &[chars::UNDERLINE],
                 true,
-                false,
             )? {
-                if ends_with == chars::SEMICOLON {
-                    Ok(Some(Self::new(uuid, reader, name, String::new(), false)?))
-                } else if let Some((args, _, uuid)) =
-                    reader.read_until(&[chars::SEMICOLON], true, false)?
-                {
+                if let Some(chars::SEMICOLON) = ends_with {
+                    return Ok(Some(Self::new(uuid, reader, name, String::new(), false)?));
+                }
+                if ends_with.is_none() {
+                    return Ok(Some(Self::new(uuid, reader, name, String::new(), false)?));
+                }
+                if let Some((args, _, uuid)) = reader.read_until(&[chars::SEMICOLON], true, true)? {
                     Ok(Some(Self::new(
                         uuid,
                         reader,
                         name,
                         args,
-                        ends_with == chars::QUESTION,
+                        matches!(ends_with, Some(chars::QUESTION)),
                     )?))
                 } else {
                     Err(E::MissedSemicolon)

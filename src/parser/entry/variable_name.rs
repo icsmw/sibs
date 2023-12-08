@@ -15,7 +15,7 @@ impl Reading<VariableName> for VariableName {
     fn read(reader: &mut Reader) -> Result<Option<VariableName>, E> {
         if reader.move_to_char(chars::DOLLAR)? {
             if let Some((word, _, uuid)) =
-                reader.read_letters(&[chars::COLON], &[chars::UNDERLINE], false, true)?
+                reader.read_letters(&[chars::COLON], &[chars::UNDERLINE], false)?
             {
                 Ok(Some(VariableName::new(word, uuid)))
             } else {

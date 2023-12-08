@@ -115,8 +115,7 @@ impl<'a> Reader<'a> {
         stop_on: &[char],
         allowed: &[char],
         cursor_after_stop_char: bool,
-        to_end: bool,
-    ) -> Result<Option<(String, char, Uuid)>, E> {
+    ) -> Result<Option<(String, Option<char>, Uuid)>, E> {
         let mut pos: usize = 0;
         let mut str: String = String::new();
         let start = self.pos;
@@ -131,7 +130,7 @@ impl<'a> Reader<'a> {
                     Ok(None)
                 } else {
                     self.pos += pos - if cursor_after_stop_char { 0 } else { 1 };
-                    Ok(Some((str, char, self.add_to_map((start, self.pos)))))
+                    Ok(Some((str, Some(char), self.add_to_map((start, self.pos)))))
                 };
             }
             if !char.is_alphabetic() && !allowed.contains(&char) {
@@ -139,13 +138,9 @@ impl<'a> Reader<'a> {
             }
             str.push(char);
         }
-        if to_end && !str.is_empty() {
-            let char = str
-                .chars()
-                .last()
-                .ok_or(E::Other("Fail to get last char".to_string()))?;
+        if !str.is_empty() {
             self.pos += pos - if cursor_after_stop_char { 0 } else { 1 };
-            Ok(Some((str, char, self.add_to_map((start, self.pos)))))
+            Ok(Some((str, None, self.add_to_map((start, self.pos)))))
         } else {
             Ok(None)
         }

@@ -12,3 +12,5 @@
 "release{@os}-win.zip"
 "release{@os windows}-win.zip"
 "release{@ls ./path/*.txt}-win.zip"
+"release{@ls ./path/*.txt ./another/path}-win.zip"
+"release{@ls ./path/*.txt ./another\ path\ with\ spaces/path}-win.zip"
