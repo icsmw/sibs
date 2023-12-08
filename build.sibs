@@ -18,6 +18,8 @@
         /// [dev] build developing version
         /// [prod] build production version
         $dev = @envvar DEV_MODE;
+        @cd ./some_folder;
+        @cd ..;
         @remove? ./node_modules/shared;
         @remove? ./node_modules/wrapper;
         @remove? ./dist/client;
@@ -44,12 +46,31 @@
     distribution [
         /// Name and compress release artifacts
         $version = @read_as_string ./package.json > @find /"version": "([\d\.])"/gi;
-        $file_name = @os window => "release{$version}-win.zip"
-                     @os linux => "release{$version}-linux.zip"
-                     @os darwin => "release{$version}-darwin.zip";
-        @os window => zip ./release/unpacked-win ${file_name};
+        IF @os linux OR @os darwin [ "release{$version}-win.zip" ] ELSE [ "" ];
+        [
+            @os window => $file_name = release{$version}-win.zip;
+            @os linux => $file_name = release{$version}-linux.zip;
+            @os darwin => $file_name = release{$version}-darwin.zip;
+        ];
+        @os window => [
+            @cd something
+            zip ./release/unpacked-win ${file_name};
+            @cd ..
+        ];
         @os linux => tgz ./release/unpacked-linux ${file_name};
         @os darwin => tgz ./release/unpacked-mac ${file_name};
+    ]
+    collect [
+        $files = @read_as_lines ./some_file;
+        EACH($file) $files [
+            tgz ./release/{$file};
+        ]
+        $files = @ls ./path > @as_lines;
+        EACH($file) $files [
+            IF $file != "." AND $file != ".." [
+                tgz ./release/{$file};
+            ]
+        ]
     ]
     lint [:TS:lint]
 

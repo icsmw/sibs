@@ -26,6 +26,7 @@ pub struct Reader<'a> {
     pub pos: usize,
     pub mapper: &'a mut Mapper,
     pub offset: usize,
+    holded: Option<usize>,
 }
 
 impl<'a> Reader<'a> {
@@ -35,6 +36,15 @@ impl<'a> Reader<'a> {
             pos: 0,
             mapper,
             offset,
+            holded: None,
+        }
+    }
+    pub fn hold(&mut self) {
+        self.holded = Some(self.pos);
+    }
+    pub fn roll_back(&mut self) {
+        if let Some(pos) = self.holded.take() {
+            self.pos = pos;
         }
     }
     pub fn inherit(&mut self, content: String) -> Reader<'_> {
@@ -52,6 +62,9 @@ impl<'a> Reader<'a> {
             0
         };
         (self.add_to_map((start, self.pos)), rest)
+    }
+    pub fn next_char(&self) -> Option<char> {
+        self.content[self.pos..].chars().next()
     }
     pub fn move_to_char(&mut self, target: char) -> Result<bool, E> {
         let content = &self.content[self.pos..];
@@ -73,11 +86,36 @@ impl<'a> Reader<'a> {
         }
         Ok(false)
     }
-
+    pub fn stop_on_char(&mut self, target: char, cancel_on: &[char]) -> Result<bool, E> {
+        let content = &self.content[self.pos..];
+        let mut pos: usize = 0;
+        let mut serialized: bool = false;
+        for char in content.chars() {
+            pos += 1;
+            if !char.is_ascii() {
+                Err(E::NotAscii(char))?;
+            }
+            if serialized || char == chars::SERIALIZING {
+                serialized = char == chars::SERIALIZING;
+                continue;
+            }
+            serialized = char == chars::SERIALIZING;
+            if cancel_on.contains(&char) {
+                return Ok(false);
+            }
+            if char == target {
+                self.pos += pos;
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    }
     pub fn read_letters(
         &mut self,
         stop_on: &[char],
-        stay_on_stop_char: bool,
+        allowed: &[char],
+        cursor_after_stop_char: bool,
+        to_end: bool,
     ) -> Result<Option<(String, char, Uuid)>, E> {
         let mut pos: usize = 0;
         let mut str: String = String::new();
@@ -92,16 +130,25 @@ impl<'a> Reader<'a> {
                 return if str.is_empty() {
                     Ok(None)
                 } else {
-                    self.pos += pos - if stay_on_stop_char { 0 } else { 1 };
+                    self.pos += pos - if cursor_after_stop_char { 0 } else { 1 };
                     Ok(Some((str, char, self.add_to_map((start, self.pos)))))
                 };
             }
-            if !char.is_alphabetic() {
+            if !char.is_alphabetic() && !allowed.contains(&char) {
                 Err(E::UnexpectedChar(char))?;
             }
             str.push(char);
         }
-        Ok(None)
+        if to_end && !str.is_empty() {
+            let char = str
+                .chars()
+                .last()
+                .ok_or(E::Other("Fail to get last char".to_string()))?;
+            self.pos += pos - if cursor_after_stop_char { 0 } else { 1 };
+            Ok(Some((str, char, self.add_to_map((start, self.pos)))))
+        } else {
+            Ok(None)
+        }
     }
 
     pub fn read_letters_to_end(
@@ -137,9 +184,10 @@ impl<'a> Reader<'a> {
         &mut self,
         stop_on: &[char],
         stay_on_stop_char: bool,
-    ) -> Result<Option<(String, char)>, E> {
+    ) -> Result<Option<(String, char, Uuid)>, E> {
         let mut pos: usize = 0;
         let mut str: String = String::new();
+        let start = self.pos;
         let content = &self.content[self.pos..];
         for char in content.chars() {
             pos += 1;
@@ -151,7 +199,7 @@ impl<'a> Reader<'a> {
                     Ok(None)
                 } else {
                     self.pos += pos - if stay_on_stop_char { 0 } else { 1 };
-                    Ok(Some((str, char)))
+                    Ok(Some((str, char, self.add_to_map((start, self.pos)))))
                 };
             }
             if !char.is_alphabetic() {
@@ -166,6 +214,7 @@ impl<'a> Reader<'a> {
         &mut self,
         stop_on: &[char],
         cursor_after_stop_char: bool,
+        to_end: bool,
     ) -> Result<Option<(String, char, Uuid)>, E> {
         let mut pos: usize = 0;
         let mut str: String = String::new();
@@ -188,7 +237,16 @@ impl<'a> Reader<'a> {
             serialized = char == chars::SERIALIZING;
             str.push(char);
         }
-        Ok(None)
+        if to_end && !str.is_empty() {
+            let char = str
+                .chars()
+                .last()
+                .ok_or(E::Other("Fail to get last char".to_string()))?;
+            self.pos += pos - if cursor_after_stop_char { 0 } else { 1 };
+            Ok(Some((str, char, self.add_to_map((start, self.pos)))))
+        } else {
+            Ok(None)
+        }
     }
 
     pub fn read_until_wt(

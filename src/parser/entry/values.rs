@@ -1,9 +1,24 @@
-use crate::parser::E;
-use std::fmt;
+use crate::parser::{
+    chars,
+    entry::{Reader, Reading},
+    E,
+};
 
 #[derive(Debug)]
 pub struct Values {
     pub values: Vec<String>,
+}
+
+impl Reading<Values> for Values {
+    fn read(reader: &mut Reader) -> Result<Option<Values>, E> {
+        if let Some((variants, _stopped_on, _uuid)) =
+            reader.read_until(&[chars::SEMICOLON], true, true)?
+        {
+            Ok(Some(Values::new(variants)?))
+        } else {
+            Err(E::NoTypeDeclaration)
+        }
+    }
 }
 
 impl Values {

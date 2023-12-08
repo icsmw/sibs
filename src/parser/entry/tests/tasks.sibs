@@ -1,0 +1,6 @@
+build($mode: dev | prod) [ ]
+custom($input: {string}) [ ]
+build_multi($mode: dev | prod; $target: win | linux) [ ]
+build($mode: dev | prod; $target: win | linux; $input: {string}) [ ]
+build($input_a: {string}, $mode: dev | prod; $target: win | linux; $input_b: {string}) [ ]
+distribution [ ]

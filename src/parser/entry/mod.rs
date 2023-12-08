@@ -2,7 +2,10 @@ mod arguments;
 mod component;
 mod function;
 mod group;
+mod task;
+mod value_strings;
 mod values;
+mod variable_assignation;
 mod variable_declaration;
 mod variable_name;
 mod variable_type;
@@ -12,10 +15,14 @@ pub use arguments::Arguments;
 pub use component::Component;
 pub use function::Function;
 pub use group::Group;
+pub use task::Task;
+pub use value_strings::ValueString;
 pub use values::Values;
+pub use variable_assignation::VariableAssignation;
 pub use variable_declaration::VariableDeclaration;
 pub use variable_name::VariableName;
 pub use variable_type::VariableType;
+
 pub trait Reading<T> {
     fn read(reader: &mut Reader) -> Result<Option<T>, E>;
 }
@@ -48,14 +55,10 @@ impl Entry {
         let mut entities: Vec<Self> = vec![];
         loop {
             if let Some(entity) = Self::function(reader)? {
-                println!("{entity:?}");
                 entities.push(entity);
             } else if let Some(entity) = Self::component(reader)? {
-                println!("{entity:?}");
                 entities.push(entity);
             } else {
-                println!("{}", reader.rest());
-                println!(">>>>>>>>>>>>>>>>>>>>> break");
                 break;
             }
         }
@@ -83,53 +86,16 @@ impl Entry {
         Group::read(reader)?.map_or(Ok(None), |v| Ok(Some(Self::Group(v))))
     }
     pub fn variable_name(reader: &mut Reader) -> Result<Option<Self>, E> {
-        if reader.move_to_char(chars::DOLLAR)? {
-            if let Some((word, _, uuid)) = reader.read_letters(&[chars::COLON], false)? {
-                Ok(Some(Self::VariableName(VariableName::new(word))))
-            } else {
-                Ok(None)
-            }
-        } else {
-            Ok(None)
-        }
+        VariableName::read(reader)?.map_or(Ok(None), |v| Ok(Some(Self::VariableName(v))))
     }
     pub fn variable_declaration(reader: &mut Reader) -> Result<Option<Self>, E> {
-        if reader.move_to_char(chars::COLON)? {
-            if let Some(Self::VariableType(variable_type)) = Self::variable_type(reader)? {
-                Ok(Some(Self::VariableDeclaration(VariableDeclaration::typed(
-                    variable_type,
-                ))))
-            } else if let Some(Self::Values(values)) = Self::values(reader)? {
-                Ok(Some(Self::VariableDeclaration(
-                    VariableDeclaration::values(values),
-                )))
-            } else {
-                Err(E::NoTypeDeclaration)
-            }
-        } else {
-            Ok(None)
-        }
+        VariableDeclaration::read(reader)?
+            .map_or(Ok(None), |v| Ok(Some(Self::VariableDeclaration(v))))
     }
-
     pub fn variable_type(reader: &mut Reader) -> Result<Option<Self>, E> {
-        if reader.move_to_char(chars::TYPE_OPEN)? {
-            if let Some((word, _)) = reader.read_word(&[chars::TYPE_CLOSE], true)? {
-                Ok(Some(Self::VariableType(VariableType::new(word)?)))
-            } else {
-                Err(E::NotClosedTypeDeclaration)
-            }
-        } else {
-            Ok(None)
-        }
+        VariableType::read(reader)?.map_or(Ok(None), |v| Ok(Some(Self::VariableType(v))))
     }
-
     pub fn values(reader: &mut Reader) -> Result<Option<Self>, E> {
-        if let Some((variants, _stopped_on, _uuid)) =
-            reader.read_until(&[chars::SEMICOLON, chars::CLOSE_BRACKET], true)?
-        {
-            Ok(Some(Self::Values(Values::new(variants)?)))
-        } else {
-            Err(E::NoTypeDeclaration)
-        }
+        Values::read(reader)?.map_or(Ok(None), |v| Ok(Some(Self::Values(v))))
     }
 }

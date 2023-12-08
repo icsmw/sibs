@@ -1,0 +1,46 @@
+$file_name = IF @os linux [
+    "release{$version}-linux.zip";
+] IF @os darwin [
+    "release{$version}-mac.zip";
+] IF @os windows [
+    "release{$version}-win.zip";
+] ELSE [
+    @exit 1 "Unsupported OS: {@os}";
+];
+
+IF @os linux OR @os darwin [
+    "release{$version}-normal_os.zip";
+] ELSE [
+    "release{$version}-windows.zip";
+];
+
+IF @os linux [
+    @cd ./linux;
+    run some script;
+] IF @os darwin [
+    @cd ./mac;
+    run some script;
+] IF @os windows [
+    @cd ./windows;
+    run some script;
+] ELSE [
+    @exit 1 "Unsupported OS: ${@os}"
+];
+
+@os window => $file_name = "release{$version}-win.zip";
+@os linux => $file_name = "release{$version}-linux.zip";
+@os darwin => $file_name = "release{$version}-darwin.zip";
+
+$file_name = FIRST [
+    @os window => "release{$version}-win.zip";
+    @os linux => "release{$version}-linux.zip";
+    @os darwin => "release{$version}-darwin.zip";
+    @exit 1 "Unsupported OS: {@os}";
+];
+@os window => [
+    @cd something
+    zip ./release/unpacked-win {$file_name};
+    @cd ..
+];
+@os linux => tgz ./release/unpacked-linux {$file_name};
+@os darwin => tgz ./release/unpacked-mac {$file_name};
