@@ -4,7 +4,7 @@ use crate::parser::{
 };
 use uuid::Uuid;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Arguments {
     pub inner: Vec<Vec<(Uuid, String)>>,
 }

@@ -36,6 +36,14 @@ pub enum E {
     FailFindTaskActions,
     #[error("Empty group")]
     EmptyGroup,
+    #[error("Missed comparing operator: == or !=")]
+    MissedComparingOperator,
+    #[error("Fail to find proviso of condition")]
+    NoProvisoOfCondition,
+    #[error("After AND or OR should be proviso")]
+    RepeatedCombinationOperator,
+    #[error("Only string values can be used with conditions")]
+    NoStringValueWithCondition,
     #[error("Expecting = or ==")]
     NoComparingOrAssignation,
     #[error("Unnamed component")]
@@ -46,6 +54,10 @@ pub enum E {
     NoGroup,
     #[error("Not closed group")]
     NotClosedGroup,
+    #[error("Not closed condition group (...)")]
+    NotClosedConditionGroup,
+    #[error("Nested condition group (..(..)..) aren't supported")]
+    NestedConditionGroups,
     #[error("No values related to variable")]
     NoVariableValues,
     #[error("Converting error")]

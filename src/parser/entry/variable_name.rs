@@ -5,7 +5,7 @@ use crate::parser::{
 };
 use uuid::Uuid;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VariableName {
     pub name: String,
     pub uuid: Uuid,

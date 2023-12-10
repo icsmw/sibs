@@ -6,7 +6,7 @@ use crate::parser::{
     Reader, E,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Function {
     pub tolerance: bool,
     pub name: String,

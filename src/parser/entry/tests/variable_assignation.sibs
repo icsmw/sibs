@@ -1,7 +1,4 @@
 $dev = @envvar DEV_MODE;
-$file_name = [
-    @os window => "release{$version}-win.zip";
-    @os linux => "release{$version}-linux.zip";
-    @os darwin => "release{$version}-darwin.zip";
-];
-$version = @read_as_string ./package.json > @find /\"version\": \"([\d\.])\"/gi;
+$file = "release{$version}-win.zip";
+$file = "release{$version}-{@os}.zip";
+$file = "release{@ls ./path/*.txt ./another\ path\ with\ spaces/path}-win.zip";

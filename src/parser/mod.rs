@@ -2,6 +2,7 @@ mod chars;
 mod entry;
 mod error;
 mod reader;
+mod words;
 
 use error::E;
 pub use reader::{Mapper, Reader};

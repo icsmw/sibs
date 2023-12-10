@@ -86,6 +86,29 @@ impl<'a> Reader<'a> {
         }
         Ok(false)
     }
+    pub fn move_to_word(&mut self, target: &[&str]) -> Result<Option<String>, E> {
+        let content = &self.content[self.pos..];
+        let mut pos: usize = 0;
+        let mut str = String::new();
+        for char in content.chars() {
+            pos += 1;
+            if !char.is_ascii() {
+                Err(E::NotAscii(char))?;
+            }
+            if char.is_ascii_whitespace() && str.is_empty() {
+                continue;
+            } else if char.is_ascii_whitespace() && !str.is_empty() {
+                return if target.contains(&str.as_str()) {
+                    self.pos += pos;
+                    Ok(Some(str))
+                } else {
+                    Ok(None)
+                };
+            }
+            str.push(char);
+        }
+        Ok(None)
+    }
     pub fn stop_on_char(&mut self, target: char, cancel_on: &[char]) -> Result<bool, E> {
         let content = &self.content[self.pos..];
         let mut pos: usize = 0;

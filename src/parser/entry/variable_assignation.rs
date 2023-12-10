@@ -1,12 +1,13 @@
 use crate::parser::{
     chars,
-    entry::{Function, Reader, Reading, VariableName},
+    entry::{Function, Reader, Reading, ValueString, VariableName},
     E,
 };
 
 #[derive(Debug)]
 pub enum Assignation {
     Function(Function),
+    ValueString(ValueString),
 }
 #[derive(Debug)]
 pub struct VariableAssignation {
@@ -24,11 +25,21 @@ impl Reading<VariableAssignation> for VariableAssignation {
                     reader.roll_back();
                     return Ok(None);
                 }
-                if let Some(func) = Function::read(reader)? {
-                    return Ok(Some(VariableAssignation::new(
-                        name,
-                        Assignation::Function(func),
-                    )));
+                if let Some((inner, _, _)) = reader.read_until(&[chars::SEMICOLON], true, false)? {
+                    let mut inner_reader = reader.inherit(inner);
+                    if let Some(func) = Function::read(&mut inner_reader)? {
+                        return Ok(Some(VariableAssignation::new(
+                            name,
+                            Assignation::Function(func),
+                        )));
+                    } else if let Some(value_string) = ValueString::read(&mut inner_reader)? {
+                        return Ok(Some(VariableAssignation::new(
+                            name,
+                            Assignation::ValueString(value_string),
+                        )));
+                    }
+                } else {
+                    Err(E::MissedSemicolon)?
                 }
             } else {
                 Err(E::NoComparingOrAssignation)?
@@ -64,7 +75,8 @@ impl VariableAssignation {
 //         while let Some(task) = VariableAssignation::read(&mut reader)? {
 //             println!("{task:?}");
 //         }
-//         println!("{:?}", reader.mapper);
+
+//         println!("{}", reader.rest().trim());
 //         assert!(reader.rest().trim().is_empty());
 //         Ok(())
 //     }

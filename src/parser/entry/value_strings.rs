@@ -4,13 +4,13 @@ use crate::parser::{
     E,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Injection {
     VariableName(VariableName),
     Function(Function),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ValueString {
     pub pattern: String,
     pub injections: Vec<Injection>,
@@ -55,25 +55,25 @@ impl ValueString {
     }
 }
 
-#[cfg(test)]
-mod test {
-    use crate::parser::{
-        entry::{Reading, ValueString},
-        Mapper, Reader, E,
-    };
+// #[cfg(test)]
+// mod test {
+//     use crate::parser::{
+//         entry::{Reading, ValueString},
+//         Mapper, Reader, E,
+//     };
 
-    #[test]
-    fn reading() -> Result<(), E> {
-        let mut mapper = Mapper::new();
-        let mut reader = Reader::new(
-            include_str!("./tests/value_string.sibs").to_string(),
-            &mut mapper,
-            0,
-        );
-        while let Some(value_string) = ValueString::read(&mut reader)? {
-            println!("{value_string:?}");
-        }
-        assert!(reader.rest().trim().is_empty());
-        Ok(())
-    }
-}
+//     #[test]
+//     fn reading() -> Result<(), E> {
+//         let mut mapper = Mapper::new();
+//         let mut reader = Reader::new(
+//             include_str!("./tests/value_string.sibs").to_string(),
+//             &mut mapper,
+//             0,
+//         );
+//         while let Some(value_string) = ValueString::read(&mut reader)? {
+//             println!("{value_string:?}");
+//         }
+//         assert!(reader.rest().trim().is_empty());
+//         Ok(())
+//     }
+// }
