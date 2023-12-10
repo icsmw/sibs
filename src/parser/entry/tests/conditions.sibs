@@ -44,7 +44,7 @@ IF @os linux [
 ] IF @os windows [
     @cd ./windows;
 ] ELSE [
-    @exit 1 "Unsupported OS: ${@os}"
+    @exit 1 "Unsupported OS: {@os}";
 ];
 IF $variable == "one" [
     @cd ./linux;
@@ -53,5 +53,5 @@ IF $variable == "one" [
 ] IF $variable == "three" [
     @cd ./windows;
 ] ELSE [
-    @exit 1 "Unsupported OS: ${@os}"
+    @exit 1 "Unsupported OS: {@os}";
 ];

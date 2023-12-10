@@ -1,8 +1,6 @@
-use std::{path::PathBuf, str::FromStr};
-
 use crate::parser::{
     chars,
-    entry::{Function, Group, Reading, ValueString, VariableName},
+    entry::{Function, Reading, ValueString, VariableName},
     words, Reader, E,
 };
 
@@ -80,7 +78,6 @@ impl Reading<Condition> for Condition {
                         Err(E::NotClosedGroup)?
                     }
                 } else {
-                    println!(">>>>>>>>>>>>>>>> 2");
                     Err(E::NoGroup)?
                 }
             }
@@ -101,7 +98,7 @@ impl Condition {
                     if group_reader.move_to_char(chars::OPEN_BRACKET)? {
                         Err(E::NestedConditionGroups)?
                     }
-                    proviso = [proviso, Condition::proviso(&mut group_reader)?].concat();
+                    proviso.push(Proviso::Group(Condition::proviso(&mut group_reader)?));
                     continue;
                 } else {
                     Err(E::NotClosedConditionGroup)?

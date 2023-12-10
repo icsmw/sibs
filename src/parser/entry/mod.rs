@@ -1,4 +1,5 @@
 mod arguments;
+mod block;
 mod component;
 mod condition;
 mod function;
@@ -13,6 +14,7 @@ mod variable_type;
 
 use crate::parser::{chars, Reader, E};
 pub use arguments::Arguments;
+pub use block::Block;
 pub use component::Component;
 pub use condition::Condition;
 pub use function::Function;
