@@ -1,4 +1,5 @@
 use crate::parser::{
+    chars,
     entry::{Group, Reader, Reading},
     E,
 };
@@ -37,6 +38,9 @@ impl Arguments {
     pub fn add_args(&mut self, inner: String, parent: &mut Reader) -> Result<(), E> {
         let mut reader = parent.inherit(inner);
         let mut arguments: Vec<(Uuid, String)> = vec![];
+        if reader.has_char(chars::AT)? {
+            Err(E::NestedFunction)?
+        }
         while let Some((arg, _, uuid)) = reader.read_until_wt(true)? {
             if !arg.trim().is_empty() {
                 arguments.push((uuid, Reader::unserialize(&arg)));

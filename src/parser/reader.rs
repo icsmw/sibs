@@ -133,6 +133,26 @@ impl<'a> Reader<'a> {
         }
         Ok(false)
     }
+
+    pub fn has_char(&mut self, target: char) -> Result<bool, E> {
+        let content = &self.content[self.pos..];
+        let mut serialized: bool = false;
+        for char in content.chars() {
+            if !char.is_ascii() {
+                Err(E::NotAscii(char))?;
+            }
+            if serialized || char == chars::SERIALIZING {
+                serialized = char == chars::SERIALIZING;
+                continue;
+            }
+            serialized = char == chars::SERIALIZING;
+            if char == target {
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    }
+
     pub fn read_letters(
         &mut self,
         stop_on: &[char],
