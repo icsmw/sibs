@@ -87,6 +87,33 @@ impl Reading<Condition> for Condition {
 }
 
 impl Condition {
+    pub fn inner(reader: &mut Reader) -> Result<Proviso, E> {
+        if let Some(variable_name) = VariableName::read(reader)? {
+            if let Some(word) = reader.move_to_word(&[words::CMP_TRUE, words::CMP_FALSE])? {
+                if let Some(value_string) = ValueString::read(reader)? {
+                    return Ok(Proviso::Variable(
+                        variable_name,
+                        if word == words::CMP_TRUE {
+                            Cmp::Equal
+                        } else {
+                            Cmp::NotEqual
+                        },
+                        value_string,
+                    ));
+                } else {
+                    Err(E::NoStringValueWithCondition)?
+                }
+            } else {
+                Err(E::MissedComparingOperator)?
+            }
+        }
+        let negative = reader.move_to_char(chars::EXCLAMATION)?;
+        if let Some(func) = Function::read(reader)? {
+            Ok(Proviso::Function(func, negative))
+        } else {
+            Err(E::NoProvisoOfCondition)
+        }
+    }
     pub fn proviso(reader: &mut Reader) -> Result<Vec<Proviso>, E> {
         let mut proviso: Vec<Proviso> = vec![];
         while !reader.rest().trim().is_empty() {
@@ -104,31 +131,6 @@ impl Condition {
                     Err(E::NotClosedConditionGroup)?
                 }
             }
-            if let Some(variable_name) = VariableName::read(reader)? {
-                if let Some(word) = reader.move_to_word(&[words::CMP_TRUE, words::CMP_FALSE])? {
-                    if let Some(value_string) = ValueString::read(reader)? {
-                        proviso.push(Proviso::Variable(
-                            variable_name,
-                            if word == words::CMP_TRUE {
-                                Cmp::Equal
-                            } else {
-                                Cmp::NotEqual
-                            },
-                            value_string,
-                        ));
-                        continue;
-                    } else {
-                        Err(E::NoStringValueWithCondition)?
-                    }
-                } else {
-                    Err(E::MissedComparingOperator)?
-                }
-            }
-            let negative = reader.move_to_char(chars::EXCLAMATION)?;
-            if let Some(func) = Function::read(reader)? {
-                proviso.push(Proviso::Function(func, negative));
-                continue;
-            }
             if let Some(combination) = reader.move_to_word(&[words::AND, words::OR])? {
                 if let Some(Proviso::Combination(_)) = proviso.last() {
                     Err(E::RepeatedCombinationOperator)?
@@ -140,6 +142,18 @@ impl Condition {
                 } else {
                     Combination::Or
                 }));
+            }
+            if let Some((inner, combination, uuid)) =
+                reader.read_until_word(&[words::AND, words::OR], &[], true)?
+            {
+                proviso.push(Condition::inner(&mut reader.inherit(inner))?);
+                proviso.push(Proviso::Combination(if combination == words::AND {
+                    Combination::And
+                } else {
+                    Combination::Or
+                }));
+            } else {
+                proviso.push(Condition::inner(reader)?);
             }
         }
         Ok(proviso)
