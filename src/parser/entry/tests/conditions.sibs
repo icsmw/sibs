@@ -33,7 +33,7 @@ IF @os linux [
 ] IF @os windows [
     "release{$version}-win.zip";
 ] ELSE [
-    @exit 1 "Unsupported OS: {@os}";
+    @exit 1 "Unsupported OS: {_os}";
 ];
 IF @os linux OR @os darwin [
     "release{$version}-normal_os.zip";
@@ -47,7 +47,7 @@ IF @os linux [
 ] IF @os windows [
     @cd ./windows;
 ] ELSE [
-    @exit 1 "Unsupported OS: {@os}";
+    @exit 1 "Unsupported OS: {_os}";
 ];
 IF $variable == "one" [
     @cd ./linux;
@@ -56,5 +56,5 @@ IF $variable == "one" [
 ] IF $variable == "three" [
     @cd ./windows;
 ] ELSE [
-    @exit 1 "Unsupported OS: {@os}";
+    @exit 1 "Unsupported OS: {_os}";
 ];
