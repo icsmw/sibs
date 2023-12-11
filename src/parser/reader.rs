@@ -86,7 +86,7 @@ impl<'a> Reader<'a> {
         }
         Ok(false)
     }
-    pub fn move_to_word(&mut self, target: &[&str]) -> Result<Option<String>, E> {
+    pub fn move_to_word(&mut self, targets: &[&str]) -> Result<Option<String>, E> {
         let content = &self.content[self.pos..];
         let mut pos: usize = 0;
         let mut str = String::new();
@@ -98,7 +98,7 @@ impl<'a> Reader<'a> {
             if char.is_ascii_whitespace() && str.is_empty() {
                 continue;
             } else if char.is_ascii_whitespace() && !str.is_empty() {
-                return if target.contains(&str.as_str()) {
+                return if targets.contains(&str.as_str()) {
                     self.pos += pos;
                     Ok(Some(str))
                 } else {
@@ -133,7 +133,6 @@ impl<'a> Reader<'a> {
         }
         Ok(false)
     }
-
     pub fn has_char(&mut self, target: char) -> Result<bool, E> {
         let content = &self.content[self.pos..];
         let mut serialized: bool = false;
@@ -207,7 +206,6 @@ impl<'a> Reader<'a> {
             Ok(None)
         }
     }
-
     pub fn read_letters_to_end(
         &mut self,
         stop_on: &[char],
@@ -236,7 +234,6 @@ impl<'a> Reader<'a> {
         }
         Ok(Some((str, None)))
     }
-
     pub fn read_word(
         &mut self,
         stop_on: &[char],
@@ -266,7 +263,6 @@ impl<'a> Reader<'a> {
         }
         Ok(None)
     }
-
     pub fn read_until(
         &mut self,
         stop_on: &[char],
@@ -330,6 +326,53 @@ impl<'a> Reader<'a> {
             }
             serialized = char == chars::SERIALIZING;
             str.push(char);
+        }
+        Ok(None)
+    }
+    pub fn read_until_word(
+        &mut self,
+        targets: &[&str],
+        cancel_on: &[char],
+        cursor_after_stop: bool,
+    ) -> Result<Option<(String, String, Uuid)>, E> {
+        let mut pos: usize = 0;
+        let mut str: String = String::new();
+        let mut serialized: bool = false;
+        let mut unserialized: String = String::new();
+        let start = self.pos;
+        let content = &self.content[self.pos..];
+        for char in content.chars() {
+            pos += 1;
+            if !char.is_ascii() {
+                Err(E::NotAscii(char))?;
+            }
+            if !serialized && char != chars::SERIALIZING {
+                unserialized.push(char);
+            }
+            if !serialized && cancel_on.contains(&char) {
+                return Ok(None);
+            }
+            serialized = char == chars::SERIALIZING;
+            str.push(char);
+            for word in targets.iter() {
+                if unserialized.ends_with(word) {
+                    return if cursor_after_stop {
+                        self.pos += pos;
+                        Ok(Some((
+                            str,
+                            word.to_string(),
+                            self.mapper.add((start, self.pos)),
+                        )))
+                    } else {
+                        self.pos += pos - word.len();
+                        Ok(Some((
+                            str[0..pos - word.len()].to_string(),
+                            word.to_string(),
+                            self.mapper.add((start, self.pos)),
+                        )))
+                    };
+                }
+            }
         }
         Ok(None)
     }

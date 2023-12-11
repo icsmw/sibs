@@ -36,6 +36,10 @@ pub enum E {
     FailFindTaskActions,
     #[error("Nested functions arn't supported")]
     NestedFunction,
+    #[error("No function on optional action")]
+    NoFunctionOnOptionalAction,
+    #[error("Fail parse optional action")]
+    FailParseOptionalAction,
     #[error("Empty group")]
     EmptyGroup,
     #[error("Missed comparing operator: == or !=")]
