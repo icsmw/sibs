@@ -1,16 +1,16 @@
-use uuid::Uuid;
-
 use crate::parser::{
     chars,
-    entry::{Function, Reading, ValueString, VariableAssignation},
+    entry::{Block, Function, Reading, ValueString, VariableAssignation},
     words, Reader, E,
 };
+use uuid::Uuid;
 
 #[derive(Debug)]
 pub enum Action {
     VariableAssignation(VariableAssignation),
     ValueString(ValueString),
     Command(String),
+    Block(Block),
 }
 
 #[derive(Debug)]
@@ -30,6 +30,24 @@ impl Reading<Optional> for Optional {
             {
                 if let Some(function) = Function::read(&mut reader.inherit(left))? {
                     if reader.move_to_word(&[words::DO_ON])?.is_some() {
+                        if reader.move_to_char(chars::OPEN_SQ_BRACKET)? {
+                            if let Some((inner, _, uuid)) =
+                                reader.read_until(&[chars::CLOSE_SQ_BRACKET], true, false)?
+                            {
+                                if !reader.move_to_char(chars::SEMICOLON)? {
+                                    Err(E::MissedSemicolon)?
+                                }
+                                if let Some(block) = Block::read(&mut reader.inherit(inner))? {
+                                    return Ok(Some(Optional {
+                                        uuid,
+                                        action: Action::Block(block),
+                                        function,
+                                    }));
+                                }
+                            } else {
+                                Err(E::NotClosedGroup)?
+                            }
+                        }
                         if let Some((inner, _, uuid)) =
                             reader.read_until(&[chars::SEMICOLON], true, true)?
                         {
@@ -67,25 +85,25 @@ impl Reading<Optional> for Optional {
     }
 }
 
-// #[cfg(test)]
-// mod test {
-//     use crate::parser::{
-//         entry::{Optional, Reading},
-//         Mapper, Reader, E,
-//     };
+#[cfg(test)]
+mod test {
+    use crate::parser::{
+        entry::{Optional, Reading},
+        Mapper, Reader, E,
+    };
 
-//     #[test]
-//     fn reading() -> Result<(), E> {
-//         let mut mapper = Mapper::new();
-//         let mut reader = Reader::new(
-//             include_str!("./tests/optional.sibs").to_string(),
-//             &mut mapper,
-//             0,
-//         );
-//         while let Some(optional) = Optional::read(&mut reader)? {
-//             println!("{optional:?}");
-//         }
-//         assert!(reader.rest().trim().is_empty());
-//         Ok(())
-//     }
-// }
+    #[test]
+    fn reading() -> Result<(), E> {
+        let mut mapper = Mapper::new();
+        let mut reader = Reader::new(
+            include_str!("./tests/optional.sibs").to_string(),
+            &mut mapper,
+            0,
+        );
+        while let Some(optional) = Optional::read(&mut reader)? {
+            println!("{optional:?}");
+        }
+        assert!(reader.rest().trim().is_empty());
+        Ok(())
+    }
+}
