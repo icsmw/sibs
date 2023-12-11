@@ -57,27 +57,27 @@ impl VariableAssignation {
     }
 }
 
-// #[cfg(test)]
-// mod test {
-//     use crate::parser::{
-//         entry::{Reading, VariableAssignation},
-//         Mapper, Reader, E,
-//     };
+#[cfg(test)]
+mod test {
+    use crate::parser::{
+        entry::{Reading, VariableAssignation},
+        Mapper, Reader, E,
+    };
 
-//     #[test]
-//     fn reading() -> Result<(), E> {
-//         let mut mapper = Mapper::new();
-//         let mut reader = Reader::new(
-//             include_str!("./tests/variable_assignation.sibs").to_string(),
-//             &mut mapper,
-//             0,
-//         );
-//         while let Some(task) = VariableAssignation::read(&mut reader)? {
-//             println!("{task:?}");
-//         }
+    #[test]
+    fn reading() -> Result<(), E> {
+        let mut mapper = Mapper::new();
+        let mut reader = Reader::new(
+            include_str!("./tests/variable_assignation.sibs").to_string(),
+            &mut mapper,
+            0,
+        );
+        while let Some(task) = VariableAssignation::read(&mut reader)? {
+            println!("{task:?}");
+        }
 
-//         println!("{}", reader.rest().trim());
-//         assert!(reader.rest().trim().is_empty());
-//         Ok(())
-//     }
-// }
+        println!("{}", reader.rest().trim());
+        assert!(reader.rest().trim().is_empty());
+        Ok(())
+    }
+}

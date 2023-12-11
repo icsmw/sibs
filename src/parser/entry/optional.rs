@@ -49,7 +49,7 @@ impl Reading<Optional> for Optional {
                             }
                         }
                         if let Some((inner, _, uuid)) =
-                            reader.read_until(&[chars::SEMICOLON], true, true)?
+                            reader.read_until(&[chars::SEMICOLON], true, false)?
                         {
                             let mut inner_reader = reader.inherit(inner);
                             Ok(Some(Optional {
