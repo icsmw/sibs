@@ -3,7 +3,7 @@ use uuid::Uuid;
 use crate::parser::{
     chars,
     entry::{Arguments, Reading},
-    Reader, E,
+    words, Reader, E,
 };
 
 #[derive(Debug, Clone)]
@@ -16,6 +16,7 @@ pub struct Function {
 
 impl Reading<Function> for Function {
     fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
+        reader.hold();
         if reader.move_to_char(chars::AT)? {
             if let Some((name, ends_with, uuid)) = reader.read_letters(
                 &[chars::CARET, chars::QUESTION, chars::SEMICOLON],
@@ -29,6 +30,10 @@ impl Reading<Function> for Function {
                     return Ok(Some(Self::new(uuid, reader, name, String::new(), false)?));
                 }
                 if let Some((args, _, uuid)) = reader.read_until(&[chars::SEMICOLON], true, true)? {
+                    if reader.inherit(args.clone()).has_word(&[words::DO_ON])? {
+                        reader.roll_back();
+                        return Ok(None);
+                    }
                     Ok(Some(Self::new(
                         uuid,
                         reader,
@@ -84,7 +89,6 @@ mod test {
         while let Some(func) = Function::read(&mut reader)? {
             println!("{func:?}");
         }
-        println!("{:?}", reader.mapper);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }

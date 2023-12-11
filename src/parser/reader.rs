@@ -152,7 +152,26 @@ impl<'a> Reader<'a> {
         }
         Ok(false)
     }
-
+    pub fn has_word(&mut self, targets: &[&str]) -> Result<bool, E> {
+        let mut str: String = String::new();
+        let mut serialized: bool = false;
+        let content = &self.content[self.pos..];
+        for char in content.chars() {
+            if !char.is_ascii() {
+                Err(E::NotAscii(char))?;
+            }
+            if !serialized && char != chars::SERIALIZING {
+                str.push(char);
+            }
+            serialized = char == chars::SERIALIZING;
+            for word in targets.iter() {
+                if str.ends_with(word) {
+                    return Ok(true);
+                }
+            }
+        }
+        Ok(false)
+    }
     pub fn read_letters(
         &mut self,
         stop_on: &[char],
