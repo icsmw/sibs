@@ -1,6 +1,6 @@
 use crate::parser::{
     chars,
-    entry::{Group, Reader, Reading, ValueString},
+    entry::{Function, Group, Reader, Reading, ValueString},
     E,
 };
 use uuid::Uuid;
@@ -9,16 +9,17 @@ use uuid::Uuid;
 pub enum Argument {
     String(String),
     ValueString(ValueString),
+    Function(Function),
 }
 
 #[derive(Debug, Clone)]
 pub struct Arguments {
-    pub inner: Vec<Vec<(Uuid, Argument)>>,
+    pub inner: Vec<(Uuid, Argument)>,
 }
 
 impl Reading<Arguments> for Arguments {
     fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
-        let mut args = Arguments::new();
+        let mut args = Arguments::new(vec![]);
         while let Some(group) = Group::read(reader)? {
             args.add_from_group(group, reader)?;
         }
@@ -34,8 +35,8 @@ impl Reading<Arguments> for Arguments {
 }
 
 impl Arguments {
-    pub fn new() -> Self {
-        Self { inner: vec![] }
+    pub fn new(args: Vec<(Uuid, Argument)>) -> Self {
+        Self { inner: args }
     }
     pub fn read_string_args(reader: &mut Reader) -> Result<Vec<(Uuid, Argument)>, E> {
         let mut arguments: Vec<(Uuid, Argument)> = vec![];
@@ -81,11 +82,25 @@ impl Arguments {
             }
         }
         if !arguments.is_empty() {
-            self.inner.push(arguments);
+            self.inner = [self.inner.clone(), arguments].concat();
         }
         Ok(())
     }
     pub fn is_empty(&self) -> bool {
         self.inner.is_empty()
+    }
+    pub fn add_fn_arg(&mut self, fn_arg: Function) {
+        if let Some((_, arg)) = self
+            .inner
+            .iter_mut()
+            .find(|(_, arg)| matches!(arg, Argument::Function(_)))
+        {
+            if let Argument::Function(func) = arg {
+                func.add_fn_arg(fn_arg);
+            }
+        } else {
+            self.inner
+                .insert(0, (Uuid::new_v4(), Argument::Function(fn_arg)));
+        }
     }
 }

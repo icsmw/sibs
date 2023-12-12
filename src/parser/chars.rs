@@ -20,3 +20,4 @@ pub const EQUAL: char = '=';
 pub const CARET: char = '\n';
 pub const SERIALIZING: char = '\\';
 pub const QUOTES: char = '"';
+pub const REDIRECT: char = '>';

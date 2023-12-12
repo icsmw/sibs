@@ -11,3 +11,5 @@
 @toLowerCase SoMe\;TeXt\;;
 @exit 1 "Unsupported OS: {@os}";
 @copy ./path/file ./dest/"some_new_filename{$prefix}.zip";
+@read_as_string ./package.json > @find /\"version\":\ \"([\d\.])\"/gi;
+@read_as_string ./package.json > @find /\"version\":\ \"([\d\.])\"/gi > @filter 123;

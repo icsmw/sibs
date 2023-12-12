@@ -14,7 +14,7 @@ mod variable_name;
 mod variable_type;
 
 use crate::parser::{chars, Reader, E};
-pub use arguments::Arguments;
+pub use arguments::{Argument, Arguments};
 pub use block::Block;
 pub use component::Component;
 pub use condition::Condition;

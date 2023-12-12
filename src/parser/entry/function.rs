@@ -2,7 +2,7 @@ use uuid::Uuid;
 
 use crate::parser::{
     chars,
-    entry::{Arguments, Reading},
+    entry::{Argument, Arguments, Reading},
     words, Reader, E,
 };
 
@@ -29,18 +29,36 @@ impl Reading<Function> for Function {
                 if ends_with.is_none() {
                     return Ok(Some(Self::new(uuid, reader, name, String::new(), false)?));
                 }
-                if let Some((args, _, uuid)) = reader.read_until(&[chars::SEMICOLON], true, true)? {
+                if let Some((args, stop_on, uuid)) =
+                    reader.read_until(&[chars::REDIRECT, chars::SEMICOLON], true, true)?
+                {
                     if reader.inherit(args.clone()).has_word(&[words::DO_ON])? {
                         reader.roll_back();
                         return Ok(None);
                     }
-                    Ok(Some(Self::new(
-                        uuid,
-                        reader,
-                        name,
-                        args,
-                        matches!(ends_with, Some(chars::QUESTION)),
-                    )?))
+                    if stop_on == chars::REDIRECT {
+                        let arg_func = Self::new(
+                            uuid,
+                            reader,
+                            name,
+                            args,
+                            matches!(ends_with, Some(chars::QUESTION)),
+                        )?;
+                        if let Some(mut parent_func) = Function::read(reader)? {
+                            parent_func.add_fn_arg(arg_func);
+                            Ok(Some(parent_func))
+                        } else {
+                            Err(E::NoDestFunction)
+                        }
+                    } else {
+                        Ok(Some(Self::new(
+                            uuid,
+                            reader,
+                            name,
+                            args,
+                            matches!(ends_with, Some(chars::QUESTION)),
+                        )?))
+                    }
                 } else {
                     Err(E::MissedSemicolon)
                 }
@@ -68,6 +86,16 @@ impl Function {
             tolerance,
             args: Arguments::read(&mut reader)?,
         })
+    }
+    pub fn add_fn_arg(&mut self, fn_arg: Function) {
+        if let Some(args) = self.args.as_mut() {
+            args.add_fn_arg(fn_arg);
+        } else {
+            self.args = Some(Arguments::new(vec![(
+                Uuid::new_v4(),
+                Argument::Function(fn_arg),
+            )]));
+        }
     }
 }
 

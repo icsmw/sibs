@@ -42,6 +42,8 @@ pub enum E {
     FailParseOptionalAction,
     #[error("Empty group")]
     EmptyGroup,
+    #[error("No destination function after >")]
+    NoDestFunction,
     #[error("Missed comparing operator: == or !=")]
     MissedComparingOperator,
     #[error("Fail to find proviso of condition")]
