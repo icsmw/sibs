@@ -13,7 +13,7 @@ pub struct VariableName {
 
 impl Reading<VariableName> for VariableName {
     fn read(reader: &mut Reader) -> Result<Option<VariableName>, E> {
-        if reader.move_to_char(chars::DOLLAR)? {
+        if reader.move_to_char(&[chars::DOLLAR])?.is_some() {
             if let Some((word, _, uuid)) =
                 reader.read_letters(&[chars::COLON], &[chars::UNDERLINE], false)?
             {

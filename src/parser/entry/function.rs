@@ -17,7 +17,7 @@ pub struct Function {
 impl Reading<Function> for Function {
     fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
         reader.hold();
-        if reader.move_to_char(chars::AT)? {
+        if reader.move_to_char(&[chars::AT])?.is_some() {
             if let Some((name, ends_with, uuid)) = reader.read_letters(
                 &[chars::CARET, chars::QUESTION, chars::SEMICOLON],
                 &[chars::UNDERLINE],

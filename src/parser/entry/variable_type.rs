@@ -35,7 +35,7 @@ pub struct VariableType {
 
 impl Reading<VariableType> for VariableType {
     fn read(reader: &mut Reader) -> Result<Option<VariableType>, E> {
-        if reader.move_to_char(chars::TYPE_OPEN)? {
+        if reader.move_to_char(&[chars::TYPE_OPEN])?.is_some() {
             if let Some((word, _, uuid)) = reader.read_word(&[chars::TYPE_CLOSE], true)? {
                 Ok(Some(VariableType::new(word, uuid)?))
             } else {

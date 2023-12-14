@@ -66,7 +66,7 @@ impl<'a> Reader<'a> {
     pub fn next_char(&self) -> Option<char> {
         self.content[self.pos..].chars().next()
     }
-    pub fn move_to_char(&mut self, target: char) -> Result<bool, E> {
+    pub fn move_to_char(&mut self, targets: &[char]) -> Result<Option<char>, E> {
         let content = &self.content[self.pos..];
         let mut pos: usize = 0;
         for char in content.chars() {
@@ -77,14 +77,14 @@ impl<'a> Reader<'a> {
             if char.is_ascii_whitespace() {
                 continue;
             }
-            return if char == target {
+            return if targets.contains(&char) {
                 self.pos += pos;
-                Ok(true)
+                Ok(Some(char))
             } else {
-                Ok(false)
+                Ok(None)
             };
         }
-        Ok(false)
+        Ok(None)
     }
     pub fn move_to_word(&mut self, targets: &[&str]) -> Result<Option<String>, E> {
         let content = &self.content[self.pos..];

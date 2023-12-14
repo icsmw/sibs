@@ -34,7 +34,9 @@ impl Reading<Task> for Task {
             } else {
                 Err(E::NoTaskArguments)?
             };
-            if stopped_on == chars::OPEN_BRACKET && !reader.move_to_char(chars::OPEN_SQ_BRACKET)? {
+            if stopped_on == chars::OPEN_BRACKET
+                && !reader.move_to_char(&[chars::OPEN_SQ_BRACKET])?.is_some()
+            {
                 Err(E::NoTaskActions)?
             }
             if let Some((content, uuid)) =

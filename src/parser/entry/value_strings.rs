@@ -18,7 +18,7 @@ pub struct ValueString {
 
 impl Reading<ValueString> for ValueString {
     fn read(reader: &mut Reader) -> Result<Option<ValueString>, E> {
-        if reader.move_to_char(chars::QUOTES)? {
+        if reader.move_to_char(&[chars::QUOTES])?.is_some() {
             if let Some((pattern, _, _uuid)) = reader.read_until(&[chars::QUOTES], true, false)? {
                 Ok(Some(ValueString::new(pattern, reader)?))
             } else {

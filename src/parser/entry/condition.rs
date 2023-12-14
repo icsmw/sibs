@@ -64,11 +64,11 @@ impl Reading<Condition> for Condition {
             if elements.is_empty() {
                 return Ok(None);
             }
-            if reader.move_to_char(chars::SEMICOLON)? {
+            if reader.move_to_char(&[chars::SEMICOLON])?.is_some() {
                 return Ok(Some(Condition { elements }));
             }
             if reader.move_to_word(&[words::ELSE])?.is_some() {
-                if reader.move_to_char(chars::OPEN_SQ_BRACKET)? {
+                if reader.move_to_char(&[chars::OPEN_SQ_BRACKET])?.is_some() {
                     if let Some((block, _, _)) =
                         reader.read_until(&[chars::CLOSE_SQ_BRACKET], true, false)?
                     {
@@ -77,7 +77,7 @@ impl Reading<Condition> for Condition {
                         } else {
                             Err(E::EmptyGroup)?
                         }
-                        if reader.move_to_char(chars::SEMICOLON)? {
+                        if reader.move_to_char(&[chars::SEMICOLON])?.is_some() {
                             return Ok(Some(Condition { elements }));
                         } else {
                             Err(E::MissedSemicolon)?
@@ -115,7 +115,7 @@ impl Condition {
                 Err(E::MissedComparingOperator)?
             }
         }
-        let negative = reader.move_to_char(chars::EXCLAMATION)?;
+        let negative = reader.move_to_char(&[chars::EXCLAMATION])?.is_some();
         if let Some(func) = Function::read(reader)? {
             Ok(Proviso::Function(func, negative))
         } else {
@@ -125,12 +125,12 @@ impl Condition {
     pub fn proviso(reader: &mut Reader) -> Result<Vec<Proviso>, E> {
         let mut proviso: Vec<Proviso> = vec![];
         while !reader.rest().trim().is_empty() {
-            if reader.move_to_char(chars::OPEN_BRACKET)? {
+            if reader.move_to_char(&[chars::OPEN_BRACKET])?.is_some() {
                 if let Some((group, _, _)) =
                     reader.read_until(&[chars::CLOSE_BRACKET], true, false)?
                 {
                     let mut group_reader = reader.inherit(group);
-                    if group_reader.move_to_char(chars::OPEN_BRACKET)? {
+                    if group_reader.move_to_char(&[chars::OPEN_BRACKET])?.is_some() {
                         Err(E::NestedConditionGroups)?
                     }
                     proviso.push(Proviso::Group(Condition::proviso(&mut group_reader)?));

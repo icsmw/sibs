@@ -10,6 +10,7 @@ mod task;
 mod value_strings;
 mod values;
 mod variable_assignation;
+mod variable_comparing;
 mod variable_declaration;
 mod variable_name;
 mod variable_type;
@@ -27,6 +28,7 @@ pub use task::Task;
 pub use value_strings::ValueString;
 pub use values::Values;
 pub use variable_assignation::VariableAssignation;
+pub use variable_comparing::VariableComparing;
 pub use variable_declaration::VariableDeclaration;
 pub use variable_name::VariableName;
 pub use variable_type::VariableType;
@@ -74,7 +76,7 @@ impl Entry {
     }
 
     pub fn component(reader: &mut Reader) -> Result<Option<Self>, E> {
-        if reader.move_to_char(chars::POUND_SIGN)? {
+        if reader.move_to_char(&[chars::POUND_SIGN])?.is_some() {
             if let Some(Self::Group(group)) = Self::group(reader)? {
                 Ok(Some(Self::Component(Component::new(group, reader)?)))
             } else {

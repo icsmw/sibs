@@ -8,3 +8,9 @@
     zip ./release/unpacked-win {$file_name};
     @cd ..;
 ];
+$mode == dev => "release{$version}-win.zip";
+$mode != dev => [
+    @cd something;
+    zip ./release/unpacked-win {$file_name};
+    @cd ..;
+];

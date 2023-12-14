@@ -19,7 +19,7 @@ impl Reading<VariableAssignation> for VariableAssignation {
     fn read(reader: &mut Reader) -> Result<Option<VariableAssignation>, E> {
         reader.hold();
         if let Some(name) = VariableName::read(reader)? {
-            if reader.move_to_char(chars::EQUAL)? {
+            if reader.move_to_char(&[chars::EQUAL])?.is_some() {
                 if let Some(chars::EQUAL) = reader.next_char() {
                     // This is condition
                     reader.roll_back();
