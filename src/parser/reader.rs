@@ -340,6 +340,7 @@ impl<'a> Reader<'a> {
         let mut serialized: bool = false;
         let start = self.pos;
         let content = &self.content[self.pos..];
+        let mut root_opened = false;
         let mut opened: i32 = 0;
         for char in content.chars() {
             pos += 1;
@@ -347,13 +348,18 @@ impl<'a> Reader<'a> {
                 Err(E::NotAscii(char))?;
             }
             if !serialized {
+                if !root_opened && char != open && !char.is_whitespace() {
+                    return Ok(None);
+                } else if char == open {
+                    root_opened = true;
+                }
                 if char == open {
                     opened += 1;
                 }
                 if char == close {
                     opened -= 1;
                 }
-                if char == close && opened < 0 {
+                if char == close && opened == 0 {
                     return if str.is_empty() {
                         Ok(None)
                     } else {

@@ -33,9 +33,11 @@ impl Reading<Optional> for Optional {
         reader.hold();
         if reader.move_to_char(&[chars::AT, chars::DOLLAR])?.is_some() {
             reader.roll_back();
-            if let Some((left, _, _)) =
-                reader.read_until_word(&[words::DO_ON], &[chars::SEMICOLON], false)?
-            {
+            if let Some((left, _, _)) = reader.read_until_word(
+                &[words::DO_ON],
+                &[chars::SEMICOLON, chars::OPEN_SQ_BRACKET], //TODO: Caret should instead OPEN_SQ_BRACKET
+                false,
+            )? {
                 let condition = if let Some(variable_comparing) =
                     VariableComparing::read(&mut reader.inherit(left.clone()))?
                 {
@@ -50,7 +52,7 @@ impl Reading<Optional> for Optional {
                         if let Some((inner, _, uuid)) =
                             reader.read_until(&[chars::CLOSE_SQ_BRACKET], true, false)?
                         {
-                            if !reader.move_to_char(&[chars::SEMICOLON])?.is_some() {
+                            if reader.move_to_char(&[chars::SEMICOLON])?.is_none() {
                                 Err(E::MissedSemicolon)?
                             }
                             if let Some(block) = Block::read(&mut reader.inherit(inner))? {

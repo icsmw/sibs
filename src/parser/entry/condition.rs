@@ -168,27 +168,27 @@ impl Condition {
     }
 }
 
-// #[cfg(test)]
-// mod test {
-//     use crate::parser::{
-//         entry::{Condition, Reading},
-//         Mapper, Reader, E,
-//     };
+#[cfg(test)]
+mod test {
+    use crate::parser::{
+        entry::{Condition, Reading},
+        Mapper, Reader, E,
+    };
 
-//     #[test]
-//     fn reading() -> Result<(), E> {
-//         let mut mapper = Mapper::new();
-//         let mut reader = Reader::new(
-//             include_str!("./tests/conditions.sibs").to_string(),
-//             &mut mapper,
-//             0,
-//         );
-//         while let Some(task) = Condition::read(&mut reader)? {
-//             println!("{task:?}");
-//         }
+    #[test]
+    fn reading() -> Result<(), E> {
+        let mut mapper = Mapper::new();
+        let mut reader = Reader::new(
+            include_str!("./tests/conditions.sibs").to_string(),
+            &mut mapper,
+            0,
+        );
+        while let Some(task) = Condition::read(&mut reader)? {
+            println!("{task:?}");
+        }
 
-//         println!("{}", reader.rest().trim());
-//         assert!(reader.rest().trim().is_empty());
-//         Ok(())
-//     }
-// }
+        println!("{}", reader.rest().trim());
+        assert!(reader.rest().trim().is_empty());
+        Ok(())
+    }
+}

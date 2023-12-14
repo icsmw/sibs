@@ -37,25 +37,25 @@ impl Reading<Reference> for Reference {
     }
 }
 
-// #[cfg(test)]
-// mod test {
-//     use crate::parser::{
-//         entry::{Reading, Reference},
-//         Mapper, Reader, E,
-//     };
+#[cfg(test)]
+mod test {
+    use crate::parser::{
+        entry::{Reading, Reference},
+        Mapper, Reader, E,
+    };
 
-//     #[test]
-//     fn reading() -> Result<(), E> {
-//         let mut mapper = Mapper::new();
-//         let mut reader = Reader::new(
-//             include_str!("./tests/refs.sibs").to_string(),
-//             &mut mapper,
-//             0,
-//         );
-//         while let Some(refs) = Reference::read(&mut reader)? {
-//             println!("{refs:?}");
-//         }
-//         assert!(reader.rest().trim().is_empty());
-//         Ok(())
-//     }
-// }
+    #[test]
+    fn reading() -> Result<(), E> {
+        let mut mapper = Mapper::new();
+        let mut reader = Reader::new(
+            include_str!("./tests/refs.sibs").to_string(),
+            &mut mapper,
+            0,
+        );
+        while let Some(refs) = Reference::read(&mut reader)? {
+            println!("{refs:?}");
+        }
+        assert!(reader.rest().trim().is_empty());
+        Ok(())
+    }
+}

@@ -4,15 +4,9 @@ $file_name = [
     @os linux => "release{$version}-linux.zip";
     @os darwin => "release{$version}-darwin.zip";
 ];
-$version = @read_as_string ./package.json > @find /\"version\": \"([\d\.])\"/gi;
 $file_name = FIRST [
     @os window => "release{$version}-win.zip";
     @os linux => "release{$version}-linux.zip";
     @os darwin => "release{$version}-darwin.zip";
     @exit 1 "Unsupported OS: {@os}";
-];
-@os window => [
-    @cd something
-    zip ./release/unpacked-win {$file_name};
-    @cd ..
 ];

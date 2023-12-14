@@ -17,7 +17,7 @@ pub struct Task {
 impl Reading<Task> for Task {
     fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
         if let Some((name, stopped_on, uuid)) =
-            reader.read_until(&[chars::OPEN_BRACKET, chars::OPEN_SQ_BRACKET], true, false)?
+            reader.read_until(&[chars::OPEN_BRACKET, chars::OPEN_SQ_BRACKET], false, false)?
         {
             let declarations: Vec<VariableDeclaration> = if stopped_on == chars::OPEN_SQ_BRACKET {
                 vec![]
@@ -34,11 +34,6 @@ impl Reading<Task> for Task {
             } else {
                 Err(E::NoTaskArguments)?
             };
-            if stopped_on == chars::OPEN_BRACKET
-                && !reader.move_to_char(&[chars::OPEN_SQ_BRACKET])?.is_some()
-            {
-                Err(E::NoTaskActions)?
-            }
             if let Some((content, uuid)) =
                 reader.read_until_close(chars::OPEN_SQ_BRACKET, chars::CLOSE_SQ_BRACKET, true)?
             {
@@ -58,25 +53,25 @@ impl Reading<Task> for Task {
     }
 }
 
-// #[cfg(test)]
-// mod test {
-//     use crate::parser::{
-//         entry::{Reading, Task},
-//         Mapper, Reader, E,
-//     };
+#[cfg(test)]
+mod test {
+    use crate::parser::{
+        entry::{Reading, Task},
+        Mapper, Reader, E,
+    };
 
-//     #[test]
-//     fn reading() -> Result<(), E> {
-//         let mut mapper = Mapper::new();
-//         let mut reader = Reader::new(
-//             include_str!("./tests/tasks.sibs").to_string(),
-//             &mut mapper,
-//             0,
-//         );
-//         while let Some(task) = Task::read(&mut reader)? {
-//             println!("{task:?}");
-//         }
-//         assert!(reader.rest().trim().is_empty());
-//         Ok(())
-//     }
-// }
+    #[test]
+    fn reading() -> Result<(), E> {
+        let mut mapper = Mapper::new();
+        let mut reader = Reader::new(
+            include_str!("./tests/tasks.sibs").to_string(),
+            &mut mapper,
+            0,
+        );
+        while let Some(task) = Task::read(&mut reader)? {
+            println!("{task:?}");
+        }
+        assert!(reader.rest().trim().is_empty());
+        Ok(())
+    }
+}
