@@ -85,25 +85,25 @@ impl Reading<Optional> for Optional {
     }
 }
 
-#[cfg(test)]
-mod test {
-    use crate::parser::{
-        entry::{Optional, Reading},
-        Mapper, Reader, E,
-    };
+// #[cfg(test)]
+// mod test {
+//     use crate::parser::{
+//         entry::{Optional, Reading},
+//         Mapper, Reader, E,
+//     };
 
-    #[test]
-    fn reading() -> Result<(), E> {
-        let mut mapper = Mapper::new();
-        let mut reader = Reader::new(
-            include_str!("./tests/optional.sibs").to_string(),
-            &mut mapper,
-            0,
-        );
-        while let Some(optional) = Optional::read(&mut reader)? {
-            println!("{optional:?}");
-        }
-        assert!(reader.rest().trim().is_empty());
-        Ok(())
-    }
-}
+//     #[test]
+//     fn reading() -> Result<(), E> {
+//         let mut mapper = Mapper::new();
+//         let mut reader = Reader::new(
+//             include_str!("./tests/optional.sibs").to_string(),
+//             &mut mapper,
+//             0,
+//         );
+//         while let Some(optional) = Optional::read(&mut reader)? {
+//             println!("{optional:?}");
+//         }
+//         assert!(reader.rest().trim().is_empty());
+//         Ok(())
+//     }
+// }

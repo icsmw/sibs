@@ -3,7 +3,7 @@
 @os darwin => $file_name = "release{$version}-darwin.zip";
 @os linux => tgz ./release/unpacked-linux {$file_name};
 @os window => "release{$version}-win.zip";
-@os wi_ndow => [
+@os window => [
     @cd something;
     zip ./release/unpacked-win {$file_name};
     @cd ..;

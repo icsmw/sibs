@@ -1,4 +1,6 @@
 $dev = @envvar DEV_MODE;
+$dev = @read_as_string ./package.json > @find /\"version\":\ \"([\d\.])\"/gi;
+$dev = @read_as_string ./package.json > @find /\"version\":\ \"([\d\.])\"/gi > @filter 123;
 $file = "release{$version}-win.zip";
 $file = "release{$version}-{@os}.zip";
 $file = "release{@ls ./path/*.txt ./another\ path\ with\ spaces/path}-win.zip";

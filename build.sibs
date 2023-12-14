@@ -84,7 +84,7 @@
         /// $mode
         /// [dev] build developing (no JS optimization) version
         /// [prod] build production version
-        !@exists ./node_modules => yarn install ;
+        !@exists ./node_modules => yarn install;
         @remove? ./dist;
         $mode == dev => yarn run build;
         $mode == prod => yarn run prod;

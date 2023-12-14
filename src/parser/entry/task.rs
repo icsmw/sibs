@@ -2,14 +2,15 @@ use uuid::Uuid;
 
 use crate::parser::{
     chars,
-    entry::{Reading, VariableDeclaration},
-    reader, Reader, E,
+    entry::{Block, Reading, VariableDeclaration},
+    Reader, E,
 };
 
 #[derive(Debug)]
 pub struct Task {
     pub name: String,
     pub declarations: Vec<VariableDeclaration>,
+    pub block: Option<Block>,
     pub uuid: Uuid,
 }
 
@@ -36,60 +37,44 @@ impl Reading<Task> for Task {
             if stopped_on == chars::OPEN_BRACKET && !reader.move_to_char(chars::OPEN_SQ_BRACKET)? {
                 Err(E::NoTaskActions)?
             }
-            let actions = if let Some((content, stopped_on, uuid)) =
-                reader.read_until(&[chars::CLOSE_SQ_BRACKET], true, false)?
+            if let Some((content, uuid)) =
+                reader.read_until_close(chars::OPEN_SQ_BRACKET, chars::CLOSE_SQ_BRACKET, true)?
             {
-                Some((content, uuid))
+                let block = Block::read(&mut reader.inherit(content))?;
+                Ok(Some(Task {
+                    name,
+                    declarations,
+                    uuid,
+                    block,
+                }))
             } else {
-                Err(E::FailFindTaskActions)?
-            };
-            Ok(Some(Task::new(
-                uuid,
-                reader,
-                name.trim().to_string(),
-                declarations,
-            )?))
+                Err(E::FailFindTaskActions)
+            }
         } else {
             Ok(None)
         }
     }
 }
 
-impl Task {
-    pub fn new(
-        uuid: Uuid,
-        parent: &mut Reader,
-        name: String,
-        declarations: Vec<VariableDeclaration>,
-    ) -> Result<Self, E> {
-        Ok(Self {
-            uuid,
-            name,
-            declarations: vec![],
-        })
+#[cfg(test)]
+mod test {
+    use crate::parser::{
+        entry::{Reading, Task},
+        Mapper, Reader, E,
+    };
+
+    #[test]
+    fn reading() -> Result<(), E> {
+        let mut mapper = Mapper::new();
+        let mut reader = Reader::new(
+            include_str!("./tests/tasks.sibs").to_string(),
+            &mut mapper,
+            0,
+        );
+        while let Some(task) = Task::read(&mut reader)? {
+            println!("{task:?}");
+        }
+        assert!(reader.rest().trim().is_empty());
+        Ok(())
     }
 }
-
-// #[cfg(test)]
-// mod test {
-//     use crate::parser::{
-//         entry::{Reading, Task},
-//         Mapper, Reader, E,
-//     };
-
-//     #[test]
-//     fn reading() -> Result<(), E> {
-//         let mut mapper = Mapper::new();
-//         let mut reader = Reader::new(
-//             include_str!("./tests/tasks.sibs").to_string(),
-//             &mut mapper,
-//             0,
-//         );
-//         while let Some(task) = Task::read(&mut reader)? {
-//             println!("{task:?}");
-//         }
-//         println!("{:?}", reader.mapper);
-//         assert!(reader.rest().trim().is_empty());
-//         Ok(())
-//     }
-// }

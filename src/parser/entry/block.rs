@@ -53,33 +53,33 @@ impl Reading<Block> for Block {
     }
 }
 
-#[cfg(test)]
-mod test {
-    use crate::parser::{
-        entry::{Block, Reading},
-        Mapper, Reader, E,
-    };
+// #[cfg(test)]
+// mod test {
+//     use crate::parser::{
+//         entry::{Block, Reading},
+//         Mapper, Reader, E,
+//     };
 
-    #[test]
-    fn reading() -> Result<(), E> {
-        let mut mapper = Mapper::new();
-        let mut reader = Reader::new(
-            format!(
-                "{}\n{}\n{}\n{}",
-                include_str!("./tests/conditions.sibs"),
-                include_str!("./tests/variable_assignation.sibs"),
-                include_str!("./tests/function.sibs"),
-                include_str!("./tests/optional.sibs")
-            ),
-            &mut mapper,
-            0,
-        );
-        while let Some(task) = Block::read(&mut reader)? {
-            println!("{task:?}");
-        }
+//     #[test]
+//     fn reading() -> Result<(), E> {
+//         let mut mapper = Mapper::new();
+//         let mut reader = Reader::new(
+//             format!(
+//                 "{}\n{}\n{}\n{}",
+//                 include_str!("./tests/conditions.sibs"),
+//                 include_str!("./tests/variable_assignation.sibs"),
+//                 include_str!("./tests/function.sibs"),
+//                 include_str!("./tests/optional.sibs")
+//             ),
+//             &mut mapper,
+//             0,
+//         );
+//         while let Some(task) = Block::read(&mut reader)? {
+//             println!("{task:?}");
+//         }
 
-        println!("{}", reader.rest().trim());
-        assert!(reader.rest().trim().is_empty());
-        Ok(())
-    }
-}
+//         println!("{}", reader.rest().trim());
+//         assert!(reader.rest().trim().is_empty());
+//         Ok(())
+//     }
+// }

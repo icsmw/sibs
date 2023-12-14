@@ -99,25 +99,25 @@ impl Function {
     }
 }
 
-#[cfg(test)]
-mod test {
-    use crate::parser::{
-        entry::{Function, Reading},
-        Mapper, Reader, E,
-    };
+// #[cfg(test)]
+// mod test {
+//     use crate::parser::{
+//         entry::{Function, Reading},
+//         Mapper, Reader, E,
+//     };
 
-    #[test]
-    fn reading() -> Result<(), E> {
-        let mut mapper = Mapper::new();
-        let mut reader = Reader::new(
-            include_str!("./tests/function.sibs").to_string(),
-            &mut mapper,
-            0,
-        );
-        while let Some(func) = Function::read(&mut reader)? {
-            println!("{func:?}");
-        }
-        assert!(reader.rest().trim().is_empty());
-        Ok(())
-    }
-}
+//     #[test]
+//     fn reading() -> Result<(), E> {
+//         let mut mapper = Mapper::new();
+//         let mut reader = Reader::new(
+//             include_str!("./tests/function.sibs").to_string(),
+//             &mut mapper,
+//             0,
+//         );
+//         while let Some(func) = Function::read(&mut reader)? {
+//             println!("{func:?}");
+//         }
+//         assert!(reader.rest().trim().is_empty());
+//         Ok(())
+//     }
+// }

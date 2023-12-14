@@ -329,6 +329,44 @@ impl<'a> Reader<'a> {
         }
         Ok(None)
     }
+    pub fn read_until_close(
+        &mut self,
+        open: char,
+        close: char,
+        cursor_after_stop_char: bool,
+    ) -> Result<Option<(String, Uuid)>, E> {
+        let mut pos: usize = 0;
+        let mut str: String = String::new();
+        let mut serialized: bool = false;
+        let start = self.pos;
+        let content = &self.content[self.pos..];
+        let mut opened: i32 = 0;
+        for char in content.chars() {
+            pos += 1;
+            if !char.is_ascii() {
+                Err(E::NotAscii(char))?;
+            }
+            if !serialized {
+                if char == open {
+                    opened += 1;
+                }
+                if char == close {
+                    opened -= 1;
+                }
+                if char == close && opened < 0 {
+                    return if str.is_empty() {
+                        Ok(None)
+                    } else {
+                        self.pos += pos - if cursor_after_stop_char { 0 } else { 1 };
+                        Ok(Some((str, self.add_to_map((start, self.pos)))))
+                    };
+                }
+            }
+            serialized = char == chars::SERIALIZING;
+            str.push(char);
+        }
+        Ok(None)
+    }
     pub fn read_until_word(
         &mut self,
         targets: &[&str],
