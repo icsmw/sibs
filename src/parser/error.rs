@@ -42,6 +42,8 @@ pub enum E {
     FailParseOptionalAction,
     #[error("Empty group")]
     EmptyGroup,
+    #[error("Empty path to reference")]
+    EmptyPathToReference,
     #[error("No destination function after >")]
     NoDestFunction,
     #[error("Missed comparing operator: == or !=")]

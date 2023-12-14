@@ -1,6 +1,6 @@
 use crate::parser::{
     chars,
-    entry::{Condition, Function, Optional, Reading, VariableAssignation},
+    entry::{Condition, Function, Optional, Reading, Reference, VariableAssignation},
     Reader, E,
 };
 
@@ -10,6 +10,7 @@ pub enum Element {
     Condition(Condition),
     VariableAssignation(VariableAssignation),
     Optional(Optional),
+    Reference(Reference),
     Command(String),
 }
 
@@ -28,6 +29,10 @@ impl Reading<Block> for Block {
             }
             if let Some(el) = Optional::read(reader)? {
                 elements.push(Element::Optional(el));
+                continue;
+            }
+            if let Some(el) = Reference::read(reader)? {
+                elements.push(Element::Reference(el));
                 continue;
             }
             if let Some((inner, _, _)) = reader.read_until(&[chars::SEMICOLON], true, false)? {
@@ -53,33 +58,34 @@ impl Reading<Block> for Block {
     }
 }
 
-// #[cfg(test)]
-// mod test {
-//     use crate::parser::{
-//         entry::{Block, Reading},
-//         Mapper, Reader, E,
-//     };
+#[cfg(test)]
+mod test {
+    use crate::parser::{
+        entry::{Block, Reading},
+        Mapper, Reader, E,
+    };
 
-//     #[test]
-//     fn reading() -> Result<(), E> {
-//         let mut mapper = Mapper::new();
-//         let mut reader = Reader::new(
-//             format!(
-//                 "{}\n{}\n{}\n{}",
-//                 include_str!("./tests/conditions.sibs"),
-//                 include_str!("./tests/variable_assignation.sibs"),
-//                 include_str!("./tests/function.sibs"),
-//                 include_str!("./tests/optional.sibs")
-//             ),
-//             &mut mapper,
-//             0,
-//         );
-//         while let Some(task) = Block::read(&mut reader)? {
-//             println!("{task:?}");
-//         }
+    #[test]
+    fn reading() -> Result<(), E> {
+        let mut mapper = Mapper::new();
+        let mut reader = Reader::new(
+            format!(
+                "{}\n{}\n{}\n{}\n{}",
+                include_str!("./tests/conditions.sibs"),
+                include_str!("./tests/variable_assignation.sibs"),
+                include_str!("./tests/function.sibs"),
+                include_str!("./tests/optional.sibs"),
+                include_str!("./tests/refs.sibs")
+            ),
+            &mut mapper,
+            0,
+        );
+        while let Some(task) = Block::read(&mut reader)? {
+            println!("{task:?}");
+        }
 
-//         println!("{}", reader.rest().trim());
-//         assert!(reader.rest().trim().is_empty());
-//         Ok(())
-//     }
-// }
+        println!("{}", reader.rest().trim());
+        assert!(reader.rest().trim().is_empty());
+        Ok(())
+    }
+}
