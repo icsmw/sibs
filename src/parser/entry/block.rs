@@ -1,6 +1,6 @@
 use crate::parser::{
     chars,
-    entry::{Function, If, Optional, Reading, Reference, VariableAssignation},
+    entry::{Each, Function, If, Optional, Reading, Reference, VariableAssignation},
     Reader, E,
 };
 
@@ -8,6 +8,7 @@ use crate::parser::{
 pub enum Element {
     Function(Function),
     If(If),
+    Each(Each),
     VariableAssignation(VariableAssignation),
     Optional(Optional),
     Reference(Reference),
@@ -35,6 +36,10 @@ impl Reading<Block> for Block {
                 elements.push(Element::VariableAssignation(el));
                 continue;
             }
+            if let Some(el) = Each::read(reader)? {
+                elements.push(Element::Each(el));
+                continue;
+            }
             if let Some(el) = Reference::read(reader)? {
                 elements.push(Element::Reference(el));
                 continue;
@@ -47,6 +52,8 @@ impl Reading<Block> for Block {
                     elements.push(Element::Optional(el));
                 } else if let Some(el) = VariableAssignation::read(&mut inner)? {
                     elements.push(Element::VariableAssignation(el));
+                } else if let Some(el) = Each::read(&mut inner)? {
+                    elements.push(Element::Each(el));
                 } else {
                     elements.push(Element::Command(inner.rest().to_string()));
                 }
@@ -74,11 +81,12 @@ mod blocks {
         let mut mapper = Mapper::new();
         let mut reader = Reader::new(
             format!(
-                "{}\n{}\n{}\n{}\n{}",
+                "{}\n{}\n{}\n{}\n{}\n{}",
                 include_str!("./tests/if.sibs"),
                 include_str!("./tests/variable_assignation.sibs"),
                 include_str!("./tests/function.sibs"),
                 include_str!("./tests/optional.sibs"),
+                include_str!("./tests/each.sibs"),
                 include_str!("./tests/refs.sibs")
             ),
             &mut mapper,
