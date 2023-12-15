@@ -1,6 +1,6 @@
 use crate::parser::{
     chars,
-    entry::{Block, Function, Group, Reader, Reading, ValueString, VariableName},
+    entry::{Block, First, Function, Group, Reader, Reading, ValueString, VariableName},
     E,
 };
 
@@ -9,6 +9,7 @@ pub enum Assignation {
     Function(Function),
     ValueString(ValueString),
     Block(Block),
+    First(First),
 }
 #[derive(Debug)]
 pub struct VariableAssignation {
@@ -26,7 +27,16 @@ impl Reading<VariableAssignation> for VariableAssignation {
                     reader.roll_back();
                     return Ok(None);
                 }
-                if let Some(group) = Group::read(reader)? {
+                if let Some(first) = First::read(reader)? {
+                    if reader.move_to_char(&[chars::SEMICOLON])?.is_none() {
+                        Err(E::MissedSemicolon)
+                    } else {
+                        Ok(Some(VariableAssignation::new(
+                            name,
+                            Assignation::First(first),
+                        )))
+                    }
+                } else if let Some(group) = Group::read(reader)? {
                     if reader.move_to_char(&[chars::SEMICOLON])?.is_none() {
                         Err(E::MissedSemicolon)
                     } else {
@@ -53,7 +63,6 @@ impl Reading<VariableAssignation> for VariableAssignation {
                             Assignation::ValueString(value_string),
                         )))
                     } else {
-                        println!(">>>>>>>>>>>>>>>>>>?");
                         Err(E::NoComparingOrAssignation)?
                     }
                 } else {
@@ -75,7 +84,7 @@ impl VariableAssignation {
 }
 
 #[cfg(test)]
-mod test {
+mod test_variable_assignation {
     use crate::parser::{
         entry::{Reading, VariableAssignation},
         Mapper, Reader, E,

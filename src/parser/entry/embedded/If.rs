@@ -31,12 +31,12 @@ pub enum Element {
     Else(Block),
 }
 #[derive(Debug)]
-pub struct Condition {
+pub struct If {
     pub elements: Vec<Element>,
 }
 
-impl Reading<Condition> for Condition {
-    fn read(reader: &mut Reader) -> Result<Option<Condition>, E> {
+impl Reading<If> for If {
+    fn read(reader: &mut Reader) -> Result<Option<If>, E> {
         let mut elements: Vec<Element> = vec![];
         while !reader.rest().trim().is_empty() {
             if reader.move_to_word(&[words::IF])?.is_some() {
@@ -44,7 +44,7 @@ impl Reading<Condition> for Condition {
                     reader.read_until(&[chars::OPEN_SQ_BRACKET], false, false)?
                 {
                     let mut inner_reader = reader.inherit(inner);
-                    let proviso: Vec<Proviso> = Condition::proviso(&mut inner_reader)?;
+                    let proviso: Vec<Proviso> = If::proviso(&mut inner_reader)?;
                     if let Some(group) = Group::read(reader)? {
                         if let Some(block) = Block::read(&mut reader.inherit(group.inner))? {
                             elements.push(Element::If(proviso, block));
@@ -63,7 +63,7 @@ impl Reading<Condition> for Condition {
                 return Ok(None);
             }
             if reader.move_to_char(&[chars::SEMICOLON])?.is_some() {
-                return Ok(Some(Condition { elements }));
+                return Ok(Some(If { elements }));
             }
             if reader.move_to_word(&[words::ELSE])?.is_some() {
                 if let Some(group) = Group::read(reader)? {
@@ -73,7 +73,7 @@ impl Reading<Condition> for Condition {
                         Err(E::EmptyGroup)?
                     }
                     if reader.move_to_char(&[chars::SEMICOLON])?.is_some() {
-                        return Ok(Some(Condition { elements }));
+                        return Ok(Some(If { elements }));
                     } else {
                         Err(E::MissedSemicolon)?
                     }
@@ -86,7 +86,7 @@ impl Reading<Condition> for Condition {
     }
 }
 
-impl Condition {
+impl If {
     pub fn inner(reader: &mut Reader) -> Result<Proviso, E> {
         if let Some(variable_name) = VariableName::read(reader)? {
             if let Some(word) = reader.move_to_word(&[words::CMP_TRUE, words::CMP_FALSE])? {
@@ -125,7 +125,7 @@ impl Condition {
                     if group_reader.move_to_char(&[chars::OPEN_BRACKET])?.is_some() {
                         Err(E::NestedConditionGroups)?
                     }
-                    proviso.push(Proviso::Group(Condition::proviso(&mut group_reader)?));
+                    proviso.push(Proviso::Group(If::proviso(&mut group_reader)?));
                     continue;
                 } else {
                     Err(E::NotClosedConditionGroup)?
@@ -146,14 +146,14 @@ impl Condition {
             if let Some((inner, combination, uuid)) =
                 reader.read_until_word(&[words::AND, words::OR], &[], true)?
             {
-                proviso.push(Condition::inner(&mut reader.inherit(inner))?);
+                proviso.push(If::inner(&mut reader.inherit(inner))?);
                 proviso.push(Proviso::Combination(if combination == words::AND {
                     Combination::And
                 } else {
                     Combination::Or
                 }));
             } else {
-                proviso.push(Condition::inner(reader)?);
+                proviso.push(If::inner(reader)?);
             }
         }
         Ok(proviso)
@@ -163,7 +163,7 @@ impl Condition {
 #[cfg(test)]
 mod test {
     use crate::parser::{
-        entry::{Condition, Reading},
+        entry::{If, Reading},
         Mapper, Reader, E,
     };
 
@@ -171,11 +171,11 @@ mod test {
     fn reading() -> Result<(), E> {
         let mut mapper = Mapper::new();
         let mut reader = Reader::new(
-            include_str!("./tests/conditions.sibs").to_string(),
+            include_str!("../tests/conditions.sibs").to_string(),
             &mut mapper,
             0,
         );
-        while let Some(task) = Condition::read(&mut reader)? {
+        while let Some(task) = If::read(&mut reader)? {
             println!("{task:?}");
         }
 

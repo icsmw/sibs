@@ -1,7 +1,7 @@
 mod arguments;
 mod block;
 mod component;
-mod condition;
+mod embedded;
 mod function;
 mod group;
 mod optional;
@@ -19,7 +19,10 @@ use crate::parser::{chars, Reader, E};
 pub use arguments::{Argument, Arguments};
 pub use block::Block;
 pub use component::Component;
-pub use condition::Condition;
+pub use embedded::{
+    first::First,
+    If::{Cmp, If},
+};
 pub use function::Function;
 pub use group::Group;
 pub use optional::Optional;

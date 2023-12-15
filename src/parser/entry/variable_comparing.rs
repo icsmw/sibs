@@ -1,6 +1,5 @@
 use crate::parser::{
-    chars,
-    entry::{condition::Cmp, Function, Reader, Reading, ValueString, VariableName},
+    entry::{Cmp, Reader, Reading, VariableName},
     words, E,
 };
 

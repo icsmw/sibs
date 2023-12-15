@@ -9,3 +9,9 @@ $file_name = [
     @os linux => "release{$version}-linux.zip";
     @os darwin => "release{$version}-darwin.zip";
 ];
+$file_name = FIRST [
+    @os window => "release{$version}-win.zip";
+    @os linux => "release{$version}-linux.zip";
+    @os darwin => "release{$version}-darwin.zip";
+    @exit 1 "Unsupported OS: {@os}";
+];

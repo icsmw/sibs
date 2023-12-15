@@ -1,13 +1,13 @@
 use crate::parser::{
     chars,
-    entry::{Condition, Function, Optional, Reading, Reference, VariableAssignation},
+    entry::{Function, If, Optional, Reading, Reference, VariableAssignation},
     Reader, E,
 };
 
 #[derive(Debug)]
 pub enum Element {
     Function(Function),
-    Condition(Condition),
+    If(If),
     VariableAssignation(VariableAssignation),
     Optional(Optional),
     Reference(Reference),
@@ -23,8 +23,8 @@ impl Reading<Block> for Block {
     fn read(reader: &mut Reader) -> Result<Option<Block>, E> {
         let mut elements: Vec<Element> = vec![];
         while !reader.rest().trim().is_empty() {
-            if let Some(el) = Condition::read(reader)? {
-                elements.push(Element::Condition(el));
+            if let Some(el) = If::read(reader)? {
+                elements.push(Element::If(el));
                 continue;
             }
             if let Some(el) = Optional::read(reader)? {
@@ -33,6 +33,7 @@ impl Reading<Block> for Block {
             }
             if let Some(el) = VariableAssignation::read(reader)? {
                 elements.push(Element::VariableAssignation(el));
+                continue;
             }
             if let Some(el) = Reference::read(reader)? {
                 elements.push(Element::Reference(el));

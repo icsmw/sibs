@@ -10,7 +10,6 @@ pub struct Group {
 
 impl Reading<Group> for Group {
     fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
-        println!("READING GROUP:{}", reader.rest());
         if let Some((inner, uuid)) =
             reader.read_until_close(chars::OPEN_SQ_BRACKET, chars::CLOSE_SQ_BRACKET, true)?
         {
