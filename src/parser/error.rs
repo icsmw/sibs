@@ -52,6 +52,8 @@ pub enum E {
     MissedComparingOperator,
     #[error("Fail to find proviso of condition")]
     NoProvisoOfCondition,
+    #[error("No loop variable EACH($var)")]
+    NoLoopVariable,
     #[error("After AND or OR should be proviso")]
     RepeatedCombinationOperator,
     #[error("Only string values can be used with conditions")]
@@ -64,6 +66,8 @@ pub enum E {
     NoComponentContext,
     #[error("Group [...] is expecting")]
     NoGroup,
+    #[error("No loop input EACH($var) input [...]")]
+    NoLoopInput,
     #[error("Not closed group")]
     NotClosedGroup,
     #[error("Not closed condition group (...)")]

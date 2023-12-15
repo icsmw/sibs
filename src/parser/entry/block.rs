@@ -75,7 +75,7 @@ mod blocks {
         let mut reader = Reader::new(
             format!(
                 "{}\n{}\n{}\n{}\n{}",
-                include_str!("./tests/conditions.sibs"),
+                include_str!("./tests/if.sibs"),
                 include_str!("./tests/variable_assignation.sibs"),
                 include_str!("./tests/function.sibs"),
                 include_str!("./tests/optional.sibs"),

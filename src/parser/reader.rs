@@ -87,6 +87,7 @@ impl<'a> Reader<'a> {
         Ok(None)
     }
     pub fn move_to_word(&mut self, targets: &[&str]) -> Result<Option<String>, E> {
+        let only_alphabetic = !targets.join("").chars().any(|c| !c.is_alphabetic());
         let content = &self.content[self.pos..];
         let mut pos: usize = 0;
         let mut str = String::new();
@@ -97,9 +98,11 @@ impl<'a> Reader<'a> {
             }
             if char.is_ascii_whitespace() && str.is_empty() {
                 continue;
-            } else if char.is_ascii_whitespace() && !str.is_empty() {
+            } else if (char.is_ascii_whitespace() || (only_alphabetic && !char.is_alphabetic()))
+                && !str.is_empty()
+            {
                 return if targets.contains(&str.as_str()) {
-                    self.pos += pos;
+                    self.pos += pos - 1;
                     Ok(Some(str))
                 } else {
                     Ok(None)
@@ -347,6 +350,7 @@ impl<'a> Reader<'a> {
             if !char.is_ascii() {
                 Err(E::NotAscii(char))?;
             }
+            let writing = root_opened;
             if !serialized {
                 if !root_opened && char != open && !char.is_whitespace() {
                     return Ok(None);
@@ -369,7 +373,9 @@ impl<'a> Reader<'a> {
                 }
             }
             serialized = char == chars::SERIALIZING;
-            str.push(char);
+            if writing {
+                str.push(char);
+            }
         }
         Ok(None)
     }

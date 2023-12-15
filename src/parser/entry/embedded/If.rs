@@ -170,11 +170,7 @@ mod test {
     #[test]
     fn reading() -> Result<(), E> {
         let mut mapper = Mapper::new();
-        let mut reader = Reader::new(
-            include_str!("../tests/conditions.sibs").to_string(),
-            &mut mapper,
-            0,
-        );
+        let mut reader = Reader::new(include_str!("../tests/if.sibs").to_string(), &mut mapper, 0);
         while let Some(task) = If::read(&mut reader)? {
             println!("{task:?}");
         }

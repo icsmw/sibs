@@ -20,6 +20,7 @@ pub use arguments::{Argument, Arguments};
 pub use block::Block;
 pub use component::Component;
 pub use embedded::{
+    each::Each,
     first::First,
     If::{Cmp, If},
 };
