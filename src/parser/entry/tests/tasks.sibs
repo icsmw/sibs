@@ -1,4 +1,7 @@
 build($mode: dev | prod) [
+    /// Building electron application 
+    /// [$mode:dev] build developing version
+    /// [$mode:prod] build production version
     @os window => $file_name = "release{$version}-win.zip";
     @os linux => $file_name = "release{$version}-linux.zip";
     @os darwin => $file_name = "release{$version}-darwin.zip";

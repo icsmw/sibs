@@ -54,7 +54,7 @@ impl Reading<Task> for Task {
 }
 
 #[cfg(test)]
-mod test {
+mod test_tasks {
     use crate::parser::{
         entry::{Reading, Task},
         Mapper, Reader, E,

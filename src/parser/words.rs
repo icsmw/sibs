@@ -7,3 +7,4 @@ pub const EACH: &str = "EACH";
 pub const CMP_TRUE: &str = "==";
 pub const CMP_FALSE: &str = "!=";
 pub const DO_ON: &str = "=>";
+pub const META: &str = "///";

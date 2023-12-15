@@ -1,6 +1,6 @@
 use crate::parser::{
     chars,
-    entry::{Each, Function, If, Optional, Reading, Reference, VariableAssignation},
+    entry::{Each, Function, If, Meta, Optional, Reading, Reference, VariableAssignation},
     Reader, E,
 };
 
@@ -17,13 +17,19 @@ pub enum Element {
 
 #[derive(Debug)]
 pub struct Block {
+    meta: Option<Meta>,
     elements: Vec<Element>,
 }
 
 impl Reading<Block> for Block {
     fn read(reader: &mut Reader) -> Result<Option<Block>, E> {
         let mut elements: Vec<Element> = vec![];
+        let mut meta: Option<Meta> = None;
         while !reader.rest().trim().is_empty() {
+            if let Some(md) = Meta::read(reader)? {
+                meta = Some(md);
+                continue;
+            }
             if let Some(el) = If::read(reader)? {
                 elements.push(Element::If(el));
                 continue;
@@ -64,7 +70,7 @@ impl Reading<Block> for Block {
         Ok(if elements.is_empty() {
             None
         } else {
-            Some(Block { elements })
+            Some(Block { elements, meta })
         })
     }
 }

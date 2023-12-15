@@ -76,6 +76,8 @@ pub enum E {
     NestedConditionGroups,
     #[error("No values related to variable")]
     NoVariableValues,
+    #[error("No metadata content")]
+    NoMetaContent,
     #[error("Converting error")]
     Infallible(#[from] std::convert::Infallible),
     #[error("IO error")]

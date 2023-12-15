@@ -4,6 +4,7 @@ mod component;
 mod embedded;
 mod function;
 mod group;
+mod meta;
 mod optional;
 mod reference;
 mod task;
@@ -26,6 +27,7 @@ pub use embedded::{
 };
 pub use function::Function;
 pub use group::Group;
+pub use meta::Meta;
 pub use optional::Optional;
 pub use reference::Reference;
 pub use task::Task;
