@@ -1,6 +1,6 @@
 use crate::parser::{
     chars,
-    entry::{Block, Function, Reading, ValueString, VariableName},
+    entry::{Block, Function, Group, Reading, ValueString, VariableName},
     words, Reader, E,
 };
 
@@ -41,14 +41,12 @@ impl Reading<Condition> for Condition {
         while !reader.rest().trim().is_empty() {
             if reader.move_to_word(&[words::IF])?.is_some() {
                 if let Some((inner, _char, _uuid)) =
-                    reader.read_until(&[chars::OPEN_SQ_BRACKET], true, false)?
+                    reader.read_until(&[chars::OPEN_SQ_BRACKET], false, false)?
                 {
                     let mut inner_reader = reader.inherit(inner);
                     let proviso: Vec<Proviso> = Condition::proviso(&mut inner_reader)?;
-                    if let Some((block, _, _)) =
-                        reader.read_until(&[chars::CLOSE_SQ_BRACKET], true, false)?
-                    {
-                        if let Some(block) = Block::read(&mut reader.inherit(block))? {
+                    if let Some(group) = Group::read(reader)? {
+                        if let Some(block) = Block::read(&mut reader.inherit(group.inner))? {
                             elements.push(Element::If(proviso, block));
                         } else {
                             Err(E::EmptyGroup)?
@@ -68,22 +66,16 @@ impl Reading<Condition> for Condition {
                 return Ok(Some(Condition { elements }));
             }
             if reader.move_to_word(&[words::ELSE])?.is_some() {
-                if reader.move_to_char(&[chars::OPEN_SQ_BRACKET])?.is_some() {
-                    if let Some((block, _, _)) =
-                        reader.read_until(&[chars::CLOSE_SQ_BRACKET], true, false)?
-                    {
-                        if let Some(block) = Block::read(&mut reader.inherit(block))? {
-                            elements.push(Element::Else(block));
-                        } else {
-                            Err(E::EmptyGroup)?
-                        }
-                        if reader.move_to_char(&[chars::SEMICOLON])?.is_some() {
-                            return Ok(Some(Condition { elements }));
-                        } else {
-                            Err(E::MissedSemicolon)?
-                        }
+                if let Some(group) = Group::read(reader)? {
+                    if let Some(block) = Block::read(&mut reader.inherit(group.inner))? {
+                        elements.push(Element::Else(block));
                     } else {
-                        Err(E::NotClosedGroup)?
+                        Err(E::EmptyGroup)?
+                    }
+                    if reader.move_to_char(&[chars::SEMICOLON])?.is_some() {
+                        return Ok(Some(Condition { elements }));
+                    } else {
+                        Err(E::MissedSemicolon)?
                     }
                 } else {
                     Err(E::NoGroup)?
