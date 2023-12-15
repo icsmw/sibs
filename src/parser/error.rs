@@ -66,6 +66,8 @@ pub enum E {
     NoComponentContext,
     #[error("Group [...] is expecting")]
     NoGroup,
+    #[error("No colon")]
+    NoColon,
     #[error("No loop input EACH($var) input [...]")]
     NoLoopInput,
     #[error("Not closed group")]

@@ -1,0 +1,3 @@
+#[app: ./app]
+#[client: ./client/with spaces in name]
+#[shared: ./shared/one/to]

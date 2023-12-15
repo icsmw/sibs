@@ -68,50 +68,6 @@ pub enum Entry {
 
 impl Entry {
     pub fn parse(reader: &mut Reader) -> Result<Vec<Self>, E> {
-        let mut entities: Vec<Self> = vec![];
-        loop {
-            if let Some(entity) = Self::function(reader)? {
-                entities.push(entity);
-            } else if let Some(entity) = Self::component(reader)? {
-                entities.push(entity);
-            } else {
-                break;
-            }
-        }
-        Ok(entities)
-    }
-
-    pub fn component(reader: &mut Reader) -> Result<Option<Self>, E> {
-        if reader.move_to_char(&[chars::POUND_SIGN])?.is_some() {
-            if let Some(Self::Group(group)) = Self::group(reader)? {
-                Ok(Some(Self::Component(Component::new(group, reader)?)))
-            } else {
-                Err(E::NoGroup)
-            }
-        } else {
-            Ok(None)
-        }
-    }
-    pub fn function(reader: &mut Reader) -> Result<Option<Self>, E> {
-        Function::read(reader)?.map_or(Ok(None), |v| Ok(Some(Self::Function(v))))
-    }
-    pub fn arguments(reader: &mut Reader) -> Result<Option<Self>, E> {
-        Arguments::read(reader)?.map_or(Ok(None), |v| Ok(Some(Self::Arguments(v))))
-    }
-    pub fn group(reader: &mut Reader) -> Result<Option<Self>, E> {
-        Group::read(reader)?.map_or(Ok(None), |v| Ok(Some(Self::Group(v))))
-    }
-    pub fn variable_name(reader: &mut Reader) -> Result<Option<Self>, E> {
-        VariableName::read(reader)?.map_or(Ok(None), |v| Ok(Some(Self::VariableName(v))))
-    }
-    pub fn variable_declaration(reader: &mut Reader) -> Result<Option<Self>, E> {
-        VariableDeclaration::read(reader)?
-            .map_or(Ok(None), |v| Ok(Some(Self::VariableDeclaration(v))))
-    }
-    pub fn variable_type(reader: &mut Reader) -> Result<Option<Self>, E> {
-        VariableType::read(reader)?.map_or(Ok(None), |v| Ok(Some(Self::VariableType(v))))
-    }
-    pub fn values(reader: &mut Reader) -> Result<Option<Self>, E> {
-        Values::read(reader)?.map_or(Ok(None), |v| Ok(Some(Self::Values(v))))
+        Ok(vec![])
     }
 }
