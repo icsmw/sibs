@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::parser::{
     chars,
-    entry::{Group, Reading, Task},
+    entry::{Group, Meta, Reading, Task},
     words, Reader, E,
 };
 
@@ -11,6 +11,7 @@ pub struct Component {
     pub cwd: PathBuf,
     pub name: String,
     pub tasks: Vec<Task>,
+    pub meta: Option<Meta>,
 }
 
 impl Reading<Component> for Component {
@@ -32,6 +33,10 @@ impl Reading<Component> for Component {
                         Err(E::NoComponentBody)?
                     }
                     let mut task_reader = reader.inherit(inner);
+                    let mut meta: Option<Meta> = None;
+                    if let Some(mt) = Meta::read(&mut task_reader)? {
+                        meta = Some(mt);
+                    }
                     let mut tasks: Vec<Task> = vec![];
                     while let Some(task) = Task::read(&mut task_reader)? {
                         tasks.push(task);
@@ -40,6 +45,7 @@ impl Reading<Component> for Component {
                         name,
                         cwd: PathBuf::from(path),
                         tasks,
+                        meta,
                     }))
                 } else {
                     Err(E::NoColon)
