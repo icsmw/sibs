@@ -1,3 +1,5 @@
+mod error;
+mod functions;
 mod parser;
 
 fn main() {

@@ -82,10 +82,16 @@ pub enum E {
     NoVariableValues,
     #[error("No metadata content")]
     NoMetaContent,
+    #[error("Not allowed function")]
+    NotAllowedFunction,
     #[error("Converting error")]
     Infallible(#[from] std::convert::Infallible),
+    #[error("File {0} does't exist")]
+    FileNotExists(String),
     #[error("IO error")]
     IO(#[from] std::io::Error),
+    #[error("{0}: {1}")]
+    FunctionError(String, String),
     #[error("{0}")]
     Other(String),
 }

@@ -16,7 +16,11 @@ mod variable_declaration;
 mod variable_name;
 mod variable_type;
 
-use crate::parser::{chars, Reader, E};
+use crate::{
+    error::E,
+    functions::{reader::import::Import, Implementation},
+    parser::{Mapper, Reader},
+};
 pub use arguments::{Argument, Arguments};
 pub use block::Block;
 pub use component::Component;
@@ -30,6 +34,7 @@ pub use group::Group;
 pub use meta::Meta;
 pub use optional::Optional;
 pub use reference::Reference;
+use std::{fs, path::PathBuf};
 pub use task::Task;
 pub use value_strings::ValueString;
 pub use values::Values;
@@ -42,32 +47,21 @@ pub use variable_type::VariableType;
 pub trait Reading<T> {
     fn read(reader: &mut Reader) -> Result<Option<T>, E>;
 }
-#[derive(Debug)]
-pub enum Entry {
-    // /// [...]
-    // SBracketBlock(Data),
-    // /// (...)
-    // BracketBlock(Data),
-    // /// @...
-    Function(Function),
-    Arguments(Arguments),
-    // /// $...
-    VariableName(VariableName),
-    VariableType(VariableType),
-    Values(Values),
-    VariableDeclaration(VariableDeclaration),
-    Group(Group),
-    Component(Component),
-    // /// ///...
-    // Meta(Data),
-    // /// :...:...
-    // Reference(Data),
-    // /// ...
-    // Unknown(Data),
-}
 
-impl Entry {
-    pub fn parse(reader: &mut Reader) -> Result<Vec<Self>, E> {
-        Ok(vec![])
+pub fn read(filename: PathBuf) -> Result<Vec<Component>, E> {
+    if !filename.exists() {
+        Err(E::FileNotExists(filename.to_string_lossy().to_string()))?
     }
+    let mut mapper = Mapper::new();
+    let mut reader = Reader::new(fs::read_to_string(filename)?, &mut mapper, 0);
+    let mut functions: Vec<Import> = vec![];
+    while let Some(func) = Function::read(&mut reader)? {
+        if let Some(fn_impl) = <Import as Implementation<Import, String>>::from(func)? {
+            functions.push(fn_impl);
+        } else {
+            Err(E::NotAllowedFunction)?
+        }
+    }
+    // Here should be import
+    Ok(vec![])
 }
