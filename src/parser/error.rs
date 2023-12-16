@@ -64,6 +64,8 @@ pub enum E {
     UnnamedComponent,
     #[error("No component context")]
     NoComponentContext,
+    #[error("No component body")]
+    NoComponentBody,
     #[error("Group [...] is expecting")]
     NoGroup,
     #[error("No colon")]
