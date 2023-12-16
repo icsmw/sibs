@@ -1,7 +1,9 @@
+pub mod chars;
+pub mod entry;
+pub mod words;
+use crate::error::E;
 use std::collections::HashMap;
 use uuid::Uuid;
-
-use crate::parser::{chars, E};
 
 #[derive(Debug)]
 pub struct Mapper {

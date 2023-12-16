@@ -1,4 +1,4 @@
-use crate::parser::{
+use crate::reader::{
     entry::{Cmp, Reader, Reading, VariableName},
     words, E,
 };

@@ -1,7 +1,7 @@
 use crate::{
     error::E,
     functions::Implementation,
-    parser::entry::{Argument, Function},
+    reader::entry::{Argument, Function},
 };
 use std::{fs, path::PathBuf};
 use thiserror::Error;

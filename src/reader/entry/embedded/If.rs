@@ -1,4 +1,4 @@
-use crate::parser::{
+use crate::reader::{
     chars,
     entry::{Block, Function, Group, Reading, ValueString, VariableName},
     words, Reader, E,
@@ -162,7 +162,7 @@ impl If {
 
 #[cfg(test)]
 mod test {
-    use crate::parser::{
+    use crate::reader::{
         entry::{If, Reading},
         Mapper, Reader, E,
     };

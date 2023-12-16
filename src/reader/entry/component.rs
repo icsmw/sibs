@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::parser::{
+use crate::reader::{
     chars,
     entry::{Group, Meta, Reading, Task},
     words, Reader, E,
@@ -65,7 +65,7 @@ impl Reading<Component> for Component {
 
 #[cfg(test)]
 mod test_component {
-    use crate::parser::{
+    use crate::reader::{
         entry::{Component, Reading},
         Mapper, Reader, E,
     };

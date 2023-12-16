@@ -19,7 +19,7 @@ mod variable_type;
 use crate::{
     error::E,
     functions::{reader::import::Import, Implementation},
-    parser::{Mapper, Reader},
+    reader::{Mapper, Reader},
 };
 pub use arguments::{Argument, Arguments};
 pub use block::Block;

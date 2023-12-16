@@ -1,4 +1,4 @@
-use crate::parser::{
+use crate::reader::{
     chars,
     entry::{Block, First, Function, Group, Reader, Reading, ValueString, VariableName},
     E,
@@ -85,7 +85,7 @@ impl VariableAssignation {
 
 #[cfg(test)]
 mod test_variable_assignation {
-    use crate::parser::{
+    use crate::reader::{
         entry::{Reading, VariableAssignation},
         Mapper, Reader, E,
     };

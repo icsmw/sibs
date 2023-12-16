@@ -1,4 +1,4 @@
-use crate::parser::{
+use crate::reader::{
     chars,
     entry::{Block, Function, Group, Reading, VariableName},
     words, Reader, E,
@@ -65,7 +65,7 @@ impl Reading<Each> for Each {
 
 #[cfg(test)]
 mod test_each {
-    use crate::parser::{
+    use crate::reader::{
         entry::{Each, Reading, E},
         Mapper, Reader,
     };

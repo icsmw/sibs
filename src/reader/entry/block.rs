@@ -1,4 +1,4 @@
-use crate::parser::{
+use crate::reader::{
     chars,
     entry::{Each, Function, If, Meta, Optional, Reading, Reference, VariableAssignation},
     Reader, E,
@@ -77,7 +77,7 @@ impl Reading<Block> for Block {
 
 #[cfg(test)]
 mod blocks {
-    use crate::parser::{
+    use crate::reader::{
         entry::{Block, Reading},
         Mapper, Reader, E,
     };

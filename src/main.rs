@@ -1,6 +1,6 @@
 mod error;
 mod functions;
-mod parser;
+mod reader;
 
 fn main() {
     println!("Hello, world!");

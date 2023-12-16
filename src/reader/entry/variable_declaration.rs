@@ -1,4 +1,4 @@
-use crate::parser::{
+use crate::reader::{
     chars,
     entry::{Reading, Values, VariableName, VariableType},
     E,
@@ -16,7 +16,7 @@ pub struct VariableDeclaration {
 }
 
 impl Reading<VariableDeclaration> for VariableDeclaration {
-    fn read(reader: &mut crate::parser::Reader) -> Result<Option<VariableDeclaration>, E> {
+    fn read(reader: &mut crate::reader::Reader) -> Result<Option<VariableDeclaration>, E> {
         if let Some(name) = VariableName::read(reader)? {
             if reader.move_to_char(&[chars::COLON])?.is_some() {
                 if let Some(variable_type) = VariableType::read(reader)? {

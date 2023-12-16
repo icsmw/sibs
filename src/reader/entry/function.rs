@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::parser::{
+use crate::reader::{
     chars,
     entry::{Argument, Arguments, Reading},
     words, Reader, E,
@@ -101,7 +101,7 @@ impl Function {
 
 #[cfg(test)]
 mod test {
-    use crate::parser::{
+    use crate::reader::{
         entry::{Function, Reading},
         Mapper, Reader, E,
     };

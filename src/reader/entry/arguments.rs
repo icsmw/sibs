@@ -1,4 +1,4 @@
-use crate::parser::{
+use crate::reader::{
     chars,
     entry::{Function, Group, Reader, Reading, ValueString},
     E,

@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::parser::{
+use crate::reader::{
     chars,
     entry::{Block, Reading, VariableDeclaration},
     Reader, E,
@@ -55,7 +55,7 @@ impl Reading<Task> for Task {
 
 #[cfg(test)]
 mod test_tasks {
-    use crate::parser::{
+    use crate::reader::{
         entry::{Reading, Task},
         Mapper, Reader, E,
     };

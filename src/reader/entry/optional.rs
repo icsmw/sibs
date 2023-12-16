@@ -1,4 +1,4 @@
-use crate::parser::{
+use crate::reader::{
     chars,
     entry::{Block, Function, Reading, ValueString, VariableAssignation, VariableComparing},
     words, Reader, E,
@@ -101,7 +101,7 @@ impl Reading<Optional> for Optional {
 
 #[cfg(test)]
 mod test {
-    use crate::parser::{
+    use crate::reader::{
         entry::{Optional, Reading},
         Mapper, Reader, E,
     };

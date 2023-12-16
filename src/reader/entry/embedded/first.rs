@@ -1,4 +1,4 @@
-use crate::parser::{
+use crate::reader::{
     entry::{Block, Group, Reading},
     words, Reader, E,
 };

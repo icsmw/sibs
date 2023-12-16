@@ -1,4 +1,4 @@
-use crate::parser::{
+use crate::reader::{
     chars,
     entry::{Function, Reader, Reading, VariableName},
     E,
@@ -57,7 +57,7 @@ impl ValueString {
 
 #[cfg(test)]
 mod test {
-    use crate::parser::{
+    use crate::reader::{
         entry::{Reading, ValueString},
         Mapper, Reader, E,
     };
