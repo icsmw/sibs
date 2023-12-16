@@ -1,3 +1,5 @@
 #[app: ./app]
 #[client: ./client/with spaces in name]
 #[shared: ./shared/one/to]
+#[defaults]
+#[NO_CONTEXT_TASK]

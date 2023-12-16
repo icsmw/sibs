@@ -8,7 +8,7 @@ use crate::parser::{
 
 #[derive(Debug)]
 pub struct Component {
-    pub cwd: PathBuf,
+    pub cwd: Option<PathBuf>,
     pub name: String,
     pub tasks: Vec<Task>,
     pub meta: Option<Meta>,
@@ -19,7 +19,7 @@ impl Reading<Component> for Component {
         if reader.move_to_char(&[chars::POUND_SIGN])?.is_some() {
             if let Some(group) = Group::read(reader)? {
                 let mut inner = reader.inherit(group.inner);
-                if let Some((name, _, _)) = inner.read_until(&[chars::COLON], true, false)? {
+                if let Some((name, _, _)) = inner.read_until(&[chars::COLON], true, true)? {
                     let path = inner.rest().trim().to_string();
                     let inner = if let Some((inner, _, _)) =
                         reader.read_until_word(&[words::COMP], &[], false)?
@@ -43,7 +43,11 @@ impl Reading<Component> for Component {
                     }
                     Ok(Some(Component {
                         name,
-                        cwd: PathBuf::from(path),
+                        cwd: if path.is_empty() {
+                            None
+                        } else {
+                            Some(PathBuf::from(path))
+                        },
                         tasks,
                         meta,
                     }))
