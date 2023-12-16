@@ -47,21 +47,3 @@ pub use variable_type::VariableType;
 pub trait Reading<T> {
     fn read(reader: &mut Reader) -> Result<Option<T>, E>;
 }
-
-pub fn read(filename: PathBuf) -> Result<Vec<Component>, E> {
-    if !filename.exists() {
-        Err(E::FileNotExists(filename.to_string_lossy().to_string()))?
-    }
-    let mut mapper = Mapper::new();
-    let mut reader = Reader::new(fs::read_to_string(filename)?, &mut mapper, 0);
-    let mut functions: Vec<Import> = vec![];
-    while let Some(func) = Function::read(&mut reader)? {
-        if let Some(fn_impl) = <Import as Implementation<Import, String>>::from(func)? {
-            functions.push(fn_impl);
-        } else {
-            Err(E::NotAllowedFunction)?
-        }
-    }
-    // Here should be import
-    Ok(vec![])
-}

@@ -84,6 +84,8 @@ pub enum E {
     NoMetaContent,
     #[error("Not allowed function")]
     NotAllowedFunction,
+    #[error("Path doesn't include parent")]
+    NoFileParent,
     #[error("Converting error")]
     Infallible(#[from] std::convert::Infallible),
     #[error("File {0} does't exist")]

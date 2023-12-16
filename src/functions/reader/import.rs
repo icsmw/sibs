@@ -1,4 +1,5 @@
 use crate::{
+    context::Context,
     error::E,
     functions::Implementation,
     reader::entry::{Argument, Function},
@@ -32,7 +33,7 @@ pub struct Import {
 }
 
 impl Implementation<Import, String> for Import {
-    fn from(function: Function) -> Result<Option<Import>, E> {
+    fn from(function: Function, context: &Context) -> Result<Option<Import>, E> {
         if function.name.trim() != NAME {
             return Ok(None);
         }
@@ -40,18 +41,21 @@ impl Implementation<Import, String> for Import {
         if args.inner.len() != 1 {
             Err(Error::InvalidNumberOfArguments)?;
         }
-        let path = if let (_, Argument::String(value)) = &args.inner[0] {
+        let mut path = if let (_, Argument::String(value)) = &args.inner[0] {
             PathBuf::from(value)
         } else {
             Err(Error::InvalidPathArgument)?
         };
+        if path.is_relative() {
+            path = context.cwd.join(path);
+        }
         if !path.exists() {
             Err(Error::NoFile(path.to_string_lossy().to_string()))?;
         }
         Ok(Some(Import { path }))
     }
 
-    fn run(&mut self) -> Result<String, E> {
+    fn run(&mut self, context: &mut Context) -> Result<String, E> {
         fs::read_to_string(&self.path).map_err(|e| e.into())
     }
 }

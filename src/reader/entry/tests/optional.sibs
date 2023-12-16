@@ -14,3 +14,4 @@ $mode != dev => [
     zip ./release/unpacked-win {$file_name};
     @cd ..;
 ];
+$mode == dev => :client:build(dev);

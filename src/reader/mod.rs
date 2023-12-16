@@ -1,8 +1,13 @@
 pub mod chars;
 pub mod entry;
 pub mod words;
-use crate::error::E;
-use std::collections::HashMap;
+use crate::{
+    context::Context,
+    error::E,
+    functions::{reader::import::Import, Implementation},
+};
+use entry::{Component, Function, Reading};
+use std::{collections::HashMap, fs, path::PathBuf};
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -440,5 +445,48 @@ impl<'a> Reader<'a> {
     }
     fn add_to_map(&mut self, pos: (usize, usize)) -> Uuid {
         self.mapper.add((self.offset + pos.0, self.offset + pos.1))
+    }
+}
+
+pub fn read_file(filename: &PathBuf) -> Result<Vec<Component>, E> {
+    if !filename.exists() {
+        Err(E::FileNotExists(filename.to_string_lossy().to_string()))?
+    }
+    let mut mapper = Mapper::new();
+    let mut reader = Reader::new(fs::read_to_string(filename)?, &mut mapper, 0);
+    let mut imports: Vec<Import> = vec![];
+    let context = Context {
+        cwd: filename.parent().ok_or(E::NoFileParent)?.to_path_buf(),
+    };
+    while let Some(func) = Function::read(&mut reader)? {
+        if let Some(fn_impl) = <Import as Implementation<Import, String>>::from(func, &context)? {
+            imports.push(fn_impl);
+        } else {
+            Err(E::NotAllowedFunction)?
+        }
+    }
+    let mut components: Vec<Component> = vec![];
+    for import in imports.iter_mut() {
+        components.append(&mut read_file(&import.path)?);
+    }
+    while let Some(component) = Component::read(&mut reader)? {
+        components.push(component);
+    }
+    Ok(components)
+}
+
+#[cfg(test)]
+mod test_reader {
+    use crate::{error::E, reader::read_file};
+
+    #[test]
+    fn reading() -> Result<(), E> {
+        let target = std::env::current_dir()
+            .unwrap()
+            .join("./src/reader/entry/tests/full/build.sibs");
+        let components = read_file(&target)?;
+        println!("{components:?}");
+        assert!(!components.is_empty());
+        Ok(())
     }
 }
