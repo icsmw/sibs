@@ -1,5 +1,3 @@
-use uuid::Uuid;
-
 use crate::reader::{
     chars,
     entry::{Argument, Arguments, Reading},
@@ -11,7 +9,7 @@ pub struct Function {
     pub tolerance: bool,
     pub name: String,
     pub args: Option<Arguments>,
-    pub uuid: Uuid,
+    pub index: usize,
 }
 
 impl Reading<Function> for Function {
@@ -29,7 +27,7 @@ impl Reading<Function> for Function {
                 if ends_with.is_none() {
                     return Ok(Some(Self::new(uuid, reader, name, String::new(), false)?));
                 }
-                if let Some((args, stop_on, uuid)) =
+                if let Some((args, stop_on, index)) =
                     reader.read_until(&[chars::REDIRECT, chars::SEMICOLON], true, true)?
                 {
                     if reader.inherit(args.clone()).has_word(&[words::DO_ON])? {
@@ -38,7 +36,7 @@ impl Reading<Function> for Function {
                     }
                     if stop_on == chars::REDIRECT {
                         let arg_func = Self::new(
-                            uuid,
+                            index,
                             reader,
                             name,
                             args,
@@ -52,7 +50,7 @@ impl Reading<Function> for Function {
                         }
                     } else {
                         Ok(Some(Self::new(
-                            uuid,
+                            index,
                             reader,
                             name,
                             args,
@@ -73,7 +71,7 @@ impl Reading<Function> for Function {
 
 impl Function {
     pub fn new(
-        uuid: Uuid,
+        index: usize,
         parent: &mut Reader,
         name: String,
         args: String,
@@ -81,7 +79,7 @@ impl Function {
     ) -> Result<Self, E> {
         let mut reader = parent.inherit(args);
         Ok(Self {
-            uuid,
+            index,
             name,
             tolerance,
             args: Arguments::read(&mut reader)?,
@@ -91,10 +89,10 @@ impl Function {
         if let Some(args) = self.args.as_mut() {
             args.add_fn_arg(fn_arg);
         } else {
-            self.args = Some(Arguments::new(vec![(
-                Uuid::new_v4(),
-                Argument::Function(fn_arg),
-            )]));
+            self.args = Some(Arguments {
+                args: vec![(0, Argument::Function(fn_arg))],
+                index: 0,
+            });
         }
     }
 }

@@ -13,10 +13,12 @@ pub struct Each {
     pub variable: VariableName,
     pub input: Input,
     pub block: Block,
+    pub index: usize,
 }
 
 impl Reading<Each> for Each {
     fn read(reader: &mut Reader) -> Result<Option<Each>, E> {
+        let from = reader.pos;
         if reader.move_to_word(&[words::EACH])?.is_some() {
             if let Some((inner, uuid)) =
                 reader.read_until_close(chars::OPEN_BRACKET, chars::CLOSE_BRACKET, true)?
@@ -43,6 +45,7 @@ impl Reading<Each> for Each {
                                     input,
                                     block: Block::read(&mut reader.inherit(group.inner))?
                                         .ok_or(E::EmptyGroup)?,
+                                    index: reader.get_index_until_current(from),
                                 }))
                             }
                         } else {
@@ -81,7 +84,6 @@ mod test_each {
         while let Some(optional) = Each::read(&mut reader)? {
             println!("{optional:?}");
         }
-        println!("_________{}", reader.rest());
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }

@@ -12,11 +12,13 @@ pub struct Component {
     pub name: String,
     pub tasks: Vec<Task>,
     pub meta: Option<Meta>,
+    pub index: usize,
 }
 
 impl Reading<Component> for Component {
     fn read(reader: &mut Reader) -> Result<Option<Component>, E> {
         if reader.move_to_char(&[chars::POUND_SIGN])?.is_some() {
+            let from = reader.pos;
             if let Some(group) = Group::read(reader)? {
                 let mut inner = reader.inherit(group.inner);
                 if let Some((name, _, _)) = inner.read_until(&[chars::COLON], true, true)? {
@@ -50,6 +52,7 @@ impl Reading<Component> for Component {
                         },
                         tasks,
                         meta,
+                        index: reader.get_index_until_current(from),
                     }))
                 } else {
                     Err(E::NoColon)

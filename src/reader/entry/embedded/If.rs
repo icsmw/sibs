@@ -21,7 +21,7 @@ pub enum Proviso {
     Variable(VariableName, Cmp, ValueString),
     // Function, is negative (!)
     Function(Function, bool),
-    Combination(Combination),
+    Combination(Combination, usize),
     Group(Vec<Proviso>),
 }
 
@@ -33,11 +33,13 @@ pub enum Element {
 #[derive(Debug)]
 pub struct If {
     pub elements: Vec<Element>,
+    pub index: usize,
 }
 
 impl Reading<If> for If {
     fn read(reader: &mut Reader) -> Result<Option<If>, E> {
         let mut elements: Vec<Element> = vec![];
+        let from = reader.pos;
         while !reader.rest().trim().is_empty() {
             if reader.move_to_word(&[words::IF])?.is_some() {
                 if let Some((inner, _char, _uuid)) =
@@ -63,7 +65,10 @@ impl Reading<If> for If {
                 return Ok(None);
             }
             if reader.move_to_char(&[chars::SEMICOLON])?.is_some() {
-                return Ok(Some(If { elements }));
+                return Ok(Some(If {
+                    elements,
+                    index: reader.get_index_until_current(from),
+                }));
             }
             if reader.move_to_word(&[words::ELSE])?.is_some() {
                 if let Some(group) = Group::read(reader)? {
@@ -73,7 +78,10 @@ impl Reading<If> for If {
                         Err(E::EmptyGroup)?
                     }
                     if reader.move_to_char(&[chars::SEMICOLON])?.is_some() {
-                        return Ok(Some(If { elements }));
+                        return Ok(Some(If {
+                            elements,
+                            index: reader.get_index_until_current(from),
+                        }));
                     } else {
                         Err(E::MissedSemicolon)?
                     }
@@ -131,27 +139,35 @@ impl If {
                     Err(E::NotClosedConditionGroup)?
                 }
             }
+            let from = reader.pos;
             if let Some(combination) = reader.move_to_word(&[words::AND, words::OR])? {
-                if let Some(Proviso::Combination(_)) = proviso.last() {
+                if let Some(Proviso::Combination(_, _)) = proviso.last() {
                     Err(E::RepeatedCombinationOperator)?
                 } else if proviso.last().is_none() {
                     Err(E::NoProvisoOfCondition)?
                 }
-                proviso.push(Proviso::Combination(if combination == words::AND {
-                    Combination::And
-                } else {
-                    Combination::Or
-                }));
+                proviso.push(Proviso::Combination(
+                    if combination == words::AND {
+                        Combination::And
+                    } else {
+                        Combination::Or
+                    },
+                    reader.get_index_until_current(from),
+                ));
             }
+            let from = reader.pos;
             if let Some((inner, combination, uuid)) =
                 reader.read_until_word(&[words::AND, words::OR], &[], true)?
             {
                 proviso.push(If::inner(&mut reader.inherit(inner))?);
-                proviso.push(Proviso::Combination(if combination == words::AND {
-                    Combination::And
-                } else {
-                    Combination::Or
-                }));
+                proviso.push(Proviso::Combination(
+                    if combination == words::AND {
+                        Combination::And
+                    } else {
+                        Combination::Or
+                    },
+                    reader.get_index_until_current(from),
+                ));
             } else {
                 proviso.push(If::inner(reader)?);
             }

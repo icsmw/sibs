@@ -38,10 +38,10 @@ impl Implementation<Import, String> for Import {
             return Ok(None);
         }
         let args = function.args.ok_or(Error::NoArguments)?;
-        if args.inner.len() != 1 {
+        if args.args.len() != 1 {
             Err(Error::InvalidNumberOfArguments)?;
         }
-        let mut path = if let (_, Argument::String(value)) = &args.inner[0] {
+        let mut path = if let (_, Argument::String(value)) = &args.args[0] {
             PathBuf::from(value)
         } else {
             Err(Error::InvalidPathArgument)?

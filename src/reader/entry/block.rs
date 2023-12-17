@@ -19,12 +19,14 @@ pub enum Element {
 pub struct Block {
     meta: Option<Meta>,
     elements: Vec<Element>,
+    index: usize,
 }
 
 impl Reading<Block> for Block {
     fn read(reader: &mut Reader) -> Result<Option<Block>, E> {
         let mut elements: Vec<Element> = vec![];
         let mut meta: Option<Meta> = None;
+        let from = reader.pos;
         while !reader.rest().trim().is_empty() {
             if let Some(md) = Meta::read(reader)? {
                 meta = Some(md);
@@ -70,7 +72,11 @@ impl Reading<Block> for Block {
         Ok(if elements.is_empty() {
             None
         } else {
-            Some(Block { elements, meta })
+            Some(Block {
+                elements,
+                meta,
+                index: reader.get_index_until_current(from),
+            })
         })
     }
 }

@@ -3,9 +3,6 @@ use crate::reader::{
     entry::{Block, Function, Reading, ValueString, VariableAssignation, VariableComparing},
     words, Reader, E,
 };
-use uuid::Uuid;
-
-use super::variable_comparing;
 
 #[derive(Debug)]
 pub enum Action {
@@ -25,7 +22,7 @@ pub enum Condition {
 pub struct Optional {
     pub condition: Condition,
     pub action: Action,
-    pub uuid: Uuid,
+    pub index: usize,
 }
 
 impl Reading<Optional> for Optional {
@@ -49,7 +46,7 @@ impl Reading<Optional> for Optional {
                 };
                 if reader.move_to_word(&[words::DO_ON])?.is_some() {
                     if reader.move_to_char(&[chars::OPEN_SQ_BRACKET])?.is_some() {
-                        if let Some((inner, _, uuid)) =
+                        if let Some((inner, _, index)) =
                             reader.read_until(&[chars::CLOSE_SQ_BRACKET], true, false)?
                         {
                             if reader.move_to_char(&[chars::SEMICOLON])?.is_none() {
@@ -57,7 +54,7 @@ impl Reading<Optional> for Optional {
                             }
                             if let Some(block) = Block::read(&mut reader.inherit(inner))? {
                                 return Ok(Some(Optional {
-                                    uuid,
+                                    index,
                                     action: Action::Block(block),
                                     condition,
                                 }));
@@ -66,12 +63,12 @@ impl Reading<Optional> for Optional {
                             Err(E::NotClosedGroup)?
                         }
                     }
-                    if let Some((inner, _, uuid)) =
+                    if let Some((inner, _, index)) =
                         reader.read_until(&[chars::SEMICOLON], true, false)?
                     {
                         let mut inner_reader = reader.inherit(inner);
                         Ok(Some(Optional {
-                            uuid,
+                            index,
                             action: if let Some(assignation) =
                                 VariableAssignation::read(&mut inner_reader)?
                             {

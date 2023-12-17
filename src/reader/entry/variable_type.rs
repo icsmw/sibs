@@ -4,7 +4,6 @@ use crate::reader::{
     E,
 };
 use std::fmt;
-use uuid::Uuid;
 
 #[derive(Debug)]
 pub enum Types {
@@ -30,14 +29,14 @@ impl fmt::Display for Types {
 #[derive(Debug)]
 pub struct VariableType {
     pub var_type: Types,
-    pub uuid: Uuid,
+    pub index: usize,
 }
 
 impl Reading<VariableType> for VariableType {
     fn read(reader: &mut Reader) -> Result<Option<VariableType>, E> {
         if reader.move_to_char(&[chars::TYPE_OPEN])?.is_some() {
-            if let Some((word, _, uuid)) = reader.read_word(&[chars::TYPE_CLOSE], true)? {
-                Ok(Some(VariableType::new(word, uuid)?))
+            if let Some((word, _, index)) = reader.read_word(&[chars::TYPE_CLOSE], true)? {
+                Ok(Some(VariableType::new(word, index)?))
             } else {
                 Err(E::NotClosedTypeDeclaration)
             }
@@ -48,23 +47,23 @@ impl Reading<VariableType> for VariableType {
 }
 
 impl VariableType {
-    pub fn new(var_type: String, uuid: Uuid) -> Result<Self, E> {
+    pub fn new(var_type: String, index: usize) -> Result<Self, E> {
         if Types::String.to_string() == var_type {
             return Ok(Self {
                 var_type: Types::String,
-                uuid,
+                index,
             });
         }
         if Types::Bool.to_string() == var_type {
             return Ok(Self {
                 var_type: Types::Bool,
-                uuid,
+                index,
             });
         }
         if Types::Number.to_string() == var_type {
             return Ok(Self {
                 var_type: Types::Number,
-                uuid,
+                index,
             });
         }
         Err(E::UnknownVariableType(var_type))

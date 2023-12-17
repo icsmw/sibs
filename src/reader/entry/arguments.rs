@@ -3,7 +3,6 @@ use crate::reader::{
     entry::{Function, Group, Reader, Reading, ValueString},
     E,
 };
-use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub enum Argument {
@@ -14,12 +13,17 @@ pub enum Argument {
 
 #[derive(Debug, Clone)]
 pub struct Arguments {
-    pub inner: Vec<(Uuid, Argument)>,
+    pub args: Vec<(usize, Argument)>,
+    pub index: usize,
 }
 
 impl Reading<Arguments> for Arguments {
     fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
-        let mut args = Arguments::new(vec![]);
+        let mut args = Arguments {
+            args: vec![],
+            index: 0,
+        };
+        let from = reader.pos;
         while let Some(group) = Group::read(reader)? {
             args.add_from_group(group, reader)?;
         }
@@ -29,31 +33,29 @@ impl Reading<Arguments> for Arguments {
         if args.is_empty() {
             Ok(None)
         } else {
+            args.index = reader.get_index_until_current(from);
             Ok(Some(args))
         }
     }
 }
 
 impl Arguments {
-    pub fn new(args: Vec<(Uuid, Argument)>) -> Self {
-        Self { inner: args }
-    }
-    pub fn read_string_args(reader: &mut Reader) -> Result<Vec<(Uuid, Argument)>, E> {
-        let mut arguments: Vec<(Uuid, Argument)> = vec![];
-        while let Some((arg, _, uuid)) = reader.read_until_wt(true)? {
+    pub fn read_string_args(reader: &mut Reader) -> Result<Vec<(usize, Argument)>, E> {
+        let mut arguments: Vec<(usize, Argument)> = vec![];
+        while let Some((arg, _, index)) = reader.read_until_wt(true)? {
             if !arg.trim().is_empty() {
                 if reader.inherit(arg.clone()).has_char(chars::AT)? {
                     Err(E::NestedFunction)?
                 }
-                arguments.push((uuid, Argument::String(Reader::unserialize(&arg))));
+                arguments.push((index, Argument::String(Reader::unserialize(&arg))));
             }
         }
         if !reader.rest().trim().is_empty() {
             if reader.has_char(chars::AT)? {
                 Err(E::NestedFunction)?
             }
-            let (uuid, rest) = reader.to_end();
-            arguments.push((uuid, Argument::String(Reader::unserialize(&rest))));
+            let (index, rest) = reader.to_end();
+            arguments.push((index, Argument::String(Reader::unserialize(&rest))));
         }
         Ok(arguments)
     }
@@ -63,7 +65,7 @@ impl Arguments {
     }
     pub fn add_args(&mut self, inner: String, parent: &mut Reader) -> Result<(), E> {
         let mut reader = parent.inherit(inner);
-        let mut arguments: Vec<(Uuid, Argument)> = vec![];
+        let mut arguments: Vec<(usize, Argument)> = vec![];
         loop {
             if let Some((before, _, _)) = reader.read_until(&[chars::QUOTES], false, false)? {
                 arguments = [
@@ -72,7 +74,7 @@ impl Arguments {
                 ]
                 .concat();
                 if let Some(value_string) = ValueString::read(&mut reader)? {
-                    arguments.push((Uuid::new_v4(), Argument::ValueString(value_string)));
+                    arguments.push((0, Argument::ValueString(value_string)));
                 } else {
                     Err(E::NoStringEnd)?
                 }
@@ -82,16 +84,16 @@ impl Arguments {
             }
         }
         if !arguments.is_empty() {
-            self.inner = [self.inner.clone(), arguments].concat();
+            self.args = [self.args.clone(), arguments].concat();
         }
         Ok(())
     }
     pub fn is_empty(&self) -> bool {
-        self.inner.is_empty()
+        self.args.is_empty()
     }
     pub fn add_fn_arg(&mut self, fn_arg: Function) {
         if let Some((_, arg)) = self
-            .inner
+            .args
             .iter_mut()
             .find(|(_, arg)| matches!(arg, Argument::Function(_)))
         {
@@ -99,8 +101,7 @@ impl Arguments {
                 func.add_fn_arg(fn_arg);
             }
         } else {
-            self.inner
-                .insert(0, (Uuid::new_v4(), Argument::Function(fn_arg)));
+            self.args.insert(0, (0, Argument::Function(fn_arg)));
         }
     }
 }

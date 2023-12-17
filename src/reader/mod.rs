@@ -8,23 +8,24 @@ use crate::{
 };
 use entry::{Component, Function, Reading};
 use std::{collections::HashMap, fs, path::PathBuf};
-use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct Mapper {
-    pub map: HashMap<Uuid, (usize, usize)>,
+    pub map: HashMap<usize, (usize, usize)>,
+    pub index: usize,
 }
 
 impl Mapper {
     pub fn new() -> Self {
         Self {
             map: HashMap::new(),
+            index: 0,
         }
     }
-    fn add(&mut self, pos: (usize, usize)) -> Uuid {
-        let uuid = Uuid::new_v4();
-        self.map.insert(uuid, pos);
-        uuid
+    fn add(&mut self, pos: (usize, usize)) -> usize {
+        self.index += 1;
+        self.map.insert(self.index, pos);
+        self.index
     }
 }
 #[derive(Debug)]
@@ -55,12 +56,20 @@ impl<'a> Reader<'a> {
         }
     }
     pub fn inherit(&mut self, content: String) -> Reader<'_> {
-        Reader::new(content, self.mapper, self.pos)
+        let len = content.len();
+        Reader::new(
+            content,
+            self.mapper,
+            if self.pos < len { 0 } else { self.pos - len },
+        )
+    }
+    pub fn get_index_until_current(&mut self, from: usize) -> usize {
+        self.mapper.add((from, self.pos))
     }
     pub fn rest(&self) -> &str {
         &self.content[self.pos..]
     }
-    pub fn to_end(&mut self) -> (Uuid, String) {
+    pub fn to_end(&mut self) -> (usize, String) {
         let rest = self.rest().to_string();
         let start = self.pos;
         self.pos = if !self.content.is_empty() {
@@ -186,7 +195,7 @@ impl<'a> Reader<'a> {
         stop_on: &[char],
         allowed: &[char],
         cursor_after_stop_char: bool,
-    ) -> Result<Option<(String, Option<char>, Uuid)>, E> {
+    ) -> Result<Option<(String, Option<char>, usize)>, E> {
         let mut pos: usize = 0;
         let mut str: String = String::new();
         let start = self.pos;
@@ -216,39 +225,11 @@ impl<'a> Reader<'a> {
             Ok(None)
         }
     }
-    pub fn read_letters_to_end(
-        &mut self,
-        stop_on: &[char],
-        stay_on_stop_char: bool,
-    ) -> Result<Option<(String, Option<char>)>, E> {
-        let mut pos: usize = 0;
-        let mut str: String = String::new();
-        let content = &self.content[self.pos..];
-        for char in content.chars() {
-            pos += 1;
-            if !char.is_ascii() {
-                Err(E::NotAscii(char))?;
-            }
-            if char.is_ascii_whitespace() || stop_on.contains(&char) {
-                return if str.is_empty() {
-                    Ok(None)
-                } else {
-                    self.pos += pos - if stay_on_stop_char { 0 } else { 1 };
-                    Ok(Some((str, Some(char))))
-                };
-            }
-            if !char.is_alphabetic() {
-                Err(E::UnexpectedChar(char))?;
-            }
-            str.push(char);
-        }
-        Ok(Some((str, None)))
-    }
     pub fn read_word(
         &mut self,
         stop_on: &[char],
         stay_on_stop_char: bool,
-    ) -> Result<Option<(String, char, Uuid)>, E> {
+    ) -> Result<Option<(String, char, usize)>, E> {
         let mut pos: usize = 0;
         let mut str: String = String::new();
         let start = self.pos;
@@ -278,7 +259,7 @@ impl<'a> Reader<'a> {
         stop_on: &[char],
         cursor_after_stop_char: bool,
         to_end: bool,
-    ) -> Result<Option<(String, char, Uuid)>, E> {
+    ) -> Result<Option<(String, char, usize)>, E> {
         let mut pos: usize = 0;
         let mut str: String = String::new();
         let mut serialized: bool = false;
@@ -315,7 +296,7 @@ impl<'a> Reader<'a> {
     pub fn read_until_wt(
         &mut self,
         cursor_after_stop_char: bool,
-    ) -> Result<Option<(String, char, Uuid)>, E> {
+    ) -> Result<Option<(String, char, usize)>, E> {
         let mut pos: usize = 0;
         let mut str: String = String::new();
         let mut serialized: bool = false;
@@ -344,7 +325,7 @@ impl<'a> Reader<'a> {
         open: char,
         close: char,
         cursor_after_stop_char: bool,
-    ) -> Result<Option<(String, Uuid)>, E> {
+    ) -> Result<Option<(String, usize)>, E> {
         let mut pos: usize = 0;
         let mut str: String = String::new();
         let mut serialized: bool = false;
@@ -391,7 +372,7 @@ impl<'a> Reader<'a> {
         targets: &[&str],
         cancel_on: &[char],
         cursor_after_stop: bool,
-    ) -> Result<Option<(String, String, Uuid)>, E> {
+    ) -> Result<Option<(String, String, usize)>, E> {
         let mut pos: usize = 0;
         let mut str: String = String::new();
         let mut serialized: bool = false;
@@ -443,7 +424,7 @@ impl<'a> Reader<'a> {
         }
         str.trim().to_string()
     }
-    fn add_to_map(&mut self, pos: (usize, usize)) -> Uuid {
+    fn add_to_map(&mut self, pos: (usize, usize)) -> usize {
         self.mapper.add((self.offset + pos.0, self.offset + pos.1))
     }
 }

@@ -1,5 +1,3 @@
-use uuid::Uuid;
-
 use crate::{
     functions::reader,
     reader::{
@@ -18,12 +16,13 @@ pub enum Input {
 pub struct Reference {
     pub path: Vec<String>,
     pub inputs: Vec<Input>,
-    pub uuid: Uuid,
+    pub index: usize,
 }
 
 impl Reading<Reference> for Reference {
     fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
         if reader.move_to_char(&[chars::COLON])?.is_some() {
+            let from = reader.pos;
             let mut path: Vec<String> = vec![];
             let mut inputs: Vec<Input> = vec![];
             while let Some((content, stopped_on, _)) =
@@ -66,7 +65,7 @@ impl Reading<Reference> for Reference {
                 }
             }
             Ok(Some(Reference {
-                uuid: Uuid::new_v4(),
+                index: reader.get_index_until_current(from),
                 path,
                 inputs,
             }))

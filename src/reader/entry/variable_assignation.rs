@@ -15,11 +15,13 @@ pub enum Assignation {
 pub struct VariableAssignation {
     pub name: VariableName,
     pub assignation: Assignation,
+    pub index: usize,
 }
 
 impl Reading<VariableAssignation> for VariableAssignation {
     fn read(reader: &mut Reader) -> Result<Option<VariableAssignation>, E> {
         reader.hold();
+        let from = reader.pos;
         if let Some(name) = VariableName::read(reader)? {
             if reader.move_to_char(&[chars::EQUAL])?.is_some() {
                 if let Some(chars::EQUAL) = reader.next_char() {
@@ -31,37 +33,41 @@ impl Reading<VariableAssignation> for VariableAssignation {
                     if reader.move_to_char(&[chars::SEMICOLON])?.is_none() {
                         Err(E::MissedSemicolon)
                     } else {
-                        Ok(Some(VariableAssignation::new(
+                        Ok(Some(VariableAssignation {
                             name,
-                            Assignation::First(first),
-                        )))
+                            assignation: Assignation::First(first),
+                            index: reader.get_index_until_current(from),
+                        }))
                     }
                 } else if let Some(group) = Group::read(reader)? {
                     if reader.move_to_char(&[chars::SEMICOLON])?.is_none() {
                         Err(E::MissedSemicolon)
                     } else {
-                        Ok(Some(VariableAssignation::new(
+                        Ok(Some(VariableAssignation {
                             name,
-                            Assignation::Block(
+                            assignation: Assignation::Block(
                                 Block::read(&mut reader.inherit(group.inner))?
                                     .ok_or(E::EmptyGroup)?,
                             ),
-                        )))
+                            index: reader.get_index_until_current(from),
+                        }))
                     }
                 } else if let Some((inner, _, _)) =
                     reader.read_until(&[chars::SEMICOLON], true, true)?
                 {
                     let mut inner_reader = reader.inherit(inner);
                     if let Some(func) = Function::read(&mut inner_reader)? {
-                        Ok(Some(VariableAssignation::new(
+                        Ok(Some(VariableAssignation {
                             name,
-                            Assignation::Function(func),
-                        )))
+                            assignation: Assignation::Function(func),
+                            index: reader.get_index_until_current(from),
+                        }))
                     } else if let Some(value_string) = ValueString::read(&mut inner_reader)? {
-                        Ok(Some(VariableAssignation::new(
+                        Ok(Some(VariableAssignation {
                             name,
-                            Assignation::ValueString(value_string),
-                        )))
+                            assignation: Assignation::ValueString(value_string),
+                            index: reader.get_index_until_current(from),
+                        }))
                     } else {
                         Err(E::NoComparingOrAssignation)?
                     }
@@ -74,12 +80,6 @@ impl Reading<VariableAssignation> for VariableAssignation {
         } else {
             Ok(None)
         }
-    }
-}
-
-impl VariableAssignation {
-    pub fn new(name: VariableName, assignation: Assignation) -> Self {
-        Self { name, assignation }
     }
 }
 

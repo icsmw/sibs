@@ -1,5 +1,3 @@
-use uuid::Uuid;
-
 use crate::reader::{
     chars,
     entry::{Block, Reading, VariableDeclaration},
@@ -11,7 +9,7 @@ pub struct Task {
     pub name: String,
     pub declarations: Vec<VariableDeclaration>,
     pub block: Option<Block>,
-    pub uuid: Uuid,
+    pub index: usize,
 }
 
 impl Reading<Task> for Task {
@@ -34,14 +32,14 @@ impl Reading<Task> for Task {
             } else {
                 Err(E::NoTaskArguments)?
             };
-            if let Some((content, uuid)) =
+            if let Some((content, index)) =
                 reader.read_until_close(chars::OPEN_SQ_BRACKET, chars::CLOSE_SQ_BRACKET, true)?
             {
                 let block = Block::read(&mut reader.inherit(content))?;
                 Ok(Some(Task {
                     name,
                     declarations,
-                    uuid,
+                    index,
                     block,
                 }))
             } else {
