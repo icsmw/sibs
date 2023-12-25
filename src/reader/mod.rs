@@ -1,6 +1,8 @@
 pub mod chars;
 pub mod entry;
+pub mod walker;
 pub mod words;
+
 use crate::{
     context::Context,
     error::E,
@@ -8,6 +10,7 @@ use crate::{
 };
 use entry::{Component, Function, Reading};
 use std::{collections::HashMap, fs, path::PathBuf};
+pub use walker::Walker;
 
 #[derive(Debug)]
 pub struct Mapper {
@@ -28,6 +31,7 @@ impl Mapper {
         self.index
     }
 }
+
 #[derive(Debug)]
 pub struct Reader<'a> {
     pub content: String,

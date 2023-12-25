@@ -1,5 +1,25 @@
 use thiserror::Error;
 
+#[derive(Debug)]
+pub struct LocatedError {
+    pub from: usize,
+    pub to: usize,
+    pub e: E,
+}
+
+impl LocatedError {
+    pub fn range(from: usize, to: usize, e: E) -> Self {
+        Self { from, to, e }
+    }
+    pub fn pos(pos: usize, e: E) -> Self {
+        Self {
+            from: pos,
+            to: pos,
+            e,
+        }
+    }
+}
+
 #[derive(Error, Debug)]
 pub enum E {
     #[error("Found not ascii char: {0}")]
