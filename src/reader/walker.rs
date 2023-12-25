@@ -135,7 +135,6 @@ impl<'a> MoveTo<'a> {
 pub struct Until<'a> {
     walker: &'a mut Walker,
 }
-
 impl<'a> Until<'a> {
     pub fn new(walker: &'a mut Walker) -> Self {
         Self { walker }
@@ -216,7 +215,6 @@ impl<'a> Until<'a> {
 pub struct Contains<'a> {
     walker: &'a mut Walker,
 }
-
 impl<'a> Contains<'a> {
     pub fn new(walker: &'a mut Walker) -> Self {
         Self { walker }
@@ -317,6 +315,7 @@ impl<'a> Group<'a> {
         None
     }
 }
+
 #[derive(Debug)]
 pub struct Token {
     pub content: String,
@@ -329,7 +328,7 @@ pub struct Walker {
     content: String,
     pos: usize,
     chars: &'static [&'static char],
-    map: Box<Map>,
+    map: Map,
 }
 
 impl Walker {
@@ -338,7 +337,7 @@ impl Walker {
             content,
             pos: 0,
             chars: &[],
-            map: Box::new(Map::new()),
+            map: Map::new(),
         }
     }
     pub fn move_to(&mut self) -> MoveTo<'_> {
