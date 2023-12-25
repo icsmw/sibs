@@ -1,7 +1,4 @@
-use crate::{
-    error::{LocatedError, E},
-    reader::chars,
-};
+use crate::reader::chars;
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -121,6 +118,17 @@ impl<'a> MoveTo<'a> {
         self.walker.pos = next;
         true
     }
+    pub fn end(&mut self) -> String {
+        let rest = self.walker.rest().to_string();
+        let pos = if !rest.is_empty() {
+            self.walker.content.len() - 1
+        } else {
+            self.walker.pos
+        };
+        self.walker.map.add((self.walker.pos, pos));
+        self.walker.pos = pos;
+        rest
+    }
 }
 
 #[derive(Debug)]
@@ -205,11 +213,11 @@ impl<'a> Until<'a> {
 }
 
 #[derive(Debug)]
-pub struct Has<'a> {
+pub struct Contains<'a> {
     walker: &'a mut Walker,
 }
 
-impl<'a> Has<'a> {
+impl<'a> Contains<'a> {
     pub fn new(walker: &'a mut Walker) -> Self {
         Self { walker }
     }
@@ -321,7 +329,7 @@ pub struct Walker {
     content: String,
     pos: usize,
     chars: &'static [&'static char],
-    map: Map,
+    map: Box<Map>,
 }
 
 impl Walker {
@@ -330,7 +338,7 @@ impl Walker {
             content,
             pos: 0,
             chars: &[],
-            map: Map::new(),
+            map: Box::new(Map::new()),
         }
     }
     pub fn move_to(&mut self) -> MoveTo<'_> {
@@ -339,8 +347,8 @@ impl Walker {
     pub fn until(&mut self) -> Until<'_> {
         Until::new(self)
     }
-    pub fn has(&mut self) -> Has<'_> {
-        Has::new(self)
+    pub fn contains(&mut self) -> Contains<'_> {
+        Contains::new(self)
     }
     pub fn group(&mut self) -> Group<'_> {
         Group::new(self)
@@ -360,17 +368,6 @@ impl Walker {
                 return;
             }
         }
-    }
-    pub fn to_end(&mut self) -> String {
-        let rest = self.rest().to_string();
-        let pos = if !rest.is_empty() {
-            self.content.len() - 1
-        } else {
-            self.pos
-        };
-        self.map.add((self.pos, pos));
-        self.pos = pos;
-        rest
     }
     pub fn token(&self) -> Option<Token> {
         self.map.last().map(|(id, coors)| Token {
@@ -397,7 +394,7 @@ mod test_walker {
                 let read = if let Some(read) = walker.until().whitespace() {
                     read
                 } else {
-                    walker.to_end()
+                    walker.move_to().end()
                 };
                 let token = walker.token().unwrap();
                 assert_eq!(read, *word);
@@ -423,7 +420,7 @@ mod test_walker {
                     assert!(walker.move_to().next());
                     (read, char)
                 } else {
-                    (walker.to_end(), *target)
+                    (walker.move_to().end(), *target)
                 };
                 let token = walker.token().unwrap();
                 assert_eq!(read, *word);
@@ -450,7 +447,7 @@ mod test_walker {
                     assert!(walker.move_to().if_next(&stopped));
                     (read, stopped)
                 } else {
-                    (walker.to_end(), target.to_string())
+                    (walker.move_to().end(), target.to_string())
                 };
                 let token = walker.token().unwrap();
                 assert_eq!(read, *word);
@@ -539,33 +536,33 @@ mod test_walker {
         assert_eq!(count, whitespaces.len() * times);
     }
     #[test]
-    fn has_char() {
+    fn contains_char() {
         let word = "_________";
         let chars = ['@', '$', '%'];
         let mut count = 0;
         chars.iter().for_each(|char| {
             let mut walker = Walker::new(format!("{char}{word}"));
-            assert!(walker.has().char(*char));
+            assert!(walker.contains().char(*char));
             let mut walker = Walker::new(format!(r"\\{char}{char}{word}"));
-            assert!(walker.has().char(*char));
+            assert!(walker.contains().char(*char));
             let mut walker = Walker::new(format!(r"\\{char}{word}"));
-            assert!(!walker.has().char(*char));
+            assert!(!walker.contains().char(*char));
             count += 1;
         });
         assert_eq!(count, chars.len());
     }
     #[test]
-    fn has_word() {
+    fn contains_word() {
         let word = "_________";
         let targets = [">", "==", "!=", "=>"];
         let mut count = 0;
         targets.iter().for_each(|target| {
             let mut walker = Walker::new(format!("{target}{word}"));
-            assert!(walker.has().word(&[target]));
+            assert!(walker.contains().word(&[target]));
             let mut walker = Walker::new(format!(r"\\{target}{target}{word}"));
-            assert!(walker.has().word(&[target]));
+            assert!(walker.contains().word(&[target]));
             let mut walker = Walker::new(format!(r"\\{target}{word}"));
-            assert!(!walker.has().word(&[target]));
+            assert!(!walker.contains().word(&[target]));
             count += 1;
         });
         assert_eq!(count, targets.len());
