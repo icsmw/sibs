@@ -247,6 +247,69 @@ impl<'a> Has<'a> {
 }
 
 #[derive(Debug)]
+pub struct Group<'a> {
+    walker: &'a mut Walker,
+}
+impl<'a> Group<'a> {
+    pub fn new(walker: &'a mut Walker) -> Self {
+        Self { walker }
+    }
+    pub fn between(&mut self, open: &char, close: &char) -> Option<String> {
+        let mut str: String = String::new();
+        let mut serialized: bool = false;
+        let content = &self.walker.content[self.walker.pos..];
+        let mut opened: Option<usize> = None;
+        let mut count: i32 = 0;
+        for (pos, char) in content.chars().enumerate() {
+            if char.is_whitespace() && opened.is_none() {
+                continue;
+            }
+            if char == *open && !serialized {
+                if opened.is_none() {
+                    opened = Some(self.walker.pos + pos + 1);
+                    count += 1;
+                    continue;
+                }
+                count += 1;
+            } else if char == *close && !serialized {
+                count -= 1;
+                if let (0, Some(opened)) = (count, opened) {
+                    self.walker.map.add((opened, self.walker.pos + pos - 1));
+                    self.walker.pos += pos + 1;
+                    return Some(str);
+                }
+            }
+            serialized = char == chars::SERIALIZING;
+            str.push(char);
+        }
+        None
+    }
+    pub fn closed(&mut self, border: &char) -> Option<String> {
+        let mut str: String = String::new();
+        let mut serialized: bool = false;
+        let content = &self.walker.content[self.walker.pos..];
+        let mut opened: Option<usize> = None;
+        for (pos, char) in content.chars().enumerate() {
+            if char.is_whitespace() && opened.is_none() {
+                continue;
+            }
+            if char == *border && !serialized {
+                if let Some(opened) = opened {
+                    self.walker.map.add((opened, self.walker.pos + pos - 1));
+                    self.walker.pos += pos + 1;
+                    return Some(str);
+                } else {
+                    opened = Some(self.walker.pos + pos + 1);
+                    continue;
+                }
+            }
+            serialized = char == chars::SERIALIZING;
+            str.push(char);
+        }
+        None
+    }
+}
+#[derive(Debug)]
 pub struct Token {
     pub content: String,
     pub id: usize,
@@ -279,50 +342,12 @@ impl Walker {
     pub fn has(&mut self) -> Has<'_> {
         Has::new(self)
     }
+    pub fn group(&mut self) -> Group<'_> {
+        Group::new(self)
+    }
     pub fn cancel_on(&mut self, chars: &'static [&'static char]) -> &mut Self {
         self.chars = chars;
         self
-    }
-    pub fn between(&mut self, open: &char, close: &char) -> Option<String> {
-        let mut str: String = String::new();
-        let mut serialized: bool = false;
-        let content = &self.content[self.pos..];
-        let mut root_opened = false;
-        let mut opened: i32 = 0;
-        let mut opened_on_pos = self.pos;
-        for (pos, char) in content.chars().enumerate() {
-            let writing = root_opened;
-            if !serialized {
-                if !root_opened && char != *open && !char.is_whitespace() {
-                    return None;
-                } else if char == *open {
-                    if !root_opened {
-                        opened_on_pos = self.pos + pos + 1;
-                    }
-                    root_opened = true;
-                }
-                if char == *open {
-                    opened += 1;
-                }
-                if char == *close {
-                    opened -= 1;
-                }
-                if char == *close && opened == 0 {
-                    return if str.is_empty() {
-                        None
-                    } else {
-                        self.map.add((opened_on_pos, self.pos + pos - 1));
-                        self.pos += pos + 1;
-                        Some(str)
-                    };
-                }
-            }
-            serialized = char == chars::SERIALIZING;
-            if writing {
-                str.push(char);
-            }
-        }
-        None
     }
     pub fn rest(&self) -> &str {
         &self.content[self.pos..]
@@ -546,7 +571,7 @@ mod test_walker {
         assert_eq!(count, targets.len());
     }
     #[test]
-    fn between() {
+    fn group_between() {
         let noise = "abcdefg123456";
         let borders = [('{', '}'), ('<', '>'), ('[', ']'), ('>', '<')];
         let mut count = 0;
@@ -555,12 +580,12 @@ mod test_walker {
                 // Nested groups
                 let content = format!("{left}{noise}{right}{noise}\\{left}{noise}\\{right}{noise}");
                 let mut walker = Walker::new(format!(" \t\n {left}{content}{right}{noise}"));
-                let between = walker.between(left, right).unwrap();
+                let between = walker.group().between(left, right).unwrap();
                 assert_eq!(between, content);
                 let token = walker.token().unwrap();
                 assert_eq!(token.content, between);
                 let mut walker = Walker::new(between);
-                let between = walker.between(left, right).unwrap();
+                let between = walker.group().between(left, right).unwrap();
                 let token = walker.token().unwrap();
                 assert_eq!(token.content, between);
                 assert_eq!(between, noise);
@@ -569,13 +594,13 @@ mod test_walker {
                 // Nested shifted groups
                 let content = format!("{noise}\\{left}{left}{noise}{right}\\{right}{noise}");
                 let mut walker = Walker::new(format!("{left}{content}{right}{noise}"));
-                let between = walker.between(left, right).unwrap();
+                let between = walker.group().between(left, right).unwrap();
                 assert_eq!(between, content);
                 let token = walker.token().unwrap();
                 assert_eq!(token.content, between);
                 let mut walker = Walker::new(between);
                 walker.until().char(&[*left]);
-                let between = walker.between(left, right).unwrap();
+                let between = walker.group().between(left, right).unwrap();
                 let token = walker.token().unwrap();
                 assert_eq!(token.content, between);
                 assert_eq!(between, noise);
@@ -586,11 +611,11 @@ mod test_walker {
                 let mut walker = Walker::new(format!(
                     "{left}{content}{right} \t \n{left}{content}{right}"
                 ));
-                let between = walker.between(left, right).unwrap();
+                let between = walker.group().between(left, right).unwrap();
                 assert_eq!(between, content);
                 let token = walker.token().unwrap();
                 assert_eq!(token.content, between);
-                let between = walker.between(left, right).unwrap();
+                let between = walker.group().between(left, right).unwrap();
                 let token = walker.token().unwrap();
                 assert_eq!(token.content, between);
                 assert_eq!(between, content);
@@ -600,14 +625,69 @@ mod test_walker {
                 let content = format!("{noise}\\{left}{noise}\\{right}{noise}");
                 let mut walker =
                     Walker::new(format!("{left}{content}{right}{left}{content}{right}"));
-                let between = walker.between(left, right).unwrap();
+                let between = walker.group().between(left, right).unwrap();
                 assert_eq!(between, content);
                 let token = walker.token().unwrap();
                 assert_eq!(token.content, between);
-                let between = walker.between(left, right).unwrap();
+                let between = walker.group().between(left, right).unwrap();
                 let token = walker.token().unwrap();
                 assert_eq!(token.content, between);
                 assert_eq!(between, content);
+            }
+            count += 1;
+        });
+        assert_eq!(count, borders.len());
+    }
+    #[test]
+    fn group_closed() {
+        let noise = "abcdefg123456";
+        let borders = ['"', '|', '\''];
+        let mut count = 0;
+        borders.iter().for_each(|border| {
+            {
+                let mut walker = Walker::new(format!(" \t\n {border}{noise}{border}"));
+                let between = walker.group().closed(border).unwrap();
+                assert_eq!(between, noise);
+                let token = walker.token().unwrap();
+                assert_eq!(token.content, between);
+            }
+            {
+                let content = format!("\\{border}{noise}\\{border}");
+                let mut walker = Walker::new(format!("{border}{content}{border}"));
+                let between = walker.group().closed(border).unwrap();
+                assert_eq!(between, content);
+                let token = walker.token().unwrap();
+                assert_eq!(token.content, between);
+            }
+            {
+                // Following groups without spaces
+                let content = format!("\\{border}{noise}\\{border}");
+                let mut walker = Walker::new(format!(
+                    "{border}{content}{border}{border}{content}{border}"
+                ));
+                let between = walker.group().closed(border).unwrap();
+                assert_eq!(between, content);
+                let token = walker.token().unwrap();
+                assert_eq!(token.content, between);
+                let between = walker.group().closed(border).unwrap();
+                assert_eq!(between, content);
+                let token = walker.token().unwrap();
+                assert_eq!(token.content, between);
+            }
+            {
+                // Following groups with spaces
+                let content = format!("\\{border}{noise}\\{border}");
+                let mut walker = Walker::new(format!(
+                    "{border}{content}{border} \n \t{border}{content}{border}"
+                ));
+                let between = walker.group().closed(border).unwrap();
+                assert_eq!(between, content);
+                let token = walker.token().unwrap();
+                assert_eq!(token.content, between);
+                let between = walker.group().closed(border).unwrap();
+                assert_eq!(between, content);
+                let token = walker.token().unwrap();
+                assert_eq!(token.content, between);
             }
             count += 1;
         });
