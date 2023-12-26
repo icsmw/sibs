@@ -1,9 +1,13 @@
 use crate::reader::chars;
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    {cell::RefCell, rc::Rc},
+};
 
 #[derive(Debug)]
 pub struct Map {
     map: HashMap<usize, (usize, usize)>,
+    content: String,
     index: usize,
 }
 
@@ -11,6 +15,7 @@ impl Map {
     pub fn new() -> Self {
         Self {
             map: HashMap::new(),
+            content: String::new(),
             index: 0,
         }
     }
@@ -45,8 +50,7 @@ impl<'a> MoveTo<'a> {
             }
             return if chars.contains(&&char) {
                 self.walker
-                    .map
-                    .add((self.walker.pos, self.walker.pos + pos - 1));
+                    .index((self.walker.pos, self.walker.pos + pos - 1));
                 self.walker.pos += pos + 1;
                 Some(char)
             } else {
@@ -67,11 +71,11 @@ impl<'a> MoveTo<'a> {
                 if next > self.walker.content.len() - 1 {
                     continue;
                 }
-                let fragment = &self.walker.content[current..=next];
+                let fragment = self.walker.content[current..=next].to_string();
                 if fragment == *word {
-                    self.walker.map.add((self.walker.pos, current - 1));
+                    self.walker.index((self.walker.pos, current - 1));
                     self.walker.pos = next + 1;
-                    return Some(fragment.to_string());
+                    return Some(fragment);
                 }
             }
         }
@@ -82,8 +86,7 @@ impl<'a> MoveTo<'a> {
         for (pos, char) in content.chars().enumerate() {
             if char.is_whitespace() {
                 self.walker
-                    .map
-                    .add((self.walker.pos, self.walker.pos + pos - 1));
+                    .index((self.walker.pos, self.walker.pos + pos - 1));
                 self.walker.pos += pos + 1;
                 return true;
             }
@@ -125,7 +128,7 @@ impl<'a> MoveTo<'a> {
         } else {
             self.walker.pos
         };
-        self.walker.map.add((self.walker.pos, pos));
+        self.walker.index((self.walker.pos, pos));
         self.walker.pos = pos;
         rest
     }
@@ -149,8 +152,7 @@ impl<'a> Until<'a> {
                     None
                 } else {
                     self.walker
-                        .map
-                        .add((self.walker.pos, self.walker.pos + pos - 1));
+                        .index((self.walker.pos, self.walker.pos + pos - 1));
                     self.walker.pos += pos;
                     Some((str, char))
                 };
@@ -178,7 +180,7 @@ impl<'a> Until<'a> {
                 if clean.ends_with(word) {
                     let next_pos = self.walker.pos + pos - (word.len() - 1);
                     let read = self.walker.content[self.walker.pos..next_pos].to_string();
-                    self.walker.map.add((self.walker.pos, next_pos - 1));
+                    self.walker.index((self.walker.pos, next_pos - 1));
                     self.walker.pos = next_pos;
                     return Some((read, word.to_string()));
                 }
@@ -199,8 +201,7 @@ impl<'a> Until<'a> {
             }
             if char.is_whitespace() {
                 self.walker
-                    .map
-                    .add((self.walker.pos, self.walker.pos + pos - 1));
+                    .index((self.walker.pos, self.walker.pos + pos - 1));
                 self.walker.pos += pos;
                 return Some(str);
             }
@@ -270,6 +271,9 @@ impl<'a> Group<'a> {
             if char.is_whitespace() && opened.is_none() {
                 continue;
             }
+            if !char.is_whitespace() && opened.is_none() && char != *open {
+                return None;
+            }
             if char == *open && !serialized {
                 if opened.is_none() {
                     opened = Some(self.walker.pos + pos + 1);
@@ -280,7 +284,7 @@ impl<'a> Group<'a> {
             } else if char == *close && !serialized {
                 count -= 1;
                 if let (0, Some(opened)) = (count, opened) {
-                    self.walker.map.add((opened, self.walker.pos + pos - 1));
+                    self.walker.index((opened, self.walker.pos + pos - 1));
                     self.walker.pos += pos + 1;
                     return Some(str);
                 }
@@ -299,9 +303,12 @@ impl<'a> Group<'a> {
             if char.is_whitespace() && opened.is_none() {
                 continue;
             }
+            if !char.is_whitespace() && opened.is_none() && char != *border {
+                return None;
+            }
             if char == *border && !serialized {
                 if let Some(opened) = opened {
-                    self.walker.map.add((opened, self.walker.pos + pos - 1));
+                    self.walker.index((opened, self.walker.pos + pos - 1));
                     self.walker.pos += pos + 1;
                     return Some(str);
                 } else {
@@ -321,6 +328,7 @@ pub struct Token {
     pub content: String,
     pub id: usize,
     pub coors: (usize, usize),
+    pub walker: Walker,
 }
 
 #[derive(Debug)]
@@ -328,16 +336,29 @@ pub struct Walker {
     content: String,
     pos: usize,
     chars: &'static [&'static char],
-    map: Map,
+    _map: Rc<RefCell<Map>>,
+    _offset: usize,
 }
 
 impl Walker {
     pub fn new(content: String) -> Self {
+        let mut map = Map::new();
+        map.content = content.clone();
         Self {
             content,
             pos: 0,
             chars: &[],
-            map: Map::new(),
+            _offset: 0,
+            _map: Rc::new(RefCell::new(map)),
+        }
+    }
+    pub fn inherit(content: String, map: Rc<RefCell<Map>>, offset: usize) -> Self {
+        Self {
+            content,
+            pos: 0,
+            chars: &[],
+            _offset: offset,
+            _map: map,
         }
     }
     pub fn move_to(&mut self) -> MoveTo<'_> {
@@ -368,18 +389,29 @@ impl Walker {
             }
         }
     }
+    pub fn index(&mut self, pos: (usize, usize)) {
+        self._map
+            .borrow_mut()
+            .add((pos.0 + self._offset, pos.1 + self._offset));
+    }
     pub fn token(&self) -> Option<Token> {
-        self.map.last().map(|(id, coors)| Token {
-            content: self.content[coors.0..=coors.1].to_string(),
-            id,
-            coors,
+        let content = self._map.borrow().content.to_string();
+        self._map.borrow_mut().last().map(|(id, coors)| {
+            let value = content[coors.0..=coors.1].to_string();
+            Token {
+                content: value.to_string(),
+                id,
+                coors,
+                walker: Walker::inherit(value, self._map.clone(), coors.0),
+            }
         })
     }
 }
 
 #[cfg(test)]
 mod test_walker {
-    use crate::reader::walker::Walker;
+    use crate::reader::walker::{Map, Walker};
+    use std::{cell::RefCell, rc::Rc};
 
     #[test]
     fn until_whitespace() {
@@ -688,5 +720,21 @@ mod test_walker {
             count += 1;
         });
         assert_eq!(count, borders.len());
+    }
+    #[test]
+    fn mapping() {
+        let noise = "=================";
+        let inner = format!("<{noise}>{noise}");
+        let mut walker = Walker::new(format!("[{inner}]"));
+        let between = walker.group().between(&'[', &']').unwrap();
+        assert_eq!(between, inner);
+        let mut token = walker.token().unwrap();
+        assert_eq!(token.content, inner);
+        assert_eq!(token.coors, (1, inner.len()));
+        let between = token.walker.group().between(&'<', &'>').unwrap();
+        assert_eq!(between, noise);
+        let nested_token = token.walker.token().unwrap();
+        assert_eq!(nested_token.content, noise);
+        assert_eq!(nested_token.coors, (2, noise.len() + 1));
     }
 }

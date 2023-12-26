@@ -1,5 +1,6 @@
 pub mod chars;
 pub mod entry;
+mod exp;
 pub mod walker;
 pub mod words;
 
