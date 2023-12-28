@@ -21,7 +21,7 @@ impl Reading<ValueString> for ValueString {
     fn read(reader: &mut Reader) -> Result<Option<ValueString>, E> {
         if let Some(inner) = reader.group().closed(&chars::QUOTES) {
             let mut token = reader.token()?;
-            Ok(Some(ValueString::new(inner, &mut token.walker)?))
+            Ok(Some(ValueString::new(inner, &mut token.bound)?))
         } else {
             Ok(None)
         }
@@ -37,9 +37,9 @@ impl ValueString {
             if reader.until().char(&[&chars::TYPE_CLOSE]).is_some() {
                 let mut token = reader.token()?;
                 reader.move_to().next();
-                if let Some(variable_name) = VariableName::read(&mut token.walker)? {
+                if let Some(variable_name) = VariableName::read(&mut token.bound)? {
                     injections.push(Injection::VariableName(variable_name));
-                } else if let Some(func) = Function::read(&mut token.walker)? {
+                } else if let Some(func) = Function::read(&mut token.bound)? {
                     injections.push(Injection::Function(func));
                 } else {
                     Err(E::NoVariableReference)?

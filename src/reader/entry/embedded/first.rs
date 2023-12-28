@@ -20,7 +20,7 @@ impl Reading<First> for First {
             {
                 let mut token = reader.token()?;
                 Ok(Some(First {
-                    block: Block::read(&mut token.walker)?.ok_or(E::EmptyGroup)?,
+                    block: Block::read(&mut token.bound)?.ok_or(E::EmptyGroup)?,
                     token: token.id,
                 }))
             } else {

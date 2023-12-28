@@ -42,13 +42,13 @@ impl Reading<If> for If {
         while !reader.rest().trim().is_empty() {
             if reader.move_to().word(&[&words::IF]).is_some() {
                 if reader.until().char(&[&chars::OPEN_SQ_BRACKET]).is_some() {
-                    let proviso: Vec<Proviso> = If::proviso(&mut reader.token()?.walker)?;
+                    let proviso: Vec<Proviso> = If::proviso(&mut reader.token()?.bound)?;
                     if reader
                         .group()
                         .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
                         .is_some()
                     {
-                        if let Some(block) = Block::read(&mut reader.token()?.walker)? {
+                        if let Some(block) = Block::read(&mut reader.token()?.bound)? {
                             elements.push(Element::If(proviso, block));
                         } else {
                             Err(E::EmptyGroup)?
@@ -76,7 +76,7 @@ impl Reading<If> for If {
                     .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
                     .is_some()
                 {
-                    if let Some(block) = Block::read(&mut reader.token()?.walker)? {
+                    if let Some(block) = Block::read(&mut reader.token()?.bound)? {
                         elements.push(Element::Else(block));
                     } else {
                         Err(E::EmptyGroup)?
@@ -134,7 +134,7 @@ impl If {
         while !reader.rest().trim().is_empty() {
             if reader.move_to().char(&[&chars::OPEN_BRACKET]).is_some() {
                 if reader.until().char(&[&chars::CLOSE_BRACKET]).is_some() {
-                    let mut group_reader = reader.token()?.walker;
+                    let mut group_reader = reader.token()?.bound;
                     if group_reader
                         .move_to()
                         .char(&[&chars::OPEN_BRACKET])
@@ -168,7 +168,7 @@ impl If {
                 if !reader.move_to().whitespace() {
                     Err(E::NoWhitespaceAfterCondition)?;
                 }
-                proviso.push(If::inner(&mut token.walker)?);
+                proviso.push(If::inner(&mut token.bound)?);
                 proviso.push(Proviso::Combination(
                     if combination == words::AND {
                         Combination::And

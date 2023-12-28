@@ -24,9 +24,9 @@ impl Reading<Each> for Each {
                 .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
                 .is_some()
             {
-                if let Some(variable) = VariableName::read(&mut reader.token()?.walker)? {
+                if let Some(variable) = VariableName::read(&mut reader.token()?.bound)? {
                     if reader.until().char(&[&chars::OPEN_SQ_BRACKET]).is_some() {
-                        let mut inner_reader = reader.token()?.walker;
+                        let mut inner_reader = reader.token()?.bound;
                         let input =
                             if let Some(variable_name) = VariableName::read(&mut inner_reader)? {
                                 Input::VariableName(variable_name)
@@ -47,7 +47,7 @@ impl Reading<Each> for Each {
                                 Ok(Some(Each {
                                     variable,
                                     input,
-                                    block: Block::read(&mut token.walker)?.ok_or(E::EmptyGroup)?,
+                                    block: Block::read(&mut token.bound)?.ok_or(E::EmptyGroup)?,
                                     token: token.id,
                                 }))
                             }

@@ -28,10 +28,10 @@ impl Reading<Arguments> for Arguments {
             .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
             .is_some()
         {
-            args.add_args(&mut reader.token()?.walker)?;
+            args.add_args(&mut reader.token()?.bound)?;
         }
         if !reader.move_to().end().is_empty() {
-            args.add_args(&mut reader.token()?.walker)?;
+            args.add_args(&mut reader.token()?.bound)?;
         }
         if args.is_empty() {
             Ok(None)
@@ -49,7 +49,7 @@ impl Arguments {
             reader.move_to().next();
             if !arg.trim().is_empty() {
                 let mut token = reader.token()?;
-                if token.walker.contains().char(&chars::AT) {
+                if token.bound.contains().char(&chars::AT) {
                     Err(E::NestedFunction)?
                 }
                 arguments.push((token.id, Argument::String(Reader::unserialize(&arg))));
@@ -73,7 +73,7 @@ impl Arguments {
             if reader.until().char(&[&chars::QUOTES]).is_some() {
                 arguments = [
                     arguments,
-                    Arguments::read_string_args(&mut reader.token()?.walker)?,
+                    Arguments::read_string_args(&mut reader.token()?.bound)?,
                 ]
                 .concat();
                 if let Some(value_string) = ValueString::read(reader)? {

@@ -30,7 +30,7 @@ impl Reading<Function> for Function {
                 reader.move_to().next();
                 return Ok(Some(Self::new(
                     reader.token()?.id,
-                    &mut reader.token()?.walker,
+                    &mut reader.token()?.bound,
                     name,
                     false,
                 )?));
@@ -48,7 +48,7 @@ impl Reading<Function> for Function {
                     None
                 });
             let mut token = reader.token()?;
-            if token.walker.contains().word(&[&words::DO_ON]) {
+            if token.bound.contains().word(&[&words::DO_ON]) {
                 let _ = reader.state().restore();
                 return Ok(None);
             }
@@ -56,7 +56,7 @@ impl Reading<Function> for Function {
             if matches!(stop_on, Some(chars::REDIRECT)) {
                 let arg_func = Self::new(
                     token.id,
-                    &mut token.walker,
+                    &mut token.bound,
                     name,
                     matches!(ends_with, Some(chars::QUESTION)),
                 )?;
@@ -69,7 +69,7 @@ impl Reading<Function> for Function {
             } else {
                 Ok(Some(Self::new(
                     token.id,
-                    &mut token.walker,
+                    &mut token.bound,
                     name,
                     matches!(ends_with, Some(chars::QUESTION)),
                 )?))

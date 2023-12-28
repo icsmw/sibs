@@ -36,18 +36,18 @@ impl Reading<Reference> for Reference {
             if path.pop().is_some() {
                 let mut token = reader.token()?;
                 let name = token
-                    .walker
+                    .bound
                     .until()
                     .char(&[&chars::OPEN_BRACKET])
                     .map(|(value, _)| value)
-                    .unwrap_or_else(|| token.walker.rest().to_string());
+                    .unwrap_or_else(|| token.bound.rest().to_string());
                 if token
-                    .walker
+                    .bound
                     .group()
                     .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
                     .is_some()
                 {
-                    let mut inner = token.walker.token()?.walker;
+                    let mut inner = token.bound.token()?.bound;
                     let mut last = false;
                     while let Some(value) = inner
                         .until()
@@ -65,7 +65,7 @@ impl Reading<Reference> for Reference {
                             }
                         })
                     {
-                        let mut value_reader = inner.token()?.walker;
+                        let mut value_reader = inner.token()?.bound;
                         inputs.push(
                             if let Some(variable_name) = VariableName::read(&mut value_reader)? {
                                 Input::VariableName(variable_name)

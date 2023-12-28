@@ -42,9 +42,9 @@ impl Reading<Optional> for Optional {
             {
                 let mut token = reader.token()?;
                 let condition =
-                    if let Some(variable_comparing) = VariableComparing::read(&mut token.walker)? {
+                    if let Some(variable_comparing) = VariableComparing::read(&mut token.bound)? {
                         Condition::VariableComparing(variable_comparing)
-                    } else if let Some(function) = Function::read(&mut token.walker)? {
+                    } else if let Some(function) = Function::read(&mut token.bound)? {
                         Condition::Function(function)
                     } else {
                         Err(E::NoFunctionOnOptionalAction)?
@@ -59,7 +59,7 @@ impl Reading<Optional> for Optional {
                         if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
                             Err(E::MissedSemicolon)?
                         }
-                        if let Some(block) = Block::read(&mut token.walker)? {
+                        if let Some(block) = Block::read(&mut token.bound)? {
                             return Ok(Some(Optional {
                                 token: token.id,
                                 action: Action::Block(block),
@@ -75,14 +75,14 @@ impl Reading<Optional> for Optional {
                         Ok(Some(Optional {
                             token: token.id,
                             action: if let Some(assignation) =
-                                VariableAssignation::read(&mut token.walker)?
+                                VariableAssignation::read(&mut token.bound)?
                             {
                                 Action::VariableAssignation(assignation)
-                            } else if let Some(value_string) = ValueString::read(&mut token.walker)?
+                            } else if let Some(value_string) = ValueString::read(&mut token.bound)?
                             {
                                 Action::ValueString(value_string)
                             } else {
-                                Action::Command(token.walker.rest().to_string())
+                                Action::Command(token.bound.rest().to_string())
                             },
                             condition,
                         }))

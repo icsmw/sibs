@@ -50,7 +50,7 @@ impl Reading<VariableAssignation> for VariableAssignation {
                         Some(VariableAssignation {
                             name: name.clone(),
                             assignation: Assignation::Block(
-                                Block::read(&mut group_token.walker)?.ok_or(E::EmptyGroup)?,
+                                Block::read(&mut group_token.bound)?.ok_or(E::EmptyGroup)?,
                             ),
                             token: group_token.id,
                         })
@@ -73,13 +73,13 @@ impl Reading<VariableAssignation> for VariableAssignation {
                         let _ = reader.move_to().end();
                         reader.token()
                     })?;
-                if let Some(func) = Function::read(&mut token.walker)? {
+                if let Some(func) = Function::read(&mut token.bound)? {
                     Ok(Some(VariableAssignation {
                         name,
                         assignation: Assignation::Function(func),
                         token: token.id,
                     }))
-                } else if let Some(value_string) = ValueString::read(&mut token.walker)? {
+                } else if let Some(value_string) = ValueString::read(&mut token.bound)? {
                     Ok(Some(VariableAssignation {
                         name,
                         assignation: Assignation::ValueString(value_string),

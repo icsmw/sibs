@@ -27,7 +27,7 @@ impl Reading<Task> for Task {
                 reader.move_to().next();
                 let mut declarations: Vec<VariableDeclaration> = vec![];
                 let mut token = reader.token()?;
-                while let Some(variable_declaration) = VariableDeclaration::read(&mut token.walker)?
+                while let Some(variable_declaration) = VariableDeclaration::read(&mut token.bound)?
                 {
                     declarations.push(variable_declaration);
                 }
@@ -41,7 +41,7 @@ impl Reading<Task> for Task {
                 .is_some()
             {
                 let mut token = reader.token()?;
-                let block = Block::read(&mut token.walker)?;
+                let block = Block::read(&mut token.bound)?;
                 Ok(Some(Task {
                     name,
                     declarations,

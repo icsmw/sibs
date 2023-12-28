@@ -23,7 +23,7 @@ impl Reading<Component> for Component {
                 .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
                 .is_some()
             {
-                let mut inner = reader.token()?.walker;
+                let mut inner = reader.token()?.bound;
                 let name = inner
                     .until()
                     .char(&[&chars::COLON])
@@ -41,7 +41,7 @@ impl Reading<Component> for Component {
                 if inner.trim().is_empty() {
                     Err(E::NoComponentBody)?
                 }
-                let mut task_reader = reader.token()?.walker;
+                let mut task_reader = reader.token()?.bound;
                 let mut meta: Option<Meta> = None;
                 if let Some(mt) = Meta::read(&mut task_reader)? {
                     meta = Some(mt);
