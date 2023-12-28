@@ -436,6 +436,7 @@ pub struct Reader {
     fixed: Option<usize>,
     _map: Rc<RefCell<Map>>,
     _offset: usize,
+    _recent: usize,
 }
 
 impl Reader {
@@ -449,6 +450,7 @@ impl Reader {
             fixed: None,
             _offset: 0,
             _map: Rc::new(RefCell::new(map)),
+            _recent: 0,
         }
     }
     pub fn inherit(content: String, map: Rc<RefCell<Map>>, offset: usize) -> Self {
@@ -459,6 +461,7 @@ impl Reader {
             fixed: None,
             _offset: offset,
             _map: map,
+            _recent: 0,
         }
     }
     pub fn move_to(&mut self) -> MoveTo<'_> {
@@ -488,6 +491,15 @@ impl Reader {
     }
     pub fn rest(&self) -> &str {
         &self.content[self.pos..]
+    }
+    pub fn recent(&mut self) -> &str {
+        if self.pos == 0 {
+            ""
+        } else {
+            let readed = &self.content[self._recent..self.pos];
+            self._recent = self.pos;
+            readed
+        }
     }
     pub fn trim(&mut self) {
         let content = &self.content[self.pos..];

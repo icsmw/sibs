@@ -3,6 +3,7 @@ use crate::reader::{
     entry::{Function, Reader, Reading, VariableName},
     E,
 };
+use std::fmt;
 
 #[derive(Debug, Clone)]
 pub enum Injection {
@@ -53,6 +54,12 @@ impl ValueString {
             injections,
             token,
         })
+    }
+}
+
+impl fmt::Display for ValueString {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "\"{}\"", self.pattern,)
     }
 }
 

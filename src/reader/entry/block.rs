@@ -3,6 +3,7 @@ use crate::reader::{
     entry::{Each, Function, If, Meta, Optional, Reading, Reference, VariableAssignation},
     Reader, E,
 };
+use std::fmt;
 
 #[derive(Debug)]
 pub enum Element {
@@ -71,6 +72,12 @@ impl Reading<Block> for Block {
                 token: reader.token()?.id,
             })
         })
+    }
+}
+
+impl fmt::Display for Block {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[]")
     }
 }
 

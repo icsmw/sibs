@@ -1,14 +1,29 @@
 use crate::reader::{
     chars,
-    entry::{Function, Reader, Reading, ValueString},
+    entry::{Reader, Reading, ValueString, VariableName},
     E,
 };
+use std::fmt;
 
 #[derive(Debug, Clone)]
 pub enum Argument {
     String(String),
     ValueString(ValueString),
-    Function(Function),
+    VariableName(VariableName),
+}
+
+impl fmt::Display for Argument {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::String(v) => v.to_string(),
+                Self::ValueString(v) => v.to_string(),
+                Self::VariableName(v) => v.to_string(),
+            }
+        )
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -52,18 +67,26 @@ impl Arguments {
                 if token.bound.contains().char(&chars::AT) {
                     Err(E::NestedFunction)?
                 }
-                arguments.push((token.id, Argument::String(Reader::unserialize(&arg))));
+                if let Some(variable) = VariableName::read(&mut token.bound)? {
+                    arguments.push((token.id, Argument::VariableName(variable)));
+                } else {
+                    arguments.push((token.id, Argument::String(Reader::unserialize(&arg))));
+                }
             }
         }
         if !reader.rest().trim().is_empty() {
             if reader.contains().char(&chars::AT) {
                 Err(E::NestedFunction)?
             }
-            let rest = reader.move_to().end();
-            arguments.push((
-                reader.token()?.id,
-                Argument::String(Reader::unserialize(&rest)),
-            ));
+            if let Some(variable) = VariableName::read(reader)? {
+                arguments.push((reader.token()?.id, Argument::VariableName(variable)));
+            } else {
+                let rest = reader.move_to().end();
+                arguments.push((
+                    reader.token()?.id,
+                    Argument::String(Reader::unserialize(&rest)),
+                ));
+            }
         }
         Ok(arguments)
     }
@@ -94,17 +117,18 @@ impl Arguments {
     pub fn is_empty(&self) -> bool {
         self.args.is_empty()
     }
-    pub fn add_fn_arg(&mut self, fn_arg: Function) {
-        if let Some((_, arg)) = self
-            .args
-            .iter_mut()
-            .find(|(_, arg)| matches!(arg, Argument::Function(_)))
-        {
-            if let Argument::Function(func) = arg {
-                func.add_fn_arg(fn_arg);
-            }
-        } else {
-            self.args.insert(0, (0, Argument::Function(fn_arg)));
-        }
+}
+
+impl fmt::Display for Arguments {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            self.args
+                .iter()
+                .map(|(_, arg)| arg.to_string())
+                .collect::<Vec<String>>()
+                .join(" ")
+        )
     }
 }

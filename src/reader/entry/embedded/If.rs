@@ -3,6 +3,7 @@ use crate::reader::{
     entry::{Block, Function, Reading, ValueString, VariableName},
     words, Reader, E,
 };
+use std::fmt;
 
 #[derive(Debug, Clone)]
 pub enum Cmp {
@@ -10,10 +11,36 @@ pub enum Cmp {
     NotEqual,
 }
 
+impl fmt::Display for Cmp {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Equal => words::CMP_TRUE,
+                Self::NotEqual => words::CMP_FALSE,
+            }
+        )
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Combination {
     And,
     Or,
+}
+
+impl fmt::Display for Combination {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::And => words::AND,
+                Self::Or => words::OR,
+            }
+        )
+    }
 }
 
 #[derive(Debug, Clone)]

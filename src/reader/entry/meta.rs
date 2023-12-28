@@ -3,6 +3,8 @@ use crate::reader::{
     entry::{Reader, Reading},
     words, E,
 };
+use std::fmt;
+
 #[derive(Debug)]
 pub struct Meta {
     pub inner: Vec<String>,
@@ -27,5 +29,19 @@ impl Reading<Meta> for Meta {
                 index: reader.token()?.id,
             }))
         }
+    }
+}
+
+impl fmt::Display for Meta {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            self.inner
+                .iter()
+                .map(|v| format!("/// {v}"))
+                .collect::<Vec<String>>()
+                .join("\n")
+        )
     }
 }

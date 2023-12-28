@@ -3,6 +3,7 @@ use crate::reader::{
     entry::{Block, Reading},
     words, Reader, E,
 };
+use std::fmt;
 
 #[derive(Debug)]
 pub struct First {
@@ -29,5 +30,11 @@ impl Reading<First> for First {
         } else {
             Ok(None)
         }
+    }
+}
+
+impl fmt::Display for First {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "FIRST = {}", self.block)
     }
 }

@@ -3,11 +3,25 @@ use crate::reader::{
     entry::{Reading, VariableName},
     Reader, E,
 };
+use std::fmt;
 
 #[derive(Debug, Clone)]
 pub enum Input {
     VariableName(VariableName),
     String(String),
+}
+
+impl fmt::Display for Input {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::String(s) => s.to_string(),
+                Self::VariableName(v) => v.to_string(),
+            }
+        )
+    }
 }
 #[derive(Debug, Clone)]
 pub struct Reference {
@@ -86,6 +100,25 @@ impl Reading<Reference> for Reference {
         } else {
             Ok(None)
         }
+    }
+}
+
+impl fmt::Display for Reference {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            ":{}{};",
+            self.path.join(":"),
+            if self.inputs.is_empty() {
+                String::new()
+            } else {
+                self.inputs
+                    .iter()
+                    .map(|input| input.to_string())
+                    .collect::<Vec<String>>()
+                    .join(", ")
+            }
+        )
     }
 }
 

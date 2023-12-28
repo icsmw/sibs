@@ -69,6 +69,14 @@ impl VariableDeclaration {
 
 impl fmt::Display for VariableDeclaration {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "${}", self.name)
+        write!(
+            f,
+            "{}: {}",
+            self.name,
+            match &self.declaration {
+                Declaration::Typed(v) => v.to_string(),
+                Declaration::Values(v) => v.to_string(),
+            }
+        )
     }
 }

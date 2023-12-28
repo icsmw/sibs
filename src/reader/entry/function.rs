@@ -1,14 +1,16 @@
 use crate::reader::{
     chars,
-    entry::{Argument, Arguments, Reading},
+    entry::{Arguments, Reading},
     words, Reader, E,
 };
+use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct Function {
     pub tolerance: bool,
     pub name: String,
     pub args: Option<Arguments>,
+    pub feed: Option<Box<Function>>,
     pub token: usize,
 }
 
@@ -54,14 +56,14 @@ impl Reading<Function> for Function {
             }
             reader.move_to().next();
             if matches!(stop_on, Some(chars::REDIRECT)) {
-                let arg_func = Self::new(
+                let feed = Self::new(
                     token.id,
                     &mut token.bound,
                     name,
                     matches!(ends_with, Some(chars::QUESTION)),
                 )?;
                 if let Some(mut parent_func) = Function::read(reader)? {
-                    parent_func.add_fn_arg(arg_func);
+                    parent_func.feeding(feed);
                     Ok(Some(parent_func))
                 } else {
                     Err(E::NoDestFunction)
@@ -91,18 +93,31 @@ impl Function {
             token,
             name,
             tolerance,
+            feed: None,
             args: Arguments::read(reader)?,
         })
     }
-    pub fn add_fn_arg(&mut self, fn_arg: Function) {
-        if let Some(args) = self.args.as_mut() {
-            args.add_fn_arg(fn_arg);
+    pub fn feeding(&mut self, func: Function) {
+        if let Some(bound) = self.feed.as_mut() {
+            bound.feeding(func);
         } else {
-            self.args = Some(Arguments {
-                args: vec![(0, Argument::Function(fn_arg))],
-                token: 0,
-            });
+            self.feed = Some(Box::new(func));
         }
+    }
+}
+
+impl fmt::Display for Function {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "@{}{}{}",
+            self.name,
+            if self.tolerance { "?" } else { "" },
+            self.args
+                .as_ref()
+                .map(|args| format!(" {args}"))
+                .unwrap_or_default()
+        )
     }
 }
 
@@ -121,7 +136,7 @@ mod test_functions {
             println!("{func:?}");
             count += 1;
         }
-        assert_eq!(count, 13);
+        assert_eq!(count, 17);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }

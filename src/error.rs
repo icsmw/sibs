@@ -76,6 +76,8 @@ pub enum E {
     NoMetaContent,
     #[error("Not allowed function")]
     NotAllowedFunction,
+    // #[error("Function already redirected")]
+    // FunctionAlreadyRedirected,
     #[error("Path doesn't include parent")]
     NoFileParent,
     #[error("Converting error")]

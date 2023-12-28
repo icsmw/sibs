@@ -13,3 +13,7 @@
 @copy ./path/file ./dest/"some_new_filename{$prefix}.zip";
 @read_as_string ./package.json > @find /\"version\":\ \"([\d\.])\"/gi;
 @read_as_string ./package.json > @find /\"version\":\ \"([\d\.])\"/gi > @filter 123;
+@import $variable;
+@import ./tasks.sibs $variable;
+@import $variable ./tasks.sibs $variable;
+@copy "filename-{$platform}.zip" ./node_modules $dest;

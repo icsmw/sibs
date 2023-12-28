@@ -3,6 +3,7 @@ use crate::reader::{
     entry::{Block, First, Function, Reader, Reading, ValueString, VariableName},
     E,
 };
+use std::fmt;
 
 #[derive(Debug)]
 pub enum Assignation {
@@ -97,6 +98,22 @@ impl Reading<VariableAssignation> for VariableAssignation {
     }
 }
 
+impl fmt::Display for VariableAssignation {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{} = {};",
+            self.name,
+            match &self.assignation {
+                Assignation::ValueString(v) => v.to_string(),
+                Assignation::Block(v) => v.to_string(),
+                Assignation::First(v) => v.to_string(),
+                Assignation::Function(v) => v.to_string(),
+            }
+        )
+    }
+}
+
 #[cfg(test)]
 mod test_variable_assignation {
     use crate::reader::{
@@ -108,8 +125,9 @@ mod test_variable_assignation {
     fn reading() -> Result<(), E> {
         let mut reader = Reader::new(include_str!("./tests/variable_assignation.sibs").to_string());
         let mut count = 0;
-        while let Some(task) = VariableAssignation::read(&mut reader)? {
-            println!("{task:?}");
+        while let Some(entity) = VariableAssignation::read(&mut reader)? {
+            let recently_read = reader.recent();
+            println!("{entity}");
             count += 1;
         }
         assert_eq!(count, 10);

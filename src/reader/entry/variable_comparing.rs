@@ -2,6 +2,7 @@ use crate::reader::{
     entry::{Cmp, Reader, Reading, VariableName},
     words, E,
 };
+use std::fmt;
 
 #[derive(Debug)]
 pub struct VariableComparing {
@@ -40,5 +41,11 @@ impl Reading<VariableComparing> for VariableComparing {
         } else {
             Ok(None)
         }
+    }
+}
+
+impl fmt::Display for VariableComparing {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} {} {}", self.name, self.cmp, self.value)
     }
 }

@@ -3,6 +3,7 @@ use crate::reader::{
     entry::{Block, Function, Reading, ValueString, VariableAssignation, VariableComparing},
     words, Reader, E,
 };
+use std::fmt;
 
 #[derive(Debug)]
 pub enum Action {
@@ -12,10 +13,38 @@ pub enum Action {
     Block(Block),
 }
 
+impl fmt::Display for Action {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::VariableAssignation(v) => v.to_string(),
+                Self::ValueString(v) => v.to_string(),
+                Self::Command(v) => v.to_string(),
+                Self::Block(v) => v.to_string(),
+            }
+        )
+    }
+}
+
 #[derive(Debug)]
 pub enum Condition {
     Function(Function),
     VariableComparing(VariableComparing),
+}
+
+impl fmt::Display for Condition {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Function(v) => v.to_string(),
+                Self::VariableComparing(v) => v.to_string(),
+            }
+        )
+    }
 }
 
 #[derive(Debug)]
@@ -98,6 +127,12 @@ impl Reading<Optional> for Optional {
         } else {
             Ok(None)
         }
+    }
+}
+
+impl fmt::Display for Optional {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} => {}", self.condition, self.action)
     }
 }
 
