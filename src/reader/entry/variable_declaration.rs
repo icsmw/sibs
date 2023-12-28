@@ -1,8 +1,9 @@
 use crate::reader::{
     chars,
-    entry::{Reading, Values, VariableName, VariableType},
+    entry::{Reader, Reading, Values, VariableName, VariableType},
     E,
 };
+use std::fmt;
 
 #[derive(Debug)]
 pub enum Declaration {
@@ -13,29 +14,33 @@ pub enum Declaration {
 pub struct VariableDeclaration {
     pub name: VariableName,
     pub declaration: Declaration,
-    pub index: usize,
+    pub token: usize,
 }
 
 impl Reading<VariableDeclaration> for VariableDeclaration {
-    fn read(reader: &mut crate::reader::Reader) -> Result<Option<VariableDeclaration>, E> {
-        let from = reader.pos;
+    fn read(reader: &mut Reader) -> Result<Option<VariableDeclaration>, E> {
         if let Some(name) = VariableName::read(reader)? {
-            if reader.move_to_char(&[chars::COLON])?.is_some() {
-                if let Some(variable_type) = VariableType::read(reader)? {
-                    Ok(Some(VariableDeclaration::typed(
+            if reader.move_to().char(&[&chars::COLON]).is_some() {
+                let declaration = if let Some(variable_type) = VariableType::read(reader)? {
+                    Some(VariableDeclaration::typed(
                         name,
                         variable_type,
-                        reader.get_index_until_current(from),
-                    )))
+                        reader.token()?.id,
+                    ))
                 } else if let Some(values) = Values::read(reader)? {
-                    Ok(Some(VariableDeclaration::values(
+                    Some(VariableDeclaration::values(
                         name,
                         values,
-                        reader.get_index_until_current(from),
-                    )))
+                        reader.token()?.id,
+                    ))
                 } else {
-                    Err(E::NoTypeDeclaration)
+                    return Err(E::NoTypeDeclaration);
+                };
+                reader.trim();
+                if matches!(reader.next().char(), Some(chars::SEMICOLON)) {
+                    reader.move_to().next();
                 }
+                Ok(declaration)
             } else {
                 Err(E::NoTypeDeclaration)
             }
@@ -46,18 +51,24 @@ impl Reading<VariableDeclaration> for VariableDeclaration {
 }
 
 impl VariableDeclaration {
-    pub fn typed(name: VariableName, typed: VariableType, index: usize) -> Self {
+    pub fn typed(name: VariableName, typed: VariableType, token: usize) -> Self {
         Self {
             name,
             declaration: Declaration::Typed(typed),
-            index,
+            token,
         }
     }
-    pub fn values(name: VariableName, values: Values, index: usize) -> Self {
+    pub fn values(name: VariableName, values: Values, token: usize) -> Self {
         Self {
             name,
             declaration: Declaration::Values(values),
-            index,
+            token,
         }
+    }
+}
+
+impl fmt::Display for VariableDeclaration {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "${}", self.name)
     }
 }

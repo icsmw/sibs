@@ -9,12 +9,6 @@ IF $variable == "one" [
 IF $variable == "one" OR $variable == "two" [
     @cd ./linux;
 ];
-IF ($variable == "one" OR $variable == "two") AND $variable == "three" [
-    @cd ./linux;
-];
-IF $variable == "three" OR ($variable == "one" OR $variable == "two") AND $variable == "three" [
-    @cd ./linux;
-];
 IF $variable == "one" OR $variable == "two" [
     @cd ./linux;
 ] ELSE [

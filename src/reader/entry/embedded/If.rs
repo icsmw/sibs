@@ -1,6 +1,6 @@
 use crate::reader::{
     chars,
-    entry::{Block, Function, Group, Reading, ValueString, VariableName},
+    entry::{Block, Function, Reading, ValueString, VariableName},
     words, Reader, E,
 };
 
@@ -39,16 +39,16 @@ pub struct If {
 impl Reading<If> for If {
     fn read(reader: &mut Reader) -> Result<Option<If>, E> {
         let mut elements: Vec<Element> = vec![];
-        let from = reader.pos;
         while !reader.rest().trim().is_empty() {
-            if reader.move_to_word(&[words::IF])?.is_some() {
-                if let Some((inner, _char, _uuid)) =
-                    reader.read_until(&[chars::OPEN_SQ_BRACKET], false, false)?
-                {
-                    let mut inner_reader = reader.inherit(inner);
-                    let proviso: Vec<Proviso> = If::proviso(&mut inner_reader)?;
-                    if let Some(group) = Group::read(reader)? {
-                        if let Some(block) = Block::read(&mut reader.inherit(group.inner))? {
+            if reader.move_to().word(&[&words::IF]).is_some() {
+                if reader.until().char(&[&chars::OPEN_SQ_BRACKET]).is_some() {
+                    let proviso: Vec<Proviso> = If::proviso(&mut reader.token()?.walker)?;
+                    if reader
+                        .group()
+                        .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
+                        .is_some()
+                    {
+                        if let Some(block) = Block::read(&mut reader.token()?.walker)? {
                             elements.push(Element::If(proviso, block));
                         } else {
                             Err(E::EmptyGroup)?
@@ -64,23 +64,27 @@ impl Reading<If> for If {
             if elements.is_empty() {
                 return Ok(None);
             }
-            if reader.move_to_char(&[chars::SEMICOLON])?.is_some() {
+            if reader.move_to().char(&[&chars::SEMICOLON]).is_some() {
                 return Ok(Some(If {
                     elements,
-                    index: reader.get_index_until_current(from),
+                    index: reader.token()?.id,
                 }));
             }
-            if reader.move_to_word(&[words::ELSE])?.is_some() {
-                if let Some(group) = Group::read(reader)? {
-                    if let Some(block) = Block::read(&mut reader.inherit(group.inner))? {
+            if reader.move_to().word(&[&words::ELSE]).is_some() {
+                if reader
+                    .group()
+                    .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
+                    .is_some()
+                {
+                    if let Some(block) = Block::read(&mut reader.token()?.walker)? {
                         elements.push(Element::Else(block));
                     } else {
                         Err(E::EmptyGroup)?
                     }
-                    if reader.move_to_char(&[chars::SEMICOLON])?.is_some() {
+                    if reader.move_to().char(&[&chars::SEMICOLON]).is_some() {
                         return Ok(Some(If {
                             elements,
-                            index: reader.get_index_until_current(from),
+                            index: reader.token()?.id,
                         }));
                     } else {
                         Err(E::MissedSemicolon)?
@@ -97,7 +101,10 @@ impl Reading<If> for If {
 impl If {
     pub fn inner(reader: &mut Reader) -> Result<Proviso, E> {
         if let Some(variable_name) = VariableName::read(reader)? {
-            if let Some(word) = reader.move_to_word(&[words::CMP_TRUE, words::CMP_FALSE])? {
+            if let Some(word) = reader
+                .move_to()
+                .word(&[&words::CMP_TRUE, &words::CMP_FALSE])
+            {
                 if let Some(value_string) = ValueString::read(reader)? {
                     return Ok(Proviso::Variable(
                         variable_name,
@@ -115,7 +122,7 @@ impl If {
                 Err(E::MissedComparingOperator)?
             }
         }
-        let negative = reader.move_to_char(&[chars::EXCLAMATION])?.is_some();
+        let negative = reader.move_to().char(&[&chars::EXCLAMATION]).is_some();
         if let Some(func) = Function::read(reader)? {
             Ok(Proviso::Function(func, negative))
         } else {
@@ -125,12 +132,14 @@ impl If {
     pub fn proviso(reader: &mut Reader) -> Result<Vec<Proviso>, E> {
         let mut proviso: Vec<Proviso> = vec![];
         while !reader.rest().trim().is_empty() {
-            if reader.move_to_char(&[chars::OPEN_BRACKET])?.is_some() {
-                if let Some((group, _, _)) =
-                    reader.read_until(&[chars::CLOSE_BRACKET], true, false)?
-                {
-                    let mut group_reader = reader.inherit(group);
-                    if group_reader.move_to_char(&[chars::OPEN_BRACKET])?.is_some() {
+            if reader.move_to().char(&[&chars::OPEN_BRACKET]).is_some() {
+                if reader.until().char(&[&chars::CLOSE_BRACKET]).is_some() {
+                    let mut group_reader = reader.token()?.walker;
+                    if group_reader
+                        .move_to()
+                        .char(&[&chars::OPEN_BRACKET])
+                        .is_some()
+                    {
                         Err(E::NestedConditionGroups)?
                     }
                     proviso.push(Proviso::Group(If::proviso(&mut group_reader)?));
@@ -139,8 +148,7 @@ impl If {
                     Err(E::NotClosedConditionGroup)?
                 }
             }
-            let from = reader.pos;
-            if let Some(combination) = reader.move_to_word(&[words::AND, words::OR])? {
+            if let Some(combination) = reader.move_to().word(&[&words::AND, words::OR]) {
                 if let Some(Proviso::Combination(_, _)) = proviso.last() {
                     Err(E::RepeatedCombinationOperator)?
                 } else if proviso.last().is_none() {
@@ -152,21 +160,22 @@ impl If {
                     } else {
                         Combination::Or
                     },
-                    reader.get_index_until_current(from),
+                    reader.token()?.id,
                 ));
             }
-            let from = reader.pos;
-            if let Some((inner, combination, uuid)) =
-                reader.read_until_word(&[words::AND, words::OR], &[], true)?
-            {
-                proviso.push(If::inner(&mut reader.inherit(inner))?);
+            if let Some((_, combination)) = reader.until().word(&[&words::AND, &words::OR]) {
+                let mut token = reader.token()?;
+                if !reader.move_to().whitespace() {
+                    Err(E::NoWhitespaceAfterCondition)?;
+                }
+                proviso.push(If::inner(&mut token.walker)?);
                 proviso.push(Proviso::Combination(
                     if combination == words::AND {
                         Combination::And
                     } else {
                         Combination::Or
                     },
-                    reader.get_index_until_current(from),
+                    token.id,
                 ));
             } else {
                 proviso.push(If::inner(reader)?);
@@ -177,21 +186,21 @@ impl If {
 }
 
 #[cfg(test)]
-mod test {
+mod test_if {
     use crate::reader::{
         entry::{If, Reading},
-        Mapper, Reader, E,
+        Reader, E,
     };
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut mapper = Mapper::new();
-        let mut reader = Reader::new(include_str!("../tests/if.sibs").to_string(), &mut mapper, 0);
+        let mut reader = Reader::new(include_str!("../tests/if.sibs").to_string());
+        let mut count = 0;
         while let Some(task) = If::read(&mut reader)? {
             println!("{task:?}");
+            count += 1;
         }
-
-        println!("{}", reader.rest().trim());
+        assert_eq!(count, 10);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }

@@ -3,31 +3,27 @@ use crate::reader::{
     entry::{Reader, Reading},
     E,
 };
+use std::fmt;
 
 #[derive(Debug)]
 pub struct Values {
     pub values: Vec<String>,
-    pub index: usize,
+    pub token: usize,
 }
 
 impl Reading<Values> for Values {
     fn read(reader: &mut Reader) -> Result<Option<Values>, E> {
-        let from = reader.pos;
-        if let Some((variants, _stopped_on, _uuid)) =
-            reader.read_until(&[chars::SEMICOLON], true, true)?
-        {
-            Ok(Some(Values::new(
-                variants,
-                reader.get_index_until_current(from),
-            )?))
-        } else {
-            Err(E::NoTypeDeclaration)
-        }
+        let content = reader
+            .until()
+            .char(&[&chars::SEMICOLON])
+            .map(|(content, _)| content)
+            .unwrap_or_else(|| reader.move_to().end());
+        Ok(Some(Values::new(content, reader.token()?.id)?))
     }
 }
 
 impl Values {
-    pub fn new(input: String, index: usize) -> Result<Self, E> {
+    pub fn new(input: String, token: usize) -> Result<Self, E> {
         let mut values: Vec<String> = vec![];
         for value in input.split('|') {
             let value = value.trim();
@@ -42,6 +38,12 @@ impl Values {
         if values.is_empty() {
             Err(E::NoVariableValues)?;
         }
-        Ok(Values { values, index })
+        Ok(Values { values, token })
+    }
+}
+
+impl fmt::Display for Values {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.values.join(" | "))
     }
 }

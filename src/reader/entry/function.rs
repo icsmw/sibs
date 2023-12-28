@@ -9,59 +9,70 @@ pub struct Function {
     pub tolerance: bool,
     pub name: String,
     pub args: Option<Arguments>,
-    pub index: usize,
+    pub token: usize,
 }
 
 impl Reading<Function> for Function {
     fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
-        reader.hold();
-        if reader.move_to_char(&[chars::AT])?.is_some() {
-            if let Some((name, ends_with, uuid)) = reader.read_letters(
-                &[chars::CARET, chars::QUESTION, chars::SEMICOLON],
-                &[chars::UNDERLINE],
-                true,
-            )? {
-                if let Some(chars::SEMICOLON) = ends_with {
-                    return Ok(Some(Self::new(uuid, reader, name, String::new(), false)?));
-                }
-                if ends_with.is_none() {
-                    return Ok(Some(Self::new(uuid, reader, name, String::new(), false)?));
-                }
-                if let Some((args, stop_on, index)) =
-                    reader.read_until(&[chars::REDIRECT, chars::SEMICOLON], true, true)?
-                {
-                    if reader.inherit(args.clone()).has_word(&[words::DO_ON])? {
-                        reader.roll_back();
-                        return Ok(None);
-                    }
-                    if stop_on == chars::REDIRECT {
-                        let arg_func = Self::new(
-                            index,
-                            reader,
-                            name,
-                            args,
-                            matches!(ends_with, Some(chars::QUESTION)),
-                        )?;
-                        if let Some(mut parent_func) = Function::read(reader)? {
-                            parent_func.add_fn_arg(arg_func);
-                            Ok(Some(parent_func))
-                        } else {
-                            Err(E::NoDestFunction)
-                        }
-                    } else {
-                        Ok(Some(Self::new(
-                            index,
-                            reader,
-                            name,
-                            args,
-                            matches!(ends_with, Some(chars::QUESTION)),
-                        )?))
-                    }
+        reader.state().set();
+        if reader.move_to().char(&[&chars::AT]).is_some() {
+            let (name, ends_with) = reader
+                .until()
+                .char(&[
+                    &chars::CARET,
+                    &chars::QUESTION,
+                    &chars::SEMICOLON,
+                    &chars::WS,
+                ])
+                .map(|(str, char)| (str, Some(char)))
+                .unwrap_or_else(|| (reader.move_to().end(), None));
+            if matches!(ends_with, Some(chars::SEMICOLON)) {
+                reader.move_to().next();
+                return Ok(Some(Self::new(
+                    reader.token()?.id,
+                    &mut reader.token()?.walker,
+                    name,
+                    false,
+                )?));
+            }
+            if ends_with.is_none() {
+                return Ok(Some(Self::new(reader.token()?.id, reader, name, false)?));
+            }
+            reader.trim();
+            let stop_on = reader
+                .until()
+                .char(&[&chars::REDIRECT, &chars::SEMICOLON])
+                .map(|(_, stop_on)| Some(stop_on))
+                .unwrap_or_else(|| {
+                    reader.move_to().end();
+                    None
+                });
+            let mut token = reader.token()?;
+            if token.walker.contains().word(&[&words::DO_ON]) {
+                let _ = reader.state().restore();
+                return Ok(None);
+            }
+            reader.move_to().next();
+            if matches!(stop_on, Some(chars::REDIRECT)) {
+                let arg_func = Self::new(
+                    token.id,
+                    &mut token.walker,
+                    name,
+                    matches!(ends_with, Some(chars::QUESTION)),
+                )?;
+                if let Some(mut parent_func) = Function::read(reader)? {
+                    parent_func.add_fn_arg(arg_func);
+                    Ok(Some(parent_func))
                 } else {
-                    Err(E::MissedSemicolon)
+                    Err(E::NoDestFunction)
                 }
             } else {
-                Ok(None)
+                Ok(Some(Self::new(
+                    token.id,
+                    &mut token.walker,
+                    name,
+                    matches!(ends_with, Some(chars::QUESTION)),
+                )?))
             }
         } else {
             Ok(None)
@@ -71,18 +82,16 @@ impl Reading<Function> for Function {
 
 impl Function {
     pub fn new(
-        index: usize,
-        parent: &mut Reader,
+        token: usize,
+        reader: &mut Reader,
         name: String,
-        args: String,
         tolerance: bool,
     ) -> Result<Self, E> {
-        let mut reader = parent.inherit(args);
         Ok(Self {
-            index,
+            token,
             name,
             tolerance,
-            args: Arguments::read(&mut reader)?,
+            args: Arguments::read(reader)?,
         })
     }
     pub fn add_fn_arg(&mut self, fn_arg: Function) {
@@ -91,30 +100,28 @@ impl Function {
         } else {
             self.args = Some(Arguments {
                 args: vec![(0, Argument::Function(fn_arg))],
-                index: 0,
+                token: 0,
             });
         }
     }
 }
 
 #[cfg(test)]
-mod test {
+mod test_functions {
     use crate::reader::{
         entry::{Function, Reading},
-        Mapper, Reader, E,
+        Reader, E,
     };
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut mapper = Mapper::new();
-        let mut reader = Reader::new(
-            include_str!("./tests/function.sibs").to_string(),
-            &mut mapper,
-            0,
-        );
+        let mut reader = Reader::new(include_str!("./tests/function.sibs").to_string());
+        let mut count = 0;
         while let Some(func) = Function::read(&mut reader)? {
             println!("{func:?}");
+            count += 1;
         }
+        assert_eq!(count, 13);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }

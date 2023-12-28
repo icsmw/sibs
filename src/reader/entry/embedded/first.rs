@@ -1,22 +1,27 @@
 use crate::reader::{
-    entry::{Block, Group, Reading},
+    chars,
+    entry::{Block, Reading},
     words, Reader, E,
 };
 
 #[derive(Debug)]
 pub struct First {
     pub block: Block,
-    index: usize,
+    pub token: usize,
 }
 
 impl Reading<First> for First {
     fn read(reader: &mut Reader) -> Result<Option<First>, E> {
-        if reader.move_to_word(&[words::FIRST])?.is_some() {
-            let from = reader.pos;
-            if let Some(group) = Group::read(reader)? {
+        if reader.move_to().word(&[&words::FIRST]).is_some() {
+            if reader
+                .group()
+                .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
+                .is_some()
+            {
+                let mut token = reader.token()?;
                 Ok(Some(First {
-                    block: Block::read(&mut reader.inherit(group.inner))?.ok_or(E::EmptyGroup)?,
-                    index: reader.get_index_until_current(from),
+                    block: Block::read(&mut token.walker)?.ok_or(E::EmptyGroup)?,
+                    token: token.id,
                 }))
             } else {
                 Err(E::NoGroup)

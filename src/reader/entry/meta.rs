@@ -12,9 +12,8 @@ pub struct Meta {
 impl Reading<Meta> for Meta {
     fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
         let mut inner: Vec<String> = vec![];
-        let from = reader.pos;
-        while reader.move_to_word(&[words::META])?.is_some() {
-            if let Some((line, _, _)) = reader.read_until(&[chars::CARET], true, true)? {
+        while reader.move_to().word(&[&words::META]).is_some() {
+            if let Some((line, _)) = reader.until().char(&[&chars::CARET]) {
                 inner.push(line.trim().to_string());
             } else {
                 Err(E::NoMetaContent)?
@@ -25,7 +24,7 @@ impl Reading<Meta> for Meta {
         } else {
             Ok(Some(Meta {
                 inner,
-                index: reader.get_index_until_current(from),
+                index: reader.token()?.id,
             }))
         }
     }

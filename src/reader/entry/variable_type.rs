@@ -29,14 +29,15 @@ impl fmt::Display for Types {
 #[derive(Debug)]
 pub struct VariableType {
     pub var_type: Types,
-    pub index: usize,
+    pub token: usize,
 }
 
 impl Reading<VariableType> for VariableType {
     fn read(reader: &mut Reader) -> Result<Option<VariableType>, E> {
-        if reader.move_to_char(&[chars::TYPE_OPEN])?.is_some() {
-            if let Some((word, _, index)) = reader.read_word(&[chars::TYPE_CLOSE], true)? {
-                Ok(Some(VariableType::new(word, index)?))
+        if reader.move_to().char(&[&chars::TYPE_OPEN]).is_some() {
+            if let Some((word, _char)) = reader.until().char(&[&chars::TYPE_CLOSE]) {
+                reader.move_to().next();
+                Ok(Some(VariableType::new(word, reader.token()?.id)?))
             } else {
                 Err(E::NotClosedTypeDeclaration)
             }
@@ -47,25 +48,31 @@ impl Reading<VariableType> for VariableType {
 }
 
 impl VariableType {
-    pub fn new(var_type: String, index: usize) -> Result<Self, E> {
+    pub fn new(var_type: String, token: usize) -> Result<Self, E> {
         if Types::String.to_string() == var_type {
             return Ok(Self {
                 var_type: Types::String,
-                index,
+                token,
             });
         }
         if Types::Bool.to_string() == var_type {
             return Ok(Self {
                 var_type: Types::Bool,
-                index,
+                token,
             });
         }
         if Types::Number.to_string() == var_type {
             return Ok(Self {
                 var_type: Types::Number,
-                index,
+                token,
             });
         }
         Err(E::UnknownVariableType(var_type))
+    }
+}
+
+impl fmt::Display for VariableType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{{{}}}", self.var_type)
     }
 }

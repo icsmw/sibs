@@ -17,16 +17,15 @@ pub enum Element {
 
 #[derive(Debug)]
 pub struct Block {
-    meta: Option<Meta>,
-    elements: Vec<Element>,
-    index: usize,
+    pub meta: Option<Meta>,
+    pub elements: Vec<Element>,
+    pub token: usize,
 }
 
 impl Reading<Block> for Block {
     fn read(reader: &mut Reader) -> Result<Option<Block>, E> {
         let mut elements: Vec<Element> = vec![];
         let mut meta: Option<Meta> = None;
-        let from = reader.pos;
         while !reader.rest().trim().is_empty() {
             if let Some(md) = Meta::read(reader)? {
                 meta = Some(md);
@@ -52,19 +51,13 @@ impl Reading<Block> for Block {
                 elements.push(Element::Reference(el));
                 continue;
             }
-            if let Some((inner, _, _)) = reader.read_until(&[chars::SEMICOLON], true, false)? {
-                let mut inner = reader.inherit(inner);
-                if let Some(el) = Function::read(&mut inner)? {
-                    elements.push(Element::Function(el));
-                } else if let Some(el) = Optional::read(&mut inner)? {
-                    elements.push(Element::Optional(el));
-                } else if let Some(el) = VariableAssignation::read(&mut inner)? {
-                    elements.push(Element::VariableAssignation(el));
-                } else if let Some(el) = Each::read(&mut inner)? {
-                    elements.push(Element::Each(el));
-                } else {
-                    elements.push(Element::Command(inner.rest().to_string()));
-                }
+            if let Some(el) = Function::read(reader)? {
+                elements.push(Element::Function(el));
+                continue;
+            }
+            if let Some((cmd, _)) = reader.until().char(&[&chars::SEMICOLON]) {
+                reader.move_to().next();
+                elements.push(Element::Command(cmd));
             } else {
                 break;
             }
@@ -75,35 +68,30 @@ impl Reading<Block> for Block {
             Some(Block {
                 elements,
                 meta,
-                index: reader.get_index_until_current(from),
+                token: reader.token()?.id,
             })
         })
     }
 }
 
 #[cfg(test)]
-mod blocks {
+mod test_blocks {
     use crate::reader::{
         entry::{Block, Reading},
-        Mapper, Reader, E,
+        Reader, E,
     };
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut mapper = Mapper::new();
-        let mut reader = Reader::new(
-            format!(
-                "{}\n{}\n{}\n{}\n{}\n{}",
-                include_str!("./tests/if.sibs"),
-                include_str!("./tests/variable_assignation.sibs"),
-                include_str!("./tests/function.sibs"),
-                include_str!("./tests/optional.sibs"),
-                include_str!("./tests/each.sibs"),
-                include_str!("./tests/refs.sibs")
-            ),
-            &mut mapper,
-            0,
-        );
+        let mut reader = Reader::new(format!(
+            "{}\n{}\n{}\n{}\n{}\n{}",
+            include_str!("./tests/if.sibs"),
+            include_str!("./tests/variable_assignation.sibs"),
+            include_str!("./tests/function.sibs"),
+            include_str!("./tests/optional.sibs"),
+            include_str!("./tests/each.sibs"),
+            include_str!("./tests/refs.sibs")
+        ));
         while let Some(task) = Block::read(&mut reader)? {
             println!("{task:?}");
         }

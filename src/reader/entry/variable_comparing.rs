@@ -8,15 +8,17 @@ pub struct VariableComparing {
     pub name: VariableName,
     pub cmp: Cmp,
     pub value: String,
-    pub index: usize,
+    pub token: usize,
 }
 
 impl Reading<VariableComparing> for VariableComparing {
     fn read(reader: &mut Reader) -> Result<Option<VariableComparing>, E> {
-        reader.hold();
-        let from = reader.pos;
+        reader.state().set();
         if let Some(name) = VariableName::read(reader)? {
-            if let Some(word) = reader.move_to_word(&[words::CMP_TRUE, words::CMP_FALSE])? {
+            if let Some(word) = reader
+                .move_to()
+                .word(&[&words::CMP_TRUE, &words::CMP_FALSE])
+            {
                 if reader.rest().trim().is_empty() {
                     Err(E::NoValueAfterComparing)
                 } else {
@@ -27,12 +29,12 @@ impl Reading<VariableComparing> for VariableComparing {
                         } else {
                             Cmp::NotEqual
                         },
-                        value: reader.rest().trim().to_string(),
-                        index: reader.get_index_until_current(from),
+                        value: reader.move_to().end().trim().to_string(),
+                        token: reader.token()?.id,
                     }))
                 }
             } else {
-                reader.roll_back();
+                reader.state().restore()?;
                 Ok(None)
             }
         } else {

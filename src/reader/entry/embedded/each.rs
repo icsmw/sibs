@@ -1,6 +1,6 @@
 use crate::reader::{
     chars,
-    entry::{Block, Function, Group, Reading, VariableName},
+    entry::{Block, Function, Reading, VariableName},
     words, Reader, E,
 };
 #[derive(Debug)]
@@ -13,21 +13,20 @@ pub struct Each {
     pub variable: VariableName,
     pub input: Input,
     pub block: Block,
-    pub index: usize,
+    pub token: usize,
 }
 
 impl Reading<Each> for Each {
     fn read(reader: &mut Reader) -> Result<Option<Each>, E> {
-        let from = reader.pos;
-        if reader.move_to_word(&[words::EACH])?.is_some() {
-            if let Some((inner, uuid)) =
-                reader.read_until_close(chars::OPEN_BRACKET, chars::CLOSE_BRACKET, true)?
+        if reader.move_to().word(&[&words::EACH]).is_some() {
+            if reader
+                .group()
+                .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
+                .is_some()
             {
-                if let Some(variable) = VariableName::read(&mut reader.inherit(inner))? {
-                    if let Some((inner, _, _)) =
-                        reader.read_until(&[chars::OPEN_SQ_BRACKET], false, false)?
-                    {
-                        let mut inner_reader = reader.inherit(inner);
+                if let Some(variable) = VariableName::read(&mut reader.token()?.walker)? {
+                    if reader.until().char(&[&chars::OPEN_SQ_BRACKET]).is_some() {
+                        let mut inner_reader = reader.token()?.walker;
                         let input =
                             if let Some(variable_name) = VariableName::read(&mut inner_reader)? {
                                 Input::VariableName(variable_name)
@@ -36,16 +35,20 @@ impl Reading<Each> for Each {
                             } else {
                                 Err(E::NoLoopInput)?
                             };
-                        if let Some(group) = Group::read(reader)? {
-                            if reader.move_to_char(&[chars::SEMICOLON])?.is_none() {
+                        if reader
+                            .group()
+                            .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
+                            .is_some()
+                        {
+                            let mut token = reader.token()?;
+                            if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
                                 Err(E::MissedSemicolon)
                             } else {
                                 Ok(Some(Each {
                                     variable,
                                     input,
-                                    block: Block::read(&mut reader.inherit(group.inner))?
-                                        .ok_or(E::EmptyGroup)?,
-                                    index: reader.get_index_until_current(from),
+                                    block: Block::read(&mut token.walker)?.ok_or(E::EmptyGroup)?,
+                                    token: token.id,
                                 }))
                             }
                         } else {
@@ -70,20 +73,18 @@ impl Reading<Each> for Each {
 mod test_each {
     use crate::reader::{
         entry::{Each, Reading, E},
-        Mapper, Reader,
+        Reader,
     };
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut mapper = Mapper::new();
-        let mut reader = Reader::new(
-            include_str!("../tests/each.sibs").to_string(),
-            &mut mapper,
-            0,
-        );
+        let mut reader = Reader::new(include_str!("../tests/each.sibs").to_string());
+        let mut count = 0;
         while let Some(optional) = Each::read(&mut reader)? {
             println!("{optional:?}");
+            count += 1;
         }
+        assert_eq!(count, 6);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }

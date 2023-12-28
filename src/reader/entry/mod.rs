@@ -3,7 +3,6 @@ mod block;
 mod component;
 mod embedded;
 mod function;
-mod group;
 mod meta;
 mod optional;
 mod reference;
@@ -26,7 +25,6 @@ pub use embedded::{
     If::{Cmp, If},
 };
 pub use function::Function;
-pub use group::Group;
 pub use meta::Meta;
 pub use optional::Optional;
 pub use reference::Reference;

@@ -1,35 +1,7 @@
 use thiserror::Error;
 
-#[derive(Debug)]
-pub struct LocatedError {
-    pub from: usize,
-    pub to: usize,
-    pub e: E,
-}
-
-impl LocatedError {
-    pub fn range(from: usize, to: usize, e: E) -> Self {
-        Self { from, to, e }
-    }
-    pub fn pos(pos: usize, e: E) -> Self {
-        Self {
-            from: pos,
-            to: pos,
-            e,
-        }
-    }
-}
-
 #[derive(Error, Debug)]
 pub enum E {
-    #[error("Found not ascii char: {0}")]
-    NotAscii(char),
-    #[error("Unexpected whitespace: {0}")]
-    UnexpectedWhitespace(usize),
-    #[error("Unexpected char: {0}")]
-    UnexpectedChar(char),
-    #[error("Invalid configuration: {0}")]
-    InvalidConfiguration(String),
     #[error("Unknown variable type: {0}")]
     UnknownVariableType(String),
     #[error("Not closed variable type declaration")]
@@ -50,8 +22,6 @@ pub enum E {
     MissedSemicolon,
     #[error("No task arguments")]
     NoTaskArguments,
-    #[error("No task actions")]
-    NoTaskActions,
     #[error("Fail find task actions, missed ]")]
     FailFindTaskActions,
     #[error("Nested functions arn't supported")]
@@ -62,6 +32,12 @@ pub enum E {
     FailParseOptionalAction,
     #[error("Empty group")]
     EmptyGroup,
+    #[error("Fail get last token")]
+    FailGetToken,
+    #[error("Invalid variable name")]
+    InvalidVariableName,
+    #[error("Invalid block [...]")]
+    InvalidBlock,
     #[error("No value after comparing ==")]
     NoValueAfterComparing,
     #[error("Empty path to reference")]
@@ -80,16 +56,12 @@ pub enum E {
     NoStringValueWithCondition,
     #[error("Expecting = or ==")]
     NoComparingOrAssignation,
-    #[error("Unnamed component")]
-    UnnamedComponent,
-    #[error("No component context")]
-    NoComponentContext,
     #[error("No component body")]
     NoComponentBody,
     #[error("Group [...] is expecting")]
     NoGroup,
-    #[error("No colon")]
-    NoColon,
+    #[error("Expecting whitespace after condition like OR, AND")]
+    NoWhitespaceAfterCondition,
     #[error("No loop input EACH($var) input [...]")]
     NoLoopInput,
     #[error("Not closed group")]

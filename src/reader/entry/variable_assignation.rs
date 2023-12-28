@@ -1,6 +1,6 @@
 use crate::reader::{
     chars,
-    entry::{Block, First, Function, Group, Reader, Reading, ValueString, VariableName},
+    entry::{Block, First, Function, Reader, Reading, ValueString, VariableName},
     E,
 };
 
@@ -15,64 +15,78 @@ pub enum Assignation {
 pub struct VariableAssignation {
     pub name: VariableName,
     pub assignation: Assignation,
-    pub index: usize,
+    pub token: usize,
 }
 
 impl Reading<VariableAssignation> for VariableAssignation {
     fn read(reader: &mut Reader) -> Result<Option<VariableAssignation>, E> {
-        reader.hold();
-        let from = reader.pos;
+        reader.state().set();
         if let Some(name) = VariableName::read(reader)? {
-            if reader.move_to_char(&[chars::EQUAL])?.is_some() {
-                if let Some(chars::EQUAL) = reader.next_char() {
+            if reader.move_to().char(&[&chars::EQUAL]).is_some() {
+                if let Some(chars::EQUAL) = reader.next().char() {
                     // This is condition
-                    reader.roll_back();
+                    reader.state().restore()?;
                     return Ok(None);
                 }
-                if let Some(first) = First::read(reader)? {
-                    if reader.move_to_char(&[chars::SEMICOLON])?.is_none() {
-                        Err(E::MissedSemicolon)
+                let assignation = if let Some(first) = First::read(reader)? {
+                    if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
+                        return Err(E::MissedSemicolon)?;
                     } else {
-                        Ok(Some(VariableAssignation {
-                            name,
+                        Some(VariableAssignation {
+                            name: name.clone(),
                             assignation: Assignation::First(first),
-                            index: reader.get_index_until_current(from),
-                        }))
+                            token: reader.token()?.id,
+                        })
                     }
-                } else if let Some(group) = Group::read(reader)? {
-                    if reader.move_to_char(&[chars::SEMICOLON])?.is_none() {
-                        Err(E::MissedSemicolon)
-                    } else {
-                        Ok(Some(VariableAssignation {
-                            name,
-                            assignation: Assignation::Block(
-                                Block::read(&mut reader.inherit(group.inner))?
-                                    .ok_or(E::EmptyGroup)?,
-                            ),
-                            index: reader.get_index_until_current(from),
-                        }))
-                    }
-                } else if let Some((inner, _, _)) =
-                    reader.read_until(&[chars::SEMICOLON], true, true)?
+                } else if reader
+                    .group()
+                    .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
+                    .is_some()
                 {
-                    let mut inner_reader = reader.inherit(inner);
-                    if let Some(func) = Function::read(&mut inner_reader)? {
-                        Ok(Some(VariableAssignation {
-                            name,
-                            assignation: Assignation::Function(func),
-                            index: reader.get_index_until_current(from),
-                        }))
-                    } else if let Some(value_string) = ValueString::read(&mut inner_reader)? {
-                        Ok(Some(VariableAssignation {
-                            name,
-                            assignation: Assignation::ValueString(value_string),
-                            index: reader.get_index_until_current(from),
-                        }))
+                    let mut group_token = reader.token()?;
+                    if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
+                        return Err(E::MissedSemicolon)?;
                     } else {
-                        Err(E::NoComparingOrAssignation)?
+                        Some(VariableAssignation {
+                            name: name.clone(),
+                            assignation: Assignation::Block(
+                                Block::read(&mut group_token.walker)?.ok_or(E::EmptyGroup)?,
+                            ),
+                            token: group_token.id,
+                        })
                     }
                 } else {
-                    Err(E::MissedSemicolon)
+                    None
+                };
+                if assignation.is_some() {
+                    reader.move_to().next();
+                    return Ok(assignation);
+                }
+                let mut token = reader
+                    .until()
+                    .char(&[&chars::SEMICOLON])
+                    .map(|_| {
+                        reader.move_to().next();
+                        reader.token()
+                    })
+                    .unwrap_or_else(|| {
+                        let _ = reader.move_to().end();
+                        reader.token()
+                    })?;
+                if let Some(func) = Function::read(&mut token.walker)? {
+                    Ok(Some(VariableAssignation {
+                        name,
+                        assignation: Assignation::Function(func),
+                        token: token.id,
+                    }))
+                } else if let Some(value_string) = ValueString::read(&mut token.walker)? {
+                    Ok(Some(VariableAssignation {
+                        name,
+                        assignation: Assignation::ValueString(value_string),
+                        token: token.id,
+                    }))
+                } else {
+                    Err(E::NoComparingOrAssignation)?
                 }
             } else {
                 Err(E::NoComparingOrAssignation)?
@@ -87,20 +101,18 @@ impl Reading<VariableAssignation> for VariableAssignation {
 mod test_variable_assignation {
     use crate::reader::{
         entry::{Reading, VariableAssignation},
-        Mapper, Reader, E,
+        Reader, E,
     };
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut mapper = Mapper::new();
-        let mut reader = Reader::new(
-            include_str!("./tests/variable_assignation.sibs").to_string(),
-            &mut mapper,
-            0,
-        );
+        let mut reader = Reader::new(include_str!("./tests/variable_assignation.sibs").to_string());
+        let mut count = 0;
         while let Some(task) = VariableAssignation::read(&mut reader)? {
             println!("{task:?}");
+            count += 1;
         }
+        assert_eq!(count, 10);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }

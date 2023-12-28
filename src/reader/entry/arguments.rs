@@ -1,6 +1,6 @@
 use crate::reader::{
     chars,
-    entry::{Function, Group, Reader, Reading, ValueString},
+    entry::{Function, Reader, Reading, ValueString},
     E,
 };
 
@@ -14,26 +14,29 @@ pub enum Argument {
 #[derive(Debug, Clone)]
 pub struct Arguments {
     pub args: Vec<(usize, Argument)>,
-    pub index: usize,
+    pub token: usize,
 }
 
 impl Reading<Arguments> for Arguments {
     fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
         let mut args = Arguments {
             args: vec![],
-            index: 0,
+            token: 0,
         };
-        let from = reader.pos;
-        while let Some(group) = Group::read(reader)? {
-            args.add_from_group(group, reader)?;
+        while reader
+            .group()
+            .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
+            .is_some()
+        {
+            args.add_args(&mut reader.token()?.walker)?;
         }
-        if !reader.rest().is_empty() {
-            args.add_args(reader.to_end().1, reader)?;
+        if !reader.move_to().end().is_empty() {
+            args.add_args(&mut reader.token()?.walker)?;
         }
         if args.is_empty() {
             Ok(None)
         } else {
-            args.index = reader.get_index_until_current(from);
+            args.token = reader.token()?.id;
             Ok(Some(args))
         }
     }
@@ -42,44 +45,44 @@ impl Reading<Arguments> for Arguments {
 impl Arguments {
     pub fn read_string_args(reader: &mut Reader) -> Result<Vec<(usize, Argument)>, E> {
         let mut arguments: Vec<(usize, Argument)> = vec![];
-        while let Some((arg, _, index)) = reader.read_until_wt(true)? {
+        while let Some(arg) = reader.until().whitespace() {
+            reader.move_to().next();
             if !arg.trim().is_empty() {
-                if reader.inherit(arg.clone()).has_char(chars::AT)? {
+                let mut token = reader.token()?;
+                if token.walker.contains().char(&chars::AT) {
                     Err(E::NestedFunction)?
                 }
-                arguments.push((index, Argument::String(Reader::unserialize(&arg))));
+                arguments.push((token.id, Argument::String(Reader::unserialize(&arg))));
             }
         }
         if !reader.rest().trim().is_empty() {
-            if reader.has_char(chars::AT)? {
+            if reader.contains().char(&chars::AT) {
                 Err(E::NestedFunction)?
             }
-            let (index, rest) = reader.to_end();
-            arguments.push((index, Argument::String(Reader::unserialize(&rest))));
+            let rest = reader.move_to().end();
+            arguments.push((
+                reader.token()?.id,
+                Argument::String(Reader::unserialize(&rest)),
+            ));
         }
         Ok(arguments)
     }
-    pub fn add_from_group(&mut self, group: Group, parent: &mut Reader) -> Result<(), E> {
-        self.add_args(group.inner, parent)?;
-        Ok(())
-    }
-    pub fn add_args(&mut self, inner: String, parent: &mut Reader) -> Result<(), E> {
-        let mut reader = parent.inherit(inner);
+    pub fn add_args(&mut self, reader: &mut Reader) -> Result<(), E> {
         let mut arguments: Vec<(usize, Argument)> = vec![];
         loop {
-            if let Some((before, _, _)) = reader.read_until(&[chars::QUOTES], false, false)? {
+            if reader.until().char(&[&chars::QUOTES]).is_some() {
                 arguments = [
                     arguments,
-                    Arguments::read_string_args(&mut reader.inherit(before))?,
+                    Arguments::read_string_args(&mut reader.token()?.walker)?,
                 ]
                 .concat();
-                if let Some(value_string) = ValueString::read(&mut reader)? {
+                if let Some(value_string) = ValueString::read(reader)? {
                     arguments.push((0, Argument::ValueString(value_string)));
                 } else {
                     Err(E::NoStringEnd)?
                 }
             } else {
-                arguments = [arguments, Arguments::read_string_args(&mut reader)?].concat();
+                arguments = [arguments, Arguments::read_string_args(reader)?].concat();
                 break;
             }
         }

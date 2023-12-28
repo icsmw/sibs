@@ -1,10 +1,7 @@
-use crate::{
-    functions::reader,
-    reader::{
-        chars,
-        entry::{Reading, VariableName},
-        words, Reader, E,
-    },
+use crate::reader::{
+    chars,
+    entry::{Reading, VariableName},
+    Reader, E,
 };
 
 #[derive(Debug, Clone)]
@@ -16,56 +13,73 @@ pub enum Input {
 pub struct Reference {
     pub path: Vec<String>,
     pub inputs: Vec<Input>,
-    pub index: usize,
+    pub token: usize,
 }
 
 impl Reading<Reference> for Reference {
     fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
-        if reader.move_to_char(&[chars::COLON])?.is_some() {
-            let from = reader.pos;
+        if reader.move_to().char(&[&chars::COLON]).is_some() {
             let mut path: Vec<String> = vec![];
             let mut inputs: Vec<Input> = vec![];
-            while let Some((content, stopped_on, _)) =
-                reader.read_until(&[chars::COLON, chars::SEMICOLON], true, false)?
+            while let Some((content, stopped_on)) =
+                reader.until().char(&[&chars::COLON, &chars::SEMICOLON])
             {
                 if content.trim().is_empty() {
                     Err(E::EmptyPathToReference)?
                 }
                 path.push(content);
+                reader.move_to().next();
                 if stopped_on == chars::SEMICOLON {
                     break;
                 }
             }
-            if let Some(last) = path.pop() {
-                let mut inner_reader = reader.inherit(last);
-                if let Some((name, stopped_on, _)) =
-                    inner_reader.read_until(&[chars::OPEN_BRACKET], false, true)?
+            if path.pop().is_some() {
+                let mut token = reader.token()?;
+                let name = token
+                    .walker
+                    .until()
+                    .char(&[&chars::OPEN_BRACKET])
+                    .map(|(value, _)| value)
+                    .unwrap_or_else(|| token.walker.rest().to_string());
+                if token
+                    .walker
+                    .group()
+                    .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
+                    .is_some()
                 {
-                    if stopped_on == chars::OPEN_BRACKET {
-                        if let Some((content, _)) = inner_reader.read_until_close(
-                            chars::OPEN_BRACKET,
-                            chars::CLOSE_BRACKET,
-                            true,
-                        )? {
-                            for value in content.split(',') {
-                                inputs.push(
-                                    if let Some(variable_name) = VariableName::read(
-                                        &mut inner_reader.inherit(value.trim().to_string()),
-                                    )? {
-                                        Input::VariableName(variable_name)
-                                    } else {
-                                        Input::String(value.trim().to_string())
-                                    },
-                                );
+                    let mut inner = token.walker.token()?.walker;
+                    let mut last = false;
+                    while let Some(value) = inner
+                        .until()
+                        .char(&[&chars::COMMA])
+                        .map(|(v, _)| {
+                            inner.move_to().next();
+                            v
+                        })
+                        .or_else(|| {
+                            if !last {
+                                last = true;
+                                Some(inner.move_to().end())
+                            } else {
+                                None
                             }
-                        }
-                    } else {
-                        path.push(name);
+                        })
+                    {
+                        let mut value_reader = inner.token()?.walker;
+                        inputs.push(
+                            if let Some(variable_name) = VariableName::read(&mut value_reader)? {
+                                Input::VariableName(variable_name)
+                            } else {
+                                Input::String(value.trim().to_string())
+                            },
+                        );
                     }
+                } else {
+                    path.push(name);
                 }
             }
             Ok(Some(Reference {
-                index: reader.get_index_until_current(from),
+                token: reader.token()?.id,
                 path,
                 inputs,
             }))
@@ -79,20 +93,18 @@ impl Reading<Reference> for Reference {
 mod test_refs {
     use crate::reader::{
         entry::{Reading, Reference},
-        Mapper, Reader, E,
+        Reader, E,
     };
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut mapper = Mapper::new();
-        let mut reader = Reader::new(
-            include_str!("./tests/refs.sibs").to_string(),
-            &mut mapper,
-            0,
-        );
+        let mut reader = Reader::new(include_str!("./tests/refs.sibs").to_string());
+        let mut count = 0;
         while let Some(refs) = Reference::read(&mut reader)? {
             println!("{refs:?}");
+            count += 1;
         }
+        assert_eq!(count, 6);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }

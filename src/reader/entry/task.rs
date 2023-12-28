@@ -9,22 +9,25 @@ pub struct Task {
     pub name: String,
     pub declarations: Vec<VariableDeclaration>,
     pub block: Option<Block>,
-    pub index: usize,
+    pub token: usize,
 }
 
 impl Reading<Task> for Task {
     fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
-        if let Some((name, stopped_on, uuid)) =
-            reader.read_until(&[chars::OPEN_BRACKET, chars::OPEN_SQ_BRACKET], false, false)?
+        if let Some((name, stopped_on)) = reader
+            .until()
+            .char(&[&chars::OPEN_BRACKET, &chars::OPEN_SQ_BRACKET])
         {
+            if stopped_on == chars::OPEN_BRACKET {
+                reader.move_to().next();
+            }
             let declarations: Vec<VariableDeclaration> = if stopped_on == chars::OPEN_SQ_BRACKET {
                 vec![]
-            } else if let Some((content, _stopped_on, _uuid)) =
-                reader.read_until(&[chars::CLOSE_BRACKET], true, false)?
-            {
+            } else if reader.until().char(&[&chars::CLOSE_BRACKET]).is_some() {
+                reader.move_to().next();
                 let mut declarations: Vec<VariableDeclaration> = vec![];
-                let mut vars_reader = reader.inherit(content);
-                while let Some(variable_declaration) = VariableDeclaration::read(&mut vars_reader)?
+                let mut token = reader.token()?;
+                while let Some(variable_declaration) = VariableDeclaration::read(&mut token.walker)?
                 {
                     declarations.push(variable_declaration);
                 }
@@ -32,14 +35,17 @@ impl Reading<Task> for Task {
             } else {
                 Err(E::NoTaskArguments)?
             };
-            if let Some((content, index)) =
-                reader.read_until_close(chars::OPEN_SQ_BRACKET, chars::CLOSE_SQ_BRACKET, true)?
+            if reader
+                .group()
+                .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
+                .is_some()
             {
-                let block = Block::read(&mut reader.inherit(content))?;
+                let mut token = reader.token()?;
+                let block = Block::read(&mut token.walker)?;
                 Ok(Some(Task {
                     name,
                     declarations,
-                    index,
+                    token: token.id,
                     block,
                 }))
             } else {
@@ -55,20 +61,18 @@ impl Reading<Task> for Task {
 mod test_tasks {
     use crate::reader::{
         entry::{Reading, Task},
-        Mapper, Reader, E,
+        Reader, E,
     };
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut mapper = Mapper::new();
-        let mut reader = Reader::new(
-            include_str!("./tests/tasks.sibs").to_string(),
-            &mut mapper,
-            0,
-        );
+        let mut reader = Reader::new(include_str!("./tests/tasks.sibs").to_string());
+        let mut count = 0;
         while let Some(task) = Task::read(&mut reader)? {
             println!("{task:?}");
+            count += 1;
         }
+        assert_eq!(count, 6);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }

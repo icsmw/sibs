@@ -22,62 +22,67 @@ pub enum Condition {
 pub struct Optional {
     pub condition: Condition,
     pub action: Action,
-    pub index: usize,
+    pub token: usize,
 }
 
 impl Reading<Optional> for Optional {
     fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
-        reader.hold();
-        if reader.move_to_char(&[chars::AT, chars::DOLLAR])?.is_some() {
-            reader.roll_back();
-            if let Some((left, _, _)) = reader.read_until_word(
-                &[words::DO_ON],
-                &[chars::SEMICOLON, chars::OPEN_SQ_BRACKET], //TODO: Caret should instead OPEN_SQ_BRACKET
-                false,
-            )? {
-                let condition = if let Some(variable_comparing) =
-                    VariableComparing::read(&mut reader.inherit(left.clone()))?
-                {
-                    Condition::VariableComparing(variable_comparing)
-                } else if let Some(function) = Function::read(&mut reader.inherit(left))? {
-                    Condition::Function(function)
-                } else {
-                    Err(E::NoFunctionOnOptionalAction)?
-                };
-                if reader.move_to_word(&[words::DO_ON])?.is_some() {
-                    if reader.move_to_char(&[chars::OPEN_SQ_BRACKET])?.is_some() {
-                        if let Some((inner, _, index)) =
-                            reader.read_until(&[chars::CLOSE_SQ_BRACKET], true, false)?
-                        {
-                            if reader.move_to_char(&[chars::SEMICOLON])?.is_none() {
-                                Err(E::MissedSemicolon)?
-                            }
-                            if let Some(block) = Block::read(&mut reader.inherit(inner))? {
-                                return Ok(Some(Optional {
-                                    index,
-                                    action: Action::Block(block),
-                                    condition,
-                                }));
-                            }
+        reader.state().set();
+        if reader
+            .move_to()
+            .char(&[&chars::AT, &chars::DOLLAR])
+            .is_some()
+        {
+            reader.state().restore()?;
+            if reader
+                .cancel_on(&[&chars::SEMICOLON, &chars::OPEN_SQ_BRACKET])
+                .until()
+                .word(&[words::DO_ON])
+                .is_some()
+            {
+                let mut token = reader.token()?;
+                let condition =
+                    if let Some(variable_comparing) = VariableComparing::read(&mut token.walker)? {
+                        Condition::VariableComparing(variable_comparing)
+                    } else if let Some(function) = Function::read(&mut token.walker)? {
+                        Condition::Function(function)
+                    } else {
+                        Err(E::NoFunctionOnOptionalAction)?
+                    };
+                if reader.move_to().word(&[&words::DO_ON]).is_some() {
+                    if reader
+                        .group()
+                        .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
+                        .is_some()
+                    {
+                        let mut token = reader.token()?;
+                        if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
+                            Err(E::MissedSemicolon)?
+                        }
+                        if let Some(block) = Block::read(&mut token.walker)? {
+                            return Ok(Some(Optional {
+                                token: token.id,
+                                action: Action::Block(block),
+                                condition,
+                            }));
                         } else {
-                            Err(E::NotClosedGroup)?
+                            Err(E::InvalidBlock)?
                         }
                     }
-                    if let Some((inner, _, index)) =
-                        reader.read_until(&[chars::SEMICOLON], true, false)?
-                    {
-                        let mut inner_reader = reader.inherit(inner);
+                    if reader.until().char(&[&chars::SEMICOLON]).is_some() {
+                        let mut token = reader.token()?;
+                        reader.move_to().next();
                         Ok(Some(Optional {
-                            index,
+                            token: token.id,
                             action: if let Some(assignation) =
-                                VariableAssignation::read(&mut inner_reader)?
+                                VariableAssignation::read(&mut token.walker)?
                             {
                                 Action::VariableAssignation(assignation)
-                            } else if let Some(value_string) = ValueString::read(&mut inner_reader)?
+                            } else if let Some(value_string) = ValueString::read(&mut token.walker)?
                             {
                                 Action::ValueString(value_string)
                             } else {
-                                Action::Command(inner_reader.rest().to_string())
+                                Action::Command(token.walker.rest().to_string())
                             },
                             condition,
                         }))
@@ -97,23 +102,21 @@ impl Reading<Optional> for Optional {
 }
 
 #[cfg(test)]
-mod test {
+mod test_optional {
     use crate::reader::{
         entry::{Optional, Reading},
-        Mapper, Reader, E,
+        Reader, E,
     };
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut mapper = Mapper::new();
-        let mut reader = Reader::new(
-            include_str!("./tests/optional.sibs").to_string(),
-            &mut mapper,
-            0,
-        );
+        let mut reader = Reader::new(include_str!("./tests/optional.sibs").to_string());
+        let mut count = 0;
         while let Some(optional) = Optional::read(&mut reader)? {
             println!("{optional:?}");
+            count += 1;
         }
+        assert_eq!(count, 9);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }

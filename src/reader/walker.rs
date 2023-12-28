@@ -410,8 +410,7 @@ impl Walker {
 
 #[cfg(test)]
 mod test_walker {
-    use crate::reader::walker::{Map, Walker};
-    use std::{cell::RefCell, rc::Rc};
+    use crate::reader::walker::Walker;
 
     #[test]
     fn until_whitespace() {
