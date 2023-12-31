@@ -67,15 +67,18 @@ impl fmt::Display for ValueString {
 mod test_value_string {
     use crate::reader::{
         entry::{Reading, ValueString},
-        Reader, E,
+        tests, Reader, E,
     };
 
     #[test]
     fn reading() -> Result<(), E> {
         let mut reader = Reader::new(include_str!("./tests/value_string.sibs").to_string());
         let mut count = 0;
-        while let Some(value_string) = ValueString::read(&mut reader)? {
-            println!("{value_string:?}");
+        while let Some(entity) = ValueString::read(&mut reader)? {
+            assert_eq!(
+                tests::trim(reader.recent()),
+                tests::trim(&entity.to_string())
+            );
             count += 1;
         }
         assert_eq!(count, 16);

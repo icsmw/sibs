@@ -30,17 +30,20 @@ impl Reading<Function> for Function {
                 .unwrap_or_else(|| (reader.move_to().end(), None));
             if matches!(ends_with, Some(chars::SEMICOLON)) {
                 reader.move_to().next();
+                return Ok(Some(Self::new(reader.token()?.id, None, name, false)?));
+            }
+            if ends_with.is_none() {
                 return Ok(Some(Self::new(
                     reader.token()?.id,
-                    &mut reader.token()?.bound,
+                    Some(reader),
                     name,
                     false,
                 )?));
             }
-            if ends_with.is_none() {
-                return Ok(Some(Self::new(reader.token()?.id, reader, name, false)?));
-            }
             reader.trim();
+            if matches!(ends_with, Some(chars::QUESTION)) {
+                reader.move_to().next();
+            }
             let stop_on = reader
                 .until()
                 .char(&[&chars::REDIRECT, &chars::SEMICOLON])
@@ -58,7 +61,7 @@ impl Reading<Function> for Function {
             if matches!(stop_on, Some(chars::REDIRECT)) {
                 let feed = Self::new(
                     token.id,
-                    &mut token.bound,
+                    Some(&mut token.bound),
                     name,
                     matches!(ends_with, Some(chars::QUESTION)),
                 )?;
@@ -71,7 +74,7 @@ impl Reading<Function> for Function {
             } else {
                 Ok(Some(Self::new(
                     token.id,
-                    &mut token.bound,
+                    Some(&mut token.bound),
                     name,
                     matches!(ends_with, Some(chars::QUESTION)),
                 )?))
@@ -85,7 +88,7 @@ impl Reading<Function> for Function {
 impl Function {
     pub fn new(
         token: usize,
-        reader: &mut Reader,
+        mut reader: Option<&mut Reader>,
         name: String,
         tolerance: bool,
     ) -> Result<Self, E> {
@@ -94,7 +97,11 @@ impl Function {
             name,
             tolerance,
             feed: None,
-            args: Arguments::read(reader)?,
+            args: if let Some(reader) = reader.take() {
+                Arguments::read(reader)?
+            } else {
+                None
+            },
         })
     }
     pub fn feeding(&mut self, func: Function) {
@@ -108,15 +115,30 @@ impl Function {
 
 impl fmt::Display for Function {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fn to_string(func: &Function) -> String {
+            format!(
+                "@{}{}{}",
+                func.name,
+                if func.tolerance { "?" } else { "" },
+                func.args
+                    .as_ref()
+                    .map(|args| format!(" {args}"))
+                    .unwrap_or_default()
+            )
+        }
+        let mut nested: Vec<String> = vec![];
+        let mut current = self;
+        while let Some(feed) = current.feed.as_ref() {
+            nested.push(to_string(feed));
+            current = feed;
+        }
+        nested.reverse();
         write!(
             f,
-            "@{}{}{}",
-            self.name,
-            if self.tolerance { "?" } else { "" },
-            self.args
-                .as_ref()
-                .map(|args| format!(" {args}"))
-                .unwrap_or_default()
+            "{}{}{}",
+            nested.join(" > "),
+            if nested.is_empty() { "" } else { " > " },
+            to_string(self)
         )
     }
 }
@@ -125,15 +147,18 @@ impl fmt::Display for Function {
 mod test_functions {
     use crate::reader::{
         entry::{Function, Reading},
-        Reader, E,
+        tests, Reader, E,
     };
 
     #[test]
     fn reading() -> Result<(), E> {
         let mut reader = Reader::new(include_str!("./tests/function.sibs").to_string());
         let mut count = 0;
-        while let Some(func) = Function::read(&mut reader)? {
-            println!("{func:?}");
+        while let Some(entity) = Function::read(&mut reader)? {
+            assert_eq!(
+                tests::trim(reader.recent()),
+                tests::trim(&format!("{entity};"))
+            );
             count += 1;
         }
         assert_eq!(count, 17);

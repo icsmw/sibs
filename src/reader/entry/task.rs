@@ -3,6 +3,7 @@ use crate::reader::{
     entry::{Block, Reading, VariableDeclaration},
     Reader, E,
 };
+use std::fmt;
 
 #[derive(Debug)]
 pub struct Task {
@@ -42,8 +43,11 @@ impl Reading<Task> for Task {
             {
                 let mut token = reader.token()?;
                 let block = Block::read(&mut token.bound)?;
+                if reader.move_to().char(&[&chars::SEMICOLON]).is_some() {
+                    reader.move_to().next();
+                }
                 Ok(Some(Task {
-                    name,
+                    name: name.trim().to_string(),
                     declarations,
                     token: token.id,
                     block,
@@ -57,19 +61,48 @@ impl Reading<Task> for Task {
     }
 }
 
+impl fmt::Display for Task {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}{} {}",
+            self.name,
+            if self.declarations.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "({})",
+                    self.declarations
+                        .iter()
+                        .map(|d| d.to_string())
+                        .collect::<Vec<String>>()
+                        .join("; ")
+                )
+            },
+            self.block
+                .as_ref()
+                .map(|b| format!("{b};"))
+                .unwrap_or_default()
+        )
+    }
+}
+
 #[cfg(test)]
 mod test_tasks {
     use crate::reader::{
         entry::{Reading, Task},
-        Reader, E,
+        tests, Reader, E,
     };
 
     #[test]
     fn reading() -> Result<(), E> {
         let mut reader = Reader::new(include_str!("./tests/tasks.sibs").to_string());
         let mut count = 0;
-        while let Some(task) = Task::read(&mut reader)? {
-            println!("{task:?}");
+        while let Some(entity) = Task::read(&mut reader)? {
+            assert_eq!(
+                tests::trim(reader.recent()),
+                tests::trim(&entity.to_string())
+            );
             count += 1;
         }
         assert_eq!(count, 6);

@@ -52,11 +52,52 @@ pub enum Proviso {
     Group(Vec<Proviso>),
 }
 
+impl fmt::Display for Proviso {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Variable(variable_name, cmp, value_string) =>
+                    format!("{variable_name} {cmp} {value_string}"),
+                Self::Combination(v, _) => v.to_string(),
+                Self::Function(v, negative) => format!("{}{v}", if *negative { "!" } else { "" }),
+                Self::Group(provisio) => provisio
+                    .iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(" "),
+            }
+        )
+    }
+}
+
 #[derive(Debug)]
 pub enum Element {
     If(Vec<Proviso>, Block),
     Else(Block),
 }
+
+impl fmt::Display for Element {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Element::If(provisio, block) => format!(
+                    "IF {} {block}",
+                    provisio
+                        .iter()
+                        .map(|p| p.to_string())
+                        .collect::<Vec<String>>()
+                        .join(" ")
+                ),
+                Element::Else(block) => format!("ELSE {block}"),
+            }
+        )
+    }
+}
+
 #[derive(Debug)]
 pub struct If {
     pub elements: Vec<Element>,
@@ -212,19 +253,36 @@ impl If {
     }
 }
 
+impl fmt::Display for If {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{};",
+            self.elements
+                .iter()
+                .map(|el| el.to_string())
+                .collect::<Vec<String>>()
+                .join(" ")
+        )
+    }
+}
+
 #[cfg(test)]
 mod test_if {
     use crate::reader::{
         entry::{If, Reading},
-        Reader, E,
+        tests, Reader, E,
     };
 
     #[test]
     fn reading() -> Result<(), E> {
         let mut reader = Reader::new(include_str!("../tests/if.sibs").to_string());
         let mut count = 0;
-        while let Some(task) = If::read(&mut reader)? {
-            println!("{task:?}");
+        while let Some(entity) = If::read(&mut reader)? {
+            assert_eq!(
+                tests::trim(reader.recent()),
+                tests::trim(&entity.to_string())
+            );
             count += 1;
         }
         assert_eq!(count, 10);

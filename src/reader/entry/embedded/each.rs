@@ -3,11 +3,27 @@ use crate::reader::{
     entry::{Block, Function, Reading, VariableName},
     words, Reader, E,
 };
+use std::fmt;
+
 #[derive(Debug)]
 pub enum Input {
     VariableName(VariableName),
     Function(Function),
 }
+
+impl fmt::Display for Input {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Function(v) => v.to_string(),
+                Self::VariableName(v) => v.to_string(),
+            }
+        )
+    }
+}
+
 #[derive(Debug)]
 pub struct Each {
     pub variable: VariableName,
@@ -69,19 +85,27 @@ impl Reading<Each> for Each {
     }
 }
 
+impl fmt::Display for Each {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "EACH({}) {} {};", self.variable, self.input, self.block)
+    }
+}
 #[cfg(test)]
 mod test_each {
     use crate::reader::{
         entry::{Each, Reading, E},
-        Reader,
+        tests, Reader,
     };
 
     #[test]
     fn reading() -> Result<(), E> {
         let mut reader = Reader::new(include_str!("../tests/each.sibs").to_string());
         let mut count = 0;
-        while let Some(optional) = Each::read(&mut reader)? {
-            println!("{optional:?}");
+        while let Some(entity) = Each::read(&mut reader)? {
+            assert_eq!(
+                tests::trim(reader.recent()),
+                tests::trim(&format!("{entity}"))
+            );
             count += 1;
         }
         assert_eq!(count, 6);

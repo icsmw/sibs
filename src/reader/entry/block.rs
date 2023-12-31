@@ -16,6 +16,24 @@ pub enum Element {
     Command(String),
 }
 
+impl fmt::Display for Element {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Command(v) => v.to_string(),
+                Self::Function(v) => v.to_string(),
+                Self::If(v) => v.to_string(),
+                Self::Each(v) => v.to_string(),
+                Self::VariableAssignation(v) => v.to_string(),
+                Self::Optional(v) => v.to_string(),
+                Self::Reference(v) => v.to_string(),
+            }
+        )
+    }
+}
+
 #[derive(Debug)]
 pub struct Block {
     pub meta: Option<Meta>,
@@ -77,7 +95,36 @@ impl Reading<Block> for Block {
 
 impl fmt::Display for Block {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "[]")
+        write!(
+            f,
+            "[\n{}{}{}]",
+            self.meta
+                .as_ref()
+                .map(|meta| {
+                    format!(
+                        "{}{}",
+                        meta.inner
+                            .iter()
+                            .map(|v| format!("/// {v}"))
+                            .collect::<Vec<String>>()
+                            .join("\n"),
+                        if meta.inner.is_empty() { "" } else { "\n" }
+                    )
+                })
+                .unwrap_or_default(),
+            self.elements
+                .iter()
+                .map(|el| format!(
+                    "{el}{}",
+                    match el {
+                        Element::Function(_) | Element::Command(_) => ";",
+                        _ => "",
+                    }
+                ))
+                .collect::<Vec<String>>()
+                .join("\n"),
+            if self.elements.is_empty() { "" } else { "\n" }
+        )
     }
 }
 
@@ -85,7 +132,7 @@ impl fmt::Display for Block {
 mod test_blocks {
     use crate::reader::{
         entry::{Block, Reading},
-        Reader, E,
+        tests, Reader, E,
     };
 
     #[test]
@@ -99,8 +146,11 @@ mod test_blocks {
             include_str!("./tests/each.sibs"),
             include_str!("./tests/refs.sibs")
         ));
-        while let Some(task) = Block::read(&mut reader)? {
-            println!("{task:?}");
+        while let Some(entity) = Block::read(&mut reader)? {
+            assert_eq!(
+                format!("[{}]", tests::trim(reader.recent())),
+                tests::trim(&entity.to_string())
+            );
         }
         assert!(reader.rest().trim().is_empty());
         Ok(())

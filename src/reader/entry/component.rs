@@ -1,10 +1,9 @@
-use std::path::PathBuf;
-
 use crate::reader::{
     chars,
     entry::{Meta, Reading, Task},
     words, Reader, E,
 };
+use std::{fmt, path::PathBuf};
 
 #[derive(Debug)]
 pub struct Component {
@@ -70,11 +69,34 @@ impl Reading<Component> for Component {
     }
 }
 
+impl fmt::Display for Component {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "#[{}{}]{}\n{}",
+            self.name,
+            self.cwd
+                .as_ref()
+                .map(|cwd| format!(": {}", cwd.to_string_lossy()))
+                .unwrap_or_default(),
+            self.meta
+                .as_ref()
+                .map(|meta| meta.to_string())
+                .unwrap_or_default(),
+            self.tasks
+                .iter()
+                .map(|task| task.to_string())
+                .collect::<Vec<String>>()
+                .join("\n")
+        )
+    }
+}
+
 #[cfg(test)]
 mod test_component {
     use crate::reader::{
         entry::{Component, Reading},
-        Reader, E,
+        tests, Reader, E,
     };
 
     #[test]
@@ -90,8 +112,12 @@ mod test_component {
                 .join("\n"),
         );
         let mut count = 0;
-        while let Some(comp) = Component::read(&mut reader)? {
-            println!("{:?}: {}", comp.cwd, comp.name,);
+        while let Some(entity) = Component::read(&mut reader)? {
+            // println!("{:?}: {}", comp.cwd, comp.name,);
+            assert_eq!(
+                tests::trim(reader.recent()),
+                tests::trim(&format!("{entity}"))
+            );
             count += 1;
         }
         assert_eq!(count, 5);

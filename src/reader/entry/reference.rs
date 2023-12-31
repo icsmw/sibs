@@ -88,9 +88,8 @@ impl Reading<Reference> for Reference {
                             },
                         );
                     }
-                } else {
-                    path.push(name);
                 }
+                path.push(name);
             }
             Ok(Some(Reference {
                 token: reader.token()?.id,
@@ -112,11 +111,14 @@ impl fmt::Display for Reference {
             if self.inputs.is_empty() {
                 String::new()
             } else {
-                self.inputs
-                    .iter()
-                    .map(|input| input.to_string())
-                    .collect::<Vec<String>>()
-                    .join(", ")
+                format!(
+                    "({})",
+                    self.inputs
+                        .iter()
+                        .map(|input| input.to_string())
+                        .collect::<Vec<String>>()
+                        .join(", ")
+                )
             }
         )
     }
@@ -126,15 +128,18 @@ impl fmt::Display for Reference {
 mod test_refs {
     use crate::reader::{
         entry::{Reading, Reference},
-        Reader, E,
+        tests, Reader, E,
     };
 
     #[test]
     fn reading() -> Result<(), E> {
         let mut reader = Reader::new(include_str!("./tests/refs.sibs").to_string());
         let mut count = 0;
-        while let Some(refs) = Reference::read(&mut reader)? {
-            println!("{refs:?}");
+        while let Some(entity) = Reference::read(&mut reader)? {
+            assert_eq!(
+                tests::trim(reader.recent()),
+                tests::trim(&entity.to_string())
+            );
             count += 1;
         }
         assert_eq!(count, 6);

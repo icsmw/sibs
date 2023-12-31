@@ -10,6 +10,7 @@ pub enum Argument {
     String(String),
     ValueString(ValueString),
     VariableName(VariableName),
+    Arguments(Arguments),
 }
 
 impl fmt::Display for Argument {
@@ -18,9 +19,10 @@ impl fmt::Display for Argument {
             f,
             "{}",
             match self {
-                Self::String(v) => v.to_string(),
+                Self::String(v) => Reader::serialize(v),
                 Self::ValueString(v) => v.to_string(),
                 Self::VariableName(v) => v.to_string(),
+                Self::Arguments(v) => format!("[{v}]"),
             }
         )
     }
@@ -43,7 +45,13 @@ impl Reading<Arguments> for Arguments {
             .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
             .is_some()
         {
-            args.add_args(&mut reader.token()?.bound)?;
+            let mut token = reader.token()?;
+            let mut group = Arguments {
+                args: vec![],
+                token: token.id,
+            };
+            group.add_args(&mut token.bound)?;
+            args.args.push((token.id, Argument::Arguments(group)));
         }
         if !reader.move_to().end().is_empty() {
             args.add_args(&mut reader.token()?.bound)?;
@@ -69,6 +77,8 @@ impl Arguments {
                 }
                 if let Some(variable) = VariableName::read(&mut token.bound)? {
                     arguments.push((token.id, Argument::VariableName(variable)));
+                } else if let Some(value_string) = ValueString::read(&mut token.bound)? {
+                    arguments.push((token.id, Argument::ValueString(value_string)));
                 } else {
                     arguments.push((token.id, Argument::String(Reader::unserialize(&arg))));
                 }

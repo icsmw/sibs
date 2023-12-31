@@ -118,7 +118,7 @@ impl fmt::Display for VariableAssignation {
 mod test_variable_assignation {
     use crate::reader::{
         entry::{Reading, VariableAssignation},
-        Reader, E,
+        tests, Reader, E,
     };
 
     #[test]
@@ -126,11 +126,13 @@ mod test_variable_assignation {
         let mut reader = Reader::new(include_str!("./tests/variable_assignation.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = VariableAssignation::read(&mut reader)? {
-            let recently_read = reader.recent();
-            println!("{entity}");
+            assert_eq!(
+                tests::trim(reader.recent()),
+                tests::trim(&entity.to_string())
+            );
             count += 1;
         }
-        assert_eq!(count, 10);
+        assert_eq!(count, 11);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }

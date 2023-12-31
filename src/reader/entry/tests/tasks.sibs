@@ -23,7 +23,7 @@ build($mode: dev | prod) [
     IF $variable == "one" OR $variable == "two" [
         @cd ./linux;
     ];
-]
+];
 custom($input: {string}) [
     @os window => $file_name = "release{$version}-win.zip";
     @os linux => $file_name = "release{$version}-linux.zip";
@@ -46,7 +46,7 @@ custom($input: {string}) [
     IF $variable == "one" OR $variable == "two" [
         @cd ./linux;
     ];
-]
+];
 build_multi($mode: dev | prod; $target: win | linux) [
     @os window => $file_name = "release{$version}-win.zip";
     @os linux => $file_name = "release{$version}-linux.zip";
@@ -69,8 +69,8 @@ build_multi($mode: dev | prod; $target: win | linux) [
     IF $variable == "one" OR $variable == "two" [
         @cd ./linux;
     ];
-]
-build($mode: dev | prod; $target: win | linux; $input: {string}) [
+];
+build_b($mode: dev | prod; $target: win | linux; $input: {string}) [
     @os window => $file_name = "release{$version}-win.zip";
     @os linux => $file_name = "release{$version}-linux.zip";
     @os darwin => $file_name = "release{$version}-darwin.zip";
@@ -92,8 +92,8 @@ build($mode: dev | prod; $target: win | linux; $input: {string}) [
     IF $variable == "one" OR $variable == "two" [
         @cd ./linux;
     ];
-]
-build($input_a: {string}, $mode: dev | prod; $target: win | linux; $input_b: {string}) [
+];
+build_c($input_a: {string}; $mode: dev | prod; $target: win | linux; $input_b: {string}) [
     @os window => $file_name = "release{$version}-win.zip";
     @os linux => $file_name = "release{$version}-linux.zip";
     @os darwin => $file_name = "release{$version}-darwin.zip";
@@ -115,7 +115,7 @@ build($input_a: {string}, $mode: dev | prod; $target: win | linux; $input_b: {st
     IF $variable == "one" OR $variable == "two" [
         @cd ./linux;
     ];
-]
+];
 distribution [
     @os window => $file_name = "release{$version}-win.zip";
     @os linux => $file_name = "release{$version}-linux.zip";
@@ -138,4 +138,4 @@ distribution [
     IF $variable == "one" OR $variable == "two" [
         @cd ./linux;
     ];
-]
+];

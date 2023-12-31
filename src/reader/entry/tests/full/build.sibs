@@ -26,7 +26,7 @@
         @copy ../client/dist/client ./dist;
         yarn run build;
         @copy ./package.json ./dist;
-    ]
+    ];
     release($mode: dev | prod) [
         /// Build release artifacts
         /// $mode
@@ -36,7 +36,7 @@
         @os window => yarn run build-win;
         @os linux => yarn run build-linux;
         @os darwin => yarn run build-darwin;
-    ]
+    ];
     distribution [
         /// Name and compress release artifacts
         $version = @read_as_string ./package.json > @find /"version": "([\d\.])"/gi;
@@ -51,7 +51,7 @@
         ];
         @os linux => tgz ./release/unpacked-linux {$file_name};
         @os darwin => tgz ./release/unpacked-mac {$file_name};
-    ]
+    ];
     collect [
         $files = @read_as_lines ./some_file;
         EACH($file) $files [
@@ -63,10 +63,10 @@
                 tgz ./release/{$file};
             ];
         ];
-    ]
+    ];
     lint [
         :TS:lint;
-    ]
+    ];
 
 #[client: ./client]
     /// Client (HTML + JS client files)
@@ -82,10 +82,10 @@
         @remove? ./dist;
         $mode == dev => yarn run build;
         $mode == prod => yarn run prod;
-    ]
+    ];
     lint [
         :TS:lint;
-    ]
+    ];
 
 #[shared: ./shared]
     /// Common utils/libs/defs for client, app and wrapper
@@ -96,26 +96,26 @@
         /// Compile
         !@exists ./node_modules => yarn install;
         yarn run build;
-    ]
+    ];
     prod [
         /// Compile & cleanup node_modules for production
         :self:build;
         @remove? ./node_modules;
         yarn install --production;
-    ]
+    ];
     lint [
         :TS:lint;
-    ]
+    ];
         
 #[module: ./core/module]
     /// Rust core of application
     @hash [./src];
     lint [
         :RUST:lint;
-    ]
+    ];
     test [
         :RUST:test;
-    ]
+    ];
 
 #[binding: ./core/binding]
     /// Compiler of index.node with rust core application
@@ -124,13 +124,13 @@
         [build];
     build [
         nj-cli build --release;
-    ]
+    ];
     lint [
         :RUST:lint;
-    ]
+    ];
     test [
         :RUST:test;
-    ]
+    ];
 
 #[wrapper: ./core/wrapper]
     /// Rust core wrapped into TypeScript module
@@ -143,13 +143,13 @@
         :binding:build;
         @copy ../binding/dist/index.node ./dist;
         yarn run build;
-    ]
+    ];
     prod [
         /// Compile & cleanup node_modules for production
         :self:build;
         @remove? ./node_modules;
         yarn install --production;
-    ]
+    ];
     lint [
         :TS:lint;
-    ]
+    ];

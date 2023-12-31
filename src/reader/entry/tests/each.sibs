@@ -1,7 +1,7 @@
-EACH($file)$files[
+EACH($file) $files [
     tgz ./release/{$file};
 ];
-EACH($file)$files [
+EACH($file) $files [
     IF $file != "." AND $file != ".." [
         tgz ./release/{$file};
     ];
@@ -11,17 +11,17 @@ EACH($file) $files [
         tgz ./release/{$file};
     ];
 ];
-EACH ($file) @ls ../output/files [
+EACH($file) @ls ../output/files [
     IF $file != "." AND $file != ".." [
         tgz ./release/{$file};
     ];
 ];
-EACH    ($file) @ls ../output/files  [
+EACH($file) @ls ../output/files [
     IF $file != "." AND $file != ".." [
         tgz ./release/{$file};
     ];
 ];
-EACH($file)@ls ../output/files[
+EACH($file) @ls ../output/files [
     IF $file != "." AND $file != ".." [
         tgz ./release/{$file};
     ];

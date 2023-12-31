@@ -1,5 +1,7 @@
 pub mod chars;
 pub mod entry;
+#[cfg(test)]
+pub mod tests;
 pub mod words;
 
 use crate::{
@@ -538,13 +540,16 @@ impl Reader {
         self.pos == self.content.len()
     }
     pub fn unserialize(content: &str) -> String {
-        let mut str: String = String::new();
-        for char in content.chars() {
-            if char != chars::SERIALIZING {
-                str.push(char);
-            }
-        }
-        str.trim().to_string()
+        content
+            .to_string()
+            .replace("\\\"", "\"")
+            .replace("\\ ", " ")
+    }
+    pub fn serialize(content: &str) -> String {
+        content
+            .to_string()
+            .replace('\"', "\\\"")
+            .replace(' ', "\\ ")
     }
 }
 
@@ -954,7 +959,6 @@ mod test_reader {
             .unwrap()
             .join("./src/reader/entry/tests/full/build.sibs");
         let components = read_file(&target)?;
-        println!("{components:?}");
         assert!(!components.is_empty());
         Ok(())
     }

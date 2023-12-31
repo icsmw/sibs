@@ -35,6 +35,6 @@ impl Reading<First> for First {
 
 impl fmt::Display for First {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "FIRST = {}", self.block)
+        write!(f, "FIRST {}", self.block)
     }
 }

@@ -20,9 +20,9 @@ impl fmt::Display for Action {
             "{}",
             match self {
                 Self::VariableAssignation(v) => v.to_string(),
-                Self::ValueString(v) => v.to_string(),
-                Self::Command(v) => v.to_string(),
-                Self::Block(v) => v.to_string(),
+                Self::ValueString(v) => format!("{v};"),
+                Self::Command(v) => format!("{v};"),
+                Self::Block(v) => format!("{v};"),
             }
         )
     }
@@ -111,7 +111,7 @@ impl Reading<Optional> for Optional {
                             {
                                 Action::ValueString(value_string)
                             } else {
-                                Action::Command(token.bound.rest().to_string())
+                                Action::Command(token.bound.rest().trim().to_string())
                             },
                             condition,
                         }))
@@ -140,15 +140,18 @@ impl fmt::Display for Optional {
 mod test_optional {
     use crate::reader::{
         entry::{Optional, Reading},
-        Reader, E,
+        tests, Reader, E,
     };
 
     #[test]
     fn reading() -> Result<(), E> {
         let mut reader = Reader::new(include_str!("./tests/optional.sibs").to_string());
         let mut count = 0;
-        while let Some(optional) = Optional::read(&mut reader)? {
-            println!("{optional:?}");
+        while let Some(entity) = Optional::read(&mut reader)? {
+            assert_eq!(
+                tests::trim(reader.recent()),
+                tests::trim(&entity.to_string())
+            );
             count += 1;
         }
         assert_eq!(count, 9);

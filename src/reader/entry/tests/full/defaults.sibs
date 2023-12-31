@@ -2,7 +2,7 @@
     build [
         /// Building application
         :app:build;
-    ]
+    ];
     lint($target: rust | ts | all) [
         /// Linting
         /// [rust] run clippy for all rust modules
@@ -22,4 +22,4 @@
             :self:lint(rust);
             :self:lint(ts);
         ];
-    ]
+    ];
