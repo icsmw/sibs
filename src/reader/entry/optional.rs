@@ -9,6 +9,7 @@ use std::fmt;
 pub enum Action {
     VariableAssignation(VariableAssignation),
     ValueString(ValueString),
+    Function(Function),
     Command(String),
     Block(Block),
 }
@@ -20,6 +21,7 @@ impl fmt::Display for Action {
             "{}",
             match self {
                 Self::VariableAssignation(v) => v.to_string(),
+                Self::Function(v) => format!("{v};"),
                 Self::ValueString(v) => format!("{v};"),
                 Self::Command(v) => format!("{v};"),
                 Self::Block(v) => format!("{v};"),
@@ -107,6 +109,8 @@ impl Reading<Optional> for Optional {
                                 VariableAssignation::read(&mut token.bound)?
                             {
                                 Action::VariableAssignation(assignation)
+                            } else if let Some(func) = Function::read(&mut token.bound)? {
+                                Action::Function(func)
                             } else if let Some(value_string) = ValueString::read(&mut token.bound)?
                             {
                                 Action::ValueString(value_string)
@@ -150,13 +154,14 @@ mod test_optional {
         let mut reader = Reader::new(include_str!("./tests/normal/optional.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Optional::read(&mut reader)? {
+            println!("{entity:?}");
             assert_eq!(
                 tests::trim(reader.recent()),
                 tests::trim(&entity.to_string())
             );
             count += 1;
         }
-        assert_eq!(count, 9);
+        assert_eq!(count, 10);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
