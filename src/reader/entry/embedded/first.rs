@@ -20,10 +20,14 @@ impl Reading<First> for First {
                 .is_some()
             {
                 let mut token = reader.token()?;
-                Ok(Some(First {
-                    block: Block::read(&mut token.bound)?.ok_or(E::EmptyGroup)?,
-                    token: token.id,
-                }))
+                if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
+                    Err(E::MissedSemicolon)
+                } else {
+                    Ok(Some(First {
+                        block: Block::read(&mut token.bound)?.ok_or(E::EmptyGroup)?,
+                        token: token.id,
+                    }))
+                }
             } else {
                 Err(E::NoGroup)
             }
@@ -35,6 +39,47 @@ impl Reading<First> for First {
 
 impl fmt::Display for First {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "FIRST {}", self.block)
+        write!(f, "FIRST {};", self.block)
+    }
+}
+
+#[cfg(test)]
+mod test_first {
+    use crate::reader::{
+        entry::{First, Reading},
+        tests, Reader, E,
+    };
+
+    #[test]
+    fn reading() -> Result<(), E> {
+        let mut reader = Reader::new(include_str!("../tests/normal/first.sibs").to_string());
+        let mut count = 0;
+        while let Some(entity) = First::read(&mut reader)? {
+            println!("{}", reader.rest());
+            assert_eq!(
+                tests::trim(reader.recent()),
+                tests::trim(&entity.to_string())
+            );
+            count += 1;
+        }
+        assert_eq!(count, 2);
+        assert!(reader.rest().trim().is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn error() -> Result<(), E> {
+        let samples = include_str!("../tests/error/first.sibs").to_string();
+        let samples = samples.split('\n').collect::<Vec<&str>>();
+        let mut count = 0;
+        for sample in samples.iter() {
+            let mut reader = Reader::new(sample.to_string());
+            let res = First::read(&mut reader);
+            println!("{res:?}");
+            assert!(res.is_err());
+            count += 1;
+        }
+        assert_eq!(count, samples.len());
+        Ok(())
     }
 }

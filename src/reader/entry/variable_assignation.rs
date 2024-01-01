@@ -30,15 +30,11 @@ impl Reading<VariableAssignation> for VariableAssignation {
                     return Ok(None);
                 }
                 let assignation = if let Some(first) = First::read(reader)? {
-                    if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
-                        return Err(E::MissedSemicolon)?;
-                    } else {
-                        Some(VariableAssignation {
-                            name: name.clone(),
-                            assignation: Assignation::First(first),
-                            token: reader.token()?.id,
-                        })
-                    }
+                    Some(VariableAssignation {
+                        name: name.clone(),
+                        assignation: Assignation::First(first),
+                        token: reader.token()?.id,
+                    })
                 } else if reader
                     .group()
                     .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
@@ -102,13 +98,17 @@ impl fmt::Display for VariableAssignation {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{} = {};",
+            "{} = {}{}",
             self.name,
             match &self.assignation {
                 Assignation::ValueString(v) => v.to_string(),
                 Assignation::Block(v) => v.to_string(),
                 Assignation::First(v) => v.to_string(),
                 Assignation::Function(v) => v.to_string(),
+            },
+            match &self.assignation {
+                Assignation::First(_) => "",
+                _ => ";",
             }
         )
     }
