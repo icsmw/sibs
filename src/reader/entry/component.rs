@@ -136,18 +136,18 @@ mod test_component {
 
     #[test]
     fn error() -> Result<(), E> {
-        let components = include_str!("./tests/error/component.sibs").to_string();
-        let components = components
+        let samples = include_str!("./tests/error/component.sibs").to_string();
+        let samples = samples
             .split('\n')
             .map(|v| format!("{v} [\n@os;\n];"))
             .collect::<Vec<String>>();
         let mut count = 0;
-        for component in components.iter() {
-            let mut reader = Reader::new(component.to_string());
+        for sample in samples.iter() {
+            let mut reader = Reader::new(sample.to_string());
             assert!(Component::read(&mut reader).is_err());
             count += 1;
         }
-        assert_eq!(count, components.len());
+        assert_eq!(count, samples.len());
         Ok(())
     }
 }

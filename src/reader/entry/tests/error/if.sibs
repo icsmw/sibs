@@ -1,0 +1,12 @@
+IF $variable == "one" OR $variable != "two" [ ] ELSE [ ];
+IF $variable == "one" OR AND $variable != "two" [ ] ELSE [ ];
+IF $variable == "one" ??? $variable != "two" [ ] ELSE [ ];
+IF $variable == "one" $variable != "two" [ @os; ];
+IF AND $variable == "one" [ ] ELSE [ ];
+IF $variable == "one [ ] ELSE [ ];
+IF $variable == "one" [ @os; ] IF $variable == "one" OR $variable != "two" [ ] ELSE [ ];
+IF $variable == "one" [ @os; ] IF $variable == "one" OR AND $variable != "two" [ ] ELSE [ ];
+IF $variable == "one" [ @os; ] IF $variable == "one" ??? $variable != "two" [ ] ELSE [ ];
+IF $variable == "one" [ @os; ] IF $variable == "one" $variable != "two" [ @os; ];
+IF $variable == "one" [ @os; ] IF AND $variable == "one" [ ] ELSE [ ];
+IF $variable == "one" [ @os; ] IF $variable == "one [ ] ELSE [ ];

@@ -157,15 +157,15 @@ mod test_refs {
 
     #[test]
     fn error() -> Result<(), E> {
-        let references = include_str!("./tests/error/refs.sibs").to_string();
-        let references = references.split('\n').collect::<Vec<&str>>();
+        let samples = include_str!("./tests/error/refs.sibs").to_string();
+        let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
-        for reference in references.iter() {
-            let mut reader = Reader::new(reference.to_string());
+        for sample in samples.iter() {
+            let mut reader = Reader::new(sample.to_string());
             assert!(Reference::read(&mut reader).is_err());
             count += 1;
         }
-        assert_eq!(count, references.len());
+        assert_eq!(count, samples.len());
         Ok(())
     }
 }

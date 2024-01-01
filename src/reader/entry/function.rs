@@ -179,15 +179,15 @@ mod test_functions {
 
     #[test]
     fn error() -> Result<(), E> {
-        let functions = include_str!("./tests/error/function.sibs").to_string();
-        let functions = functions.split('\n').collect::<Vec<&str>>();
+        let samples = include_str!("./tests/error/function.sibs").to_string();
+        let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
-        for function in functions.iter() {
-            let mut reader = Reader::new(function.to_string());
+        for sample in samples.iter() {
+            let mut reader = Reader::new(sample.to_string());
             assert!(Function::read(&mut reader).is_err());
             count += 1;
         }
-        assert_eq!(count, functions.len());
+        assert_eq!(count, samples.len());
         Ok(())
     }
 }

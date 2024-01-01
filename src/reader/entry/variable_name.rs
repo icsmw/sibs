@@ -68,15 +68,15 @@ mod test_variable_name {
 
     #[test]
     fn error() -> Result<(), E> {
-        let variables = include_str!("./tests/error/variable_name.sibs").to_string();
-        let variables = variables.split('\n').collect::<Vec<&str>>();
+        let samples = include_str!("./tests/error/variable_name.sibs").to_string();
+        let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
-        for variable in variables.iter() {
-            let mut reader = Reader::new(variable.to_string());
+        for sample in samples.iter() {
+            let mut reader = Reader::new(sample.to_string());
             assert!(VariableName::read(&mut reader).is_err());
             count += 1;
         }
-        assert_eq!(count, variables.len());
+        assert_eq!(count, samples.len());
         Ok(())
     }
 }
