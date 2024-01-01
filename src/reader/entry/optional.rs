@@ -110,8 +110,10 @@ impl Reading<Optional> for Optional {
                             } else if let Some(value_string) = ValueString::read(&mut token.bound)?
                             {
                                 Action::ValueString(value_string)
-                            } else {
+                            } else if !token.bound.rest().trim().is_empty() {
                                 Action::Command(token.bound.rest().trim().to_string())
+                            } else {
+                                Err(E::NotActionForCondition)?
                             },
                             condition,
                         }))
@@ -156,6 +158,20 @@ mod test_optional {
         }
         assert_eq!(count, 9);
         assert!(reader.rest().trim().is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn error() -> Result<(), E> {
+        let samples = include_str!("./tests/error/optional.sibs").to_string();
+        let samples = samples.split('\n').collect::<Vec<&str>>();
+        let mut count = 0;
+        for sample in samples.iter() {
+            let mut reader = Reader::new(sample.to_string());
+            assert!(Optional::read(&mut reader).is_err());
+            count += 1;
+        }
+        assert_eq!(count, samples.len());
         Ok(())
     }
 }

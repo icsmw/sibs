@@ -70,6 +70,8 @@ pub enum E {
     NoWhitespaceAfterCondition,
     #[error("No loop input EACH($var) input [...]")]
     NoLoopInput,
+    #[error("Optional action doesn't have action")]
+    NotActionForCondition,
     #[error("Not closed group")]
     NotClosedGroup,
     #[error("Not closed condition group (...)")]
