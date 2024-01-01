@@ -957,7 +957,7 @@ mod test_reader {
     fn reading() -> Result<(), E> {
         let target = std::env::current_dir()
             .unwrap()
-            .join("./src/reader/entry/tests/full/build.sibs");
+            .join("./src/reader/entry/tests/normal/full/build.sibs");
         let components = read_file(&target)?;
         assert!(!components.is_empty());
         Ok(())

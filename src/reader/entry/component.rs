@@ -101,9 +101,9 @@ mod test_component {
 
     #[test]
     fn reading() -> Result<(), E> {
-        let components = include_str!("./tests/component.sibs").to_string();
+        let components = include_str!("./tests/normal/component.sibs").to_string();
         let components = components.split('\n').collect::<Vec<&str>>();
-        let tasks = include_str!("./tests/tasks.sibs");
+        let tasks = include_str!("./tests/normal/tasks.sibs");
         let mut reader = Reader::new(
             components
                 .iter()

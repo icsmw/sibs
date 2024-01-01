@@ -99,7 +99,7 @@ mod test_each {
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut reader = Reader::new(include_str!("../tests/each.sibs").to_string());
+        let mut reader = Reader::new(include_str!("../tests/normal/each.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Each::read(&mut reader)? {
             assert_eq!(

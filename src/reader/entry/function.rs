@@ -152,7 +152,7 @@ mod test_functions {
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut reader = Reader::new(include_str!("./tests/function.sibs").to_string());
+        let mut reader = Reader::new(include_str!("./tests/normal/function.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Function::read(&mut reader)? {
             assert_eq!(

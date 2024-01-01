@@ -145,7 +145,7 @@ mod test_optional {
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut reader = Reader::new(include_str!("./tests/optional.sibs").to_string());
+        let mut reader = Reader::new(include_str!("./tests/normal/optional.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Optional::read(&mut reader)? {
             assert_eq!(
