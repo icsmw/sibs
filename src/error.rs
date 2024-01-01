@@ -82,6 +82,8 @@ pub enum E {
     NoMetaContent,
     #[error("Not allowed function")]
     NotAllowedFunction,
+    #[error("Invalid function name")]
+    InvalidFunctionName,
     // #[error("Function already redirected")]
     // FunctionAlreadyRedirected,
     #[error("Path doesn't include parent")]

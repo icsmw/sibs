@@ -28,6 +28,12 @@ impl Reading<Function> for Function {
                 ])
                 .map(|(str, char)| (str, Some(char)))
                 .unwrap_or_else(|| (reader.move_to().end(), None));
+            if !Reader::is_ascii_alphabetic_and_alphanumeric(
+                &name,
+                &[&chars::UNDERSCORE, &chars::DASH],
+            ) {
+                Err(E::InvalidFunctionName)?;
+            }
             if matches!(ends_with, Some(chars::SEMICOLON)) {
                 reader.move_to().next();
                 return Ok(Some(Self::new(reader.token()?.id, None, name, false)?));
@@ -43,6 +49,11 @@ impl Reading<Function> for Function {
             reader.trim();
             if matches!(ends_with, Some(chars::QUESTION)) {
                 reader.move_to().next();
+                if let Some(next) = reader.next().char() {
+                    if !next.is_whitespace() {
+                        Err(E::InvalidFunctionName)?;
+                    }
+                }
             }
             let stop_on = reader
                 .until()
@@ -163,6 +174,20 @@ mod test_functions {
         }
         assert_eq!(count, 17);
         assert!(reader.rest().trim().is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn error() -> Result<(), E> {
+        let functions = include_str!("./tests/error/function.sibs").to_string();
+        let functions = functions.split('\n').collect::<Vec<&str>>();
+        let mut count = 0;
+        for function in functions.iter() {
+            let mut reader = Reader::new(function.to_string());
+            assert!(Function::read(&mut reader).is_err());
+            count += 1;
+        }
+        assert_eq!(count, functions.len());
         Ok(())
     }
 }
