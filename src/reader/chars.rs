@@ -18,3 +18,5 @@ pub const QUOTES: char = '"';
 pub const REDIRECT: char = '>';
 pub const WS: char = ' ';
 pub const COMMA: char = ',';
+pub const UNDERSCORE: char = '_';
+pub const DASH: char = '-';

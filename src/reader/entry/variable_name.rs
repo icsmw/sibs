@@ -29,7 +29,9 @@ impl Reading<VariableName> for VariableName {
 impl VariableName {
     pub fn new(mut name: String, token: usize) -> Result<Self, E> {
         name = name.trim().to_string();
-        if !name.is_ascii() || name.is_empty() || name.chars().any(|c| c.is_whitespace()) {
+        if !Reader::is_ascii_alphabetic_and_alphanumeric(&name, &[&chars::UNDERSCORE, &chars::DASH])
+            || name.is_empty()
+        {
             Err(E::InvalidVariableName)
         } else {
             Ok(Self { name, token })
@@ -40,5 +42,41 @@ impl VariableName {
 impl fmt::Display for VariableName {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "${}", self.name)
+    }
+}
+
+#[cfg(test)]
+mod test_variable_name {
+    use crate::reader::{
+        entry::{Reading, VariableName},
+        Reader, E,
+    };
+
+    #[test]
+    fn reading() -> Result<(), E> {
+        let variables = include_str!("./tests/normal/variable_name.sibs").to_string();
+        let variables = variables.split('\n').collect::<Vec<&str>>();
+        let mut count = 0;
+        for variable in variables.iter() {
+            let mut reader = Reader::new(variable.to_string());
+            assert!(VariableName::read(&mut reader).is_ok());
+            count += 1;
+        }
+        assert_eq!(count, variables.len());
+        Ok(())
+    }
+
+    #[test]
+    fn error() -> Result<(), E> {
+        let variables = include_str!("./tests/error/variable_name.sibs").to_string();
+        let variables = variables.split('\n').collect::<Vec<&str>>();
+        let mut count = 0;
+        for variable in variables.iter() {
+            let mut reader = Reader::new(variable.to_string());
+            assert!(VariableName::read(&mut reader).is_err());
+            count += 1;
+        }
+        assert_eq!(count, variables.len());
+        Ok(())
     }
 }

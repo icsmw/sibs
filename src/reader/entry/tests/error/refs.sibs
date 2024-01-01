@@ -1,0 +1,6 @@
+:wrap()per:prod;
+:se%lf:prod;
+:self:bu@ild($mode);
+:self: :build(dev, prod);
+:selyyf::build(dev, prod);
+:self:bui=ld(dev, $p#rod);

@@ -179,13 +179,9 @@ impl<'a> Until<'a> {
         let content = &self.bound.content[self.bound.pos..];
         for (pos, char) in content.chars().enumerate() {
             if !serialized && (targets.contains(&&char) || (char.is_whitespace() && whitespace)) {
-                return if str.is_empty() {
-                    None
-                } else {
-                    self.bound.index(self.bound.pos, pos);
-                    self.bound.pos += pos;
-                    Some((str, char))
-                };
+                self.bound.index(self.bound.pos, pos);
+                self.bound.pos += pos;
+                return Some((str, char));
             }
             serialized = char == chars::SERIALIZING;
             str.push(char);
@@ -550,6 +546,25 @@ impl Reader {
             .to_string()
             .replace('\"', "\\\"")
             .replace(' ', "\\ ")
+    }
+    pub fn is_ascii_alphabetic(content: &str, exceptions: &[&char]) -> bool {
+        for char in content.chars() {
+            if !char.is_ascii_alphabetic() && !exceptions.contains(&&char) {
+                return false;
+            }
+        }
+        true
+    }
+    pub fn is_ascii_alphabetic_and_alphanumeric(content: &str, exceptions: &[&char]) -> bool {
+        for char in content.chars() {
+            if !char.is_ascii_alphanumeric()
+                && !char.is_ascii_alphabetic()
+                && !exceptions.contains(&&char)
+            {
+                return false;
+            }
+        }
+        true
     }
 }
 

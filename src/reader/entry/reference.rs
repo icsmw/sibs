@@ -91,6 +91,14 @@ impl Reading<Reference> for Reference {
                 }
                 path.push(name);
             }
+            for part in path.iter() {
+                if !Reader::is_ascii_alphabetic_and_alphanumeric(
+                    part,
+                    &[&chars::UNDERSCORE, &chars::DASH],
+                ) {
+                    Err(E::InvalidReference)?
+                }
+            }
             Ok(Some(Reference {
                 token: reader.token()?.id,
                 path,
@@ -144,6 +152,20 @@ mod test_refs {
         }
         assert_eq!(count, 6);
         assert!(reader.rest().trim().is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn error() -> Result<(), E> {
+        let references = include_str!("./tests/error/refs.sibs").to_string();
+        let references = references.split('\n').collect::<Vec<&str>>();
+        let mut count = 0;
+        for reference in references.iter() {
+            let mut reader = Reader::new(reference.to_string());
+            assert!(Reference::read(&mut reader).is_err());
+            count += 1;
+        }
+        assert_eq!(count, references.len());
         Ok(())
     }
 }

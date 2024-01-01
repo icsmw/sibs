@@ -31,6 +31,15 @@ impl Reading<Component> for Component {
                         v
                     })
                     .unwrap_or_else(|| inner.move_to().end());
+                if name.trim().is_empty() {
+                    Err(E::EmptyComponentName)?;
+                }
+                if !Reader::is_ascii_alphabetic_and_alphanumeric(
+                    &name,
+                    &[&chars::UNDERSCORE, &chars::DASH],
+                ) {
+                    Err(E::InvalidComponentName)?;
+                }
                 let path = inner.rest().trim().to_string();
                 let inner = if let Some((inner, _)) = reader.until().word(&[&words::COMP]) {
                     inner
@@ -122,6 +131,23 @@ mod test_component {
         }
         assert_eq!(count, 5);
         assert!(reader.rest().trim().is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn error() -> Result<(), E> {
+        let components = include_str!("./tests/error/component.sibs").to_string();
+        let components = components
+            .split('\n')
+            .map(|v| format!("{v} [\n@os;\n];"))
+            .collect::<Vec<String>>();
+        let mut count = 0;
+        for component in components.iter() {
+            let mut reader = Reader::new(component.to_string());
+            assert!(Component::read(&mut reader).is_err());
+            count += 1;
+        }
+        assert_eq!(count, components.len());
         Ok(())
     }
 }

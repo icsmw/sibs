@@ -32,6 +32,10 @@ pub enum E {
     FailParseOptionalAction,
     #[error("Empty group")]
     EmptyGroup,
+    #[error("No component name")]
+    EmptyComponentName,
+    #[error("Invalid component name")]
+    InvalidComponentName,
     #[error("Fail get last token")]
     FailGetToken,
     #[error("Invalid variable name")]
@@ -42,6 +46,8 @@ pub enum E {
     NoValueAfterComparing,
     #[error("Empty path to reference")]
     EmptyPathToReference,
+    #[error("Invalid reference")]
+    InvalidReference,
     #[error("No destination function after >")]
     NoDestFunction,
     #[error("Missed comparing operator: == or !=")]
