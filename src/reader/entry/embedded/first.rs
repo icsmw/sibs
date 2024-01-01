@@ -55,7 +55,6 @@ mod test_first {
         let mut reader = Reader::new(include_str!("../tests/normal/first.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = First::read(&mut reader)? {
-            println!("{}", reader.rest());
             assert_eq!(
                 tests::trim(reader.recent()),
                 tests::trim(&entity.to_string())
@@ -74,9 +73,7 @@ mod test_first {
         let mut count = 0;
         for sample in samples.iter() {
             let mut reader = Reader::new(sample.to_string());
-            let res = First::read(&mut reader);
-            println!("{res:?}");
-            assert!(res.is_err());
+            assert!(First::read(&mut reader).is_err());
             count += 1;
         }
         assert_eq!(count, samples.len());

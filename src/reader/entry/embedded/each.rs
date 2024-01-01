@@ -120,9 +120,7 @@ mod test_each {
         let mut count = 0;
         for sample in samples.iter() {
             let mut reader = Reader::new(sample.to_string());
-            let res = Each::read(&mut reader);
-            println!("{res:?}");
-            assert!(res.is_err());
+            assert!(Each::read(&mut reader).is_err());
             count += 1;
         }
         assert_eq!(count, samples.len());
