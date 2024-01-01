@@ -160,6 +160,8 @@ impl Reading<If> for If {
                 } else {
                     Err(E::NoGroup)?
                 }
+            } else {
+                Err(E::MissedSemicolon)?
             }
         }
         Ok(None)
@@ -301,9 +303,7 @@ mod test_if {
         let mut count = 0;
         for sample in samples.iter() {
             let mut reader = Reader::new(sample.to_string());
-            let res = If::read(&mut reader);
-            println!("{res:?}");
-            assert!(res.is_err());
+            assert!(If::read(&mut reader).is_err());
             count += 1;
         }
         assert_eq!(count, samples.len());

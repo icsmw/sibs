@@ -1,0 +1,10 @@
+EACH ($file) [ tgz ./release/{$file}; ];
+EACH ($file) $files [ ];
+EACH ($file) abc [ tgz ./release/{$file}; ];
+EACH ($file) @abc @abs [ tgz ./release/{$file}; ];
+EACH (@abs) @abc [ tgz ./release/{$file}; ];
+EACH (abs) @abc [ tgz ./release/{$file}; ];
+EACH () @abc [ tgz ./release/{$file}; ];
+EACH [$var] @abc [ tgz ./release/{$file}; ];
+EACH [ tgz ./release/{$file}; ];
+EACH;

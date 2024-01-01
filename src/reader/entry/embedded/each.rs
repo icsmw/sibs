@@ -112,4 +112,20 @@ mod test_each {
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
+
+    #[test]
+    fn error() -> Result<(), E> {
+        let samples = include_str!("../tests/error/each.sibs").to_string();
+        let samples = samples.split('\n').collect::<Vec<&str>>();
+        let mut count = 0;
+        for sample in samples.iter() {
+            let mut reader = Reader::new(sample.to_string());
+            let res = Each::read(&mut reader);
+            println!("{res:?}");
+            assert!(res.is_err());
+            count += 1;
+        }
+        assert_eq!(count, samples.len());
+        Ok(())
+    }
 }
