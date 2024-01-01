@@ -35,15 +35,24 @@ impl Reading<Reference> for Reference {
         if reader.move_to().char(&[&chars::COLON]).is_some() {
             let mut path: Vec<String> = vec![];
             let mut inputs: Vec<Input> = vec![];
-            while let Some((content, stopped_on)) =
-                reader.until().char(&[&chars::COLON, &chars::SEMICOLON])
+            while let Some((content, stopped_on)) = reader
+                .until()
+                .char(&[&chars::COLON, &chars::SEMICOLON])
+                .map(|(content, stopped_on)| (content, Some(stopped_on)))
+                .or_else(|| {
+                    if reader.rest().trim().is_empty() {
+                        None
+                    } else {
+                        Some((reader.move_to().end(), None))
+                    }
+                })
             {
                 if content.trim().is_empty() {
                     Err(E::EmptyPathToReference)?
                 }
                 path.push(content);
                 reader.move_to().next();
-                if stopped_on == chars::SEMICOLON {
+                if matches!(stopped_on, Some(chars::SEMICOLON)) {
                     break;
                 }
             }

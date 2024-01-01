@@ -1,6 +1,8 @@
 use crate::reader::{
     chars,
-    entry::{Block, Function, Reading, ValueString, VariableAssignation, VariableComparing},
+    entry::{
+        Block, Function, Reading, Reference, ValueString, VariableAssignation, VariableComparing,
+    },
     words, Reader, E,
 };
 use std::fmt;
@@ -12,6 +14,7 @@ pub enum Action {
     Function(Function),
     Command(String),
     Block(Block),
+    Reference(Reference),
 }
 
 impl fmt::Display for Action {
@@ -21,6 +24,7 @@ impl fmt::Display for Action {
             "{}",
             match self {
                 Self::VariableAssignation(v) => v.to_string(),
+                Self::Reference(v) => v.to_string(),
                 Self::Function(v) => format!("{v};"),
                 Self::ValueString(v) => format!("{v};"),
                 Self::Command(v) => format!("{v};"),
@@ -109,6 +113,8 @@ impl Reading<Optional> for Optional {
                                 VariableAssignation::read(&mut token.bound)?
                             {
                                 Action::VariableAssignation(assignation)
+                            } else if let Some(reference) = Reference::read(&mut token.bound)? {
+                                Action::Reference(reference)
                             } else if let Some(func) = Function::read(&mut token.bound)? {
                                 Action::Function(func)
                             } else if let Some(value_string) = ValueString::read(&mut token.bound)?
