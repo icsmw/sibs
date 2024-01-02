@@ -6,3 +6,5 @@
 @remove?? ./some_path/to_something;
 @hash @hash;
 @"hash";
+@read_as_string ./package.json >> @find something > @filter 123;
+@read_as_string ./package.json > @find something >> @filter 123;
