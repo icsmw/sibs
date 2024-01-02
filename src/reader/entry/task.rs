@@ -15,12 +15,19 @@ pub struct Task {
 
 impl Reading<Task> for Task {
     fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
-        if let Some((name, stopped_on)) = reader
+        if let Some((mut name, stopped_on)) = reader
             .until()
             .char(&[&chars::OPEN_BRACKET, &chars::OPEN_SQ_BRACKET])
         {
+            name = name.trim().to_string();
             if stopped_on == chars::OPEN_BRACKET {
                 reader.move_to().next();
+            }
+            if !Reader::is_ascii_alphabetic_and_alphanumeric(
+                &name,
+                &[&chars::UNDERSCORE, &chars::DASH],
+            ) {
+                Err(E::InvalidTaskName)?
             }
             let declarations: Vec<VariableDeclaration> = if stopped_on == chars::OPEN_SQ_BRACKET {
                 vec![]
@@ -31,6 +38,9 @@ impl Reading<Task> for Task {
                 while let Some(variable_declaration) = VariableDeclaration::read(&mut token.bound)?
                 {
                     declarations.push(variable_declaration);
+                }
+                if !token.bound.rest().trim().is_empty() {
+                    Err(E::InvalidTaskArguments)?
                 }
                 declarations
             } else {
@@ -47,7 +57,7 @@ impl Reading<Task> for Task {
                     reader.move_to().next();
                 }
                 Ok(Some(Task {
-                    name: name.trim().to_string(),
+                    name,
                     declarations,
                     token: token.id,
                     block,
@@ -107,6 +117,20 @@ mod test_tasks {
         }
         assert_eq!(count, 6);
         assert!(reader.rest().trim().is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn error() -> Result<(), E> {
+        let samples = include_str!("./tests/error/tasks.sibs").to_string();
+        let samples = samples.split('\n').collect::<Vec<&str>>();
+        let mut count = 0;
+        for sample in samples.iter() {
+            let mut reader = Reader::new(sample.to_string());
+            assert!(Task::read(&mut reader).is_err());
+            count += 1;
+        }
+        assert_eq!(count, samples.len());
         Ok(())
     }
 }

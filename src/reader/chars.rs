@@ -20,3 +20,13 @@ pub const WS: char = ' ';
 pub const COMMA: char = ',';
 pub const UNDERSCORE: char = '_';
 pub const DASH: char = '-';
+
+pub fn has_reserved(str: &str) -> bool {
+    let reserved = [&COMMA, &SEMICOLON, &COLON];
+    for char in str.chars() {
+        if reserved.contains(&&char) {
+            return true;
+        }
+    }
+    false
+}

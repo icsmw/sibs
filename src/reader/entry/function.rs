@@ -168,7 +168,9 @@ mod test_functions {
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut reader = Reader::new(include_str!("./tests/normal/function.sibs").to_string());
+        let content = include_str!("./tests/normal/function.sibs").to_string();
+        let len = content.split('\n').count();
+        let mut reader = Reader::new(content);
         let mut count = 0;
         while let Some(entity) = Function::read(&mut reader)? {
             assert_eq!(
@@ -177,7 +179,7 @@ mod test_functions {
             );
             count += 1;
         }
-        assert_eq!(count, 17);
+        assert_eq!(count, len);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }

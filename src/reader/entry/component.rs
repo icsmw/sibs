@@ -1,6 +1,6 @@
 use crate::reader::{
     chars,
-    entry::{Meta, Reading, Task},
+    entry::{Function, Meta, Reading, Task},
     words, Reader, E,
 };
 use std::{fmt, path::PathBuf};
@@ -10,6 +10,7 @@ pub struct Component {
     pub cwd: Option<PathBuf>,
     pub name: String,
     pub tasks: Vec<Task>,
+    pub functions: Vec<Function>,
     pub meta: Option<Meta>,
     pub index: usize,
 }
@@ -54,12 +55,17 @@ impl Reading<Component> for Component {
                 if let Some(mt) = Meta::read(&mut task_reader)? {
                     meta = Some(mt);
                 }
+                let mut functions: Vec<Function> = vec![];
+                while let Some(func) = Function::read(&mut task_reader)? {
+                    functions.push(func);
+                }
                 let mut tasks: Vec<Task> = vec![];
                 while let Some(task) = Task::read(&mut task_reader)? {
                     tasks.push(task);
                 }
                 Ok(Some(Component {
                     name,
+                    functions,
                     cwd: if path.is_empty() {
                         None
                     } else {
@@ -82,7 +88,7 @@ impl fmt::Display for Component {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "#[{}{}]{}\n{}",
+            "#[{}{}]{}{}\n{}",
             self.name,
             self.cwd
                 .as_ref()
@@ -92,6 +98,11 @@ impl fmt::Display for Component {
                 .as_ref()
                 .map(|meta| meta.to_string())
                 .unwrap_or_default(),
+            self.functions
+                .iter()
+                .map(|function| format!("{function};"))
+                .collect::<Vec<String>>()
+                .join("\n"),
             self.tasks
                 .iter()
                 .map(|task| task.to_string())
@@ -122,14 +133,13 @@ mod test_component {
         );
         let mut count = 0;
         while let Some(entity) = Component::read(&mut reader)? {
-            // println!("{:?}: {}", comp.cwd, comp.name,);
             assert_eq!(
                 tests::trim(reader.recent()),
                 tests::trim(&format!("{entity}"))
             );
             count += 1;
         }
-        assert_eq!(count, 5);
+        assert_eq!(count, components.len());
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }

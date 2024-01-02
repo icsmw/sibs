@@ -4,7 +4,7 @@
 #[app: ./app]
     /// Application
     @hash 
-        [./src; ./dist; :client; :shared; :wrapper]
+        [./src ./dist :client :shared :wrapper]
         [build(dev)];
     build($mode: dev | prod) [
         /// Building electron application 
@@ -71,7 +71,7 @@
 #[client: ./client]
     /// Client (HTML + JS client files)
     @hash 
-        [./src, ./dist, :shared]
+        [./src ./dist :shared]
         [build(dev)];
     build($mode: dev | prod) [
         /// Buildind client 
@@ -90,7 +90,7 @@
 #[shared: ./shared]
     /// Common utils/libs/defs for client, app and wrapper
     @hash 
-        [./src, ./dist]
+        [./src ./dist]
         [build];
     build [
         /// Compile
@@ -120,7 +120,7 @@
 #[binding: ./core/binding]
     /// Compiler of index.node with rust core application
     @hash 
-        [./src, ./dist, :module]
+        [./src ./dist :module]
         [build];
     build [
         nj-cli build --release;
@@ -135,7 +135,7 @@
 #[wrapper: ./core/wrapper]
     /// Rust core wrapped into TypeScript module
     @hash 
-        [./src, ./dist, :binding]
+        [./src ./dist :binding]
         [build];
     build [
         /// Compile

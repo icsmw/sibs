@@ -426,12 +426,6 @@ impl<'a> Prev<'a> {
     pub fn new(bound: &'a Reader) -> Self {
         Self { bound }
     }
-    pub fn char(&self) -> Option<char> {
-        if self.bound.pos == 0 {
-            return None;
-        }
-        self.bound.content.chars().nth(self.bound.pos - 1)
-    }
     pub fn nth(&self, offset: usize) -> Option<char> {
         if self.bound.pos < offset {
             return None;
@@ -577,14 +571,6 @@ impl Reader {
             .to_string()
             .replace('\"', "\\\"")
             .replace(' ', "\\ ")
-    }
-    pub fn is_ascii_alphabetic(content: &str, exceptions: &[&char]) -> bool {
-        for char in content.chars() {
-            if !char.is_ascii_alphabetic() && !exceptions.contains(&&char) {
-                return false;
-            }
-        }
-        true
     }
     pub fn is_ascii_alphabetic_and_alphanumeric(content: &str, exceptions: &[&char]) -> bool {
         for char in content.chars() {

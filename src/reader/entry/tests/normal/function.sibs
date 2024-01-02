@@ -15,3 +15,4 @@
 @import ./tasks.sibs $variable;
 @import $variable ./tasks.sibs $variable;
 @copy "filename-{$platform}.zip" ./node_modules $dest;
+@hash [./src ./dist :client :shared :wrapper] [build(dev)];

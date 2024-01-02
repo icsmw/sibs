@@ -30,6 +30,9 @@ impl Values {
             if !value.is_ascii() {
                 Err(E::NotAsciiValue(value.to_string()))?;
             }
+            if chars::has_reserved(value) {
+                Err(E::UsingReservedChars)?
+            }
             if value.is_empty() {
                 Err(E::EmptyValue)?;
             }

@@ -18,10 +18,16 @@ pub enum E {
     NotAsciiValue(String),
     #[error("Empty value")]
     EmptyValue,
+    #[error("Using reserved chars")]
+    UsingReservedChars,
     #[error("Missed semicolon")]
     MissedSemicolon,
+    #[error("Invalid task arguments")]
+    InvalidTaskArguments,
     #[error("No task arguments")]
     NoTaskArguments,
+    #[error("Invalid task name")]
+    InvalidTaskName,
     #[error("Fail find task actions, missed ]")]
     FailFindTaskActions,
     #[error("Nested functions arn't supported")]
