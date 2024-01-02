@@ -404,17 +404,45 @@ impl<'a> SeekTo<'a> {
 }
 #[derive(Debug)]
 pub struct Next<'a> {
-    bound: &'a mut Reader,
+    bound: &'a Reader,
 }
 impl<'a> Next<'a> {
-    pub fn new(bound: &'a mut Reader) -> Self {
+    pub fn new(bound: &'a Reader) -> Self {
         Self { bound }
     }
-    pub fn char(&mut self) -> Option<char> {
+    pub fn char(&self) -> Option<char> {
         if self.bound.done() {
             return None;
         }
         self.bound.content[self.bound.pos..].chars().next()
+    }
+}
+
+#[derive(Debug)]
+pub struct Prev<'a> {
+    bound: &'a Reader,
+}
+impl<'a> Prev<'a> {
+    pub fn new(bound: &'a Reader) -> Self {
+        Self { bound }
+    }
+    pub fn char(&self) -> Option<char> {
+        if self.bound.pos == 0 {
+            return None;
+        }
+        self.bound.content.chars().nth(self.bound.pos - 1)
+    }
+    pub fn nth(&self, offset: usize) -> Option<char> {
+        if self.bound.pos < offset {
+            return None;
+        }
+        self.bound.content.chars().nth(self.bound.pos - offset)
+    }
+    pub fn word(&self, len: usize) -> Option<String> {
+        if self.bound.pos < len {
+            return None;
+        }
+        Some(self.bound.content[(self.bound.pos - len)..self.bound.pos].to_string())
     }
 }
 #[derive(Debug)]
@@ -480,8 +508,11 @@ impl Reader {
     pub fn state(&mut self) -> State<'_> {
         State::new(self)
     }
-    pub fn next(&mut self) -> Next<'_> {
+    pub fn next(&self) -> Next<'_> {
         Next::new(self)
+    }
+    pub fn prev(&self) -> Prev<'_> {
+        Prev::new(self)
     }
     pub fn cancel_on(&mut self, chars: &'static [&'static char]) -> &mut Self {
         self.chars = chars;

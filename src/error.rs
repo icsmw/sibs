@@ -28,6 +28,8 @@ pub enum E {
     NestedFunction,
     #[error("No function on optional action")]
     NoFunctionOnOptionalAction,
+    #[error("Nested optional action")]
+    NestedOptionalAction,
     #[error("Fail parse optional action")]
     FailParseOptionalAction,
     #[error("Empty group")]

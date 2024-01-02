@@ -1,5 +1,8 @@
 @os window =>;
 @os linux => [];
+@os linux => [ @cd ] => $file_name = "release{$version}-darwin.zip";
 @os darwin => $file_name = "release{$version}-darwin.zip"
 @os darwin => $file_name = "release{$version}-darwin.zip;
 @os @darwin => $file_name = "release{$version}-darwin.zip";
+@os @darwin => $file_name = "release{$version}-darwin.zip" => @os @darwin;
+@os darwin => @os darwin => @os darwin;

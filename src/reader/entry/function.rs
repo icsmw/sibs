@@ -70,6 +70,11 @@ impl Reading<Function> for Function {
             }
             reader.move_to().next();
             if matches!(stop_on, Some(chars::REDIRECT)) {
+                if matches!(reader.prev().word(2).as_deref(), Some(words::DO_ON))
+                    && !matches!(reader.prev().nth(3), Some(chars::SERIALIZING))
+                {
+                    Err(E::NestedOptionalAction)?
+                }
                 let feed = Self::new(
                     token.id,
                     Some(&mut token.bound),

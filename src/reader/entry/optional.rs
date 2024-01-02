@@ -106,6 +106,9 @@ impl Reading<Optional> for Optional {
                     }
                     if reader.until().char(&[&chars::SEMICOLON]).is_some() {
                         let mut token = reader.token()?;
+                        if token.bound.contains().word(&[&words::DO_ON]) {
+                            Err(E::NestedOptionalAction)?
+                        }
                         reader.move_to().next();
                         Ok(Some(Optional {
                             token: token.id,
@@ -160,7 +163,6 @@ mod test_optional {
         let mut reader = Reader::new(include_str!("./tests/normal/optional.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Optional::read(&mut reader)? {
-            println!("{entity:?}");
             assert_eq!(
                 tests::trim(reader.recent()),
                 tests::trim(&entity.to_string())
