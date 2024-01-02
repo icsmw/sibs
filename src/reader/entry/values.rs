@@ -50,3 +50,39 @@ impl fmt::Display for Values {
         write!(f, "{}", self.values.join(" | "))
     }
 }
+
+#[cfg(test)]
+mod test_values {
+    use crate::reader::{
+        entry::{Reading, Values},
+        Reader, E,
+    };
+
+    #[test]
+    fn reading() -> Result<(), E> {
+        let samples = include_str!("./tests/normal/values.sibs").to_string();
+        let samples = samples.split('\n').collect::<Vec<&str>>();
+        let mut count = 0;
+        for sample in samples.iter() {
+            let mut reader = Reader::new(sample.to_string());
+            assert!(Values::read(&mut reader).is_ok());
+            count += 1;
+        }
+        assert_eq!(count, samples.len());
+        Ok(())
+    }
+
+    #[test]
+    fn error() -> Result<(), E> {
+        let samples = include_str!("./tests/error/values.sibs").to_string();
+        let samples = samples.split('\n').collect::<Vec<&str>>();
+        let mut count = 0;
+        for sample in samples.iter() {
+            let mut reader = Reader::new(sample.to_string());
+            assert!(Values::read(&mut reader).is_err());
+            count += 1;
+        }
+        assert_eq!(count, samples.len());
+        Ok(())
+    }
+}
