@@ -1,0 +1,4 @@
+$var = not_valid_value;
+$var = ("release{$version}-win.zip");
+$var = [];
+$var = IF $dev == "one" [ @os; ];

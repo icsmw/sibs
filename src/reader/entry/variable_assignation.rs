@@ -137,4 +137,18 @@ mod test_variable_assignation {
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
+
+    #[test]
+    fn error() -> Result<(), E> {
+        let samples = include_str!("./tests/error/variable_assignation.sibs").to_string();
+        let samples = samples.split('\n').collect::<Vec<&str>>();
+        let mut count = 0;
+        for sample in samples.iter() {
+            let mut reader = Reader::new(sample.to_string());
+            assert!(VariableAssignation::read(&mut reader).is_err());
+            count += 1;
+        }
+        assert_eq!(count, samples.len());
+        Ok(())
+    }
 }
