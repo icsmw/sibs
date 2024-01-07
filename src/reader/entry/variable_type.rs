@@ -1,7 +1,10 @@
-use crate::reader::{
-    chars,
-    entry::{Reader, Reading},
-    E,
+use crate::{
+    cli::reporter::{self, Reporter},
+    reader::{
+        chars,
+        entry::{Reader, Reading},
+        E,
+    },
 };
 use std::fmt;
 
@@ -74,5 +77,11 @@ impl VariableType {
 impl fmt::Display for VariableType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{{{}}}", self.var_type)
+    }
+}
+
+impl reporter::Display for VariableType {
+    fn to_string(&self) -> String {
+        format!("{{{}}}", self.var_type)
     }
 }

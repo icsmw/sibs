@@ -1,4 +1,4 @@
-use crate::cli::{args::Argument, error::E, reporter::Description};
+use crate::cli::{args::{Argument, Description}, error::E};
 
 const ARGS: [&str; 2] = ["--help", "-h"];
 
@@ -19,6 +19,7 @@ impl Argument<Help> for Help {
             if ARGS.contains(&arg.as_str()) {
                 if i <= 1 {
                     args.drain(0..=i);
+                    println!(">>>>>>>>>>>>>> HELP ARG");
                     return Ok(Some(Self {
                         component: if i == 0 { None } else { Some(args.remove(0)) },
                     }));

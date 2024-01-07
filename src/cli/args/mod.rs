@@ -3,9 +3,14 @@ pub mod target;
 
 use crate::cli::{
     error::E,
-    reporter::{self, Description},
+    reporter::{self, Reporter},
 };
-use std::{any::Any, collections::VecDeque};
+use std::{any::Any, collections::VecDeque, fmt::Debug};
+
+pub struct Description {
+    pub key: Vec<String>,
+    pub desc: String,
+}
 
 pub trait Argument<T> {
     fn read(args: &mut Vec<String>) -> Result<Option<T>, E>
@@ -17,7 +22,7 @@ pub trait Argument<T> {
 }
 
 pub struct Arguments {
-    arguments: Vec<Box<dyn Any>>,
+    pub arguments: Vec<Box<dyn Any>>,
 }
 
 impl Arguments {
@@ -44,13 +49,23 @@ impl Arguments {
             .iter()
             .position(|entity| entity.as_ref().downcast_ref::<T>().is_some())
         {
+            println!(">>>>>>>>>>>>>> FOUND on {i}");
             Some(self.arguments.remove(i).downcast::<T>().ok()?)
         } else {
             None
         }
     }
+}
 
-    pub fn desc() {
-        reporter::desc(vec![target::Target::desc(), help::Help::desc()]);
+impl reporter::Display for Arguments {
+    fn display(&self, reporter: &mut Reporter) {
+        print!("{}", reporter.offset());
+        reporter.print(
+            &[target::Target::desc(), help::Help::desc()]
+                .iter()
+                .map(|desc| format!("{}>>{}", desc.key.join(", "), desc.desc))
+                .collect::<Vec<String>>()
+                .join("\n"),
+        );
     }
 }

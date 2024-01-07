@@ -1,7 +1,10 @@
-use crate::reader::{
-    chars,
-    entry::{Reader, Reading},
-    E,
+use crate::{
+    cli::reporter::{self, Reporter},
+    reader::{
+        chars,
+        entry::{Reader, Reading},
+        E,
+    },
 };
 use std::fmt;
 
@@ -48,6 +51,12 @@ impl Values {
 impl fmt::Display for Values {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.values.join(" | "))
+    }
+}
+
+impl reporter::Display for Values {
+    fn to_string(&self) -> String {
+        format!("[{}]", self.values.join(" | "))
     }
 }
 

@@ -1,7 +1,10 @@
-use crate::reader::{
-    chars,
-    entry::{Reader, Reading},
-    words, E,
+use crate::{
+    cli::reporter::{self, Reporter},
+    reader::{
+        chars,
+        entry::{Reader, Reading},
+        words, E,
+    },
 };
 use std::fmt;
 
@@ -9,6 +12,15 @@ use std::fmt;
 pub struct Meta {
     pub inner: Vec<String>,
     pub index: usize,
+}
+
+impl Meta {
+    pub fn as_string(&self) -> String {
+        self.inner.join("\n")
+    }
+    pub fn as_lines(&self) -> Vec<&str> {
+        self.inner.iter().map(|s| s.as_str()).collect()
+    }
 }
 
 impl Reading<Meta> for Meta {
@@ -43,5 +55,11 @@ impl fmt::Display for Meta {
                 .collect::<Vec<String>>()
                 .join("\n")
         )
+    }
+}
+
+impl reporter::Display for Meta {
+    fn display(&self, reporter: &mut Reporter) {
+        reporter.print_fmt(&self.as_lines());
     }
 }

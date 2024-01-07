@@ -1,7 +1,10 @@
-use crate::reader::{
-    chars,
-    entry::{Each, Function, If, Meta, Optional, Reading, Reference, VariableAssignation},
-    Reader, E,
+use crate::{
+    cli::reporter::{self, Reporter},
+    reader::{
+        chars,
+        entry::{Each, Function, If, Meta, Optional, Reading, Reference, VariableAssignation},
+        Reader, E,
+    },
 };
 use std::fmt;
 
@@ -125,6 +128,14 @@ impl fmt::Display for Block {
                 .join("\n"),
             if self.elements.is_empty() { "" } else { "\n" }
         )
+    }
+}
+
+impl reporter::Display for Block {
+    fn display(&self, reporter: &mut Reporter) {
+        if let Some(meta) = self.meta.as_ref() {
+            meta.display(reporter);
+        }
     }
 }
 

@@ -1,7 +1,10 @@
-use crate::reader::{
-    chars,
-    entry::{Reader, Reading, Values, VariableName, VariableType},
-    E,
+use crate::{
+    cli::reporter::{self, Reporter},
+    reader::{
+        chars,
+        entry::{Reader, Reading, Values, VariableName, VariableType},
+        E,
+    },
 };
 use std::fmt;
 
@@ -78,5 +81,14 @@ impl fmt::Display for VariableDeclaration {
                 Declaration::Values(v) => v.to_string(),
             }
         )
+    }
+}
+
+impl reporter::Display for VariableDeclaration {
+    fn to_string(&self) -> String {
+        match &self.declaration {
+            Declaration::Typed(v) => reporter::Display::to_string(v),
+            Declaration::Values(v) => reporter::Display::to_string(v),
+        }
     }
 }

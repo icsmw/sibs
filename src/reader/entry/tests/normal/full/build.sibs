@@ -2,7 +2,7 @@
 @import ./defaults.sibs;
 
 #[app: ./app]
-    /// Application
+    /// Application 
     @hash 
         [./src ./dist :client :shared :wrapper]
         [build(dev)];

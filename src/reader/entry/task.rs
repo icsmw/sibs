@@ -1,7 +1,10 @@
-use crate::reader::{
-    chars,
-    entry::{Block, Reading, VariableDeclaration},
-    Reader, E,
+use crate::{
+    cli::reporter::{self, Reporter},
+    reader::{
+        chars,
+        entry::{Block, Reading, VariableDeclaration},
+        Reader, E,
+    },
 };
 use std::fmt;
 
@@ -11,6 +14,15 @@ pub struct Task {
     pub declarations: Vec<VariableDeclaration>,
     pub block: Option<Block>,
     pub token: usize,
+}
+
+impl Task {
+    pub fn has_meta(&self) -> bool {
+        self.block
+            .as_ref()
+            .map(|b| b.meta.is_some())
+            .unwrap_or(false)
+    }
 }
 
 impl Reading<Task> for Task {
@@ -94,6 +106,35 @@ impl fmt::Display for Task {
                 .map(|b| format!("{b};"))
                 .unwrap_or_default()
         )
+    }
+}
+
+impl reporter::Display for Task {
+    fn display(&self, reporter: &mut Reporter) {
+        reporter.bold(&format!("{}[{}]", reporter.offset(), self.name));
+        println!();
+        reporter.step_right();
+        reporter.print(&format!(
+            "{}USAGE: {}{}{}",
+            reporter.offset(),
+            self.name,
+            if self.declarations.is_empty() {
+                ""
+            } else {
+                " "
+            },
+            self.declarations
+                .iter()
+                .map(reporter::Display::to_string)
+                .collect::<Vec<String>>()
+                .join(" ")
+        ));
+        println!();
+        if let Some(block) = self.block.as_ref() {
+            block.display(reporter);
+        }
+        reporter.step_left();
+        println!();
     }
 }
 

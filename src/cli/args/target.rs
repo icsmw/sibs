@@ -1,4 +1,7 @@
-use crate::cli::{args::Argument, error::E, reporter::Description};
+use crate::cli::{
+    args::{Argument, Description},
+    error::E,
+};
 use std::path::PathBuf;
 
 const ARGS: [&str; 2] = ["--scenario", "-s"];

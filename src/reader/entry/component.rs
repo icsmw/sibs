@@ -1,7 +1,10 @@
-use crate::reader::{
-    chars,
-    entry::{Function, Meta, Reading, Task},
-    words, Reader, E,
+use crate::{
+    cli::reporter::{self, Reporter},
+    reader::{
+        chars,
+        entry::{Function, Meta, Reading, Task},
+        words, Reader, E,
+    },
 };
 use std::{fmt, path::PathBuf};
 
@@ -111,6 +114,8 @@ impl fmt::Display for Component {
         )
     }
 }
+
+impl reporter::Display for Component {}
 
 #[cfg(test)]
 mod test_component {
