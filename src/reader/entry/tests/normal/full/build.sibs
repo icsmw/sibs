@@ -1,6 +1,6 @@
 @import ./common.sibs;
 @import ./defaults.sibs;
-sibs app build --dev
+
 #[app: ./app]
     /// Application
     @hash 

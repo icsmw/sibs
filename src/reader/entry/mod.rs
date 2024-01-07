@@ -15,7 +15,7 @@ mod variable_declaration;
 mod variable_name;
 mod variable_type;
 
-use crate::{error::E, reader::Reader};
+use crate::reader::{error::E, Reader};
 pub use arguments::{Argument, Arguments};
 pub use block::Block;
 pub use component::Component;

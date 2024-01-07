@@ -1,8 +1,10 @@
 use crate::{
     context::Context,
-    error::E,
     functions::Implementation,
-    reader::entry::{Argument, Function},
+    reader::{
+        entry::{Argument, Function},
+        error::E,
+    },
 };
 use std::{fs, path::PathBuf};
 use thiserror::Error;

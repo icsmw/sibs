@@ -1,15 +1,16 @@
 pub mod chars;
 pub mod entry;
+pub mod error;
 #[cfg(test)]
 pub mod tests;
 pub mod words;
 
 use crate::{
     context::Context,
-    error::E,
     functions::{reader::import::Import, Implementation},
 };
 use entry::{Component, Function, Reading};
+use error::E;
 use std::{
     collections::HashMap,
     fs,
@@ -983,7 +984,7 @@ pub fn read_file(filename: &PathBuf) -> Result<Vec<Component>, E> {
 
 #[cfg(test)]
 mod test_reader {
-    use crate::{error::E, reader::read_file};
+    use crate::reader::{error::E, read_file};
 
     #[test]
     fn reading() -> Result<(), E> {
@@ -991,7 +992,7 @@ mod test_reader {
             .unwrap()
             .join("./src/reader/entry/tests/normal/full/build.sibs");
         let components = read_file(&target)?;
-        assert!(!components.is_empty());
+        assert_eq!(components.len(), 9);
         Ok(())
     }
 }

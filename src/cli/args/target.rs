@@ -1,5 +1,5 @@
-use crate::cli::{args::Argument, error::E};
-use std::{io, io::Write, path::PathBuf};
+use crate::cli::{args::Argument, error::E, reporter::Description};
+use std::path::PathBuf;
 
 const ARGS: [&str; 2] = ["--scenario", "-s"];
 
@@ -36,13 +36,10 @@ impl Argument<Target> for Target {
             Ok(None)
         }
     }
-    fn post(stdout: &mut io::Stdout) -> Result<(), io::Error> {
-        stdout.write_all(
-            format!(
-                "{} path to file - uses to define specific scenario file (*.sibs)",
-                ARGS.join(", ")
-            )
-            .as_bytes(),
-        )
+    fn desc() -> Description {
+        Description {
+            key: ARGS.iter().map(|s| s.to_string()).collect::<Vec<String>>(),
+            desc: String::from("path to file - uses to define specific scenario file (*.sibs)"),
+        }
     }
 }

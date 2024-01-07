@@ -1,33 +1,38 @@
-use crate::cli::{args::Argument, error::E};
-use std::{io, io::Write, path::PathBuf};
+use crate::cli::{args::Argument, error::E, reporter::Description};
 
 const ARGS: [&str; 2] = ["--help", "-h"];
 
 #[derive(Debug)]
-pub struct Help {}
+pub struct Help {
+    component: Option<String>,
+}
+
+impl Help {
+    pub fn context(&self) -> Option<&String> {
+        self.component.as_ref()
+    }
+}
 
 impl Argument<Help> for Help {
     fn read(args: &mut Vec<String>) -> Result<Option<Help>, E> {
-        if let Some(first) = args.first() {
-            if ARGS.contains(&first.as_str()) {
-                if let Some(path) = args.get(1) {
-                    let scenario = PathBuf::from(path);
-                    if scenario.exists() {
-                        Ok(Some(Help {}))
-                    } else {
-                        Err(E::FileNotExists(path.to_owned()))
-                    }
+        for (i, arg) in args.iter().enumerate() {
+            if ARGS.contains(&arg.as_str()) {
+                if i <= 1 {
+                    args.drain(0..=i);
+                    return Ok(Some(Self {
+                        component: if i == 0 { None } else { Some(args.remove(0)) },
+                    }));
                 } else {
-                    Err(E::NoPathToScenarioFile)
+                    return Err(E::InvalidHelpRequest);
                 }
-            } else {
-                Ok(None)
             }
-        } else {
-            Ok(None)
         }
+        Ok(None)
     }
-    fn post(stdout: &mut io::Stdout) -> Result<(), io::Error> {
-        stdout.write_all(format!("{} - shows help", ARGS.join(", ")).as_bytes())
+    fn desc() -> Description {
+        Description { 
+            key: ARGS.iter().map(|s|s.to_string()).collect::<Vec<String>>(),
+            desc: String::from("shows help. Global context - shows available options and components. To get help for component use: component --help.")
+        }
     }
 }
