@@ -2,10 +2,15 @@ pub mod help;
 pub mod target;
 
 use crate::cli::{
+    args::help::Help,
     error::E,
     reporter::{self, Reporter},
 };
-use std::{any::Any, collections::VecDeque, fmt::Debug};
+use std::{
+    any::{Any, TypeId},
+    collections::VecDeque,
+    fmt::Debug,
+};
 
 pub struct Description {
     pub key: Vec<String>,
@@ -21,20 +26,37 @@ pub trait Argument<T> {
         Self: Sized;
 }
 
+pub trait DebugAny: Any + Debug {
+    fn as_any(&self) -> &dyn Any;
+    fn as_any_mut(&mut self) -> &mut dyn Any;
+}
+
+impl<T: Any + Debug + 'static> DebugAny for T {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+}
+
+#[derive(Debug)]
 pub struct Arguments {
-    pub arguments: Vec<Box<dyn Any>>,
+    pub arguments: Vec<Box<dyn DebugAny>>,
 }
 
 impl Arguments {
     pub fn new(args: &mut Vec<String>) -> Result<Self, E> {
-        fn to_any<T: 'static>(entity: Result<Option<T>, E>) -> Result<Option<Box<dyn Any>>, E> {
-            entity.map(|o| o.map(|r| Box::new(r) as Box<dyn Any>))
+        fn to_any<T: DebugAny + 'static>(
+            entity: Result<Option<T>, E>,
+        ) -> Result<Option<Box<dyn DebugAny>>, E> {
+            entity.map(|o| o.map(|r| Box::new(r) as Box<dyn DebugAny>))
         }
         let mut all = VecDeque::from([
             to_any(target::Target::read(args))?,
             to_any(help::Help::read(args))?,
         ]);
-        let mut arguments: Vec<Box<dyn Any>> = vec![];
+        let mut arguments: Vec<Box<dyn DebugAny>> = vec![];
         while let Some(mut res) = all.pop_front() {
             if let Some(argument) = res.take() {
                 arguments.push(argument);
@@ -43,18 +65,12 @@ impl Arguments {
         Ok(Self { arguments })
     }
 
-    pub fn take<T: 'static>(&mut self) -> Option<Box<T>> {
-        if let Some(i) = self
-            .arguments
-            .iter()
-            .position(|entity| entity.as_ref().downcast_ref::<T>().is_some())
-        {
-            println!(">>>>>>>>>>>>>> FOUND on {i}");
-            Some(self.arguments.remove(i).downcast::<T>().ok()?)
-        } else {
-            None
-        }
-    }
+    // pub fn find<T: 'static>(&mut self) -> Option<&mut T> {
+    //     self.arguments
+    //         .iter_mut()
+    //         .find(|v| (*v.as_ref().as_any()).is::<T>())
+    //         .and_then(|f| f.as_any_mut().downcast_mut::<T>())
+    // }
 }
 
 impl reporter::Display for Arguments {

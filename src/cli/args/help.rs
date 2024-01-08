@@ -1,5 +1,4 @@
 use crate::cli::{args::{Argument, Description}, error::E};
-
 const ARGS: [&str; 2] = ["--help", "-h"];
 
 #[derive(Debug)]
@@ -13,13 +12,13 @@ impl Help {
     }
 }
 
+
 impl Argument<Help> for Help {
     fn read(args: &mut Vec<String>) -> Result<Option<Help>, E> {
         for (i, arg) in args.iter().enumerate() {
             if ARGS.contains(&arg.as_str()) {
                 if i <= 1 {
                     args.drain(0..=i);
-                    println!(">>>>>>>>>>>>>> HELP ARG");
                     return Ok(Some(Self {
                         component: if i == 0 { None } else { Some(args.remove(0)) },
                     }));

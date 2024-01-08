@@ -11,34 +11,30 @@ use std::env;
 
 use self::reporter::{Display, Reporter};
 
+fn find<T: 'static>(args: &mut Arguments) -> Option<&mut T> {
+    args.arguments
+        .iter_mut()
+        .find(|v| (*v.as_ref().as_any()).is::<T>())
+        .and_then(|f| f.as_any_mut().downcast_mut::<T>())
+}
+
 pub fn read() -> Result<(), E> {
     let mut income = env::args().collect::<Vec<String>>();
     if !income.is_empty() {
         income.remove(0);
     }
-    println!(">>>>>>>>>>>>>>>>>>>>>> {income:?}");
     let mut defaults = Arguments::new(&mut income)?;
-    println!(
-        ">>>>>>>>>>>>>>>>>>>>>> count: {:?}",
-        defaults.arguments.len()
-    );
-    let location = if let Some(target) = defaults.take::<args::target::Target>() {
+    let location = if let Some(target) = find::<args::target::Target>(&mut defaults) {
         Location::from(target.get())?
     } else {
         Location::new()?
     };
-    println!(
-        ">>>>>>>>>>>>>>>>>>>>>> count: {:?}",
-        defaults.arguments.len()
-    );
     let components = reader::read_file(&location.filename)?;
     let mut reporter = Reporter::new();
-    if let Some(help) = defaults.take::<args::help::Help>() {
-        println!(">>>>>>>>>>>>>>>>>>>>>> 0");
+    println!("{defaults:?}");
+    if let Some(help) = find::<args::help::Help>(&mut defaults) {
         if help.context().is_none() && components.is_empty() {
-            println!(">>>>>>>>>>>>>>>>>>>>>> 1");
             defaults.display(&mut reporter);
-            //arguments help
         } else {
             reporter.bold("SCENARIO:\n");
             reporter.step_right();
