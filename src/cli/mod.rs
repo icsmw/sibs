@@ -11,20 +11,13 @@ use std::env;
 
 use self::reporter::{Display, Reporter};
 
-fn find<T: 'static>(args: &mut Arguments) -> Option<&mut T> {
-    args.arguments
-        .iter_mut()
-        .find(|v| (*v.as_ref().as_any()).is::<T>())
-        .and_then(|f| f.as_any_mut().downcast_mut::<T>())
-}
-
 pub fn read() -> Result<(), E> {
     let mut income = env::args().collect::<Vec<String>>();
     if !income.is_empty() {
         income.remove(0);
     }
-    let mut defaults = Arguments::new(&mut income)?;
-    let location = if let Some(target) = find::<args::target::Target>(&mut defaults) {
+    let defaults = Arguments::new(&mut income)?;
+    let location = if let Some(target) = defaults.get::<args::target::Target>() {
         Location::from(target.get())?
     } else {
         Location::new()?
@@ -32,7 +25,7 @@ pub fn read() -> Result<(), E> {
     let components = reader::read_file(&location.filename)?;
     let mut reporter = Reporter::new();
     println!("{defaults:?}");
-    if let Some(help) = find::<args::help::Help>(&mut defaults) {
+    if let Some(help) = defaults.get::<args::help::Help>() {
         if help.context().is_none() && components.is_empty() {
             defaults.display(&mut reporter);
         } else {

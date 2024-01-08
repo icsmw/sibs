@@ -2,13 +2,12 @@ pub mod help;
 pub mod target;
 
 use crate::cli::{
-    args::help::Help,
     error::E,
     reporter::{self, Reporter},
 };
 use std::{
     any::{Any, TypeId},
-    collections::VecDeque,
+    collections::HashMap,
     fmt::Debug,
 };
 
@@ -42,35 +41,42 @@ impl<T: Any + Debug + 'static> DebugAny for T {
 
 #[derive(Debug)]
 pub struct Arguments {
-    pub arguments: Vec<Box<dyn DebugAny>>,
+    pub arguments: HashMap<TypeId, Box<dyn DebugAny>>,
 }
 
 impl Arguments {
     pub fn new(args: &mut Vec<String>) -> Result<Self, E> {
-        fn to_any<T: DebugAny + 'static>(
-            entity: Result<Option<T>, E>,
-        ) -> Result<Option<Box<dyn DebugAny>>, E> {
-            entity.map(|o| o.map(|r| Box::new(r) as Box<dyn DebugAny>))
+        fn into<T: DebugAny + 'static>(entity: Option<T>) -> Option<(TypeId, Box<dyn DebugAny>)> {
+            entity.map(|v| (TypeId::of::<T>(), Box::new(v) as Box<dyn DebugAny>))
         }
-        let mut all = VecDeque::from([
-            to_any(target::Target::read(args))?,
-            to_any(help::Help::read(args))?,
-        ]);
-        let mut arguments: Vec<Box<dyn DebugAny>> = vec![];
-        while let Some(mut res) = all.pop_front() {
-            if let Some(argument) = res.take() {
-                arguments.push(argument);
+        let mut all = vec![
+            into(target::Target::read(args)?),
+            into(help::Help::read(args)?),
+        ];
+        let mut arguments: HashMap<TypeId, Box<dyn DebugAny>> = HashMap::new();
+        while let Some(mut res) = all.pop() {
+            if let Some((type_id, argument)) = res.take() {
+                arguments.insert(type_id, argument);
             }
         }
         Ok(Self { arguments })
     }
 
-    // pub fn find<T: 'static>(&mut self) -> Option<&mut T> {
-    //     self.arguments
-    //         .iter_mut()
-    //         .find(|v| (*v.as_ref().as_any()).is::<T>())
-    //         .and_then(|f| f.as_any_mut().downcast_mut::<T>())
-    // }
+    pub fn get<T: 'static>(&self) -> Option<&T> {
+        self.arguments
+            .get(&TypeId::of::<T>())
+            .and_then(|entity| entity.as_ref().as_any().downcast_ref())
+    }
+
+    pub fn get_mut<T: 'static>(&mut self) -> Option<&mut T> {
+        self.arguments
+            .get_mut(&TypeId::of::<T>())
+            .and_then(|entity| entity.as_mut().as_any_mut().downcast_mut())
+    }
+
+    pub fn remove<T: 'static>(&mut self) {
+        let _ = self.arguments.remove(&TypeId::of::<T>());
+    }
 }
 
 impl reporter::Display for Arguments {
