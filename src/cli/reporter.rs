@@ -1,3 +1,6 @@
+use core::fmt;
+use std::io::BufRead;
+
 use terminal_size::terminal_size;
 
 use ansi_term::{Color, Style};
@@ -28,7 +31,10 @@ impl Reporter {
         );
     }
 
-    pub fn print_fmt(&self, lines: &[&str]) {
+    pub fn print_fmt<'a, T>(&self, lines: &[T])
+    where
+        T: 'a + ToOwned + ToString,
+    {
         print_fmt(lines, self._offset);
     }
 
@@ -73,10 +79,14 @@ impl Reporter {
     }
 }
 
-pub fn print_fmt(lines: &[&str], offset: usize) {
+pub fn print_fmt<'a, T>(lines: &[T], offset: usize)
+where
+    T: 'a + ToOwned + ToString,
+{
     let max = lines
         .iter()
         .map(|s| {
+            let s = s.to_string();
             let columns = s.split(TITLE_SPLITTER).collect::<Vec<&str>>();
             if columns.len() < 2 {
                 0
@@ -87,10 +97,11 @@ pub fn print_fmt(lines: &[&str], offset: usize) {
         .max()
         .unwrap_or_default();
     lines.iter().for_each(|line| {
+        let line = line.to_string();
         let mut columns = line.split(TITLE_SPLITTER).collect::<Vec<&str>>();
         print!("{}", " ".repeat(offset));
         if columns.len() < 2 {
-            print(line, offset, Some(Color::White.normal()));
+            // print(&line, offset, Some(Color::White.normal()));
         } else {
             let first = columns.remove(0).trim();
             print!(

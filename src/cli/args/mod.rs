@@ -98,6 +98,6 @@ impl reporter::Display for Arguments {
             .iter()
             .map(|desc| format!("{}>>{}", desc.key.join(", "), desc.desc))
             .collect::<Vec<String>>();
-        // reporter.print_fmt(lines);
+        reporter.print_fmt(lines);
     }
 }
