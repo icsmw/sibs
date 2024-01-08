@@ -73,19 +73,6 @@ impl Reporter {
     }
 }
 
-pub struct Description {
-    pub key: Vec<String>,
-    pub desc: String,
-}
-
-pub fn associated(reporter: &str, msg: &str) {
-    println!(
-        "{}: {}",
-        Color::White.bold().paint(reporter),
-        Color::Cyan.paint(msg)
-    );
-}
-
 pub fn print_fmt(lines: &[&str], offset: usize) {
     let max = lines
         .iter()

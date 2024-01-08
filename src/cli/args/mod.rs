@@ -1,9 +1,13 @@
 pub mod help;
 pub mod target;
 
-use crate::cli::{
-    error::E,
-    reporter::{self, Reporter},
+use crate::{
+    cli::{
+        error::E,
+        location::Location,
+        reporter::{self, Reporter},
+    },
+    reader::entry::Component,
 };
 use std::{
     any::{Any, TypeId},
@@ -23,6 +27,14 @@ pub trait Argument<T> {
     fn desc() -> Description
     where
         Self: Sized;
+    fn action(
+        &mut self,
+        _components: &[Component],
+        _reporter: &mut Reporter,
+        _location: &Location,
+    ) -> Result<(), E> {
+        Ok(())
+    }
 }
 
 pub trait DebugAny: Any + Debug {
@@ -82,12 +94,10 @@ impl Arguments {
 impl reporter::Display for Arguments {
     fn display(&self, reporter: &mut Reporter) {
         print!("{}", reporter.offset());
-        reporter.print(
-            &[target::Target::desc(), help::Help::desc()]
-                .iter()
-                .map(|desc| format!("{}>>{}", desc.key.join(", "), desc.desc))
-                .collect::<Vec<String>>()
-                .join("\n"),
-        );
+        let lines = &[target::Target::desc(), help::Help::desc()]
+            .iter()
+            .map(|desc| format!("{}>>{}", desc.key.join(", "), desc.desc))
+            .collect::<Vec<String>>();
+        // reporter.print_fmt(lines);
     }
 }
