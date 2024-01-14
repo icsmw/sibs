@@ -19,9 +19,10 @@ impl Argument<Help> for Help {
         for (i, arg) in args.iter().enumerate() {
             if ARGS.contains(&arg.as_str()) {
                 if i <= 1 {
+                    let component = if i == 0 { None } else { Some(args[i - 1].clone()) };
                     args.drain(0..=i);
                     return Ok(Some(Self {
-                        component: if i == 0 { None } else { Some(args.remove(0)) },
+                        component,
                     }));
                 } else {
                     return Err(E::InvalidHelpRequest);
@@ -37,15 +38,8 @@ impl Argument<Help> for Help {
         }
     }
     fn action(&mut self, components: &[Component], reporter: &mut Reporter, location: &Location) -> Result<(), E> {
-        reporter.bold("SCENARIO:\n");
-        reporter.step_right();
-        reporter.print(&format!(
-            "{}{}\n\n",
-            reporter.offset(),
-            location.filename.to_str().unwrap()
-        ));
-        reporter.step_left();
-        let with_context = components
+        fn list_components(components: &[Component], reporter: &mut Reporter) {
+            let with_context = components
             .iter()
             .filter(|comp| comp.cwd.is_some())
             .map(|comp| {
@@ -58,25 +52,52 @@ impl Argument<Help> for Help {
                 )
             })
             .collect::<Vec<(String, String)>>();
-        if !with_context.is_empty() {
-            reporter.bold("COMPONENTS:\n");
+            if !with_context.is_empty() {
+                reporter.bold("COMPONENTS:\n");
+                reporter.step_right();
+                reporter.pairs(with_context);
+                reporter.step_left();
+            }
+        }
+        fn list_commands(components: &[Component], reporter: &mut Reporter) {
+            if components.iter().any(|comp| comp.cwd.is_none()) {
+                reporter.bold("\nCOMMANDS:\n");
+            }
             reporter.step_right();
-            reporter.pairs(with_context);
+            components
+                .iter()
+                .filter(|comp| comp.cwd.is_none())
+                .for_each(|comp| {
+                    comp.tasks.iter().filter(|t| t.has_meta()).for_each(|task| {
+                        task.display(reporter);
+                    });
+                });
             reporter.step_left();
         }
-        if components.iter().any(|comp| comp.cwd.is_none()) {
-            reporter.bold("\nCOMMANDS:\n");
-        }
+        reporter.bold("SCENARIO:\n");
         reporter.step_right();
-        components
-            .iter()
-            .filter(|comp| comp.cwd.is_none())
-            .for_each(|comp| {
-                comp.tasks.iter().filter(|t| t.has_meta()).for_each(|task| {
-                    task.display(reporter);
-                });
-            });
+        reporter.print(format!(
+            "{}{}\n\n",
+            reporter.offset(),
+            location.filename.to_str().unwrap()
+        ));
         reporter.step_left();
+
+        if let Some(component) = self.component.as_ref() {
+            if let Some(component) = components.iter().find(|c| &c.name == component) {
+                component.display(reporter);
+            } else {
+                reporter.bold("ERROR:\n");
+                reporter.step_right();
+                reporter.printnl(format!("Component \"{component}\" isn't found.:\n\n"));
+                reporter.step_left();
+                list_components(components, reporter);
+                return Err(E::ComponentNotExists(component.to_string()));
+            }
+        } else {
+            list_components(components, reporter);
+            list_commands(components, reporter);
+        }
         Ok(())
     }
 }

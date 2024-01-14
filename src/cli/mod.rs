@@ -39,6 +39,9 @@ pub fn read() -> Result<(), E> {
         match Location::new() {
             Ok(location) => location,
             Err(_) => {
+                reporter.print("Scenario file hasn't been found.\n\n");
+                reporter.bold("OPTIONS\n");
+                reporter.step_right();
                 defaults.display(&mut reporter);
                 return Ok(());
             }
@@ -47,8 +50,5 @@ pub fn read() -> Result<(), E> {
     println!("{location:?}");
     let components = reader::read_file(&location.filename)?;
     run::<args::help::Help>(components, &mut defaults, &mut reporter, &location)?;
-    // if let Some(arg) = defaults.get_mut::<args::help::Help>() {
-    //     arg.action(&components, &mut reporter, &location)?;
-    // }
     Ok(())
 }

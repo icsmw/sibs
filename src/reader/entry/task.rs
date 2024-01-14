@@ -111,10 +111,10 @@ impl fmt::Display for Task {
 
 impl reporter::Display for Task {
     fn display(&self, reporter: &mut Reporter) {
-        reporter.bold(&format!("{}[{}]", reporter.offset(), self.name));
+        reporter.bold(format!("{}[{}]", reporter.offset(), self.name));
         println!();
         reporter.step_right();
-        reporter.print(&format!(
+        reporter.print(format!(
             "{}USAGE: {}{}{}",
             reporter.offset(),
             self.name,
@@ -134,7 +134,6 @@ impl reporter::Display for Task {
             block.display(reporter);
         }
         reporter.step_left();
-        println!();
     }
 }
 

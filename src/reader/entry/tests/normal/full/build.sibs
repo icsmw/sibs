@@ -8,9 +8,8 @@
         [build(dev)];
     build($mode: dev | prod) [
         /// Building electron application 
-        /// $mode
-        /// [dev] build developing version
-        /// [prod] build production version
+        /// build dev >> build developing version
+        /// build prod >> build production version
         $dev = @envvar DEV_MODE;
         @cd ./some_folder;
         @cd ..;
@@ -29,9 +28,8 @@
     ];
     release($mode: dev | prod) [
         /// Build release artifacts
-        /// $mode
-        /// [dev] build developing version
-        /// [prod] build production version
+        /// release dev >> build developing version
+        /// release prod >> build production version
         :self:build($mode);
         @os window => yarn run build-win;
         @os linux => yarn run build-linux;
@@ -65,6 +63,7 @@
         ];
     ];
     lint [
+        /// Lint application code
         :TS:lint;
     ];
 
@@ -75,15 +74,15 @@
         [build(dev)];
     build($mode: dev | prod) [
         /// Buildind client 
-        /// $mode
-        /// [dev] build developing (no JS optimization) version
-        /// [prod] build production version
+        /// build dev >> build developing (no JS optimization) version
+        /// build prod >> build production version
         !@exists ./node_modules => yarn install;
         @remove? ./dist;
         $mode == dev => yarn run build;
         $mode == prod => yarn run prod;
     ];
     lint [
+        /// Lint client code
         :TS:lint;
     ];
 

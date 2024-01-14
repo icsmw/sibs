@@ -115,7 +115,24 @@ impl fmt::Display for Component {
     }
 }
 
-impl reporter::Display for Component {}
+impl reporter::Display for Component {
+    fn display(&self, reporter: &mut Reporter) {
+        reporter.bold("COMPONENT:\n");
+        reporter.step_right();
+        reporter.boldnl(&self.name);
+        if let Some(meta) = self.meta.as_ref() {
+            println!();
+            meta.display(reporter);
+        }
+        reporter.step_left();
+        reporter.bold("\nTASKS:\n");
+        reporter.step_right();
+        self.tasks.iter().filter(|t| t.has_meta()).for_each(|task| {
+            task.display(reporter);
+        });
+        reporter.step_left();
+    }
+}
 
 #[cfg(test)]
 mod test_component {

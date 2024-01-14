@@ -6,7 +6,8 @@ pub enum E {
     NoPathToScenarioFile,
     #[error("--help (-h) can be used in global scope or in component context. Try --help to see all options.")]
     InvalidHelpRequest,
-
+    #[error("Component {0} does't exist")]
+    ComponentNotExists(String),
     #[error("File {0} does't exist")]
     FileNotExists(String),
     #[error("IO error: {0}")]

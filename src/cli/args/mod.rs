@@ -93,11 +93,11 @@ impl Arguments {
 
 impl reporter::Display for Arguments {
     fn display(&self, reporter: &mut Reporter) {
-        print!("{}", reporter.offset());
-        let lines = &[target::Target::desc(), help::Help::desc()]
-            .iter()
-            .map(|desc| format!("{}>>{}", desc.key.join(", "), desc.desc))
-            .collect::<Vec<String>>();
-        reporter.print_fmt(lines);
+        reporter.print_fmt(
+            &[target::Target::desc(), help::Help::desc()]
+                .iter()
+                .map(|desc| format!("{}>>{}", desc.key.join(", "), desc.desc))
+                .collect::<Vec<String>>(),
+        );
     }
 }

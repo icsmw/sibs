@@ -38,8 +38,18 @@ impl Reporter {
         print_fmt(lines, self._offset);
     }
 
-    pub fn print(&self, msg: &str) {
-        print(msg, self._offset, None)
+    pub fn print<'a, T>(&self, msg: T)
+    where
+        T: 'a + ToOwned + ToString,
+    {
+        print(msg, self._offset, None, false)
+    }
+
+    pub fn printnl<'a, T>(&self, msg: T)
+    where
+        T: 'a + ToOwned + ToString,
+    {
+        print(msg, self._offset, None, true)
     }
 
     pub fn pairs(&self, pairs: Vec<(String, String)>) {
@@ -55,15 +65,24 @@ impl Reporter {
                 Color::White.bold().paint(&pair.0),
                 " ".repeat(max - pair.0.len()),
             );
-            print(&pair.1, max + 3 + self._offset, None);
+            print(&pair.1, max + 3 + self._offset, None, false);
             println!();
         });
     }
 
-    pub fn bold(&self, msg: &str) {
-        print(msg, self._offset, Some(Color::White.bold()))
+    pub fn bold<'a, T>(&self, msg: T)
+    where
+        T: 'a + ToOwned + ToString,
+    {
+        print(msg, self._offset, Some(Color::White.bold()), false)
     }
 
+    pub fn boldnl<'a, T>(&self, msg: T)
+    where
+        T: 'a + ToOwned + ToString,
+    {
+        print(msg, self._offset, Some(Color::White.bold()), true)
+    }
     pub fn step_left(&mut self) {
         if self._offset > 0 {
             self._offset -= 4;
@@ -99,23 +118,32 @@ where
     lines.iter().for_each(|line| {
         let line = line.to_string();
         let mut columns = line.split(TITLE_SPLITTER).collect::<Vec<&str>>();
-        print!("{}", " ".repeat(offset));
         if columns.len() < 2 {
-            // print(&line, offset, Some(Color::White.normal()));
+            print(line, offset, None, true);
         } else {
+            print!("{}", " ".repeat(offset));
             let first = columns.remove(0).trim();
             print!(
                 "{}{} - ",
                 Color::White.bold().paint(first),
                 " ".repeat(max - first.len()),
             );
-            print(columns.join(TITLE_SPLITTER).trim(), offset + max + 3, None);
+            print(
+                columns.join(TITLE_SPLITTER).trim(),
+                offset + max + 3,
+                None,
+                false,
+            );
         }
         println!();
     });
 }
 
-pub fn print(msg: &str, offset: usize, style: Option<Style>) {
+pub fn print<'a, T>(msg: T, offset: usize, style: Option<Style>, nl: bool)
+where
+    T: 'a + ToOwned + ToString,
+{
+    let msg = msg.to_string();
     if msg.is_empty() {
         return;
     }
@@ -135,7 +163,7 @@ pub fn print(msg: &str, offset: usize, style: Option<Style>) {
         }
         print!(
             "{}{}",
-            if cursor == 0 {
+            if cursor == 0 && !nl {
                 "".to_string()
             } else {
                 " ".repeat(offset)
