@@ -86,6 +86,10 @@ impl Arguments {
             .and_then(|entity| entity.as_mut().as_any_mut().downcast_mut())
     }
 
+    pub fn has<T: 'static>(&self) -> bool {
+        self.arguments.get(&TypeId::of::<T>()).is_some()
+    }
+
     pub fn remove<T: 'static>(&mut self) {
         let _ = self.arguments.remove(&TypeId::of::<T>());
     }

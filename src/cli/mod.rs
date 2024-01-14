@@ -47,8 +47,11 @@ pub fn read() -> Result<(), E> {
             }
         }
     };
-    println!("{location:?}");
     let components = reader::read_file(&location.filename)?;
+    let help_arg = defaults.has::<args::help::Help>();
     run::<args::help::Help>(components, &mut defaults, &mut reporter, &location)?;
+    if help_arg {
+        return Ok(());
+    }
     Ok(())
 }

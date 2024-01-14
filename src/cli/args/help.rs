@@ -89,7 +89,7 @@ impl Argument<Help> for Help {
             } else {
                 reporter.bold("ERROR:\n");
                 reporter.step_right();
-                reporter.printnl(format!("Component \"{component}\" isn't found.:\n\n"));
+                reporter.printnl(format!("Component \"{component}\" isn't found.\n\n"));
                 reporter.step_left();
                 list_components(components, reporter);
                 return Err(E::ComponentNotExists(component.to_string()));
