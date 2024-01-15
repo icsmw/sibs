@@ -1,4 +1,4 @@
-use crate::{cli::{args::{Argument, Description}, error::E, reporter::{Reporter, Display}, location::Location}, reader::entry::Component};
+use crate::{cli::{args::{Argument, Description}, error::E, location::Location},inf::reporter::{Display, Reporter}, reader::entry::Component};
 
 const ARGS: [&str; 2] = ["--help", "-h"];
 
@@ -6,13 +6,6 @@ const ARGS: [&str; 2] = ["--help", "-h"];
 pub struct Help {
     component: Option<String>,
 }
-
-impl Help {
-    pub fn context(&self) -> Option<&String> {
-        self.component.as_ref()
-    }
-}
-
 
 impl Argument<Help> for Help {
     fn read(args: &mut Vec<String>) -> Result<Option<Help>, E> {
@@ -82,15 +75,11 @@ impl Argument<Help> for Help {
             location.filename.to_str().unwrap()
         ));
         reporter.step_left();
-
         if let Some(component) = self.component.as_ref() {
             if let Some(component) = components.iter().find(|c| &c.name == component) {
                 component.display(reporter);
             } else {
-                reporter.bold("ERROR:\n");
-                reporter.step_right();
-                reporter.printnl(format!("Component \"{component}\" isn't found.\n\n"));
-                reporter.step_left();
+                reporter.err(format!("Component \"{component}\" isn't found.\n\n"));
                 list_components(components, reporter);
                 return Err(E::ComponentNotExists(component.to_string()));
             }

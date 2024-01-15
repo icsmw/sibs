@@ -1,19 +1,16 @@
 pub mod help;
 pub mod target;
+pub mod version;
 
 use crate::{
-    cli::{
-        error::E,
-        location::Location,
+    cli::{error::E, location::Location},
+    inf::{
+        any::DebugAny,
         reporter::{self, Reporter},
     },
     reader::entry::Component,
 };
-use std::{
-    any::{Any, TypeId},
-    collections::HashMap,
-    fmt::Debug,
-};
+use std::{any::TypeId, collections::HashMap, fmt::Debug};
 
 pub struct Description {
     pub key: Vec<String>,
@@ -37,20 +34,6 @@ pub trait Argument<T> {
     }
 }
 
-pub trait DebugAny: Any + Debug {
-    fn as_any(&self) -> &dyn Any;
-    fn as_any_mut(&mut self) -> &mut dyn Any;
-}
-
-impl<T: Any + Debug + 'static> DebugAny for T {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-}
-
 #[derive(Debug)]
 pub struct Arguments {
     pub arguments: HashMap<TypeId, Box<dyn DebugAny>>,
@@ -62,6 +45,7 @@ impl Arguments {
             entity.map(|v| (TypeId::of::<T>(), Box::new(v) as Box<dyn DebugAny>))
         }
         let mut all = vec![
+            into(version::Version::read(args)?),
             into(target::Target::read(args)?),
             into(help::Help::read(args)?),
         ];

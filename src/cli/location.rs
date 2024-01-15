@@ -16,6 +16,12 @@ pub struct Location {
 }
 
 impl Location {
+    pub fn dummy() -> Self {
+        Self {
+            path: PathBuf::new(),
+            filename: PathBuf::new(),
+        }
+    }
     pub fn from(filename: PathBuf) -> Result<Self, Error> {
         Ok(Self {
             filename: filename.clone(),

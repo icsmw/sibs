@@ -3,6 +3,7 @@ use std::{env, process::exit};
 mod cli;
 mod context;
 mod functions;
+mod inf;
 mod reader;
 
 const SIBS_PRINT_ERRORS: &str = "SIBS_PRINT_ERRORS";

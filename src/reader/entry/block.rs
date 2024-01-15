@@ -1,5 +1,9 @@
 use crate::{
-    cli::reporter::{self, Reporter},
+    cli,
+    inf::{
+        reporter::{self, Reporter},
+        runner::{self, Runner},
+    },
     reader::{
         chars,
         entry::{Each, Function, If, Meta, Optional, Reading, Reference, VariableAssignation},
@@ -136,6 +140,17 @@ impl reporter::Display for Block {
         if let Some(meta) = self.meta.as_ref() {
             meta.display(reporter);
         }
+    }
+}
+
+impl Runner for Block {
+    fn run(
+        &self,
+        components: &[super::Component],
+        args: Vec<String>,
+        reporter: &mut Reporter,
+    ) -> Result<runner::Return, cli::error::E> {
+        Ok(None)
     }
 }
 

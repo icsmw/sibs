@@ -1,5 +1,9 @@
 use crate::{
-    cli::reporter::{self, Reporter},
+    cli,
+    inf::{
+        reporter::{self, Reporter},
+        runner::{self, Runner},
+    },
     reader::{
         chars,
         entry::{Function, Meta, Reading, Task},
@@ -131,6 +135,37 @@ impl reporter::Display for Component {
             task.display(reporter);
         });
         reporter.step_left();
+    }
+}
+
+impl Runner for Component {
+    fn run(
+        &self,
+        components: &[Component],
+        mut args: Vec<String>,
+        reporter: &mut Reporter,
+    ) -> Result<runner::Return, cli::error::E> {
+        let task = if args.is_empty() {
+            None
+        } else {
+            Some(args.remove(0))
+        }
+        .ok_or_else(|| {
+            reporter.err(format!(
+                "No task provided for component \"{}\". Try to use \"sibs {} --help\".\n",
+                self.name, self.name
+            ));
+            cli::error::E::NoTaskForComponent(self.name.to_string())
+        })?;
+        let task = self.tasks.iter().find(|t| t.name == task).ok_or_else(|| {
+            reporter.err(format!(
+                "Task \"{task}\" doesn't exist on component \"{}\". Try to use \"sibs {} --help\".\n",
+                self.name, self.name
+            ));
+            cli::error::E::TaskNotExists(self.name.to_string(), task)
+        })?;
+        reporter.with_title("COMPONENT", &self.name);
+        task.run(components, args, reporter)
     }
 }
 

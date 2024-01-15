@@ -1,5 +1,9 @@
 use crate::{
-    cli::reporter::{self, Reporter},
+    cli,
+    inf::{
+        reporter::{self, Reporter},
+        runner::{self, Runner},
+    },
     reader::{
         chars,
         entry::{Block, Reading, VariableDeclaration},
@@ -134,6 +138,25 @@ impl reporter::Display for Task {
             block.display(reporter);
         }
         reporter.step_left();
+    }
+}
+
+impl Runner for Task {
+    fn run(
+        &self,
+        components: &[super::Component],
+        args: Vec<String>,
+        reporter: &mut Reporter,
+    ) -> Result<runner::Return, cli::error::E> {
+        let block = self.block.as_ref().ok_or_else(|| {
+            reporter.err(format!(
+                "Task \"{}\" doesn't have actions block.\n",
+                self.name,
+            ));
+            cli::error::E::NoTaskBlock(self.name.to_string())
+        })?;
+        reporter.with_title("TASK", &self.name);
+        block.run(components, args, reporter)
     }
 }
 

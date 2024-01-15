@@ -1,0 +1,46 @@
+use crate::{
+    cli::{
+        args::{Argument, Description},
+        error::E,
+    },
+    inf::reporter::Reporter,
+    reader::entry::Component,
+};
+use std::path::PathBuf;
+
+const ARGS: [&str; 2] = ["--version", "-v"];
+
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+#[derive(Debug)]
+pub struct Version {}
+
+impl Argument<Version> for Version {
+    fn read(args: &mut Vec<String>) -> Result<Option<Version>, E> {
+        if let Some(first) = args.first() {
+            if ARGS.contains(&first.as_str()) {
+                let _ = args.remove(0);
+                Ok(Some(Version {}))
+            } else {
+                Ok(None)
+            }
+        } else {
+            Ok(None)
+        }
+    }
+    fn desc() -> Description {
+        Description {
+            key: ARGS.iter().map(|s| s.to_string()).collect::<Vec<String>>(),
+            desc: String::from("show version of sibs"),
+        }
+    }
+    fn action(
+        &mut self,
+        _components: &[Component],
+        _reporter: &mut Reporter,
+        _location: &crate::cli::location::Location,
+    ) -> Result<(), E> {
+        println!("{VERSION}");
+        Ok(())
+    }
+}

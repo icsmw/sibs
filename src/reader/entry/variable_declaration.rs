@@ -1,5 +1,5 @@
 use crate::{
-    cli::reporter::{self, Reporter},
+    inf::reporter,
     reader::{
         chars,
         entry::{Reader, Reading, Values, VariableName, VariableType},

@@ -96,6 +96,24 @@ impl Reporter {
     pub fn offset(&self) -> String {
         " ".repeat(self._offset).to_string()
     }
+
+    pub fn err<'a, T>(&mut self, msg: T)
+    where
+        T: 'a + ToOwned + ToString,
+    {
+        self.with_title("ERROR".to_string(), msg.to_string());
+    }
+
+    pub fn with_title<'a, T>(&mut self, title: T, msg: T)
+    where
+        T: 'a + ToOwned + ToString,
+    {
+        self.bold(format!("{}:\n", title.to_string()));
+        self.step_right();
+        self.printnl(msg);
+        self.step_left();
+        println!()
+    }
 }
 
 pub fn print_fmt<'a, T>(lines: &[T], offset: usize)
