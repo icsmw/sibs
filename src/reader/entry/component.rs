@@ -142,30 +142,25 @@ impl Runner for Component {
     fn run(
         &self,
         components: &[Component],
-        mut args: Vec<String>,
+        args: &[String],
         reporter: &mut Reporter,
     ) -> Result<runner::Return, cli::error::E> {
-        let task = if args.is_empty() {
-            None
-        } else {
-            Some(args.remove(0))
-        }
-        .ok_or_else(|| {
+        let task = args.first().ok_or_else(|| {
             reporter.err(format!(
                 "No task provided for component \"{}\". Try to use \"sibs {} --help\".\n",
                 self.name, self.name
             ));
             cli::error::E::NoTaskForComponent(self.name.to_string())
         })?;
-        let task = self.tasks.iter().find(|t| t.name == task).ok_or_else(|| {
+        let task = self.tasks.iter().find(|t| &t.name == task).ok_or_else(|| {
             reporter.err(format!(
                 "Task \"{task}\" doesn't exist on component \"{}\". Try to use \"sibs {} --help\".\n",
                 self.name, self.name
             ));
-            cli::error::E::TaskNotExists(self.name.to_string(), task)
+            cli::error::E::TaskNotExists(self.name.to_string(), task.to_owned())
         })?;
         reporter.with_title("COMPONENT", &self.name);
-        task.run(components, args, reporter)
+        task.run(components, &args[1..], reporter)
     }
 }
 

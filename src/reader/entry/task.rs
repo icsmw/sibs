@@ -6,7 +6,7 @@ use crate::{
     },
     reader::{
         chars,
-        entry::{Block, Reading, VariableDeclaration},
+        entry::{Block, Component, Reading, VariableDeclaration},
         Reader, E,
     },
 };
@@ -144,8 +144,8 @@ impl reporter::Display for Task {
 impl Runner for Task {
     fn run(
         &self,
-        components: &[super::Component],
-        args: Vec<String>,
+        components: &[Component],
+        args: &[String],
         reporter: &mut Reporter,
     ) -> Result<runner::Return, cli::error::E> {
         let block = self.block.as_ref().ok_or_else(|| {

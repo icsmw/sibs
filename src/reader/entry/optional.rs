@@ -1,9 +1,17 @@
-use crate::reader::{
-    chars,
-    entry::{
-        Block, Function, Reading, Reference, ValueString, VariableAssignation, VariableComparing,
+use crate::{
+    cli,
+    inf::{
+        reporter::{self, Reporter},
+        runner::{self, Runner},
     },
-    words, Reader, E,
+    reader::{
+        chars,
+        entry::{
+            Block, Component, Function, Reading, Reference, ValueString, VariableAssignation,
+            VariableComparing,
+        },
+        words, Reader, E,
+    },
 };
 use std::fmt;
 
@@ -148,6 +156,17 @@ impl Reading<Optional> for Optional {
 impl fmt::Display for Optional {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{} => {}", self.condition, self.action)
+    }
+}
+
+impl Runner for Optional {
+    fn run(
+        &self,
+        components: &[Component],
+        args: &[String],
+        reporter: &mut Reporter,
+    ) -> Result<runner::Return, cli::error::E> {
+        Ok(None)
     }
 }
 

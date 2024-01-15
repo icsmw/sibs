@@ -9,7 +9,7 @@ pub trait Runner {
     fn run(
         &self,
         components: &[Component],
-        args: Vec<String>,
+        args: &[String],
         reporter: &mut Reporter,
     ) -> Result<Return, E>;
 }

@@ -1,7 +1,14 @@
-use crate::reader::{
-    chars,
-    entry::{Reading, VariableName},
-    Reader, E,
+use crate::{
+    cli,
+    inf::{
+        reporter::{self, Reporter},
+        runner::{self, Runner},
+    },
+    reader::{
+        chars,
+        entry::{Component, Reading, VariableName},
+        Reader, E,
+    },
 };
 use std::fmt;
 
@@ -138,6 +145,17 @@ impl fmt::Display for Reference {
                 )
             }
         )
+    }
+}
+
+impl Runner for Reference {
+    fn run(
+        &self,
+        components: &[Component],
+        args: &[String],
+        reporter: &mut Reporter,
+    ) -> Result<runner::Return, cli::error::E> {
+        Ok(None)
     }
 }
 

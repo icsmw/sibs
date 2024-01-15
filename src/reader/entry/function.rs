@@ -1,7 +1,14 @@
-use crate::reader::{
-    chars,
-    entry::{Arguments, Reading},
-    words, Reader, E,
+use crate::{
+    cli,
+    inf::{
+        reporter::{self, Reporter},
+        runner::{self, Runner},
+    },
+    reader::{
+        chars,
+        entry::{Arguments, Component, Reading},
+        words, Reader, E,
+    },
 };
 use std::fmt;
 
@@ -156,6 +163,17 @@ impl fmt::Display for Function {
             if nested.is_empty() { "" } else { " > " },
             to_string(self)
         )
+    }
+}
+
+impl Runner for Function {
+    fn run(
+        &self,
+        components: &[Component],
+        args: &[String],
+        reporter: &mut Reporter,
+    ) -> Result<runner::Return, cli::error::E> {
+        Ok(None)
     }
 }
 

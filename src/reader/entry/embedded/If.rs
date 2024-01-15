@@ -1,7 +1,14 @@
-use crate::reader::{
-    chars,
-    entry::{Block, Function, Reading, ValueString, VariableName},
-    words, Reader, E,
+use crate::{
+    cli,
+    inf::{
+        reporter::{self, Reporter},
+        runner::{self, Runner},
+    },
+    reader::{
+        chars,
+        entry::{Block, Component, Function, Reading, ValueString, VariableName},
+        words, Reader, E,
+    },
 };
 use std::fmt;
 
@@ -270,6 +277,17 @@ impl fmt::Display for If {
                 .collect::<Vec<String>>()
                 .join(" ")
         )
+    }
+}
+
+impl Runner for If {
+    fn run(
+        &self,
+        components: &[Component],
+        args: &[String],
+        reporter: &mut Reporter,
+    ) -> Result<runner::Return, cli::error::E> {
+        Ok(None)
     }
 }
 

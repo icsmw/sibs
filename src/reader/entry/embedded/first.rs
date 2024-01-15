@@ -1,7 +1,14 @@
-use crate::reader::{
-    chars,
-    entry::{Block, Reading},
-    words, Reader, E,
+use crate::{
+    cli,
+    inf::{
+        reporter::{self, Reporter},
+        runner::{self, Runner},
+    },
+    reader::{
+        chars,
+        entry::{Block, Component, Reading},
+        words, Reader, E,
+    },
 };
 use std::fmt;
 
@@ -40,6 +47,17 @@ impl Reading<First> for First {
 impl fmt::Display for First {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "FIRST {};", self.block)
+    }
+}
+
+impl Runner for First {
+    fn run(
+        &self,
+        components: &[Component],
+        args: &[String],
+        reporter: &mut Reporter,
+    ) -> Result<runner::Return, cli::error::E> {
+        Ok(None)
     }
 }
 

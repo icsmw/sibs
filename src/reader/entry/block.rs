@@ -6,7 +6,10 @@ use crate::{
     },
     reader::{
         chars,
-        entry::{Each, Function, If, Meta, Optional, Reading, Reference, VariableAssignation},
+        entry::{
+            Command, Component, Each, Function, If, Meta, Optional, Reading, Reference,
+            VariableAssignation,
+        },
         Reader, E,
     },
 };
@@ -20,7 +23,7 @@ pub enum Element {
     VariableAssignation(VariableAssignation),
     Optional(Optional),
     Reference(Reference),
-    Command(String),
+    Command(Command),
 }
 
 impl fmt::Display for Element {
@@ -38,6 +41,25 @@ impl fmt::Display for Element {
                 Self::Reference(v) => v.to_string(),
             }
         )
+    }
+}
+
+impl Runner for Element {
+    fn run(
+        &self,
+        components: &[Component],
+        args: &[String],
+        reporter: &mut Reporter,
+    ) -> Result<runner::Return, cli::error::E> {
+        match self {
+            Self::Command(v) => v.run(components, args, reporter),
+            Self::Function(v) => v.run(components, args, reporter),
+            Self::If(v) => v.run(components, args, reporter),
+            Self::Each(v) => v.run(components, args, reporter),
+            Self::VariableAssignation(v) => v.run(components, args, reporter),
+            Self::Optional(v) => v.run(components, args, reporter),
+            Self::Reference(v) => v.run(components, args, reporter),
+        }
     }
 }
 
@@ -83,7 +105,7 @@ impl Reading<Block> for Block {
             }
             if let Some((cmd, _)) = reader.until().char(&[&chars::SEMICOLON]) {
                 reader.move_to().next();
-                elements.push(Element::Command(cmd));
+                elements.push(Element::Command(Command::new(cmd, reader.token()?.id)));
             } else {
                 break;
             }
@@ -146,11 +168,15 @@ impl reporter::Display for Block {
 impl Runner for Block {
     fn run(
         &self,
-        components: &[super::Component],
-        args: Vec<String>,
+        components: &[Component],
+        args: &[String],
         reporter: &mut Reporter,
     ) -> Result<runner::Return, cli::error::E> {
-        Ok(None)
+        let mut output: runner::Return = None;
+        for element in self.elements.iter() {
+            output = element.run(components, args, reporter)?;
+        }
+        Ok(output)
     }
 }
 

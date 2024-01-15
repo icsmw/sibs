@@ -1,5 +1,6 @@
 mod arguments;
 mod block;
+mod command;
 mod component;
 mod embedded;
 mod function;
@@ -18,6 +19,7 @@ mod variable_type;
 use crate::reader::{error::E, Reader};
 pub use arguments::{Argument, Arguments};
 pub use block::Block;
+pub use command::Command;
 pub use component::Component;
 pub use embedded::{
     each::Each,

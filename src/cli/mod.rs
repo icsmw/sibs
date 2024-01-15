@@ -68,7 +68,7 @@ pub fn read() -> Result<(), E> {
         Some(income.remove(0))
     } {
         if let Some(component) = components.iter().find(|comp| comp.name == component) {
-            component.run(&components, income, &mut reporter)?;
+            component.run(&components, &income, &mut reporter)?;
             Ok(())
         } else {
             Err(E::ComponentNotExists(component.to_string()))

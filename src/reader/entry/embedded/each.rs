@@ -1,7 +1,14 @@
-use crate::reader::{
-    chars,
-    entry::{Block, Function, Reading, VariableName},
-    words, Reader, E,
+use crate::{
+    cli,
+    inf::{
+        reporter::{self, Reporter},
+        runner::{self, Runner},
+    },
+    reader::{
+        chars,
+        entry::{Block, Component, Function, Reading, VariableName},
+        words, Reader, E,
+    },
 };
 use std::fmt;
 
@@ -90,6 +97,18 @@ impl fmt::Display for Each {
         write!(f, "EACH({}) {} {};", self.variable, self.input, self.block)
     }
 }
+
+impl Runner for Each {
+    fn run(
+        &self,
+        components: &[Component],
+        args: &[String],
+        reporter: &mut Reporter,
+    ) -> Result<runner::Return, cli::error::E> {
+        Ok(None)
+    }
+}
+
 #[cfg(test)]
 mod test_each {
     use crate::reader::{

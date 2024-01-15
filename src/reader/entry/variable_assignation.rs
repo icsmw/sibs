@@ -1,7 +1,14 @@
-use crate::reader::{
-    chars,
-    entry::{Block, First, Function, Reader, Reading, ValueString, VariableName},
-    E,
+use crate::{
+    cli,
+    inf::{
+        reporter::{self, Reporter},
+        runner::{self, Runner},
+    },
+    reader::{
+        chars,
+        entry::{Block, Component, First, Function, Reader, Reading, ValueString, VariableName},
+        E,
+    },
 };
 use std::fmt;
 
@@ -111,6 +118,17 @@ impl fmt::Display for VariableAssignation {
                 _ => ";",
             }
         )
+    }
+}
+
+impl Runner for VariableAssignation {
+    fn run(
+        &self,
+        components: &[Component],
+        args: &[String],
+        reporter: &mut Reporter,
+    ) -> Result<runner::Return, cli::error::E> {
+        Ok(None)
     }
 }
 
