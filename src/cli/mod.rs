@@ -21,10 +21,10 @@ pub fn read() -> Result<(), E> {
     fn run<T: Argument<T> + 'static>(
         components: &[Component],
         arguments: &mut Arguments,
-        context: &mut Context,
+        cx: &mut Context,
     ) -> Result<(), E> {
         if let Some(arg) = arguments.get_mut::<T>() {
-            arg.action(components, context)
+            arg.action(components, cx)
         } else {
             Ok(())
         }
@@ -56,15 +56,15 @@ pub fn read() -> Result<(), E> {
             }
         }
     };
-    let mut context = Context {
+    let mut cx = Context {
         cwd: PathBuf::new(),
         location,
         reporter,
         tracker: Tracker::new(),
     };
-    let components = reader::read_file(&mut context)?;
+    let components = reader::read_file(&mut cx)?;
     let no_actions = defaults.has::<args::help::Help>();
-    run::<args::help::Help>(&components, &mut defaults, &mut context)?;
+    run::<args::help::Help>(&components, &mut defaults, &mut cx)?;
     if no_actions {
         return Ok(());
     }
@@ -74,7 +74,7 @@ pub fn read() -> Result<(), E> {
         Some(income.remove(0))
     } {
         if let Some(component) = components.iter().find(|comp| comp.name == component) {
-            component.run(&components, &income, &mut context)?;
+            component.run(&components, &income, &mut cx)?;
             Ok(())
         } else {
             Err(E::ComponentNotExists(component.to_string()))

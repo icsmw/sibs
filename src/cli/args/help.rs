@@ -3,7 +3,7 @@ use crate::{
         args::{Argument, Description}, error::E 
     },
     inf::{
-        reporter::{Display, Reporter},
+        reporter::{Display},
         context::Context,
     }, 
     reader::entry::Component
@@ -36,11 +36,11 @@ impl Argument<Help> for Help {
     fn desc() -> Description {
         Description { 
             key: ARGS.iter().map(|s|s.to_string()).collect::<Vec<String>>(),
-            desc: String::from("shows help. Global context - shows available options and components. To get help for component use: component --help.")
+            desc: String::from("shows help. Global cx - shows available options and components. To get help for component use: component --help.")
         }
     }
-    fn action(&mut self, components: &[Component], context: &mut Context) -> Result<(), E> {
-        fn list_components(components: &[Component], context: &mut Context) {
+    fn action(&mut self, components: &[Component], cx: &mut Context) -> Result<(), E> {
+        fn list_components(components: &[Component], cx: &mut Context) {
             let with_context = components
             .iter()
             .filter(|comp| comp.cwd.is_some())
@@ -55,46 +55,46 @@ impl Argument<Help> for Help {
             })
             .collect::<Vec<(String, String)>>();
             if !with_context.is_empty() {
-                context.reporter.bold("COMPONENTS:\n");
-                context.reporter.step_right();
-                context.reporter.pairs(with_context);
-                context.reporter.step_left();
+                cx.reporter.bold("COMPONENTS:\n");
+                cx.reporter.step_right();
+                cx.reporter.pairs(with_context);
+                cx.reporter.step_left();
             }
         }
-        fn list_commands(components: &[Component], context: &mut Context) {
+        fn list_commands(components: &[Component], cx: &mut Context) {
             if components.iter().any(|comp| comp.cwd.is_none()) {
-                context.reporter.bold("\nCOMMANDS:\n");
+                cx.reporter.bold("\nCOMMANDS:\n");
             }
-            context.reporter.step_right();
+            cx.reporter.step_right();
             components
                 .iter()
                 .filter(|comp| comp.cwd.is_none())
                 .for_each(|comp| {
                     comp.tasks.iter().filter(|t| t.has_meta()).for_each(|task| {
-                        task.display(&mut context.reporter);
+                        task.display(&mut cx.reporter);
                     });
                 });
-                context.reporter.step_left();
+                cx.reporter.step_left();
         }
-        context.reporter.bold("SCENARIO:\n");
-        context.reporter.step_right();
-        context.reporter.print(format!(
+        cx.reporter.bold("SCENARIO:\n");
+        cx.reporter.step_right();
+        cx.reporter.print(format!(
             "{}{}\n\n",
-            context.reporter.offset(),
-            context.location.filename.to_str().unwrap()
+            cx.reporter.offset(),
+            cx.location.filename.to_str().unwrap()
         ));
-        context.reporter.step_left();
+        cx.reporter.step_left();
         if let Some(component) = self.component.as_ref() {
             if let Some(component) = components.iter().find(|c| &c.name == component) {
-                component.display(&mut context.reporter);
+                component.display(&mut cx.reporter);
             } else {
-                context.reporter.err(format!("Component \"{component}\" isn't found.\n\n"));
-                list_components(components, context);
+                cx.reporter.err(format!("Component \"{component}\" isn't found.\n\n"));
+                list_components(components, cx);
                 return Err(E::ComponentNotExists(component.to_string()));
             }
         } else {
-            list_components(components, context);
-            list_commands(components, context);
+            list_components(components, cx);
+            list_commands(components, cx);
         }
         Ok(())
     }

@@ -956,16 +956,16 @@ mod test_walker {
     }
 }
 
-pub fn read_file(context: &mut Context) -> Result<Vec<Component>, E> {
-    if !context.location.filename.exists() {
+pub fn read_file(cx: &mut Context) -> Result<Vec<Component>, E> {
+    if !cx.location.filename.exists() {
         Err(E::FileNotExists(
-            context.location.filename.to_string_lossy().to_string(),
+            cx.location.filename.to_string_lossy().to_string(),
         ))?
     }
-    let mut reader = Reader::new(fs::read_to_string(&context.location.filename)?);
+    let mut reader = Reader::new(fs::read_to_string(&cx.location.filename)?);
     let mut imports: Vec<Import> = vec![];
     while let Some(func) = Function::read(&mut reader)? {
-        if let Some(fn_impl) = <Import as Implementation<Import, String>>::from(func, context)? {
+        if let Some(fn_impl) = <Import as Implementation<Import, String>>::from(func, cx)? {
             imports.push(fn_impl);
         } else {
             Err(E::NotAllowedFunction)?
@@ -973,8 +973,8 @@ pub fn read_file(context: &mut Context) -> Result<Vec<Component>, E> {
     }
     let mut components: Vec<Component> = vec![];
     for import in imports.iter_mut() {
-        let mut context = Context::from_filename(&import.path)?;
-        components.append(&mut read_file(&mut context)?);
+        let mut cx = Context::from_filename(&import.path)?;
+        components.append(&mut read_file(&mut cx)?);
     }
     while let Some(component) = Component::read(&mut reader)? {
         components.push(component);
@@ -994,8 +994,8 @@ mod test_reader {
         let target = std::env::current_dir()
             .unwrap()
             .join("./src/reader/entry/tests/normal/full/build.sibs");
-        let mut context = Context::from_filename(&target)?;
-        let components = read_file(&mut context)?;
+        let mut cx = Context::from_filename(&target)?;
+        let components = read_file(&mut cx)?;
         assert_eq!(components.len(), 9);
         Ok(())
     }

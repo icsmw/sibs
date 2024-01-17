@@ -55,7 +55,7 @@ impl Runner for First {
         &self,
         components: &[Component],
         args: &[String],
-        context: &mut Context,
+        cx: &mut Context,
     ) -> Result<runner::Return, cli::error::E> {
         Ok(None)
     }
