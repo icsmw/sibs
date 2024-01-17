@@ -1,6 +1,6 @@
 use crate::{
-    context::Context,
     functions::Implementation,
+    inf::context::Context,
     reader::{
         entry::{Argument, Function},
         error::E,
@@ -35,7 +35,7 @@ pub struct Import {
 }
 
 impl Implementation<Import, String> for Import {
-    fn from(function: Function, context: &Context) -> Result<Option<Import>, E> {
+    fn from(function: Function, context: &mut Context) -> Result<Option<Import>, E> {
         if function.name.trim() != NAME {
             return Ok(None);
         }

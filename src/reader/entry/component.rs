@@ -1,6 +1,7 @@
 use crate::{
     cli,
     inf::{
+        context::Context,
         reporter::{self, Reporter},
         runner::{self, Runner},
     },
@@ -143,24 +144,24 @@ impl Runner for Component {
         &self,
         components: &[Component],
         args: &[String],
-        reporter: &mut Reporter,
+        context: &mut Context,
     ) -> Result<runner::Return, cli::error::E> {
         let task = args.first().ok_or_else(|| {
-            reporter.err(format!(
+            context.reporter.err(format!(
                 "No task provided for component \"{}\". Try to use \"sibs {} --help\".\n",
                 self.name, self.name
             ));
             cli::error::E::NoTaskForComponent(self.name.to_string())
         })?;
         let task = self.tasks.iter().find(|t| &t.name == task).ok_or_else(|| {
-            reporter.err(format!(
+            context.reporter.err(format!(
                 "Task \"{task}\" doesn't exist on component \"{}\". Try to use \"sibs {} --help\".\n",
                 self.name, self.name
             ));
             cli::error::E::TaskNotExists(self.name.to_string(), task.to_owned())
         })?;
-        reporter.with_title("COMPONENT", &self.name);
-        task.run(components, &args[1..], reporter)
+        context.reporter.with_title("COMPONENT", &self.name);
+        task.run(components, &args[1..], context)
     }
 }
 

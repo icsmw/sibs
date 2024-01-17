@@ -1,6 +1,7 @@
 use crate::{
     cli,
     inf::{
+        context::Context,
         reporter::{self, Reporter},
         runner::{self, Runner},
     },
@@ -146,17 +147,17 @@ impl Runner for Task {
         &self,
         components: &[Component],
         args: &[String],
-        reporter: &mut Reporter,
+        context: &mut Context,
     ) -> Result<runner::Return, cli::error::E> {
         let block = self.block.as_ref().ok_or_else(|| {
-            reporter.err(format!(
+            context.reporter.err(format!(
                 "Task \"{}\" doesn't have actions block.\n",
                 self.name,
             ));
             cli::error::E::NoTaskBlock(self.name.to_string())
         })?;
-        reporter.with_title("TASK", &self.name);
-        block.run(components, args, reporter)
+        context.reporter.with_title("TASK", &self.name);
+        block.run(components, args, context)
     }
 }
 

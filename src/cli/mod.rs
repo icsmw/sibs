@@ -1,18 +1,19 @@
 mod args;
 pub mod error;
-pub mod location;
 
 use crate::{
     inf::{
+        context::Context,
+        location::Location,
         reporter::{Display, Reporter},
         runner::Runner,
+        tracker::Tracker,
     },
     reader::{self, entry::Component},
 };
 use args::Arguments;
 use error::E;
-use location::Location;
-use std::env;
+use std::{env, path::PathBuf};
 
 use self::args::Argument;
 
@@ -20,11 +21,10 @@ pub fn read() -> Result<(), E> {
     fn run<T: Argument<T> + 'static>(
         components: &[Component],
         arguments: &mut Arguments,
-        reporter: &mut Reporter,
-        location: &Location,
+        context: &mut Context,
     ) -> Result<(), E> {
         if let Some(arg) = arguments.get_mut::<T>() {
-            arg.action(components, reporter, location)
+            arg.action(components, context)
         } else {
             Ok(())
         }
@@ -36,14 +36,14 @@ pub fn read() -> Result<(), E> {
     let mut reporter = Reporter::new();
     let mut defaults = Arguments::new(&mut income)?;
     if defaults.has::<args::version::Version>() {
-        run::<args::version::Version>(&[], &mut defaults, &mut reporter, &Location::dummy())?;
+        run::<args::version::Version>(&[], &mut defaults, &mut Context::unbound())?;
         if !income.is_empty() {
             reporter.err(format!("Ingore next arguments: {}", income.join(", ")));
         }
         return Ok(());
     }
     let location = if let Some(target) = defaults.get::<args::target::Target>() {
-        Location::from(target.get())?
+        Location::from(&target.get())?
     } else {
         match Location::new() {
             Ok(location) => location,
@@ -56,9 +56,15 @@ pub fn read() -> Result<(), E> {
             }
         }
     };
-    let components = reader::read_file(&location.filename)?;
+    let mut context = Context {
+        cwd: PathBuf::new(),
+        location,
+        reporter,
+        tracker: Tracker::new(),
+    };
+    let components = reader::read_file(&mut context)?;
     let no_actions = defaults.has::<args::help::Help>();
-    run::<args::help::Help>(&components, &mut defaults, &mut reporter, &location)?;
+    run::<args::help::Help>(&components, &mut defaults, &mut context)?;
     if no_actions {
         return Ok(());
     }
@@ -68,7 +74,7 @@ pub fn read() -> Result<(), E> {
         Some(income.remove(0))
     } {
         if let Some(component) = components.iter().find(|comp| comp.name == component) {
-            component.run(&components, &income, &mut reporter)?;
+            component.run(&components, &income, &mut context)?;
             Ok(())
         } else {
             Err(E::ComponentNotExists(component.to_string()))

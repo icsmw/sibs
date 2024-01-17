@@ -1,6 +1,7 @@
 use crate::{
     cli,
     inf::{
+        context::Context,
         reporter::{self, Reporter},
         runner::{self, Runner},
     },
@@ -49,16 +50,16 @@ impl Runner for Element {
         &self,
         components: &[Component],
         args: &[String],
-        reporter: &mut Reporter,
+        context: &mut Context,
     ) -> Result<runner::Return, cli::error::E> {
         match self {
-            Self::Command(v) => v.run(components, args, reporter),
-            Self::Function(v) => v.run(components, args, reporter),
-            Self::If(v) => v.run(components, args, reporter),
-            Self::Each(v) => v.run(components, args, reporter),
-            Self::VariableAssignation(v) => v.run(components, args, reporter),
-            Self::Optional(v) => v.run(components, args, reporter),
-            Self::Reference(v) => v.run(components, args, reporter),
+            Self::Command(v) => v.run(components, args, context),
+            Self::Function(v) => v.run(components, args, context),
+            Self::If(v) => v.run(components, args, context),
+            Self::Each(v) => v.run(components, args, context),
+            Self::VariableAssignation(v) => v.run(components, args, context),
+            Self::Optional(v) => v.run(components, args, context),
+            Self::Reference(v) => v.run(components, args, context),
         }
     }
 }
@@ -170,11 +171,11 @@ impl Runner for Block {
         &self,
         components: &[Component],
         args: &[String],
-        reporter: &mut Reporter,
+        context: &mut Context,
     ) -> Result<runner::Return, cli::error::E> {
         let mut output: runner::Return = None;
         for element in self.elements.iter() {
-            output = element.run(components, args, reporter)?;
+            output = element.run(components, args, context)?;
         }
         Ok(output)
     }

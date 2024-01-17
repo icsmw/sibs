@@ -1,6 +1,6 @@
 use crate::{
     cli::error::E,
-    inf::{any::DebugAny, reporter::Reporter},
+    inf::{any::DebugAny, context::Context},
     reader::entry::Component,
 };
 
@@ -10,6 +10,6 @@ pub trait Runner {
         &self,
         components: &[Component],
         args: &[String],
-        reporter: &mut Reporter,
+        context: &mut Context,
     ) -> Result<Return, E>;
 }

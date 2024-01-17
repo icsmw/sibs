@@ -6,8 +6,8 @@ pub mod tests;
 pub mod words;
 
 use crate::{
-    context::Context,
     functions::{reader::import::Import, Implementation},
+    inf::context::Context,
 };
 use entry::{Component, Function, Reading};
 use error::E;
@@ -956,17 +956,16 @@ mod test_walker {
     }
 }
 
-pub fn read_file(filename: &PathBuf) -> Result<Vec<Component>, E> {
-    if !filename.exists() {
-        Err(E::FileNotExists(filename.to_string_lossy().to_string()))?
+pub fn read_file(context: &mut Context) -> Result<Vec<Component>, E> {
+    if !context.location.filename.exists() {
+        Err(E::FileNotExists(
+            context.location.filename.to_string_lossy().to_string(),
+        ))?
     }
-    let mut reader = Reader::new(fs::read_to_string(filename)?);
+    let mut reader = Reader::new(fs::read_to_string(&context.location.filename)?);
     let mut imports: Vec<Import> = vec![];
-    let context = Context {
-        cwd: filename.parent().ok_or(E::NoFileParent)?.to_path_buf(),
-    };
     while let Some(func) = Function::read(&mut reader)? {
-        if let Some(fn_impl) = <Import as Implementation<Import, String>>::from(func, &context)? {
+        if let Some(fn_impl) = <Import as Implementation<Import, String>>::from(func, context)? {
             imports.push(fn_impl);
         } else {
             Err(E::NotAllowedFunction)?
@@ -974,7 +973,8 @@ pub fn read_file(filename: &PathBuf) -> Result<Vec<Component>, E> {
     }
     let mut components: Vec<Component> = vec![];
     for import in imports.iter_mut() {
-        components.append(&mut read_file(&import.path)?);
+        let mut context = Context::from_filename(&import.path)?;
+        components.append(&mut read_file(&mut context)?);
     }
     while let Some(component) = Component::read(&mut reader)? {
         components.push(component);
@@ -984,14 +984,18 @@ pub fn read_file(filename: &PathBuf) -> Result<Vec<Component>, E> {
 
 #[cfg(test)]
 mod test_reader {
-    use crate::reader::{error::E, read_file};
+    use crate::{
+        inf::context::Context,
+        reader::{error::E, read_file},
+    };
 
     #[test]
     fn reading() -> Result<(), E> {
         let target = std::env::current_dir()
             .unwrap()
             .join("./src/reader/entry/tests/normal/full/build.sibs");
-        let components = read_file(&target)?;
+        let mut context = Context::from_filename(&target)?;
+        let components = read_file(&mut context)?;
         assert_eq!(components.len(), 9);
         Ok(())
     }

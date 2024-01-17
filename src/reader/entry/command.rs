@@ -1,6 +1,8 @@
 use crate::{
     cli,
     inf::{
+        context::Context,
+        location::Location,
         reporter::{self, Reporter},
         runner::{self, Runner},
     },
@@ -37,7 +39,7 @@ impl Runner for Command {
         &self,
         components: &[Component],
         args: &[String],
-        reporter: &mut Reporter,
+        context: &mut Context,
     ) -> Result<runner::Return, cli::error::E> {
         Ok(None)
     }

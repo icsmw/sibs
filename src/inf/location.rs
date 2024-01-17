@@ -3,7 +3,7 @@ use std::{
     ffi::OsStr,
     fs::read_dir,
     io::{Error, ErrorKind},
-    path::{self, Component, Components, PathBuf},
+    path::{self, Component, Path, PathBuf},
 };
 
 const DEFAULT_SIBS_SCENARIO: &str = "build.sibs";
@@ -16,13 +16,23 @@ pub struct Location {
 }
 
 impl Location {
+    pub fn new() -> Result<Self, Error> {
+        if let Some((path, filename)) = Self::search(&current_dir()?)? {
+            Ok(Self { path, filename })
+        } else {
+            Err(Error::new(
+                ErrorKind::NotFound,
+                "Fail to find any sibs files; default sibs file - build.sibs also wasn't found",
+            ))
+        }
+    }
     pub fn dummy() -> Self {
         Self {
             path: PathBuf::new(),
             filename: PathBuf::new(),
         }
     }
-    pub fn from(filename: PathBuf) -> Result<Self, Error> {
+    pub fn from(filename: &PathBuf) -> Result<Self, Error> {
         Ok(Self {
             filename: filename.clone(),
             path: filename
@@ -33,6 +43,11 @@ impl Location {
                 ))?
                 .to_path_buf(),
         })
+    }
+    pub fn to_relative_path(&self, path: &Path) -> String {
+        path.to_string_lossy()
+            .to_string()
+            .replace(&self.path.to_string_lossy().to_string(), "")
     }
 
     fn search(location: &PathBuf) -> Result<Option<(PathBuf, PathBuf)>, Error> {
@@ -69,16 +84,5 @@ impl Location {
                 .collect::<Vec<&OsStr>>()
                 .join(OsStr::new(path::MAIN_SEPARATOR_STR)),
         ))
-    }
-
-    pub fn new() -> Result<Self, Error> {
-        if let Some((path, filename)) = Self::search(&current_dir()?)? {
-            Ok(Self { path, filename })
-        } else {
-            Err(Error::new(
-                ErrorKind::NotFound,
-                "Fail to find any sibs files; default sibs file - build.sibs also wasn't found",
-            ))
-        }
     }
 }

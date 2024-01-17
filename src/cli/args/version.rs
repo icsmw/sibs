@@ -3,10 +3,9 @@ use crate::{
         args::{Argument, Description},
         error::E,
     },
-    inf::reporter::Reporter,
+    inf::{context::Context, location::Location, reporter::Reporter},
     reader::entry::Component,
 };
-use std::path::PathBuf;
 
 const ARGS: [&str; 2] = ["--version", "-v"];
 
@@ -34,12 +33,7 @@ impl Argument<Version> for Version {
             desc: String::from("show version of sibs"),
         }
     }
-    fn action(
-        &mut self,
-        _components: &[Component],
-        _reporter: &mut Reporter,
-        _location: &crate::cli::location::Location,
-    ) -> Result<(), E> {
+    fn action(&mut self, _components: &[Component], _context: &mut Context) -> Result<(), E> {
         println!("{VERSION}");
         Ok(())
     }

@@ -1,4 +1,13 @@
-use crate::{cli::{args::{Argument, Description}, error::E, location::Location},inf::reporter::{Display, Reporter}, reader::entry::Component};
+use crate::{
+    cli::{
+        args::{Argument, Description}, error::E 
+    },
+    inf::{
+        reporter::{Display, Reporter},
+        context::Context,
+    }, 
+    reader::entry::Component
+};
 
 const ARGS: [&str; 2] = ["--help", "-h"];
 
@@ -30,8 +39,8 @@ impl Argument<Help> for Help {
             desc: String::from("shows help. Global context - shows available options and components. To get help for component use: component --help.")
         }
     }
-    fn action(&mut self, components: &[Component], reporter: &mut Reporter, location: &Location) -> Result<(), E> {
-        fn list_components(components: &[Component], reporter: &mut Reporter) {
+    fn action(&mut self, components: &[Component], context: &mut Context) -> Result<(), E> {
+        fn list_components(components: &[Component], context: &mut Context) {
             let with_context = components
             .iter()
             .filter(|comp| comp.cwd.is_some())
@@ -46,46 +55,46 @@ impl Argument<Help> for Help {
             })
             .collect::<Vec<(String, String)>>();
             if !with_context.is_empty() {
-                reporter.bold("COMPONENTS:\n");
-                reporter.step_right();
-                reporter.pairs(with_context);
-                reporter.step_left();
+                context.reporter.bold("COMPONENTS:\n");
+                context.reporter.step_right();
+                context.reporter.pairs(with_context);
+                context.reporter.step_left();
             }
         }
-        fn list_commands(components: &[Component], reporter: &mut Reporter) {
+        fn list_commands(components: &[Component], context: &mut Context) {
             if components.iter().any(|comp| comp.cwd.is_none()) {
-                reporter.bold("\nCOMMANDS:\n");
+                context.reporter.bold("\nCOMMANDS:\n");
             }
-            reporter.step_right();
+            context.reporter.step_right();
             components
                 .iter()
                 .filter(|comp| comp.cwd.is_none())
                 .for_each(|comp| {
                     comp.tasks.iter().filter(|t| t.has_meta()).for_each(|task| {
-                        task.display(reporter);
+                        task.display(&mut context.reporter);
                     });
                 });
-            reporter.step_left();
+                context.reporter.step_left();
         }
-        reporter.bold("SCENARIO:\n");
-        reporter.step_right();
-        reporter.print(format!(
+        context.reporter.bold("SCENARIO:\n");
+        context.reporter.step_right();
+        context.reporter.print(format!(
             "{}{}\n\n",
-            reporter.offset(),
-            location.filename.to_str().unwrap()
+            context.reporter.offset(),
+            context.location.filename.to_str().unwrap()
         ));
-        reporter.step_left();
+        context.reporter.step_left();
         if let Some(component) = self.component.as_ref() {
             if let Some(component) = components.iter().find(|c| &c.name == component) {
-                component.display(reporter);
+                component.display(&mut context.reporter);
             } else {
-                reporter.err(format!("Component \"{component}\" isn't found.\n\n"));
-                list_components(components, reporter);
+                context.reporter.err(format!("Component \"{component}\" isn't found.\n\n"));
+                list_components(components, context);
                 return Err(E::ComponentNotExists(component.to_string()));
             }
         } else {
-            list_components(components, reporter);
-            list_commands(components, reporter);
+            list_components(components, context);
+            list_commands(components, context);
         }
         Ok(())
     }

@@ -1,7 +1,7 @@
 use crate::{
     cli,
     inf::{
-        reporter::{self, Reporter},
+        context::Context,
         runner::{self, Runner},
     },
     reader::{
@@ -153,7 +153,7 @@ impl Runner for Reference {
         &self,
         components: &[Component],
         args: &[String],
-        reporter: &mut Reporter,
+        context: &mut Context,
     ) -> Result<runner::Return, cli::error::E> {
         Ok(None)
     }

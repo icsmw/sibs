@@ -1,9 +1,5 @@
-use core::fmt;
-use std::io::BufRead;
-
+use console::{style, Style};
 use terminal_size::terminal_size;
-
-use ansi_term::{Color, Style};
 
 const TITLE_SPLITTER: &str = ">>";
 
@@ -27,7 +23,7 @@ impl Reporter {
         println!(
             "{}{}: {value}",
             " ".repeat(self._offset),
-            Color::White.bold().paint(key)
+            style(key).bold().white()
         );
     }
 
@@ -62,7 +58,7 @@ impl Reporter {
             print!(
                 "{}{}{} - ",
                 self.offset(),
-                Color::White.bold().paint(&pair.0),
+                style(&pair.0).bold().white(),
                 " ".repeat(max - pair.0.len()),
             );
             print(&pair.1, max + 3 + self._offset, None, false);
@@ -74,14 +70,14 @@ impl Reporter {
     where
         T: 'a + ToOwned + ToString,
     {
-        print(msg, self._offset, Some(Color::White.bold()), false)
+        print(msg, self._offset, Some(Style::new().white().bold()), false)
     }
 
     pub fn boldnl<'a, T>(&self, msg: T)
     where
         T: 'a + ToOwned + ToString,
     {
-        print(msg, self._offset, Some(Color::White.bold()), true)
+        print(msg, self._offset, Some(Style::new().white().bold()), true)
     }
     pub fn step_left(&mut self) {
         if self._offset > 0 {
@@ -143,7 +139,7 @@ where
             let first = columns.remove(0).trim();
             print!(
                 "{}{} - ",
-                Color::White.bold().paint(first),
+                style(first).bold().white(),
                 " ".repeat(max - first.len()),
             );
             print(
@@ -187,7 +183,7 @@ where
                 " ".repeat(offset)
             },
             if let Some(style) = style.as_ref() {
-                style.paint(chunk).to_string()
+                style.apply_to(chunk).to_string()
             } else {
                 chunk.to_string()
             }

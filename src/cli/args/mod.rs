@@ -3,9 +3,10 @@ pub mod target;
 pub mod version;
 
 use crate::{
-    cli::{error::E, location::Location},
+    cli::error::E,
     inf::{
         any::DebugAny,
+        context::Context,
         reporter::{self, Reporter},
     },
     reader::entry::Component,
@@ -24,12 +25,7 @@ pub trait Argument<T> {
     fn desc() -> Description
     where
         Self: Sized;
-    fn action(
-        &mut self,
-        _components: &[Component],
-        _reporter: &mut Reporter,
-        _location: &Location,
-    ) -> Result<(), E> {
+    fn action(&mut self, _components: &[Component], _context: &mut Context) -> Result<(), E> {
         Ok(())
     }
 }
