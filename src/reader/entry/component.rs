@@ -2,8 +2,8 @@ use crate::{
     cli,
     inf::{
         context::Context,
-        reporter::{self, Reporter},
         runner::{self, Runner},
+        term::{self, Term},
     },
     reader::{
         chars,
@@ -120,22 +120,22 @@ impl fmt::Display for Component {
     }
 }
 
-impl reporter::Display for Component {
-    fn display(&self, reporter: &mut Reporter) {
-        reporter.bold("COMPONENT:\n");
-        reporter.step_right();
-        reporter.boldnl(&self.name);
+impl term::Display for Component {
+    fn display(&self, term: &mut Term) {
+        term.bold("COMPONENT:\n");
+        term.step_right();
+        term.boldnl(&self.name);
         if let Some(meta) = self.meta.as_ref() {
             println!();
-            meta.display(reporter);
+            meta.display(term);
         }
-        reporter.step_left();
-        reporter.bold("\nTASKS:\n");
-        reporter.step_right();
+        term.step_left();
+        term.bold("\nTASKS:\n");
+        term.step_right();
         self.tasks.iter().filter(|t| t.has_meta()).for_each(|task| {
-            task.display(reporter);
+            task.display(term);
         });
-        reporter.step_left();
+        term.step_left();
     }
 }
 
@@ -147,20 +147,20 @@ impl Runner for Component {
         context: &mut Context,
     ) -> Result<runner::Return, cli::error::E> {
         let task = args.first().ok_or_else(|| {
-            context.reporter.err(format!(
+            context.term.err(format!(
                 "No task provided for component \"{}\". Try to use \"sibs {} --help\".\n",
                 self.name, self.name
             ));
             cli::error::E::NoTaskForComponent(self.name.to_string())
         })?;
         let task = self.tasks.iter().find(|t| &t.name == task).ok_or_else(|| {
-            context.reporter.err(format!(
+            context.term.err(format!(
                 "Task \"{task}\" doesn't exist on component \"{}\". Try to use \"sibs {} --help\".\n",
                 self.name, self.name
             ));
             cli::error::E::TaskNotExists(self.name.to_string(), task.to_owned())
         })?;
-        context.reporter.with_title("COMPONENT", &self.name);
+        context.term.with_title("COMPONENT", &self.name);
         task.run(components, &args[1..], context)
     }
 }

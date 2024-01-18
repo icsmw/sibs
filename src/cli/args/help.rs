@@ -3,7 +3,7 @@ use crate::{
         args::{Argument, Description}, error::E 
     },
     inf::{
-        reporter::{Display},
+        term::Display,
         context::Context,
     }, 
     reader::entry::Component
@@ -55,40 +55,40 @@ impl Argument<Help> for Help {
             })
             .collect::<Vec<(String, String)>>();
             if !with_context.is_empty() {
-                cx.reporter.bold("COMPONENTS:\n");
-                cx.reporter.step_right();
-                cx.reporter.pairs(with_context);
-                cx.reporter.step_left();
+                cx.term.bold("COMPONENTS:\n");
+                cx.term.step_right();
+                cx.term.pairs(with_context);
+                cx.term.step_left();
             }
         }
         fn list_commands(components: &[Component], cx: &mut Context) {
             if components.iter().any(|comp| comp.cwd.is_none()) {
-                cx.reporter.bold("\nCOMMANDS:\n");
+                cx.term.bold("\nCOMMANDS:\n");
             }
-            cx.reporter.step_right();
+            cx.term.step_right();
             components
                 .iter()
                 .filter(|comp| comp.cwd.is_none())
                 .for_each(|comp| {
                     comp.tasks.iter().filter(|t| t.has_meta()).for_each(|task| {
-                        task.display(&mut cx.reporter);
+                        task.display(&mut cx.term);
                     });
                 });
-                cx.reporter.step_left();
+                cx.term.step_left();
         }
-        cx.reporter.bold("SCENARIO:\n");
-        cx.reporter.step_right();
-        cx.reporter.print(format!(
+        cx.term.bold("SCENARIO:\n");
+        cx.term.step_right();
+        cx.term.print(format!(
             "{}{}\n\n",
-            cx.reporter.offset(),
+            cx.term.offset(),
             cx.scenario.filename.to_str().unwrap()
         ));
-        cx.reporter.step_left();
+        cx.term.step_left();
         if let Some(component) = self.component.as_ref() {
             if let Some(component) = components.iter().find(|c| &c.name == component) {
-                component.display(&mut cx.reporter);
+                component.display(&mut cx.term);
             } else {
-                cx.reporter.err(format!("Component \"{component}\" isn't found.\n\n"));
+                cx.term.err(format!("Component \"{component}\" isn't found.\n\n"));
                 list_components(components, cx);
                 return Err(E::ComponentNotExists(component.to_string()));
             }

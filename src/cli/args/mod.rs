@@ -7,7 +7,7 @@ use crate::{
     inf::{
         any::DebugAny,
         context::Context,
-        reporter::{self, Reporter},
+        term::{self, Term},
     },
     reader::entry::Component,
 };
@@ -75,9 +75,9 @@ impl Arguments {
     }
 }
 
-impl reporter::Display for Arguments {
-    fn display(&self, reporter: &mut Reporter) {
-        reporter.print_fmt(
+impl term::Display for Arguments {
+    fn display(&self, term: &mut Term) {
+        term.print_fmt(
             &[target::Target::desc(), help::Help::desc()]
                 .iter()
                 .map(|desc| format!("{}>>{}", desc.key.join(", "), desc.desc))

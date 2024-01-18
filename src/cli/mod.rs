@@ -4,9 +4,9 @@ pub mod error;
 use crate::{
     inf::{
         context::Context,
-        reporter::{Display, Reporter},
         runner::Runner,
         scenario::Scenario,
+        term::{Display, Term},
         tracker::Tracker,
     },
     reader::{self, entry::Component},
@@ -33,12 +33,12 @@ pub fn read() -> Result<(), E> {
     if !income.is_empty() {
         income.remove(0);
     }
-    let mut reporter = Reporter::new();
+    let mut term = Term::new();
     let mut defaults = Arguments::new(&mut income)?;
     if defaults.has::<args::version::Version>() {
         run::<args::version::Version>(&[], &mut defaults, &mut Context::unbound())?;
         if !income.is_empty() {
-            reporter.err(format!("Ingore next arguments: {}", income.join(", ")));
+            term.err(format!("Ingore next arguments: {}", income.join(", ")));
         }
         return Ok(());
     }
@@ -48,10 +48,10 @@ pub fn read() -> Result<(), E> {
         match Scenario::new() {
             Ok(scenario) => scenario,
             Err(_) => {
-                reporter.print("Scenario file hasn't been found.\n\n");
-                reporter.bold("OPTIONS\n");
-                reporter.step_right();
-                defaults.display(&mut reporter);
+                term.print("Scenario file hasn't been found.\n\n");
+                term.bold("OPTIONS\n");
+                term.step_right();
+                defaults.display(&mut term);
                 return Ok(());
             }
         }
@@ -59,7 +59,7 @@ pub fn read() -> Result<(), E> {
     let mut cx = Context {
         cwd: PathBuf::new(),
         scenario,
-        reporter,
+        term,
         tracker: Tracker::new(),
     };
     let components = reader::read_file(&mut cx)?;

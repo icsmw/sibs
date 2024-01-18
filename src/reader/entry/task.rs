@@ -2,8 +2,8 @@ use crate::{
     cli,
     inf::{
         context::Context,
-        reporter::{self, Reporter},
         runner::{self, Runner},
+        term::{self, Term},
     },
     reader::{
         chars,
@@ -114,14 +114,14 @@ impl fmt::Display for Task {
     }
 }
 
-impl reporter::Display for Task {
-    fn display(&self, reporter: &mut Reporter) {
-        reporter.bold(format!("{}[{}]", reporter.offset(), self.name));
+impl term::Display for Task {
+    fn display(&self, term: &mut Term) {
+        term.bold(format!("{}[{}]", term.offset(), self.name));
         println!();
-        reporter.step_right();
-        reporter.print(format!(
+        term.step_right();
+        term.print(format!(
             "{}USAGE: {}{}{}",
-            reporter.offset(),
+            term.offset(),
             self.name,
             if self.declarations.is_empty() {
                 ""
@@ -130,15 +130,15 @@ impl reporter::Display for Task {
             },
             self.declarations
                 .iter()
-                .map(reporter::Display::to_string)
+                .map(term::Display::to_string)
                 .collect::<Vec<String>>()
                 .join(" ")
         ));
         println!();
         if let Some(block) = self.block.as_ref() {
-            block.display(reporter);
+            block.display(term);
         }
-        reporter.step_left();
+        term.step_left();
     }
 }
 
@@ -150,13 +150,13 @@ impl Runner for Task {
         context: &mut Context,
     ) -> Result<runner::Return, cli::error::E> {
         let block = self.block.as_ref().ok_or_else(|| {
-            context.reporter.err(format!(
+            context.term.err(format!(
                 "Task \"{}\" doesn't have actions block.\n",
                 self.name,
             ));
             cli::error::E::NoTaskBlock(self.name.to_string())
         })?;
-        context.reporter.with_title("TASK", &self.name);
+        context.term.with_title("TASK", &self.name);
         block.run(components, args, context)
     }
 }

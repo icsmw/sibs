@@ -4,27 +4,19 @@ use terminal_size::terminal_size;
 const TITLE_SPLITTER: &str = ">>";
 
 pub trait Display {
-    fn display(&self, _reporter: &mut Reporter) {}
+    fn display(&self, _reporter: &mut Term) {}
     fn to_string(&self) -> String {
         String::new()
     }
 }
 
-pub struct Reporter {
+pub struct Term {
     _offset: usize,
 }
 
-impl Reporter {
+impl Term {
     pub fn new() -> Self {
         Self { _offset: 0 }
-    }
-
-    pub fn pair(&self, key: &str, value: &str) {
-        println!(
-            "{}{}: {value}",
-            " ".repeat(self._offset),
-            style(key).bold().white()
-        );
     }
 
     pub fn print_fmt<'a, T>(&self, lines: &[T])

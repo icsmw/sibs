@@ -1,5 +1,5 @@
 use crate::{
-    inf::reporter::{self, Reporter},
+    inf::term::{self, Term},
     reader::{
         chars,
         entry::{Reader, Reading},
@@ -54,7 +54,7 @@ impl fmt::Display for Values {
     }
 }
 
-impl reporter::Display for Values {
+impl term::Display for Values {
     fn to_string(&self) -> String {
         format!("[{}]", self.values.join(" | "))
     }

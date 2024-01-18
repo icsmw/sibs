@@ -1,5 +1,5 @@
 use crate::{
-    inf::reporter,
+    inf::term,
     reader::{
         chars,
         entry::{Reader, Reading, Values, VariableName, VariableType},
@@ -84,11 +84,11 @@ impl fmt::Display for VariableDeclaration {
     }
 }
 
-impl reporter::Display for VariableDeclaration {
+impl term::Display for VariableDeclaration {
     fn to_string(&self) -> String {
         match &self.declaration {
-            Declaration::Typed(v) => reporter::Display::to_string(v),
-            Declaration::Values(v) => reporter::Display::to_string(v),
+            Declaration::Typed(v) => term::Display::to_string(v),
+            Declaration::Values(v) => term::Display::to_string(v),
         }
     }
 }

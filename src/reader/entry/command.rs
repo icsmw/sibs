@@ -2,8 +2,8 @@ use crate::{
     cli,
     inf::{
         context::Context,
-        reporter::{self, Reporter},
         runner::{self, Runner},
+        term::{self, Term},
     },
     reader::entry::Component,
 };
@@ -27,9 +27,9 @@ impl fmt::Display for Command {
     }
 }
 
-impl reporter::Display for Command {
-    fn display(&self, reporter: &mut Reporter) {
-        reporter.printnl(&self.command);
+impl term::Display for Command {
+    fn display(&self, term: &mut Term) {
+        term.printnl(&self.command);
     }
 }
 

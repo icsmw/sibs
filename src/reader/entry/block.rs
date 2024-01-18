@@ -2,8 +2,8 @@ use crate::{
     cli,
     inf::{
         context::Context,
-        reporter::{self, Reporter},
         runner::{self, Runner},
+        term::{self, Term},
     },
     reader::{
         chars,
@@ -158,10 +158,10 @@ impl fmt::Display for Block {
     }
 }
 
-impl reporter::Display for Block {
-    fn display(&self, reporter: &mut Reporter) {
+impl term::Display for Block {
+    fn display(&self, term: &mut Term) {
         if let Some(meta) = self.meta.as_ref() {
-            meta.display(reporter);
+            meta.display(term);
         }
     }
 }

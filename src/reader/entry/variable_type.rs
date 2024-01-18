@@ -1,5 +1,5 @@
 use crate::{
-    inf::reporter::{self},
+    inf::term::{self},
     reader::{
         chars,
         entry::{Reader, Reading},
@@ -80,7 +80,7 @@ impl fmt::Display for VariableType {
     }
 }
 
-impl reporter::Display for VariableType {
+impl term::Display for VariableType {
     fn to_string(&self) -> String {
         format!("{{{}}}", self.var_type)
     }

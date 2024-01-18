@@ -1,5 +1,5 @@
 use crate::{
-    inf::reporter::{self, Reporter},
+    inf::term::{self, Term},
     reader::{
         chars,
         entry::{Reader, Reading},
@@ -58,8 +58,8 @@ impl fmt::Display for Meta {
     }
 }
 
-impl reporter::Display for Meta {
-    fn display(&self, reporter: &mut Reporter) {
-        reporter.print_fmt(&self.as_lines());
+impl term::Display for Meta {
+    fn display(&self, term: &mut Term) {
+        term.print_fmt(&self.as_lines());
     }
 }
