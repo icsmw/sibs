@@ -1,4 +1,4 @@
-use crate::inf::{location::Location, tracker::Tracker};
+use crate::inf::{scenario::Scenario, tracker::Tracker};
 
 use async_process::{Command, ExitStatus, Stdio};
 use async_std::{io::BufReader, prelude::*};
@@ -28,7 +28,7 @@ pub async fn spawn(
     command: &str,
     cwd: &PathBuf,
     tracker: &Tracker,
-    location: &Location,
+    location: &Scenario,
 ) -> Result<SpawnResult, io::Error> {
     let mut parts = command.split(' ').collect::<Vec<&str>>();
     let cmd = parts.remove(0);

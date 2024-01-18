@@ -81,7 +81,7 @@ impl Argument<Help> for Help {
         cx.reporter.print(format!(
             "{}{}\n\n",
             cx.reporter.offset(),
-            cx.location.filename.to_str().unwrap()
+            cx.scenario.filename.to_str().unwrap()
         ));
         cx.reporter.step_left();
         if let Some(component) = self.component.as_ref() {

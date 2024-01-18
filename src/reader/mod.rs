@@ -14,7 +14,6 @@ use error::E;
 use std::{
     collections::HashMap,
     fs,
-    path::PathBuf,
     {cell::RefCell, rc::Rc},
 };
 
@@ -957,12 +956,12 @@ mod test_walker {
 }
 
 pub fn read_file(cx: &mut Context) -> Result<Vec<Component>, E> {
-    if !cx.location.filename.exists() {
+    if !cx.scenario.filename.exists() {
         Err(E::FileNotExists(
-            cx.location.filename.to_string_lossy().to_string(),
+            cx.scenario.filename.to_string_lossy().to_string(),
         ))?
     }
-    let mut reader = Reader::new(fs::read_to_string(&cx.location.filename)?);
+    let mut reader = Reader::new(fs::read_to_string(&cx.scenario.filename)?);
     let mut imports: Vec<Import> = vec![];
     while let Some(func) = Function::read(&mut reader)? {
         if let Some(fn_impl) = <Import as Implementation<Import, String>>::from(func, cx)? {

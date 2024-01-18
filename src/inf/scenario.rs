@@ -10,12 +10,12 @@ const DEFAULT_SIBS_SCENARIO: &str = "build.sibs";
 const SIBS_SCENARIO_EXT: &str = "sibs";
 
 #[derive(Clone, Debug)]
-pub struct Location {
+pub struct Scenario {
     pub path: PathBuf,
     pub filename: PathBuf,
 }
 
-impl Location {
+impl Scenario {
     pub fn new() -> Result<Self, Error> {
         if let Some((path, filename)) = Self::search(&current_dir()?)? {
             Ok(Self { path, filename })

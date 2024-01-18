@@ -1,5 +1,5 @@
 use crate::{
-    inf::{location::Location, reporter::Reporter, tracker::Tracker},
+    inf::{reporter::Reporter, scenario::Scenario, tracker::Tracker},
     reader,
 };
 use std::path::PathBuf;
@@ -8,7 +8,7 @@ pub struct Context {
     pub cwd: PathBuf,
     pub reporter: Reporter,
     pub tracker: Tracker,
-    pub location: Location,
+    pub scenario: Scenario,
 }
 
 impl Context {
@@ -18,7 +18,7 @@ impl Context {
                 .parent()
                 .ok_or(reader::error::E::NoFileParent)?
                 .to_path_buf(),
-            location: Location::from(filename)?,
+            scenario: Scenario::from(filename)?,
             tracker: Tracker::new(),
             reporter: Reporter::new(),
         })
@@ -27,7 +27,7 @@ impl Context {
     pub fn unbound() -> Self {
         Context {
             cwd: PathBuf::new(),
-            location: Location::dummy(),
+            scenario: Scenario::dummy(),
             tracker: Tracker::new(),
             reporter: Reporter::new(),
         }

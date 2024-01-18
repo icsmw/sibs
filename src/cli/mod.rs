@@ -4,9 +4,9 @@ pub mod error;
 use crate::{
     inf::{
         context::Context,
-        location::Location,
         reporter::{Display, Reporter},
         runner::Runner,
+        scenario::Scenario,
         tracker::Tracker,
     },
     reader::{self, entry::Component},
@@ -42,11 +42,11 @@ pub fn read() -> Result<(), E> {
         }
         return Ok(());
     }
-    let location = if let Some(target) = defaults.get::<args::target::Target>() {
-        Location::from(&target.get())?
+    let scenario = if let Some(target) = defaults.get::<args::target::Target>() {
+        Scenario::from(&target.get())?
     } else {
-        match Location::new() {
-            Ok(location) => location,
+        match Scenario::new() {
+            Ok(scenario) => scenario,
             Err(_) => {
                 reporter.print("Scenario file hasn't been found.\n\n");
                 reporter.bold("OPTIONS\n");
@@ -58,7 +58,7 @@ pub fn read() -> Result<(), E> {
     };
     let mut cx = Context {
         cwd: PathBuf::new(),
-        location,
+        scenario,
         reporter,
         tracker: Tracker::new(),
     };
