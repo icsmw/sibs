@@ -1,0 +1,7 @@
+#[test: ./tmp]
+    /// Test SIBS
+    try [
+        /// Will try to execute terminal command
+        ls -lsa;
+    ];
+

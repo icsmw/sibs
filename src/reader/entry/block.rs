@@ -46,20 +46,20 @@ impl fmt::Display for Element {
 }
 
 impl Runner for Element {
-    fn run(
+    async fn run(
         &self,
         components: &[Component],
         args: &[String],
         context: &mut Context,
     ) -> Result<runner::Return, cli::error::E> {
         match self {
-            Self::Command(v) => v.run(components, args, context),
-            Self::Function(v) => v.run(components, args, context),
-            Self::If(v) => v.run(components, args, context),
-            Self::Each(v) => v.run(components, args, context),
-            Self::VariableAssignation(v) => v.run(components, args, context),
-            Self::Optional(v) => v.run(components, args, context),
-            Self::Reference(v) => v.run(components, args, context),
+            Self::Command(v) => v.run(components, args, context).await,
+            Self::Function(v) => v.run(components, args, context).await,
+            Self::If(v) => v.run(components, args, context).await,
+            Self::Each(v) => v.run(components, args, context).await,
+            Self::VariableAssignation(v) => v.run(components, args, context).await,
+            Self::Optional(v) => v.run(components, args, context).await,
+            Self::Reference(v) => v.run(components, args, context).await,
         }
     }
 }
@@ -167,7 +167,7 @@ impl term::Display for Block {
 }
 
 impl Runner for Block {
-    fn run(
+    async fn run(
         &self,
         components: &[Component],
         args: &[String],
@@ -175,7 +175,7 @@ impl Runner for Block {
     ) -> Result<runner::Return, cli::error::E> {
         let mut output: runner::Return = None;
         for element in self.elements.iter() {
-            output = element.run(components, args, context)?;
+            output = element.run(components, args, context).await?;
         }
         Ok(output)
     }

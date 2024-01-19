@@ -51,7 +51,7 @@ impl fmt::Display for First {
 }
 
 impl Runner for First {
-    fn run(
+    async fn run(
         &self,
         components: &[Component],
         args: &[String],

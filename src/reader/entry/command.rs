@@ -3,6 +3,7 @@ use crate::{
     inf::{
         context::Context,
         runner::{self, Runner},
+        spawner,
         term::{self, Term},
     },
     reader::entry::Component,
@@ -17,7 +18,10 @@ pub struct Command {
 
 impl Command {
     pub fn new(command: String, token: usize) -> Self {
-        Self { command, token }
+        Self {
+            command: command.trim().to_owned(),
+            token,
+        }
     }
 }
 
@@ -34,12 +38,19 @@ impl term::Display for Command {
 }
 
 impl Runner for Command {
-    fn run(
+    async fn run(
         &self,
         components: &[Component],
         args: &[String],
         cx: &mut Context,
     ) -> Result<runner::Return, cli::error::E> {
+        let cwd = cx
+            .cwd
+            .as_ref()
+            .ok_or(cli::error::E::NoCurrentWorkingFolder)?;
+        let res = spawner::spawn(&self.command, cx).await;
+        println!(">>>>>>>>>>>>>>>>>>> wiuuu: {cx:?}");
+        println!(">>>>>>>>>>>>>>>>>>> wiuuu: {res:?}");
         Ok(None)
     }
 }

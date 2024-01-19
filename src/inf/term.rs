@@ -10,6 +10,7 @@ pub trait Display {
     }
 }
 
+#[derive(Debug)]
 pub struct Term {
     _offset: usize,
 }

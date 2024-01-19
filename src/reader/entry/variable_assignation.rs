@@ -122,7 +122,7 @@ impl fmt::Display for VariableAssignation {
 }
 
 impl Runner for VariableAssignation {
-    fn run(
+    async fn run(
         &self,
         components: &[Component],
         args: &[String],

@@ -22,4 +22,6 @@ pub enum E {
     IO(#[from] std::io::Error),
     #[error("Syntax error: {0}")]
     Reader(#[from] reader::error::E),
+    #[error("CWD is required")]
+    NoCurrentWorkingFolder,
 }

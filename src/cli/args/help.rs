@@ -18,6 +18,11 @@ pub struct Help {
 
 impl Argument<Help> for Help {
     fn read(args: &mut Vec<String>) -> Result<Option<Help>, E> {
+        if args.is_empty() {
+            return Ok(Some(Self {
+                component: None,
+            }));
+        }
         for (i, arg) in args.iter().enumerate() {
             if ARGS.contains(&arg.as_str()) {
                 if i <= 1 {

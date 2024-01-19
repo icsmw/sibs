@@ -33,6 +33,18 @@ impl Scenario {
         }
     }
     pub fn from(filename: &PathBuf) -> Result<Self, Error> {
+        if !filename.is_absolute() {
+            Err(Error::new(
+                ErrorKind::InvalidData,
+                "Scenario file path isn't absolute",
+            ))?;
+        }
+        if !filename.exists() {
+            Err(Error::new(
+                ErrorKind::NotFound,
+                "Scenario file path doesn't exist",
+            ))?;
+        }
         Ok(Self {
             filename: filename.clone(),
             path: filename
@@ -44,10 +56,15 @@ impl Scenario {
                 .to_path_buf(),
         })
     }
+
     pub fn to_relative_path(&self, path: &Path) -> String {
         path.to_string_lossy()
             .to_string()
             .replace(&self.path.to_string_lossy().to_string(), "")
+    }
+
+    pub fn to_abs_path(&self, path: &Path) -> Result<PathBuf, Error> {
+        self.path.join(path).canonicalize()
     }
 
     fn search(location: &PathBuf) -> Result<Option<(PathBuf, PathBuf)>, Error> {

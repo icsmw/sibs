@@ -4,8 +4,9 @@ use crate::{
 };
 use std::path::PathBuf;
 
+#[derive(Debug)]
 pub struct Context {
-    pub cwd: PathBuf,
+    pub cwd: Option<PathBuf>,
     pub term: Term,
     pub tracker: Tracker,
     pub scenario: Scenario,
@@ -14,10 +15,12 @@ pub struct Context {
 impl Context {
     pub fn from_filename(filename: &PathBuf) -> Result<Self, reader::error::E> {
         Ok(Context {
-            cwd: filename
-                .parent()
-                .ok_or(reader::error::E::NoFileParent)?
-                .to_path_buf(),
+            cwd: Some(
+                filename
+                    .parent()
+                    .ok_or(reader::error::E::NoFileParent)?
+                    .to_path_buf(),
+            ),
             scenario: Scenario::from(filename)?,
             tracker: Tracker::new(),
             term: Term::new(),
@@ -26,10 +29,19 @@ impl Context {
 
     pub fn unbound() -> Self {
         Context {
-            cwd: PathBuf::new(),
+            cwd: Some(PathBuf::new()),
             scenario: Scenario::dummy(),
             tracker: Tracker::new(),
             term: Term::new(),
         }
+    }
+
+    pub fn set_cwd(&mut self, cwd: Option<PathBuf>) -> Result<(), reader::error::E> {
+        if let Some(cwd) = cwd.as_ref() {
+            self.cwd = Some(self.scenario.to_abs_path(cwd)?);
+        } else {
+            self.cwd = None;
+        }
+        Ok(())
     }
 }

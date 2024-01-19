@@ -143,7 +143,7 @@ impl term::Display for Task {
 }
 
 impl Runner for Task {
-    fn run(
+    async fn run(
         &self,
         components: &[Component],
         args: &[String],
@@ -157,7 +157,7 @@ impl Runner for Task {
             cli::error::E::NoTaskBlock(self.name.to_string())
         })?;
         context.term.with_title("TASK", &self.name);
-        block.run(components, args, context)
+        block.run(components, args, context).await
     }
 }
 

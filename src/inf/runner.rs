@@ -6,7 +6,7 @@ use crate::{
 
 pub type Return = Option<Box<dyn DebugAny>>;
 pub trait Runner {
-    fn run(
+    async fn run(
         &self,
         components: &[Component],
         args: &[String],

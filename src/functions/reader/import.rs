@@ -21,6 +21,8 @@ pub enum Error {
     InvalidPathArgument,
     #[error("File {0} doesn't exist")]
     NoFile(String),
+    #[error("Import action required CWD")]
+    NoCurrentWorkingFolder,
 }
 
 impl From<Error> for E {
@@ -35,10 +37,11 @@ pub struct Import {
 }
 
 impl Implementation<Import, String> for Import {
-    fn from(function: Function, context: &mut Context) -> Result<Option<Import>, E> {
+    fn from(function: Function, cx: &mut Context) -> Result<Option<Import>, E> {
         if function.name.trim() != NAME {
             return Ok(None);
         }
+        let cwd = cx.cwd.as_ref().ok_or(Error::NoCurrentWorkingFolder)?;
         let args = function.args.ok_or(Error::NoArguments)?;
         if args.args.len() != 1 {
             Err(Error::InvalidNumberOfArguments)?;
@@ -49,7 +52,7 @@ impl Implementation<Import, String> for Import {
             Err(Error::InvalidPathArgument)?
         };
         if path.is_relative() {
-            path = context.cwd.join(path);
+            path = cwd.join(path);
         }
         if !path.exists() {
             Err(Error::NoFile(path.to_string_lossy().to_string()))?;

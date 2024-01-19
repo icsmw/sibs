@@ -1,4 +1,4 @@
-use crate::inf::{scenario::Scenario, tracker::Tracker};
+use crate::inf::context::Context;
 
 use async_process::{Command, ExitStatus, Stdio};
 use async_std::{io::BufReader, prelude::*};
@@ -24,12 +24,13 @@ impl SpawnResult {
     }
 }
 
-pub async fn spawn(
-    command: &str,
-    cwd: &PathBuf,
-    tracker: &Tracker,
-    location: &Scenario,
-) -> Result<SpawnResult, io::Error> {
+pub async fn spawn(command: &str, cx: &Context) -> Result<SpawnResult, io::Error> {
+    let cwd = cx.cwd.as_ref().ok_or(io::Error::new(
+        io::ErrorKind::InvalidData,
+        "Current working folder is required to spawn command",
+    ))?;
+    println!(":::{command:?}");
+    println!(":::{cwd:?}");
     let mut parts = command.split(' ').collect::<Vec<&str>>();
     let cmd = parts.remove(0);
     #[allow(clippy::useless_vec)]
@@ -46,8 +47,12 @@ pub async fn spawn(
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()?;
-    let sequence = tracker
-        .start(&format!("{}: {cmd}", location.to_relative_path(cwd)), None)
+    let sequence = cx
+        .tracker
+        .start(
+            &format!("{}: {cmd}", cx.scenario.to_relative_path(cwd)),
+            None,
+        )
         .await?;
     let mut stdout_lines: Vec<String> = vec![];
     let drain_stdout = {
@@ -61,8 +66,8 @@ pub async fn spawn(
                 if read_lines == 0 {
                     break;
                 } else {
-                    tracker.msg(sequence, &line).await;
-                    tracker.progress(sequence, None).await;
+                    cx.tracker.msg(sequence, &line).await;
+                    cx.tracker.progress(sequence, None).await;
                     storage.push(line);
                 }
             }
@@ -83,7 +88,7 @@ pub async fn spawn(
                 if read_lines == 0 {
                     break;
                 } else {
-                    tracker.progress(sequence, None).await;
+                    cx.tracker.progress(sequence, None).await;
                     if !line.trim().is_empty() {
                         storage.push(line);
                     }
@@ -100,15 +105,15 @@ pub async fn spawn(
     {
         Ok(status) => status,
         Err(err) => {
-            tracker.fail(sequence, &err.to_string()).await;
+            cx.tracker.fail(sequence, &err.to_string()).await;
             return Err(err);
         }
     };
     if let Some(status) = status {
         if status.success() {
-            tracker.success(sequence, "").await;
+            cx.tracker.success(sequence, "").await;
         } else {
-            tracker.fail(sequence, "finished with errors").await;
+            cx.tracker.fail(sequence, "finished with errors").await;
         }
         Ok(SpawnResult {
             stdout: stdout_lines,
@@ -117,7 +122,7 @@ pub async fn spawn(
             job: cmd.to_owned(),
         })
     } else {
-        tracker
+        cx.tracker
             .fail(sequence, "Fail to get exist status of spawned command")
             .await;
         Err(io::Error::new(

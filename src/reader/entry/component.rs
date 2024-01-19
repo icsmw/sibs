@@ -140,28 +140,29 @@ impl term::Display for Component {
 }
 
 impl Runner for Component {
-    fn run(
+    async fn run(
         &self,
         components: &[Component],
         args: &[String],
-        context: &mut Context,
+        cx: &mut Context,
     ) -> Result<runner::Return, cli::error::E> {
         let task = args.first().ok_or_else(|| {
-            context.term.err(format!(
+            cx.term.err(format!(
                 "No task provided for component \"{}\". Try to use \"sibs {} --help\".\n",
                 self.name, self.name
             ));
             cli::error::E::NoTaskForComponent(self.name.to_string())
         })?;
         let task = self.tasks.iter().find(|t| &t.name == task).ok_or_else(|| {
-            context.term.err(format!(
+            cx.term.err(format!(
                 "Task \"{task}\" doesn't exist on component \"{}\". Try to use \"sibs {} --help\".\n",
                 self.name, self.name
             ));
             cli::error::E::TaskNotExists(self.name.to_string(), task.to_owned())
         })?;
-        context.term.with_title("COMPONENT", &self.name);
-        task.run(components, &args[1..], context)
+        cx.term.with_title("COMPONENT", &self.name);
+        cx.set_cwd(self.cwd.clone());
+        task.run(components, &args[1..], cx).await
     }
 }
 

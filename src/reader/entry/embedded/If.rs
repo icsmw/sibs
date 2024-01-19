@@ -281,7 +281,7 @@ impl fmt::Display for If {
 }
 
 impl Runner for If {
-    fn run(
+    async fn run(
         &self,
         components: &[Component],
         args: &[String],

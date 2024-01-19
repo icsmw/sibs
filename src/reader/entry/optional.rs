@@ -160,7 +160,7 @@ impl fmt::Display for Optional {
 }
 
 impl Runner for Optional {
-    fn run(
+    async fn run(
         &self,
         components: &[Component],
         args: &[String],

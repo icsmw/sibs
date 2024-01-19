@@ -149,7 +149,7 @@ impl fmt::Display for Reference {
 }
 
 impl Runner for Reference {
-    fn run(
+    async fn run(
         &self,
         components: &[Component],
         args: &[String],

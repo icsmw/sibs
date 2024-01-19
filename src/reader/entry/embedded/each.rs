@@ -99,7 +99,7 @@ impl fmt::Display for Each {
 }
 
 impl Runner for Each {
-    fn run(
+    async fn run(
         &self,
         components: &[Component],
         args: &[String],

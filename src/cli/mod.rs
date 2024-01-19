@@ -13,11 +13,11 @@ use crate::{
 };
 use args::Arguments;
 use error::E;
-use std::{env, path::PathBuf};
+use std::env::{self, current_dir};
 
 use self::args::Argument;
 
-pub fn read() -> Result<(), E> {
+pub async fn read() -> Result<Option<Context>, E> {
     fn run<T: Argument<T> + 'static>(
         components: &[Component],
         arguments: &mut Arguments,
@@ -40,10 +40,10 @@ pub fn read() -> Result<(), E> {
         if !income.is_empty() {
             term.err(format!("Ingore next arguments: {}", income.join(", ")));
         }
-        return Ok(());
+        return Ok(None);
     }
     let scenario = if let Some(target) = defaults.get::<args::target::Target>() {
-        Scenario::from(&target.get())?
+        Scenario::from(&current_dir()?.join(target.get()).canonicalize()?)?
     } else {
         match Scenario::new() {
             Ok(scenario) => scenario,
@@ -52,21 +52,21 @@ pub fn read() -> Result<(), E> {
                 term.bold("OPTIONS\n");
                 term.step_right();
                 defaults.display(&mut term);
-                return Ok(());
+                return Ok(None);
             }
         }
     };
     let mut cx = Context {
-        cwd: PathBuf::new(),
+        cwd: None,
         scenario,
         term,
         tracker: Tracker::new(),
     };
     let components = reader::read_file(&mut cx)?;
-    let no_actions = defaults.has::<args::help::Help>();
+    let no_actions = defaults.has::<args::help::Help>() || income.is_empty();
     run::<args::help::Help>(&components, &mut defaults, &mut cx)?;
     if no_actions {
-        return Ok(());
+        return Ok(Some(cx));
     }
     if let Some(component) = if components.is_empty() {
         None
@@ -74,8 +74,8 @@ pub fn read() -> Result<(), E> {
         Some(income.remove(0))
     } {
         if let Some(component) = components.iter().find(|comp| comp.name == component) {
-            component.run(&components, &income, &mut cx)?;
-            Ok(())
+            component.run(&components, &income, &mut cx).await?;
+            Ok(Some(cx))
         } else {
             Err(E::ComponentNotExists(component.to_string()))
         }

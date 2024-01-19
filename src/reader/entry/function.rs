@@ -167,7 +167,7 @@ impl fmt::Display for Function {
 }
 
 impl Runner for Function {
-    fn run(
+    async fn run(
         &self,
         components: &[Component],
         args: &[String],
