@@ -40,15 +40,35 @@ impl term::Display for Command {
 impl Runner for Command {
     async fn run(
         &self,
-        components: &[Component],
-        args: &[String],
+        _components: &[Component],
+        _args: &[String],
         cx: &mut Context,
     ) -> Result<runner::Return, cli::error::E> {
         let cwd = cx
             .cwd
             .as_ref()
             .ok_or(cli::error::E::NoCurrentWorkingFolder)?;
-        let res = spawner::spawn(&self.command, cx).await;
-        Ok(None)
+        let task = cx
+            .tracker
+            .start(
+                &format!("{}: {}", cx.scenario.to_relative_path(cwd), self.command),
+                None,
+            )
+            .await?;
+        match spawner::spawn(&self.command, cwd, &task).await {
+            Ok(result) => {
+                if result.status.success() {
+                    task.success("no errros").await;
+                    Ok(None)
+                } else {
+                    task.fail("done with errors").await;
+                    Err(cli::error::E::SpawningCommand)
+                }
+            }
+            Err(e) => {
+                task.fail(&e.to_string()).await;
+                Err(e.into())
+            }
+        }
     }
 }

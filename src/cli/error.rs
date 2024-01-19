@@ -8,6 +8,8 @@ pub enum E {
     InvalidHelpRequest,
     #[error("No any options/commands. Try --help to see all options.")]
     NoArguments,
+    #[error("Terminal command has been finished with errors")]
+    SpawningCommand,
     #[error("Task {0} doesn't have an actions block")]
     NoTaskBlock(String),
     #[error("No any task provided for component {0}")]

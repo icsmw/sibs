@@ -39,6 +39,37 @@ pub enum Tick {
 }
 
 #[derive(Clone, Debug)]
+pub struct Task {
+    tracker: Tracker,
+    id: usize,
+}
+
+impl Task {
+    pub fn new(tracker: &Tracker, id: usize) -> Self {
+        Self {
+            tracker: tracker.clone(),
+            id,
+        }
+    }
+
+    pub async fn progress(&self, pos: Option<u64>) {
+        self.tracker.progress(self.id, pos).await;
+    }
+
+    pub async fn msg(&self, log: &str) {
+        self.tracker.msg(self.id, log).await;
+    }
+
+    pub async fn success(&self, msg: &str) {
+        self.tracker.msg(self.id, msg).await;
+    }
+
+    pub async fn fail(&self, msg: &str) {
+        self.tracker.fail(self.id, msg).await;
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct Tracker {
     tx: Sender<Tick>,
 }
@@ -146,16 +177,17 @@ impl Tracker {
         Ok(())
     }
 
-    pub async fn start(&self, job: &str, max: Option<u64>) -> Result<usize, Error> {
+    pub async fn start(&self, job: &str, max: Option<u64>) -> Result<Task, Error> {
         let (tx_response, rx_response) = bounded(1);
         self.tx
             .send(Tick::Started(job.to_string(), max, tx_response))
             .await
             .map_err(|e| Error::new(ErrorKind::Other, format!("Fail to send tick: {e}")))?;
-        rx_response
+        let id = rx_response
             .recv()
             .await
-            .map_err(|e| Error::new(ErrorKind::NotConnected, e.to_string()))
+            .map_err(|e| Error::new(ErrorKind::NotConnected, e.to_string()))?;
+        Ok(Task::new(self, id))
     }
 
     pub async fn progress(&self, sequence: usize, pos: Option<u64>) {

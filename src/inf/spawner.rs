@@ -1,4 +1,4 @@
-use crate::inf::context::Context;
+use crate::inf::tracker::Task;
 
 use async_process::{Command, ExitStatus, Stdio};
 use async_std::{io::BufReader, prelude::*};
@@ -24,11 +24,7 @@ impl SpawnResult {
     }
 }
 
-pub async fn spawn(command: &str, cx: &Context) -> Result<SpawnResult, io::Error> {
-    let cwd = cx.cwd.as_ref().ok_or(io::Error::new(
-        io::ErrorKind::InvalidData,
-        "Current working folder is required to spawn command",
-    ))?;
+pub async fn spawn(command: &str, cwd: &PathBuf, task: &Task) -> Result<SpawnResult, io::Error> {
     let mut parts = command.split(' ').collect::<Vec<&str>>();
     let cmd = parts.remove(0);
     #[allow(clippy::useless_vec)]
@@ -45,13 +41,6 @@ pub async fn spawn(command: &str, cx: &Context) -> Result<SpawnResult, io::Error
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()?;
-    let sequence = cx
-        .tracker
-        .start(
-            &format!("{}: {cmd}", cx.scenario.to_relative_path(cwd)),
-            None,
-        )
-        .await?;
     let mut stdout_lines: Vec<String> = vec![];
     let drain_stdout = {
         let storage = &mut stdout_lines;
@@ -64,8 +53,8 @@ pub async fn spawn(command: &str, cx: &Context) -> Result<SpawnResult, io::Error
                 if read_lines == 0 {
                     break;
                 } else {
-                    cx.tracker.msg(sequence, &line).await;
-                    cx.tracker.progress(sequence, None).await;
+                    task.msg(&line).await;
+                    task.progress(None).await;
                     storage.push(line);
                 }
             }
@@ -86,7 +75,7 @@ pub async fn spawn(command: &str, cx: &Context) -> Result<SpawnResult, io::Error
                 if read_lines == 0 {
                     break;
                 } else {
-                    cx.tracker.progress(sequence, None).await;
+                    task.progress(None).await;
                     if !line.trim().is_empty() {
                         storage.push(line);
                     }
@@ -103,16 +92,10 @@ pub async fn spawn(command: &str, cx: &Context) -> Result<SpawnResult, io::Error
     {
         Ok(status) => status,
         Err(err) => {
-            cx.tracker.fail(sequence, &err.to_string()).await;
             return Err(err);
         }
     };
     if let Some(status) = status {
-        if status.success() {
-            cx.tracker.success(sequence, "").await;
-        } else {
-            cx.tracker.fail(sequence, "finished with errors").await;
-        }
         Ok(SpawnResult {
             stdout: stdout_lines,
             stderr: stderr_lines,
@@ -120,9 +103,6 @@ pub async fn spawn(command: &str, cx: &Context) -> Result<SpawnResult, io::Error
             job: cmd.to_owned(),
         })
     } else {
-        cx.tracker
-            .fail(sequence, "Fail to get exist status of spawned command")
-            .await;
         Err(io::Error::new(
             io::ErrorKind::Other,
             "Fail to get exist status of spawned command",
