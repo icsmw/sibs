@@ -29,8 +29,6 @@ pub async fn spawn(command: &str, cx: &Context) -> Result<SpawnResult, io::Error
         io::ErrorKind::InvalidData,
         "Current working folder is required to spawn command",
     ))?;
-    println!(":::{command:?}");
-    println!(":::{cwd:?}");
     let mut parts = command.split(' ').collect::<Vec<&str>>();
     let cmd = parts.remove(0);
     #[allow(clippy::useless_vec)]

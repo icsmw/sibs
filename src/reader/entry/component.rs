@@ -161,7 +161,7 @@ impl Runner for Component {
             cli::error::E::TaskNotExists(self.name.to_string(), task.to_owned())
         })?;
         cx.term.with_title("COMPONENT", &self.name);
-        cx.set_cwd(self.cwd.clone());
+        cx.set_cwd(self.cwd.clone())?;
         task.run(components, &args[1..], cx).await
     }
 }

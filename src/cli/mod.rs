@@ -17,7 +17,7 @@ use std::env::{self, current_dir};
 
 use self::args::Argument;
 
-pub async fn read() -> Result<Option<Context>, E> {
+pub async fn read(tracker: &Tracker) -> Result<Option<Context>, E> {
     fn run<T: Argument<T> + 'static>(
         components: &[Component],
         arguments: &mut Arguments,
@@ -60,7 +60,7 @@ pub async fn read() -> Result<Option<Context>, E> {
         cwd: None,
         scenario,
         term,
-        tracker: Tracker::new(),
+        tracker: tracker.clone(),
     };
     let components = reader::read_file(&mut cx)?;
     let no_actions = defaults.has::<args::help::Help>() || income.is_empty();

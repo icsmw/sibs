@@ -49,8 +49,6 @@ impl Runner for Command {
             .as_ref()
             .ok_or(cli::error::E::NoCurrentWorkingFolder)?;
         let res = spawner::spawn(&self.command, cx).await;
-        println!(">>>>>>>>>>>>>>>>>>> wiuuu: {cx:?}");
-        println!(">>>>>>>>>>>>>>>>>>> wiuuu: {res:?}");
         Ok(None)
     }
 }
