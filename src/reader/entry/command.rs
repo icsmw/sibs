@@ -1,8 +1,9 @@
 use crate::{
     cli,
     inf::{
+        any::AnyValue,
         context::Context,
-        runner::{self, Runner},
+        operator::Operator,
         spawner,
         term::{self, Term},
     },
@@ -37,13 +38,13 @@ impl term::Display for Command {
     }
 }
 
-impl Runner for Command {
-    async fn run(
+impl Operator for Command {
+    async fn process(
         &self,
         _components: &[Component],
         _args: &[String],
         cx: &mut Context,
-    ) -> Result<runner::Return, cli::error::E> {
+    ) -> Result<Option<&AnyValue>, cli::error::E> {
         let cwd = cx
             .cwd
             .as_ref()

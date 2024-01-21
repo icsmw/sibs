@@ -1,8 +1,9 @@
 use crate::{
     cli,
     inf::{
+        any::AnyValue,
         context::Context,
-        runner::{self, Runner},
+        operator::Operator,
         term::{self, Term},
     },
     reader::{
@@ -45,21 +46,21 @@ impl fmt::Display for Element {
     }
 }
 
-impl Runner for Element {
-    async fn run(
+impl Operator for Element {
+    async fn process(
         &self,
         components: &[Component],
         args: &[String],
         context: &mut Context,
-    ) -> Result<runner::Return, cli::error::E> {
+    ) -> Result<Option<&AnyValue>, cli::error::E> {
         match self {
-            Self::Command(v) => v.run(components, args, context).await,
-            Self::Function(v) => v.run(components, args, context).await,
-            Self::If(v) => v.run(components, args, context).await,
-            Self::Each(v) => v.run(components, args, context).await,
-            Self::VariableAssignation(v) => v.run(components, args, context).await,
-            Self::Optional(v) => v.run(components, args, context).await,
-            Self::Reference(v) => v.run(components, args, context).await,
+            Self::Command(v) => v.process(components, args, context).await,
+            Self::Function(v) => v.process(components, args, context).await,
+            Self::If(v) => v.process(components, args, context).await,
+            Self::Each(v) => v.process(components, args, context).await,
+            Self::VariableAssignation(v) => v.process(components, args, context).await,
+            Self::Optional(v) => v.process(components, args, context).await,
+            Self::Reference(v) => v.process(components, args, context).await,
         }
     }
 }
@@ -166,16 +167,16 @@ impl term::Display for Block {
     }
 }
 
-impl Runner for Block {
-    async fn run(
+impl Operator for Block {
+    async fn process(
         &self,
         components: &[Component],
         args: &[String],
         context: &mut Context,
-    ) -> Result<runner::Return, cli::error::E> {
-        let mut output: runner::Return = None;
+    ) -> Result<Option<&AnyValue>, cli::error::E> {
+        let mut output: Option<&AnyValue> = None;
         for element in self.elements.iter() {
-            output = element.run(components, args, context).await?;
+            output = element.process(components, args, context).await?;
         }
         Ok(output)
     }

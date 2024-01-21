@@ -1,5 +1,6 @@
 use crate::reader;
 use thiserror::Error;
+
 #[derive(Error, Debug)]
 pub enum E {
     #[error("--scenario requires a path to *.sibs file")]
@@ -26,4 +27,8 @@ pub enum E {
     Reader(#[from] reader::error::E),
     #[error("CWD is required")]
     NoCurrentWorkingFolder,
+    #[error("Not supported")]
+    NotSupported,
+    #[error("{0}: {1}")]
+    FunctionError(String, String),
 }

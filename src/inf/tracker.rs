@@ -61,7 +61,7 @@ impl Task {
     }
 
     pub async fn success(&self, msg: &str) {
-        self.tracker.msg(self.id, msg).await;
+        self.tracker.success(self.id, msg).await;
     }
 
     pub async fn fail(&self, msg: &str) {
@@ -96,6 +96,7 @@ impl Tracker {
             let mut bars: HashMap<usize, (ProgressBar, Instant, String, Option<OperationResult>)> =
                 HashMap::new();
             let mp = MultiProgress::new();
+            let mut output: Vec<String> = vec![];
             while let Ok(tick) = rx.recv().await {
                 match tick {
                     Tick::Started(job, len, tx_response) => {
@@ -108,17 +109,19 @@ impl Tracker {
                         bar.set_style(spinner_style.clone());
                         bars.insert(sequence, (bar, Instant::now(), job, None));
                         bars.iter_mut().for_each(|(k, (bar, _, job, result))| {
-                            if let Some(result) = result {
-                                bar.set_prefix(format!(
+                            let msg = if let Some(result) = result {
+                                format!(
                                     "[{k}/{sequence}]{}[{result}][{job}]",
                                     order_offset(*k, sequence)
-                                ));
+                                )
                             } else {
-                                bar.set_prefix(format!(
+                                format!(
                                     "[{k}/{sequence}]{}[....][{job}]",
                                     order_offset(*k, sequence)
-                                ));
-                            }
+                                )
+                            };
+                            output.push(msg.clone());
+                            bar.set_prefix(msg);
                         });
                         if let Err(e) = tx_response.send(sequence).await {
                             let _ = mp.println(format!("Fail to send response: {e}"));
@@ -126,6 +129,7 @@ impl Tracker {
                     }
                     Tick::Message(sequence, log) => {
                         if let Some((bar, _, _, _)) = bars.get(&sequence) {
+                            output.push(log.clone());
                             bar.set_message(log);
                         }
                     }
@@ -144,14 +148,14 @@ impl Tracker {
                                 "[{seq}/{sequence}]{}[{result}][{job}]",
                                 order_offset(seq, sequence)
                             ));
-                            bar.finish_with_message(format!(
-                                "Done in {}s. {msg}",
-                                instant.elapsed().as_secs()
-                            ));
+                            let msg = format!("Done in {}s. {msg}", instant.elapsed().as_secs());
+                            output.push(msg.clone());
+                            bar.finish_with_message(msg);
                             res.replace(result);
                         }
                     }
                     Tick::Print(msg) => {
+                        output.push(msg.clone());
                         let _ = mp.println(msg);
                     }
                     Tick::Shutdown(tx_response) => {
@@ -164,7 +168,6 @@ impl Tracker {
                             }
                         });
                         bars.clear();
-                        // let _ = mp.clear();
                         if let Err(e) = tx_response.send(()).await {
                             let _ = mp.println(format!("Fail to send response: {e}"));
                         }

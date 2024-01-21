@@ -1,9 +1,6 @@
 use crate::{
     cli,
-    inf::{
-        context::Context,
-        runner::{self, Runner},
-    },
+    inf::{any::AnyValue, context::Context, operator::Operator},
     reader::{
         chars,
         entry::{Block, Component, First, Function, Reader, Reading, ValueString, VariableName},
@@ -121,13 +118,13 @@ impl fmt::Display for VariableAssignation {
     }
 }
 
-impl Runner for VariableAssignation {
-    async fn run(
+impl Operator for VariableAssignation {
+    async fn process(
         &self,
         components: &[Component],
         args: &[String],
         cx: &mut Context,
-    ) -> Result<runner::Return, cli::error::E> {
+    ) -> Result<Option<&AnyValue>, cli::error::E> {
         Ok(None)
     }
 }

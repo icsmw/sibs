@@ -4,7 +4,7 @@ pub mod error;
 use crate::{
     inf::{
         context::Context,
-        runner::Runner,
+        operator::Operator,
         scenario::Scenario,
         term::{Display, Term},
         tracker::Tracker,
@@ -56,12 +56,7 @@ pub async fn read(tracker: &Tracker) -> Result<Option<Context>, E> {
             }
         }
     };
-    let mut cx = Context {
-        cwd: None,
-        scenario,
-        term,
-        tracker: tracker.clone(),
-    };
+    let mut cx = Context::new(term, tracker.clone(), scenario);
     let components = reader::read_file(&mut cx)?;
     let no_actions = defaults.has::<args::help::Help>() || income.is_empty();
     run::<args::help::Help>(&components, &mut defaults, &mut cx)?;
@@ -74,7 +69,7 @@ pub async fn read(tracker: &Tracker) -> Result<Option<Context>, E> {
         Some(income.remove(0))
     } {
         if let Some(component) = components.iter().find(|comp| comp.name == component) {
-            component.run(&components, &income, &mut cx).await?;
+            component.process(&components, &income, &mut cx).await?;
             Ok(Some(cx))
         } else {
             Err(E::ComponentNotExists(component.to_string()))

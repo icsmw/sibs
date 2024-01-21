@@ -6,7 +6,7 @@ pub mod tests;
 pub mod words;
 
 use crate::{
-    functions::{reader::import::Import, Implementation},
+    functions::{import::Import, Implementation},
     inf::context::Context,
 };
 use entry::{Component, Function, Reading};

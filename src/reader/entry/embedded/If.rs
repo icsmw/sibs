@@ -1,9 +1,6 @@
 use crate::{
     cli,
-    inf::{
-        context::Context,
-        runner::{self, Runner},
-    },
+    inf::{any::AnyValue, context::Context, operator::Operator},
     reader::{
         chars,
         entry::{Block, Component, Function, Reading, ValueString, VariableName},
@@ -280,13 +277,13 @@ impl fmt::Display for If {
     }
 }
 
-impl Runner for If {
-    async fn run(
+impl Operator for If {
+    async fn process(
         &self,
         components: &[Component],
         args: &[String],
         cx: &mut Context,
-    ) -> Result<runner::Return, cli::error::E> {
+    ) -> Result<Option<&AnyValue>, cli::error::E> {
         Ok(None)
     }
 }

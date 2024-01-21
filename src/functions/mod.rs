@@ -1,8 +1,7 @@
-pub mod reader;
-use crate::{
-    inf::context::Context,
-    reader::{entry::Function, error::E},
-};
+pub mod import;
+pub mod os;
+
+use crate::{error::E, inf::context::Context, reader::entry::Function};
 
 pub trait Implementation<T, O> {
     fn from(function: Function, context: &mut Context) -> Result<Option<T>, E>;

@@ -1,8 +1,9 @@
 use crate::{
     cli,
     inf::{
+        any::AnyValue,
         context::Context,
-        runner::{self, Runner},
+        operator::{self, Operator},
     },
     reader::{
         chars,
@@ -98,13 +99,13 @@ impl fmt::Display for Each {
     }
 }
 
-impl Runner for Each {
-    async fn run(
+impl Operator for Each {
+    async fn process(
         &self,
         components: &[Component],
         args: &[String],
         cx: &mut Context,
-    ) -> Result<runner::Return, cli::error::E> {
+    ) -> Result<Option<&AnyValue>, cli::error::E> {
         Ok(None)
     }
 }

@@ -1,9 +1,6 @@
 use crate::{
     cli,
-    inf::{
-        context::Context,
-        runner::{self, Runner},
-    },
+    inf::{any::AnyValue, context::Context, operator::Operator},
     reader::{
         chars,
         entry::{Arguments, Component, Reading},
@@ -166,13 +163,13 @@ impl fmt::Display for Function {
     }
 }
 
-impl Runner for Function {
-    async fn run(
+impl Operator for Function {
+    async fn process(
         &self,
         components: &[Component],
         args: &[String],
         cx: &mut Context,
-    ) -> Result<runner::Return, cli::error::E> {
+    ) -> Result<Option<&AnyValue>, cli::error::E> {
         Ok(None)
     }
 }

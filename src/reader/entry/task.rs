@@ -1,8 +1,9 @@
 use crate::{
     cli,
     inf::{
+        any::AnyValue,
         context::Context,
-        runner::{self, Runner},
+        operator::Operator,
         term::{self, Term},
     },
     reader::{
@@ -142,13 +143,13 @@ impl term::Display for Task {
     }
 }
 
-impl Runner for Task {
-    async fn run(
+impl Operator for Task {
+    async fn process(
         &self,
         components: &[Component],
         args: &[String],
         context: &mut Context,
-    ) -> Result<runner::Return, cli::error::E> {
+    ) -> Result<Option<&AnyValue>, cli::error::E> {
         let block = self.block.as_ref().ok_or_else(|| {
             context.term.err(format!(
                 "Task \"{}\" doesn't have actions block.\n",
@@ -157,7 +158,7 @@ impl Runner for Task {
             cli::error::E::NoTaskBlock(self.name.to_string())
         })?;
         context.term.with_title("TASK", &self.name);
-        block.run(components, args, context).await
+        block.process(components, args, context).await
     }
 }
 

@@ -1,8 +1,13 @@
 use crate::{
-    inf::{scenario::Scenario, term::Term, tracker::Tracker},
+    inf::{
+        any::{AnyValue, DebugAny},
+        scenario::Scenario,
+        term::Term,
+        tracker::Tracker,
+    },
     reader,
 };
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 #[derive(Debug)]
 pub struct Context {
@@ -10,9 +15,19 @@ pub struct Context {
     pub term: Term,
     pub tracker: Tracker,
     pub scenario: Scenario,
+    pub vars: HashMap<String, AnyValue>,
 }
 
 impl Context {
+    pub fn new(term: Term, tracker: Tracker, scenario: Scenario) -> Self {
+        Context {
+            cwd: None,
+            scenario,
+            tracker,
+            term,
+            vars: HashMap::new(),
+        }
+    }
     pub fn from_filename(filename: &PathBuf) -> Result<Self, reader::error::E> {
         Ok(Context {
             cwd: Some(
@@ -24,6 +39,7 @@ impl Context {
             scenario: Scenario::from(filename)?,
             tracker: Tracker::new(),
             term: Term::new(),
+            vars: HashMap::new(),
         })
     }
 
@@ -33,6 +49,7 @@ impl Context {
             scenario: Scenario::dummy(),
             tracker: Tracker::new(),
             term: Term::new(),
+            vars: HashMap::new(),
         }
     }
 

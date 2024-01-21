@@ -1,12 +1,10 @@
 use crate::{
+    error::E,
     functions::Implementation,
     inf::context::Context,
-    reader::{
-        entry::{Argument, Function},
-        error::E,
-    },
+    reader::entry::{Argument, Function},
 };
-use std::{fs, path::PathBuf};
+use std::{fs, io, path::PathBuf};
 use thiserror::Error;
 
 const NAME: &str = "import";
@@ -26,8 +24,20 @@ pub enum Error {
 }
 
 impl From<Error> for E {
-    fn from(val: Error) -> Self {
-        E::FunctionError(NAME.to_string(), val.to_string())
+    fn from(e: Error) -> Self {
+        E {
+            sig: format!("@{NAME}"),
+            msg: e.to_string(),
+        }
+    }
+}
+
+impl From<io::Error> for E {
+    fn from(e: io::Error) -> Self {
+        E {
+            sig: format!("@{NAME}"),
+            msg: e.to_string(),
+        }
     }
 }
 
@@ -60,7 +70,7 @@ impl Implementation<Import, String> for Import {
         Ok(Some(Import { path }))
     }
 
-    fn run(&mut self, context: &mut Context) -> Result<String, E> {
-        fs::read_to_string(&self.path).map_err(|e| e.into())
+    fn run(&mut self, _context: &mut Context) -> Result<String, E> {
+        Ok(fs::read_to_string(&self.path)?)
     }
 }

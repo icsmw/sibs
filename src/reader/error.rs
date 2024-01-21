@@ -1,3 +1,4 @@
+use crate::error;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -105,7 +106,13 @@ pub enum E {
     #[error("IO error")]
     IO(#[from] std::io::Error),
     #[error("{0}: {1}")]
-    FunctionError(String, String),
-    #[error("{0}")]
-    Other(String),
+    OwnedError(String, String),
+    #[error("Variable {0} isn't assigned")]
+    VariableIsNotAssigned(String),
+}
+
+impl From<error::E> for E {
+    fn from(e: error::E) -> Self {
+        E::OwnedError(e.sig, e.msg)
+    }
 }

@@ -1,8 +1,9 @@
 use crate::{
     cli,
     inf::{
+        any::AnyValue,
         context::Context,
-        runner::{self, Runner},
+        operator::Operator,
         term::{self, Term},
     },
     reader::{
@@ -139,13 +140,13 @@ impl term::Display for Component {
     }
 }
 
-impl Runner for Component {
-    async fn run(
+impl Operator for Component {
+    async fn process(
         &self,
         components: &[Component],
         args: &[String],
         cx: &mut Context,
-    ) -> Result<runner::Return, cli::error::E> {
+    ) -> Result<Option<&AnyValue>, cli::error::E> {
         let task = args.first().ok_or_else(|| {
             cx.term.err(format!(
                 "No task provided for component \"{}\". Try to use \"sibs {} --help\".\n",
@@ -162,7 +163,7 @@ impl Runner for Component {
         })?;
         cx.term.with_title("COMPONENT", &self.name);
         cx.set_cwd(self.cwd.clone())?;
-        task.run(components, &args[1..], cx).await
+        task.process(components, &args[1..], cx).await
     }
 }
 

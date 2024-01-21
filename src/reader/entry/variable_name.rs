@@ -1,7 +1,11 @@
-use crate::reader::{
-    chars,
-    entry::{Reader, Reading},
-    E,
+use crate::{
+    cli,
+    inf::{any::AnyValue, context::Context, operator::Operator},
+    reader::{
+        chars,
+        entry::{Reader, Reading},
+        E,
+    },
 };
 use std::fmt;
 
@@ -36,6 +40,16 @@ impl VariableName {
         } else {
             Ok(Self { name, token })
         }
+    }
+}
+
+impl Operator for VariableName {
+    fn val<'a>(&'a self, cx: &'a mut Context) -> Result<&AnyValue, cli::error::E> {
+        Ok(cx
+            .vars
+            .get(&self.name)
+            .as_ref()
+            .ok_or(E::VariableIsNotAssigned(self.name.to_owned()))?)
     }
 }
 
