@@ -1,5 +1,6 @@
 use crate::{
-    inf::{any::AnyValue, context::Context},
+    cli,
+    inf::{any::AnyValue, context::Context, operator::Operator},
     reader::{
         chars,
         entry::{Function, Reader, Reading, VariableName},
@@ -7,11 +8,30 @@ use crate::{
     },
 };
 use std::fmt;
+use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub enum Injection {
-    VariableName(VariableName),
-    Function(Function),
+    VariableName(String, VariableName),
+    Function(String, Function),
+}
+
+impl Injection {
+    pub fn hook(&self) -> &str {
+        match self {
+            Self::VariableName(hook, _) => &hook,
+            Self::Function(hook, _) => &hook,
+        }
+    }
+}
+
+impl Operator for Injection {
+    fn val<'a>(&'a mut self, cx: &'a mut Context) -> Result<&AnyValue, cli::error::E> {
+        match self {
+            Self::VariableName(_, v) => v.val(cx),
+            Self::Function(_, v) => v.val(cx),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -19,6 +39,7 @@ pub struct ValueString {
     pub pattern: String,
     pub injections: Vec<Injection>,
     pub token: usize,
+    val_ref: Option<Uuid>,
 }
 
 impl Reading<ValueString> for ValueString {
@@ -40,11 +61,12 @@ impl ValueString {
             reader.move_to().next();
             if reader.until().char(&[&chars::TYPE_CLOSE]).is_some() {
                 let mut token = reader.token()?;
+                let hook = token.content.clone();
                 reader.move_to().next();
                 if let Some(variable_name) = VariableName::read(&mut token.bound)? {
-                    injections.push(Injection::VariableName(variable_name));
+                    injections.push(Injection::VariableName(hook, variable_name));
                 } else if let Some(func) = Function::read(&mut token.bound)? {
-                    injections.push(Injection::Function(func));
+                    injections.push(Injection::Function(hook, func));
                 } else {
                     Err(E::NoVariableReference)?
                 }
@@ -56,6 +78,7 @@ impl ValueString {
             pattern,
             injections,
             token,
+            val_ref: None,
         })
     }
 }
@@ -63,6 +86,34 @@ impl ValueString {
 impl fmt::Display for ValueString {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "\"{}\"", self.pattern,)
+    }
+}
+
+impl Operator for ValueString {
+    fn val<'a>(&'a mut self, cx: &'a mut Context) -> Result<&AnyValue, cli::error::E> {
+        let uuid = if let Some(uuid) = self.val_ref.as_ref() {
+            *uuid
+        } else {
+            let mut output = self.pattern.clone();
+            for injection in self.injections.iter_mut() {
+                let val = injection
+                    .val(cx)?
+                    .get_as_string()
+                    .ok_or(cli::error::E::NoArguments)?;
+                let hook = injection.hook();
+                println!(">>>>>>>>>>>>>>>>>>>HOOK:__{hook}__");
+                output = output.replace(hook, &val);
+            }
+            let uuid = Uuid::new_v4();
+            cx.processed.insert(uuid.clone(), AnyValue::new(output));
+            self.val_ref = Some(uuid);
+            uuid
+        };
+        Ok(cx
+            .processed
+            .get(&uuid)
+            .as_ref()
+            .ok_or(cli::error::E::FailToExtractValue)?)
     }
 }
 

@@ -44,12 +44,12 @@ impl VariableName {
 }
 
 impl Operator for VariableName {
-    fn val<'a>(&'a self, cx: &'a mut Context) -> Result<&AnyValue, cli::error::E> {
+    fn val<'a>(&'a mut self, cx: &'a mut Context) -> Result<&AnyValue, cli::error::E> {
         Ok(cx
             .vars
             .get(&self.name)
             .as_ref()
-            .ok_or(E::VariableIsNotAssigned(self.name.to_owned()))?)
+            .ok_or(cli::error::E::VariableIsNotAssigned(self.name.to_owned()))?)
     }
 }
 

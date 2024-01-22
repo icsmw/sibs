@@ -1,6 +1,7 @@
 use crate::{
     error::E,
     functions::Implementation,
+    inf::any::AnyValue,
     inf::context::Context,
     reader::entry::{Argument, Function},
 };
@@ -42,17 +43,15 @@ impl From<io::Error> for E {
 }
 
 #[derive(Debug)]
-pub struct Import {
-    pub path: PathBuf,
-}
+pub struct Import {}
 
-impl Implementation<Import, String> for Import {
-    fn from(function: Function, cx: &mut Context) -> Result<Option<Import>, E> {
+impl Implementation for Import {
+    fn from(function: &mut Function, cx: &mut Context) -> Result<Option<AnyValue>, E> {
         if function.name.trim() != NAME {
             return Ok(None);
         }
         let cwd = cx.cwd.as_ref().ok_or(Error::NoCurrentWorkingFolder)?;
-        let args = function.args.ok_or(Error::NoArguments)?;
+        let args = function.args.as_mut().ok_or(Error::NoArguments)?;
         if args.args.len() != 1 {
             Err(Error::InvalidNumberOfArguments)?;
         }
@@ -67,10 +66,10 @@ impl Implementation<Import, String> for Import {
         if !path.exists() {
             Err(Error::NoFile(path.to_string_lossy().to_string()))?;
         }
-        Ok(Some(Import { path }))
+        Ok(Some(AnyValue::new(path)))
     }
 
-    fn run(&mut self, _context: &mut Context) -> Result<String, E> {
-        Ok(fs::read_to_string(&self.path)?)
+    fn get_name() -> String {
+        NAME.to_owned()
     }
 }

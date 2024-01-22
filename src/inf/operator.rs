@@ -14,7 +14,7 @@ pub trait Operator {
         Err(E::NotSupported)
     }
 
-    fn val<'a>(&'a self, cx: &'a mut Context) -> Result<&AnyValue, E> {
+    fn val<'a>(&'a mut self, cx: &'a mut Context) -> Result<&AnyValue, E> {
         Err(E::NotSupported)
     }
 }

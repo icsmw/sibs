@@ -31,4 +31,8 @@ pub enum E {
     NotSupported,
     #[error("{0}: {1}")]
     FunctionError(String, String),
+    #[error("Variable {0} isn't assigned")]
+    VariableIsNotAssigned(String),
+    #[error("Fail to extract value")]
+    FailToExtractValue,
 }

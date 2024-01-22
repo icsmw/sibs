@@ -1,4 +1,5 @@
 use crate::{
+    functions::{self, register, FunctionExecutor},
     inf::{
         any::{AnyValue, DebugAny},
         scenario::Scenario,
@@ -7,7 +8,11 @@ use crate::{
     },
     reader,
 };
-use std::{collections::HashMap, path::PathBuf};
+use std::{
+    collections::{hash_map::Entry, HashMap},
+    path::PathBuf,
+};
+use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct Context {
@@ -16,20 +21,29 @@ pub struct Context {
     pub tracker: Tracker,
     pub scenario: Scenario,
     pub vars: HashMap<String, AnyValue>,
+    pub processed: HashMap<Uuid, AnyValue>,
+    pub functions: HashMap<String, FunctionExecutor>,
 }
 
 impl Context {
-    pub fn new(term: Term, tracker: Tracker, scenario: Scenario) -> Self {
-        Context {
+    fn register_functions(mut cx: Self) -> Result<Self, reader::error::E> {
+        functions::register(&mut cx)?;
+        Ok(cx)
+    }
+
+    pub fn new(term: Term, tracker: Tracker, scenario: Scenario) -> Result<Self, reader::error::E> {
+        Self::register_functions(Context {
             cwd: None,
             scenario,
             tracker,
             term,
             vars: HashMap::new(),
-        }
+            processed: HashMap::new(),
+            functions: HashMap::new(),
+        })
     }
     pub fn from_filename(filename: &PathBuf) -> Result<Self, reader::error::E> {
-        Ok(Context {
+        Self::register_functions(Context {
             cwd: Some(
                 filename
                     .parent()
@@ -40,17 +54,21 @@ impl Context {
             tracker: Tracker::new(),
             term: Term::new(),
             vars: HashMap::new(),
+            processed: HashMap::new(),
+            functions: HashMap::new(),
         })
     }
 
-    pub fn unbound() -> Self {
-        Context {
+    pub fn unbound() -> Result<Self, reader::error::E> {
+        Self::register_functions(Context {
             cwd: Some(PathBuf::new()),
             scenario: Scenario::dummy(),
             tracker: Tracker::new(),
             term: Term::new(),
             vars: HashMap::new(),
-        }
+            processed: HashMap::new(),
+            functions: HashMap::new(),
+        })
     }
 
     pub fn set_cwd(&mut self, cwd: Option<PathBuf>) -> Result<(), reader::error::E> {
@@ -60,5 +78,18 @@ impl Context {
             self.cwd = None;
         }
         Ok(())
+    }
+
+    pub fn add_fn(&mut self, name: String, func: FunctionExecutor) -> Result<(), reader::error::E> {
+        if let Entry::Vacant(e) = self.functions.entry(name.clone()) {
+            e.insert(func);
+            Ok(())
+        } else {
+            Err(reader::error::E::FunctionAlreadyExists(name))
+        }
+    }
+
+    pub fn get_fn(&self, name: &str) -> Option<&FunctionExecutor> {
+        self.functions.get(name)
     }
 }

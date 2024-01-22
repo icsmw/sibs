@@ -14,6 +14,7 @@ use error::E;
 use std::{
     collections::HashMap,
     fs,
+    path::PathBuf,
     {cell::RefCell, rc::Rc},
 };
 
@@ -962,17 +963,22 @@ pub fn read_file(cx: &mut Context) -> Result<Vec<Component>, E> {
         ))?
     }
     let mut reader = Reader::new(fs::read_to_string(&cx.scenario.filename)?);
-    let mut imports: Vec<Import> = vec![];
-    while let Some(func) = Function::read(&mut reader)? {
-        if let Some(fn_impl) = <Import as Implementation<Import, String>>::from(func, cx)? {
-            imports.push(fn_impl);
-        } else {
-            Err(E::NotAllowedFunction)?
-        }
+    let mut imports: Vec<PathBuf> = vec![];
+    while let Some(mut func) = Function::read(&mut reader)? {
+        let handle = cx
+            .get_fn(&Import::get_name())
+            .ok_or(E::FunctionIsNotRegistred)?;
+        imports.push(
+            handle(&mut func, cx)?
+                .ok_or(E::NotAllowedFunction)?
+                .get_as::<PathBuf>()
+                .ok_or(E::InvalidFunctionReturn)?
+                .clone(),
+        );
     }
     let mut components: Vec<Component> = vec![];
-    for import in imports.iter_mut() {
-        let mut cx = Context::from_filename(&import.path)?;
+    for import_path in imports.iter_mut() {
+        let mut cx = Context::from_filename(import_path)?;
         components.append(&mut read_file(&mut cx)?);
     }
     while let Some(component) = Component::read(&mut reader)? {

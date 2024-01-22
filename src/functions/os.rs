@@ -2,7 +2,7 @@ use crate::{
     cli,
     error::E,
     functions::Implementation,
-    inf::{context::Context, operator::Operator},
+    inf::{any::AnyValue, context::Context, operator::Operator},
     reader::entry::{Argument, Function},
 };
 use thiserror::Error;
@@ -29,35 +29,39 @@ impl From<Error> for E {
 }
 
 #[derive(Debug)]
-pub struct Os {
-    pub probe: String,
-}
+pub struct Os {}
 
-impl Implementation<Os, bool> for Os {
-    fn from(function: Function, cx: &mut Context) -> Result<Option<Os>, E> {
+impl Implementation for Os {
+    fn from(mut function: &mut Function, cx: &mut Context) -> Result<Option<AnyValue>, E> {
         if function.name.trim() != NAME {
             return Ok(None);
         }
         let arg = function
             .args
-            .as_ref()
+            .as_mut()
             .ok_or(Error::NoArguments)?
-            .get(0)
+            .get_mut(0)
             .ok_or(Error::InvalidNumberOfArguments)?;
-        let probe = match &arg {
+        let probe = match arg {
             Argument::String(value) => value.to_owned(),
-            Argument::ValueString(value_string) => String::new(),
+            Argument::ValueString(value_string) => value_string
+                .val(cx)?
+                .get_as::<String>()
+                .ok_or(Error::InvalidArgumentType)?
+                .to_owned(),
             Argument::VariableName(variable) => variable
                 .val(cx)?
                 .get_as::<String>()
-                .ok_or(Error::NoArguments)?
+                .ok_or(Error::InvalidArgumentType)?
                 .to_owned(),
             _ => Err(Error::InvalidArgumentType)?,
         };
-        Ok(Some(Os { probe }))
+        Ok(Some(AnyValue::new(
+            probe.to_lowercase() == std::env::consts::OS,
+        )))
     }
 
-    fn run(&mut self, _context: &mut Context) -> Result<bool, E> {
-        Ok(self.probe.to_lowercase() == std::env::consts::OS)
+    fn get_name() -> String {
+        NAME.to_owned()
     }
 }

@@ -95,6 +95,10 @@ pub enum E {
     NotAllowedFunction,
     #[error("Invalid function name")]
     InvalidFunctionName,
+    #[error("Function isn't registred")]
+    FunctionIsNotRegistred,
+    #[error("Invalid function return")]
+    InvalidFunctionReturn,
     // #[error("Function already redirected")]
     // FunctionAlreadyRedirected,
     #[error("Path doesn't include parent")]
@@ -107,8 +111,8 @@ pub enum E {
     IO(#[from] std::io::Error),
     #[error("{0}: {1}")]
     OwnedError(String, String),
-    #[error("Variable {0} isn't assigned")]
-    VariableIsNotAssigned(String),
+    #[error("Function {0} already exist")]
+    FunctionAlreadyExists(String),
 }
 
 impl From<error::E> for E {

@@ -36,7 +36,7 @@ pub async fn read(tracker: &Tracker) -> Result<Option<Context>, E> {
     let mut term = Term::new();
     let mut defaults = Arguments::new(&mut income)?;
     if defaults.has::<args::version::Version>() {
-        run::<args::version::Version>(&[], &mut defaults, &mut Context::unbound())?;
+        run::<args::version::Version>(&[], &mut defaults, &mut Context::unbound()?)?;
         if !income.is_empty() {
             term.err(format!("Ingore next arguments: {}", income.join(", ")));
         }
@@ -56,7 +56,7 @@ pub async fn read(tracker: &Tracker) -> Result<Option<Context>, E> {
             }
         }
     };
-    let mut cx = Context::new(term, tracker.clone(), scenario);
+    let mut cx = Context::new(term, tracker.clone(), scenario)?;
     let components = reader::read_file(&mut cx)?;
     let no_actions = defaults.has::<args::help::Help>() || income.is_empty();
     run::<args::help::Help>(&components, &mut defaults, &mut cx)?;
