@@ -146,7 +146,7 @@ impl Operator for Component {
         components: &[Component],
         args: &[String],
         cx: &mut Context,
-    ) -> Result<Option<&AnyValue>, cli::error::E> {
+    ) -> Result<Option<AnyValue>, cli::error::E> {
         let task = args.first().ok_or_else(|| {
             cx.term.err(format!(
                 "No task provided for component \"{}\". Try to use \"sibs {} --help\".\n",

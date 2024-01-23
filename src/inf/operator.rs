@@ -10,11 +10,7 @@ pub trait Operator {
         components: &[Component],
         args: &[String],
         cx: &mut Context,
-    ) -> Result<Option<&AnyValue>, E> {
-        Err(E::NotSupported)
-    }
-
-    fn val<'a>(&'a mut self, cx: &'a mut Context) -> Result<&AnyValue, E> {
+    ) -> Result<Option<AnyValue>, E> {
         Err(E::NotSupported)
     }
 }

@@ -52,7 +52,7 @@ impl Operator for Element {
         components: &[Component],
         args: &[String],
         context: &mut Context,
-    ) -> Result<Option<&AnyValue>, cli::error::E> {
+    ) -> Result<Option<AnyValue>, cli::error::E> {
         match self {
             Self::Command(v) => v.process(components, args, context).await,
             Self::Function(v) => v.process(components, args, context).await,
@@ -173,8 +173,8 @@ impl Operator for Block {
         components: &[Component],
         args: &[String],
         context: &mut Context,
-    ) -> Result<Option<&AnyValue>, cli::error::E> {
-        let mut output: Option<&AnyValue> = None;
+    ) -> Result<Option<AnyValue>, cli::error::E> {
+        let mut output: Option<AnyValue> = None;
         for element in self.elements.iter() {
             output = element.process(components, args, context).await?;
         }

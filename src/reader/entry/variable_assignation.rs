@@ -124,7 +124,7 @@ impl Operator for VariableAssignation {
         components: &[Component],
         args: &[String],
         cx: &mut Context,
-    ) -> Result<Option<&AnyValue>, cli::error::E> {
+    ) -> Result<Option<AnyValue>, cli::error::E> {
         Ok(None)
     }
 }

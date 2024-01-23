@@ -44,12 +44,18 @@ impl VariableName {
 }
 
 impl Operator for VariableName {
-    fn val<'a>(&'a mut self, cx: &'a mut Context) -> Result<&AnyValue, cli::error::E> {
+    async fn process(
+        &self,
+        components: &[super::Component],
+        args: &[String],
+        cx: &mut Context,
+    ) -> Result<Option<AnyValue>, cli::error::E> {
         Ok(cx
             .vars
             .get(&self.name)
-            .as_ref()
-            .ok_or(cli::error::E::VariableIsNotAssigned(self.name.to_owned()))?)
+            .ok_or(cli::error::E::VariableIsNotAssigned(self.name.to_owned()))?
+            .get_as::<String>()
+            .map(|name| AnyValue::new(name.to_string())))
     }
 }
 

@@ -169,7 +169,7 @@ impl Operator for Function {
         components: &[Component],
         args: &[String],
         cx: &mut Context,
-    ) -> Result<Option<&AnyValue>, cli::error::E> {
+    ) -> Result<Option<AnyValue>, cli::error::E> {
         Ok(None)
     }
 }

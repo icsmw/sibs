@@ -26,10 +26,15 @@ impl Injection {
 }
 
 impl Operator for Injection {
-    fn val<'a>(&'a mut self, cx: &'a mut Context) -> Result<&AnyValue, cli::error::E> {
+    async fn process(
+        &self,
+        components: &[super::Component],
+        args: &[String],
+        cx: &mut Context,
+    ) -> Result<Option<AnyValue>, cli::error::E> {
         match self {
-            Self::VariableName(_, v) => v.val(cx),
-            Self::Function(_, v) => v.val(cx),
+            Self::VariableName(_, v) => v.process(components, args, cx).await,
+            Self::Function(_, v) => v.process(components, args, cx).await,
         }
     }
 }
@@ -39,7 +44,6 @@ pub struct ValueString {
     pub pattern: String,
     pub injections: Vec<Injection>,
     pub token: usize,
-    val_ref: Option<Uuid>,
 }
 
 impl Reading<ValueString> for ValueString {
@@ -78,7 +82,6 @@ impl ValueString {
             pattern,
             injections,
             token,
-            val_ref: None,
         })
     }
 }
@@ -90,30 +93,25 @@ impl fmt::Display for ValueString {
 }
 
 impl Operator for ValueString {
-    fn val<'a>(&'a mut self, cx: &'a mut Context) -> Result<&AnyValue, cli::error::E> {
-        let uuid = if let Some(uuid) = self.val_ref.as_ref() {
-            *uuid
-        } else {
-            let mut output = self.pattern.clone();
-            for injection in self.injections.iter_mut() {
-                let val = injection
-                    .val(cx)?
-                    .get_as_string()
-                    .ok_or(cli::error::E::NoArguments)?;
-                let hook = injection.hook();
-                println!(">>>>>>>>>>>>>>>>>>>HOOK:__{hook}__");
-                output = output.replace(hook, &val);
-            }
-            let uuid = Uuid::new_v4();
-            cx.processed.insert(uuid.clone(), AnyValue::new(output));
-            self.val_ref = Some(uuid);
-            uuid
-        };
-        Ok(cx
-            .processed
-            .get(&uuid)
-            .as_ref()
-            .ok_or(cli::error::E::FailToExtractValue)?)
+    async fn process(
+        &self,
+        components: &[super::Component],
+        args: &[String],
+        cx: &mut Context,
+    ) -> Result<Option<AnyValue>, cli::error::E> {
+        let mut output = self.pattern.clone();
+        for injection in self.injections.iter() {
+            let val = injection
+                .process(components, args, cx)
+                .await?
+                .ok_or(cli::error::E::FailToExtractValue)?
+                .get_as_string()
+                .ok_or(cli::error::E::NoArguments)?;
+            let hook = injection.hook();
+            println!(">>>>>>>>>>>>>>>>>>>HOOK:__{hook}__");
+            output = output.replace(hook, &val);
+        }
+        Ok(Some(AnyValue::new(output)))
     }
 }
 

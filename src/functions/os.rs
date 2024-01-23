@@ -33,32 +33,34 @@ pub struct Os {}
 
 impl Implementation for Os {
     fn from(mut function: &mut Function, cx: &mut Context) -> Result<Option<AnyValue>, E> {
-        if function.name.trim() != NAME {
-            return Ok(None);
-        }
-        let arg = function
-            .args
-            .as_mut()
-            .ok_or(Error::NoArguments)?
-            .get_mut(0)
-            .ok_or(Error::InvalidNumberOfArguments)?;
-        let probe = match arg {
-            Argument::String(value) => value.to_owned(),
-            Argument::ValueString(value_string) => value_string
-                .val(cx)?
-                .get_as::<String>()
-                .ok_or(Error::InvalidArgumentType)?
-                .to_owned(),
-            Argument::VariableName(variable) => variable
-                .val(cx)?
-                .get_as::<String>()
-                .ok_or(Error::InvalidArgumentType)?
-                .to_owned(),
-            _ => Err(Error::InvalidArgumentType)?,
-        };
-        Ok(Some(AnyValue::new(
-            probe.to_lowercase() == std::env::consts::OS,
-        )))
+        return Ok(None);
+
+        // if function.name.trim() != NAME {
+        //     return Ok(None);
+        // }
+        // let arg = function
+        //     .args
+        //     .as_mut()
+        //     .ok_or(Error::NoArguments)?
+        //     .get_mut(0)
+        //     .ok_or(Error::InvalidNumberOfArguments)?;
+        // let probe = match arg {
+        //     Argument::String(value) => value.to_owned(),
+        //     Argument::ValueString(value_string) => value_string
+        //         .val(cx)?
+        //         .get_as::<String>()
+        //         .ok_or(Error::InvalidArgumentType)?
+        //         .to_owned(),
+        //     Argument::VariableName(variable) => variable
+        //         .val(cx)?
+        //         .get_as::<String>()
+        //         .ok_or(Error::InvalidArgumentType)?
+        //         .to_owned(),
+        //     _ => Err(Error::InvalidArgumentType)?,
+        // };
+        // Ok(Some(AnyValue::new(
+        //     probe.to_lowercase() == std::env::consts::OS,
+        // )))
     }
 
     fn get_name() -> String {

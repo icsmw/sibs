@@ -149,7 +149,7 @@ impl Operator for Task {
         components: &[Component],
         args: &[String],
         context: &mut Context,
-    ) -> Result<Option<&AnyValue>, cli::error::E> {
+    ) -> Result<Option<AnyValue>, cli::error::E> {
         let block = self.block.as_ref().ok_or_else(|| {
             context.term.err(format!(
                 "Task \"{}\" doesn't have actions block.\n",

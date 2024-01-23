@@ -44,7 +44,7 @@ impl Operator for Command {
         _components: &[Component],
         _args: &[String],
         cx: &mut Context,
-    ) -> Result<Option<&AnyValue>, cli::error::E> {
+    ) -> Result<Option<AnyValue>, cli::error::E> {
         let cwd = cx
             .cwd
             .as_ref()
