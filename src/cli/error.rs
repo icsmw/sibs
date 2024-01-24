@@ -1,4 +1,4 @@
-use crate::reader;
+use crate::{error, reader};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -35,4 +35,12 @@ pub enum E {
     VariableIsNotAssigned(String),
     #[error("Fail to extract value")]
     FailToExtractValue,
+    #[error("Error: {0}")]
+    Other(String),
+}
+
+impl From<error::E> for E {
+    fn from(e: error::E) -> Self {
+        E::Other(e.msg.to_owned())
+    }
 }

@@ -15,13 +15,6 @@ indicatif = "0.17.7"
 terminal_size = "0.3.0"
 thiserror = "1.0.50"
 
-[dependencies.uuid]
-version = "1.7.0"
-features = [
-    "v4",                
-    "fast-rng",
-]
-
 [dependencies.async-std]
 version = "1.12.0"
 features = [

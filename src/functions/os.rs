@@ -17,6 +17,10 @@ pub enum Error {
     InvalidNumberOfArguments,
     #[error("Invalid argument type; expected string.")]
     InvalidArgumentType,
+    #[error("Fail to extract string value from ValueString entity")]
+    NoStringValue,
+    #[error("Fail to extract variable name from VariableName entity")]
+    NoVariableName,
 }
 
 impl From<Error> for E {
@@ -32,35 +36,39 @@ impl From<Error> for E {
 pub struct Os {}
 
 impl Executor for Os {
-    fn from<'a>(function: &'a mut Function, cx: &'a mut Context) -> ExecutorPinnedResult<'a> {
-        Box::pin(async { Ok(None) })
-
-        // if function.name.trim() != NAME {
-        //     return Ok(None);
-        // }
-        // let arg = function
-        //     .args
-        //     .as_mut()
-        //     .ok_or(Error::NoArguments)?
-        //     .get_mut(0)
-        //     .ok_or(Error::InvalidNumberOfArguments)?;
-        // let probe = match arg {
-        //     Argument::String(value) => value.to_owned(),
-        //     Argument::ValueString(value_string) => value_string
-        //         .val(cx)?
-        //         .get_as::<String>()
-        //         .ok_or(Error::InvalidArgumentType)?
-        //         .to_owned(),
-        //     Argument::VariableName(variable) => variable
-        //         .val(cx)?
-        //         .get_as::<String>()
-        //         .ok_or(Error::InvalidArgumentType)?
-        //         .to_owned(),
-        //     _ => Err(Error::InvalidArgumentType)?,
-        // };
-        // Ok(Some(AnyValue::new(
-        //     probe.to_lowercase() == std::env::consts::OS,
-        // )))
+    fn execute<'a>(function: &'a Function, cx: &'a mut Context) -> ExecutorPinnedResult<'a> {
+        Box::pin(async {
+            if function.name.trim() != NAME {
+                return Ok(None);
+            }
+            let arg = function
+                .args
+                .as_ref()
+                .ok_or(Error::NoArguments)?
+                .get(0)
+                .ok_or(Error::InvalidNumberOfArguments)?;
+            let probe = match arg {
+                Argument::String(value) => value.to_owned(),
+                Argument::ValueString(value_string) => value_string
+                    .process(&[], &[], cx)
+                    .await?
+                    .ok_or(Error::NoStringValue)?
+                    .get_as::<String>()
+                    .ok_or(Error::InvalidArgumentType)?
+                    .to_owned(),
+                Argument::VariableName(variable) => variable
+                    .process(&[], &[], cx)
+                    .await?
+                    .ok_or(Error::NoVariableName)?
+                    .get_as::<String>()
+                    .ok_or(Error::InvalidArgumentType)?
+                    .to_owned(),
+                _ => Err(Error::InvalidArgumentType)?,
+            };
+            Ok(Some(AnyValue::new(
+                probe.to_lowercase() == std::env::consts::OS,
+            )))
+        })
     }
 
     fn get_name() -> String {

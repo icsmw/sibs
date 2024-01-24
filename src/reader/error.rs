@@ -59,6 +59,8 @@ pub enum E {
     InvalidReference,
     #[error("No destination function after >")]
     NoDestFunction,
+    #[error("No executor for function {0}")]
+    NoFunctionExecutor(String),
     #[error("Missed comparing operator: == or !=")]
     MissedComparingOperator,
     #[error("Fail to find proviso of condition")]

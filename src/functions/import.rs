@@ -46,13 +46,13 @@ impl From<io::Error> for E {
 pub struct Import {}
 
 impl Executor for Import {
-    fn from<'a>(function: &'a mut Function, cx: &'a mut Context) -> ExecutorPinnedResult<'a> {
+    fn execute<'a>(function: &'a Function, cx: &'a mut Context) -> ExecutorPinnedResult<'a> {
         Box::pin(async {
             if function.name.trim() != NAME {
                 return Ok(None);
             }
             let cwd = cx.cwd.as_ref().ok_or(Error::NoCurrentWorkingFolder)?;
-            let args = function.args.as_mut().ok_or(Error::NoArguments)?;
+            let args = function.args.as_ref().ok_or(Error::NoArguments)?;
             if args.args.len() != 1 {
                 Err(Error::InvalidNumberOfArguments)?;
             }

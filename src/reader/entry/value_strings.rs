@@ -8,7 +8,6 @@ use crate::{
     },
 };
 use std::fmt;
-use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub enum Injection {
@@ -19,8 +18,8 @@ pub enum Injection {
 impl Injection {
     pub fn hook(&self) -> &str {
         match self {
-            Self::VariableName(hook, _) => &hook,
-            Self::Function(hook, _) => &hook,
+            Self::VariableName(hook, _) => hook,
+            Self::Function(hook, _) => hook,
         }
     }
 }

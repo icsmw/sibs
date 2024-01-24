@@ -12,7 +12,6 @@ use std::{
     collections::{hash_map::Entry, HashMap},
     path::PathBuf,
 };
-use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct Context {

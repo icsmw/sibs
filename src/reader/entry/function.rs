@@ -166,11 +166,16 @@ impl fmt::Display for Function {
 impl Operator for Function {
     async fn process(
         &self,
-        components: &[Component],
-        args: &[String],
+        _: &[Component],
+        _: &[String],
         cx: &mut Context,
     ) -> Result<Option<AnyValue>, cli::error::E> {
-        Ok(None)
+        let executor = cx
+            .get_fn(&self.name)
+            .ok_or(E::NoFunctionExecutor(self.name.clone()))?;
+        let result = executor(self, cx).await?;
+        println!(">>>>>>>>>>>>>>>>>>>>> func:{} => {result:?}", self.name);
+        Ok(result)
     }
 }
 
