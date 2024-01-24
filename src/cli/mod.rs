@@ -57,7 +57,7 @@ pub async fn read(tracker: &Tracker) -> Result<Option<Context>, E> {
         }
     };
     let mut cx = Context::new(term, tracker.clone(), scenario)?;
-    let components = reader::read_file(&mut cx)?;
+    let components = reader::read_file(&mut cx).await?;
     let no_actions = defaults.has::<args::help::Help>() || income.is_empty();
     run::<args::help::Help>(&components, &mut defaults, &mut cx)?;
     if no_actions {

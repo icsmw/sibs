@@ -1,6 +1,6 @@
 use crate::{
     error::E,
-    functions::Implementation,
+    functions::{Executor, ExecutorPinnedResult},
     inf::any::AnyValue,
     inf::context::Context,
     reader::entry::{Argument, Function},
@@ -45,28 +45,30 @@ impl From<io::Error> for E {
 #[derive(Debug)]
 pub struct Import {}
 
-impl Implementation for Import {
-    fn from(function: &mut Function, cx: &mut Context) -> Result<Option<AnyValue>, E> {
-        if function.name.trim() != NAME {
-            return Ok(None);
-        }
-        let cwd = cx.cwd.as_ref().ok_or(Error::NoCurrentWorkingFolder)?;
-        let args = function.args.as_mut().ok_or(Error::NoArguments)?;
-        if args.args.len() != 1 {
-            Err(Error::InvalidNumberOfArguments)?;
-        }
-        let mut path = if let (_, Argument::String(value)) = &args.args[0] {
-            PathBuf::from(value)
-        } else {
-            Err(Error::InvalidPathArgument)?
-        };
-        if path.is_relative() {
-            path = cwd.join(path);
-        }
-        if !path.exists() {
-            Err(Error::NoFile(path.to_string_lossy().to_string()))?;
-        }
-        Ok(Some(AnyValue::new(path)))
+impl Executor for Import {
+    fn from<'a>(function: &'a mut Function, cx: &'a mut Context) -> ExecutorPinnedResult<'a> {
+        Box::pin(async {
+            if function.name.trim() != NAME {
+                return Ok(None);
+            }
+            let cwd = cx.cwd.as_ref().ok_or(Error::NoCurrentWorkingFolder)?;
+            let args = function.args.as_mut().ok_or(Error::NoArguments)?;
+            if args.args.len() != 1 {
+                Err(Error::InvalidNumberOfArguments)?;
+            }
+            let mut path = if let (_, Argument::String(value)) = &args.args[0] {
+                PathBuf::from(value)
+            } else {
+                Err(Error::InvalidPathArgument)?
+            };
+            if path.is_relative() {
+                path = cwd.join(path);
+            }
+            if !path.exists() {
+                Err(Error::NoFile(path.to_string_lossy().to_string()))?;
+            }
+            Ok(Some(AnyValue::new(path)))
+        })
     }
 
     fn get_name() -> String {

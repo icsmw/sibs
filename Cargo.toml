@@ -9,7 +9,6 @@ edition = "2021"
 async-channel = "2.1.1"
 async-io = "2.3.0"
 async-process = "2.0.1"
-async-std = "1.12.0"
 console = "0.15.8"
 futures-lite = "2.2.0"
 indicatif = "0.17.7"
@@ -21,4 +20,10 @@ version = "1.7.0"
 features = [
     "v4",                
     "fast-rng",
+]
+
+[dependencies.async-std]
+version = "1.12.0"
+features = [
+    "attributes",
 ]

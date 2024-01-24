@@ -1,7 +1,7 @@
 use crate::{
     cli,
     error::E,
-    functions::Implementation,
+    functions::{Executor, ExecutorPinnedResult},
     inf::{any::AnyValue, context::Context, operator::Operator},
     reader::entry::{Argument, Function},
 };
@@ -31,9 +31,9 @@ impl From<Error> for E {
 #[derive(Debug)]
 pub struct Os {}
 
-impl Implementation for Os {
-    fn from(mut function: &mut Function, cx: &mut Context) -> Result<Option<AnyValue>, E> {
-        return Ok(None);
+impl Executor for Os {
+    fn from<'a>(function: &'a mut Function, cx: &'a mut Context) -> ExecutorPinnedResult<'a> {
+        Box::pin(async { Ok(None) })
 
         // if function.name.trim() != NAME {
         //     return Ok(None);

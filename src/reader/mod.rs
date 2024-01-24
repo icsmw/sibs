@@ -6,7 +6,7 @@ pub mod tests;
 pub mod words;
 
 use crate::{
-    functions::{import::Import, Implementation},
+    functions::{import::Import, Executor},
     inf::context::Context,
 };
 use entry::{Component, Function, Reading};
@@ -956,35 +956,42 @@ mod test_walker {
     }
 }
 
-pub fn read_file(cx: &mut Context) -> Result<Vec<Component>, E> {
-    if !cx.scenario.filename.exists() {
-        Err(E::FileNotExists(
-            cx.scenario.filename.to_string_lossy().to_string(),
-        ))?
-    }
-    let mut reader = Reader::new(fs::read_to_string(&cx.scenario.filename)?);
-    let mut imports: Vec<PathBuf> = vec![];
-    while let Some(mut func) = Function::read(&mut reader)? {
-        let handle = cx
-            .get_fn(&Import::get_name())
-            .ok_or(E::FunctionIsNotRegistred)?;
-        imports.push(
-            handle(&mut func, cx)?
-                .ok_or(E::NotAllowedFunction)?
-                .get_as::<PathBuf>()
-                .ok_or(E::InvalidFunctionReturn)?
-                .clone(),
-        );
-    }
-    let mut components: Vec<Component> = vec![];
-    for import_path in imports.iter_mut() {
-        let mut cx = Context::from_filename(import_path)?;
-        components.append(&mut read_file(&mut cx)?);
-    }
-    while let Some(component) = Component::read(&mut reader)? {
-        components.push(component);
-    }
-    Ok(components)
+use std::{future::Future, pin::Pin};
+
+pub fn read_file<'a>(
+    cx: &'a mut Context,
+) -> Pin<Box<dyn Future<Output = Result<Vec<Component>, E>> + 'a>> {
+    Box::pin(async {
+        if !cx.scenario.filename.exists() {
+            Err(E::FileNotExists(
+                cx.scenario.filename.to_string_lossy().to_string(),
+            ))?
+        }
+        let mut reader = Reader::new(fs::read_to_string(&cx.scenario.filename)?);
+        let mut imports: Vec<PathBuf> = vec![];
+        while let Some(mut func) = Function::read(&mut reader)? {
+            let handle = cx
+                .get_fn(&Import::get_name())
+                .ok_or(E::FunctionIsNotRegistred)?;
+            imports.push(
+                handle(&mut func, cx)
+                    .await?
+                    .ok_or(E::NotAllowedFunction)?
+                    .get_as::<PathBuf>()
+                    .ok_or(E::InvalidFunctionReturn)?
+                    .clone(),
+            );
+        }
+        let mut components: Vec<Component> = vec![];
+        for import_path in imports.iter_mut() {
+            let mut cx = Context::from_filename(import_path)?;
+            components.append(&mut read_file(&mut cx).await?);
+        }
+        while let Some(component) = Component::read(&mut reader)? {
+            components.push(component);
+        }
+        Ok(components)
+    })
 }
 
 #[cfg(test)]
@@ -994,13 +1001,13 @@ mod test_reader {
         reader::{error::E, read_file},
     };
 
-    #[test]
-    fn reading() -> Result<(), E> {
+    #[async_std::test]
+    async fn reading() -> Result<(), E> {
         let target = std::env::current_dir()
             .unwrap()
             .join("./src/reader/entry/tests/normal/full/build.sibs");
         let mut cx = Context::from_filename(&target)?;
-        let components = read_file(&mut cx)?;
+        let components = read_file(&mut cx).await?;
         assert_eq!(components.len(), 9);
         Ok(())
     }

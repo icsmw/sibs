@@ -1,5 +1,5 @@
 use crate::{
-    functions::{self, register, FunctionExecutor},
+    functions::{self, register, ExecutorFn},
     inf::{
         any::{AnyValue, DebugAny},
         scenario::Scenario,
@@ -21,8 +21,7 @@ pub struct Context {
     pub tracker: Tracker,
     pub scenario: Scenario,
     pub vars: HashMap<String, AnyValue>,
-    pub processed: HashMap<Uuid, AnyValue>,
-    pub functions: HashMap<String, FunctionExecutor>,
+    pub executors: HashMap<String, ExecutorFn>,
 }
 
 impl Context {
@@ -38,8 +37,7 @@ impl Context {
             tracker,
             term,
             vars: HashMap::new(),
-            processed: HashMap::new(),
-            functions: HashMap::new(),
+            executors: HashMap::new(),
         })
     }
     pub fn from_filename(filename: &PathBuf) -> Result<Self, reader::error::E> {
@@ -54,8 +52,7 @@ impl Context {
             tracker: Tracker::new(),
             term: Term::new(),
             vars: HashMap::new(),
-            processed: HashMap::new(),
-            functions: HashMap::new(),
+            executors: HashMap::new(),
         })
     }
 
@@ -66,8 +63,7 @@ impl Context {
             tracker: Tracker::new(),
             term: Term::new(),
             vars: HashMap::new(),
-            processed: HashMap::new(),
-            functions: HashMap::new(),
+            executors: HashMap::new(),
         })
     }
 
@@ -80,8 +76,8 @@ impl Context {
         Ok(())
     }
 
-    pub fn add_fn(&mut self, name: String, func: FunctionExecutor) -> Result<(), reader::error::E> {
-        if let Entry::Vacant(e) = self.functions.entry(name.clone()) {
+    pub fn add_fn(&mut self, name: String, func: ExecutorFn) -> Result<(), reader::error::E> {
+        if let Entry::Vacant(e) = self.executors.entry(name.clone()) {
             e.insert(func);
             Ok(())
         } else {
@@ -89,7 +85,7 @@ impl Context {
         }
     }
 
-    pub fn get_fn(&self, name: &str) -> Option<&FunctionExecutor> {
-        self.functions.get(name)
+    pub fn get_fn(&self, name: &str) -> Option<&ExecutorFn> {
+        self.executors.get(name)
     }
 }
