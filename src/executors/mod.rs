@@ -1,12 +1,9 @@
+mod error;
 pub mod import;
 pub mod os;
 
-use crate::{
-    error::E,
-    inf::any::AnyValue,
-    inf::context::Context,
-    reader::{self, entry::Function},
-};
+use crate::{inf::any::AnyValue, inf::context::Context, reader::entry::Function};
+pub use error::E;
 use std::{future::Future, pin::Pin};
 
 pub type ExecutorPinnedResult<'a> = Pin<Box<dyn Future<Output = ExecutorResult> + 'a>>;
@@ -18,7 +15,7 @@ pub trait Executor {
     fn get_name() -> String;
 }
 
-pub fn register(cx: &mut Context) -> Result<(), reader::error::E> {
+pub fn register(cx: &mut Context) -> Result<(), E> {
     cx.add_fn(
         import::Import::get_name(),
         <import::Import as Executor>::execute,

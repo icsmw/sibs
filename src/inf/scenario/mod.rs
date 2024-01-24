@@ -1,8 +1,9 @@
+mod error;
+pub use error::E;
 use std::{
     env::current_dir,
     ffi::OsStr,
     fs::read_dir,
-    io::{Error, ErrorKind},
     path::{self, Component, Path, PathBuf},
 };
 
@@ -16,14 +17,11 @@ pub struct Scenario {
 }
 
 impl Scenario {
-    pub fn new() -> Result<Self, Error> {
+    pub fn new() -> Result<Self, E> {
         if let Some((path, filename)) = Self::search(&current_dir()?)? {
             Ok(Self { path, filename })
         } else {
-            Err(Error::new(
-                ErrorKind::NotFound,
-                "Fail to find any sibs files; default sibs file - build.sibs also wasn't found",
-            ))
+            Err(E::ScenarioNotFound)
         }
     }
     pub fn dummy() -> Self {
@@ -32,27 +30,19 @@ impl Scenario {
             filename: PathBuf::new(),
         }
     }
-    pub fn from(filename: &PathBuf) -> Result<Self, Error> {
+    pub fn from(filename: &PathBuf) -> Result<Self, E> {
+        let filename_str = filename.to_string_lossy().to_string();
         if !filename.is_absolute() {
-            Err(Error::new(
-                ErrorKind::InvalidData,
-                "Scenario file path isn't absolute",
-            ))?;
+            Err(E::IsNotAbsolutePath(filename_str.clone()))?;
         }
         if !filename.exists() {
-            Err(Error::new(
-                ErrorKind::NotFound,
-                "Scenario file path doesn't exist",
-            ))?;
+            Err(E::PathDoesNotExist(filename_str.clone()))?;
         }
         Ok(Self {
             filename: filename.clone(),
             path: filename
                 .parent()
-                .ok_or(Error::new(
-                    ErrorKind::NotFound,
-                    format!("Fail to find parent folder {filename:?}"),
-                ))?
+                .ok_or(E::NoParentFolderFor(filename_str))?
                 .to_path_buf(),
         })
     }
@@ -63,11 +53,11 @@ impl Scenario {
             .replace(&self.path.to_string_lossy().to_string(), "")
     }
 
-    pub fn to_abs_path(&self, path: &Path) -> Result<PathBuf, Error> {
-        self.path.join(path).canonicalize()
+    pub fn to_abs_path(&self, path: &Path) -> Result<PathBuf, E> {
+        Ok(self.path.join(path).canonicalize()?)
     }
 
-    fn search(location: &PathBuf) -> Result<Option<(PathBuf, PathBuf)>, Error> {
+    fn search(location: &PathBuf) -> Result<Option<(PathBuf, PathBuf)>, E> {
         if location.join(DEFAULT_SIBS_SCENARIO).exists() {
             return Ok(Some((
                 location.clone(),

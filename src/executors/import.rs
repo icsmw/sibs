@@ -1,11 +1,10 @@
 use crate::{
-    error::E,
-    functions::{Executor, ExecutorPinnedResult},
+    executors::{Executor, ExecutorPinnedResult, E},
     inf::any::AnyValue,
     inf::context::Context,
     reader::entry::{Argument, Function},
 };
-use std::{fs, io, path::PathBuf};
+use std::path::PathBuf;
 use thiserror::Error;
 
 const NAME: &str = "import";
@@ -26,19 +25,7 @@ pub enum Error {
 
 impl From<Error> for E {
     fn from(e: Error) -> Self {
-        E {
-            sig: format!("@{NAME}"),
-            msg: e.to_string(),
-        }
-    }
-}
-
-impl From<io::Error> for E {
-    fn from(e: io::Error) -> Self {
-        E {
-            sig: format!("@{NAME}"),
-            msg: e.to_string(),
-        }
+        E::FunctionExecutingError(format!("@{NAME}"), e.to_string())
     }
 }
 

@@ -3,7 +3,7 @@ use crate::{
     inf::{
         any::AnyValue,
         context::Context,
-        operator::Operator,
+        operator::{self, Operator},
         term::{self, Term},
     },
     reader::{
@@ -146,20 +146,20 @@ impl Operator for Component {
         components: &[Component],
         args: &[String],
         cx: &mut Context,
-    ) -> Result<Option<AnyValue>, cli::error::E> {
+    ) -> Result<Option<AnyValue>, operator::E> {
         let task = args.first().ok_or_else(|| {
             cx.term.err(format!(
                 "No task provided for component \"{}\". Try to use \"sibs {} --help\".\n",
                 self.name, self.name
             ));
-            cli::error::E::NoTaskForComponent(self.name.to_string())
+            operator::E::NoTaskForComponent(self.name.to_string())
         })?;
         let task = self.tasks.iter().find(|t| &t.name == task).ok_or_else(|| {
             cx.term.err(format!(
                 "Task \"{task}\" doesn't exist on component \"{}\". Try to use \"sibs {} --help\".\n",
                 self.name, self.name
             ));
-            cli::error::E::TaskNotExists(self.name.to_string(), task.to_owned())
+            operator::E::TaskNotExists( task.to_owned(),self.name.to_string())
         })?;
         cx.term.with_title("COMPONENT", &self.name);
         cx.set_cwd(self.cwd.clone())?;

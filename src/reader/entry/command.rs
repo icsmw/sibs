@@ -3,7 +3,7 @@ use crate::{
     inf::{
         any::AnyValue,
         context::Context,
-        operator::Operator,
+        operator::{self, Operator},
         spawner,
         term::{self, Term},
     },
@@ -44,11 +44,8 @@ impl Operator for Command {
         _components: &[Component],
         _args: &[String],
         cx: &mut Context,
-    ) -> Result<Option<AnyValue>, cli::error::E> {
-        let cwd = cx
-            .cwd
-            .as_ref()
-            .ok_or(cli::error::E::NoCurrentWorkingFolder)?;
+    ) -> Result<Option<AnyValue>, operator::E> {
+        let cwd = cx.cwd.as_ref().ok_or(operator::E::NoCurrentWorkingFolder)?;
         let task = cx
             .tracker
             .start(
@@ -63,12 +60,12 @@ impl Operator for Command {
                     Ok(None)
                 } else {
                     task.fail("done with errors").await;
-                    Err(cli::error::E::SpawningCommand)
+                    Err(operator::E::SpawnedProcessExitWithError)
                 }
             }
             Err(e) => {
                 task.fail(&e.to_string()).await;
-                Err(e.into())
+                Err(e)?
             }
         }
     }

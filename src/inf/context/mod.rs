@@ -1,13 +1,9 @@
+mod error;
 use crate::{
-    functions::{self, register, ExecutorFn},
-    inf::{
-        any::{AnyValue, DebugAny},
-        scenario::Scenario,
-        term::Term,
-        tracker::Tracker,
-    },
-    reader,
+    executors::{self, ExecutorFn},
+    inf::{any::AnyValue, scenario::Scenario, term::Term, tracker::Tracker},
 };
+pub use error::E;
 use std::{
     collections::{hash_map::Entry, HashMap},
     path::PathBuf,
@@ -24,12 +20,12 @@ pub struct Context {
 }
 
 impl Context {
-    fn register_functions(mut cx: Self) -> Result<Self, reader::error::E> {
-        functions::register(&mut cx)?;
+    fn register_functions(mut cx: Self) -> Result<Self, E> {
+        executors::register(&mut cx)?;
         Ok(cx)
     }
 
-    pub fn new(term: Term, tracker: Tracker, scenario: Scenario) -> Result<Self, reader::error::E> {
+    pub fn new(term: Term, tracker: Tracker, scenario: Scenario) -> Result<Self, E> {
         Self::register_functions(Context {
             cwd: None,
             scenario,
@@ -39,12 +35,12 @@ impl Context {
             executors: HashMap::new(),
         })
     }
-    pub fn from_filename(filename: &PathBuf) -> Result<Self, reader::error::E> {
+    pub fn from_filename(filename: &PathBuf) -> Result<Self, E> {
         Self::register_functions(Context {
             cwd: Some(
                 filename
                     .parent()
-                    .ok_or(reader::error::E::NoFileParent)?
+                    .ok_or(E::NoParentFolderFor(filename.to_string_lossy().to_string()))?
                     .to_path_buf(),
             ),
             scenario: Scenario::from(filename)?,
@@ -55,7 +51,7 @@ impl Context {
         })
     }
 
-    pub fn unbound() -> Result<Self, reader::error::E> {
+    pub fn unbound() -> Result<Self, E> {
         Self::register_functions(Context {
             cwd: Some(PathBuf::new()),
             scenario: Scenario::dummy(),
@@ -66,7 +62,7 @@ impl Context {
         })
     }
 
-    pub fn set_cwd(&mut self, cwd: Option<PathBuf>) -> Result<(), reader::error::E> {
+    pub fn set_cwd(&mut self, cwd: Option<PathBuf>) -> Result<(), E> {
         if let Some(cwd) = cwd.as_ref() {
             self.cwd = Some(self.scenario.to_abs_path(cwd)?);
         } else {
@@ -75,12 +71,12 @@ impl Context {
         Ok(())
     }
 
-    pub fn add_fn(&mut self, name: String, func: ExecutorFn) -> Result<(), reader::error::E> {
+    pub fn add_fn(&mut self, name: String, func: ExecutorFn) -> Result<(), E> {
         if let Entry::Vacant(e) = self.executors.entry(name.clone()) {
             e.insert(func);
             Ok(())
         } else {
-            Err(reader::error::E::FunctionAlreadyExists(name))
+            Err(E::FunctionAlreadyExists(name))
         }
     }
 

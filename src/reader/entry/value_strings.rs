@@ -1,6 +1,10 @@
 use crate::{
     cli,
-    inf::{any::AnyValue, context::Context, operator::Operator},
+    inf::{
+        any::AnyValue,
+        context::Context,
+        operator::{self, Operator},
+    },
     reader::{
         chars,
         entry::{Function, Reader, Reading, VariableName},
@@ -30,7 +34,7 @@ impl Operator for Injection {
         components: &[super::Component],
         args: &[String],
         cx: &mut Context,
-    ) -> Result<Option<AnyValue>, cli::error::E> {
+    ) -> Result<Option<AnyValue>, operator::E> {
         match self {
             Self::VariableName(_, v) => v.process(components, args, cx).await,
             Self::Function(_, v) => v.process(components, args, cx).await,
@@ -97,15 +101,15 @@ impl Operator for ValueString {
         components: &[super::Component],
         args: &[String],
         cx: &mut Context,
-    ) -> Result<Option<AnyValue>, cli::error::E> {
+    ) -> Result<Option<AnyValue>, operator::E> {
         let mut output = self.pattern.clone();
         for injection in self.injections.iter() {
             let val = injection
                 .process(components, args, cx)
                 .await?
-                .ok_or(cli::error::E::FailToExtractValue)?
+                .ok_or(operator::E::FailToExtractValue)?
                 .get_as_string()
-                .ok_or(cli::error::E::NoArguments)?;
+                .ok_or(operator::E::FailToGetValueAsString)?;
             let hook = injection.hook();
             println!(">>>>>>>>>>>>>>>>>>>HOOK:__{hook}__");
             output = output.replace(hook, &val);

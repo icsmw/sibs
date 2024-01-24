@@ -1,6 +1,10 @@
 use crate::{
     cli,
-    inf::{any::AnyValue, context::Context, operator::Operator},
+    inf::{
+        any::AnyValue,
+        context::Context,
+        operator::{self, Operator},
+    },
     reader::{
         chars,
         entry::{Component, Reading, VariableName},
@@ -151,7 +155,7 @@ impl Operator for Reference {
         components: &[Component],
         args: &[String],
         cx: &mut Context,
-    ) -> Result<Option<AnyValue>, cli::error::E> {
+    ) -> Result<Option<AnyValue>, operator::E> {
         Ok(None)
     }
 }

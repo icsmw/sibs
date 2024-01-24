@@ -1,6 +1,10 @@
 use crate::{
     cli,
-    inf::{any::AnyValue, context::Context, operator::Operator},
+    inf::{
+        any::AnyValue,
+        context::Context,
+        operator::{self, Operator},
+    },
     reader::{
         chars,
         entry::{Arguments, Component, Reading},
@@ -169,10 +173,10 @@ impl Operator for Function {
         _: &[Component],
         _: &[String],
         cx: &mut Context,
-    ) -> Result<Option<AnyValue>, cli::error::E> {
+    ) -> Result<Option<AnyValue>, operator::E> {
         let executor = cx
             .get_fn(&self.name)
-            .ok_or(E::NoFunctionExecutor(self.name.clone()))?;
+            .ok_or(operator::E::NoFunctionExecutor(self.name.clone()))?;
         let result = executor(self, cx).await?;
         println!(">>>>>>>>>>>>>>>>>>>>> func:{} => {result:?}", self.name);
         Ok(result)

@@ -1,8 +1,9 @@
+mod error;
 use crate::{
-    cli::error::E,
     inf::{any::AnyValue, context::Context},
     reader::entry::Component,
 };
+pub use error::E;
 
 pub trait Operator {
     async fn process(

@@ -1,4 +1,4 @@
-use crate::error;
+use crate::{error, executors, inf::context};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -115,10 +115,26 @@ pub enum E {
     OwnedError(String, String),
     #[error("Function {0} already exist")]
     FunctionAlreadyExists(String),
+    #[error("Context error: {0}")]
+    ContextError(String),
+    #[error("Executor error: {0}")]
+    ExecutorError(String),
 }
 
 impl From<error::E> for E {
     fn from(e: error::E) -> Self {
         E::OwnedError(e.sig, e.msg)
+    }
+}
+
+impl From<context::E> for E {
+    fn from(e: context::E) -> Self {
+        E::ContextError(e.to_string())
+    }
+}
+
+impl From<executors::E> for E {
+    fn from(e: executors::E) -> Self {
+        E::ExecutorError(e.to_string())
     }
 }

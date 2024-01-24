@@ -1,6 +1,9 @@
 use crate::{
-    cli,
-    inf::{any::AnyValue, context::Context, operator::Operator},
+    inf::{
+        any::AnyValue,
+        context::Context,
+        operator::{self, Operator},
+    },
     reader::{
         chars,
         entry::{Reader, Reading},
@@ -46,14 +49,14 @@ impl VariableName {
 impl Operator for VariableName {
     async fn process(
         &self,
-        components: &[super::Component],
-        args: &[String],
+        _: &[super::Component],
+        _: &[String],
         cx: &mut Context,
-    ) -> Result<Option<AnyValue>, cli::error::E> {
+    ) -> Result<Option<AnyValue>, operator::E> {
         Ok(cx
             .vars
             .get(&self.name)
-            .ok_or(cli::error::E::VariableIsNotAssigned(self.name.to_owned()))?
+            .ok_or(operator::E::VariableIsNotAssigned(self.name.to_owned()))?
             .get_as::<String>()
             .map(|name| AnyValue::new(name.to_string())))
     }

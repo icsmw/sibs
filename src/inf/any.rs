@@ -46,51 +46,15 @@ impl AnyValue {
         let reference = self.value.as_ref().as_any();
         reference
             .downcast_ref::<String>()
-            .and_then(|v| Some(v.to_owned()))
-            .or_else(|| {
-                reference
-                    .downcast_ref::<usize>()
-                    .and_then(|v| Some(v.to_string()))
-            })
-            .or_else(|| {
-                reference
-                    .downcast_ref::<u8>()
-                    .and_then(|v| Some(v.to_string()))
-            })
-            .or_else(|| {
-                reference
-                    .downcast_ref::<u16>()
-                    .and_then(|v| Some(v.to_string()))
-            })
-            .or_else(|| {
-                reference
-                    .downcast_ref::<u32>()
-                    .and_then(|v| Some(v.to_string()))
-            })
-            .or_else(|| {
-                reference
-                    .downcast_ref::<u64>()
-                    .and_then(|v| Some(v.to_string()))
-            })
-            .or_else(|| {
-                reference
-                    .downcast_ref::<i8>()
-                    .and_then(|v| Some(v.to_string()))
-            })
-            .or_else(|| {
-                reference
-                    .downcast_ref::<i16>()
-                    .and_then(|v| Some(v.to_string()))
-            })
-            .or_else(|| {
-                reference
-                    .downcast_ref::<i32>()
-                    .and_then(|v| Some(v.to_string()))
-            })
-            .or_else(|| {
-                reference
-                    .downcast_ref::<i64>()
-                    .and_then(|v| Some(v.to_string()))
-            })
+            .map(|v| v.to_owned())
+            .or_else(|| reference.downcast_ref::<usize>().map(|v| v.to_string()))
+            .or_else(|| reference.downcast_ref::<u8>().map(|v| v.to_string()))
+            .or_else(|| reference.downcast_ref::<u16>().map(|v| v.to_string()))
+            .or_else(|| reference.downcast_ref::<u32>().map(|v| v.to_string()))
+            .or_else(|| reference.downcast_ref::<u64>().map(|v| v.to_string()))
+            .or_else(|| reference.downcast_ref::<i8>().map(|v| v.to_string()))
+            .or_else(|| reference.downcast_ref::<i16>().map(|v| v.to_string()))
+            .or_else(|| reference.downcast_ref::<i32>().map(|v| v.to_string()))
+            .or_else(|| reference.downcast_ref::<i64>().map(|v| v.to_string()))
     }
 }

@@ -3,7 +3,7 @@ use crate::{
     inf::{
         any::AnyValue,
         context::Context,
-        operator::Operator,
+        operator::{self, Operator},
         term::{self, Term},
     },
     reader::{
@@ -149,13 +149,13 @@ impl Operator for Task {
         components: &[Component],
         args: &[String],
         context: &mut Context,
-    ) -> Result<Option<AnyValue>, cli::error::E> {
+    ) -> Result<Option<AnyValue>, operator::E> {
         let block = self.block.as_ref().ok_or_else(|| {
             context.term.err(format!(
                 "Task \"{}\" doesn't have actions block.\n",
                 self.name,
             ));
-            cli::error::E::NoTaskBlock(self.name.to_string())
+            operator::E::NoTaskBlock(self.name.to_string())
         })?;
         context.term.with_title("TASK", &self.name);
         block.process(components, args, context).await

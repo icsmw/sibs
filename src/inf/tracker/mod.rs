@@ -1,12 +1,12 @@
+mod error;
+
 use async_channel::{bounded, unbounded, Receiver, Sender};
 use async_std::task;
 use console::style;
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
-use std::{
-    collections::HashMap,
-    io::{Error, ErrorKind},
-    time::Instant,
-};
+use std::{collections::HashMap, time::Instant};
+
+pub use error::E;
 
 #[derive(Clone, Debug)]
 pub enum OperationResult {
@@ -86,9 +86,9 @@ impl Tracker {
         Self { tx }
     }
 
-    pub async fn run(rx: Receiver<Tick>) -> Result<(), Error> {
+    pub async fn run(rx: Receiver<Tick>) -> Result<(), E> {
         let spinner_style = ProgressStyle::with_template("{spinner} {prefix:.bold.dim} {wide_msg}")
-            .map_err(|e| Error::new(ErrorKind::Other, e.to_string()))?
+            .map_err(|e| E::ProgressBarError(e.to_string()))?
             .tick_chars("▂▃▅▆▇▆▅▃▂ ");
         async move {
             let mut sequence: usize = 0;
@@ -180,16 +180,16 @@ impl Tracker {
         Ok(())
     }
 
-    pub async fn start(&self, job: &str, max: Option<u64>) -> Result<Task, Error> {
+    pub async fn start(&self, job: &str, max: Option<u64>) -> Result<Task, E> {
         let (tx_response, rx_response) = bounded(1);
         self.tx
             .send(Tick::Started(job.to_string(), max, tx_response))
             .await
-            .map_err(|e| Error::new(ErrorKind::Other, format!("Fail to send tick: {e}")))?;
+            .map_err(|e| E::ChannelError(format!("Fail to send tick: {e}")))?;
         let id = rx_response
             .recv()
             .await
-            .map_err(|e| Error::new(ErrorKind::NotConnected, e.to_string()))?;
+            .map_err(|e| E::ChannelError(e.to_string()))?;
         Ok(Task::new(self, id))
     }
 
@@ -233,16 +233,16 @@ impl Tracker {
         }
     }
 
-    pub async fn shutdown(&self) -> Result<(), Error> {
+    pub async fn shutdown(&self) -> Result<(), E> {
         let (tx_response, rx_response) = bounded(1);
         self.tx
             .send(Tick::Shutdown(tx_response))
             .await
-            .map_err(|e| Error::new(ErrorKind::Other, format!("Fail to send tick: {e}")))?;
+            .map_err(|e| E::ChannelError(format!("Fail to send tick: {e}")))?;
         rx_response
             .recv()
             .await
-            .map_err(|e| Error::new(ErrorKind::NotConnected, e.to_string()))
+            .map_err(|e| E::ChannelError(e.to_string()))
     }
 
     pub async fn _print(&self, msg: String) {
@@ -250,7 +250,7 @@ impl Tracker {
             .tx
             .send(Tick::Print(msg))
             .await
-            .map_err(|e| Error::new(ErrorKind::Other, format!("Fail to send tick: {e}")))
+            .map_err(|e| E::ChannelError(format!("Fail to send tick: {e}")))
         {
             eprintln!("Fail to communicate with tracker: {e}");
         }

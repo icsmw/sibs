@@ -1,4 +1,8 @@
-use crate::{error, reader};
+use crate::{
+    error,
+    inf::{context, operator, scenario},
+    reader,
+};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -35,6 +39,12 @@ pub enum E {
     VariableIsNotAssigned(String),
     #[error("Fail to extract value")]
     FailToExtractValue,
+    #[error("Context error: {0}")]
+    ContextError(String),
+    #[error("Scenario error: {0}")]
+    ScenarioError(String),
+    #[error("Operator error: {0}")]
+    OperatorError(String),
     #[error("Error: {0}")]
     Other(String),
 }
@@ -42,5 +52,23 @@ pub enum E {
 impl From<error::E> for E {
     fn from(e: error::E) -> Self {
         E::Other(e.msg.to_owned())
+    }
+}
+
+impl From<context::E> for E {
+    fn from(e: context::E) -> Self {
+        E::ContextError(e.to_string())
+    }
+}
+
+impl From<scenario::E> for E {
+    fn from(e: scenario::E) -> Self {
+        E::ScenarioError(e.to_string())
+    }
+}
+
+impl From<operator::E> for E {
+    fn from(e: operator::E) -> Self {
+        E::OperatorError(e.to_string())
     }
 }

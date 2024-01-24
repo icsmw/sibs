@@ -1,9 +1,13 @@
+mod error;
+
 use crate::inf::tracker::Task;
 
 use async_process::{Command, ExitStatus, Stdio};
 use async_std::{io::BufReader, prelude::*};
 use futures_lite::{future, FutureExt};
-use std::{env::vars, io, path::PathBuf};
+use std::{env::vars, path::PathBuf};
+
+pub use error::E;
 
 #[derive(Clone, Debug)]
 pub struct SpawnResult {
@@ -24,7 +28,7 @@ impl SpawnResult {
     }
 }
 
-pub async fn spawn(command: &str, cwd: &PathBuf, task: &Task) -> Result<SpawnResult, io::Error> {
+pub async fn spawn(command: &str, cwd: &PathBuf, task: &Task) -> Result<SpawnResult, E> {
     let mut parts = command.split(' ').collect::<Vec<&str>>();
     let cmd = parts.remove(0);
     #[allow(clippy::useless_vec)]
@@ -59,7 +63,7 @@ pub async fn spawn(command: &str, cwd: &PathBuf, task: &Task) -> Result<SpawnRes
                 }
             }
             future::pending::<()>().await;
-            Ok::<Option<ExitStatus>, io::Error>(None)
+            Ok::<Option<ExitStatus>, E>(None)
         }
     };
 
@@ -82,7 +86,7 @@ pub async fn spawn(command: &str, cwd: &PathBuf, task: &Task) -> Result<SpawnRes
                 }
             }
             future::pending::<()>().await;
-            Ok::<Option<ExitStatus>, io::Error>(None)
+            Ok::<Option<ExitStatus>, E>(None)
         }
     };
     let status = match drain_stdout
@@ -103,9 +107,6 @@ pub async fn spawn(command: &str, cwd: &PathBuf, task: &Task) -> Result<SpawnRes
             job: cmd.to_owned(),
         })
     } else {
-        Err(io::Error::new(
-            io::ErrorKind::Other,
-            "Fail to get exist status of spawned command",
-        ))
+        Err(E::NoExitStatus)
     }
 }

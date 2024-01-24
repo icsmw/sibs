@@ -1,7 +1,5 @@
 use crate::{
-    cli,
-    error::E,
-    functions::{Executor, ExecutorPinnedResult},
+    executors::{Executor, ExecutorPinnedResult, E},
     inf::{any::AnyValue, context::Context, operator::Operator},
     reader::entry::{Argument, Function},
 };
@@ -25,10 +23,7 @@ pub enum Error {
 
 impl From<Error> for E {
     fn from(e: Error) -> Self {
-        E {
-            sig: format!("@{NAME}"),
-            msg: e.to_string(),
-        }
+        E::FunctionExecutingError(format!("@{NAME}"), e.to_string())
     }
 }
 
