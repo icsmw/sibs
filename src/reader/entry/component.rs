@@ -3,7 +3,7 @@ use crate::{
     inf::{
         any::AnyValue,
         context::Context,
-        operator::{self, Operator},
+        operator::{self, Operator, OperatorPinnedResult},
         term::{self, Term},
     },
     reader::{
@@ -141,29 +141,31 @@ impl term::Display for Component {
 }
 
 impl Operator for Component {
-    async fn process(
-        &self,
-        components: &[Component],
-        args: &[String],
-        cx: &mut Context,
-    ) -> Result<Option<AnyValue>, operator::E> {
-        let task = args.first().ok_or_else(|| {
-            cx.term.err(format!(
-                "No task provided for component \"{}\". Try to use \"sibs {} --help\".\n",
-                self.name, self.name
-            ));
-            operator::E::NoTaskForComponent(self.name.to_string())
-        })?;
-        let task = self.tasks.iter().find(|t| &t.name == task).ok_or_else(|| {
-            cx.term.err(format!(
-                "Task \"{task}\" doesn't exist on component \"{}\". Try to use \"sibs {} --help\".\n",
-                self.name, self.name
-            ));
-            operator::E::TaskNotExists( task.to_owned(),self.name.to_string())
-        })?;
-        cx.term.with_title("COMPONENT", &self.name);
-        cx.set_cwd(self.cwd.clone())?;
-        task.process(components, &args[1..], cx).await
+    fn process<'a>(
+        &'a self,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async {
+            let task = args.first().ok_or_else(|| {
+                cx.term.err(format!(
+                    "No task provided for component \"{}\". Try to use \"sibs {} --help\".\n",
+                    self.name, self.name
+                ));
+                operator::E::NoTaskForComponent(self.name.to_string())
+            })?;
+            let task = self.tasks.iter().find(|t| &t.name == task).ok_or_else(|| {
+                cx.term.err(format!(
+                    "Task \"{task}\" doesn't exist on component \"{}\". Try to use \"sibs {} --help\".\n",
+                    self.name, self.name
+                ));
+                operator::E::TaskNotExists( task.to_owned(),self.name.to_string())
+            })?;
+            cx.term.with_title("COMPONENT", &self.name);
+            cx.set_cwd(self.cwd.clone())?;
+            task.process(components, &args[1..], cx).await
+        })
     }
 }
 

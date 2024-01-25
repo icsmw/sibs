@@ -34,6 +34,8 @@ pub enum E {
     VariableIsNotAssigned(String),
     #[error("Function \"{0}\" doesn't have registred executor")]
     NoFunctionExecutor(String),
+    #[error("Fail assign variable \"{0}\"; no value")]
+    NoValueToAssign(String),
 }
 
 impl From<tracker::E> for E {

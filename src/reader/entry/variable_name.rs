@@ -2,11 +2,11 @@ use crate::{
     inf::{
         any::AnyValue,
         context::Context,
-        operator::{self, Operator},
+        operator::{self, Operator, OperatorPinnedResult},
     },
     reader::{
         chars,
-        entry::{Reader, Reading},
+        entry::{Component, Reader, Reading},
         E,
     },
 };
@@ -47,18 +47,19 @@ impl VariableName {
 }
 
 impl Operator for VariableName {
-    async fn process(
-        &self,
-        _: &[super::Component],
-        _: &[String],
-        cx: &mut Context,
-    ) -> Result<Option<AnyValue>, operator::E> {
-        Ok(cx
-            .vars
-            .get(&self.name)
-            .ok_or(operator::E::VariableIsNotAssigned(self.name.to_owned()))?
-            .get_as::<String>()
-            .map(|name| AnyValue::new(name.to_string())))
+    fn process<'a>(
+        &'a self,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async {
+            Ok(cx
+                .get_var(&self.name)
+                .ok_or(operator::E::VariableIsNotAssigned(self.name.to_owned()))?
+                .get_as::<String>()
+                .map(|name| AnyValue::new(name.to_string())))
+        })
     }
 }
 

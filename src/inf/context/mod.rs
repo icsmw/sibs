@@ -5,6 +5,7 @@ use crate::{
 };
 pub use error::E;
 use std::{
+    any::Any,
     collections::{hash_map::Entry, HashMap},
     path::PathBuf,
 };
@@ -15,8 +16,8 @@ pub struct Context {
     pub term: Term,
     pub tracker: Tracker,
     pub scenario: Scenario,
-    pub vars: HashMap<String, AnyValue>,
-    pub executors: HashMap<String, ExecutorFn>,
+    vars: HashMap<String, AnyValue>,
+    executors: HashMap<String, ExecutorFn>,
 }
 
 impl Context {
@@ -82,5 +83,13 @@ impl Context {
 
     pub fn get_fn(&self, name: &str) -> Option<&ExecutorFn> {
         self.executors.get(name)
+    }
+
+    pub fn get_var(&self, name: &str) -> Option<&AnyValue> {
+        self.vars.get(name)
+    }
+
+    pub fn set_var(&mut self, name: String, value: AnyValue) {
+        self.vars.insert(name, value);
     }
 }

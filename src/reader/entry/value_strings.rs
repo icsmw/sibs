@@ -3,11 +3,11 @@ use crate::{
     inf::{
         any::AnyValue,
         context::Context,
-        operator::{self, Operator},
+        operator::{self, Operator, OperatorPinnedResult},
     },
     reader::{
         chars,
-        entry::{Function, Reader, Reading, VariableName},
+        entry::{Component, Function, Reader, Reading, VariableName},
         E,
     },
 };
@@ -29,16 +29,18 @@ impl Injection {
 }
 
 impl Operator for Injection {
-    async fn process(
-        &self,
-        components: &[super::Component],
-        args: &[String],
-        cx: &mut Context,
-    ) -> Result<Option<AnyValue>, operator::E> {
-        match self {
-            Self::VariableName(_, v) => v.process(components, args, cx).await,
-            Self::Function(_, v) => v.process(components, args, cx).await,
-        }
+    fn process<'a>(
+        &'a self,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async move {
+            match self {
+                Self::VariableName(_, v) => v.process(components, args, cx).await,
+                Self::Function(_, v) => v.process(components, args, cx).await,
+            }
+        })
     }
 }
 
@@ -96,25 +98,27 @@ impl fmt::Display for ValueString {
 }
 
 impl Operator for ValueString {
-    async fn process(
-        &self,
-        components: &[super::Component],
-        args: &[String],
-        cx: &mut Context,
-    ) -> Result<Option<AnyValue>, operator::E> {
-        let mut output = self.pattern.clone();
-        for injection in self.injections.iter() {
-            let val = injection
-                .process(components, args, cx)
-                .await?
-                .ok_or(operator::E::FailToExtractValue)?
-                .get_as_string()
-                .ok_or(operator::E::FailToGetValueAsString)?;
-            let hook = injection.hook();
-            println!(">>>>>>>>>>>>>>>>>>>HOOK:__{hook}__");
-            output = output.replace(hook, &val);
-        }
-        Ok(Some(AnyValue::new(output)))
+    fn process<'a>(
+        &'a self,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async {
+            let mut output = self.pattern.clone();
+            for injection in self.injections.iter() {
+                let val = injection
+                    .process(components, args, cx)
+                    .await?
+                    .ok_or(operator::E::FailToExtractValue)?
+                    .get_as_string()
+                    .ok_or(operator::E::FailToGetValueAsString)?;
+                let hook = injection.hook();
+                println!(">>>>>>>>>>>>>>>>>>>HOOK:__{hook}__");
+                output = output.replace(hook, &val);
+            }
+            Ok(Some(AnyValue::new(output)))
+        })
     }
 }
 

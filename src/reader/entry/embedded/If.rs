@@ -3,7 +3,7 @@ use crate::{
     inf::{
         any::AnyValue,
         context::Context,
-        operator::{self, Operator},
+        operator::{self, Operator, OperatorPinnedResult},
     },
     reader::{
         chars,
@@ -282,13 +282,13 @@ impl fmt::Display for If {
 }
 
 impl Operator for If {
-    async fn process(
+    fn process(
         &self,
         components: &[Component],
         args: &[String],
         cx: &mut Context,
-    ) -> Result<Option<AnyValue>, operator::E> {
-        Ok(None)
+    ) -> OperatorPinnedResult {
+        Box::pin(async { Ok(None) })
     }
 }
 

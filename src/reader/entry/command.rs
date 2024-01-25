@@ -3,7 +3,7 @@ use crate::{
     inf::{
         any::AnyValue,
         context::Context,
-        operator::{self, Operator},
+        operator::{self, Operator, OperatorPinnedResult},
         spawner,
         term::{self, Term},
     },
@@ -39,34 +39,36 @@ impl term::Display for Command {
 }
 
 impl Operator for Command {
-    async fn process(
-        &self,
-        _components: &[Component],
-        _args: &[String],
-        cx: &mut Context,
-    ) -> Result<Option<AnyValue>, operator::E> {
-        let cwd = cx.cwd.as_ref().ok_or(operator::E::NoCurrentWorkingFolder)?;
-        let task = cx
-            .tracker
-            .start(
-                &format!("{}: {}", cx.scenario.to_relative_path(cwd), self.command),
-                None,
-            )
-            .await?;
-        match spawner::spawn(&self.command, cwd, &task).await {
-            Ok(result) => {
-                if result.status.success() {
-                    task.success("no errros").await;
-                    Ok(None)
-                } else {
-                    task.fail("done with errors").await;
-                    Err(operator::E::SpawnedProcessExitWithError)
+    fn process<'a>(
+        &'a self,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async {
+            let cwd = cx.cwd.as_ref().ok_or(operator::E::NoCurrentWorkingFolder)?;
+            let task = cx
+                .tracker
+                .start(
+                    &format!("{}: {}", cx.scenario.to_relative_path(cwd), self.command),
+                    None,
+                )
+                .await?;
+            match spawner::spawn(&self.command, cwd, &task).await {
+                Ok(result) => {
+                    if result.status.success() {
+                        task.success("no errros").await;
+                        Ok(None)
+                    } else {
+                        task.fail("done with errors").await;
+                        Err(operator::E::SpawnedProcessExitWithError)
+                    }
+                }
+                Err(e) => {
+                    task.fail(&e.to_string()).await;
+                    Err(e)?
                 }
             }
-            Err(e) => {
-                task.fail(&e.to_string()).await;
-                Err(e)?
-            }
-        }
+        })
     }
 }

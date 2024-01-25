@@ -3,7 +3,7 @@ use crate::{
     inf::{
         any::AnyValue,
         context::Context,
-        operator::{self, Operator},
+        operator::{self, Operator, OperatorPinnedResult},
         term::{self, Term},
     },
     reader::{
@@ -144,21 +144,23 @@ impl term::Display for Task {
 }
 
 impl Operator for Task {
-    async fn process(
-        &self,
-        components: &[Component],
-        args: &[String],
-        context: &mut Context,
-    ) -> Result<Option<AnyValue>, operator::E> {
-        let block = self.block.as_ref().ok_or_else(|| {
-            context.term.err(format!(
-                "Task \"{}\" doesn't have actions block.\n",
-                self.name,
-            ));
-            operator::E::NoTaskBlock(self.name.to_string())
-        })?;
-        context.term.with_title("TASK", &self.name);
-        block.process(components, args, context).await
+    fn process<'a>(
+        &'a self,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async {
+            let block = self.block.as_ref().ok_or_else(|| {
+                cx.term.err(format!(
+                    "Task \"{}\" doesn't have actions block.\n",
+                    self.name,
+                ));
+                operator::E::NoTaskBlock(self.name.to_string())
+            })?;
+            cx.term.with_title("TASK", &self.name);
+            block.process(components, args, cx).await
+        })
     }
 }
 

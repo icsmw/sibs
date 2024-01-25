@@ -3,7 +3,7 @@ use crate::{
     inf::{
         any::AnyValue,
         context::Context,
-        operator::{self, Operator},
+        operator::{self, Operator, OperatorPinnedResult},
         term::{self, Term},
     },
     reader::{
@@ -47,21 +47,23 @@ impl fmt::Display for Element {
 }
 
 impl Operator for Element {
-    async fn process(
-        &self,
-        components: &[Component],
-        args: &[String],
-        context: &mut Context,
-    ) -> Result<Option<AnyValue>, operator::E> {
-        match self {
-            Self::Command(v) => v.process(components, args, context).await,
-            Self::Function(v) => v.process(components, args, context).await,
-            Self::If(v) => v.process(components, args, context).await,
-            Self::Each(v) => v.process(components, args, context).await,
-            Self::VariableAssignation(v) => v.process(components, args, context).await,
-            Self::Optional(v) => v.process(components, args, context).await,
-            Self::Reference(v) => v.process(components, args, context).await,
-        }
+    fn process<'a>(
+        &'a self,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async move {
+            match self {
+                Self::Command(v) => v.process(components, args, cx).await,
+                Self::Function(v) => v.process(components, args, cx).await,
+                Self::If(v) => v.process(components, args, cx).await,
+                Self::Each(v) => v.process(components, args, cx).await,
+                Self::VariableAssignation(v) => v.process(components, args, cx).await,
+                Self::Optional(v) => v.process(components, args, cx).await,
+                Self::Reference(v) => v.process(components, args, cx).await,
+            }
+        })
     }
 }
 
@@ -168,17 +170,19 @@ impl term::Display for Block {
 }
 
 impl Operator for Block {
-    async fn process(
-        &self,
-        components: &[Component],
-        args: &[String],
-        context: &mut Context,
-    ) -> Result<Option<AnyValue>, operator::E> {
-        let mut output: Option<AnyValue> = None;
-        for element in self.elements.iter() {
-            output = element.process(components, args, context).await?;
-        }
-        Ok(output)
+    fn process<'a>(
+        &'a self,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async {
+            let mut output: Option<AnyValue> = None;
+            for element in self.elements.iter() {
+                output = element.process(components, args, cx).await?;
+            }
+            Ok(output)
+        })
     }
 }
 

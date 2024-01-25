@@ -3,7 +3,7 @@ use crate::{
     inf::{
         any::AnyValue,
         context::Context,
-        operator::{self, Operator},
+        operator::{self, Operator, OperatorPinnedResult},
     },
     reader::{
         chars,
@@ -168,18 +168,20 @@ impl fmt::Display for Function {
 }
 
 impl Operator for Function {
-    async fn process(
-        &self,
-        _: &[Component],
-        _: &[String],
-        cx: &mut Context,
-    ) -> Result<Option<AnyValue>, operator::E> {
-        let executor = cx
-            .get_fn(&self.name)
-            .ok_or(operator::E::NoFunctionExecutor(self.name.clone()))?;
-        let result = executor(self, cx).await?;
-        println!(">>>>>>>>>>>>>>>>>>>>> func:{} => {result:?}", self.name);
-        Ok(result)
+    fn process<'a>(
+        &'a self,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async {
+            let executor = cx
+                .get_fn(&self.name)
+                .ok_or(operator::E::NoFunctionExecutor(self.name.clone()))?;
+            let result = executor(self, cx).await?;
+            println!(">>>>>>>>>>>>>>>>>>>>> func:{} => {result:?}", self.name);
+            Ok(result)
+        })
     }
 }
 

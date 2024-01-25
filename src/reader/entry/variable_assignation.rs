@@ -3,7 +3,7 @@ use crate::{
     inf::{
         any::AnyValue,
         context::Context,
-        operator::{self, Operator},
+        operator::{self, Operator, OperatorPinnedResult},
     },
     reader::{
         chars,
@@ -20,6 +20,25 @@ pub enum Assignation {
     Block(Block),
     First(First),
 }
+
+impl Operator for Assignation {
+    fn process<'a>(
+        &'a self,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async move {
+            match self {
+                Self::Function(v) => v.process(components, args, cx).await,
+                Self::ValueString(v) => v.process(components, args, cx).await,
+                Self::Block(v) => v.process(components, args, cx).await,
+                Self::First(v) => v.process(components, args, cx).await,
+            }
+        })
+    }
+}
+
 #[derive(Debug)]
 pub struct VariableAssignation {
     pub name: VariableName,
@@ -123,13 +142,21 @@ impl fmt::Display for VariableAssignation {
 }
 
 impl Operator for VariableAssignation {
-    async fn process(
-        &self,
-        components: &[Component],
-        args: &[String],
-        cx: &mut Context,
-    ) -> Result<Option<AnyValue>, operator::E> {
-        Ok(None)
+    fn process<'a>(
+        &'a self,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async {
+            let assignation = &self.assignation;
+            let value = assignation
+                .process(components, args, cx)
+                .await?
+                .ok_or(operator::E::NoValueToAssign(self.name.name.clone()))?;
+            cx.set_var(self.name.name.clone(), value);
+            Ok(None)
+        })
     }
 }
 
