@@ -113,9 +113,8 @@ impl Operator for ValueString {
                     .ok_or(operator::E::FailToExtractValue)?
                     .get_as_string()
                     .ok_or(operator::E::FailToGetValueAsString)?;
-                let hook = injection.hook();
-                println!(">>>>>>>>>>>>>>>>>>>HOOK:__{hook}__");
-                output = output.replace(hook, &val);
+                let hook = format!("{{{}}}", injection.hook());
+                output = output.replace(&hook, &val);
             }
             Ok(Some(AnyValue::new(output)))
         })

@@ -7,6 +7,8 @@
         @os linux;
         @os darwin;
         $a = "value_a";
-        $b = "value_b{@os linux}";
+        $b = "value_b_{@os linux}";
+        $c = "value_c_{$a}-{$b}";
+
     ];
 
