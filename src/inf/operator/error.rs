@@ -28,6 +28,8 @@ pub enum E {
     NoTaskBlock(String),
     #[error("Fail to extract value")]
     FailToExtractValue,
+    #[error("Fail to extract bool value for condition")]
+    FailToExtractConditionValue,
     #[error("Fail to get value as string")]
     FailToGetValueAsString,
     #[error("Variable \"{0}\" isn't assigned")]

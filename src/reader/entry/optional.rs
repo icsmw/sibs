@@ -1,27 +1,27 @@
 use crate::{
     cli,
     inf::{
-        any::AnyValue,
+        any::{AnyValue, DebugAny},
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
     },
     reader::{
         chars,
         entry::{
-            Block, Component, Function, Reading, Reference, ValueString, VariableAssignation,
-            VariableComparing,
+            Block, Command, Component, Function, Reading, Reference, ValueString,
+            VariableAssignation, VariableComparing,
         },
         words, Reader, E,
     },
 };
-use std::fmt;
+use std::{fmt, ops::Deref};
 
 #[derive(Debug)]
 pub enum Action {
     VariableAssignation(VariableAssignation),
     ValueString(ValueString),
     Function(Function),
-    Command(String),
+    Command(Command),
     Block(Block),
     Reference(Reference),
 }
@@ -43,6 +43,26 @@ impl fmt::Display for Action {
     }
 }
 
+impl Operator for Action {
+    fn process<'a>(
+        &'a self,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async move {
+            match self {
+                Self::VariableAssignation(v) => v.process(components, args, cx).await,
+                Self::Reference(v) => v.process(components, args, cx).await,
+                Self::Function(v) => v.process(components, args, cx).await,
+                Self::ValueString(v) => v.process(components, args, cx).await,
+                Self::Command(v) => v.process(components, args, cx).await,
+                Self::Block(v) => v.process(components, args, cx).await,
+            }
+        })
+    }
+}
+
 #[derive(Debug)]
 pub enum Condition {
     Function(Function),
@@ -59,6 +79,22 @@ impl fmt::Display for Condition {
                 Self::VariableComparing(v) => v.to_string(),
             }
         )
+    }
+}
+
+impl Operator for Condition {
+    fn process<'a>(
+        &'a self,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async move {
+            match self {
+                Self::Function(v) => v.process(components, args, cx).await,
+                Self::VariableComparing(v) => v.process(components, args, cx).await,
+            }
+        })
     }
 }
 
@@ -133,7 +169,9 @@ impl Reading<Optional> for Optional {
                             {
                                 Action::ValueString(value_string)
                             } else if !token.bound.rest().trim().is_empty() {
-                                Action::Command(token.bound.rest().trim().to_string())
+                                let cmd = token.bound.move_to().end();
+                                let token = token.bound.token()?;
+                                Action::Command(Command::new(cmd, token.id))
                             } else {
                                 Err(E::NotActionForCondition)?
                             },
@@ -167,7 +205,20 @@ impl Operator for Optional {
         args: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
-        Box::pin(async { Ok(None) })
+        Box::pin(async move {
+            let condition = *self
+                .condition
+                .process(components, args, cx)
+                .await?
+                .ok_or(operator::E::FailToExtractConditionValue)?
+                .get_as::<bool>()
+                .ok_or(operator::E::FailToExtractConditionValue)?;
+            if !condition {
+                Ok(None)
+            } else {
+                self.action.process(components, args, cx).await
+            }
+        })
     }
 }
 

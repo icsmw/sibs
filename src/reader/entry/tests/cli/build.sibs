@@ -6,9 +6,10 @@
         @os windows;
         @os linux;
         @os darwin;
-        $a = "value_a";
-        $b = "value_b_{@os linux}";
-        $c = "value_c_{$a}-{$b}";
+        $a_str = "value_a";
+        $b_str = "value_b_{@os linux}";
+        $c_str = "value_c_{$a_str}-{$b_str}";
+        $d_bool = @os linux;
 
     ];
 

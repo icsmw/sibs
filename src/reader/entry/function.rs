@@ -170,8 +170,8 @@ impl fmt::Display for Function {
 impl Operator for Function {
     fn process<'a>(
         &'a self,
-        components: &'a [Component],
-        args: &'a [String],
+        _: &'a [Component],
+        _: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async {
@@ -179,7 +179,6 @@ impl Operator for Function {
                 .get_fn(&self.name)
                 .ok_or(operator::E::NoFunctionExecutor(self.name.clone()))?;
             let result = executor(self, cx).await?;
-            println!(">>>>>>>>>>>>>>>>>>>>> func:{} => {result:?}", self.name);
             Ok(result)
         })
     }
