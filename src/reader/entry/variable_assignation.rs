@@ -154,7 +154,7 @@ impl Operator for VariableAssignation {
                 .process(components, args, cx)
                 .await?
                 .ok_or(operator::E::NoValueToAssign(self.name.name.clone()))?;
-            cx.set_var(self.name.name.clone(), value);
+            cx.set_var(self.name.name.clone(), value).await;
             Ok(None)
         })
     }

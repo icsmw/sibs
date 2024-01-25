@@ -1,5 +1,6 @@
 use std::{
     any::{Any, TypeId},
+    fmt,
     fmt::Debug,
 };
 pub trait DebugAny: Any + Debug {
@@ -21,7 +22,8 @@ pub struct AnyValue {
     value: Box<dyn DebugAny>,
     type_id: TypeId,
 }
-pub trait D: std::fmt::Display + Sized + 'static {}
+
+pub trait D: fmt::Display + Sized + 'static {}
 
 impl AnyValue {
     pub fn new<T>(val: T) -> Self
@@ -56,5 +58,12 @@ impl AnyValue {
             .or_else(|| reference.downcast_ref::<i16>().map(|v| v.to_string()))
             .or_else(|| reference.downcast_ref::<i32>().map(|v| v.to_string()))
             .or_else(|| reference.downcast_ref::<i64>().map(|v| v.to_string()))
+            .or_else(|| reference.downcast_ref::<bool>().map(|v| v.to_string()))
+    }
+}
+
+impl fmt::Display for AnyValue {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self.value)
     }
 }

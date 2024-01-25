@@ -6,5 +6,7 @@
         @os windows;
         @os linux;
         @os darwin;
+        $a = "value_a";
+        $b = "value_b{@os linux}";
     ];
 

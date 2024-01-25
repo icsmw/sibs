@@ -1,11 +1,15 @@
 mod error;
 use crate::{
     executors::{self, ExecutorFn},
-    inf::{any::AnyValue, scenario::Scenario, term::Term, tracker::Tracker},
+    inf::{
+        any::AnyValue,
+        scenario::Scenario,
+        term::Term,
+        tracker::{Logger, Tracker},
+    },
 };
 pub use error::E;
 use std::{
-    any::Any,
     collections::{hash_map::Entry, HashMap},
     path::PathBuf,
 };
@@ -18,6 +22,7 @@ pub struct Context {
     pub scenario: Scenario,
     vars: HashMap<String, AnyValue>,
     executors: HashMap<String, ExecutorFn>,
+    logger: Logger,
 }
 
 impl Context {
@@ -27,6 +32,7 @@ impl Context {
     }
 
     pub fn new(term: Term, tracker: Tracker, scenario: Scenario) -> Result<Self, E> {
+        let logger = tracker.get_logger(String::from("Context"));
         Self::register_functions(Context {
             cwd: None,
             scenario,
@@ -34,9 +40,12 @@ impl Context {
             term,
             vars: HashMap::new(),
             executors: HashMap::new(),
+            logger,
         })
     }
     pub fn from_filename(filename: &PathBuf) -> Result<Self, E> {
+        let tracker = Tracker::new();
+        let logger = tracker.get_logger(String::from("Context"));
         Self::register_functions(Context {
             cwd: Some(
                 filename
@@ -45,21 +54,25 @@ impl Context {
                     .to_path_buf(),
             ),
             scenario: Scenario::from(filename)?,
-            tracker: Tracker::new(),
+            tracker,
             term: Term::new(),
             vars: HashMap::new(),
             executors: HashMap::new(),
+            logger,
         })
     }
 
     pub fn unbound() -> Result<Self, E> {
+        let tracker = Tracker::new();
+        let logger = tracker.get_logger(String::from("Context"));
         Self::register_functions(Context {
             cwd: Some(PathBuf::new()),
             scenario: Scenario::dummy(),
-            tracker: Tracker::new(),
+            tracker,
             term: Term::new(),
             vars: HashMap::new(),
             executors: HashMap::new(),
+            logger,
         })
     }
 
@@ -89,7 +102,10 @@ impl Context {
         self.vars.get(name)
     }
 
-    pub fn set_var(&mut self, name: String, value: AnyValue) {
+    pub async fn set_var(&mut self, name: String, value: AnyValue) {
+        self.logger
+            .log(format!("Assignation: ${name} = {value}"))
+            .await;
         self.vars.insert(name, value);
     }
 }
