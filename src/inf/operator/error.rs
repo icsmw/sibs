@@ -64,7 +64,7 @@ pub enum E {
     NoOwnerComponent,
     #[error("Fail to find component \"{0}\"")]
     NotFoundComponent(String),
-    #[error("Task \"{0}\" for component \"{0}\" not found")]
+    #[error("Task \"{0}\" for component \"{1}\" not found")]
     TaskNotFound(String, String),
 }
 

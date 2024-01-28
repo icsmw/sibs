@@ -10,6 +10,10 @@
         $b_str = "value_b_{@os linux}";
         $c_str = "value_c_{$a_str}-{$b_str}";
         $d_bool = @os linux;
-
+        :self:build(dima, prod);
+    ];
+    build($input_a: {string}; $mode: dev | prod;) [
+        $a_str = "value_a";
+        ls -lsa;
     ];
 
