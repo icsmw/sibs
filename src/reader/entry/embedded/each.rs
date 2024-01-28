@@ -22,14 +22,15 @@ pub enum Input {
 impl Operator for Input {
     fn process<'a>(
         &'a self,
+        owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             match self {
-                Self::VariableName(v) => v.process(components, args, cx),
-                Self::Function(v) => v.process(components, args, cx),
+                Self::VariableName(v) => v.process(owner, components, args, cx),
+                Self::Function(v) => v.process(owner, components, args, cx),
             }
             .await
         })
@@ -119,14 +120,15 @@ impl fmt::Display for Each {
 impl Operator for Each {
     fn process<'a>(
         &'a self,
+        owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
-        Box::pin(async {
+        Box::pin(async move {
             let inputs = self
                 .input
-                .process(components, args, cx)
+                .process(owner, components, args, cx)
                 .await?
                 .ok_or(operator::E::NoInputForEach)?
                 .get_as_strings()
@@ -138,7 +140,7 @@ impl Operator for Each {
                     AnyValue::new(iteration.to_string()),
                 )
                 .await;
-                output = self.block.process(components, args, cx).await?;
+                output = self.block.process(owner, components, args, cx).await?;
             }
             Ok(if output.is_none() {
                 Some(AnyValue::new(()))

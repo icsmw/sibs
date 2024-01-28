@@ -49,6 +49,7 @@ impl VariableName {
 impl Operator for VariableName {
     fn process<'a>(
         &'a self,
+        owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,

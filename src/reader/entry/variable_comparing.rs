@@ -60,14 +60,15 @@ impl fmt::Display for VariableComparing {
 impl Operator for VariableComparing {
     fn process<'a>(
         &'a self,
+        owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
-        Box::pin(async {
+        Box::pin(async move {
             let value = self
                 .name
-                .process(components, args, cx)
+                .process(owner, components, args, cx)
                 .await?
                 .ok_or(operator::E::VariableIsNotAssigned(self.name.name.clone()))?
                 .get_as_string()

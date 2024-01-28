@@ -49,19 +49,20 @@ impl fmt::Display for Element {
 impl Operator for Element {
     fn process<'a>(
         &'a self,
+        owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             match self {
-                Self::Command(v) => v.process(components, args, cx).await,
-                Self::Function(v) => v.process(components, args, cx).await,
-                Self::If(v) => v.process(components, args, cx).await,
-                Self::Each(v) => v.process(components, args, cx).await,
-                Self::VariableAssignation(v) => v.process(components, args, cx).await,
-                Self::Optional(v) => v.process(components, args, cx).await,
-                Self::Reference(v) => v.process(components, args, cx).await,
+                Self::Command(v) => v.process(owner, components, args, cx).await,
+                Self::Function(v) => v.process(owner, components, args, cx).await,
+                Self::If(v) => v.process(owner, components, args, cx).await,
+                Self::Each(v) => v.process(owner, components, args, cx).await,
+                Self::VariableAssignation(v) => v.process(owner, components, args, cx).await,
+                Self::Optional(v) => v.process(owner, components, args, cx).await,
+                Self::Reference(v) => v.process(owner, components, args, cx).await,
             }
         })
     }
@@ -180,14 +181,15 @@ impl term::Display for Block {
 impl Operator for Block {
     fn process<'a>(
         &'a self,
+        owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
-        Box::pin(async {
+        Box::pin(async move {
             let mut output: Option<AnyValue> = None;
             for element in self.elements.iter() {
-                output = element.process(components, args, cx).await?;
+                output = element.process(owner, components, args, cx).await?;
                 if self.by_first && output.is_some() {
                     return Ok(output);
                 }

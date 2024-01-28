@@ -63,6 +63,7 @@ pub enum Proviso {
 impl Operator for Proviso {
     fn process<'a>(
         &'a self,
+        owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,
@@ -71,13 +72,13 @@ impl Operator for Proviso {
             match self {
                 Self::Variable(name, cmp, value) => {
                     let left = name
-                        .process(components, args, cx)
+                        .process(owner, components, args, cx)
                         .await?
                         .ok_or(operator::E::VariableIsNotAssigned(name.name.clone()))?
                         .get_as_string()
                         .ok_or(operator::E::FailToGetValueAsString)?;
                     let right = value
-                        .process(components, args, cx)
+                        .process(owner, components, args, cx)
                         .await?
                         .ok_or(operator::E::FailToGetStringValue)?
                         .get_as_string()
@@ -89,7 +90,7 @@ impl Operator for Proviso {
                 }
                 Self::Function(func, expectation) => {
                     let result = *func
-                        .process(components, args, cx)
+                        .process(owner, components, args, cx)
                         .await?
                         .ok_or(operator::E::NoBoolResultFromFunction)?
                         .get_as::<bool>()
@@ -114,7 +115,7 @@ impl Operator for Proviso {
                         } else {
                             iteration = Some(
                                 *proviso
-                                    .process(components, args, cx)
+                                    .process(owner, components, args, cx)
                                     .await?
                                     .ok_or(operator::E::NoResultFromProviso)?
                                     .get_as::<bool>()
@@ -161,6 +162,7 @@ pub enum Element {
 impl Operator for Element {
     fn process<'a>(
         &'a self,
+        owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,
@@ -169,18 +171,18 @@ impl Operator for Element {
             match self {
                 Self::If(proviso, block) => {
                     if *proviso
-                        .process(components, args, cx)
+                        .process(owner, components, args, cx)
                         .await?
                         .ok_or(operator::E::NoResultFromProviso)?
                         .get_as::<bool>()
                         .ok_or(operator::E::NoBoolResultFromProviso)?
                     {
-                        block.process(components, args, cx).await
+                        block.process(owner, components, args, cx).await
                     } else {
                         Ok(None)
                     }
                 }
-                Self::Else(block) => block.process(components, args, cx).await,
+                Self::Else(block) => block.process(owner, components, args, cx).await,
             }
         })
     }
@@ -377,13 +379,14 @@ impl fmt::Display for If {
 impl Operator for If {
     fn process<'a>(
         &'a self,
+        owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             for element in self.elements.iter() {
-                if let Some(output) = element.process(components, args, cx).await? {
+                if let Some(output) = element.process(owner, components, args, cx).await? {
                     return Ok(Some(output));
                 }
             }

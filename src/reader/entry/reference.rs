@@ -152,6 +152,7 @@ impl fmt::Display for Reference {
 impl Operator for Reference {
     fn process<'a>(
         &'a self,
+        owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,

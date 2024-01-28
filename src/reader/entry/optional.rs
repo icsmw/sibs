@@ -46,18 +46,19 @@ impl fmt::Display for Action {
 impl Operator for Action {
     fn process<'a>(
         &'a self,
+        owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             match self {
-                Self::VariableAssignation(v) => v.process(components, args, cx).await,
-                Self::Reference(v) => v.process(components, args, cx).await,
-                Self::Function(v) => v.process(components, args, cx).await,
-                Self::ValueString(v) => v.process(components, args, cx).await,
-                Self::Command(v) => v.process(components, args, cx).await,
-                Self::Block(v) => v.process(components, args, cx).await,
+                Self::VariableAssignation(v) => v.process(owner, components, args, cx).await,
+                Self::Reference(v) => v.process(owner, components, args, cx).await,
+                Self::Function(v) => v.process(owner, components, args, cx).await,
+                Self::ValueString(v) => v.process(owner, components, args, cx).await,
+                Self::Command(v) => v.process(owner, components, args, cx).await,
+                Self::Block(v) => v.process(owner, components, args, cx).await,
             }
         })
     }
@@ -85,14 +86,15 @@ impl fmt::Display for Condition {
 impl Operator for Condition {
     fn process<'a>(
         &'a self,
+        owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             match self {
-                Self::Function(v) => v.process(components, args, cx).await,
-                Self::VariableComparing(v) => v.process(components, args, cx).await,
+                Self::Function(v) => v.process(owner, components, args, cx).await,
+                Self::VariableComparing(v) => v.process(owner, components, args, cx).await,
             }
         })
     }
@@ -201,6 +203,7 @@ impl fmt::Display for Optional {
 impl Operator for Optional {
     fn process<'a>(
         &'a self,
+        owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,
@@ -208,7 +211,7 @@ impl Operator for Optional {
         Box::pin(async move {
             let condition = *self
                 .condition
-                .process(components, args, cx)
+                .process(owner, components, args, cx)
                 .await?
                 .ok_or(operator::E::FailToExtractConditionValue)?
                 .get_as::<bool>()
@@ -216,7 +219,7 @@ impl Operator for Optional {
             if !condition {
                 Ok(None)
             } else {
-                self.action.process(components, args, cx).await
+                self.action.process(owner, components, args, cx).await
             }
         })
     }

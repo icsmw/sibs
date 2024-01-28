@@ -170,6 +170,7 @@ impl fmt::Display for Function {
 impl Operator for Function {
     fn process<'a>(
         &'a self,
+        _: Option<&'a Component>,
         _: &'a [Component],
         _: &'a [String],
         cx: &'a mut Context,

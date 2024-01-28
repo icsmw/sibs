@@ -69,7 +69,9 @@ pub async fn read(tracker: &Tracker) -> Result<Option<Context>, E> {
         Some(income.remove(0))
     } {
         if let Some(component) = components.iter().find(|comp| comp.name == component) {
-            component.process(&components, &income, &mut cx).await?;
+            component
+                .process(Some(component), &components, &income, &mut cx)
+                .await?;
             Ok(Some(cx))
         } else {
             Err(E::ComponentNotExists(component.to_string()))

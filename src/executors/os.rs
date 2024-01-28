@@ -45,14 +45,14 @@ impl Executor for Os {
             let probe = match arg {
                 Argument::String(value) => value.to_owned(),
                 Argument::ValueString(value_string) => value_string
-                    .process(&[], &[], cx)
+                    .process(None, &[], &[], cx)
                     .await?
                     .ok_or(Error::NoStringValue)?
                     .get_as::<String>()
                     .ok_or(Error::InvalidArgumentType)?
                     .to_owned(),
                 Argument::VariableName(variable) => variable
-                    .process(&[], &[], cx)
+                    .process(None, &[], &[], cx)
                     .await?
                     .ok_or(Error::NoVariableName)?
                     .get_as::<String>()

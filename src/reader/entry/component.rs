@@ -143,11 +143,12 @@ impl term::Display for Component {
 impl Operator for Component {
     fn process<'a>(
         &'a self,
+        owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
-        Box::pin(async {
+        Box::pin(async move {
             let task = args.first().ok_or_else(|| {
                 cx.term.err(format!(
                     "No task provided for component \"{}\". Try to use \"sibs {} --help\".\n",
@@ -164,7 +165,7 @@ impl Operator for Component {
             })?;
             cx.term.with_title("COMPONENT", &self.name);
             cx.set_cwd(self.cwd.clone())?;
-            task.process(components, &args[1..], cx).await
+            task.process(owner, components, &args[1..], cx).await
         })
     }
 }

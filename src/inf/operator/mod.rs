@@ -12,6 +12,7 @@ pub type OperatorResult = Result<Option<AnyValue>, E>;
 pub trait Operator {
     fn process<'a>(
         &'a self,
+        owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,

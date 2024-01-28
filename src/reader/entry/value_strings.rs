@@ -31,14 +31,15 @@ impl Injection {
 impl Operator for Injection {
     fn process<'a>(
         &'a self,
+        owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             match self {
-                Self::VariableName(_, v) => v.process(components, args, cx).await,
-                Self::Function(_, v) => v.process(components, args, cx).await,
+                Self::VariableName(_, v) => v.process(owner, components, args, cx).await,
+                Self::Function(_, v) => v.process(owner, components, args, cx).await,
             }
         })
     }
@@ -100,15 +101,16 @@ impl fmt::Display for ValueString {
 impl Operator for ValueString {
     fn process<'a>(
         &'a self,
+        owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
-        Box::pin(async {
+        Box::pin(async move {
             let mut output = self.pattern.clone();
             for injection in self.injections.iter() {
                 let val = injection
-                    .process(components, args, cx)
+                    .process(owner, components, args, cx)
                     .await?
                     .ok_or(operator::E::FailToExtractValue)?
                     .get_as_string()

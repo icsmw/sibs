@@ -146,11 +146,12 @@ impl term::Display for Task {
 impl Operator for Task {
     fn process<'a>(
         &'a self,
+        owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
-        Box::pin(async {
+        Box::pin(async move {
             let block = self.block.as_ref().ok_or_else(|| {
                 cx.term.err(format!(
                     "Task \"{}\" doesn't have actions block.\n",
@@ -165,7 +166,7 @@ impl Operator for Task {
             for (i, declaration) in self.declarations.iter().enumerate() {
                 declaration.declare(args[i].to_owned(), cx).await?;
             }
-            block.process(components, args, cx).await
+            block.process(owner, components, args, cx).await
         })
     }
 }

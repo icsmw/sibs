@@ -56,11 +56,12 @@ impl fmt::Display for First {
 impl Operator for First {
     fn process<'a>(
         &'a self,
+        owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
-        Box::pin(async { self.block.process(components, args, cx).await })
+        Box::pin(async move { self.block.process(owner, components, args, cx).await })
     }
 }
 

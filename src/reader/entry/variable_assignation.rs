@@ -24,16 +24,17 @@ pub enum Assignation {
 impl Operator for Assignation {
     fn process<'a>(
         &'a self,
+        owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             match self {
-                Self::Function(v) => v.process(components, args, cx).await,
-                Self::ValueString(v) => v.process(components, args, cx).await,
-                Self::Block(v) => v.process(components, args, cx).await,
-                Self::First(v) => v.process(components, args, cx).await,
+                Self::Function(v) => v.process(owner, components, args, cx).await,
+                Self::ValueString(v) => v.process(owner, components, args, cx).await,
+                Self::Block(v) => v.process(owner, components, args, cx).await,
+                Self::First(v) => v.process(owner, components, args, cx).await,
             }
         })
     }
@@ -144,14 +145,15 @@ impl fmt::Display for VariableAssignation {
 impl Operator for VariableAssignation {
     fn process<'a>(
         &'a self,
+        owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
-        Box::pin(async {
+        Box::pin(async move {
             let assignation = &self.assignation;
             let value = assignation
-                .process(components, args, cx)
+                .process(owner, components, args, cx)
                 .await?
                 .ok_or(operator::E::NoValueToAssign(self.name.name.clone()))?;
             cx.set_var(self.name.name.clone(), value).await;

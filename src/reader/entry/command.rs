@@ -41,6 +41,7 @@ impl term::Display for Command {
 impl Operator for Command {
     fn process<'a>(
         &'a self,
+        owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,
