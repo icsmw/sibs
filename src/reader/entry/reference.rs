@@ -1,7 +1,5 @@
 use crate::{
-    cli,
     inf::{
-        any::AnyValue,
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
     },
@@ -12,6 +10,8 @@ use crate::{
     },
 };
 use std::fmt;
+
+const SELF: &str = "self";
 
 #[derive(Debug, Clone)]
 pub enum Input {
@@ -29,6 +29,18 @@ impl fmt::Display for Input {
                 Self::VariableName(v) => v.to_string(),
             }
         )
+    }
+}
+impl Input {
+    fn as_arg(&self, cx: &mut Context) -> Result<String, operator::E> {
+        Ok(match self {
+            Self::String(v) => v.to_owned(),
+            Self::VariableName(name) => cx
+                .get_var(&name.name)
+                .ok_or(operator::E::VariableIsNotAssigned(name.name.to_owned()))?
+                .get_as_string()
+                .ok_or(operator::E::FailToGetStringValue)?,
+        })
     }
 }
 #[derive(Debug, Clone)]
@@ -154,10 +166,38 @@ impl Operator for Reference {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [String],
+        _: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
-        Box::pin(async { Ok(None) })
+        Box::pin(async move {
+            let target = owner.ok_or(operator::E::NoOwnerComponent)?;
+            let (parent, task) = if self.path.len() == 1 {
+                (target, &self.path[0])
+            } else if self.path.len() == 2 {
+                (
+                    if self.path[0] == SELF {
+                        target
+                    } else {
+                        components
+                            .iter()
+                            .find(|c| c.name == self.path[0])
+                            .ok_or(operator::E::NotFoundComponent(self.path[0].to_owned()))?
+                    },
+                    &self.path[1],
+                )
+            } else {
+                return Err(operator::E::InvalidPartsInReference);
+            };
+            let task = parent.get_task(task).ok_or(operator::E::TaskNotFound(
+                task.to_owned(),
+                parent.name.to_owned(),
+            ))?;
+            let mut args: Vec<String> = vec![];
+            for input in self.inputs.iter() {
+                args.push(input.as_arg(cx)?);
+            }
+            task.process(owner, components, &args, cx).await
+        })
     }
 }
 

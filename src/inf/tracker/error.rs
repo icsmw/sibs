@@ -1,4 +1,3 @@
-use crate::{error, reader};
 use thiserror::Error;
 
 #[derive(Error, Debug)]

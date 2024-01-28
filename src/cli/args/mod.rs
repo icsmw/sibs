@@ -69,10 +69,6 @@ impl Arguments {
     pub fn has<T: 'static>(&self) -> bool {
         self.arguments.get(&TypeId::of::<T>()).is_some()
     }
-
-    pub fn remove<T: 'static>(&mut self) {
-        let _ = self.arguments.remove(&TypeId::of::<T>());
-    }
 }
 
 impl term::Display for Arguments {

@@ -59,8 +59,6 @@ pub enum E {
     InvalidReference,
     #[error("No destination function after >")]
     NoDestFunction,
-    #[error("No executor for function {0}")]
-    NoFunctionExecutor(String),
     #[error("Missed comparing operator: == or !=")]
     MissedComparingOperator,
     #[error("Fail to find proviso of condition")]
@@ -101,10 +99,6 @@ pub enum E {
     FunctionIsNotRegistred,
     #[error("Invalid function return")]
     InvalidFunctionReturn,
-    // #[error("Function already redirected")]
-    // FunctionAlreadyRedirected,
-    #[error("Path doesn't include parent")]
-    NoFileParent,
     #[error("Converting error")]
     Infallible(#[from] std::convert::Infallible),
     #[error("File {0} does't exist")]
@@ -113,8 +107,6 @@ pub enum E {
     IO(#[from] std::io::Error),
     #[error("{0}: {1}")]
     OwnedError(String, String),
-    #[error("Function {0} already exist")]
-    FunctionAlreadyExists(String),
     #[error("Context error: {0}")]
     ContextError(String),
     #[error("Executor error: {0}")]

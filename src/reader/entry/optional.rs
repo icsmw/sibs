@@ -1,7 +1,5 @@
 use crate::{
-    cli,
     inf::{
-        any::{AnyValue, DebugAny},
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
     },
@@ -14,7 +12,7 @@ use crate::{
         words, Reader, E,
     },
 };
-use std::{fmt, ops::Deref};
+use std::fmt;
 
 #[derive(Debug)]
 pub enum Action {

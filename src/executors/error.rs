@@ -4,23 +4,21 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum E {
     #[error("Scenario error: {0}")]
-    ContextError(String),
+    Context(String),
     #[error("Operator error: {0}")]
-    OperatorError(String),
-    #[error("Fail register function \"{0}\" because it's already exists")]
-    FunctionAlreadyExists(String),
+    Operator(String),
     #[error("Function \"{0}\" executing error: {1}")]
-    FunctionExecutingError(String, String),
+    FunctionExecuting(String, String),
 }
 
 impl From<context::E> for E {
     fn from(value: context::E) -> Self {
-        E::ContextError(value.to_string())
+        E::Context(value.to_string())
     }
 }
 
 impl From<operator::E> for E {
     fn from(value: operator::E) -> Self {
-        E::OperatorError(value.to_string())
+        E::Operator(value.to_string())
     }
 }

@@ -13,32 +13,14 @@ pub enum E {
     InvalidHelpRequest,
     #[error("No any options/commands. Try --help to see all options.")]
     NoArguments,
-    #[error("Terminal command has been finished with errors")]
-    SpawningCommand,
-    #[error("Task {0} doesn't have an actions block")]
-    NoTaskBlock(String),
-    #[error("No any task provided for component {0}")]
-    NoTaskForComponent(String),
     #[error("Component {0} does't exist")]
     ComponentNotExists(String),
-    #[error("Component {0} does't include task {1}")]
-    TaskNotExists(String, String),
     #[error("File {0} does't exist")]
     FileNotExists(String),
     #[error("IO error: {0}")]
     IO(#[from] std::io::Error),
     #[error("Syntax error: {0}")]
     Reader(#[from] reader::error::E),
-    #[error("CWD is required")]
-    NoCurrentWorkingFolder,
-    #[error("Not supported")]
-    NotSupported,
-    #[error("{0}: {1}")]
-    FunctionError(String, String),
-    #[error("Variable {0} isn't assigned")]
-    VariableIsNotAssigned(String),
-    #[error("Fail to extract value")]
-    FailToExtractValue,
     #[error("Context error: {0}")]
     ContextError(String),
     #[error("Scenario error: {0}")]

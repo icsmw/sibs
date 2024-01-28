@@ -3,7 +3,7 @@ use crate::{
         args::{Argument, Description},
         error::E,
     },
-    inf::{context::Context, scenario::Scenario, term::Term},
+    inf::context::Context,
     reader::entry::Component,
 };
 

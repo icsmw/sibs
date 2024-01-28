@@ -17,17 +17,6 @@ pub struct SpawnResult {
     pub job: String,
 }
 
-impl SpawnResult {
-    pub fn empty() -> Self {
-        SpawnResult {
-            stdout: vec![],
-            stderr: vec![],
-            status: ExitStatus::default(),
-            job: String::new(),
-        }
-    }
-}
-
 pub async fn spawn(command: &str, cwd: &PathBuf, task: &Task) -> Result<SpawnResult, E> {
     let mut parts = command.split(' ').collect::<Vec<&str>>();
     let cmd = parts.remove(0);

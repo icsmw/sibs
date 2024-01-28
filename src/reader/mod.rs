@@ -516,15 +516,6 @@ impl Reader {
     pub fn rest(&self) -> &str {
         &self.content[self.pos..]
     }
-    pub fn recent(&mut self) -> &str {
-        if self.pos == 0 {
-            ""
-        } else {
-            let readed = &self.content[self._recent..self.pos];
-            self._recent = self.pos;
-            readed
-        }
-    }
     pub fn trim(&mut self) {
         let content = &self.content[self.pos..];
         for (pos, char) in content.chars().enumerate() {
@@ -583,6 +574,16 @@ impl Reader {
             }
         }
         true
+    }
+    #[cfg(test)]
+    pub fn recent(&mut self) -> &str {
+        if self.pos == 0 {
+            ""
+        } else {
+            let readed = &self.content[self._recent..self.pos];
+            self._recent = self.pos;
+            readed
+        }
     }
 }
 

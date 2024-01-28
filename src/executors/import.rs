@@ -25,7 +25,7 @@ pub enum Error {
 
 impl From<Error> for E {
     fn from(e: Error) -> Self {
-        E::FunctionExecutingError(format!("@{NAME}"), e.to_string())
+        E::FunctionExecuting(format!("@{NAME}"), e.to_string())
     }
 }
 

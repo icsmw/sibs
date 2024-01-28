@@ -11,7 +11,7 @@ use crate::{
 pub use error::E;
 use std::{
     collections::{hash_map::Entry, HashMap},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 #[derive(Debug)]
@@ -43,7 +43,7 @@ impl Context {
             logger,
         })
     }
-    pub fn from_filename(filename: &PathBuf) -> Result<Self, E> {
+    pub fn from_filename(filename: &Path) -> Result<Self, E> {
         let tracker = Tracker::new();
         let logger = tracker.get_logger(String::from("Context"));
         Self::register_functions(Context {

@@ -30,7 +30,7 @@ impl Scenario {
             filename: PathBuf::new(),
         }
     }
-    pub fn from(filename: &PathBuf) -> Result<Self, E> {
+    pub fn from(filename: &Path) -> Result<Self, E> {
         let filename_str = filename.to_string_lossy().to_string();
         if !filename.is_absolute() {
             Err(E::IsNotAbsolutePath(filename_str.clone()))?;
@@ -39,7 +39,7 @@ impl Scenario {
             Err(E::PathDoesNotExist(filename_str.clone()))?;
         }
         Ok(Self {
-            filename: filename.clone(),
+            filename: filename.to_path_buf(),
             path: filename
                 .parent()
                 .ok_or(E::NoParentFolderFor(filename_str))?

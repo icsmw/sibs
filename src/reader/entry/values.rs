@@ -1,5 +1,5 @@
 use crate::{
-    inf::{operator, term},
+    inf::term,
     reader::{
         chars,
         entry::{Reader, Reading},

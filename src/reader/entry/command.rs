@@ -1,5 +1,4 @@
 use crate::{
-    cli,
     inf::{
         any::AnyValue,
         context::Context,
@@ -41,9 +40,9 @@ impl term::Display for Command {
 impl Operator for Command {
     fn process<'a>(
         &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
-        args: &'a [String],
+        _: Option<&'a Component>,
+        _: &'a [Component],
+        _: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async {

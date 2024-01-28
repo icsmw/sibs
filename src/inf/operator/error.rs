@@ -58,6 +58,14 @@ pub enum E {
     DismatchTaskArgumentsCount,
     #[error("Fail to get value for declaration task's argument")]
     NoValueToDeclareTaskArgument,
+    #[error("Reference has invalid number of parts")]
+    InvalidPartsInReference,
+    #[error("Owner component isn't defined")]
+    NoOwnerComponent,
+    #[error("Fail to find component \"{0}\"")]
+    NotFoundComponent(String),
+    #[error("Task \"{0}\" for component \"{0}\" not found")]
+    TaskNotFound(String, String),
 }
 
 impl From<tracker::E> for E {

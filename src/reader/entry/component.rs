@@ -1,7 +1,5 @@
 use crate::{
-    cli,
     inf::{
-        any::AnyValue,
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
         term::{self, Term},
@@ -22,6 +20,12 @@ pub struct Component {
     pub functions: Vec<Function>,
     pub meta: Option<Meta>,
     pub token: usize,
+}
+
+impl Component {
+    pub fn get_task(&self, name: &str) -> Option<&Task> {
+        self.tasks.iter().find(|t| t.name == name)
+    }
 }
 
 impl Reading<Component> for Component {

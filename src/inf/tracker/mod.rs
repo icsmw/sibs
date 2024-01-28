@@ -74,7 +74,7 @@ impl Tracker {
         Ok(Task::new(self, id))
     }
 
-    async fn send<'a, T>(sender: async_channel::Send<'a, T>) {
+    async fn send<T>(sender: async_channel::Send<'_, T>) {
         if let Err(e) = sender.await {
             Self::err(e);
         }

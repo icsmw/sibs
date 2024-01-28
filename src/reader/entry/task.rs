@@ -1,7 +1,5 @@
 use crate::{
-    cli,
     inf::{
-        any::AnyValue,
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
         term::{self, Term},
