@@ -54,6 +54,10 @@ pub enum E {
     NoInputForEach,
     #[error("Fail to convert input for EACH statements into vector of strings")]
     FailConvertInputIntoStringsForEach,
+    #[error("Number of arguments and declarations in task aren't match")]
+    DismatchTaskArgumentsCount,
+    #[error("Fail to get value for declaration task's argument")]
+    NoValueToDeclareTaskArgument,
 }
 
 impl From<tracker::E> for E {

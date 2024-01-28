@@ -35,6 +35,16 @@ pub struct VariableType {
     pub token: usize,
 }
 
+impl VariableType {
+    pub fn parse(&self, value: String) -> Option<String> {
+        match &self.var_type {
+            Types::String => Some(value),
+            Types::Number => value.parse::<isize>().ok().map(|_| value),
+            Types::Bool => value.parse::<bool>().ok().map(|_| value),
+        }
+    }
+}
+
 impl Reading<VariableType> for VariableType {
     fn read(reader: &mut Reader) -> Result<Option<VariableType>, E> {
         if reader.move_to().char(&[&chars::TYPE_OPEN]).is_some() {

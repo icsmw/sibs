@@ -159,6 +159,12 @@ impl Operator for Task {
                 operator::E::NoTaskBlock(self.name.to_string())
             })?;
             cx.term.with_title("TASK", &self.name);
+            if self.declarations.len() != args.len() {
+                Err(operator::E::DismatchTaskArgumentsCount)?;
+            }
+            for (i, declaration) in self.declarations.iter().enumerate() {
+                declaration.declare(args[i].to_owned(), cx).await?;
+            }
             block.process(components, args, cx).await
         })
     }

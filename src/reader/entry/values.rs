@@ -1,5 +1,5 @@
 use crate::{
-    inf::term::{self, Term},
+    inf::{operator, term},
     reader::{
         chars,
         entry::{Reader, Reading},
@@ -45,6 +45,14 @@ impl Values {
             Err(E::NoVariableValues)?;
         }
         Ok(Values { values, token })
+    }
+
+    pub fn parse(&self, value: String) -> Option<String> {
+        if self.values.contains(&value) {
+            Some(value)
+        } else {
+            None
+        }
     }
 }
 

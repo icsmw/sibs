@@ -21,7 +21,7 @@ pub struct Component {
     pub tasks: Vec<Task>,
     pub functions: Vec<Function>,
     pub meta: Option<Meta>,
-    pub index: usize,
+    pub token: usize,
 }
 
 impl Reading<Component> for Component {
@@ -82,7 +82,7 @@ impl Reading<Component> for Component {
                     },
                     tasks,
                     meta,
-                    index: reader.token()?.id,
+                    token: reader.token()?.id,
                 }))
             } else {
                 Err(E::NoGroup)?

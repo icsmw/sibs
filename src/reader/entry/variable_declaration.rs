@@ -1,5 +1,5 @@
 use crate::{
-    inf::term,
+    inf::{any::AnyValue, context::Context, operator, term},
     reader::{
         chars,
         entry::{Reader, Reading, Values, VariableName, VariableType},
@@ -18,6 +18,23 @@ pub struct VariableDeclaration {
     pub name: VariableName,
     pub declaration: Declaration,
     pub token: usize,
+}
+
+impl VariableDeclaration {
+    pub async fn declare<'a>(&self, value: String, cx: &'a mut Context) -> Result<(), operator::E> {
+        cx.set_var(
+            self.name.name.to_owned(),
+            AnyValue::new(
+                match &self.declaration {
+                    Declaration::Typed(typed) => typed.parse(value),
+                    Declaration::Values(values) => values.parse(value),
+                }
+                .ok_or(operator::E::NoValueToDeclareTaskArgument)?,
+            ),
+        )
+        .await;
+        Ok(())
+    }
 }
 
 impl Reading<VariableDeclaration> for VariableDeclaration {
