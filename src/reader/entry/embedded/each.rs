@@ -19,6 +19,23 @@ pub enum Input {
     Function(Function),
 }
 
+impl Operator for Input {
+    fn process<'a>(
+        &'a self,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async move {
+            match self {
+                Self::VariableName(v) => v.process(components, args, cx),
+                Self::Function(v) => v.process(components, args, cx),
+            }
+            .await
+        })
+    }
+}
+
 impl fmt::Display for Input {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -100,13 +117,35 @@ impl fmt::Display for Each {
 }
 
 impl Operator for Each {
-    fn process(
-        &self,
-        components: &[Component],
-        args: &[String],
-        cx: &mut Context,
+    fn process<'a>(
+        &'a self,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
     ) -> OperatorPinnedResult {
-        Box::pin(async { Ok(None) })
+        Box::pin(async {
+            let inputs = self
+                .input
+                .process(components, args, cx)
+                .await?
+                .ok_or(operator::E::NoInputForEach)?
+                .get_as_strings()
+                .ok_or(operator::E::FailConvertInputIntoStringsForEach)?;
+            let mut output: Option<AnyValue> = None;
+            for iteration in inputs.iter() {
+                cx.set_var(
+                    self.variable.name.to_owned(),
+                    AnyValue::new(iteration.to_string()),
+                )
+                .await;
+                output = self.block.process(components, args, cx).await?;
+            }
+            Ok(if output.is_none() {
+                Some(AnyValue::new(()))
+            } else {
+                output
+            })
+        })
     }
 }
 

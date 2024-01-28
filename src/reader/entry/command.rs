@@ -58,7 +58,7 @@ impl Operator for Command {
                 Ok(result) => {
                     if result.status.success() {
                         task.success("no errros").await;
-                        Ok(None)
+                        Ok(Some(AnyValue::new(())))
                     } else {
                         task.fail("done with errors").await;
                         Err(operator::E::SpawnedProcessExitWithError)

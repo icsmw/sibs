@@ -60,6 +60,63 @@ impl AnyValue {
             .or_else(|| reference.downcast_ref::<i64>().map(|v| v.to_string()))
             .or_else(|| reference.downcast_ref::<bool>().map(|v| v.to_string()))
     }
+
+    pub fn get_as_strings(&self) -> Option<Vec<String>> {
+        let reference = self.value.as_ref().as_any();
+        reference
+            .downcast_ref::<Vec<String>>()
+            .map(|v| v.to_owned())
+            .or_else(|| {
+                reference
+                    .downcast_ref::<Vec<usize>>()
+                    .map(|v| v.iter().map(|v| v.to_string()).collect::<Vec<String>>())
+            })
+            .or_else(|| {
+                reference
+                    .downcast_ref::<Vec<u8>>()
+                    .map(|v| v.iter().map(|v| v.to_string()).collect::<Vec<String>>())
+            })
+            .or_else(|| {
+                reference
+                    .downcast_ref::<Vec<u16>>()
+                    .map(|v| v.iter().map(|v| v.to_string()).collect::<Vec<String>>())
+            })
+            .or_else(|| {
+                reference
+                    .downcast_ref::<Vec<u32>>()
+                    .map(|v| v.iter().map(|v| v.to_string()).collect::<Vec<String>>())
+            })
+            .or_else(|| {
+                reference
+                    .downcast_ref::<Vec<u64>>()
+                    .map(|v| v.iter().map(|v| v.to_string()).collect::<Vec<String>>())
+            })
+            .or_else(|| {
+                reference
+                    .downcast_ref::<Vec<i8>>()
+                    .map(|v| v.iter().map(|v| v.to_string()).collect::<Vec<String>>())
+            })
+            .or_else(|| {
+                reference
+                    .downcast_ref::<Vec<i16>>()
+                    .map(|v| v.iter().map(|v| v.to_string()).collect::<Vec<String>>())
+            })
+            .or_else(|| {
+                reference
+                    .downcast_ref::<Vec<i32>>()
+                    .map(|v| v.iter().map(|v| v.to_string()).collect::<Vec<String>>())
+            })
+            .or_else(|| {
+                reference
+                    .downcast_ref::<Vec<i64>>()
+                    .map(|v| v.iter().map(|v| v.to_string()).collect::<Vec<String>>())
+            })
+            .or_else(|| {
+                reference
+                    .downcast_ref::<Vec<bool>>()
+                    .map(|v| v.iter().map(|v| v.to_string()).collect::<Vec<String>>())
+            })
+    }
 }
 
 impl fmt::Display for AnyValue {

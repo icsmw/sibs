@@ -71,7 +71,14 @@ impl Operator for Element {
 pub struct Block {
     pub meta: Option<Meta>,
     pub elements: Vec<Element>,
+    pub by_first: bool,
     pub token: usize,
+}
+
+impl Block {
+    pub fn use_as_first(&mut self) {
+        self.by_first = true;
+    }
 }
 
 impl Reading<Block> for Block {
@@ -121,6 +128,7 @@ impl Reading<Block> for Block {
                 elements,
                 meta,
                 token: reader.token()?.id,
+                by_first: false,
             })
         })
     }
@@ -180,8 +188,16 @@ impl Operator for Block {
             let mut output: Option<AnyValue> = None;
             for element in self.elements.iter() {
                 output = element.process(components, args, cx).await?;
+                if self.by_first && output.is_some() {
+                    return Ok(output);
+                }
             }
-            Ok(output)
+            // Block always should return some value.
+            Ok(if output.is_none() {
+                Some(AnyValue::new(()))
+            } else {
+                output
+            })
         })
     }
 }

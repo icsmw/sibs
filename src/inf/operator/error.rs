@@ -32,12 +32,28 @@ pub enum E {
     FailToExtractConditionValue,
     #[error("Fail to get value as string")]
     FailToGetValueAsString,
+    #[error("Fail to get string value")]
+    FailToGetStringValue,
+    #[error("Function doesn't return bool result")]
+    NoBoolResultFromFunction,
+    #[error("If=proviso doesn't return bool result")]
+    NoBoolResultFromProviso,
+    #[error("If=(proviso AND/OR proviso) doesn't return bool result")]
+    NoBoolResultFromProvisoGroup,
+    #[error("If=proviso doesn't return any result")]
+    NoResultFromProviso,
+    #[error("Combination operator (AND, OR) should follow after proviso")]
+    WrongConditionsOrderInIf,
     #[error("Variable \"{0}\" isn't assigned")]
     VariableIsNotAssigned(String),
     #[error("Function \"{0}\" doesn't have registred executor")]
     NoFunctionExecutor(String),
     #[error("Fail assign variable \"{0}\"; no value")]
     NoValueToAssign(String),
+    #[error("Fail to get input for EACH statements")]
+    NoInputForEach,
+    #[error("Fail to convert input for EACH statements into vector of strings")]
+    FailConvertInputIntoStringsForEach,
 }
 
 impl From<tracker::E> for E {

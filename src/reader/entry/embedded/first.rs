@@ -31,8 +31,10 @@ impl Reading<First> for First {
                 if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
                     Err(E::MissedSemicolon)
                 } else {
+                    let mut block = Block::read(&mut token.bound)?.ok_or(E::EmptyGroup)?;
+                    block.use_as_first();
                     Ok(Some(First {
-                        block: Block::read(&mut token.bound)?.ok_or(E::EmptyGroup)?,
+                        block,
                         token: token.id,
                     }))
                 }
@@ -52,13 +54,13 @@ impl fmt::Display for First {
 }
 
 impl Operator for First {
-    fn process(
-        &self,
-        components: &[Component],
-        args: &[String],
-        cx: &mut Context,
+    fn process<'a>(
+        &'a self,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
     ) -> OperatorPinnedResult {
-        Box::pin(async { Ok(None) })
+        Box::pin(async { self.block.process(components, args, cx).await })
     }
 }
 

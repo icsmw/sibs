@@ -8,7 +8,7 @@ use crate::{
     reader::{
         chars,
         entry::{Block, Component, Function, Reading, ValueString, VariableName},
-        words, Reader, E,
+        words, Group, Reader, E,
     },
 };
 use std::fmt;
@@ -60,6 +60,78 @@ pub enum Proviso {
     Group(Vec<Proviso>),
 }
 
+impl Operator for Proviso {
+    fn process<'a>(
+        &'a self,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async move {
+            match self {
+                Self::Variable(name, cmp, value) => {
+                    let left = name
+                        .process(components, args, cx)
+                        .await?
+                        .ok_or(operator::E::VariableIsNotAssigned(name.name.clone()))?
+                        .get_as_string()
+                        .ok_or(operator::E::FailToGetValueAsString)?;
+                    let right = value
+                        .process(components, args, cx)
+                        .await?
+                        .ok_or(operator::E::FailToGetStringValue)?
+                        .get_as_string()
+                        .ok_or(operator::E::FailToGetValueAsString)?;
+                    Ok(Some(AnyValue::new(match cmp.clone() {
+                        Cmp::Equal => left == right,
+                        Cmp::NotEqual => left != right,
+                    })))
+                }
+                Self::Function(func, expectation) => {
+                    let result = *func
+                        .process(components, args, cx)
+                        .await?
+                        .ok_or(operator::E::NoBoolResultFromFunction)?
+                        .get_as::<bool>()
+                        .ok_or(operator::E::NoBoolResultFromFunction)?;
+                    Ok(Some(AnyValue::new(result == *expectation)))
+                }
+                Self::Group(provisos) => {
+                    let mut iteration: Option<bool> = None;
+                    for proviso in provisos.iter() {
+                        if let Proviso::Combination(cmb, _) = proviso {
+                            if iteration.is_none() {
+                                Err(operator::E::WrongConditionsOrderInIf)?;
+                            }
+                            if let (true, Some(true)) = (matches!(cmb, Combination::Or), iteration)
+                            {
+                                return Ok(Some(AnyValue::new(true)));
+                            } else if let (true, Some(false)) =
+                                (matches!(cmb, Combination::And), iteration)
+                            {
+                                return Ok(Some(AnyValue::new(false)));
+                            }
+                        } else {
+                            iteration = Some(
+                                *proviso
+                                    .process(components, args, cx)
+                                    .await?
+                                    .ok_or(operator::E::NoResultFromProviso)?
+                                    .get_as::<bool>()
+                                    .ok_or(operator::E::NoBoolResultFromProviso)?,
+                            );
+                        }
+                    }
+                    Ok(Some(AnyValue::new(
+                        iteration.ok_or(operator::E::NoBoolResultFromProvisoGroup)?,
+                    )))
+                }
+                Self::Combination(_, _) => Err(operator::E::WrongConditionsOrderInIf),
+            }
+        })
+    }
+}
+
 impl fmt::Display for Proviso {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -82,8 +154,36 @@ impl fmt::Display for Proviso {
 
 #[derive(Debug)]
 pub enum Element {
-    If(Vec<Proviso>, Block),
+    If(Proviso, Block),
     Else(Block),
+}
+
+impl Operator for Element {
+    fn process<'a>(
+        &'a self,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async move {
+            match self {
+                Self::If(proviso, block) => {
+                    if *proviso
+                        .process(components, args, cx)
+                        .await?
+                        .ok_or(operator::E::NoResultFromProviso)?
+                        .get_as::<bool>()
+                        .ok_or(operator::E::NoBoolResultFromProviso)?
+                    {
+                        block.process(components, args, cx).await
+                    } else {
+                        Ok(None)
+                    }
+                }
+                Self::Else(block) => block.process(components, args, cx).await,
+            }
+        })
+    }
 }
 
 impl fmt::Display for Element {
@@ -92,14 +192,7 @@ impl fmt::Display for Element {
             f,
             "{}",
             match self {
-                Element::If(provisio, block) => format!(
-                    "IF {} {block}",
-                    provisio
-                        .iter()
-                        .map(|p| p.to_string())
-                        .collect::<Vec<String>>()
-                        .join(" ")
-                ),
+                Element::If(provisio, block) => format!("IF {provisio} {block}"),
                 Element::Else(block) => format!("ELSE {block}"),
             }
         )
@@ -118,7 +211,7 @@ impl Reading<If> for If {
         while !reader.rest().trim().is_empty() {
             if reader.move_to().word(&[&words::IF]).is_some() {
                 if reader.until().char(&[&chars::OPEN_SQ_BRACKET]).is_some() {
-                    let proviso: Vec<Proviso> = If::proviso(&mut reader.token()?.bound)?;
+                    let proviso: Proviso = If::proviso(&mut reader.token()?.bound)?;
                     if reader
                         .group()
                         .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
@@ -207,7 +300,7 @@ impl If {
             Err(E::NoProvisoOfCondition)
         }
     }
-    pub fn proviso(reader: &mut Reader) -> Result<Vec<Proviso>, E> {
+    pub fn proviso(reader: &mut Reader) -> Result<Proviso, E> {
         let mut proviso: Vec<Proviso> = vec![];
         while !reader.rest().trim().is_empty() {
             if reader.move_to().char(&[&chars::OPEN_BRACKET]).is_some() {
@@ -220,7 +313,7 @@ impl If {
                     {
                         Err(E::NestedConditionGroups)?
                     }
-                    proviso.push(Proviso::Group(If::proviso(&mut group_reader)?));
+                    proviso.push(If::proviso(&mut group_reader)?);
                     continue;
                 } else {
                     Err(E::NotClosedConditionGroup)?
@@ -263,7 +356,7 @@ impl If {
                 Err(E::NoProvisoOfCondition)?
             }
         }
-        Ok(proviso)
+        Ok(Proviso::Group(proviso))
     }
 }
 
@@ -282,13 +375,20 @@ impl fmt::Display for If {
 }
 
 impl Operator for If {
-    fn process(
-        &self,
-        components: &[Component],
-        args: &[String],
-        cx: &mut Context,
+    fn process<'a>(
+        &'a self,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
     ) -> OperatorPinnedResult {
-        Box::pin(async { Ok(None) })
+        Box::pin(async move {
+            for element in self.elements.iter() {
+                if let Some(output) = element.process(components, args, cx).await? {
+                    return Ok(Some(output));
+                }
+            }
+            Ok(None)
+        })
     }
 }
 

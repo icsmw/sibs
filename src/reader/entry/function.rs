@@ -178,8 +178,7 @@ impl Operator for Function {
             let executor = cx
                 .get_fn(&self.name)
                 .ok_or(operator::E::NoFunctionExecutor(self.name.clone()))?;
-            let result = executor(self, cx).await?;
-            Ok(result)
+            Ok(executor(self, cx).await?)
         })
     }
 }
