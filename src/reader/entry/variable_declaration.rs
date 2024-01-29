@@ -8,12 +8,12 @@ use crate::{
 };
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Declaration {
     Typed(VariableType),
     Values(Values),
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VariableDeclaration {
     pub name: VariableName,
     pub declaration: Declaration,
@@ -106,6 +106,47 @@ impl term::Display for VariableDeclaration {
         match &self.declaration {
             Declaration::Typed(v) => term::Display::to_string(v),
             Declaration::Values(v) => term::Display::to_string(v),
+        }
+    }
+}
+
+#[cfg(test)]
+mod proptest {
+    use crate::reader::entry::{
+        values::Values,
+        variable_declaration::{Declaration, VariableDeclaration},
+        variable_name::VariableName,
+        variable_type::VariableType,
+    };
+    use proptest::prelude::*;
+
+    impl Arbitrary for Declaration {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            prop_oneof![
+                Values::arbitrary().prop_map(Declaration::Values),
+                VariableType::arbitrary().prop_map(Declaration::Typed),
+            ]
+            .boxed()
+        }
+    }
+    impl Arbitrary for VariableDeclaration {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            (
+                Declaration::arbitrary().prop_map(|v| v),
+                VariableName::arbitrary().prop_map(|v| v),
+            )
+                .prop_map(|(declaration, name)| VariableDeclaration {
+                    declaration,
+                    name,
+                    token: 0,
+                })
+                .boxed()
         }
     }
 }

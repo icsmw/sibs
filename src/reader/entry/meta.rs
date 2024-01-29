@@ -11,7 +11,7 @@ use std::fmt;
 #[derive(Debug)]
 pub struct Meta {
     pub inner: Vec<String>,
-    pub index: usize,
+    pub token: usize,
 }
 
 impl Meta {
@@ -38,7 +38,7 @@ impl Reading<Meta> for Meta {
         } else {
             Ok(Some(Meta {
                 inner,
-                index: reader.token()?.id,
+                token: reader.token()?.id,
             }))
         }
     }
@@ -61,5 +61,23 @@ impl fmt::Display for Meta {
 impl term::Display for Meta {
     fn display(&self, term: &mut Term) {
         term.print_fmt(&self.as_lines());
+    }
+}
+
+#[cfg(test)]
+mod proptest {
+
+    use crate::reader::entry::meta::Meta;
+    use proptest::prelude::*;
+
+    impl Arbitrary for Meta {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            prop::collection::vec("[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from), 0..=10)
+                .prop_map(|inner| Meta { inner, token: 0 })
+                .boxed()
+        }
     }
 }

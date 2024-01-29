@@ -231,3 +231,56 @@ mod test_blocks {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod proptest {
+
+    use crate::reader::entry::{
+        block::{Block, Element},
+        command::Command,
+        embedded::{each::Each, If::If},
+        function::Function,
+        meta::Meta,
+        optional::Optional,
+        reference::Reference,
+        variable_assignation::VariableAssignation,
+    };
+    use proptest::prelude::*;
+
+    impl Arbitrary for Element {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            prop_oneof![
+                Each::arbitrary().prop_map(Element::Each),
+                If::arbitrary().prop_map(Element::If),
+                Command::arbitrary().prop_map(Element::Command),
+                Optional::arbitrary().prop_map(Element::Optional),
+                VariableAssignation::arbitrary().prop_map(Element::VariableAssignation),
+                Reference::arbitrary().prop_map(Element::Reference),
+                Function::arbitrary().prop_map(Element::Function),
+            ]
+            .boxed()
+        }
+    }
+
+    impl Arbitrary for Block {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            (
+                prop::collection::vec(Element::arbitrary(), 1..=10),
+                Meta::arbitrary(),
+            )
+                .prop_map(|(elements, meta)| Block {
+                    elements,
+                    meta: Some(meta),
+                    token: 0,
+                    by_first: false,
+                })
+                .boxed()
+        }
+    }
+}

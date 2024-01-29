@@ -207,7 +207,7 @@ impl fmt::Display for Element {
 #[derive(Debug)]
 pub struct If {
     pub elements: Vec<Element>,
-    pub index: usize,
+    pub token: usize,
 }
 
 impl Reading<If> for If {
@@ -241,7 +241,7 @@ impl Reading<If> for If {
             if reader.move_to().char(&[&chars::SEMICOLON]).is_some() {
                 return Ok(Some(If {
                     elements,
-                    index: reader.token()?.id,
+                    token: reader.token()?.id,
                 }));
             }
             if reader.move_to().word(&[&words::ELSE]).is_some() {
@@ -258,7 +258,7 @@ impl Reading<If> for If {
                     if reader.move_to().char(&[&chars::SEMICOLON]).is_some() {
                         return Ok(Some(If {
                             elements,
-                            index: reader.token()?.id,
+                            token: reader.token()?.id,
                         }));
                     } else {
                         Err(E::MissedSemicolon)?
@@ -433,5 +433,80 @@ mod test_if {
         }
         assert_eq!(count, samples.len());
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod proptest {
+
+    use crate::reader::entry::{
+        embedded::If::{Cmp, Combination, Element, If, Proviso},
+        function::Function,
+        value_strings::ValueString,
+        variable_name::VariableName,
+        Block,
+    };
+    use proptest::prelude::*;
+
+    impl Arbitrary for Cmp {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            prop_oneof![Just(Cmp::Equal), Just(Cmp::NotEqual),].boxed()
+        }
+    }
+
+    impl Arbitrary for Combination {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            prop_oneof![Just(Combination::And), Just(Combination::Or),].boxed()
+        }
+    }
+
+    impl Arbitrary for Proviso {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            prop_oneof![
+                (
+                    VariableName::arbitrary(),
+                    Cmp::arbitrary(),
+                    ValueString::arbitrary()
+                )
+                    .prop_map(|(name, cmp, value)| Proviso::Variable(name, cmp, value)),
+                Function::arbitrary().prop_map(|f| Proviso::Function(f, false)),
+                Combination::arbitrary().prop_map(|cmb| Proviso::Combination(cmb, 0)),
+                prop::collection::vec(Proviso::arbitrary(), 1..10).prop_map(|p| Proviso::Group(p))
+            ]
+            .boxed()
+        }
+    }
+
+    impl Arbitrary for Element {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            prop_oneof![
+                (Proviso::arbitrary(), Block::arbitrary()).prop_map(|(p, b)| Element::If(p, b)),
+                Block::arbitrary().prop_map(|b| Element::Else(b))
+            ]
+            .boxed()
+        }
+    }
+
+    impl Arbitrary for If {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            prop::collection::vec(Element::arbitrary(), 1..10)
+                .prop_map(|elements| If { elements, token: 0 })
+                .boxed()
+        }
     }
 }

@@ -187,3 +187,48 @@ mod test_each {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod proptest {
+
+    use crate::reader::entry::{
+        block::Block,
+        embedded::each::{Each, Input},
+        function::Function,
+        variable_name::VariableName,
+    };
+    use proptest::prelude::*;
+
+    impl Arbitrary for Input {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            prop_oneof![
+                VariableName::arbitrary().prop_map(Input::VariableName),
+                Function::arbitrary().prop_map(Input::Function),
+            ]
+            .boxed()
+        }
+    }
+
+    impl Arbitrary for Each {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            (
+                Block::arbitrary(),
+                VariableName::arbitrary(),
+                Input::arbitrary(),
+            )
+                .prop_map(|(block, variable, input)| Each {
+                    block,
+                    variable,
+                    input,
+                    token: 0,
+                })
+                .boxed()
+        }
+    }
+}

@@ -199,3 +199,42 @@ mod test_variable_assignation {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod proptest {
+    use crate::reader::entry::{
+        function::Function,
+        value_strings::ValueString,
+        variable_assignation::{Assignation, VariableAssignation},
+        variable_name::VariableName,
+    };
+    use proptest::prelude::*;
+
+    impl Arbitrary for Assignation {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            prop_oneof![
+                Function::arbitrary().prop_map(Self::Function),
+                ValueString::arbitrary().prop_map(Self::ValueString),
+            ]
+            .boxed()
+        }
+    }
+
+    impl Arbitrary for VariableAssignation {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            (Assignation::arbitrary(), VariableName::arbitrary())
+                .prop_map(|(assignation, name)| VariableAssignation {
+                    assignation,
+                    name,
+                    token: 0,
+                })
+                .boxed()
+        }
+    }
+}

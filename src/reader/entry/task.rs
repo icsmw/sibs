@@ -170,6 +170,47 @@ impl Operator for Task {
 }
 
 #[cfg(test)]
+mod proptest {
+    use crate::reader::entry::variable_type;
+    use proptest::prelude::*;
+
+    #[derive(Debug, Clone)]
+    struct TaskArgs(Vec<(String, String)>);
+
+    impl Arbitrary for TaskArgs {
+        type Parameters = ();
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            prop::collection::vec(
+                (
+                    "[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from),
+                    variable_type::Types::arbitrary().prop_map(|v| v.to_string()),
+                ),
+                0..=10,
+            )
+            .prop_map(TaskArgs)
+            .boxed()
+        }
+
+        type Strategy = BoxedStrategy<Self>;
+    }
+
+    fn run_task(task_args: TaskArgs) -> Result<(), &'static str> {
+        // println!("{task_args:?}");
+        // println!("LEN: {}", task_args.0.len());
+        Ok(())
+    }
+
+    proptest! {
+        #[test]
+        fn test_run_task(args in any::<TaskArgs>()) {
+            // Assuming run_task returns Result<(), &str>
+            let result = run_task(args.clone());
+            prop_assert!(result.is_ok());
+        }
+    }
+}
+#[cfg(test)]
 mod test_tasks {
     use crate::reader::{
         entry::{Reading, Task},

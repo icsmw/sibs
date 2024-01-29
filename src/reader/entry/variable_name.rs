@@ -105,3 +105,34 @@ mod test_variable_name {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod proptest {
+    use crate::reader::entry::variable_name::VariableName;
+    use proptest::prelude::*;
+
+    impl Arbitrary for VariableName {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            "[a-zA-Z_][a-zA-Z0-9_]*"
+                .prop_map(String::from)
+                .prop_map(|name| VariableName { name, token: 0 })
+                .boxed()
+        }
+    }
+
+    fn run_task(variable_name: VariableName) -> Result<(), &'static str> {
+        println!("{variable_name:?}");
+        Ok(())
+    }
+
+    proptest! {
+        #[test]
+        fn test_run_task(args in any::<VariableName>()) {
+            let result = run_task(args.clone());
+            prop_assert!(result.is_ok());
+        }
+    }
+}

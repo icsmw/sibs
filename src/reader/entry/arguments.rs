@@ -145,3 +145,37 @@ impl fmt::Display for Arguments {
         )
     }
 }
+
+#[cfg(test)]
+mod proptest {
+    use crate::reader::entry::{
+        arguments::{Argument, Arguments},
+        variable_name::VariableName,
+    };
+    use proptest::prelude::*;
+    impl Arbitrary for Argument {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            prop_oneof![
+                "[a-zA-Z_][a-zA-Z0-9_]*"
+                    .prop_map(String::from)
+                    .prop_map(Argument::String),
+                VariableName::arbitrary().prop_map(Argument::VariableName),
+                Arguments::arbitrary().prop_map(Argument::Arguments)
+            ]
+            .boxed()
+        }
+    }
+    impl Arbitrary for Arguments {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            prop::collection::vec((Just(0_usize), Argument::arbitrary()), 0..=10)
+                .prop_map(|args| Arguments { args, token: 0 })
+                .boxed()
+        }
+    }
+}

@@ -221,3 +221,28 @@ mod test_functions {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod proptest {
+    use crate::reader::entry::{arguments::Arguments, function::Function};
+    use proptest::prelude::*;
+    impl Arbitrary for Function {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            (
+                "[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from),
+                Arguments::arbitrary(),
+            )
+                .prop_map(|(name, args)| Function {
+                    args: Some(args),
+                    tolerance: false,
+                    token: 0,
+                    feed: None,
+                    name,
+                })
+                .boxed()
+        }
+    }
+}

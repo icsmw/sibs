@@ -3,3 +3,4 @@
 - support of tokens extracting
 - define tasks as allowed in parallel
 - add test for error: command in root level of scenario
+- FIRST is missed in block

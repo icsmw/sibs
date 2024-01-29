@@ -80,3 +80,31 @@ impl Operator for VariableComparing {
         })
     }
 }
+
+#[cfg(test)]
+mod proptest {
+    use crate::reader::entry::{
+        embedded::If::Cmp, variable_comparing::VariableComparing, variable_name::VariableName,
+    };
+    use proptest::prelude::*;
+
+    impl Arbitrary for VariableComparing {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            (
+                Cmp::arbitrary(),
+                VariableName::arbitrary(),
+                "[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from),
+            )
+                .prop_map(|(cmp, name, value)| VariableComparing {
+                    cmp,
+                    value,
+                    name,
+                    token: 0,
+                })
+                .boxed()
+        }
+    }
+}

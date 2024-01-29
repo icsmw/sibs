@@ -8,7 +8,7 @@ use crate::{
 };
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Types {
     String,
     Number,
@@ -29,7 +29,7 @@ impl fmt::Display for Types {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VariableType {
     pub var_type: Types,
     pub token: usize,
@@ -93,5 +93,31 @@ impl fmt::Display for VariableType {
 impl term::Display for VariableType {
     fn to_string(&self) -> String {
         format!("{{{}}}", self.var_type)
+    }
+}
+
+#[cfg(test)]
+mod proptest {
+    use crate::reader::entry::variable_type::{Types, VariableType};
+    use proptest::prelude::*;
+
+    impl Arbitrary for Types {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            prop_oneof![Just(Types::String), Just(Types::Bool), Just(Types::Number),].boxed()
+        }
+    }
+
+    impl Arbitrary for VariableType {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            Types::arbitrary()
+                .prop_map(|var_type| VariableType { var_type, token: 0 })
+                .boxed()
+        }
     }
 }

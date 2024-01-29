@@ -260,3 +260,64 @@ mod test_optional {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod proptest {
+
+    use crate::reader::entry::{
+        block::Block,
+        command::Command,
+        function::Function,
+        optional::{Action, Condition, Optional},
+        reference::Reference,
+        value_strings::ValueString,
+        variable_assignation::VariableAssignation,
+        variable_comparing::VariableComparing,
+    };
+    use proptest::prelude::*;
+
+    impl Arbitrary for Action {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            prop_oneof![
+                Command::arbitrary().prop_map(Action::Command),
+                Block::arbitrary().prop_map(Action::Block),
+                VariableAssignation::arbitrary().prop_map(Action::VariableAssignation),
+                ValueString::arbitrary().prop_map(Action::ValueString),
+                Reference::arbitrary().prop_map(Action::Reference),
+                Function::arbitrary().prop_map(Action::Function),
+            ]
+            .boxed()
+        }
+    }
+
+    impl Arbitrary for Condition {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            prop_oneof![
+                VariableComparing::arbitrary().prop_map(Condition::VariableComparing),
+                Function::arbitrary().prop_map(Condition::Function),
+            ]
+            .boxed()
+        }
+    }
+
+    impl Arbitrary for Optional {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            (Condition::arbitrary(), Action::arbitrary())
+                .prop_map(|(condition, action)| Optional {
+                    condition,
+                    action,
+                    token: 0,
+                })
+                .boxed()
+        }
+    }
+}

@@ -100,3 +100,21 @@ mod test_first {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod proptest {
+
+    use crate::reader::entry::{block::Block, embedded::first::First};
+    use proptest::prelude::*;
+
+    impl Arbitrary for First {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            Block::arbitrary()
+                .prop_map(|block| First { block, token: 0 })
+                .boxed()
+        }
+    }
+}

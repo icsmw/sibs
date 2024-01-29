@@ -10,7 +10,7 @@ use crate::{
 };
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Command {
     pub command: String,
     pub token: usize,
@@ -70,5 +70,21 @@ impl Operator for Command {
                 }
             }
         })
+    }
+}
+
+#[cfg(test)]
+mod proptest {
+
+    use crate::reader::entry::command::Command;
+    use proptest::prelude::*;
+
+    impl Arbitrary for Command {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            Just(Command::new("ls".to_owned(), 0)).boxed()
+        }
     }
 }

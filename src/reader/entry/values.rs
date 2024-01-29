@@ -8,7 +8,7 @@ use crate::{
 };
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Values {
     pub values: Vec<String>,
     pub token: usize,
@@ -101,5 +101,22 @@ mod test_values {
         }
         assert_eq!(count, samples.len());
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod proptest {
+    use crate::reader::entry::values::Values;
+    use proptest::prelude::*;
+
+    impl Arbitrary for Values {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            prop::collection::vec("[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from), 0..=10)
+                .prop_map(|values| Values { values, token: 0 })
+                .boxed()
+        }
     }
 }
