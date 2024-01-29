@@ -36,6 +36,7 @@ impl Executor for Os {
             if function.name.trim() != NAME {
                 return Ok(None);
             }
+            let logger = cx.tracker.get_logger(format!("@{NAME}"));
             let arg = function
                 .args
                 .as_ref()
@@ -60,6 +61,13 @@ impl Executor for Os {
                     .to_owned(),
                 _ => Err(Error::InvalidArgumentType)?,
             };
+            logger
+                .log(format!(
+                    "checking for \"{}\"; result: {}",
+                    probe.to_lowercase(),
+                    probe.to_lowercase() == std::env::consts::OS
+                ))
+                .await;
             Ok(Some(AnyValue::new(
                 probe.to_lowercase() == std::env::consts::OS,
             )))

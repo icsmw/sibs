@@ -87,14 +87,18 @@ impl Operator for Proviso {
                         Cmp::NotEqual => left != right,
                     })))
                 }
-                Self::Function(func, expectation) => {
+                Self::Function(func, negative) => {
                     let result = *func
                         .process(owner, components, args, cx)
                         .await?
                         .ok_or(operator::E::NoBoolResultFromFunction)?
                         .get_as::<bool>()
                         .ok_or(operator::E::NoBoolResultFromFunction)?;
-                    Ok(Some(AnyValue::new(result == *expectation)))
+                    Ok(Some(AnyValue::new(if *negative {
+                        !result
+                    } else {
+                        result
+                    })))
                 }
                 Self::Group(provisos) => {
                     let mut iteration: Option<bool> = None;
