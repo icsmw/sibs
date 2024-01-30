@@ -148,28 +148,31 @@ mod test_value_string {
 
 #[cfg(test)]
 mod proptest {
-    use crate::reader::entry::{
-        function::Function,
-        value_strings::{Injection, ValueString},
-        variable_name::VariableName,
+    use crate::{
+        inf::tests::*,
+        reader::entry::{
+            function::Function,
+            value_strings::{Injection, ValueString},
+            variable_name::VariableName,
+        },
     };
     use proptest::prelude::*;
     impl Arbitrary for Injection {
-        type Parameters = ();
+        type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             prop_oneof![
                 (
                     "[a-zA-Z_][a-zA-Z0-9_]*"
                         .prop_map(String::from)
                         .prop_map(|s| s),
-                    Function::arbitrary().prop_map(|f| f)
+                    Function::arbitrary_with(scope.clone()).prop_map(|f| f)
                 )
                     .prop_map(|(s, f)| Injection::Function(s, f)),
                 (
                     "[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from),
-                    VariableName::arbitrary().prop_map(|n| n)
+                    VariableName::arbitrary_with(scope.clone()).prop_map(|n| n)
                 )
                     .prop_map(|(s, n)| Injection::VariableName(s, n))
             ]
@@ -178,12 +181,12 @@ mod proptest {
     }
 
     impl Arbitrary for ValueString {
-        type Parameters = ();
+        type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             (
-                prop::collection::vec(Injection::arbitrary(), 1..=10),
+                prop::collection::vec(Injection::arbitrary_with(scope.clone()), 1..=10),
                 prop::collection::vec("[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from), 10),
             )
                 .prop_map(|(injections, noise)| {

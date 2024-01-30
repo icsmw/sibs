@@ -191,36 +191,39 @@ mod test_each {
 #[cfg(test)]
 mod proptest {
 
-    use crate::reader::entry::{
-        block::Block,
-        embedded::each::{Each, Input},
-        function::Function,
-        variable_name::VariableName,
+    use crate::{
+        inf::tests::*,
+        reader::entry::{
+            block::Block,
+            embedded::each::{Each, Input},
+            function::Function,
+            variable_name::VariableName,
+        },
     };
     use proptest::prelude::*;
 
     impl Arbitrary for Input {
-        type Parameters = ();
+        type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             prop_oneof![
-                VariableName::arbitrary().prop_map(Input::VariableName),
-                Function::arbitrary().prop_map(Input::Function),
+                VariableName::arbitrary_with(scope.clone()).prop_map(Input::VariableName),
+                Function::arbitrary_with(scope.clone()).prop_map(Input::Function),
             ]
             .boxed()
         }
     }
 
     impl Arbitrary for Each {
-        type Parameters = ();
+        type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             (
-                Block::arbitrary(),
-                VariableName::arbitrary(),
-                Input::arbitrary(),
+                Block::arbitrary_with(scope.clone()),
+                VariableName::arbitrary_with(scope.clone()),
+                Input::arbitrary_with(scope.clone()),
             )
                 .prop_map(|(block, variable, input)| Each {
                     block,

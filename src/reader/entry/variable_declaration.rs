@@ -112,34 +112,37 @@ impl term::Display for VariableDeclaration {
 
 #[cfg(test)]
 mod proptest {
-    use crate::reader::entry::{
-        values::Values,
-        variable_declaration::{Declaration, VariableDeclaration},
-        variable_name::VariableName,
-        variable_type::VariableType,
+    use crate::{
+        inf::tests::*,
+        reader::entry::{
+            values::Values,
+            variable_declaration::{Declaration, VariableDeclaration},
+            variable_name::VariableName,
+            variable_type::VariableType,
+        },
     };
     use proptest::prelude::*;
 
     impl Arbitrary for Declaration {
-        type Parameters = ();
+        type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             prop_oneof![
-                Values::arbitrary().prop_map(Declaration::Values),
-                VariableType::arbitrary().prop_map(Declaration::Typed),
+                Values::arbitrary_with(scope.clone()).prop_map(Declaration::Values),
+                VariableType::arbitrary_with(scope.clone()).prop_map(Declaration::Typed),
             ]
             .boxed()
         }
     }
     impl Arbitrary for VariableDeclaration {
-        type Parameters = ();
+        type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             (
-                Declaration::arbitrary().prop_map(|v| v),
-                VariableName::arbitrary().prop_map(|v| v),
+                Declaration::arbitrary_with(scope.clone()).prop_map(|v| v),
+                VariableName::arbitrary_with(scope.clone()).prop_map(|v| v),
             )
                 .prop_map(|(declaration, name)| VariableDeclaration {
                     declaration,

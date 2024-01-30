@@ -439,48 +439,53 @@ mod test_if {
 #[cfg(test)]
 mod proptest {
 
-    use crate::reader::entry::{
-        embedded::If::{Cmp, Combination, Element, If, Proviso},
-        function::Function,
-        value_strings::ValueString,
-        variable_name::VariableName,
-        Block,
+    use crate::{
+        inf::tests::*,
+        reader::entry::{
+            embedded::If::{Cmp, Combination, Element, If, Proviso},
+            function::Function,
+            value_strings::ValueString,
+            variable_name::VariableName,
+            Block,
+        },
     };
     use proptest::prelude::*;
 
     impl Arbitrary for Cmp {
-        type Parameters = ();
+        type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(_scope: Self::Parameters) -> Self::Strategy {
             prop_oneof![Just(Cmp::Equal), Just(Cmp::NotEqual),].boxed()
         }
     }
 
     impl Arbitrary for Combination {
-        type Parameters = ();
+        type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(_scope: Self::Parameters) -> Self::Strategy {
             prop_oneof![Just(Combination::And), Just(Combination::Or),].boxed()
         }
     }
 
     impl Arbitrary for Proviso {
-        type Parameters = ();
+        type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             prop_oneof![
                 (
-                    VariableName::arbitrary(),
-                    Cmp::arbitrary(),
-                    ValueString::arbitrary()
+                    VariableName::arbitrary_with(scope.clone()),
+                    Cmp::arbitrary_with(scope.clone()),
+                    ValueString::arbitrary_with(scope.clone())
                 )
                     .prop_map(|(name, cmp, value)| Proviso::Variable(name, cmp, value)),
-                Function::arbitrary().prop_map(|f| Proviso::Function(f, false)),
-                Combination::arbitrary().prop_map(|cmb| Proviso::Combination(cmb, 0)),
-                prop::collection::vec(Proviso::arbitrary(), 1..5).prop_map(Proviso::Group)
+                Function::arbitrary_with(scope.clone()).prop_map(|f| Proviso::Function(f, false)),
+                Combination::arbitrary_with(scope.clone())
+                    .prop_map(|cmb| Proviso::Combination(cmb, 0)),
+                prop::collection::vec(Proviso::arbitrary_with(scope.clone()), 1..5)
+                    .prop_map(Proviso::Group)
             ]
             .boxed()
         }
@@ -490,18 +495,27 @@ mod proptest {
         /// 0 - generate IF
         /// 1 - generate ELSE
         /// >=2 - generate IF OR ELSE
-        type Parameters = u8;
+        type Parameters = (u8, SharedScope);
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(target: Self::Parameters) -> Self::Strategy {
-            match target {
-                0 => (Proviso::arbitrary(), Block::arbitrary())
+        fn arbitrary_with(params: Self::Parameters) -> Self::Strategy {
+            match params.0 {
+                0 => (
+                    Proviso::arbitrary_with(params.1.clone()),
+                    Block::arbitrary_with(params.1.clone()),
+                )
                     .prop_map(|(p, b)| Element::If(p, b))
                     .boxed(),
-                1 => Block::arbitrary().prop_map(Element::Else).boxed(),
+                1 => Block::arbitrary_with(params.1.clone())
+                    .prop_map(Element::Else)
+                    .boxed(),
                 _ => prop_oneof![
-                    (Proviso::arbitrary(), Block::arbitrary()).prop_map(|(p, b)| Element::If(p, b)),
-                    Block::arbitrary().prop_map(Element::Else)
+                    (
+                        Proviso::arbitrary_with(params.1.clone()),
+                        Block::arbitrary_with(params.1.clone())
+                    )
+                        .prop_map(|(p, b)| Element::If(p, b)),
+                    Block::arbitrary_with(params.1.clone()).prop_map(Element::Else)
                 ]
                 .boxed(),
             }
@@ -509,13 +523,13 @@ mod proptest {
     }
 
     impl Arbitrary for If {
-        type Parameters = ();
+        type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             (
-                prop::collection::vec(Element::arbitrary_with(0), 1..5),
-                prop::collection::vec(Element::arbitrary_with(1), 0..1),
+                prop::collection::vec(Element::arbitrary_with((0, scope.clone())), 1..5),
+                prop::collection::vec(Element::arbitrary_with((1, scope.clone())), 0..1),
             )
                 .prop_map(|(elements, else_element)| If {
                     elements: [elements, else_element].concat(),

@@ -223,3 +223,36 @@ mod test_component {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod proptest {
+    use std::path::PathBuf;
+
+    use crate::{
+        inf::tests::*,
+        reader::entry::{component::Component, meta::Meta, task::Task},
+    };
+    use proptest::prelude::*;
+
+    impl Arbitrary for Component {
+        type Parameters = SharedScope;
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
+            (
+                "[a-zA-Z]*".prop_map(String::from),
+                prop::collection::vec(Task::arbitrary_with(scope.clone()), 2..6),
+                Meta::arbitrary_with(scope.clone()),
+            )
+                .prop_map(|(name, tasks, meta)| Component {
+                    tasks,
+                    meta: Some(meta),
+                    name,
+                    cwd: Some(PathBuf::new()),
+                    functions: vec![],
+                    token: 0,
+                })
+                .boxed()
+        }
+    }
+}

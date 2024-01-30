@@ -224,16 +224,19 @@ mod test_functions {
 
 #[cfg(test)]
 mod proptest {
-    use crate::reader::entry::{arguments::Arguments, function::Function};
+    use crate::{
+        inf::tests::*,
+        reader::entry::{arguments::Arguments, function::Function},
+    };
     use proptest::prelude::*;
     impl Arbitrary for Function {
-        type Parameters = ();
+        type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             (
                 "[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from),
-                Arguments::arbitrary(),
+                Arguments::arbitrary_with(scope.clone()),
             )
                 .prop_map(|(name, args)| Function {
                     args: Some(args),

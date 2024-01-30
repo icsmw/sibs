@@ -108,14 +108,14 @@ mod test_variable_name {
 
 #[cfg(test)]
 mod proptest {
-    use crate::reader::entry::variable_name::VariableName;
+    use crate::{inf::tests::*, reader::entry::variable_name::VariableName};
     use proptest::prelude::*;
 
     impl Arbitrary for VariableName {
-        type Parameters = ();
+        type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(_scope: Self::Parameters) -> Self::Strategy {
             "[a-zA-Z_][a-zA-Z0-9_]*"
                 .prop_map(String::from)
                 .prop_map(|name| VariableName { name, token: 0 })

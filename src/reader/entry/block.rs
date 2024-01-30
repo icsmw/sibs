@@ -235,44 +235,48 @@ mod test_blocks {
 #[cfg(test)]
 mod proptest {
 
-    use crate::reader::entry::{
-        block::{Block, Element},
-        command::Command,
-        embedded::{each::Each, If::If},
-        function::Function,
-        meta::Meta,
-        optional::Optional,
-        reference::Reference,
-        variable_assignation::VariableAssignation,
+    use crate::{
+        inf::tests::*,
+        reader::entry::{
+            block::{Block, Element},
+            command::Command,
+            embedded::{each::Each, If::If},
+            function::Function,
+            meta::Meta,
+            optional::Optional,
+            reference::Reference,
+            variable_assignation::VariableAssignation,
+        },
     };
     use proptest::prelude::*;
 
     impl Arbitrary for Element {
-        type Parameters = ();
+        type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             prop_oneof![
-                Each::arbitrary().prop_map(Element::Each),
-                If::arbitrary().prop_map(Element::If),
-                Command::arbitrary().prop_map(Element::Command),
-                Optional::arbitrary().prop_map(Element::Optional),
-                VariableAssignation::arbitrary().prop_map(Element::VariableAssignation),
-                Reference::arbitrary().prop_map(Element::Reference),
-                Function::arbitrary().prop_map(Element::Function),
+                Each::arbitrary_with(scope.clone()).prop_map(Element::Each),
+                If::arbitrary_with(scope.clone()).prop_map(Element::If),
+                Command::arbitrary_with(scope.clone()).prop_map(Element::Command),
+                Optional::arbitrary_with(scope.clone()).prop_map(Element::Optional),
+                VariableAssignation::arbitrary_with(scope.clone())
+                    .prop_map(Element::VariableAssignation),
+                Reference::arbitrary_with(scope.clone()).prop_map(Element::Reference),
+                Function::arbitrary_with(scope.clone()).prop_map(Element::Function),
             ]
             .boxed()
         }
     }
 
     impl Arbitrary for Block {
-        type Parameters = ();
+        type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             (
-                prop::collection::vec(Element::arbitrary(), 1..=10),
-                Meta::arbitrary(),
+                prop::collection::vec(Element::arbitrary_with(scope.clone()), 1..=10),
+                Meta::arbitrary_with(scope.clone()),
             )
                 .prop_map(|(elements, meta)| Block {
                     elements,

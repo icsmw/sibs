@@ -1,5 +1,5 @@
 mod scope;
-pub use scope::Scope;
+pub use scope::*;
 
 use proptest::{prelude::*, strategy::ValueTree, test_runner::TestRunner};
 

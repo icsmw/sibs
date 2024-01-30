@@ -202,33 +202,39 @@ mod test_variable_assignation {
 
 #[cfg(test)]
 mod proptest {
-    use crate::reader::entry::{
-        function::Function,
-        value_strings::ValueString,
-        variable_assignation::{Assignation, VariableAssignation},
-        variable_name::VariableName,
+    use crate::{
+        inf::tests::*,
+        reader::entry::{
+            function::Function,
+            value_strings::ValueString,
+            variable_assignation::{Assignation, VariableAssignation},
+            variable_name::VariableName,
+        },
     };
     use proptest::prelude::*;
 
     impl Arbitrary for Assignation {
-        type Parameters = ();
+        type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             prop_oneof![
-                Function::arbitrary().prop_map(Self::Function),
-                ValueString::arbitrary().prop_map(Self::ValueString),
+                Function::arbitrary_with(scope.clone()).prop_map(Self::Function),
+                ValueString::arbitrary_with(scope.clone()).prop_map(Self::ValueString),
             ]
             .boxed()
         }
     }
 
     impl Arbitrary for VariableAssignation {
-        type Parameters = ();
+        type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
-            (Assignation::arbitrary(), VariableName::arbitrary())
+        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
+            (
+                Assignation::arbitrary_with(scope.clone()),
+                VariableName::arbitrary_with(scope.clone()),
+            )
                 .prop_map(|(assignation, name)| VariableAssignation {
                     assignation,
                     name,

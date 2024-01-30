@@ -242,41 +242,38 @@ mod test_refs {
 #[cfg(test)]
 mod proptest {
 
-    use crate::reader::entry::{
-        block::{Block, Element},
-        command::Command,
-        embedded::{each::Each, If::If},
-        function::Function,
-        meta::Meta,
-        optional::Optional,
-        reference::{Input, Reference},
-        variable_name::VariableName,
+    use crate::{
+        inf::tests::*,
+        reader::entry::{
+            reference::{Input, Reference},
+            variable_name::VariableName,
+        },
     };
     use proptest::prelude::*;
 
     impl Arbitrary for Input {
-        type Parameters = ();
+        type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             prop_oneof![
                 "[a-zA-Z_][a-zA-Z0-9_]*"
                     .prop_map(String::from)
                     .prop_map(Input::String),
-                VariableName::arbitrary().prop_map(Input::VariableName),
+                VariableName::arbitrary_with(scope.clone()).prop_map(Input::VariableName),
             ]
             .boxed()
         }
     }
 
     impl Arbitrary for Reference {
-        type Parameters = ();
+        type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             (
                 prop::collection::vec("[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from), 2),
-                prop::collection::vec(Input::arbitrary(), 0..5),
+                prop::collection::vec(Input::arbitrary_with(scope.clone()), 0..5),
             )
                 .prop_map(|(path, inputs)| Reference {
                     path,

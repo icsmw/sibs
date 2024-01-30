@@ -106,14 +106,14 @@ mod test_values {
 
 #[cfg(test)]
 mod proptest {
-    use crate::reader::entry::values::Values;
+    use crate::{inf::tests::*, reader::entry::values::Values};
     use proptest::prelude::*;
 
     impl Arbitrary for Values {
-        type Parameters = ();
+        type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(_scope: Self::Parameters) -> Self::Strategy {
             prop::collection::vec("[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from), 0..=10)
                 .prop_map(|values| Values { values, token: 0 })
                 .boxed()

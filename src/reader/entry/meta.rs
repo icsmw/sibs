@@ -67,14 +67,14 @@ impl term::Display for Meta {
 #[cfg(test)]
 mod proptest {
 
-    use crate::reader::entry::meta::Meta;
+    use crate::{inf::tests::*, reader::entry::meta::Meta};
     use proptest::prelude::*;
 
     impl Arbitrary for Meta {
-        type Parameters = ();
+        type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(_scope: Self::Parameters) -> Self::Strategy {
             prop::collection::vec("[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from), 0..=10)
                 .prop_map(|inner| Meta { inner, token: 0 })
                 .boxed()

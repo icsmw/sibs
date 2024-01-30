@@ -104,15 +104,18 @@ mod test_first {
 #[cfg(test)]
 mod proptest {
 
-    use crate::reader::entry::{block::Block, embedded::first::First};
+    use crate::{
+        inf::tests::*,
+        reader::entry::{block::Block, embedded::first::First},
+    };
     use proptest::prelude::*;
 
     impl Arbitrary for First {
-        type Parameters = ();
+        type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
-            Block::arbitrary()
+        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
+            Block::arbitrary_with(scope.clone())
                 .prop_map(|block| First { block, token: 0 })
                 .boxed()
         }
