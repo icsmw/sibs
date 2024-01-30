@@ -12,7 +12,7 @@ use crate::{
 };
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Assignation {
     Function(Function),
     ValueString(ValueString),
@@ -39,7 +39,7 @@ impl Operator for Assignation {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VariableAssignation {
     pub name: VariableName,
     pub assignation: Assignation,

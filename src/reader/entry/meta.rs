@@ -8,7 +8,7 @@ use crate::{
 };
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Meta {
     pub inner: Vec<String>,
     pub token: usize,

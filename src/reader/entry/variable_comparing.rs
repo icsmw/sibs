@@ -11,7 +11,7 @@ use crate::{
 };
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VariableComparing {
     pub name: VariableName,
     pub cmp: Cmp,

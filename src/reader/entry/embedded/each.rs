@@ -12,7 +12,7 @@ use crate::{
 };
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Input {
     VariableName(VariableName),
     Function(Function),
@@ -49,7 +49,7 @@ impl fmt::Display for Input {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Each {
     pub variable: VariableName,
     pub input: Input,

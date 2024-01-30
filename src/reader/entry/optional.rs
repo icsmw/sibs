@@ -14,7 +14,7 @@ use crate::{
 };
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Action {
     VariableAssignation(VariableAssignation),
     ValueString(ValueString),
@@ -62,7 +62,7 @@ impl Operator for Action {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Condition {
     Function(Function),
     VariableComparing(VariableComparing),
@@ -98,7 +98,7 @@ impl Operator for Condition {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Optional {
     pub condition: Condition,
     pub action: Action,

@@ -156,7 +156,7 @@ impl fmt::Display for Proviso {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Element {
     If(Proviso, Block),
     Else(Block),
@@ -204,7 +204,7 @@ impl fmt::Display for Element {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct If {
     pub elements: Vec<Element>,
     pub token: usize,
@@ -480,22 +480,31 @@ mod proptest {
                     .prop_map(|(name, cmp, value)| Proviso::Variable(name, cmp, value)),
                 Function::arbitrary().prop_map(|f| Proviso::Function(f, false)),
                 Combination::arbitrary().prop_map(|cmb| Proviso::Combination(cmb, 0)),
-                prop::collection::vec(Proviso::arbitrary(), 1..10).prop_map(|p| Proviso::Group(p))
+                prop::collection::vec(Proviso::arbitrary(), 1..5).prop_map(Proviso::Group)
             ]
             .boxed()
         }
     }
 
     impl Arbitrary for Element {
-        type Parameters = ();
+        /// 0 - generate IF
+        /// 1 - generate ELSE
+        /// >=2 - generate IF OR ELSE
+        type Parameters = u8;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
-            prop_oneof![
-                (Proviso::arbitrary(), Block::arbitrary()).prop_map(|(p, b)| Element::If(p, b)),
-                Block::arbitrary().prop_map(|b| Element::Else(b))
-            ]
-            .boxed()
+        fn arbitrary_with(target: Self::Parameters) -> Self::Strategy {
+            match target {
+                0 => (Proviso::arbitrary(), Block::arbitrary())
+                    .prop_map(|(p, b)| Element::If(p, b))
+                    .boxed(),
+                1 => Block::arbitrary().prop_map(Element::Else).boxed(),
+                _ => prop_oneof![
+                    (Proviso::arbitrary(), Block::arbitrary()).prop_map(|(p, b)| Element::If(p, b)),
+                    Block::arbitrary().prop_map(Element::Else)
+                ]
+                .boxed(),
+            }
         }
     }
 
@@ -504,8 +513,14 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
-            prop::collection::vec(Element::arbitrary(), 1..10)
-                .prop_map(|elements| If { elements, token: 0 })
+            (
+                prop::collection::vec(Element::arbitrary_with(0), 1..5),
+                prop::collection::vec(Element::arbitrary_with(1), 0..1),
+            )
+                .prop_map(|(elements, else_element)| If {
+                    elements: [elements, else_element].concat(),
+                    token: 0,
+                })
                 .boxed()
         }
     }
