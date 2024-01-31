@@ -235,10 +235,13 @@ mod proptest {
                 Assignation::arbitrary_with(scope.clone()),
                 VariableName::arbitrary_with(scope.clone()),
             )
-                .prop_map(|(assignation, name)| VariableAssignation {
-                    assignation,
-                    name,
-                    token: 0,
+                .prop_map(move |(assignation, name)| {
+                    scope.write().unwrap().add_assignation(name.name.clone());
+                    VariableAssignation {
+                        assignation,
+                        name,
+                        token: 0,
+                    }
                 })
                 .boxed()
         }

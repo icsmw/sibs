@@ -5,7 +5,33 @@ use std::{
 
 #[derive(Debug, Clone, Default)]
 pub struct Scope {
-    pub variables: HashMap<String, String>,
+    pub declarations: HashMap<String, Option<String>>,
+    pub assignation: HashMap<String, Option<String>>,
+}
+
+impl Scope {
+    pub fn add_declaration(&mut self, name: String) {
+        self.declarations.insert(name, None);
+    }
+    pub fn assign_declaration(&mut self, name: String, value: String) {
+        self.declarations
+            .entry(name)
+            .and_modify(|v| {
+                let _ = v.insert(value.clone());
+            })
+            .or_insert(Some(value));
+    }
+    pub fn add_assignation(&mut self, name: String) {
+        self.assignation.insert(name, None);
+    }
+    pub fn assign_assignation(&mut self, name: String, value: String) {
+        self.assignation
+            .entry(name)
+            .and_modify(|v| {
+                let _ = v.insert(value.clone());
+            })
+            .or_insert(Some(value));
+    }
 }
 
 pub type SharedScope = Arc<RwLock<Scope>>;

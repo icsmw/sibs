@@ -144,10 +144,13 @@ mod proptest {
                 Declaration::arbitrary_with(scope.clone()).prop_map(|v| v),
                 VariableName::arbitrary_with(scope.clone()).prop_map(|v| v),
             )
-                .prop_map(|(declaration, name)| VariableDeclaration {
-                    declaration,
-                    name,
-                    token: 0,
+                .prop_map(move |(declaration, name)| {
+                    scope.write().unwrap().add_declaration(name.name.clone());
+                    VariableDeclaration {
+                        declaration,
+                        name,
+                        token: 0,
+                    }
                 })
                 .boxed()
         }

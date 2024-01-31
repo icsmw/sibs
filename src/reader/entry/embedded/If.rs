@@ -469,26 +469,91 @@ mod proptest {
         }
     }
 
-    impl Arbitrary for Proviso {
-        type Parameters = SharedScope;
-        type Strategy = BoxedStrategy<Self>;
-
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            prop_oneof![
-                (
-                    VariableName::arbitrary_with(scope.clone()),
-                    Cmp::arbitrary_with(scope.clone()),
-                    ValueString::arbitrary_with(scope.clone())
-                )
-                    .prop_map(|(name, cmp, value)| Proviso::Variable(name, cmp, value)),
-                Function::arbitrary_with(scope.clone()).prop_map(|f| Proviso::Function(f, false)),
+    // Gives flat Proviso with:
+    // - Combination
+    // - Variable
+    // - Function
+    fn get_proviso_chain(scope: SharedScope) -> BoxedStrategy<Vec<Proviso>> {
+        let max = 6;
+        (
+            prop::collection::vec(
                 Combination::arbitrary_with(scope.clone())
                     .prop_map(|cmb| Proviso::Combination(cmb, 0)),
-                prop::collection::vec(Proviso::arbitrary_with(scope.clone()), 1..5)
-                    .prop_map(Proviso::Group)
-            ]
+                max,
+            ),
+            prop::collection::vec(
+                prop_oneof![
+                    Function::arbitrary_with(scope.clone())
+                        .prop_map(|f| Proviso::Function(f, false)),
+                    (
+                        VariableName::arbitrary_with(scope.clone()),
+                        Cmp::arbitrary_with(scope.clone()),
+                        ValueString::arbitrary_with(scope.clone()),
+                    )
+                        .prop_map(|(name, cmp, value)| Proviso::Variable(name, cmp, value))
+                ],
+                1..max,
+            ),
+        )
+            .prop_map(|(mut combinations, mut conditions)| {
+                let mut provisos: Vec<Proviso> = conditions
+                    .into_iter()
+                    .flat_map(|condition| [condition, combinations.remove(0)])
+                    .collect();
+                if let Some(Proviso::Combination(_, _)) = provisos.last() {
+                    let _ = provisos.pop();
+                }
+                provisos
+            })
             .boxed()
-        }
+    }
+
+    // Creates proviso group with nested groups
+    fn get_proviso_group(scope: SharedScope) -> BoxedStrategy<Proviso> {
+        let max = 5;
+        (
+            prop::collection::vec(
+                Combination::arbitrary_with(scope.clone())
+                    .prop_map(|cmb| Proviso::Combination(cmb, 0)),
+                max,
+            ),
+            prop::collection::vec(get_proviso_chain(scope.clone()), max),
+        )
+            .prop_map(|(mut combinations, mut chains)| {
+                while chains.len() >= 2 {
+                    let group = Proviso::Group(chains.remove(0));
+                    chains
+                        .get_mut(0)
+                        .unwrap()
+                        .splice(0..0, vec![combinations.remove(0), group]);
+                }
+                Proviso::Group(chains.remove(0))
+            })
+            .boxed()
+    }
+
+    // Returns Proviso::Group
+    fn get_proviso(scope: SharedScope) -> BoxedStrategy<Proviso> {
+        let max = 5;
+        (
+            prop::collection::vec(
+                Combination::arbitrary_with(scope.clone())
+                    .prop_map(|cmb| Proviso::Combination(cmb, 0)),
+                max,
+            ),
+            prop::collection::vec(get_proviso_group(scope.clone()), 1..max),
+        )
+            .prop_map(|(mut combinations, mut groups)| {
+                let mut provisos: Vec<Proviso> = groups
+                    .into_iter()
+                    .flat_map(|group| [group, combinations.remove(0)])
+                    .collect();
+                if let Some(Proviso::Combination(_, _)) = provisos.last() {
+                    let _ = provisos.pop();
+                }
+                Proviso::Group(provisos)
+            })
+            .boxed()
     }
 
     impl Arbitrary for Element {
@@ -498,24 +563,24 @@ mod proptest {
         type Parameters = (u8, SharedScope);
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(params: Self::Parameters) -> Self::Strategy {
-            match params.0 {
+        fn arbitrary_with((el, scope): Self::Parameters) -> Self::Strategy {
+            match el {
                 0 => (
-                    Proviso::arbitrary_with(params.1.clone()),
-                    Block::arbitrary_with(params.1.clone()),
+                    get_proviso(scope.clone()),
+                    Block::arbitrary_with(scope.clone()),
                 )
                     .prop_map(|(p, b)| Element::If(p, b))
                     .boxed(),
-                1 => Block::arbitrary_with(params.1.clone())
+                1 => Block::arbitrary_with(scope.clone())
                     .prop_map(Element::Else)
                     .boxed(),
                 _ => prop_oneof![
                     (
-                        Proviso::arbitrary_with(params.1.clone()),
-                        Block::arbitrary_with(params.1.clone())
+                        get_proviso(scope.clone()),
+                        Block::arbitrary_with(scope.clone())
                     )
                         .prop_map(|(p, b)| Element::If(p, b)),
-                    Block::arbitrary_with(params.1.clone()).prop_map(Element::Else)
+                    Block::arbitrary_with(scope.clone()).prop_map(Element::Else)
                 ]
                 .boxed(),
             }
