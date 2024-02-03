@@ -183,9 +183,9 @@ mod test_component {
 
     #[test]
     fn reading() -> Result<(), E> {
-        let components = include_str!("./tests/normal/component.sibs").to_string();
+        let components = include_str!("../../tests/normal/component.sibs").to_string();
         let components = components.split('\n').collect::<Vec<&str>>();
-        let tasks = include_str!("./tests/normal/tasks.sibs");
+        let tasks = include_str!("../../tests/normal/tasks.sibs");
         let mut reader = Reader::new(
             components
                 .iter()
@@ -208,7 +208,7 @@ mod test_component {
 
     #[test]
     fn error() -> Result<(), E> {
-        let samples = include_str!("./tests/error/component.sibs").to_string();
+        let samples = include_str!("../../tests/error/component.sibs").to_string();
         let samples = samples
             .split('\n')
             .map(|v| format!("{v} [\n@os;\n];"))

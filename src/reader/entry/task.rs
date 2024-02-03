@@ -178,7 +178,7 @@ mod test_tasks {
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut reader = Reader::new(include_str!("./tests/normal/tasks.sibs").to_string());
+        let mut reader = Reader::new(include_str!("../../tests/normal/tasks.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Task::read(&mut reader)? {
             assert_eq!(
@@ -194,7 +194,7 @@ mod test_tasks {
 
     #[test]
     fn error() -> Result<(), E> {
-        let samples = include_str!("./tests/error/tasks.sibs").to_string();
+        let samples = include_str!("../../tests/error/tasks.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {

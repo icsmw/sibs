@@ -407,7 +407,7 @@ mod test_if {
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut reader = Reader::new(include_str!("../tests/normal/if.sibs").to_string());
+        let mut reader = Reader::new(include_str!("../../../tests/normal/if.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = If::read(&mut reader)? {
             assert_eq!(
@@ -423,7 +423,7 @@ mod test_if {
 
     #[test]
     fn error() -> Result<(), E> {
-        let samples = include_str!("../tests/error/if.sibs").to_string();
+        let samples = include_str!("../../../tests/error/if.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
