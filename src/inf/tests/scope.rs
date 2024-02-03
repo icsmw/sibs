@@ -1,3 +1,5 @@
+use crate::reader::entry::{ValueString, VariableName};
+use proptest::prelude::*;
 use std::{
     collections::HashMap,
     sync::{Arc, RwLock},
@@ -10,6 +12,9 @@ pub struct Scope {
 }
 
 impl Scope {
+    pub fn get_rnd_declaration_name(&self) -> BoxedStrategy<String> {
+        prop::sample::select(self.declarations.keys().cloned().collect::<Vec<String>>()).boxed()
+    }
     pub fn add_declaration(&mut self, name: String) {
         self.declarations.insert(name, None);
     }

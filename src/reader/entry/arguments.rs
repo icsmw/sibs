@@ -165,7 +165,7 @@ mod proptest {
                 "[a-zA-Z_][a-zA-Z0-9_]*"
                     .prop_map(String::from)
                     .prop_map(Argument::String),
-                VariableName::arbitrary_with(scope.clone()).prop_map(Argument::VariableName),
+                VariableName::arbitrary().prop_map(Argument::VariableName),
                 Arguments::arbitrary_with(scope.clone()).prop_map(Argument::Arguments)
             ]
             .boxed()

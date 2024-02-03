@@ -112,14 +112,17 @@ mod proptest {
     use proptest::prelude::*;
 
     impl Arbitrary for VariableName {
-        type Parameters = SharedScope;
+        type Parameters = Option<BoxedStrategy<String>>;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_scope: Self::Parameters) -> Self::Strategy {
-            "[a-zA-Z_][a-zA-Z0-9_]*"
-                .prop_map(String::from)
-                .prop_map(|name| VariableName { name, token: 0 })
-                .boxed()
+        fn arbitrary_with(name_strategy: Self::Parameters) -> Self::Strategy {
+            if let Some(name_strategy) = name_strategy {
+                name_strategy
+            } else {
+                "[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from).boxed()
+            }
+            .prop_map(|name| VariableName { name, token: 0 })
+            .boxed()
         }
     }
 

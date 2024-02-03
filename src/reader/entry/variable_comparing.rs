@@ -98,7 +98,7 @@ mod proptest {
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             (
                 Cmp::arbitrary_with(scope.clone()),
-                VariableName::arbitrary_with(scope.clone()),
+                VariableName::arbitrary(),
                 "[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from),
             )
                 .prop_map(|(cmp, name, value)| VariableComparing {

@@ -208,7 +208,7 @@ mod proptest {
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             prop_oneof![
-                VariableName::arbitrary_with(scope.clone()).prop_map(Input::VariableName),
+                VariableName::arbitrary().prop_map(Input::VariableName),
                 Function::arbitrary_with(scope.clone()).prop_map(Input::Function),
             ]
             .boxed()
@@ -222,7 +222,7 @@ mod proptest {
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             (
                 Block::arbitrary_with(scope.clone()),
-                VariableName::arbitrary_with(scope.clone()),
+                VariableName::arbitrary(),
                 Input::arbitrary_with(scope.clone()),
             )
                 .prop_map(|(block, variable, input)| Each {

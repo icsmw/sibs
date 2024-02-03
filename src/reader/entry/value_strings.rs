@@ -172,7 +172,7 @@ mod proptest {
                     .prop_map(|(s, f)| Injection::Function(s, f)),
                 (
                     "[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from),
-                    VariableName::arbitrary_with(scope.clone()).prop_map(|n| n)
+                    VariableName::arbitrary().prop_map(|n| n)
                 )
                     .prop_map(|(s, n)| Injection::VariableName(s, n))
             ]

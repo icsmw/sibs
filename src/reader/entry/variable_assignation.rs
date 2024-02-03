@@ -233,7 +233,7 @@ mod proptest {
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             (
                 Assignation::arbitrary_with(scope.clone()),
-                VariableName::arbitrary_with(scope.clone()),
+                VariableName::arbitrary(),
             )
                 .prop_map(move |(assignation, name)| {
                     scope.write().unwrap().add_assignation(name.name.clone());

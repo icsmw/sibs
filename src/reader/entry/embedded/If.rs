@@ -486,7 +486,7 @@ mod proptest {
                     Function::arbitrary_with(scope.clone())
                         .prop_map(|f| Proviso::Function(f, false)),
                     (
-                        VariableName::arbitrary_with(scope.clone()),
+                        VariableName::arbitrary(),
                         Cmp::arbitrary_with(scope.clone()),
                         ValueString::arbitrary_with(scope.clone()),
                     )
@@ -495,7 +495,7 @@ mod proptest {
                 1..max,
             ),
         )
-            .prop_map(|(mut combinations, mut conditions)| {
+            .prop_map(|(mut combinations, conditions)| {
                 let mut provisos: Vec<Proviso> = conditions
                     .into_iter()
                     .flat_map(|condition| [condition, combinations.remove(0)])
@@ -543,7 +543,7 @@ mod proptest {
             ),
             prop::collection::vec(get_proviso_group(scope.clone()), 1..max),
         )
-            .prop_map(|(mut combinations, mut groups)| {
+            .prop_map(|(mut combinations, groups)| {
                 let mut provisos: Vec<Proviso> = groups
                     .into_iter()
                     .flat_map(|group| [group, combinations.remove(0)])
@@ -559,7 +559,6 @@ mod proptest {
     impl Arbitrary for Element {
         /// 0 - generate IF
         /// 1 - generate ELSE
-        /// >=2 - generate IF OR ELSE
         type Parameters = (u8, SharedScope);
         type Strategy = BoxedStrategy<Self>;
 
@@ -571,18 +570,9 @@ mod proptest {
                 )
                     .prop_map(|(p, b)| Element::If(p, b))
                     .boxed(),
-                1 => Block::arbitrary_with(scope.clone())
+                _ => Block::arbitrary_with(scope.clone())
                     .prop_map(Element::Else)
                     .boxed(),
-                _ => prop_oneof![
-                    (
-                        get_proviso(scope.clone()),
-                        Block::arbitrary_with(scope.clone())
-                    )
-                        .prop_map(|(p, b)| Element::If(p, b)),
-                    Block::arbitrary_with(scope.clone()).prop_map(Element::Else)
-                ]
-                .boxed(),
             }
         }
     }
