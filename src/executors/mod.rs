@@ -1,6 +1,7 @@
 mod error;
 pub mod import;
 pub mod os;
+pub mod repeat;
 
 use crate::{inf::any::AnyValue, inf::context::Context, reader::entry::Function};
 pub use error::E;
@@ -21,5 +22,10 @@ pub fn register(cx: &mut Context) -> Result<(), E> {
         <import::Import as Executor>::execute,
     )?;
     cx.add_fn(os::Os::get_name(), <os::Os as Executor>::execute)?;
+    cx.add_fn(
+        repeat::Repeat::get_name(),
+        <repeat::Repeat as Executor>::execute,
+    )?;
+
     Ok(())
 }
