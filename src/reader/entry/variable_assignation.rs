@@ -219,6 +219,7 @@ mod processing {
         ("c", "abc"),
         ("d", "ababc"),
         ("e", "ababc"),
+        ("f", "\\{$a\\}\\{$b\\}\\{$c\\}"),
     ];
 
     #[async_std::test]
@@ -228,7 +229,6 @@ mod processing {
             include_str!("../../tests/processing/variable_assignation.sibs").to_string(),
         );
         while let Some(task) = Task::read(&mut reader)? {
-            println!("{task:?}");
             assert!(task.process(None, &[], &[], &mut cx).await?.is_some());
         }
         for (name, value) in VALUES.iter() {

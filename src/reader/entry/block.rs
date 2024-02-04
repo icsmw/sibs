@@ -9,7 +9,7 @@ use crate::{
         chars,
         entry::{
             Command, Component, Each, Function, If, Meta, Optional, Reading, Reference,
-            VariableAssignation,
+            ValueString, VariableAssignation,
         },
         Reader, E,
     },
@@ -24,6 +24,7 @@ pub enum Element {
     VariableAssignation(VariableAssignation),
     Optional(Optional),
     Reference(Reference),
+    ValueString(ValueString),
     Command(Command),
 }
 
@@ -40,6 +41,7 @@ impl fmt::Display for Element {
                 Self::VariableAssignation(v) => v.to_string(),
                 Self::Optional(v) => v.to_string(),
                 Self::Reference(v) => v.to_string(),
+                Self::ValueString(v) => format!("{v};"),
             }
         )
     }
@@ -62,6 +64,7 @@ impl Operator for Element {
                 Self::VariableAssignation(v) => v.process(owner, components, args, cx).await,
                 Self::Optional(v) => v.process(owner, components, args, cx).await,
                 Self::Reference(v) => v.process(owner, components, args, cx).await,
+                Self::ValueString(v) => v.process(owner, components, args, cx).await,
             }
         })
     }
@@ -110,13 +113,20 @@ impl Reading<Block> for Block {
                 elements.push(Element::Reference(el));
                 continue;
             }
+            if let Some(el) = ValueString::read(reader)? {
+                if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
+                    Err(E::MissedSemicolon)?;
+                }
+                elements.push(Element::ValueString(el));
+                continue;
+            }
             if let Some(el) = Function::read(reader)? {
                 elements.push(Element::Function(el));
                 continue;
             }
             if let Some((cmd, _)) = reader.until().char(&[&chars::SEMICOLON]) {
                 reader.move_to().next();
-                elements.push(Element::Command(Command::new(cmd, reader.token()?.id)));
+                elements.push(Element::Command(Command::new(cmd, reader.token()?.id)?));
             } else {
                 break;
             }

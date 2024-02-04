@@ -6,7 +6,7 @@ use crate::{
         spawner,
         term::{self, Term},
     },
-    reader::entry::Component,
+    reader::{entry::Component, error::E},
 };
 use std::fmt;
 
@@ -17,10 +17,12 @@ pub struct Command {
 }
 
 impl Command {
-    pub fn new(command: String, token: usize) -> Self {
-        Self {
-            command: command.trim().to_owned(),
-            token,
+    pub fn new(command: String, token: usize) -> Result<Self, E> {
+        let command = command.trim().to_owned();
+        if command.is_empty() {
+            Err(E::EmptyComponentName)
+        } else {
+            Ok(Self { command, token })
         }
     }
 }
@@ -84,7 +86,7 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(_scope: Self::Parameters) -> Self::Strategy {
-            Just(Command::new("ls".to_owned(), 0)).boxed()
+            Just(Command::new("ls".to_owned(), 0).unwrap()).boxed()
         }
     }
 }

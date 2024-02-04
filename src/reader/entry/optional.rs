@@ -171,7 +171,7 @@ impl Reading<Optional> for Optional {
                             } else if !token.bound.rest().trim().is_empty() {
                                 let cmd = token.bound.move_to().end();
                                 let token = token.bound.token()?;
-                                Action::Command(Command::new(cmd, token.id))
+                                Action::Command(Command::new(cmd, token.id)?)
                             } else {
                                 Err(E::NotActionForCondition)?
                             },

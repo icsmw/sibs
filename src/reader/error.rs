@@ -43,6 +43,8 @@ pub enum E {
     EmptyGroup,
     #[error("No component name")]
     EmptyComponentName,
+    #[error("Command has empty value")]
+    EmptyCommand,
     #[error("Invalid component name")]
     InvalidComponentName,
     #[error("Fail get last token")]

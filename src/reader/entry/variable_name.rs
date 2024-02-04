@@ -108,7 +108,7 @@ mod test_variable_name {
 
 #[cfg(test)]
 mod proptest {
-    use crate::{inf::tests::*, reader::entry::variable_name::VariableName};
+    use crate::reader::entry::variable_name::VariableName;
     use proptest::prelude::*;
 
     impl Arbitrary for VariableName {
