@@ -311,6 +311,7 @@ impl If {
             if reader.move_to().char(&[&chars::OPEN_BRACKET]).is_some() {
                 if reader.until().char(&[&chars::CLOSE_BRACKET]).is_some() {
                     let mut group_reader = reader.token()?.bound;
+                    let _ = reader.move_to().next();
                     if group_reader
                         .move_to()
                         .char(&[&chars::OPEN_BRACKET])
@@ -324,27 +325,19 @@ impl If {
                     Err(E::NotClosedConditionGroup)?
                 }
             }
-            if let Some(combination) = reader.move_to().word(&[&words::AND, words::OR]) {
-                if let Some(Proviso::Combination(_, _)) = proviso.last() {
-                    Err(E::RepeatedCombinationOperator)?
-                } else if proviso.last().is_none() {
-                    Err(E::NoProvisoOfCondition)?
-                }
-                proviso.push(Proviso::Combination(
-                    if combination == words::AND {
-                        Combination::And
-                    } else {
-                        Combination::Or
-                    },
-                    reader.token()?.id,
-                ));
-            }
             if let Some((_, combination)) = reader.until().word(&[&words::AND, &words::OR]) {
                 let mut token = reader.token()?;
                 if !reader.move_to().whitespace() {
                     Err(E::NoWhitespaceAfterCondition)?;
                 }
-                proviso.push(If::inner(&mut token.bound)?);
+                if let Some(Proviso::Combination(_, _)) = proviso.last() {
+                    Err(E::RepeatedCombinationOperator)?
+                } else if proviso.last().is_none() && token.content.trim().is_empty() {
+                    Err(E::NoProvisoOfCondition)?
+                }
+                if !token.content.trim().is_empty() {
+                    proviso.push(If::inner(&mut token.bound)?);
+                }
                 proviso.push(Proviso::Combination(
                     if combination == words::AND {
                         Combination::And
@@ -353,9 +346,9 @@ impl If {
                     },
                     token.id,
                 ));
-            } else if matches!(proviso.last(), Some(Proviso::Combination(_, _)))
-                || proviso.is_empty()
-            {
+                continue;
+            }
+            if matches!(proviso.last(), Some(Proviso::Combination(_, _))) || proviso.is_empty() {
                 proviso.push(If::inner(reader)?);
             } else {
                 Err(E::NoProvisoOfCondition)?

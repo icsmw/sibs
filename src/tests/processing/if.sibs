@@ -49,3 +49,43 @@ test [
         "true";
     ];
 ];
+test [
+    $a = "one";
+    IF $a == "__" [
+        "false";
+    ] IF $a == "one" [
+        "true";
+    ] ELSE [
+        "false";
+    ];
+];
+test [
+    $a = "one";
+    IF $a == "__" [
+        "false";
+    ] IF $a == "__" [
+        "false";
+    ] ELSE [
+        "true";
+    ];
+];
+test [
+    $a = "one";
+    $b = "two";
+    $c = "three";
+    IF $c != "one" AND ($a == "one" AND $b == "two") [
+        "true";
+    ] ELSE [
+        "false";
+    ];
+];
+test [
+    $a = "one";
+    $b = "two";
+    $c = "three";
+    IF ($c != "one" AND $c != "two") AND ($a == "one" AND $b == "two") [
+        "true";
+    ] ELSE [
+        "false";
+    ];
+];
