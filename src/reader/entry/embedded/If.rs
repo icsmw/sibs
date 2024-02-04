@@ -399,7 +399,7 @@ impl Operator for If {
 }
 
 #[cfg(test)]
-mod test_if {
+mod reading {
     use crate::reader::{
         entry::{If, Reading},
         tests, Reader, E,
@@ -434,6 +434,31 @@ mod test_if {
         assert_eq!(count, samples.len());
         Ok(())
     }
+}
+
+#[cfg(test)]
+mod processing {
+    use crate::{
+        inf::{
+            context::Context,
+            operator::{Operator, E},
+        },
+        reader::{
+            entry::{Block, Reading, Task},
+            tests, Reader,
+        },
+    };
+
+    // #[async_std::test]
+    // async fn reading() -> Result<(), E> {
+    //     let mut cx = Context::unbound()?;
+    //     let mut reader = Reader::new(include_str!("../../../tests/processing/if.sibs").to_string());
+    //     while let Some(task) = Task::read(&mut reader)? {
+    //         println!("{task:?}");
+    //         let result = task.process(None, &[], &[], &mut cx).await?;
+    //     }
+    //     Ok(())
+    // }
 }
 
 #[cfg(test)]

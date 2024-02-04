@@ -1,6 +1,7 @@
 use crate::{
     executors,
     inf::{context, spawner, tracker},
+    reader,
 };
 use thiserror::Error;
 
@@ -20,6 +21,8 @@ pub enum E {
     ContextError(String),
     #[error("Executor error: {0}")]
     ExecutorError(String),
+    #[error("Reader error: {0}")]
+    ReaderError(String),
     #[error("No task for component: {0}")]
     NoTaskForComponent(String),
     #[error("No task \"{0}\" for component \"{1}\" doesn't exist")]
@@ -89,5 +92,11 @@ impl From<context::E> for E {
 impl From<executors::E> for E {
     fn from(e: executors::E) -> Self {
         Self::ExecutorError(e.to_string())
+    }
+}
+
+impl From<reader::error::E> for E {
+    fn from(e: reader::error::E) -> Self {
+        Self::ReaderError(e.to_string())
     }
 }

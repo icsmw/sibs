@@ -1,0 +1,9 @@
+test [
+    $a = "one";
+    $b = "two";
+    IF $a == "one" OR $b == "two" [
+        "true";
+    ] ELSE [
+        "false";
+    ];
+];

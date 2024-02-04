@@ -162,7 +162,7 @@ impl Operator for VariableAssignation {
 }
 
 #[cfg(test)]
-mod test_variable_assignation {
+mod reading {
     use crate::reader::{
         entry::{Reading, VariableAssignation},
         tests, Reader, E,
@@ -196,6 +196,47 @@ mod test_variable_assignation {
             count += 1;
         }
         assert_eq!(count, samples.len());
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod processing {
+    use crate::{
+        inf::{
+            context::Context,
+            operator::{Operator, E},
+        },
+        reader::{
+            entry::{Reading, Task},
+            Reader,
+        },
+    };
+
+    const VALUES: &[(&str, &str)] = &[
+        ("a", "a"),
+        ("b", "b"),
+        ("c", "abc"),
+        ("d", "ababc"),
+        ("e", "ababc"),
+    ];
+
+    #[async_std::test]
+    async fn reading() -> Result<(), E> {
+        let mut cx = Context::unbound()?;
+        let mut reader = Reader::new(
+            include_str!("../../tests/processing/variable_assignation.sibs").to_string(),
+        );
+        while let Some(task) = Task::read(&mut reader)? {
+            println!("{task:?}");
+            assert!(task.process(None, &[], &[], &mut cx).await?.is_some());
+        }
+        for (name, value) in VALUES.iter() {
+            assert_eq!(
+                cx.get_var(name).unwrap().get_as_string().unwrap(),
+                value.to_string()
+            );
+        }
         Ok(())
     }
 }
