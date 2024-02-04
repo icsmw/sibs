@@ -5,7 +5,8 @@ use crate::{
         operator::{self, Operator, OperatorPinnedResult},
     },
     reader::{
-        entry::{Cmp, Component, Reader, Reading, VariableName},
+        chars,
+        entry::{Cmp, Component, Reader, Reading, ValueString, VariableName},
         words, E,
     },
 };
@@ -30,6 +31,11 @@ impl Reading<VariableComparing> for VariableComparing {
                 if reader.rest().trim().is_empty() {
                     Err(E::NoValueAfterComparing)
                 } else {
+                    let mut value = reader.move_to().end().trim().to_string();
+                    let mut token = reader.token()?;
+                    if let Some(serialized) = token.bound.group().closed(&chars::QUOTES) {
+                        value = serialized;
+                    }
                     Ok(Some(VariableComparing {
                         name,
                         cmp: if word == words::CMP_TRUE {
@@ -37,8 +43,8 @@ impl Reading<VariableComparing> for VariableComparing {
                         } else {
                             Cmp::NotEqual
                         },
-                        value: reader.move_to().end().trim().to_string(),
-                        token: reader.token()?.id,
+                        value,
+                        token: token.id,
                     }))
                 }
             } else {

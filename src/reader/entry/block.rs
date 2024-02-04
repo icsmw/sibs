@@ -9,7 +9,7 @@ use crate::{
         chars,
         entry::{
             Command, Component, Each, Function, If, Meta, Optional, Reading, Reference,
-            ValueString, VariableAssignation,
+            ValueString, VariableAssignation, VariableName,
         },
         Reader, E,
     },
@@ -25,6 +25,7 @@ pub enum Element {
     Optional(Optional),
     Reference(Reference),
     ValueString(ValueString),
+    VariableName(VariableName),
     Command(Command),
 }
 
@@ -42,6 +43,7 @@ impl fmt::Display for Element {
                 Self::Optional(v) => v.to_string(),
                 Self::Reference(v) => v.to_string(),
                 Self::ValueString(v) => format!("{v};"),
+                Self::VariableName(v) => format!("{v};"),
             }
         )
     }
@@ -65,6 +67,7 @@ impl Operator for Element {
                 Self::Optional(v) => v.process(owner, components, args, cx).await,
                 Self::Reference(v) => v.process(owner, components, args, cx).await,
                 Self::ValueString(v) => v.process(owner, components, args, cx).await,
+                Self::VariableName(v) => v.process(owner, components, args, cx).await,
             }
         })
     }
@@ -101,6 +104,16 @@ impl Reading<Block> for Block {
                 elements.push(Element::Optional(el));
                 continue;
             }
+            reader.state().set();
+            if let Some(el) = VariableName::read(reader)? {
+                if let Some(chars::SEMICOLON) =
+                    reader.move_to().char(&[&chars::SEMICOLON, &chars::EQUAL])
+                {
+                    elements.push(Element::VariableName(el));
+                    continue;
+                }
+            }
+            reader.state().restore()?;
             if let Some(el) = VariableAssignation::read(reader)? {
                 elements.push(Element::VariableAssignation(el));
                 continue;

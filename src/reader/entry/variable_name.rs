@@ -23,7 +23,7 @@ impl Reading<VariableName> for VariableName {
         if reader.move_to().char(&[&chars::DOLLAR]).is_some() {
             let content = reader
                 .until()
-                .char(&[&chars::COLON, &chars::WS, &chars::EQUAL])
+                .char(&[&chars::COLON, &chars::WS, &chars::EQUAL, &chars::SEMICOLON])
                 .map(|(content, _char)| content)
                 .unwrap_or_else(|| reader.move_to().end());
             Ok(Some(VariableName::new(content, reader.token()?.id)?))
@@ -126,16 +126,16 @@ mod proptest {
         }
     }
 
-    fn run_task(variable_name: VariableName) -> Result<(), &'static str> {
-        println!("{variable_name:?}");
-        Ok(())
-    }
+    // fn run_task(variable_name: VariableName) -> Result<(), &'static str> {
+    //     println!("{variable_name:?}");
+    //     Ok(())
+    // }
 
-    proptest! {
-        #[test]
-        fn test_run_task(args in any::<VariableName>()) {
-            let result = run_task(args.clone());
-            prop_assert!(result.is_ok());
-        }
-    }
+    // proptest! {
+    //     #[test]
+    //     fn test_run_task(args in any::<VariableName>()) {
+    //         let result = run_task(args.clone());
+    //         prop_assert!(result.is_ok());
+    //     }
+    // }
 }

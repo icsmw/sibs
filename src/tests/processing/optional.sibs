@@ -1,0 +1,10 @@
+test [
+    $a = "one";
+    $a == "one" => $b = "true";
+    $b;
+];
+test [
+    $a = "one";
+    $a == one => $b = "true";
+    $b;
+];

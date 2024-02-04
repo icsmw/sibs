@@ -437,8 +437,8 @@ mod processing {
             operator::{Operator, E},
         },
         reader::{
-            entry::{Block, Reading, Task},
-            tests, Reader,
+            entry::{Reading, Task},
+            Reader,
         },
     };
 
