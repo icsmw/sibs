@@ -1006,7 +1006,7 @@ mod test_reader {
     async fn reading() -> Result<(), E> {
         let target = std::env::current_dir()
             .unwrap()
-            .join("./src/tests/normal/full/build.sibs");
+            .join("./src/tests/reading/full/build.sibs");
         let mut cx = Context::from_filename(&target)?;
         let components = read_file(&mut cx).await?;
         assert_eq!(components.len(), 9);

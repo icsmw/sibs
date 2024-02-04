@@ -171,7 +171,7 @@ mod test_variable_assignation {
     #[test]
     fn reading() -> Result<(), E> {
         let mut reader =
-            Reader::new(include_str!("../../tests/normal/variable_assignation.sibs").to_string());
+            Reader::new(include_str!("../../tests/reading/variable_assignation.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = VariableAssignation::read(&mut reader)? {
             assert_eq!(

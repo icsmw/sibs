@@ -210,7 +210,7 @@ mod test_refs {
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut reader = Reader::new(include_str!("../../tests/normal/refs.sibs").to_string());
+        let mut reader = Reader::new(include_str!("../../tests/reading/refs.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Reference::read(&mut reader)? {
             assert_eq!(

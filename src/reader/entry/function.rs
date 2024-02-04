@@ -191,7 +191,7 @@ mod test_functions {
 
     #[test]
     fn reading() -> Result<(), E> {
-        let content = include_str!("../../tests/normal/function.sibs").to_string();
+        let content = include_str!("../../tests/reading/function.sibs").to_string();
         let len = content.split('\n').count();
         let mut reader = Reader::new(content);
         let mut count = 0;

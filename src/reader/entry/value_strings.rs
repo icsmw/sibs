@@ -132,7 +132,7 @@ mod test_value_string {
     #[test]
     fn reading() -> Result<(), E> {
         let mut reader =
-            Reader::new(include_str!("../../tests/normal/value_string.sibs").to_string());
+            Reader::new(include_str!("../../tests/reading/value_string.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = ValueString::read(&mut reader)? {
             assert_eq!(

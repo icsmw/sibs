@@ -79,7 +79,7 @@ mod test_variable_name {
 
     #[test]
     fn reading() -> Result<(), E> {
-        let samples = include_str!("../../tests/normal/variable_name.sibs").to_string();
+        let samples = include_str!("../../tests/reading/variable_name.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {

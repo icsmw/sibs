@@ -214,12 +214,12 @@ mod test_blocks {
     fn reading() -> Result<(), E> {
         let mut reader = Reader::new(format!(
             "{}\n{}\n{}\n{}\n{}\n{}",
-            include_str!("../../tests/normal/if.sibs"),
-            include_str!("../../tests/normal/variable_assignation.sibs"),
-            include_str!("../../tests/normal/function.sibs"),
-            include_str!("../../tests/normal/optional.sibs"),
-            include_str!("../../tests/normal/each.sibs"),
-            include_str!("../../tests/normal/refs.sibs")
+            include_str!("../../tests/reading/if.sibs"),
+            include_str!("../../tests/reading/variable_assignation.sibs"),
+            include_str!("../../tests/reading/function.sibs"),
+            include_str!("../../tests/reading/optional.sibs"),
+            include_str!("../../tests/reading/each.sibs"),
+            include_str!("../../tests/reading/refs.sibs")
         ));
         while let Some(entity) = Block::read(&mut reader)? {
             assert_eq!(

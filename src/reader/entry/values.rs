@@ -77,7 +77,7 @@ mod test_values {
 
     #[test]
     fn reading() -> Result<(), E> {
-        let samples = include_str!("../../tests/normal/values.sibs").to_string();
+        let samples = include_str!("../../tests/reading/values.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {

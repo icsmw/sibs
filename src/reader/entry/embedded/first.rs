@@ -72,7 +72,7 @@ mod test_first {
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut reader = Reader::new(include_str!("../../../tests/normal/first.sibs").to_string());
+        let mut reader = Reader::new(include_str!("../../../tests/reading/first.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = First::read(&mut reader)? {
             assert_eq!(
