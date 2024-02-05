@@ -64,7 +64,7 @@ impl Operator for First {
 }
 
 #[cfg(test)]
-mod test_first {
+mod reading {
     use crate::reader::{
         entry::{First, Reading},
         tests, Reader, E,
@@ -97,6 +97,39 @@ mod test_first {
             count += 1;
         }
         assert_eq!(count, samples.len());
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod processing {
+    use crate::{
+        inf::{
+            context::Context,
+            operator::{Operator, E},
+        },
+        reader::{
+            entry::{Reading, Task},
+            Reader,
+        },
+    };
+
+    #[async_std::test]
+    async fn reading() -> Result<(), E> {
+        let mut cx = Context::unbound()?;
+        let mut reader =
+            Reader::new(include_str!("../../../tests/processing/first.sibs").to_string());
+        while let Some(task) = Task::read(&mut reader)? {
+            println!("{task:?}");
+            let result = task
+                .process(None, &[], &[], &mut cx)
+                .await?
+                .expect("Task returns some value");
+            assert_eq!(
+                result.get_as_string().expect("Task returns string value"),
+                "true".to_owned()
+            );
+        }
         Ok(())
     }
 }

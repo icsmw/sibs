@@ -1,0 +1,24 @@
+test [
+    $a = "one";
+    FIRST [
+        $a == "two" => "false";
+        $a == "three" => "false";
+        $a == "one" => "true";
+    ];
+];
+test [
+    $a = "one";
+    FIRST [
+        $a == "two" => "false";
+        $a == "one" => "true";
+        $a == "three" => "false";
+    ];
+];
+test [
+    $a = "one";
+    FIRST [
+        $a == "one" => "true";
+        $a == "two" => "false";
+        $a == "three" => "false";
+    ];
+];

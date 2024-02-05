@@ -8,7 +8,7 @@ use crate::{
     reader::{
         chars,
         entry::{
-            Command, Component, Each, Function, If, Meta, Optional, Reading, Reference,
+            Command, Component, Each, First, Function, If, Meta, Optional, Reading, Reference,
             ValueString, VariableAssignation, VariableName,
         },
         Reader, E,
@@ -21,6 +21,7 @@ pub enum Element {
     Function(Function),
     If(If),
     Each(Each),
+    First(First),
     VariableAssignation(VariableAssignation),
     Optional(Optional),
     Reference(Reference),
@@ -39,6 +40,7 @@ impl fmt::Display for Element {
                 Self::Function(v) => v.to_string(),
                 Self::If(v) => v.to_string(),
                 Self::Each(v) => v.to_string(),
+                Self::First(v) => v.to_string(),
                 Self::VariableAssignation(v) => v.to_string(),
                 Self::Optional(v) => v.to_string(),
                 Self::Reference(v) => v.to_string(),
@@ -63,6 +65,7 @@ impl Operator for Element {
                 Self::Function(v) => v.process(owner, components, args, cx).await,
                 Self::If(v) => v.process(owner, components, args, cx).await,
                 Self::Each(v) => v.process(owner, components, args, cx).await,
+                Self::First(v) => v.process(owner, components, args, cx).await,
                 Self::VariableAssignation(v) => v.process(owner, components, args, cx).await,
                 Self::Optional(v) => v.process(owner, components, args, cx).await,
                 Self::Reference(v) => v.process(owner, components, args, cx).await,
@@ -120,6 +123,10 @@ impl Reading<Block> for Block {
             }
             if let Some(el) = Each::read(reader)? {
                 elements.push(Element::Each(el));
+                continue;
+            }
+            if let Some(el) = First::read(reader)? {
+                elements.push(Element::First(el));
                 continue;
             }
             if let Some(el) = Reference::read(reader)? {
