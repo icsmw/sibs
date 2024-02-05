@@ -9,23 +9,23 @@ use crate::{
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub struct Values {
+pub struct Variants {
     pub values: Vec<String>,
     pub token: usize,
 }
 
-impl Reading<Values> for Values {
-    fn read(reader: &mut Reader) -> Result<Option<Values>, E> {
+impl Reading<Variants> for Variants {
+    fn read(reader: &mut Reader) -> Result<Option<Variants>, E> {
         let content = reader
             .until()
             .char(&[&chars::SEMICOLON])
             .map(|(content, _)| content)
             .unwrap_or_else(|| reader.move_to().end());
-        Ok(Some(Values::new(content, reader.token()?.id)?))
+        Ok(Some(Variants::new(content, reader.token()?.id)?))
     }
 }
 
-impl Values {
+impl Variants {
     pub fn new(input: String, token: usize) -> Result<Self, E> {
         let mut values: Vec<String> = vec![];
         for value in input.split('|') {
@@ -44,7 +44,7 @@ impl Values {
         if values.is_empty() {
             Err(E::NoVariableValues)?;
         }
-        Ok(Values { values, token })
+        Ok(Variants { values, token })
     }
 
     pub fn parse(&self, value: String) -> Option<String> {
@@ -56,13 +56,13 @@ impl Values {
     }
 }
 
-impl fmt::Display for Values {
+impl fmt::Display for Variants {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.values.join(" | "))
     }
 }
 
-impl term::Display for Values {
+impl term::Display for Variants {
     fn to_string(&self) -> String {
         format!("[{}]", self.values.join(" | "))
     }
@@ -71,18 +71,18 @@ impl term::Display for Values {
 #[cfg(test)]
 mod test_values {
     use crate::reader::{
-        entry::{Reading, Values},
+        entry::{Reading, Variants},
         Reader, E,
     };
 
     #[test]
     fn reading() -> Result<(), E> {
-        let samples = include_str!("../../tests/reading/values.sibs").to_string();
+        let samples = include_str!("../../tests/reading/variants.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
             let mut reader = Reader::new(sample.to_string());
-            assert!(Values::read(&mut reader).is_ok());
+            assert!(Variants::read(&mut reader).is_ok());
             count += 1;
         }
         assert_eq!(count, samples.len());
@@ -96,7 +96,7 @@ mod test_values {
         let mut count = 0;
         for sample in samples.iter() {
             let mut reader = Reader::new(sample.to_string());
-            assert!(Values::read(&mut reader).is_err());
+            assert!(Variants::read(&mut reader).is_err());
             count += 1;
         }
         assert_eq!(count, samples.len());
@@ -106,16 +106,16 @@ mod test_values {
 
 #[cfg(test)]
 mod proptest {
-    use crate::{inf::tests::*, reader::entry::values::Values};
+    use crate::{inf::tests::*, reader::entry::variants::Variants};
     use proptest::prelude::*;
 
-    impl Arbitrary for Values {
+    impl Arbitrary for Variants {
         type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(_scope: Self::Parameters) -> Self::Strategy {
             prop::collection::vec("[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from), 0..=10)
-                .prop_map(|values| Values { values, token: 0 })
+                .prop_map(|values| Variants { values, token: 0 })
                 .boxed()
         }
     }

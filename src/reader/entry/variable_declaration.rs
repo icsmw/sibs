@@ -2,7 +2,7 @@ use crate::{
     inf::{any::AnyValue, context::Context, operator, term},
     reader::{
         chars,
-        entry::{Reader, Reading, Values, VariableName, VariableType},
+        entry::{Reader, Reading, VariableName, VariableType, Variants},
         E,
     },
 };
@@ -11,7 +11,7 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub enum Declaration {
     Typed(VariableType),
-    Values(Values),
+    Variants(Variants),
 }
 #[derive(Debug, Clone)]
 pub struct VariableDeclaration {
@@ -27,7 +27,7 @@ impl VariableDeclaration {
             AnyValue::new(
                 match &self.declaration {
                     Declaration::Typed(typed) => typed.parse(value),
-                    Declaration::Values(values) => values.parse(value),
+                    Declaration::Variants(values) => values.parse(value),
                 }
                 .ok_or(operator::E::NoValueToDeclareTaskArgument)?,
             ),
@@ -47,7 +47,7 @@ impl Reading<VariableDeclaration> for VariableDeclaration {
                         variable_type,
                         reader.token()?.id,
                     ))
-                } else if let Some(values) = Values::read(reader)? {
+                } else if let Some(values) = Variants::read(reader)? {
                     Some(VariableDeclaration::values(
                         name,
                         values,
@@ -78,10 +78,10 @@ impl VariableDeclaration {
             token,
         }
     }
-    pub fn values(name: VariableName, values: Values, token: usize) -> Self {
+    pub fn values(name: VariableName, values: Variants, token: usize) -> Self {
         Self {
             name,
-            declaration: Declaration::Values(values),
+            declaration: Declaration::Variants(values),
             token,
         }
     }
@@ -95,7 +95,7 @@ impl fmt::Display for VariableDeclaration {
             self.name,
             match &self.declaration {
                 Declaration::Typed(v) => v.to_string(),
-                Declaration::Values(v) => v.to_string(),
+                Declaration::Variants(v) => v.to_string(),
             }
         )
     }
@@ -105,7 +105,7 @@ impl term::Display for VariableDeclaration {
     fn to_string(&self) -> String {
         match &self.declaration {
             Declaration::Typed(v) => term::Display::to_string(v),
-            Declaration::Values(v) => term::Display::to_string(v),
+            Declaration::Variants(v) => term::Display::to_string(v),
         }
     }
 }
@@ -115,10 +115,10 @@ mod proptest {
     use crate::{
         inf::tests::*,
         reader::entry::{
-            values::Values,
             variable_declaration::{Declaration, VariableDeclaration},
             variable_name::VariableName,
             variable_type::VariableType,
+            variants::Variants,
         },
     };
     use proptest::prelude::*;
@@ -129,7 +129,7 @@ mod proptest {
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             prop_oneof![
-                Values::arbitrary_with(scope.clone()).prop_map(Declaration::Values),
+                Variants::arbitrary_with(scope.clone()).prop_map(Declaration::Variants),
                 VariableType::arbitrary_with(scope.clone()).prop_map(Declaration::Typed),
             ]
             .boxed()
