@@ -23,6 +23,8 @@ pub enum E {
     UsingReservedChars,
     #[error("Missed semicolon")]
     MissedSemicolon,
+    #[error("Unexpected semicolon")]
+    UnexpectedSemicolon,
     #[error("Invalid task arguments")]
     InvalidTaskArguments,
     #[error("No task arguments")]
