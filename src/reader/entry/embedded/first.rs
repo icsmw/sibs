@@ -120,7 +120,6 @@ mod processing {
         let mut reader =
             Reader::new(include_str!("../../../tests/processing/first.sibs").to_string());
         while let Some(task) = Task::read(&mut reader)? {
-            println!("{task:?}");
             let result = task
                 .process(None, &[], &[], &mut cx)
                 .await?
