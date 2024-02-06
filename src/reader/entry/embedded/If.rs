@@ -330,13 +330,14 @@ impl If {
                 if !reader.move_to().whitespace() {
                     Err(E::NoWhitespaceAfterCondition)?;
                 }
-                if let Some(Proviso::Combination(_, _)) = proviso.last() {
-                    Err(E::RepeatedCombinationOperator)?
-                } else if proviso.last().is_none() && token.content.trim().is_empty() {
+                if proviso.last().is_none() && token.content.trim().is_empty() {
                     Err(E::NoProvisoOfCondition)?
                 }
                 if !token.content.trim().is_empty() {
                     proviso.push(If::inner(&mut token.bound)?);
+                }
+                if let Some(Proviso::Combination(_, _)) = proviso.last() {
+                    Err(E::RepeatedCombinationOperator)?
                 }
                 proviso.push(Proviso::Combination(
                     if combination == words::AND {

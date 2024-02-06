@@ -208,6 +208,49 @@ mod test_tasks {
 }
 
 #[cfg(test)]
+mod processing {
+    use crate::{
+        inf::{
+            context::Context,
+            operator::{Operator, E},
+        },
+        reader::{
+            entry::{Reading, Task},
+            Reader,
+        },
+    };
+
+    const VALUES: &[&[&str]] = &[&["a"], &["a", "b"], &["a"], &["a", "b"], &["a", "b", "c"]];
+
+    #[async_std::test]
+    async fn reading() -> Result<(), E> {
+        let mut cx = Context::unbound()?;
+        let mut reader = Reader::new(include_str!("../../tests/processing/tasks.sibs").to_string());
+        let mut cursor: usize = 0;
+        while let Some(task) = Task::read(&mut reader)? {
+            let result = task
+                .process(
+                    None,
+                    &[],
+                    &VALUES[cursor]
+                        .iter()
+                        .map(|s| s.to_string())
+                        .collect::<Vec<String>>(),
+                    &mut cx,
+                )
+                .await?
+                .expect("Task returns some value");
+            cursor += 1;
+            assert_eq!(
+                result.get_as_string().expect("Task returns string value"),
+                "true".to_owned()
+            );
+        }
+        Ok(())
+    }
+}
+
+#[cfg(test)]
 mod proptest {
     use crate::{
         inf::tests::*,
