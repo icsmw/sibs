@@ -175,7 +175,7 @@ impl Operator for Component {
 }
 
 #[cfg(test)]
-mod test_component {
+mod reading {
     use crate::reader::{
         entry::{Component, Reading},
         tests, Reader, E,
@@ -220,6 +220,60 @@ mod test_component {
             count += 1;
         }
         assert_eq!(count, samples.len());
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod processing {
+    use crate::{
+        inf::{
+            context::Context,
+            operator::{Operator, E},
+        },
+        reader::{
+            entry::{Component, Reading, Task},
+            Reader,
+        },
+    };
+
+    const VALUES: &[&[&str]] = &[
+        &["test", "a"],
+        &["test", "a", "b", "c"],
+        &["test", "a", "b", "c"],
+        &["test", "a", "b", "c"],
+    ];
+
+    #[async_std::test]
+    async fn reading() -> Result<(), E> {
+        let mut cx = Context::unbound()?;
+        let mut reader =
+            Reader::new(include_str!("../../tests/processing/component.sibs").to_string());
+        let mut cursor: usize = 0;
+        let mut components: Vec<Component> = vec![];
+        while let Some(component) = Component::read(&mut reader)? {
+            components.push(component);
+        }
+        for component in components.iter() {
+            let result = component
+                .process(
+                    Some(component),
+                    &components,
+                    &VALUES[cursor]
+                        .iter()
+                        .map(|s| s.to_string())
+                        .collect::<Vec<String>>(),
+                    &mut cx,
+                )
+                .await?
+                .expect("component returns some value");
+            cursor += 1;
+            assert_eq!(
+                result.get_as_string().expect("Task returns string value"),
+                "true".to_owned()
+            );
+        }
+
         Ok(())
     }
 }

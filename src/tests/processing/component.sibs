@@ -1,0 +1,24 @@
+#[a]
+    test($a: a | b) [
+        IF $a == "a" [
+            "true";
+        ] ELSE [
+            "false;
+        ];
+    ];
+#[b]
+    test($a: {string}; $b: a | b; $c: {string}) [
+        IF $a == "a" AND $b == "b" AND $c == "c" [
+            "true";
+        ] ELSE [
+            "false;
+        ];
+    ];
+#[c]
+    test($a: {string}; $b: a | b; $c: {string}) [
+        :b:test(a, b, c);
+    ];
+#[d]
+    test($a: {string}; $b: a | b; $c: {string}) [
+        :a:test(a);
+    ];
