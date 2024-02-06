@@ -221,6 +221,49 @@ mod reading {
     }
 }
 
+#[cfg(test)]
+mod processing {
+    use crate::{
+        inf::{
+            context::Context,
+            operator::{Operator, E},
+        },
+        reader::{
+            entry::{Reading, Task},
+            Reader,
+        },
+    };
+
+    const VALUES: &[(&str, &str)] = &[
+        ("a0", "a"),
+        ("a1", "a,b"),
+        ("a2", "a,b,c"),
+        ("a3", "a,b,c"),
+        ("a4", "aa,bb,cc"),
+    ];
+
+    #[async_std::test]
+    async fn reading() -> Result<(), E> {
+        let mut cx = Context::unbound()?;
+        let mut reader =
+            Reader::new(include_str!("../../tests/processing/values.sibs").to_string());
+        while let Some(task) = Task::read(&mut reader)? {
+            assert!(task.process(None, &[], &[], &mut cx).await?.is_some());
+        }
+        for (name, value) in VALUES.iter() {
+            assert_eq!(
+                cx.get_var(name)
+                    .unwrap()
+                    .get_as_strings()
+                    .unwrap()
+                    .join(","),
+                value.to_string()
+            );
+        }
+        Ok(())
+    }
+}
+
 // #[cfg(test)]
 // mod proptest {
 //     use crate::{inf::tests::*, reader::entry::values::Values};

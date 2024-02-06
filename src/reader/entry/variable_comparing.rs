@@ -6,7 +6,7 @@ use crate::{
     },
     reader::{
         chars,
-        entry::{Cmp, Component, Reader, Reading, ValueString, VariableName},
+        entry::{Cmp, Component, Reader, Reading, VariableName},
         words, E,
     },
 };

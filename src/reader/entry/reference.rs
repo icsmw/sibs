@@ -255,7 +255,7 @@ mod proptest {
         type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(_scope: Self::Parameters) -> Self::Strategy {
             prop_oneof![
                 "[a-zA-Z_][a-zA-Z0-9_]*"
                     .prop_map(String::from)
