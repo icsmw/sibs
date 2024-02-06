@@ -32,11 +32,12 @@ impl fmt::Display for Input {
     }
 }
 impl Input {
-    fn as_arg(&self, cx: &mut Context) -> Result<String, operator::E> {
+    async fn as_arg(&self, cx: &mut Context) -> Result<String, operator::E> {
         Ok(match self {
             Self::String(v) => v.to_owned(),
             Self::VariableName(name) => cx
                 .get_var(&name.name)
+                .await
                 .ok_or(operator::E::VariableIsNotAssigned(name.name.to_owned()))?
                 .get_as_string()
                 .ok_or(operator::E::FailToGetStringValue)?,
@@ -194,7 +195,7 @@ impl Operator for Reference {
             ))?;
             let mut args: Vec<String> = vec![];
             for input in self.inputs.iter() {
-                args.push(input.as_arg(cx)?);
+                args.push(input.as_arg(cx).await?);
             }
             task.process(owner, components, &args, cx).await
         })

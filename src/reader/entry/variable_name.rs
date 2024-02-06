@@ -57,6 +57,7 @@ impl Operator for VariableName {
         Box::pin(async {
             Ok(cx
                 .get_var(&self.name)
+                .await
                 .ok_or(operator::E::VariableIsNotAssigned(self.name.to_owned()))?
                 .get_as::<String>()
                 .map(|name| AnyValue::new(name.to_string())))

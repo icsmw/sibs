@@ -253,6 +253,7 @@ mod processing {
         for (name, value) in VALUES.iter() {
             assert_eq!(
                 cx.get_var(name)
+                    .await
                     .unwrap()
                     .get_as_strings()
                     .unwrap()

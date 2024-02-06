@@ -1,6 +1,6 @@
 test [
     $elements = ("one", "two", "three");
     EACH($el) $elements [
-        tgz ./release/{$file};
+        $a = "a_{$el}";
     ];
 ];

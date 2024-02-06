@@ -98,7 +98,15 @@ impl Context {
         self.executors.get(name)
     }
 
-    pub fn get_var(&self, name: &str) -> Option<&AnyValue> {
+    pub async fn get_var(&self, name: &str) -> Option<&AnyValue> {
+        self.logger
+            .log(format!("Reading variable: ${name};",))
+            .await;
+        if !self.vars.contains_key(name) {
+            self.logger
+                .err(format!("Variable: ${name} doesn't exist;"))
+                .await;
+        }
         self.vars.get(name)
     }
 

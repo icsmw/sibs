@@ -151,7 +151,7 @@ impl Operator for Each {
 }
 
 #[cfg(test)]
-mod test_each {
+mod reading {
     use crate::reader::{
         entry::{Each, Reading, E},
         tests, Reader,
@@ -187,6 +187,38 @@ mod test_each {
         Ok(())
     }
 }
+
+// #[cfg(test)]
+// mod processing {
+//     use crate::{
+//         inf::{
+//             context::Context,
+//             operator::{Operator, E},
+//         },
+//         reader::{
+//             entry::{Reading, Task},
+//             Reader,
+//         },
+//     };
+
+//     #[async_std::test]
+//     async fn reading() -> Result<(), E> {
+//         let mut cx = Context::unbound()?;
+//         let mut reader =
+//             Reader::new(include_str!("../../../tests/processing/each.sibs").to_string());
+//         while let Some(task) = Task::read(&mut reader)? {
+//             let result = task
+//                 .process(None, &[], &[], &mut cx)
+//                 .await?
+//                 .expect("Task returns some value");
+//             assert_eq!(
+//                 result.get_as_string().expect("Task returns string value"),
+//                 "true".to_owned()
+//             );
+//         }
+//         Ok(())
+//     }
+// }
 
 #[cfg(test)]
 mod proptest {

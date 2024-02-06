@@ -6,3 +6,4 @@
 - FIRST is missed in block
 - catch errors in concating strings like $d = "bla${a}bla"; (should be "bla{$a}bla")
 - support modules for functions grouping; like @os.get
+- add simple assignation $a = $b

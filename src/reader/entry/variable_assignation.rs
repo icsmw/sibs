@@ -244,7 +244,7 @@ mod processing {
         }
         for (name, value) in VALUES.iter() {
             assert_eq!(
-                cx.get_var(name).unwrap().get_as_string().unwrap(),
+                cx.get_var(name).await.unwrap().get_as_string().unwrap(),
                 value.to_string()
             );
         }
