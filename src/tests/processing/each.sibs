@@ -1,6 +1,16 @@
 test [
     $elements = ("one", "two", "three");
     EACH($el) $elements [
-        $a = "a_{$el}";
+        $a = "{$el}";
+    ];
+    
+    $elements = ("one", "two");
+    EACH($el) $elements [
+        $b = "{$el}";
+    ];
+
+    $elements = ("one");
+    EACH($el) $elements [
+        $c = "{$el}";
     ];
 ];

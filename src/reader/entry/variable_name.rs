@@ -55,12 +55,14 @@ impl Operator for VariableName {
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async {
-            Ok(cx
+            let value = cx
                 .get_var(&self.name)
                 .await
-                .ok_or(operator::E::VariableIsNotAssigned(self.name.to_owned()))?
-                .get_as::<String>()
-                .map(|name| AnyValue::new(name.to_string())))
+                .ok_or(operator::E::VariableIsNotAssigned(self.name.to_owned()))?;
+            Ok(value
+                .get_as_string()
+                .map(AnyValue::new)
+                .or_else(|| value.get_as_strings().map(AnyValue::new)))
         })
     }
 }
