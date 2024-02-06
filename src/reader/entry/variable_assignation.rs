@@ -6,7 +6,9 @@ use crate::{
     },
     reader::{
         chars,
-        entry::{Block, Component, First, Function, Reader, Reading, ValueString, VariableName},
+        entry::{
+            Block, Component, First, Function, Reader, Reading, ValueString, Values, VariableName,
+        },
         E,
     },
 };
@@ -16,6 +18,7 @@ use std::fmt;
 pub enum Assignation {
     Function(Function),
     ValueString(ValueString),
+    Values(Values),
     Block(Block),
     First(First),
 }
@@ -32,6 +35,7 @@ impl Operator for Assignation {
             match self {
                 Self::Function(v) => v.process(owner, components, args, cx).await,
                 Self::ValueString(v) => v.process(owner, components, args, cx).await,
+                Self::Values(v) => v.process(owner, components, args, cx).await,
                 Self::Block(v) => v.process(owner, components, args, cx).await,
                 Self::First(v) => v.process(owner, components, args, cx).await,
             }
@@ -60,6 +64,12 @@ impl Reading<VariableAssignation> for VariableAssignation {
                     Some(VariableAssignation {
                         name: name.clone(),
                         assignation: Assignation::First(first),
+                        token: reader.token()?.id,
+                    })
+                } else if let Some(values) = Values::read(reader)? {
+                    Some(VariableAssignation {
+                        name: name.clone(),
+                        assignation: Assignation::Values(values),
                         token: reader.token()?.id,
                     })
                 } else if reader
@@ -130,6 +140,7 @@ impl fmt::Display for VariableAssignation {
             match &self.assignation {
                 Assignation::ValueString(v) => v.to_string(),
                 Assignation::Block(v) => v.to_string(),
+                Assignation::Values(v) => v.to_string(),
                 Assignation::First(v) => v.to_string(),
                 Assignation::Function(v) => v.to_string(),
             },
@@ -180,7 +191,7 @@ mod reading {
             );
             count += 1;
         }
-        assert_eq!(count, 11);
+        assert_eq!(count, 14);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }

@@ -28,8 +28,8 @@ impl fmt::Display for Element {
             "{}",
             match self {
                 Self::Function(v) => v.to_string(),
-                Self::ValueString(v) => format!("{v};"),
-                Self::VariableName(v) => format!("{v};"),
+                Self::ValueString(v) => v.to_string(),
+                Self::VariableName(v) => v.to_string(),
                 Self::String(v) => v.to_string(),
             }
         )
@@ -133,7 +133,7 @@ impl fmt::Display for Values {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{}",
+            "({})",
             self.elements
                 .iter()
                 .map(|v| v.to_string())
@@ -153,6 +153,35 @@ impl term::Display for Values {
                 .collect::<Vec<String>>()
                 .join(", ")
         )
+    }
+}
+
+impl Operator for Values {
+    fn process<'a>(
+        &'a self,
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async move {
+            let mut values: Vec<String> = vec![];
+            for element in self.elements.iter() {
+                if let Some(value) = match element {
+                    Element::Function(v) => v.process(owner, components, args, cx).await?,
+                    Element::ValueString(v) => v.process(owner, components, args, cx).await?,
+                    Element::VariableName(v) => v.process(owner, components, args, cx).await?,
+                    Element::String(v) => Some(AnyValue::new(v.to_owned())),
+                } {
+                    if let Some(value) = value.get_as_string() {
+                        values.push(value);
+                    } else if let Some(value) = value.get_as_strings() {
+                        values = [values, value].concat();
+                    }
+                }
+            }
+            Ok(Some(AnyValue::new(values)))
+        })
     }
 }
 
