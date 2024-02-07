@@ -507,16 +507,35 @@ mod proptest {
                 max,
             ),
             prop::collection::vec(
-                prop_oneof![
-                    Function::arbitrary_with(scope.clone())
-                        .prop_map(|f| Proviso::Function(f, false)),
-                    (
+                {
+                    let permissions = scope.read().unwrap().permissions();
+                    let mut allowed = vec![(
                         VariableName::arbitrary(),
                         Cmp::arbitrary_with(scope.clone()),
-                        ValueString::arbitrary_with(scope.clone()),
+                        ValueString::arbitrary_primitive(scope.clone()),
                     )
                         .prop_map(|(name, cmp, value)| Proviso::Variable(name, cmp, value))
-                ],
+                        .boxed()];
+                    if permissions.func {
+                        allowed.push(
+                            Function::arbitrary_with(scope.clone())
+                                .prop_map(|f| Proviso::Function(f, false))
+                                .boxed(),
+                        );
+                    }
+                    if permissions.value_string {
+                        allowed.push(
+                            (
+                                VariableName::arbitrary(),
+                                Cmp::arbitrary_with(scope.clone()),
+                                ValueString::arbitrary_with(scope.clone()),
+                            )
+                                .prop_map(|(name, cmp, value)| Proviso::Variable(name, cmp, value))
+                                .boxed(),
+                        );
+                    }
+                    prop::strategy::Union::new(allowed).boxed()
+                },
                 1..max,
             ),
         )
@@ -607,7 +626,8 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            (
+            scope.write().unwrap().include(Entity::If);
+            let boxed = (
                 prop::collection::vec(Element::arbitrary_with((0, scope.clone())), 1..5),
                 prop::collection::vec(Element::arbitrary_with((1, scope.clone())), 0..1),
             )
@@ -615,7 +635,9 @@ mod proptest {
                     elements: [elements, else_element].concat(),
                     token: 0,
                 })
-                .boxed()
+                .boxed();
+            scope.write().unwrap().exclude(Entity::If);
+            boxed
         }
     }
 }

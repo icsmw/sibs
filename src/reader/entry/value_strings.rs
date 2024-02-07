@@ -163,21 +163,26 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            prop_oneof![
-                (
-                    "[a-zA-Z_][a-zA-Z0-9_]*"
-                        .prop_map(String::from)
-                        .prop_map(|s| s),
-                    Function::arbitrary_with(scope.clone()).prop_map(|f| f)
-                )
-                    .prop_map(|(s, f)| Injection::Function(s, f)),
-                (
-                    "[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from),
-                    VariableName::arbitrary().prop_map(|n| n)
-                )
-                    .prop_map(|(s, n)| Injection::VariableName(s, n))
-            ]
-            .boxed()
+            let permissions = scope.read().unwrap().permissions();
+            let mut allowed = vec![(
+                "[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from),
+                VariableName::arbitrary().prop_map(|n| n),
+            )
+                .prop_map(|(s, n)| Injection::VariableName(s, n))
+                .boxed()];
+            if permissions.func {
+                allowed.push(
+                    (
+                        "[a-zA-Z_][a-zA-Z0-9_]*"
+                            .prop_map(String::from)
+                            .prop_map(|s| s),
+                        Function::arbitrary_with(scope.clone()).prop_map(|f| f),
+                    )
+                        .prop_map(|(s, f)| Injection::Function(s, f))
+                        .boxed(),
+                );
+            }
+            prop::strategy::Union::new(allowed).boxed()
         }
     }
 
@@ -186,7 +191,8 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            (
+            scope.write().unwrap().include(Entity::ValueString);
+            let boxed = (
                 prop::collection::vec(Injection::arbitrary_with(scope.clone()), 1..=10),
                 prop::collection::vec("[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from), 10),
             )
@@ -201,7 +207,25 @@ mod proptest {
                         token: 0,
                     }
                 })
-                .boxed()
+                .boxed();
+            scope.write().unwrap().exclude(Entity::ValueString);
+            boxed
+        }
+    }
+
+    impl ValueString {
+        pub fn arbitrary_primitive(scope: SharedScope) -> BoxedStrategy<Self> {
+            scope.write().unwrap().include(Entity::ValueString);
+            let boxed = "[a-zA-Z_][a-zA-Z0-9_]*"
+                .prop_map(String::from)
+                .prop_map(|pattern| ValueString {
+                    injections: vec![],
+                    pattern,
+                    token: 0,
+                })
+                .boxed();
+            scope.write().unwrap().exclude(Entity::ValueString);
+            boxed
         }
     }
 }

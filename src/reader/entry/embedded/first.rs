@@ -147,9 +147,12 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            Block::arbitrary_with(scope.clone())
+            scope.write().unwrap().include(Entity::First);
+            let boxed = Block::arbitrary_with(scope.clone())
                 .prop_map(|block| First { block, token: 0 })
-                .boxed()
+                .boxed();
+            scope.write().unwrap().exclude(Entity::First);
+            boxed
         }
     }
 }

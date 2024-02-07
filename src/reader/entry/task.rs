@@ -263,7 +263,8 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            (
+            scope.write().unwrap().include(Entity::Task);
+            let boxed = (
                 prop::collection::vec(VariableDeclaration::arbitrary_with(scope.clone()), 0..=5),
                 Block::arbitrary_with(scope.clone()),
                 "[a-zA-Z_]*".prop_map(String::from),
@@ -274,7 +275,9 @@ mod proptest {
                     token: 0,
                     name,
                 })
-                .boxed()
+                .boxed();
+            scope.write().unwrap().exclude(Entity::Task);
+            boxed
         }
     }
 

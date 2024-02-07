@@ -152,6 +152,7 @@ mod proptest {
         inf::tests::*,
         reader::entry::{
             arguments::{Argument, Arguments},
+            value_strings::ValueString,
             variable_name::VariableName,
         },
     };
@@ -161,14 +162,26 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            prop_oneof![
-                "[a-zA-Z_][a-zA-Z0-9_]*"
-                    .prop_map(String::from)
-                    .prop_map(Argument::String),
-                VariableName::arbitrary().prop_map(Argument::VariableName),
-                Arguments::arbitrary_with(scope.clone()).prop_map(Argument::Arguments)
-            ]
-            .boxed()
+            let permissions = scope.read().unwrap().permissions();
+            let mut allowed = vec!["[a-zA-Z_][a-zA-Z0-9_]*"
+                .prop_map(String::from)
+                .prop_map(Argument::String)
+                .boxed()];
+            if permissions.variable_name {
+                allowed.push(
+                    VariableName::arbitrary()
+                        .prop_map(Argument::VariableName)
+                        .boxed(),
+                );
+            }
+            if permissions.value_string {
+                allowed.push(
+                    ValueString::arbitrary_with(scope.clone())
+                        .prop_map(Argument::ValueString)
+                        .boxed(),
+                );
+            }
+            prop::strategy::Union::new(allowed).boxed()
         }
     }
     impl Arbitrary for Arguments {
@@ -178,7 +191,7 @@ mod proptest {
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             prop::collection::vec(
                 (Just(0_usize), Argument::arbitrary_with(scope.clone())),
-                0..=10,
+                0..=5,
             )
             .prop_map(|args| Arguments { args, token: 0 })
             .boxed()

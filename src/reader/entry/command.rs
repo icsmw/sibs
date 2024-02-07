@@ -85,8 +85,11 @@ mod proptest {
         type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_scope: Self::Parameters) -> Self::Strategy {
-            Just(Command::new("ls".to_owned(), 0).unwrap()).boxed()
+        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
+            scope.write().unwrap().include(Entity::Command);
+            let boxed = Just(Command::new("ls".to_owned(), 0).unwrap()).boxed();
+            scope.write().unwrap().exclude(Entity::Command);
+            boxed
         }
     }
 }

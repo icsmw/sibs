@@ -257,8 +257,11 @@ mod proptest {
     use crate::{
         inf::tests::*,
         reader::entry::{
+            block::Block,
+            embedded::first::First,
             function::Function,
             value_strings::ValueString,
+            values::Values,
             variable_assignation::{Assignation, VariableAssignation},
             variable_name::VariableName,
         },
@@ -270,11 +273,32 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            prop_oneof![
-                Function::arbitrary_with(scope.clone()).prop_map(Self::Function),
-                ValueString::arbitrary_with(scope.clone()).prop_map(Self::ValueString),
-            ]
-            .boxed()
+            let permissions = scope.read().unwrap().permissions();
+            let mut allowed = vec![ValueString::arbitrary_with(scope.clone())
+                .prop_map(Self::ValueString)
+                .boxed()];
+            if permissions.func {
+                allowed.push(
+                    Function::arbitrary_with(scope.clone())
+                        .prop_map(Self::Function)
+                        .boxed(),
+                );
+            }
+            // if permissions.first {
+            //     allowed.push(
+            //         First::arbitrary_with(scope.clone())
+            //             .prop_map(Self::First)
+            //             .boxed(),
+            //     );
+            // }
+            if permissions.block {
+                allowed.push(
+                    Block::arbitrary_with(scope.clone())
+                        .prop_map(Self::Block)
+                        .boxed(),
+                );
+            }
+            prop::strategy::Union::new(allowed).boxed()
         }
     }
 
@@ -283,19 +307,36 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            (
+            scope.write().unwrap().include(Entity::VariableAssignation);
+            let inner = scope.clone();
+            let boxed = (
                 Assignation::arbitrary_with(scope.clone()),
                 VariableName::arbitrary(),
             )
                 .prop_map(move |(assignation, name)| {
-                    scope.write().unwrap().add_assignation(name.name.clone());
+                    inner.write().unwrap().add_assignation(name.name.clone());
                     VariableAssignation {
                         assignation,
                         name,
                         token: 0,
                     }
                 })
-                .boxed()
+                .boxed();
+            scope.write().unwrap().exclude(Entity::VariableAssignation);
+            boxed
+        }
+    }
+
+    fn runner(assignation: VariableAssignation) -> Result<(), &'static str> {
+        println!("{assignation:?}");
+        Ok(())
+    }
+
+    proptest! {
+        #[test]
+        fn test_run_task(args in any::<VariableAssignation>()) {
+            let result = runner(args.clone());
+            prop_assert!(result.is_ok());
         }
     }
 }

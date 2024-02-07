@@ -285,17 +285,53 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            prop_oneof![
-                Each::arbitrary_with(scope.clone()).prop_map(Element::Each),
-                If::arbitrary_with(scope.clone()).prop_map(Element::If),
-                Command::arbitrary_with(scope.clone()).prop_map(Element::Command),
-                Optional::arbitrary_with(scope.clone()).prop_map(Element::Optional),
-                VariableAssignation::arbitrary_with(scope.clone())
-                    .prop_map(Element::VariableAssignation),
-                Reference::arbitrary_with(scope.clone()).prop_map(Element::Reference),
-                Function::arbitrary_with(scope.clone()).prop_map(Element::Function),
-            ]
-            .boxed()
+            let permissions = scope.read().unwrap().permissions();
+            let mut allowed = vec![Command::arbitrary_with(scope.clone())
+                .prop_map(Element::Command)
+                .boxed()];
+            if permissions.func {
+                allowed.push(
+                    Function::arbitrary_with(scope.clone())
+                        .prop_map(Element::Function)
+                        .boxed(),
+                );
+            }
+            // if permissions.each {
+            //     allowed.push(
+            //         Each::arbitrary_with(scope.clone())
+            //             .prop_map(Element::Each)
+            //             .boxed(),
+            //     );
+            // }
+            if permissions.If {
+                allowed.push(
+                    If::arbitrary_with(scope.clone())
+                        .prop_map(Element::If)
+                        .boxed(),
+                );
+            }
+            if permissions.optional {
+                allowed.push(
+                    Optional::arbitrary_with(scope.clone())
+                        .prop_map(Element::Optional)
+                        .boxed(),
+                );
+            }
+            if permissions.variable_assignation {
+                allowed.push(
+                    VariableAssignation::arbitrary_with(scope.clone())
+                        .prop_map(Element::VariableAssignation)
+                        .boxed(),
+                );
+            }
+            if permissions.reference {
+                allowed.push(
+                    Reference::arbitrary_with(scope.clone())
+                        .prop_map(Element::Reference)
+                        .boxed(),
+                );
+            }
+            prop::strategy::Union::new(allowed).boxed()
         }
     }
 
@@ -304,7 +340,8 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            (
+            scope.write().unwrap().include(Entity::Block);
+            let boxed = (
                 prop::collection::vec(Element::arbitrary_with(scope.clone()), 1..=10),
                 Meta::arbitrary_with(scope.clone()),
             )
@@ -314,7 +351,9 @@ mod proptest {
                     token: 0,
                     by_first: false,
                 })
-                .boxed()
+                .boxed();
+            scope.write().unwrap().exclude(Entity::Block);
+            boxed
         }
     }
 }

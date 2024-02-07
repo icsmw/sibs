@@ -239,11 +239,18 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            prop_oneof![
-                VariableName::arbitrary().prop_map(Input::VariableName),
-                Function::arbitrary_with(scope.clone()).prop_map(Input::Function),
-            ]
-            .boxed()
+            let permissions = scope.read().unwrap().permissions();
+            let mut allowed = vec![VariableName::arbitrary()
+                .prop_map(Input::VariableName)
+                .boxed()];
+            if permissions.func {
+                allowed.push(
+                    Function::arbitrary_with(scope.clone())
+                        .prop_map(Input::Function)
+                        .boxed(),
+                );
+            }
+            prop::strategy::Union::new(allowed).boxed()
         }
     }
 
@@ -252,7 +259,8 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            (
+            scope.write().unwrap().include(Entity::Each);
+            let boxed = (
                 Block::arbitrary_with(scope.clone()),
                 VariableName::arbitrary(),
                 Input::arbitrary_with(scope.clone()),
@@ -263,7 +271,9 @@ mod proptest {
                     input,
                     token: 0,
                 })
-                .boxed()
+                .boxed();
+            scope.write().unwrap().exclude(Entity::Each);
+            boxed
         }
     }
 }
