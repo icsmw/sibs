@@ -224,15 +224,20 @@ mod processing {
 mod proptest {
 
     use crate::{
-        inf::tests::*,
-        reader::entry::{
-            block::Block,
-            embedded::each::{Each, Input},
-            function::Function,
-            variable_name::VariableName,
+        inf::{operator::E, tests::*},
+        reader::{
+            entry::{
+                block::Block,
+                embedded::each::{Each, Input},
+                function::Function,
+                task::Task,
+                variable_name::VariableName,
+            },
+            Reader, Reading,
         },
     };
     use proptest::prelude::*;
+    use std::sync::{Arc, RwLock};
 
     impl Arbitrary for Input {
         type Parameters = SharedScope;
@@ -274,6 +279,27 @@ mod proptest {
                 .boxed();
             scope.write().unwrap().exclude(Entity::Each);
             boxed
+        }
+    }
+
+    fn reading(each: Each) -> Result<(), E> {
+        async_io::block_on(async {
+            let origin = format!("test [\n{each}\n];");
+            let mut reader = Reader::new(origin.clone());
+            while let Some(task) = Task::read(&mut reader)? {
+                assert_eq!(task.to_string(), origin);
+            }
+            Ok(())
+        })
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(10))]
+        #[test]
+        fn test_run_task(
+            args in any_with::<Each>(Arc::new(RwLock::new(Scope::default())).clone())
+        ) {
+            prop_assert!(reading(args.clone()).is_ok());
         }
     }
 }
