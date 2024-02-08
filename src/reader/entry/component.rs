@@ -89,7 +89,6 @@ impl Reading<Component> for Component {
                     token: reader.token()?.id,
                 }))
             } else {
-                println!(">>>>>>>>>>>>>>>> 0006");
                 Err(E::NoGroup)?
             }
         } else {

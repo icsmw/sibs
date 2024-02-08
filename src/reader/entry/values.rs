@@ -265,19 +265,66 @@ mod processing {
     }
 }
 
-// #[cfg(test)]
-// mod proptest {
-//     use crate::{inf::tests::*, reader::entry::values::Values};
-//     use proptest::prelude::*;
+#[cfg(test)]
+mod proptest {
+    use crate::{
+        inf::tests::*,
+        reader::entry::{
+            function::Function,
+            value_strings::ValueString,
+            values::{Element, Values},
+            variable_name::VariableName,
+        },
+    };
+    use proptest::prelude::*;
 
-//     impl Arbitrary for Values {
-//         type Parameters = SharedScope;
-//         type Strategy = BoxedStrategy<Self>;
+    impl Arbitrary for Element {
+        type Parameters = SharedScope;
+        type Strategy = BoxedStrategy<Self>;
 
-//         fn arbitrary_with(_scope: Self::Parameters) -> Self::Strategy {
-//             prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 0..=10)
-//                 .prop_map(|values| Values { values, token: 0 })
-//                 .boxed()
-//         }
-//     }
-// }
+        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
+            let permissions = scope.read().unwrap().permissions();
+            let mut allowed = vec!["[a-z][a-z0-9]*"
+                .prop_map(String::from)
+                .prop_map(Self::String)
+                .boxed()];
+            if permissions.func {
+                allowed.push(
+                    Function::arbitrary_with(scope.clone())
+                        .prop_map(Self::Function)
+                        .boxed(),
+                );
+            }
+            if permissions.value_string {
+                allowed.push(
+                    ValueString::arbitrary_with(scope.clone())
+                        .prop_map(Self::ValueString)
+                        .boxed(),
+                );
+            }
+            if permissions.variable_name {
+                allowed.push(
+                    VariableName::arbitrary()
+                        .prop_map(Self::VariableName)
+                        .boxed(),
+                );
+            }
+            prop::strategy::Union::new(allowed).boxed()
+        }
+    }
+
+    impl Arbitrary for Values {
+        type Parameters = SharedScope;
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
+            scope.write().unwrap().include(Entity::Values);
+            let max = 5;
+            let boxed = prop::collection::vec(Element::arbitrary_with(scope.clone()), 1..max)
+                .prop_map(|elements| Values { elements, token: 0 })
+                .boxed();
+            scope.write().unwrap().exclude(Entity::Values);
+            boxed
+        }
+    }
+}

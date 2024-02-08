@@ -240,7 +240,6 @@ impl Reading<If> for If {
                     }
                     continue;
                 } else {
-                    println!(">>>>>>>>>>>>>>>> 0001");
                     Err(E::NoGroup)?
                 }
             }
@@ -273,7 +272,6 @@ impl Reading<If> for If {
                         Err(E::MissedSemicolon)?
                     }
                 } else {
-                    println!(">>>>>>>>>>>>>>>> 0002");
                     Err(E::NoGroup)?
                 }
             } else {

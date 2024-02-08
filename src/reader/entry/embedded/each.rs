@@ -93,11 +93,9 @@ impl Reading<Each> for Each {
                                 }))
                             }
                         } else {
-                            println!(">>>>>>>>>>>>>>>> 0005");
                             Err(E::NoGroup)
                         }
                     } else {
-                        println!(">>>>>>>>>>>>>>>> 0004");
                         Err(E::NoGroup)
                     }
                 } else {

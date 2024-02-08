@@ -37,8 +37,6 @@ impl Reading<First> for First {
                     }))
                 }
             } else {
-                println!(">>>>>>>>>>>>>>>> 0003");
-                println!(">>>>>>>>>>>>>>>> REST:{}", reader.rest());
                 Err(E::NoGroup)
             }
         } else {

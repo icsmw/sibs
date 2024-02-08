@@ -296,14 +296,14 @@ mod proptest {
                         .boxed(),
                 );
             }
-            // if permissions.each {
-            //     allowed.push(
-            //         Each::arbitrary_with(scope.clone())
-            //             .prop_map(Element::Each)
-            //             .boxed(),
-            //     );
-            // }
-            if permissions.If {
+            if permissions.each {
+                allowed.push(
+                    Each::arbitrary_with(scope.clone())
+                        .prop_map(Element::Each)
+                        .boxed(),
+                );
+            }
+            if permissions.r#if {
                 allowed.push(
                     If::arbitrary_with(scope.clone())
                         .prop_map(Element::If)

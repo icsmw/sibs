@@ -250,11 +250,7 @@ mod processing {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        inf::{
-            context::Context,
-            operator::{Operator, E},
-            tests::*,
-        },
+        inf::{operator::E, tests::*},
         reader::{
             entry::{
                 block::Block,
@@ -270,10 +266,7 @@ mod proptest {
         },
     };
     use proptest::prelude::*;
-    use std::{
-        fmt::format,
-        sync::{Arc, RwLock},
-    };
+    use std::sync::{Arc, RwLock};
 
     impl Arbitrary for Assignation {
         type Parameters = SharedScope;
@@ -302,6 +295,13 @@ mod proptest {
                 allowed.push(
                     Block::arbitrary_with(scope.clone())
                         .prop_map(Self::Block)
+                        .boxed(),
+                );
+            }
+            if permissions.values {
+                allowed.push(
+                    Values::arbitrary_with(scope.clone())
+                        .prop_map(Self::Values)
                         .boxed(),
                 );
             }
@@ -337,7 +337,6 @@ mod proptest {
     fn reading(assignation: VariableAssignation) -> Result<(), E> {
         async_io::block_on(async {
             let origin = format!("test [\n{assignation}\n];");
-            // let mut cx = Context::unbound()?;
             let mut reader = Reader::new(origin.clone());
             while let Some(task) = Task::read(&mut reader)? {
                 assert_eq!(task.to_string(), origin);
@@ -347,7 +346,7 @@ mod proptest {
     }
 
     proptest! {
-        #![proptest_config(ProptestConfig::with_cases(1))]
+        #![proptest_config(ProptestConfig::with_cases(10))]
         #[test]
         fn test_run_task(
             args in any_with::<VariableAssignation>(Arc::new(RwLock::new(Scope::default())).clone())

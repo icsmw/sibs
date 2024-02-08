@@ -23,6 +23,7 @@ pub const VARIABLE_DECLARATION: usize = 10;
 pub const VARIABLE_NAME: usize = 10;
 pub const VARIABLE_TYPE: usize = 10;
 pub const VARIANTS: usize = 10;
+pub const VALUES: usize = 10;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Entity {
@@ -44,6 +45,7 @@ pub enum Entity {
     VariableName,
     VariableType,
     Variants,
+    Values,
 }
 
 pub struct Permissions {
@@ -53,7 +55,7 @@ pub struct Permissions {
     pub optional: bool,
     pub command: bool,
     pub each: bool,
-    pub If: bool,
+    pub r#if: bool,
     pub component: bool,
     pub meta: bool,
     pub reference: bool,
@@ -65,6 +67,7 @@ pub struct Permissions {
     pub variable_name: bool,
     pub variable_type: bool,
     pub variants: bool,
+    pub values: bool,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -120,7 +123,7 @@ impl Scope {
             block: self.count_of(Entity::Block) < BLOCK,
             optional: self.count_of(Entity::Optional) < OPTIONAL,
             command: self.count_of(Entity::Command) < COMMAND,
-            If: self.count_of(Entity::If) < IF,
+            r#if: self.count_of(Entity::If) < IF,
             each: self.count_of(Entity::Each) < EACH,
             component: self.count_of(Entity::Component) < COMPONENT,
             meta: self.count_of(Entity::Meta) < META,
@@ -133,6 +136,7 @@ impl Scope {
             variable_type: self.count_of(Entity::VariableType) < VARIABLE_TYPE,
             variants: self.count_of(Entity::Variants) < VARIANTS,
             task: self.count_of(Entity::Task) < TASK,
+            values: self.count_of(Entity::Values) < VALUES,
         }
     }
 }
