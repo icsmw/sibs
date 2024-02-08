@@ -3,7 +3,7 @@ use crate::{
         any::AnyValue,
         context::Context,
         operator::{Operator, OperatorPinnedResult},
-        term::{self, Term},
+        term,
     },
     reader::{
         chars,

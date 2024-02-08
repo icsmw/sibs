@@ -232,7 +232,7 @@ mod processing {
             operator::{Operator, E},
         },
         reader::{
-            entry::{Component, Reading, Task},
+            entry::{Component, Reading},
             Reader,
         },
     };

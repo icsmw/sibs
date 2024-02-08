@@ -10,7 +10,7 @@ use crate::{
         words, Reader, E,
     },
 };
-use std::fmt::{self, format};
+use std::fmt;
 
 #[derive(Debug, Clone)]
 pub enum Cmp {
