@@ -300,19 +300,24 @@ mod processing {
 mod proptest {
 
     use crate::{
-        inf::tests::*,
-        reader::entry::{
-            block::Block,
-            command::Command,
-            function::Function,
-            optional::{Action, Condition, Optional},
-            reference::Reference,
-            value_strings::ValueString,
-            variable_assignation::VariableAssignation,
-            variable_comparing::VariableComparing,
+        inf::{operator::E, tests::*},
+        reader::{
+            entry::{
+                block::Block,
+                command::Command,
+                function::Function,
+                optional::{Action, Condition, Optional},
+                reference::Reference,
+                task::Task,
+                value_strings::ValueString,
+                variable_assignation::VariableAssignation,
+                variable_comparing::VariableComparing,
+            },
+            Reader, Reading,
         },
     };
     use proptest::prelude::*;
+    use std::sync::{Arc, RwLock};
 
     impl Arbitrary for Action {
         type Parameters = SharedScope;
@@ -364,6 +369,27 @@ mod proptest {
                 .boxed();
             scope.write().unwrap().exclude(Entity::Optional);
             boxed
+        }
+    }
+
+    fn reading(optional: Optional) -> Result<(), E> {
+        async_io::block_on(async {
+            let origin = format!("test [\n{optional}\n];");
+            let mut reader = Reader::new(origin.clone());
+            while let Some(task) = Task::read(&mut reader)? {
+                assert_eq!(task.to_string(), origin);
+            }
+            Ok(())
+        })
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(10))]
+        #[test]
+        fn test_run_task(
+            args in any_with::<Optional>(Arc::new(RwLock::new(Scope::default())).clone())
+        ) {
+            prop_assert!(reading(args.clone()).is_ok());
         }
     }
 }

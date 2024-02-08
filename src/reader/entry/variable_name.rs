@@ -74,7 +74,7 @@ impl fmt::Display for VariableName {
 }
 
 #[cfg(test)]
-mod test_variable_name {
+mod reading {
     use crate::reader::{
         entry::{Reading, VariableName},
         Reader, E,
@@ -128,17 +128,4 @@ mod proptest {
             .boxed()
         }
     }
-
-    // fn run_task(variable_name: VariableName) -> Result<(), &'static str> {
-    //     println!("{variable_name:?}");
-    //     Ok(())
-    // }
-
-    // proptest! {
-    //     #[test]
-    //     fn test_run_task(args in any::<VariableName>()) {
-    //         let result = run_task(args.clone());
-    //         prop_assert!(result.is_ok());
-    //     }
-    // }
 }

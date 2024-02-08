@@ -123,7 +123,7 @@ impl Operator for ValueString {
 }
 
 #[cfg(test)]
-mod test_value_string {
+mod reading {
     use crate::reader::{
         entry::{Reading, ValueString},
         tests, Reader, E,

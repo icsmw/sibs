@@ -203,7 +203,7 @@ impl Operator for Reference {
 }
 
 #[cfg(test)]
-mod test_refs {
+mod reading {
     use crate::reader::{
         entry::{Reading, Reference},
         tests, Reader, E,
