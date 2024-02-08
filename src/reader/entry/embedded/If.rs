@@ -473,16 +473,21 @@ mod processing {
 mod proptest {
 
     use crate::{
-        inf::tests::*,
-        reader::entry::{
-            embedded::If::{Cmp, Combination, Element, If, Proviso},
-            function::Function,
-            value_strings::ValueString,
-            variable_name::VariableName,
-            Block,
+        inf::{operator::E, tests::*},
+        reader::{
+            entry::{
+                embedded::If::{Cmp, Combination, Element, If, Proviso},
+                function::Function,
+                task::Task,
+                value_strings::ValueString,
+                variable_name::VariableName,
+                Block,
+            },
+            Reader, Reading,
         },
     };
     use proptest::prelude::*;
+    use std::sync::{Arc, RwLock};
 
     impl Arbitrary for Cmp {
         type Parameters = SharedScope;
@@ -630,6 +635,27 @@ mod proptest {
                 .boxed();
             scope.write().unwrap().exclude(Entity::If);
             boxed
+        }
+    }
+
+    fn reading(if_block: If) -> Result<(), E> {
+        async_io::block_on(async {
+            let origin = format!("test [\n{if_block}\n];");
+            let mut reader = Reader::new(origin.clone());
+            while let Some(task) = Task::read(&mut reader)? {
+                assert_eq!(task.to_string(), origin);
+            }
+            Ok(())
+        })
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(10))]
+        #[test]
+        fn test_run_task(
+            args in any_with::<If>(Arc::new(RwLock::new(Scope::default())).clone())
+        ) {
+            prop_assert!(reading(args.clone()).is_ok());
         }
     }
 }
