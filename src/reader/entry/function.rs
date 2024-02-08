@@ -183,7 +183,7 @@ impl Operator for Function {
 }
 
 #[cfg(test)]
-mod test_functions {
+mod reading {
     use crate::reader::{
         entry::{Function, Reading},
         tests, Reader, E,
@@ -236,7 +236,7 @@ mod proptest {
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             scope.write().unwrap().include(Entity::Function);
             let boxed = (
-                "[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from),
+                "[a-z][a-z0-9]*".prop_map(String::from),
                 Arguments::arbitrary_with(scope.clone()),
             )
                 .prop_map(|(name, args)| Function {

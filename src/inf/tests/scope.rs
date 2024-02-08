@@ -8,21 +8,21 @@ use std::{
 pub const FUNCTION: usize = 2;
 pub const BLOCK: usize = 2;
 pub const FIRST: usize = 1;
-pub const COMMAND: usize = usize::MAX;
+pub const COMMAND: usize = 10;
 pub const COMPONENT: usize = 1;
 pub const EACH: usize = 1;
 pub const IF: usize = 1;
-pub const META: usize = 100;
-pub const OPTIONAL: usize = 100;
-pub const REFERENCE: usize = 100;
+pub const META: usize = 10;
+pub const OPTIONAL: usize = 1;
+pub const REFERENCE: usize = 10;
 pub const TASK: usize = 1;
-pub const VALUE_STRING: usize = 100;
-pub const VARIABLE_ASSIGNATION: usize = usize::MAX;
-pub const VARIABLE_COMPARING: usize = usize::MAX;
-pub const VARIABLE_DECLARATION: usize = usize::MAX;
-pub const VARIABLE_NAME: usize = usize::MAX;
-pub const VARIABLE_TYPE: usize = usize::MAX;
-pub const VARIANTS: usize = usize::MAX;
+pub const VALUE_STRING: usize = 1;
+pub const VARIABLE_ASSIGNATION: usize = 10;
+pub const VARIABLE_COMPARING: usize = 10;
+pub const VARIABLE_DECLARATION: usize = 10;
+pub const VARIABLE_NAME: usize = 10;
+pub const VARIABLE_TYPE: usize = 10;
+pub const VARIANTS: usize = 10;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Entity {

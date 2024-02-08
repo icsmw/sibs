@@ -149,6 +149,13 @@ impl Reading<Optional> for Optional {
                             Err(E::InvalidBlock)?
                         }
                     }
+                    if let Some(assignation) = VariableAssignation::read(reader)? {
+                        return Ok(Some(Optional {
+                            token: reader.token()?.id,
+                            action: Action::VariableAssignation(assignation),
+                            condition,
+                        }));
+                    }
                     if reader.until().char(&[&chars::SEMICOLON]).is_some() {
                         let mut token = reader.token()?;
                         if token.bound.contains().word(&[&words::DO_ON]) {
@@ -157,11 +164,7 @@ impl Reading<Optional> for Optional {
                         reader.move_to().next();
                         Ok(Some(Optional {
                             token: token.id,
-                            action: if let Some(assignation) =
-                                VariableAssignation::read(&mut token.bound)?
-                            {
-                                Action::VariableAssignation(assignation)
-                            } else if let Some(reference) = Reference::read(&mut token.bound)? {
+                            action: if let Some(reference) = Reference::read(&mut token.bound)? {
                                 Action::Reference(reference)
                             } else if let Some(func) = Function::read(&mut token.bound)? {
                                 Action::Function(func)

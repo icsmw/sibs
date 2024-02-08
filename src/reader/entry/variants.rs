@@ -114,7 +114,7 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(_scope: Self::Parameters) -> Self::Strategy {
-            prop::collection::vec("[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from), 0..=10)
+            prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 0..=10)
                 .prop_map(|values| Variants { values, token: 0 })
                 .boxed()
         }

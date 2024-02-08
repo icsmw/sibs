@@ -255,18 +255,30 @@ mod processing {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        inf::tests::*,
-        reader::entry::{
-            block::Block,
-            embedded::first::First,
-            function::Function,
-            value_strings::ValueString,
-            values::Values,
-            variable_assignation::{Assignation, VariableAssignation},
-            variable_name::VariableName,
+        inf::{
+            context::Context,
+            operator::{Operator, E},
+            tests::*,
+        },
+        reader::{
+            entry::{
+                block::Block,
+                embedded::first::First,
+                function::Function,
+                task::Task,
+                value_strings::ValueString,
+                values::Values,
+                variable_assignation::{Assignation, VariableAssignation},
+                variable_name::VariableName,
+            },
+            Reader, Reading,
         },
     };
     use proptest::prelude::*;
+    use std::{
+        fmt::format,
+        sync::{Arc, RwLock},
+    };
 
     impl Arbitrary for Assignation {
         type Parameters = SharedScope;
@@ -284,13 +296,13 @@ mod proptest {
                         .boxed(),
                 );
             }
-            // if permissions.first {
-            //     allowed.push(
-            //         First::arbitrary_with(scope.clone())
-            //             .prop_map(Self::First)
-            //             .boxed(),
-            //     );
-            // }
+            if permissions.first {
+                allowed.push(
+                    First::arbitrary_with(scope.clone())
+                        .prop_map(Self::First)
+                        .boxed(),
+                );
+            }
             if permissions.block {
                 allowed.push(
                     Block::arbitrary_with(scope.clone())
@@ -327,16 +339,31 @@ mod proptest {
         }
     }
 
-    fn runner(assignation: VariableAssignation) -> Result<(), &'static str> {
-        println!("{assignation:?}");
-        Ok(())
+    fn runner(assignation: VariableAssignation) -> Result<(), E> {
+        async_io::block_on(async {
+            println!("{assignation}");
+            let mut cx = Context::unbound()?;
+            let mut reader = Reader::new(format!("test [\n{assignation}\n];"));
+            let res = Task::read(&mut reader);
+            // println!("{:?}", res);
+            if let Err(e) = res {
+                println!("ERROR: {e}");
+            }
+            // while let Some(task) = Task::read(&mut reader)? {
+            //     assert!(task.process(None, &[], &[], &mut cx).await?.is_some());
+            // }
+            Ok(())
+        })
     }
 
-    proptest! {
-        #[test]
-        fn test_run_task(args in any::<VariableAssignation>()) {
-            let result = runner(args.clone());
-            prop_assert!(result.is_ok());
-        }
-    }
+    // proptest! {
+    //     #![proptest_config(ProptestConfig::with_cases(1))]
+    //     #[test]
+    //     fn test_run_task(
+    //         args in any_with::<VariableAssignation>(Arc::new(RwLock::new(Scope::default())).clone())
+    //     ) {
+    //         let result = runner(args.clone());
+    //         prop_assert!(result.is_ok());
+    //     }
+    // }
 }

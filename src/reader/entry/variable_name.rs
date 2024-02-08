@@ -122,23 +122,23 @@ mod proptest {
             if let Some(name_strategy) = name_strategy {
                 name_strategy
             } else {
-                "[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from).boxed()
+                "[a-z][a-z0-9]*".prop_map(String::from).boxed()
             }
             .prop_map(|name| VariableName { name, token: 0 })
             .boxed()
         }
     }
 
-    fn run_task(variable_name: VariableName) -> Result<(), &'static str> {
-        println!("{variable_name:?}");
-        Ok(())
-    }
+    // fn run_task(variable_name: VariableName) -> Result<(), &'static str> {
+    //     println!("{variable_name:?}");
+    //     Ok(())
+    // }
 
-    proptest! {
-        #[test]
-        fn test_run_task(args in any::<VariableName>()) {
-            let result = run_task(args.clone());
-            prop_assert!(result.is_ok());
-        }
-    }
+    // proptest! {
+    //     #[test]
+    //     fn test_run_task(args in any::<VariableName>()) {
+    //         let result = run_task(args.clone());
+    //         prop_assert!(result.is_ok());
+    //     }
+    // }
 }

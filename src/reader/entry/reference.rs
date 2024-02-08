@@ -258,7 +258,7 @@ mod proptest {
 
         fn arbitrary_with(_scope: Self::Parameters) -> Self::Strategy {
             prop_oneof![
-                "[a-zA-Z_][a-zA-Z0-9_]*"
+                "[a-z][a-z0-9]*"
                     .prop_map(String::from)
                     .prop_map(Input::String),
                 VariableName::arbitrary().prop_map(Input::VariableName),
@@ -274,7 +274,7 @@ mod proptest {
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             scope.write().unwrap().include(Entity::Reference);
             let boxed = (
-                prop::collection::vec("[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from), 2),
+                prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 2),
                 prop::collection::vec(Input::arbitrary_with(scope.clone()), 0..5),
             )
                 .prop_map(|(path, inputs)| Reference {

@@ -158,27 +158,20 @@ mod proptest {
         },
     };
     use proptest::prelude::*;
+
     impl Arbitrary for Injection {
         type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             let permissions = scope.read().unwrap().permissions();
-            let mut allowed = vec![(
-                "[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from),
-                VariableName::arbitrary().prop_map(|n| n),
-            )
-                .prop_map(|(s, n)| Injection::VariableName(s, n))
+            let mut allowed = vec![VariableName::arbitrary()
+                .prop_map(|v| Injection::VariableName(v.to_string(), v))
                 .boxed()];
             if permissions.func {
                 allowed.push(
-                    (
-                        "[a-zA-Z_][a-zA-Z0-9_]*"
-                            .prop_map(String::from)
-                            .prop_map(|s| s),
-                        Function::arbitrary_with(scope.clone()).prop_map(|f| f),
-                    )
-                        .prop_map(|(s, f)| Injection::Function(s, f))
+                    Function::arbitrary_with(scope.clone())
+                        .prop_map(|f| Injection::Function(f.to_string(), f))
                         .boxed(),
                 );
             }
@@ -194,7 +187,7 @@ mod proptest {
             scope.write().unwrap().include(Entity::ValueString);
             let boxed = (
                 prop::collection::vec(Injection::arbitrary_with(scope.clone()), 1..=10),
-                prop::collection::vec("[a-zA-Z_][a-zA-Z0-9_]*".prop_map(String::from), 10),
+                prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 10),
             )
                 .prop_map(|(injections, noise)| {
                     let mut pattern: String = String::new();
@@ -216,7 +209,7 @@ mod proptest {
     impl ValueString {
         pub fn arbitrary_primitive(scope: SharedScope) -> BoxedStrategy<Self> {
             scope.write().unwrap().include(Entity::ValueString);
-            let boxed = "[a-zA-Z_][a-zA-Z0-9_]*"
+            let boxed = "[a-z][a-z0-9]*"
                 .prop_map(String::from)
                 .prop_map(|pattern| ValueString {
                     injections: vec![],

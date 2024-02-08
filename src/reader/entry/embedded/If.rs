@@ -10,7 +10,7 @@ use crate::{
         words, Reader, E,
     },
 };
-use std::fmt;
+use std::fmt::{self, format};
 
 #[derive(Debug, Clone)]
 pub enum Cmp {
@@ -56,7 +56,8 @@ pub enum Proviso {
     // Function, is negative (!)
     Function(Function, bool),
     Combination(Combination, usize),
-    Group(Vec<Proviso>),
+    // bool: true - if root level; false - if nested group
+    Group(bool, Vec<Proviso>),
 }
 
 impl Operator for Proviso {
@@ -100,7 +101,7 @@ impl Operator for Proviso {
                         result
                     })))
                 }
-                Self::Group(provisos) => {
+                Self::Group(_, provisos) => {
                     let mut iteration: Option<bool> = None;
                     for proviso in provisos.iter() {
                         if let Proviso::Combination(cmb, _) = proviso {
@@ -146,11 +147,18 @@ impl fmt::Display for Proviso {
                     format!("{variable_name} {cmp} {value_string}"),
                 Self::Combination(v, _) => v.to_string(),
                 Self::Function(v, negative) => format!("{}{v}", if *negative { "!" } else { "" }),
-                Self::Group(provisio) => provisio
-                    .iter()
-                    .map(|p| p.to_string())
-                    .collect::<Vec<String>>()
-                    .join(" "),
+                Self::Group(root, provisio) => {
+                    format!(
+                        "{}{}{}",
+                        if *root { "" } else { "(" },
+                        provisio
+                            .iter()
+                            .map(|p| p.to_string())
+                            .collect::<Vec<String>>()
+                            .join(" "),
+                        if *root { "" } else { ")" }
+                    )
+                }
             }
         )
     }
@@ -216,7 +224,7 @@ impl Reading<If> for If {
         while !reader.rest().trim().is_empty() {
             if reader.move_to().word(&[&words::IF]).is_some() {
                 if reader.until().char(&[&chars::OPEN_SQ_BRACKET]).is_some() {
-                    let proviso: Proviso = If::proviso(&mut reader.token()?.bound)?;
+                    let proviso: Proviso = If::proviso(&mut reader.token()?.bound, true)?;
                     if reader
                         .group()
                         .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
@@ -232,6 +240,7 @@ impl Reading<If> for If {
                     }
                     continue;
                 } else {
+                    println!(">>>>>>>>>>>>>>>> 0001");
                     Err(E::NoGroup)?
                 }
             }
@@ -264,6 +273,7 @@ impl Reading<If> for If {
                         Err(E::MissedSemicolon)?
                     }
                 } else {
+                    println!(">>>>>>>>>>>>>>>> 0002");
                     Err(E::NoGroup)?
                 }
             } else {
@@ -305,7 +315,7 @@ impl If {
             Err(E::NoProvisoOfCondition)
         }
     }
-    pub fn proviso(reader: &mut Reader) -> Result<Proviso, E> {
+    pub fn proviso(reader: &mut Reader, root: bool) -> Result<Proviso, E> {
         let mut proviso: Vec<Proviso> = vec![];
         while !reader.rest().trim().is_empty() {
             if reader.move_to().char(&[&chars::OPEN_BRACKET]).is_some() {
@@ -319,7 +329,7 @@ impl If {
                     {
                         Err(E::NestedConditionGroups)?
                     }
-                    proviso.push(If::proviso(&mut group_reader)?);
+                    proviso.push(If::proviso(&mut group_reader, false)?);
                     continue;
                 } else {
                     Err(E::NotClosedConditionGroup)?
@@ -355,7 +365,7 @@ impl If {
                 Err(E::NoProvisoOfCondition)?
             }
         }
-        Ok(Proviso::Group(proviso))
+        Ok(Proviso::Group(root, proviso))
     }
 }
 
@@ -552,52 +562,36 @@ mod proptest {
             .boxed()
     }
 
-    // Creates proviso group with nested groups
-    fn get_proviso_group(scope: SharedScope) -> BoxedStrategy<Proviso> {
-        let max = 5;
-        (
-            prop::collection::vec(
-                Combination::arbitrary_with(scope.clone())
-                    .prop_map(|cmb| Proviso::Combination(cmb, 0)),
-                max,
-            ),
-            prop::collection::vec(get_proviso_chain(scope.clone()), max),
-        )
-            .prop_map(|(mut combinations, mut chains)| {
-                while chains.len() >= 2 {
-                    let group = Proviso::Group(chains.remove(0));
-                    chains
-                        .get_mut(0)
-                        .unwrap()
-                        .splice(0..0, vec![combinations.remove(0), group]);
-                }
-                Proviso::Group(chains.remove(0))
-            })
-            .boxed()
-    }
-
     // Returns Proviso::Group
     fn get_proviso(scope: SharedScope) -> BoxedStrategy<Proviso> {
         let max = 5;
-        (
-            prop::collection::vec(
+        prop::collection::vec(
+            (
+                get_proviso_chain(scope.clone()),
                 Combination::arbitrary_with(scope.clone())
                     .prop_map(|cmb| Proviso::Combination(cmb, 0)),
-                max,
+                prop_oneof![Just(true), Just(false)],
             ),
-            prop::collection::vec(get_proviso_group(scope.clone()), 1..max),
+            1..max,
         )
-            .prop_map(|(mut combinations, groups)| {
-                let mut provisos: Vec<Proviso> = groups
-                    .into_iter()
-                    .flat_map(|group| [group, combinations.remove(0)])
-                    .collect();
-                if let Some(Proviso::Combination(_, _)) = provisos.last() {
-                    let _ = provisos.pop();
+        .prop_map(|mut combinations| {
+            let mut provisos: Vec<Proviso> = vec![];
+            while let Some((chain, combination, grouping)) = combinations.pop() {
+                if chain.is_empty() {
+                    continue;
                 }
-                Proviso::Group(provisos)
-            })
-            .boxed()
+                if !provisos.is_empty() {
+                    provisos.push(combination);
+                }
+                if grouping {
+                    provisos.push(Proviso::Group(false, chain));
+                } else {
+                    provisos = [provisos, chain].concat();
+                }
+            }
+            Proviso::Group(true, provisos)
+        })
+        .boxed()
     }
 
     impl Arbitrary for Element {

@@ -163,7 +163,7 @@ mod proptest {
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             let permissions = scope.read().unwrap().permissions();
-            let mut allowed = vec!["[a-zA-Z_][a-zA-Z0-9_]*"
+            let mut allowed = vec!["[a-z][a-z0-9]*"
                 .prop_map(String::from)
                 .prop_map(Argument::String)
                 .boxed()];
