@@ -96,17 +96,12 @@ impl Reading<VariableAssignation> for VariableAssignation {
                     reader.move_to().next();
                     return Ok(assignation);
                 }
-                let mut token = reader
+                reader
                     .until()
                     .char(&[&chars::SEMICOLON])
-                    .map(|_| {
-                        reader.move_to().next();
-                        reader.token()
-                    })
-                    .unwrap_or_else(|| {
-                        let _ = reader.move_to().end();
-                        reader.token()
-                    })?;
+                    .ok_or(E::MissedSemicolon)?;
+                reader.move_to().next();
+                let mut token = reader.token()?;
                 if let Some(func) = Function::read(&mut token.bound)? {
                     Ok(Some(VariableAssignation {
                         name,
