@@ -234,7 +234,7 @@ impl Operator for Block {
 }
 
 #[cfg(test)]
-mod test_blocks {
+mod reading {
     use crate::reader::{
         entry::{Block, Reading},
         tests, Reader, E,
@@ -266,19 +266,24 @@ mod test_blocks {
 mod proptest {
 
     use crate::{
-        inf::tests::*,
-        reader::entry::{
-            block::{Block, Element},
-            command::Command,
-            embedded::{each::Each, If::If},
-            function::Function,
-            meta::Meta,
-            optional::Optional,
-            reference::Reference,
-            variable_assignation::VariableAssignation,
+        inf::{operator::E, tests::*},
+        reader::{
+            entry::{
+                block::{Block, Element},
+                command::Command,
+                embedded::{each::Each, If::If},
+                function::Function,
+                meta::Meta,
+                optional::Optional,
+                reference::Reference,
+                task::Task,
+                variable_assignation::VariableAssignation,
+            },
+            Reader, Reading,
         },
     };
     use proptest::prelude::*;
+    use std::sync::{Arc, RwLock};
 
     impl Arbitrary for Element {
         type Parameters = SharedScope;
@@ -354,6 +359,27 @@ mod proptest {
                 .boxed();
             scope.write().unwrap().exclude(Entity::Block);
             boxed
+        }
+    }
+
+    fn reading(block: Block) -> Result<(), E> {
+        async_io::block_on(async {
+            let origin = format!("test {block};");
+            let mut reader = Reader::new(origin.clone());
+            while let Some(task) = Task::read(&mut reader)? {
+                assert_eq!(task.to_string(), origin);
+            }
+            Ok(())
+        })
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(10))]
+        #[test]
+        fn test_run_task(
+            args in any_with::<Block>(Arc::new(RwLock::new(Scope::default())).clone())
+        ) {
+            prop_assert!(reading(args.clone()).is_ok());
         }
     }
 }
