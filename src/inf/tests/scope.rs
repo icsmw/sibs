@@ -78,30 +78,11 @@ pub struct Scope {
 }
 
 impl Scope {
-    pub fn get_rnd_declaration_name(&self) -> BoxedStrategy<String> {
-        prop::sample::select(self.declarations.keys().cloned().collect::<Vec<String>>()).boxed()
-    }
     pub fn add_declaration(&mut self, name: String) {
         self.declarations.insert(name, None);
     }
-    pub fn assign_declaration(&mut self, name: String, value: String) {
-        self.declarations
-            .entry(name)
-            .and_modify(|v| {
-                let _ = v.insert(value.clone());
-            })
-            .or_insert(Some(value));
-    }
     pub fn add_assignation(&mut self, name: String) {
         self.assignation.insert(name, None);
-    }
-    pub fn assign_assignation(&mut self, name: String, value: String) {
-        self.assignation
-            .entry(name)
-            .and_modify(|v| {
-                let _ = v.insert(value.clone());
-            })
-            .or_insert(Some(value));
     }
     pub fn include(&mut self, entity: Entity) {
         self.chain.push(entity);
