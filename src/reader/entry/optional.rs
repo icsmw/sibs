@@ -244,7 +244,7 @@ mod reading {
             );
             count += 1;
         }
-        assert_eq!(count, 10);
+        assert_eq!(count, 11);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
