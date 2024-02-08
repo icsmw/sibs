@@ -334,31 +334,25 @@ mod proptest {
         }
     }
 
-    fn runner(assignation: VariableAssignation) -> Result<(), E> {
+    fn reading(assignation: VariableAssignation) -> Result<(), E> {
         async_io::block_on(async {
-            println!("{assignation}");
-            let mut cx = Context::unbound()?;
-            let mut reader = Reader::new(format!("test [\n{assignation}\n];"));
-            let res = Task::read(&mut reader);
-            // println!("{:?}", res);
-            if let Err(e) = res {
-                println!("ERROR: {e}");
+            let origin = format!("test [\n{assignation}\n];");
+            // let mut cx = Context::unbound()?;
+            let mut reader = Reader::new(origin.clone());
+            while let Some(task) = Task::read(&mut reader)? {
+                assert_eq!(task.to_string(), origin);
             }
-            // while let Some(task) = Task::read(&mut reader)? {
-            //     assert!(task.process(None, &[], &[], &mut cx).await?.is_some());
-            // }
             Ok(())
         })
     }
 
-    // proptest! {
-    //     #![proptest_config(ProptestConfig::with_cases(1))]
-    //     #[test]
-    //     fn test_run_task(
-    //         args in any_with::<VariableAssignation>(Arc::new(RwLock::new(Scope::default())).clone())
-    //     ) {
-    //         let result = runner(args.clone());
-    //         prop_assert!(result.is_ok());
-    //     }
-    // }
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(1))]
+        #[test]
+        fn test_run_task(
+            args in any_with::<VariableAssignation>(Arc::new(RwLock::new(Scope::default())).clone())
+        ) {
+            prop_assert!(reading(args.clone()).is_ok());
+        }
+    }
 }

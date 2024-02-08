@@ -144,7 +144,11 @@ impl fmt::Display for Function {
                 if func.tolerance { "?" } else { "" },
                 func.args
                     .as_ref()
-                    .map(|args| format!(" {args}"))
+                    .map(|args| if args.is_empty() {
+                        String::new()
+                    } else {
+                        format!(" {args}")
+                    })
                     .unwrap_or_default()
             )
         }
