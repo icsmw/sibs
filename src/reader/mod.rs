@@ -138,7 +138,7 @@ impl<'a> MoveTo<'a> {
             false
         }
     }
-    #[allow(dead_code)]
+    #[cfg(test)]
     pub fn if_next(&mut self, target: &str) -> bool {
         let next = self.bound.pos + target.len();
         if next > self.bound.content.len() - 1 {
