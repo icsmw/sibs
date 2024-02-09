@@ -402,9 +402,12 @@ impl Operator for If {
 
 #[cfg(test)]
 mod reading {
-    use crate::reader::{
-        entry::{If, Reading},
-        tests, Reader, E,
+    use crate::{
+        inf::tests,
+        reader::{
+            entry::{If, Reading},
+            Reader, E,
+        },
     };
 
     #[test]

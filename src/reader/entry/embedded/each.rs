@@ -152,9 +152,12 @@ impl Operator for Each {
 
 #[cfg(test)]
 mod reading {
-    use crate::reader::{
-        entry::{Each, Reading, E},
-        tests, Reader,
+    use crate::{
+        inf::tests,
+        reader::{
+            entry::{Each, Reading, E},
+            Reader,
+        },
     };
 
     #[test]

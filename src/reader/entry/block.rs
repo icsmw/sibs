@@ -235,9 +235,12 @@ impl Operator for Block {
 
 #[cfg(test)]
 mod reading {
-    use crate::reader::{
-        entry::{Block, Reading},
-        tests, Reader, E,
+    use crate::{
+        inf::tests,
+        reader::{
+            entry::{Block, Reading},
+            Reader, E,
+        },
     };
 
     #[test]

@@ -4,7 +4,7 @@ use std::fmt;
 #[derive(Clone, Debug)]
 pub enum Level {
     Info,
-    Warn,
+    // Warn,
     Err,
 }
 
@@ -15,7 +15,7 @@ impl fmt::Display for Level {
             "{}",
             match self {
                 Self::Info => "",
-                Self::Warn => "[WARNING]",
+                // Self::Warn => "[WARNING]",
                 Self::Err => "[ERROR]",
             }
         )
@@ -45,14 +45,14 @@ impl Logger {
             .await;
     }
 
-    pub async fn warn<'a, T>(&self, msg: T)
-    where
-        T: 'a + ToOwned + ToString,
-    {
-        self.tracker
-            .log(self.owner.clone(), Level::Warn, msg.to_string())
-            .await;
-    }
+    // pub async fn warn<'a, T>(&self, msg: T)
+    // where
+    //     T: 'a + ToOwned + ToString,
+    // {
+    //     self.tracker
+    //         .log(self.owner.clone(), Level::Warn, msg.to_string())
+    //         .await;
+    // }
 
     pub async fn err<'a, T>(&self, msg: T)
     where

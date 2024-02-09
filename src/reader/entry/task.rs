@@ -171,9 +171,12 @@ impl Operator for Task {
 
 #[cfg(test)]
 mod test_tasks {
-    use crate::reader::{
-        entry::{Reading, Task},
-        tests, Reader, E,
+    use crate::{
+        inf::tests,
+        reader::{
+            entry::{Reading, Task},
+            Reader, E,
+        },
     };
 
     #[test]
@@ -280,19 +283,4 @@ mod proptest {
             boxed
         }
     }
-
-    // fn run_task(task_args: TaskArgs) -> Result<(), &'static str> {
-    //     // println!("{task_args:?}");
-    //     // println!("LEN: {}", task_args.0.len());
-    //     Ok(())
-    // }
-
-    // proptest! {
-    //     #[test]
-    //     fn test_run_task(args in any::<TaskArgs>()) {
-    //         // Assuming run_task returns Result<(), &str>
-    //         let result = run_task(args.clone());
-    //         prop_assert!(result.is_ok());
-    //     }
-    // }
 }

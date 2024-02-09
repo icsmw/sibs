@@ -23,8 +23,6 @@ pub struct AnyValue {
     type_id: TypeId,
 }
 
-pub trait D: fmt::Display + Sized + 'static {}
-
 impl AnyValue {
     pub fn new<T>(val: T) -> Self
     where

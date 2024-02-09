@@ -65,9 +65,12 @@ impl Operator for First {
 
 #[cfg(test)]
 mod reading {
-    use crate::reader::{
-        entry::{First, Reading},
-        tests, Reader, E,
+    use crate::{
+        inf::tests,
+        reader::{
+            entry::{First, Reading},
+            Reader, E,
+        },
     };
 
     #[test]

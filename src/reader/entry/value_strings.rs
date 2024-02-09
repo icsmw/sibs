@@ -124,9 +124,12 @@ impl Operator for ValueString {
 
 #[cfg(test)]
 mod reading {
-    use crate::reader::{
-        entry::{Reading, ValueString},
-        tests, Reader, E,
+    use crate::{
+        inf::tests,
+        reader::{
+            entry::{Reading, ValueString},
+            Reader, E,
+        },
     };
 
     #[test]

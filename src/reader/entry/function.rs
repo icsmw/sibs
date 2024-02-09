@@ -188,9 +188,12 @@ impl Operator for Function {
 
 #[cfg(test)]
 mod reading {
-    use crate::reader::{
-        entry::{Function, Reading},
-        tests, Reader, E,
+    use crate::{
+        inf::tests,
+        reader::{
+            entry::{Function, Reading},
+            Reader, E,
+        },
     };
 
     #[test]

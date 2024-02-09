@@ -228,9 +228,12 @@ impl Operator for Optional {
 
 #[cfg(test)]
 mod reading {
-    use crate::reader::{
-        entry::{Optional, Reading},
-        tests, Reader, E,
+    use crate::{
+        inf::tests,
+        reader::{
+            entry::{Optional, Reading},
+            Reader, E,
+        },
     };
 
     #[test]

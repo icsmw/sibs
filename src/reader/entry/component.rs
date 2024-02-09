@@ -176,9 +176,12 @@ impl Operator for Component {
 
 #[cfg(test)]
 mod reading {
-    use crate::reader::{
-        entry::{Component, Reading},
-        tests, Reader, E,
+    use crate::{
+        inf::tests,
+        reader::{
+            entry::{Component, Reading},
+            Reader, E,
+        },
     };
 
     #[test]

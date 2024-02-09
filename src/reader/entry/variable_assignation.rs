@@ -169,9 +169,12 @@ impl Operator for VariableAssignation {
 
 #[cfg(test)]
 mod reading {
-    use crate::reader::{
-        entry::{Reading, VariableAssignation},
-        tests, Reader, E,
+    use crate::{
+        inf::tests,
+        reader::{
+            entry::{Reading, VariableAssignation},
+            Reader, E,
+        },
     };
 
     #[test]

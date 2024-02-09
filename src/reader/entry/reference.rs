@@ -204,9 +204,12 @@ impl Operator for Reference {
 
 #[cfg(test)]
 mod reading {
-    use crate::reader::{
-        entry::{Reading, Reference},
-        tests, Reader, E,
+    use crate::{
+        inf::tests,
+        reader::{
+            entry::{Reading, Reference},
+            Reader, E,
+        },
     };
 
     #[test]
