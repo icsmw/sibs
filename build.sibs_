@@ -1,3 +1,0 @@
-@import ./src/reader/entry/tests/reading/full/common.sibs;
-@import ./src/reader/entry/tests/reading/full/defaults.sibs;
-@import ./src/reader/entry/tests/reading/full/build.sibs;
