@@ -47,6 +47,8 @@ pub enum E {
     TokenNotFound(usize),
     #[error("Token {0} has invalid range; string len={1}; range [{2},{3}]")]
     TokenHasInvalidRange(usize, usize, usize, usize),
+    #[error("No tokens")]
+    NoTokens,
     #[error("No component name")]
     EmptyComponentName,
     #[error("Invalid component name")]

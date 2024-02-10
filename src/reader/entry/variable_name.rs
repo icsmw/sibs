@@ -26,6 +26,7 @@ impl Reading<VariableName> for VariableName {
                 .char(&[&chars::COLON, &chars::WS, &chars::EQUAL, &chars::SEMICOLON])
                 .map(|(content, _char)| content)
                 .unwrap_or_else(|| reader.move_to().end());
+            reader.correct_last(-1, 0)?;
             Ok(Some(VariableName::new(content, reader.token()?.id)?))
         } else {
             Ok(None)
@@ -87,7 +88,11 @@ mod reading {
         let mut count = 0;
         for sample in samples.iter() {
             let mut reader = Reader::new(sample.to_string());
-            assert!(VariableName::read(&mut reader).is_ok());
+            let variable_name = VariableName::read(&mut reader)?.unwrap();
+            assert_eq!(
+                format!("${}", variable_name.name),
+                reader.get_fragment(&reader.token()?.id)?.content
+            );
             count += 1;
         }
         assert_eq!(count, samples.len());

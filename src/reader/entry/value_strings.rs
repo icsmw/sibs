@@ -150,9 +150,9 @@ mod reading {
                 "\"{}\"",
                 reader.get_fragment(&entity.token)?.content
             );
-            // for injection in entity.injections.iter() {
-            //     println!("{:?}", reader.get_fragment(&injection.token())?);
-            // }
+            for injection in entity.injections.iter() {
+                println!("{:?}", reader.get_fragment(&injection.token())?);
+            }
             count += 1;
         }
         assert_eq!(count, 16);

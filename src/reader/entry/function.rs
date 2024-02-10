@@ -40,6 +40,7 @@ impl Reading<Function> for Function {
             ) {
                 Err(E::InvalidFunctionName)?;
             }
+            reader.correct_last(-1, 0)?;
             if matches!(ends_with, Some(chars::SEMICOLON)) {
                 reader.move_to().next();
                 return Ok(Some(Self::new(reader.token()?.id, None, name, false)?));
