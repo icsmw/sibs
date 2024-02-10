@@ -25,6 +25,12 @@ impl Injection {
             Self::Function(hook, _) => hook,
         }
     }
+    pub fn token(&self) -> usize {
+        match self {
+            Self::VariableName(_, v) => v.token,
+            Self::Function(_, v) => v.token,
+        }
+    }
 }
 
 impl Operator for Injection {
@@ -140,8 +146,13 @@ mod reading {
         while let Some(entity) = ValueString::read(&mut reader)? {
             assert_eq!(
                 tests::trim(reader.recent()),
-                tests::trim(&entity.to_string())
+                tests::trim(&entity.to_string()),
+                "\"{}\"",
+                reader.get_fragment(&entity.token)?.content
             );
+            // for injection in entity.injections.iter() {
+            //     println!("{:?}", reader.get_fragment(&injection.token())?);
+            // }
             count += 1;
         }
         assert_eq!(count, 16);

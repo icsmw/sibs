@@ -21,6 +21,24 @@ use std::{
 };
 
 #[derive(Debug)]
+pub struct Fragment {
+    pub content: String,
+    pub from: usize,
+    pub len: usize,
+    pub to: usize,
+}
+
+impl Fragment {
+    pub fn new(content: String, from: usize, len: usize) -> Self {
+        Fragment {
+            content,
+            from,
+            len,
+            to: from + len,
+        }
+    }
+}
+#[derive(Debug)]
 pub struct Map {
     //          <id,    (from,  len  )>
     map: HashMap<usize, (usize, usize)>,
@@ -48,6 +66,22 @@ impl Map {
         self.map.insert(self.index, (from, len));
         self.index += 1;
         self.index
+    }
+    fn get_fragment(&self, token: &usize) -> Result<Fragment, E> {
+        let (from, len) = self.map.get(token).ok_or(E::TokenNotFound(*token))?;
+        if self.content.len() < from + len {
+            Err(E::TokenHasInvalidRange(
+                *token,
+                self.content.len(),
+                *from,
+                from + len,
+            ))?;
+        }
+        Ok(Fragment::new(
+            self.content[*from..(from + len)].to_string(),
+            *from,
+            *len,
+        ))
     }
 }
 
@@ -527,7 +561,7 @@ impl Reader {
             }
         }
     }
-    pub fn index(&mut self, from: usize, len: usize) {
+    pub(self) fn index(&mut self, from: usize, len: usize) {
         self._map.borrow_mut().add(from + self._offset, len);
     }
     pub fn token(&self) -> Result<Token, E> {
@@ -576,6 +610,9 @@ impl Reader {
             }
         }
         true
+    }
+    pub fn get_fragment(&self, token: &usize) -> Result<Fragment, E> {
+        self._map.borrow().get_fragment(token)
     }
     #[cfg(test)]
     pub fn recent(&mut self) -> &str {
