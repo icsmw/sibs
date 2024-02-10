@@ -41,6 +41,7 @@ impl Reading<Function> for Function {
                 Err(E::InvalidFunctionName)?;
             }
             reader.correct_last(-1, 0)?;
+            let token_id = reader.token()?.id;
             if matches!(ends_with, Some(chars::SEMICOLON)) {
                 reader.move_to().next();
                 return Ok(Some(Self::new(reader.token()?.id, None, name, false)?));
@@ -76,6 +77,7 @@ impl Reading<Function> for Function {
                 return Ok(None);
             }
             reader.move_to().next();
+            reader.merge_with_last(token_id)?;
             if matches!(stop_on, Some(chars::REDIRECT)) {
                 if matches!(reader.prev().word(2).as_deref(), Some(words::DO_ON))
                     && !matches!(reader.prev().nth(3), Some(chars::SERIALIZING))
@@ -83,7 +85,7 @@ impl Reading<Function> for Function {
                     Err(E::NestedOptionalAction)?
                 }
                 let feed = Self::new(
-                    token.id,
+                    token_id,
                     Some(&mut token.bound),
                     name,
                     matches!(ends_with, Some(chars::QUESTION)),
@@ -96,7 +98,7 @@ impl Reading<Function> for Function {
                 }
             } else {
                 Ok(Some(Self::new(
-                    token.id,
+                    token_id,
                     Some(&mut token.bound),
                     name,
                     matches!(ends_with, Some(chars::QUESTION)),

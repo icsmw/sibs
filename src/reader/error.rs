@@ -49,6 +49,8 @@ pub enum E {
     TokenHasInvalidRange(usize, usize, usize, usize),
     #[error("No tokens")]
     NoTokens,
+    #[error("Fail to merge token {0} with {1}")]
+    InvalidTokenToMerge(usize, usize),
     #[error("No component name")]
     EmptyComponentName,
     #[error("Invalid component name")]

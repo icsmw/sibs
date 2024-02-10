@@ -31,6 +31,12 @@ impl Injection {
             Self::Function(_, v) => v.token,
         }
     }
+    pub fn to_string(&self) -> String {
+        match self {
+            Self::VariableName(_, v) => v.to_string(),
+            Self::Function(_, v) => v.to_string(),
+        }
+    }
 }
 
 impl Operator for Injection {
@@ -147,11 +153,16 @@ mod reading {
             assert_eq!(
                 tests::trim(reader.recent()),
                 tests::trim(&entity.to_string()),
-                "\"{}\"",
-                reader.get_fragment(&entity.token)?.content
+            );
+            assert_eq!(
+                tests::trim(&entity.to_string()),
+                format!("\"{}\"", reader.get_fragment(&entity.token)?.content)
             );
             for injection in entity.injections.iter() {
-                println!("{:?}", reader.get_fragment(&injection.token())?);
+                assert_eq!(
+                    injection.to_string(),
+                    reader.get_fragment(&injection.token())?.content
+                );
             }
             count += 1;
         }

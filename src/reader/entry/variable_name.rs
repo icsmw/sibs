@@ -89,10 +89,9 @@ mod reading {
         for sample in samples.iter() {
             let mut reader = Reader::new(sample.to_string());
             let variable_name = VariableName::read(&mut reader)?.unwrap();
-            assert_eq!(
-                format!("${}", variable_name.name),
-                reader.get_fragment(&reader.token()?.id)?.content
-            );
+            let fragment = reader.get_fragment(&reader.token()?.id)?.content;
+            assert_eq!(format!("${}", variable_name.name), fragment);
+            assert_eq!(fragment, variable_name.to_string());
             count += 1;
         }
         assert_eq!(count, samples.len());

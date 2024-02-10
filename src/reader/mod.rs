@@ -73,11 +73,24 @@ impl Map {
             }
             *from = (*from as isize + left) as usize;
             *len = (*len as isize + (right - left)) as usize;
+            Ok(())
         } else {
-            Err(E::TokenNotFound(index))?;
+            Err(E::TokenNotFound(index))
         }
-        Ok(())
     }
+    pub fn merge_with_last(&mut self, token: usize) -> Result<(), E> {
+        let (token_last, (from_last, len_last)) = self.last().ok_or(E::NoTokens)?;
+        if let Some((from, len)) = self.map.get_mut(&token) {
+            if from_last < *from {
+                Err(E::InvalidTokenToMerge(token, token_last))?;
+            }
+            *len = from_last - *from + len_last;
+            Ok(())
+        } else {
+            Err(E::TokenNotFound(token))
+        }
+    }
+
     fn add(&mut self, from: usize, len: usize) -> usize {
         self.map.insert(self.index, (from, len));
         self.index += 1;
@@ -603,6 +616,9 @@ impl Reader {
     }
     pub fn correct_last(&mut self, left: isize, right: isize) -> Result<(), E> {
         self._map.borrow_mut().correct_last(left, right)
+    }
+    pub fn merge_with_last(&mut self, token: usize) -> Result<(), E> {
+        self._map.borrow_mut().merge_with_last(token)
     }
     pub fn done(&self) -> bool {
         self.pos == self.content.len()
