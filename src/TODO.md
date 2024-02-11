@@ -8,4 +8,3 @@
 - support modules for functions grouping; like @os.get
 - add simple assignation $a = $b
 - add web-server for remote access
-- finish function token implementation for feeding

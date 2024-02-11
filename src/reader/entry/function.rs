@@ -23,6 +23,8 @@ pub struct Function {
 impl Reading<Function> for Function {
     fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
         reader.state().set();
+        reader.move_to().any();
+        let from = reader.abs_pos();
         if reader.move_to().char(&[&chars::AT]).is_some() {
             let (name, ends_with) = reader
                 .until()
@@ -40,15 +42,18 @@ impl Reading<Function> for Function {
             ) {
                 Err(E::InvalidFunctionName)?;
             }
-            reader.correct_last(-1, 0)?;
-            let token_id = reader.token()?.id;
             if matches!(ends_with, Some(chars::SEMICOLON)) {
                 reader.move_to().next();
-                return Ok(Some(Self::new(reader.token()?.id, None, name, false)?));
+                return Ok(Some(Self::new(
+                    reader.add_abs_token(from, reader.abs_pos()),
+                    None,
+                    name,
+                    false,
+                )?));
             }
             if ends_with.is_none() {
                 return Ok(Some(Self::new(
-                    reader.token()?.id,
+                    reader.add_abs_token(from, reader.abs_pos()),
                     Some(reader),
                     name,
                     false,
@@ -77,7 +82,6 @@ impl Reading<Function> for Function {
                 return Ok(None);
             }
             reader.move_to().next();
-            reader.merge_with_last(token_id)?;
             if matches!(stop_on, Some(chars::REDIRECT)) {
                 if matches!(reader.prev().word(2).as_deref(), Some(words::DO_ON))
                     && !matches!(reader.prev().nth(3), Some(chars::SERIALIZING))
@@ -85,20 +89,21 @@ impl Reading<Function> for Function {
                     Err(E::NestedOptionalAction)?
                 }
                 let feed = Self::new(
-                    token_id,
+                    reader.add_abs_token(from, reader.abs_pos()),
                     Some(&mut token.bound),
                     name,
                     matches!(ends_with, Some(chars::QUESTION)),
                 )?;
                 if let Some(mut parent_func) = Function::read(reader)? {
                     parent_func.feeding(feed);
+                    parent_func.set_token(reader.add_abs_token(from, reader.abs_pos()));
                     Ok(Some(parent_func))
                 } else {
                     Err(E::NoDestFunction)
                 }
             } else {
                 Ok(Some(Self::new(
-                    token_id,
+                    reader.add_abs_token(from, reader.abs_pos()),
                     Some(&mut token.bound),
                     name,
                     matches!(ends_with, Some(chars::QUESTION)),
@@ -135,6 +140,9 @@ impl Function {
         } else {
             self.feed = Some(Box::new(func));
         }
+    }
+    pub fn set_token(&mut self, token: usize) {
+        self.token = token;
     }
 }
 
@@ -210,11 +218,10 @@ mod reading {
                 tests::trim(reader.recent()),
                 tests::trim(&format!("{entity};"))
             );
-            //TODO
-            // assert_eq!(
-            //     tests::trim(&entity.to_string()),
-            //     reader.get_fragment(&entity.token)?.content
-            // );
+            assert_eq!(
+                tests::trim(&format!("{entity};")),
+                reader.get_fragment(&entity.token)?.content
+            );
             count += 1;
         }
         assert_eq!(count, len);
