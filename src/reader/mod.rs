@@ -593,7 +593,7 @@ impl Reader {
                 let value = if len == 0 {
                     String::new()
                 } else {
-                    content[from..=(from + len - 1)].to_string()
+                    content[from..(from + len)].to_string()
                 };
                 Token {
                     content: value.to_string(),
