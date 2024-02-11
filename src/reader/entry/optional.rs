@@ -170,28 +170,27 @@ impl Reading<Optional> for Optional {
                             condition,
                         }));
                     }
+                    let close_right_side = reader.open_token();
                     if reader.until().char(&[&chars::SEMICOLON]).is_some() {
                         let mut token = reader.token()?;
                         if token.bound.contains().word(&[&words::DO_ON]) {
                             Err(E::NestedOptionalAction)?
                         }
                         reader.move_to().next();
+                        let action = if let Some(reference) = Reference::read(&mut token.bound)? {
+                            Action::Reference(reference)
+                        } else if let Some(func) = Function::read(&mut token.bound)? {
+                            Action::Function(func)
+                        } else if let Some(value_string) = ValueString::read(&mut token.bound)? {
+                            Action::ValueString(value_string)
+                        } else if !token.content.trim().is_empty() {
+                            Action::Command(Command::new(token.content, close_right_side(reader))?)
+                        } else {
+                            Err(E::NotActionForCondition)?
+                        };
                         Ok(Some(Optional {
                             token: close(reader),
-                            action: if let Some(reference) = Reference::read(&mut token.bound)? {
-                                Action::Reference(reference)
-                            } else if let Some(func) = Function::read(&mut token.bound)? {
-                                Action::Function(func)
-                            } else if let Some(value_string) = ValueString::read(&mut token.bound)?
-                            {
-                                Action::ValueString(value_string)
-                            } else if !token.bound.rest().trim().is_empty() {
-                                let cmd = token.bound.move_to().end();
-                                let token = token.bound.token()?;
-                                Action::Command(Command::new(cmd, token.id)?)
-                            } else {
-                                Err(E::NotActionForCondition)?
-                            },
+                            action,
                             condition,
                         }))
                     } else {
@@ -269,10 +268,9 @@ mod reading {
             // );
             // println!("{:?}", entity.action);
             // assert_eq!(
-            //     tests::trim(&entity.action.to_string()),
+            //     tests::trim(&format!("{};", entity.action)),
             //     reader.get_fragment(&entity.action.token())?.lined
             // );
-
             count += 1;
         }
         assert_eq!(count, 11);

@@ -65,9 +65,14 @@ pub struct ValueString {
 
 impl Reading<ValueString> for ValueString {
     fn read(reader: &mut Reader) -> Result<Option<ValueString>, E> {
+        let close = reader.open_token();
         if let Some(inner) = reader.group().closed(&chars::QUOTES) {
             let mut token = reader.token()?;
-            Ok(Some(ValueString::new(inner, &mut token.bound)?))
+            Ok(Some(ValueString::new(
+                inner,
+                &mut token.bound,
+                close(reader),
+            )?))
         } else {
             Ok(None)
         }
@@ -75,9 +80,8 @@ impl Reading<ValueString> for ValueString {
 }
 
 impl ValueString {
-    pub fn new(pattern: String, reader: &mut Reader) -> Result<Self, E> {
+    pub fn new(pattern: String, reader: &mut Reader, token: usize) -> Result<Self, E> {
         let mut injections: Vec<Injection> = vec![];
-        let token = reader.token()?.id;
         while reader.seek_to().char(&chars::TYPE_OPEN) {
             reader.move_to().next();
             if reader.until().char(&[&chars::TYPE_CLOSE]).is_some() {
@@ -156,7 +160,7 @@ mod reading {
             );
             assert_eq!(
                 tests::trim(&entity.to_string()),
-                format!("\"{}\"", reader.get_fragment(&entity.token)?.content)
+                reader.get_fragment(&entity.token)?.content
             );
             for injection in entity.injections.iter() {
                 assert_eq!(
