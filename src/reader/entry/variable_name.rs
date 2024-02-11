@@ -21,17 +21,14 @@ pub struct VariableName {
 impl Reading<VariableName> for VariableName {
     fn read(reader: &mut Reader) -> Result<Option<VariableName>, E> {
         reader.move_to().any();
-        let from = reader.abs_pos();
+        let close = reader.open_token();
         if reader.move_to().char(&[&chars::DOLLAR]).is_some() {
             let content = reader
                 .until()
                 .char(&[&chars::COLON, &chars::WS, &chars::EQUAL, &chars::SEMICOLON])
                 .map(|(content, _char)| content)
                 .unwrap_or_else(|| reader.move_to().end());
-            Ok(Some(VariableName::new(
-                content,
-                reader.add_abs_token(from, reader.abs_pos()),
-            )?))
+            Ok(Some(VariableName::new(content, close(reader))?))
         } else {
             Ok(None)
         }

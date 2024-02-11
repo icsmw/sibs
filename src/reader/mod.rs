@@ -605,11 +605,15 @@ impl Reader {
             })
             .ok_or(E::FailGetToken)
     }
-    pub fn abs_pos(&self) -> usize {
-        self.pos + self._offset
-    }
-    pub fn add_abs_token(&mut self, from: usize, to: usize) -> usize {
-        self._map.borrow_mut().add(from, to - from)
+    pub fn open_token(&mut self) -> impl Fn(&mut Reader) -> usize {
+        self.move_to().any();
+        let from = self.pos + self._offset;
+        move |reader: &mut Reader| {
+            reader
+                ._map
+                .borrow_mut()
+                .add(from, (reader.pos + reader._offset) - from)
+        }
     }
     pub fn done(&self) -> bool {
         self.pos == self.content.len()

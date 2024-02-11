@@ -53,8 +53,7 @@ pub struct VariableAssignation {
 impl Reading<VariableAssignation> for VariableAssignation {
     fn read(reader: &mut Reader) -> Result<Option<VariableAssignation>, E> {
         reader.state().set();
-        reader.move_to().any();
-        let from = reader.abs_pos();
+        let close = reader.open_token();
         if let Some(name) = VariableName::read(reader)? {
             if reader.move_to().char(&[&chars::EQUAL]).is_some() {
                 if let Some(chars::EQUAL) = reader.next().char() {
@@ -66,7 +65,7 @@ impl Reading<VariableAssignation> for VariableAssignation {
                     Some(VariableAssignation {
                         name: name.clone(),
                         assignation: Assignation::First(first),
-                        token: reader.add_abs_token(from, reader.abs_pos()),
+                        token: close(reader),
                     })
                 } else if let Some(values) = Values::read(reader)? {
                     reader
@@ -76,7 +75,7 @@ impl Reading<VariableAssignation> for VariableAssignation {
                     Some(VariableAssignation {
                         name: name.clone(),
                         assignation: Assignation::Values(values),
-                        token: reader.add_abs_token(from, reader.abs_pos()),
+                        token: close(reader),
                     })
                 } else if reader
                     .group()
@@ -93,7 +92,7 @@ impl Reading<VariableAssignation> for VariableAssignation {
                         assignation: Assignation::Block(
                             Block::read(&mut group_token.bound)?.ok_or(E::EmptyGroup)?,
                         ),
-                        token: reader.add_abs_token(from, reader.abs_pos()),
+                        token: close(reader),
                     })
                 } else {
                     None
@@ -111,13 +110,13 @@ impl Reading<VariableAssignation> for VariableAssignation {
                     Ok(Some(VariableAssignation {
                         name,
                         assignation: Assignation::Function(func),
-                        token: reader.add_abs_token(from, reader.abs_pos()),
+                        token: close(reader),
                     }))
                 } else if let Some(value_string) = ValueString::read(&mut token.bound)? {
                     Ok(Some(VariableAssignation {
                         name,
                         assignation: Assignation::ValueString(value_string),
-                        token: reader.add_abs_token(from, reader.abs_pos()),
+                        token: close(reader),
                     }))
                 } else {
                     Err(E::NoComparingOrAssignation)?

@@ -24,7 +24,7 @@ impl Reading<Function> for Function {
     fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
         reader.state().set();
         reader.move_to().any();
-        let from = reader.abs_pos();
+        let close = reader.open_token();
         if reader.move_to().char(&[&chars::AT]).is_some() {
             let (name, ends_with) = reader
                 .until()
@@ -44,20 +44,10 @@ impl Reading<Function> for Function {
             }
             if matches!(ends_with, Some(chars::SEMICOLON)) {
                 reader.move_to().next();
-                return Ok(Some(Self::new(
-                    reader.add_abs_token(from, reader.abs_pos()),
-                    None,
-                    name,
-                    false,
-                )?));
+                return Ok(Some(Self::new(close(reader), None, name, false)?));
             }
             if ends_with.is_none() {
-                return Ok(Some(Self::new(
-                    reader.add_abs_token(from, reader.abs_pos()),
-                    Some(reader),
-                    name,
-                    false,
-                )?));
+                return Ok(Some(Self::new(close(reader), Some(reader), name, false)?));
             }
             reader.trim();
             if matches!(ends_with, Some(chars::QUESTION)) {
@@ -89,21 +79,21 @@ impl Reading<Function> for Function {
                     Err(E::NestedOptionalAction)?
                 }
                 let feed = Self::new(
-                    reader.add_abs_token(from, reader.abs_pos()),
+                    close(reader),
                     Some(&mut token.bound),
                     name,
                     matches!(ends_with, Some(chars::QUESTION)),
                 )?;
                 if let Some(mut parent_func) = Function::read(reader)? {
                     parent_func.feeding(feed);
-                    parent_func.set_token(reader.add_abs_token(from, reader.abs_pos()));
+                    parent_func.set_token(close(reader));
                     Ok(Some(parent_func))
                 } else {
                     Err(E::NoDestFunction)
                 }
             } else {
                 Ok(Some(Self::new(
-                    reader.add_abs_token(from, reader.abs_pos()),
+                    close(reader),
                     Some(&mut token.bound),
                     name,
                     matches!(ends_with, Some(chars::QUESTION)),
