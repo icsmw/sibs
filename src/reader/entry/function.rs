@@ -210,6 +210,11 @@ mod reading {
                 tests::trim(reader.recent()),
                 tests::trim(&format!("{entity};"))
             );
+            //TODO
+            // assert_eq!(
+            //     tests::trim(&entity.to_string()),
+            //     reader.get_fragment(&entity.token)?.content
+            // );
             count += 1;
         }
         assert_eq!(count, len);

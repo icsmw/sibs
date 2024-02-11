@@ -12,6 +12,7 @@ async-process = "2.0.1"
 console = "0.15.8"
 futures-lite = "2.2.0"
 indicatif = "0.17.7"
+regex = "1.10.3"
 terminal_size = "0.3.0"
 thiserror = "1.0.50"
 

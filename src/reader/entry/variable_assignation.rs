@@ -53,6 +53,8 @@ pub struct VariableAssignation {
 impl Reading<VariableAssignation> for VariableAssignation {
     fn read(reader: &mut Reader) -> Result<Option<VariableAssignation>, E> {
         reader.state().set();
+        reader.move_to().any();
+        let from = reader.abs_pos();
         if let Some(name) = VariableName::read(reader)? {
             if reader.move_to().char(&[&chars::EQUAL]).is_some() {
                 if let Some(chars::EQUAL) = reader.next().char() {
@@ -64,13 +66,17 @@ impl Reading<VariableAssignation> for VariableAssignation {
                     Some(VariableAssignation {
                         name: name.clone(),
                         assignation: Assignation::First(first),
-                        token: reader.token()?.id,
+                        token: reader.add_abs_token(from, reader.abs_pos()),
                     })
                 } else if let Some(values) = Values::read(reader)? {
+                    reader
+                        .move_to()
+                        .char(&[&chars::SEMICOLON])
+                        .ok_or(E::MissedSemicolon)?;
                     Some(VariableAssignation {
                         name: name.clone(),
                         assignation: Assignation::Values(values),
-                        token: reader.token()?.id,
+                        token: reader.add_abs_token(from, reader.abs_pos()),
                     })
                 } else if reader
                     .group()
@@ -78,22 +84,21 @@ impl Reading<VariableAssignation> for VariableAssignation {
                     .is_some()
                 {
                     let mut group_token = reader.token()?;
-                    if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
-                        return Err(E::MissedSemicolon)?;
-                    } else {
-                        Some(VariableAssignation {
-                            name: name.clone(),
-                            assignation: Assignation::Block(
-                                Block::read(&mut group_token.bound)?.ok_or(E::EmptyGroup)?,
-                            ),
-                            token: group_token.id,
-                        })
-                    }
+                    reader
+                        .move_to()
+                        .char(&[&chars::SEMICOLON])
+                        .ok_or(E::MissedSemicolon)?;
+                    Some(VariableAssignation {
+                        name: name.clone(),
+                        assignation: Assignation::Block(
+                            Block::read(&mut group_token.bound)?.ok_or(E::EmptyGroup)?,
+                        ),
+                        token: reader.add_abs_token(from, reader.abs_pos()),
+                    })
                 } else {
                     None
                 };
                 if assignation.is_some() {
-                    reader.move_to().next();
                     return Ok(assignation);
                 }
                 reader
@@ -106,13 +111,13 @@ impl Reading<VariableAssignation> for VariableAssignation {
                     Ok(Some(VariableAssignation {
                         name,
                         assignation: Assignation::Function(func),
-                        token: token.id,
+                        token: reader.add_abs_token(from, reader.abs_pos()),
                     }))
                 } else if let Some(value_string) = ValueString::read(&mut token.bound)? {
                     Ok(Some(VariableAssignation {
                         name,
                         assignation: Assignation::ValueString(value_string),
-                        token: token.id,
+                        token: reader.add_abs_token(from, reader.abs_pos()),
                     }))
                 } else {
                     Err(E::NoComparingOrAssignation)?
@@ -186,6 +191,10 @@ mod reading {
             assert_eq!(
                 tests::trim(reader.recent()),
                 tests::trim(&entity.to_string())
+            );
+            assert_eq!(
+                tests::trim(&entity.to_string()),
+                reader.get_fragment(&entity.token)?.lined
             );
             count += 1;
         }

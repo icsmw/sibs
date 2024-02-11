@@ -11,6 +11,7 @@ use crate::{
 };
 use entry::{Component, Function, Reading};
 use error::E;
+use regex::Regex;
 use std::{
     collections::HashMap,
     fs,
@@ -23,6 +24,7 @@ use std::{
 #[derive(Debug)]
 pub struct Fragment {
     pub content: String,
+    pub lined: String,
     pub from: usize,
     pub len: usize,
     pub to: usize,
@@ -30,8 +32,13 @@ pub struct Fragment {
 
 impl Fragment {
     pub fn new(content: String, from: usize, len: usize) -> Self {
+        let lined = Regex::new(r"[\n\r]\s*")
+            .expect("Regex [\\n\\r]\\s* should be constructed")
+            .replace_all(&content, "")
+            .to_string();
         Fragment {
             content,
+            lined,
             from,
             len,
             to: from + len,
@@ -90,11 +97,10 @@ impl Map {
             Err(E::TokenNotFound(token))
         }
     }
-
     fn add(&mut self, from: usize, len: usize) -> usize {
         self.map.insert(self.index, (from, len));
         self.index += 1;
-        self.index
+        self.index - 1
     }
     fn get_fragment(&self, token: &usize) -> Result<Fragment, E> {
         let (from, len) = self.map.get(token).ok_or(E::TokenNotFound(*token))?;
@@ -140,6 +146,19 @@ impl<'a> MoveTo<'a> {
             };
         }
         None
+    }
+    pub fn any(&mut self) {
+        if self.bound.done() {
+            return;
+        }
+        let content = &self.bound.content[self.bound.pos..];
+        for char in content.chars() {
+            if char.is_whitespace() {
+                self.bound.pos += 1;
+            } else {
+                break;
+            }
+        }
     }
     pub fn word(&mut self, words: &[&str]) -> Option<String> {
         if self.bound.done() {
@@ -619,6 +638,12 @@ impl Reader {
     }
     pub fn merge_with_last(&mut self, token: usize) -> Result<(), E> {
         self._map.borrow_mut().merge_with_last(token)
+    }
+    pub fn abs_pos(&self) -> usize {
+        self.pos + self._offset
+    }
+    pub fn add_abs_token(&mut self, from: usize, to: usize) -> usize {
+        self._map.borrow_mut().add(from, to - from)
     }
     pub fn done(&self) -> bool {
         self.pos == self.content.len()
