@@ -107,7 +107,7 @@ impl fmt::Display for Task {
             },
             self.block
                 .as_ref()
-                .map(|b| format!("{b};"))
+                .map(|b| format!("{b}"))
                 .unwrap_or_default()
         )
     }
@@ -186,7 +186,7 @@ mod test_tasks {
         while let Some(entity) = Task::read(&mut reader)? {
             assert_eq!(
                 tests::trim(reader.recent()),
-                tests::trim(&entity.to_string())
+                tests::trim(&format!("{entity};"))
             );
             count += 1;
         }

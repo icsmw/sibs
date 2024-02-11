@@ -371,7 +371,7 @@ impl fmt::Display for If {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{};",
+            "{}",
             self.elements
                 .iter()
                 .map(|el| el.to_string())
@@ -417,7 +417,7 @@ mod reading {
         while let Some(entity) = If::read(&mut reader)? {
             assert_eq!(
                 tests::trim(reader.recent()),
-                tests::trim(&entity.to_string())
+                tests::trim(&format!("{entity};"))
             );
             count += 1;
         }
@@ -643,10 +643,10 @@ mod proptest {
 
     fn reading(if_block: If) -> Result<(), E> {
         async_io::block_on(async {
-            let origin = format!("test [\n{if_block}\n];");
+            let origin = format!("test [\n{if_block};\n];");
             let mut reader = Reader::new(origin.clone());
             while let Some(task) = Task::read(&mut reader)? {
-                assert_eq!(task.to_string(), origin);
+                assert_eq!(format!("{task};"), origin);
             }
             Ok(())
         })

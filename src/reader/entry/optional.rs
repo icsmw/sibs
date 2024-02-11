@@ -24,6 +24,19 @@ pub enum Action {
     Reference(Reference),
 }
 
+impl Action {
+    pub fn token(&self) -> usize {
+        match self {
+            Self::VariableAssignation(v) => v.token,
+            Self::Reference(v) => v.token,
+            Self::Function(v) => v.token,
+            Self::ValueString(v) => v.token,
+            Self::Command(v) => v.token,
+            Self::Block(v) => v.token,
+        }
+    }
+}
+
 impl fmt::Display for Action {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -32,10 +45,10 @@ impl fmt::Display for Action {
             match self {
                 Self::VariableAssignation(v) => v.to_string(),
                 Self::Reference(v) => v.to_string(),
-                Self::Function(v) => format!("{v};"),
-                Self::ValueString(v) => format!("{v};"),
-                Self::Command(v) => format!("{v};"),
-                Self::Block(v) => format!("{v};"),
+                Self::Function(v) => v.to_string(),
+                Self::ValueString(v) => v.to_string(),
+                Self::Command(v) => v.to_string(),
+                Self::Block(v) => v.to_string(),
             }
         )
     }
@@ -108,6 +121,7 @@ pub struct Optional {
 impl Reading<Optional> for Optional {
     fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
         reader.state().set();
+        let close = reader.open_token();
         if reader
             .move_to()
             .char(&[&chars::AT, &chars::DOLLAR])
@@ -141,7 +155,7 @@ impl Reading<Optional> for Optional {
                         }
                         if let Some(block) = Block::read(&mut token.bound)? {
                             return Ok(Some(Optional {
-                                token: token.id,
+                                token: close(reader),
                                 action: Action::Block(block),
                                 condition,
                             }));
@@ -151,7 +165,7 @@ impl Reading<Optional> for Optional {
                     }
                     if let Some(assignation) = VariableAssignation::read(reader)? {
                         return Ok(Some(Optional {
-                            token: reader.token()?.id,
+                            token: close(reader),
                             action: Action::VariableAssignation(assignation),
                             condition,
                         }));
@@ -163,7 +177,7 @@ impl Reading<Optional> for Optional {
                         }
                         reader.move_to().next();
                         Ok(Some(Optional {
-                            token: token.id,
+                            token: close(reader),
                             action: if let Some(reference) = Reference::read(&mut token.bound)? {
                                 Action::Reference(reference)
                             } else if let Some(func) = Function::read(&mut token.bound)? {
@@ -243,8 +257,22 @@ mod reading {
         while let Some(entity) = Optional::read(&mut reader)? {
             assert_eq!(
                 tests::trim(reader.recent()),
-                tests::trim(&entity.to_string())
+                tests::trim(&format!("{entity};"))
             );
+            assert_eq!(
+                tests::trim(&format!("{entity};")),
+                reader.get_fragment(&entity.token)?.lined
+            );
+            // println!(
+            //     ">>>>>>:{}",
+            //     reader.get_fragment(&entity.action.token())?.lined
+            // );
+            // println!("{:?}", entity.action);
+            // assert_eq!(
+            //     tests::trim(&entity.action.to_string()),
+            //     reader.get_fragment(&entity.action.token())?.lined
+            // );
+
             count += 1;
         }
         assert_eq!(count, 11);
@@ -377,10 +405,10 @@ mod proptest {
 
     fn reading(optional: Optional) -> Result<(), E> {
         async_io::block_on(async {
-            let origin = format!("test [\n{optional}\n];");
+            let origin = format!("test [\n{optional};\n];");
             let mut reader = Reader::new(origin.clone());
             while let Some(task) = Task::read(&mut reader)? {
-                assert_eq!(task.to_string(), origin);
+                assert_eq!(format!("{task};"), origin);
             }
             Ok(())
         })

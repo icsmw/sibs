@@ -134,7 +134,7 @@ impl fmt::Display for VariableAssignation {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{} = {}{}",
+            "{} = {}",
             self.name,
             match &self.assignation {
                 Assignation::ValueString(v) => v.to_string(),
@@ -143,10 +143,6 @@ impl fmt::Display for VariableAssignation {
                 Assignation::First(v) => v.to_string(),
                 Assignation::Function(v) => v.to_string(),
             },
-            match &self.assignation {
-                Assignation::First(_) => "",
-                _ => ";",
-            }
         )
     }
 }
@@ -189,10 +185,10 @@ mod reading {
         while let Some(entity) = VariableAssignation::read(&mut reader)? {
             assert_eq!(
                 tests::trim(reader.recent()),
-                tests::trim(&entity.to_string())
+                tests::trim(&format!("{entity};"))
             );
             assert_eq!(
-                tests::trim(&entity.to_string()),
+                tests::trim(&format!("{entity};")),
                 reader.get_fragment(&entity.token)?.lined
             );
             count += 1;
@@ -347,10 +343,10 @@ mod proptest {
 
     fn reading(assignation: VariableAssignation) -> Result<(), E> {
         async_io::block_on(async {
-            let origin = format!("test [\n{assignation}\n];");
+            let origin = format!("test [\n{assignation};\n];");
             let mut reader = Reader::new(origin.clone());
             while let Some(task) = Task::read(&mut reader)? {
-                assert_eq!(task.to_string(), origin);
+                assert_eq!(format!("{task};"), origin);
             }
             Ok(())
         })

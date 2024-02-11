@@ -118,7 +118,7 @@ impl fmt::Display for Component {
                 .join("\n"),
             self.tasks
                 .iter()
-                .map(|task| task.to_string())
+                .map(|task| format!("{task};"))
                 .collect::<Vec<String>>()
                 .join("\n")
         )

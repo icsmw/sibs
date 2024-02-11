@@ -144,7 +144,7 @@ impl fmt::Display for Reference {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            ":{}{};",
+            ":{}{}",
             self.path.join(":"),
             if self.inputs.is_empty() {
                 String::new()
@@ -219,7 +219,7 @@ mod reading {
         while let Some(entity) = Reference::read(&mut reader)? {
             assert_eq!(
                 tests::trim(reader.recent()),
-                tests::trim(&entity.to_string())
+                tests::trim(&format!("{entity};"))
             );
             count += 1;
         }

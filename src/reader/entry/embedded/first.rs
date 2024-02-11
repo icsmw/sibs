@@ -47,7 +47,7 @@ impl Reading<First> for First {
 
 impl fmt::Display for First {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "FIRST {};", self.block)
+        write!(f, "FIRST {}", self.block)
     }
 }
 
@@ -80,7 +80,7 @@ mod reading {
         while let Some(entity) = First::read(&mut reader)? {
             assert_eq!(
                 tests::trim(reader.recent()),
-                tests::trim(&entity.to_string())
+                tests::trim(&format!("{entity};"))
             );
             count += 1;
         }
@@ -165,10 +165,10 @@ mod proptest {
 
     fn reading(first: First) -> Result<(), E> {
         async_io::block_on(async {
-            let origin = format!("test [\n{first}\n];");
+            let origin = format!("test [\n{first};\n];");
             let mut reader = Reader::new(origin.clone());
             while let Some(task) = Task::read(&mut reader)? {
-                assert_eq!(task.to_string(), origin);
+                assert_eq!(format!("{task};"), origin);
             }
             Ok(())
         })

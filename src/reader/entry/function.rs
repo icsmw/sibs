@@ -269,12 +269,12 @@ mod proptest {
         }
     }
 
-    fn reading(funcs: Function) -> Result<(), E> {
+    fn reading(func: Function) -> Result<(), E> {
         async_io::block_on(async {
-            let origin = format!("test [\n{funcs};\n];");
+            let origin = format!("test [\n{func};\n];");
             let mut reader = Reader::new(origin.clone());
             while let Some(task) = Task::read(&mut reader)? {
-                assert_eq!(task.to_string(), origin);
+                assert_eq!(format!("{task};"), origin);
             }
             Ok(())
         })

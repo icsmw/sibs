@@ -44,8 +44,8 @@ impl fmt::Display for Element {
                 Self::VariableAssignation(v) => v.to_string(),
                 Self::Optional(v) => v.to_string(),
                 Self::Reference(v) => v.to_string(),
-                Self::ValueString(v) => format!("{v};"),
-                Self::VariableName(v) => format!("{v};"),
+                Self::ValueString(v) => v.to_string(),
+                Self::VariableName(v) => v.to_string(),
             }
         )
     }
@@ -185,13 +185,7 @@ impl fmt::Display for Block {
                 .unwrap_or_default(),
             self.elements
                 .iter()
-                .map(|el| format!(
-                    "{el}{}",
-                    match el {
-                        Element::Function(_) | Element::Command(_) => ";",
-                        _ => "",
-                    }
-                ))
+                .map(|el| format!("{el};"))
                 .collect::<Vec<String>>()
                 .join("\n"),
             if self.elements.is_empty() { "" } else { "\n" }
@@ -370,7 +364,7 @@ mod proptest {
             let origin = format!("test {block};");
             let mut reader = Reader::new(origin.clone());
             while let Some(task) = Task::read(&mut reader)? {
-                assert_eq!(task.to_string(), origin);
+                assert_eq!(format!("{task};"), origin);
             }
             Ok(())
         })

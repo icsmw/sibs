@@ -112,7 +112,7 @@ impl Reading<Each> for Each {
 
 impl fmt::Display for Each {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "EACH({}) {} {};", self.variable, self.input, self.block)
+        write!(f, "EACH({}) {} {}", self.variable, self.input, self.block)
     }
 }
 
@@ -167,7 +167,7 @@ mod reading {
         while let Some(entity) = Each::read(&mut reader)? {
             assert_eq!(
                 tests::trim(reader.recent()),
-                tests::trim(&format!("{entity}"))
+                tests::trim(&format!("{entity};"))
             );
             count += 1;
         }
@@ -287,10 +287,10 @@ mod proptest {
 
     fn reading(each: Each) -> Result<(), E> {
         async_io::block_on(async {
-            let origin = format!("test [\n{each}\n];");
+            let origin = format!("test [\n{each};\n];");
             let mut reader = Reader::new(origin.clone());
             while let Some(task) = Task::read(&mut reader)? {
-                assert_eq!(task.to_string(), origin);
+                assert_eq!(format!("{task};"), origin);
             }
             Ok(())
         })
