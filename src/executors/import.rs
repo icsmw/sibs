@@ -43,8 +43,8 @@ impl Executor for Import {
             if args.args.len() != 1 {
                 Err(Error::InvalidNumberOfArguments)?;
             }
-            let mut path = if let Argument::String(_, value) = &args.args[0] {
-                PathBuf::from(value)
+            let mut path = if let Argument::SimpleString(s) = &args.args[0] {
+                PathBuf::from(s.to_string())
             } else {
                 Err(Error::InvalidPathArgument)?
             };

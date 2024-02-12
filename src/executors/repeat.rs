@@ -52,7 +52,7 @@ impl Executor for Repeat {
                 .get(1)
                 .ok_or(Error::InvalidNumberOfArguments)?;
             let target = match first {
-                Argument::String(_, value) => value.to_owned(),
+                Argument::SimpleString(s) => s.to_string(),
                 Argument::PatternString(value_string) => value_string
                     .process(None, &[], &[], cx)
                     .await?
@@ -70,7 +70,7 @@ impl Executor for Repeat {
                 _ => Err(Error::InvalidArgumentType)?,
             };
             let count = match second {
-                Argument::String(_, value) => value.to_owned(),
+                Argument::SimpleString(s) => s.to_string(),
                 Argument::PatternString(value_string) => value_string
                     .process(None, &[], &[], cx)
                     .await?

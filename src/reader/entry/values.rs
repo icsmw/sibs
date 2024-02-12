@@ -7,7 +7,7 @@ use crate::{
     },
     reader::{
         chars,
-        entry::{Component, Function, PatternString, Reader, Reading, VariableName},
+        entry::{Component, Function, PatternString, Reader, Reading, SimpleString, VariableName},
         E,
     },
 };
@@ -18,7 +18,7 @@ pub enum Element {
     Function(Function),
     PatternString(PatternString),
     VariableName(VariableName),
-    String(usize, String),
+    SimpleString(SimpleString),
 }
 
 impl Element {
@@ -27,7 +27,7 @@ impl Element {
             Self::Function(v) => v.token,
             Self::PatternString(v) => v.token,
             Self::VariableName(v) => v.token,
-            Self::String(token, _) => *token,
+            Self::SimpleString(v) => v.token,
         }
     }
 }
@@ -41,7 +41,7 @@ impl fmt::Display for Element {
                 Self::Function(v) => v.to_string(),
                 Self::PatternString(v) => v.to_string(),
                 Self::VariableName(v) => v.to_string(),
-                Self::String(_, v) => v.to_string(),
+                Self::SimpleString(v) => v.to_string(),
             }
         )
     }
@@ -60,7 +60,7 @@ impl Operator for Element {
                 Self::Function(v) => v.process(owner, components, args, cx).await,
                 Self::PatternString(v) => v.process(owner, components, args, cx).await,
                 Self::VariableName(v) => v.process(owner, components, args, cx).await,
-                Self::String(_, v) => Ok(Some(AnyValue::new(v.to_owned()))),
+                Self::SimpleString(v) => Ok(Some(AnyValue::new(v.to_string()))),
             }
         })
     }
@@ -74,7 +74,7 @@ impl term::Display for Element {
                 Self::Function(v) => v.to_string(),
                 Self::PatternString(v) => v.to_string(),
                 Self::VariableName(v) => v.to_string(),
-                Self::String(_, v) => v.to_string(),
+                Self::SimpleString(v) => v.to_string(),
             }
         )
     }
@@ -131,7 +131,10 @@ impl Reading<Values> for Values {
                 } else if reader.rest().trim().is_empty() {
                     Err(E::EmptyValue)?;
                 } else {
-                    elements.push(Element::String(token.id, reader.rest().trim().to_owned()));
+                    elements.push(Element::SimpleString(SimpleString {
+                        value: reader.rest().trim().to_owned(),
+                        token: token.id,
+                    }));
                 }
             }
             if count + 1 != elements.len() {
@@ -189,7 +192,7 @@ impl Operator for Values {
                     Element::Function(v) => v.process(owner, components, args, cx).await?,
                     Element::PatternString(v) => v.process(owner, components, args, cx).await?,
                     Element::VariableName(v) => v.process(owner, components, args, cx).await?,
-                    Element::String(_, v) => Some(AnyValue::new(v.to_owned())),
+                    Element::SimpleString(v) => Some(AnyValue::new(v.to_string())),
                 } {
                     if let Some(value) = value.get_as_string() {
                         values.push(value);
@@ -317,6 +320,7 @@ mod proptest {
         reader::entry::{
             function::Function,
             pattern_string::PatternString,
+            simple_string::SimpleString,
             values::{Element, Values},
             variable_name::VariableName,
         },
@@ -331,7 +335,7 @@ mod proptest {
             let permissions = scope.read().unwrap().permissions();
             let mut allowed = vec!["[a-z][a-z0-9]*"
                 .prop_map(String::from)
-                .prop_map(|v| Self::String(0, v))
+                .prop_map(|v| Self::SimpleString(SimpleString { value: v, token: 0 }))
                 .boxed()];
             if permissions.func {
                 allowed.push(

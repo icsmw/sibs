@@ -1,13 +1,13 @@
 use crate::reader::{
     chars,
-    entry::{PatternString, Reader, Reading, VariableName},
+    entry::{PatternString, Reader, Reading, SimpleString, VariableName},
     E,
 };
 use std::fmt;
 
 #[derive(Debug, Clone)]
 pub enum Argument {
-    String(usize, String),
+    SimpleString(SimpleString),
     PatternString(PatternString),
     VariableName(VariableName),
     Arguments(Arguments),
@@ -16,7 +16,7 @@ pub enum Argument {
 impl Argument {
     pub fn token(&self) -> usize {
         match self {
-            Self::String(token, _) => *token,
+            Self::SimpleString(v) => v.token,
             Self::PatternString(v) => v.token,
             Self::VariableName(v) => v.token,
             Self::Arguments(v) => v.token,
@@ -30,7 +30,7 @@ impl fmt::Display for Argument {
             f,
             "{}",
             match self {
-                Self::String(_, v) => Reader::serialize(v),
+                Self::SimpleString(v) => Reader::serialize(&v.value),
                 Self::PatternString(v) => v.to_string(),
                 Self::VariableName(v) => v.to_string(),
                 Self::Arguments(v) => format!("[{v}]"),
@@ -98,7 +98,10 @@ impl Arguments {
                 } else if let Some(value_string) = PatternString::read(&mut token.bound)? {
                     arguments.push(Argument::PatternString(value_string));
                 } else {
-                    arguments.push(Argument::String(token.id, Reader::unserialize(&arg)));
+                    arguments.push(Argument::SimpleString(SimpleString {
+                        value: Reader::unserialize(&arg),
+                        token: token.id,
+                    }));
                 }
             }
         }
@@ -110,10 +113,10 @@ impl Arguments {
                 arguments.push(Argument::VariableName(variable));
             } else {
                 let rest = reader.move_to().end();
-                arguments.push(Argument::String(
-                    reader.token()?.id,
-                    Reader::unserialize(&rest),
-                ));
+                arguments.push(Argument::SimpleString(SimpleString {
+                    value: Reader::unserialize(&rest),
+                    token: reader.token()?.id,
+                }));
             }
         }
         Ok(arguments)
@@ -168,6 +171,7 @@ mod proptest {
         reader::entry::{
             arguments::{Argument, Arguments},
             pattern_string::PatternString,
+            simple_string::SimpleString,
             variable_name::VariableName,
         },
     };
@@ -180,7 +184,7 @@ mod proptest {
             let permissions = scope.read().unwrap().permissions();
             let mut allowed = vec!["[a-z][a-z0-9]*"
                 .prop_map(String::from)
-                .prop_map(|v| Argument::String(0, v))
+                .prop_map(|v| Argument::SimpleString(SimpleString { value: v, token: 0 }))
                 .boxed()];
             if permissions.variable_name {
                 allowed.push(

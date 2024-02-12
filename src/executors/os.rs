@@ -44,7 +44,7 @@ impl Executor for Os {
                 .get(0)
                 .ok_or(Error::InvalidNumberOfArguments)?;
             let probe = match arg {
-                Argument::String(_, value) => value.to_owned(),
+                Argument::SimpleString(s) => s.to_string(),
                 Argument::PatternString(value_string) => value_string
                     .process(None, &[], &[], cx)
                     .await?
