@@ -94,7 +94,7 @@ mod reading {
                 tests::trim_carets(&reader.get_fragment(&entity.token)?.lined),
             );
             assert_eq!(
-                tests::trim_carets(&format!("{}", entity.block)),
+                tests::trim_carets(&entity.block.to_string()),
                 tests::trim_carets(&reader.get_fragment(&entity.block.token)?.lined),
             );
             count += 1;

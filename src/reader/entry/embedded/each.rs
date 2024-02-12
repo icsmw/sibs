@@ -18,6 +18,15 @@ pub enum Input {
     Function(Function),
 }
 
+impl Input {
+    pub fn token(&self) -> usize {
+        match self {
+            Self::Function(v) => v.token,
+            Self::VariableName(v) => v.token,
+        }
+    }
+}
+
 impl Operator for Input {
     fn process<'a>(
         &'a self,
@@ -59,6 +68,7 @@ pub struct Each {
 
 impl Reading<Each> for Each {
     fn read(reader: &mut Reader) -> Result<Option<Each>, E> {
+        let close = reader.open_token();
         if reader.move_to().word(&[&words::EACH]).is_some() {
             if reader
                 .group()
@@ -77,7 +87,6 @@ impl Reading<Each> for Each {
                                 Err(E::NoLoopInput)?
                             };
                         if let Some(block) = Block::read(reader)? {
-                            let token = reader.token()?;
                             if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
                                 Err(E::MissedSemicolon)
                             } else {
@@ -85,7 +94,7 @@ impl Reading<Each> for Each {
                                     variable,
                                     input,
                                     block,
-                                    token: token.id,
+                                    token: close(reader),
                                 }))
                             }
                         } else {
@@ -164,6 +173,34 @@ mod reading {
             assert_eq!(
                 tests::trim_carets(reader.recent()),
                 tests::trim_carets(&format!("{entity};"))
+            );
+            count += 1;
+        }
+        assert_eq!(count, 6);
+        assert!(reader.rest().trim().is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn tokens() -> Result<(), E> {
+        let mut reader = Reader::new(include_str!("../../../tests/reading/each.sibs").to_string());
+        let mut count = 0;
+        while let Some(entity) = Each::read(&mut reader)? {
+            assert_eq!(
+                tests::trim_carets(&format!("{entity};")),
+                tests::trim_carets(&reader.get_fragment(&entity.token)?.lined),
+            );
+            assert_eq!(
+                tests::trim_carets(&entity.block.to_string()),
+                tests::trim_carets(&reader.get_fragment(&entity.block.token)?.lined),
+            );
+            assert_eq!(
+                tests::trim_carets(&entity.variable.to_string()),
+                tests::trim_carets(&reader.get_fragment(&entity.variable.token)?.lined),
+            );
+            assert_eq!(
+                tests::trim_carets(&entity.input.to_string()),
+                tests::trim_carets(&reader.get_fragment(&entity.input.token())?.lined),
             );
             count += 1;
         }
