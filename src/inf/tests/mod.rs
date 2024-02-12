@@ -1,11 +1,20 @@
 mod scope;
 pub use scope::*;
 
-pub fn trim(src: &str) -> String {
+use crate::reader::chars;
+
+pub fn trim_carets(src: &str) -> String {
     src.split('\n')
         .map(|s| s.trim())
         .collect::<Vec<&str>>()
         .join("")
+}
+pub fn trim_semicolon(src: &str) -> String {
+    if src.ends_with(chars::SEMICOLON) {
+        src[0..src.len() - 1].to_owned()
+    } else {
+        src.to_owned()
+    }
 }
 // use proptest::{prelude::*, strategy::ValueTree, test_runner::TestRunner};
 

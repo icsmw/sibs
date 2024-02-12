@@ -92,75 +92,85 @@ impl Block {
 
 impl Reading<Block> for Block {
     fn read(reader: &mut Reader) -> Result<Option<Block>, E> {
-        let mut elements: Vec<Element> = vec![];
-        let mut meta: Option<Meta> = None;
-        while !reader.rest().trim().is_empty() {
-            if let Some(md) = Meta::read(reader)? {
-                meta = Some(md);
-                continue;
-            }
-            if let Some(el) = If::read(reader)? {
-                elements.push(Element::If(el));
-                continue;
-            }
-            if let Some(el) = Optional::read(reader)? {
-                elements.push(Element::Optional(el));
-                continue;
-            }
-            reader.state().set();
-            if let Some(el) = VariableName::read(reader)? {
-                if let Some(chars::SEMICOLON) =
-                    reader.move_to().char(&[&chars::SEMICOLON, &chars::EQUAL])
-                {
-                    elements.push(Element::VariableName(el));
+        let close = reader.open_token();
+        if reader
+            .group()
+            .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
+            .is_some()
+        {
+            let mut inner = reader.token()?.bound;
+            let mut elements: Vec<Element> = vec![];
+            let mut meta: Option<Meta> = None;
+            while !inner.rest().trim().is_empty() {
+                if let Some(md) = Meta::read(&mut inner)? {
+                    meta = Some(md);
                     continue;
                 }
-            }
-            reader.state().restore()?;
-            if let Some(el) = VariableAssignation::read(reader)? {
-                elements.push(Element::VariableAssignation(el));
-                continue;
-            }
-            if let Some(el) = Each::read(reader)? {
-                elements.push(Element::Each(el));
-                continue;
-            }
-            if let Some(el) = First::read(reader)? {
-                elements.push(Element::First(el));
-                continue;
-            }
-            if let Some(el) = Reference::read(reader)? {
-                elements.push(Element::Reference(el));
-                continue;
-            }
-            if let Some(el) = ValueString::read(reader)? {
-                if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
-                    Err(E::MissedSemicolon)?;
+                if let Some(el) = If::read(&mut inner)? {
+                    elements.push(Element::If(el));
+                    continue;
                 }
-                elements.push(Element::ValueString(el));
-                continue;
+                if let Some(el) = Optional::read(&mut inner)? {
+                    elements.push(Element::Optional(el));
+                    continue;
+                }
+                inner.state().set();
+                if let Some(el) = VariableName::read(&mut inner)? {
+                    if let Some(chars::SEMICOLON) =
+                        inner.move_to().char(&[&chars::SEMICOLON, &chars::EQUAL])
+                    {
+                        elements.push(Element::VariableName(el));
+                        continue;
+                    }
+                }
+                inner.state().restore()?;
+                if let Some(el) = VariableAssignation::read(&mut inner)? {
+                    elements.push(Element::VariableAssignation(el));
+                    continue;
+                }
+                if let Some(el) = Each::read(&mut inner)? {
+                    elements.push(Element::Each(el));
+                    continue;
+                }
+                if let Some(el) = First::read(&mut inner)? {
+                    elements.push(Element::First(el));
+                    continue;
+                }
+                if let Some(el) = Reference::read(&mut inner)? {
+                    elements.push(Element::Reference(el));
+                    continue;
+                }
+                if let Some(el) = ValueString::read(&mut inner)? {
+                    if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
+                        Err(E::MissedSemicolon)?;
+                    }
+                    elements.push(Element::ValueString(el));
+                    continue;
+                }
+                if let Some(el) = Function::read(&mut inner)? {
+                    elements.push(Element::Function(el));
+                    continue;
+                }
+                if let Some((cmd, _)) = inner.until().char(&[&chars::SEMICOLON]) {
+                    inner.move_to().next();
+                    elements.push(Element::Command(Command::new(cmd, inner.token()?.id)?));
+                } else {
+                    break;
+                }
             }
-            if let Some(el) = Function::read(reader)? {
-                elements.push(Element::Function(el));
-                continue;
-            }
-            if let Some((cmd, _)) = reader.until().char(&[&chars::SEMICOLON]) {
-                reader.move_to().next();
-                elements.push(Element::Command(Command::new(cmd, reader.token()?.id)?));
+            Ok(if elements.is_empty() {
+                None
             } else {
-                break;
-            }
-        }
-        Ok(if elements.is_empty() {
-            None
-        } else {
-            Some(Block {
-                elements,
-                meta,
-                token: reader.token()?.id,
-                by_first: false,
+                Some(Block {
+                    elements,
+                    meta,
+                    token: close(reader),
+                    by_first: false,
+                })
             })
-        })
+        } else {
+            Ok(None)
+        }
     }
 }
 
@@ -240,7 +250,7 @@ mod reading {
     #[test]
     fn reading() -> Result<(), E> {
         let mut reader = Reader::new(format!(
-            "{}\n{}\n{}\n{}\n{}\n{}",
+            "[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
             include_str!("../../tests/reading/if.sibs"),
             include_str!("../../tests/reading/variable_assignation.sibs"),
             include_str!("../../tests/reading/function.sibs"),
@@ -250,8 +260,12 @@ mod reading {
         ));
         while let Some(entity) = Block::read(&mut reader)? {
             assert_eq!(
-                format!("[{}]", tests::trim(reader.recent())),
-                tests::trim(&entity.to_string())
+                tests::trim_carets(reader.recent()),
+                tests::trim_carets(&entity.to_string())
+            );
+            assert_eq!(
+                tests::trim_carets(&entity.to_string()),
+                reader.get_fragment(&entity.token)?.lined
             );
         }
         assert!(reader.rest().trim().is_empty());

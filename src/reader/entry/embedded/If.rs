@@ -225,16 +225,8 @@ impl Reading<If> for If {
             if reader.move_to().word(&[&words::IF]).is_some() {
                 if reader.until().char(&[&chars::OPEN_SQ_BRACKET]).is_some() {
                     let proviso: Proviso = If::proviso(&mut reader.token()?.bound, true)?;
-                    if reader
-                        .group()
-                        .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
-                        .is_some()
-                    {
-                        if let Some(block) = Block::read(&mut reader.token()?.bound)? {
-                            elements.push(Element::If(proviso, block));
-                        } else {
-                            Err(E::EmptyGroup)?
-                        }
+                    if let Some(block) = Block::read(reader)? {
+                        elements.push(Element::If(proviso, block));
                     } else {
                         Err(E::NotClosedGroup)?
                     }
@@ -253,16 +245,8 @@ impl Reading<If> for If {
                 }));
             }
             if reader.move_to().word(&[&words::ELSE]).is_some() {
-                if reader
-                    .group()
-                    .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
-                    .is_some()
-                {
-                    if let Some(block) = Block::read(&mut reader.token()?.bound)? {
-                        elements.push(Element::Else(block));
-                    } else {
-                        Err(E::EmptyGroup)?
-                    }
+                if let Some(block) = Block::read(reader)? {
+                    elements.push(Element::Else(block));
                     if reader.move_to().char(&[&chars::SEMICOLON]).is_some() {
                         return Ok(Some(If {
                             elements,
@@ -416,8 +400,8 @@ mod reading {
         let mut count = 0;
         while let Some(entity) = If::read(&mut reader)? {
             assert_eq!(
-                tests::trim(reader.recent()),
-                tests::trim(&format!("{entity};"))
+                tests::trim_carets(reader.recent()),
+                tests::trim_carets(&format!("{entity};"))
             );
             count += 1;
         }

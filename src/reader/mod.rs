@@ -90,6 +90,15 @@ impl Map {
             *len,
         ))
     }
+    fn extend(&mut self) {
+        if self.index == 0 {
+            return;
+        }
+        let index = self.index - 1;
+        self.map.entry(index).and_modify(|(_from, len)| {
+            *len += 1;
+        });
+    }
 }
 
 #[derive(Debug)]
@@ -187,6 +196,15 @@ impl<'a> MoveTo<'a> {
     pub fn next(&mut self) -> bool {
         if self.bound.pos < self.bound.content.len() {
             self.bound.pos += 1;
+            true
+        } else {
+            false
+        }
+    }
+    pub fn next_and_extend(&mut self) -> bool {
+        if self.bound.pos < self.bound.content.len() {
+            self.bound.pos += 1;
+            self.bound.extend_token();
             true
         } else {
             false
@@ -614,6 +632,9 @@ impl Reader {
                 .borrow_mut()
                 .add(from, (reader.pos + reader._offset) - from)
         }
+    }
+    pub fn extend_token(&mut self) {
+        self._map.borrow_mut().extend()
     }
     pub fn done(&self) -> bool {
         self.pos == self.content.len()

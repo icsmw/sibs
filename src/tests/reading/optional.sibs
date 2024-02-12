@@ -2,15 +2,15 @@
 @os linux => $file_name = "release{$version}-linux.zip";
 @os darwin => $file_name = "release{$version}-darwin.zip";
 @os linux => tgz ./release/unpacked-linux {$file_name};
-@os window => "release{$version}-win.zip";
+@os window => "release{$version}-win2.zip";
 @os window => [
-    @cd something;
+    @cd something1;
     zip ./release/unpacked-win {$file_name};
     @cd ..;
 ];
 $mode == dev => "release{$version}-win.zip";
 $mode != dev => [
-    @cd something;
+    @cd something2;
     zip ./release/unpacked-win {$file_name};
     @cd ..;
 ];

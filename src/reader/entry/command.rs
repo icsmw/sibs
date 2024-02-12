@@ -6,7 +6,7 @@ use crate::{
         spawner,
         term::{self, Term},
     },
-    reader::{entry::Component, error::E},
+    reader::{chars, entry::Component, error::E},
 };
 use std::fmt;
 
@@ -18,9 +18,12 @@ pub struct Command {
 
 impl Command {
     pub fn new(command: String, token: usize) -> Result<Self, E> {
-        let command = command.trim().to_owned();
+        let mut command = command.trim().to_owned();
+        if command.ends_with(chars::SEMICOLON) {
+            let _ = command.pop();
+        }
         if command.is_empty() {
-            Err(E::EmptyComponentName)
+            Err(E::EmptyCommand)
         } else {
             Ok(Self { command, token })
         }

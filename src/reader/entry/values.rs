@@ -18,7 +18,18 @@ pub enum Element {
     Function(Function),
     ValueString(ValueString),
     VariableName(VariableName),
-    String(String),
+    String(usize, String),
+}
+
+impl Element {
+    pub fn token(&self) -> usize {
+        match self {
+            Self::Function(v) => v.token,
+            Self::ValueString(v) => v.token,
+            Self::VariableName(v) => v.token,
+            Self::String(token, _) => *token,
+        }
+    }
 }
 
 impl fmt::Display for Element {
@@ -30,7 +41,7 @@ impl fmt::Display for Element {
                 Self::Function(v) => v.to_string(),
                 Self::ValueString(v) => v.to_string(),
                 Self::VariableName(v) => v.to_string(),
-                Self::String(v) => v.to_string(),
+                Self::String(_, v) => v.to_string(),
             }
         )
     }
@@ -49,7 +60,7 @@ impl Operator for Element {
                 Self::Function(v) => v.process(owner, components, args, cx).await,
                 Self::ValueString(v) => v.process(owner, components, args, cx).await,
                 Self::VariableName(v) => v.process(owner, components, args, cx).await,
-                Self::String(v) => Ok(Some(AnyValue::new(v.to_owned()))),
+                Self::String(_, v) => Ok(Some(AnyValue::new(v.to_owned()))),
             }
         })
     }
@@ -63,7 +74,7 @@ impl term::Display for Element {
                 Self::Function(v) => v.to_string(),
                 Self::ValueString(v) => v.to_string(),
                 Self::VariableName(v) => v.to_string(),
-                Self::String(v) => v.to_string(),
+                Self::String(_, v) => v.to_string(),
             }
         )
     }
@@ -77,6 +88,7 @@ pub struct Values {
 
 impl Reading<Values> for Values {
     fn read(reader: &mut Reader) -> Result<Option<Values>, E> {
+        let close = reader.open_token();
         if reader
             .group()
             .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
@@ -88,6 +100,7 @@ impl Reading<Values> for Values {
             if inner.rest().trim().is_empty() {
                 Err(E::EmptyValue)?;
             }
+            let mut count = 0usize;
             while !inner.rest().trim().is_empty() {
                 if let Some((candidate, char)) =
                     inner.until().char(&[&chars::COMMA, &chars::SEMICOLON])
@@ -99,10 +112,12 @@ impl Reading<Values> for Values {
                         Err(E::EmptyValue)?;
                     }
                     inner.move_to().next();
+                    count += 1;
                 } else {
                     inner.move_to().end();
                 };
-                let mut reader = inner.token()?.bound;
+                let token = inner.token()?;
+                let mut reader = token.bound;
                 if let Some(el) = VariableName::read(&mut reader)? {
                     elements.push(Element::VariableName(el));
                     continue;
@@ -116,11 +131,14 @@ impl Reading<Values> for Values {
                 } else if reader.rest().trim().is_empty() {
                     Err(E::EmptyValue)?;
                 } else {
-                    elements.push(Element::String(reader.rest().trim().to_owned()));
+                    elements.push(Element::String(token.id, reader.rest().trim().to_owned()));
                 }
             }
+            if count + 1 != elements.len() {
+                Err(E::RedundantComma)?;
+            }
             Ok(Some(Values {
-                token: token.id,
+                token: close(reader),
                 elements,
             }))
         } else {
@@ -171,7 +189,7 @@ impl Operator for Values {
                     Element::Function(v) => v.process(owner, components, args, cx).await?,
                     Element::ValueString(v) => v.process(owner, components, args, cx).await?,
                     Element::VariableName(v) => v.process(owner, components, args, cx).await?,
-                    Element::String(v) => Some(AnyValue::new(v.to_owned())),
+                    Element::String(_, v) => Some(AnyValue::new(v.to_owned())),
                 } {
                     if let Some(value) = value.get_as_string() {
                         values.push(value);
@@ -187,9 +205,12 @@ impl Operator for Values {
 
 #[cfg(test)]
 mod reading {
-    use crate::reader::{
-        entry::{Reading, Values},
-        Reader, E,
+    use crate::{
+        inf::tests,
+        reader::{
+            entry::{Reading, Values},
+            Reader, E,
+        },
     };
 
     #[test]
@@ -199,7 +220,17 @@ mod reading {
         let mut count = 0;
         for sample in samples.iter() {
             let mut reader = Reader::new(sample.to_string());
-            assert!(Values::read(&mut reader).is_ok());
+            let entity = Values::read(&mut reader)?.unwrap();
+            assert_eq!(
+                tests::trim_carets(&entity.to_string()),
+                reader.get_fragment(&entity.token)?.lined
+            );
+            for el in entity.elements.iter() {
+                assert_eq!(
+                    tests::trim_carets(&el.to_string()),
+                    tests::trim_carets(&reader.get_fragment(&el.token())?.content)
+                );
+            }
             count += 1;
         }
         assert_eq!(count, samples.len());
@@ -286,7 +317,7 @@ mod proptest {
             let permissions = scope.read().unwrap().permissions();
             let mut allowed = vec!["[a-z][a-z0-9]*"
                 .prop_map(String::from)
-                .prop_map(Self::String)
+                .prop_map(|v| Self::String(0, v))
                 .boxed()];
             if permissions.func {
                 allowed.push(

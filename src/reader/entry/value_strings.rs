@@ -31,11 +31,18 @@ impl Injection {
             Self::Function(_, v) => v.token,
         }
     }
-    pub fn to_string(&self) -> String {
-        match self {
-            Self::VariableName(_, v) => v.to_string(),
-            Self::Function(_, v) => v.to_string(),
-        }
+}
+
+impl fmt::Display for Injection {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::VariableName(_, v) => v.to_string(),
+                Self::Function(_, v) => v.to_string(),
+            },
+        )
     }
 }
 
@@ -155,11 +162,11 @@ mod reading {
         let mut count = 0;
         while let Some(entity) = ValueString::read(&mut reader)? {
             assert_eq!(
-                tests::trim(reader.recent()),
-                tests::trim(&entity.to_string()),
+                tests::trim_carets(reader.recent()),
+                tests::trim_carets(&entity.to_string()),
             );
             assert_eq!(
-                tests::trim(&entity.to_string()),
+                tests::trim_carets(&entity.to_string()),
                 reader.get_fragment(&entity.token)?.content
             );
             for injection in entity.injections.iter() {

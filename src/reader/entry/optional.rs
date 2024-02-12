@@ -81,6 +81,15 @@ pub enum Condition {
     VariableComparing(VariableComparing),
 }
 
+impl Condition {
+    pub fn token(&self) -> usize {
+        match self {
+            Self::Function(v) => v.token,
+            Self::VariableComparing(v) => v.token,
+        }
+    }
+}
+
 impl fmt::Display for Condition {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -144,24 +153,15 @@ impl Reading<Optional> for Optional {
                         Err(E::NoFunctionOnOptionalAction)?
                     };
                 if reader.move_to().word(&[&words::DO_ON]).is_some() {
-                    if reader
-                        .group()
-                        .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
-                        .is_some()
-                    {
-                        let mut token = reader.token()?;
+                    if let Some(block) = Block::read(reader)? {
                         if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
                             Err(E::MissedSemicolon)?
                         }
-                        if let Some(block) = Block::read(&mut token.bound)? {
-                            return Ok(Some(Optional {
-                                token: close(reader),
-                                action: Action::Block(block),
-                                condition,
-                            }));
-                        } else {
-                            Err(E::InvalidBlock)?
-                        }
+                        return Ok(Some(Optional {
+                            token: close(reader),
+                            action: Action::Block(block),
+                            condition,
+                        }));
                     }
                     if let Some(assignation) = VariableAssignation::read(reader)? {
                         return Ok(Some(Optional {
@@ -172,11 +172,11 @@ impl Reading<Optional> for Optional {
                     }
                     let close_right_side = reader.open_token();
                     if reader.until().char(&[&chars::SEMICOLON]).is_some() {
+                        reader.move_to().next_and_extend();
                         let mut token = reader.token()?;
                         if token.bound.contains().word(&[&words::DO_ON]) {
                             Err(E::NestedOptionalAction)?
                         }
-                        reader.move_to().next();
                         let action = if let Some(reference) = Reference::read(&mut token.bound)? {
                             Action::Reference(reference)
                         } else if let Some(func) = Function::read(&mut token.bound)? {
@@ -255,22 +255,27 @@ mod reading {
         let mut count = 0;
         while let Some(entity) = Optional::read(&mut reader)? {
             assert_eq!(
-                tests::trim(reader.recent()),
-                tests::trim(&format!("{entity};"))
+                tests::trim_carets(reader.recent()),
+                tests::trim_carets(&format!("{entity};"))
             );
             assert_eq!(
-                tests::trim(&format!("{entity};")),
+                tests::trim_carets(&format!("{entity};")),
                 reader.get_fragment(&entity.token)?.lined
             );
-            // println!(
-            //     ">>>>>>:{}",
-            //     reader.get_fragment(&entity.action.token())?.lined
-            // );
-            // println!("{:?}", entity.action);
-            // assert_eq!(
-            //     tests::trim(&format!("{};", entity.action)),
-            //     reader.get_fragment(&entity.action.token())?.lined
-            // );
+            // In some cases like with ValueString, semicolon can be skipped, because
+            // belongs to parent entity (Optional).
+            assert_eq!(
+                tests::trim_semicolon(&tests::trim_carets(&entity.action.to_string())),
+                tests::trim_semicolon(&tests::trim_carets(
+                    &reader.get_fragment(&entity.action.token())?.lined
+                )),
+            );
+            assert_eq!(
+                tests::trim_semicolon(&tests::trim_carets(&entity.condition.to_string())),
+                tests::trim_semicolon(&tests::trim_carets(
+                    &reader.get_fragment(&entity.condition.token())?.lined
+                )),
+            );
             count += 1;
         }
         assert_eq!(count, 11);

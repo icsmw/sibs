@@ -23,6 +23,7 @@ pub struct VariableComparing {
 impl Reading<VariableComparing> for VariableComparing {
     fn read(reader: &mut Reader) -> Result<Option<VariableComparing>, E> {
         reader.state().set();
+        let close = reader.open_token();
         if let Some(name) = VariableName::read(reader)? {
             if let Some(word) = reader
                 .move_to()
@@ -44,7 +45,7 @@ impl Reading<VariableComparing> for VariableComparing {
                             Cmp::NotEqual
                         },
                         value,
-                        token: token.id,
+                        token: close(reader),
                     }))
                 }
             } else {

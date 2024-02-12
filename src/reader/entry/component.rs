@@ -199,8 +199,8 @@ mod reading {
         let mut count = 0;
         while let Some(entity) = Component::read(&mut reader)? {
             assert_eq!(
-                tests::trim(reader.recent()),
-                tests::trim(&format!("{entity}"))
+                tests::trim_carets(reader.recent()),
+                tests::trim_carets(&format!("{entity}"))
             );
             count += 1;
         }

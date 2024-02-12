@@ -62,21 +62,15 @@ impl Reading<Task> for Task {
             } else {
                 Err(E::NoTaskArguments)?
             };
-            if reader
-                .group()
-                .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
-                .is_some()
-            {
-                let mut token = reader.token()?;
-                let block = Block::read(&mut token.bound)?;
+            if let Some(block) = Block::read(reader)? {
                 if reader.move_to().char(&[&chars::SEMICOLON]).is_some() {
                     reader.move_to().next();
                 }
                 Ok(Some(Task {
                     name,
                     declarations,
-                    token: token.id,
-                    block,
+                    token: reader.token()?.id,
+                    block: Some(block),
                 }))
             } else {
                 Err(E::FailFindTaskActions)
@@ -185,8 +179,8 @@ mod test_tasks {
         let mut count = 0;
         while let Some(entity) = Task::read(&mut reader)? {
             assert_eq!(
-                tests::trim(reader.recent()),
-                tests::trim(&format!("{entity};"))
+                tests::trim_carets(reader.recent()),
+                tests::trim_carets(&format!("{entity};"))
             );
             count += 1;
         }

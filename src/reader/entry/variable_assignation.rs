@@ -23,6 +23,34 @@ pub enum Assignation {
     First(First),
 }
 
+impl Assignation {
+    pub fn token(&self) -> usize {
+        match self {
+            Assignation::ValueString(v) => v.token,
+            Assignation::Block(v) => v.token,
+            Assignation::Values(v) => v.token,
+            Assignation::First(v) => v.token,
+            Assignation::Function(v) => v.token,
+        }
+    }
+}
+
+impl fmt::Display for Assignation {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match &self {
+                Assignation::ValueString(v) => v.to_string(),
+                Assignation::Block(v) => v.to_string(),
+                Assignation::Values(v) => v.to_string(),
+                Assignation::First(v) => v.to_string(),
+                Assignation::Function(v) => v.to_string(),
+            },
+        )
+    }
+}
+
 impl Operator for Assignation {
     fn process<'a>(
         &'a self,
@@ -77,21 +105,14 @@ impl Reading<VariableAssignation> for VariableAssignation {
                         assignation: Assignation::Values(values),
                         token: close(reader),
                     })
-                } else if reader
-                    .group()
-                    .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
-                    .is_some()
-                {
-                    let mut group_token = reader.token()?;
+                } else if let Some(block) = Block::read(reader)? {
                     reader
                         .move_to()
                         .char(&[&chars::SEMICOLON])
                         .ok_or(E::MissedSemicolon)?;
                     Some(VariableAssignation {
                         name: name.clone(),
-                        assignation: Assignation::Block(
-                            Block::read(&mut group_token.bound)?.ok_or(E::EmptyGroup)?,
-                        ),
+                        assignation: Assignation::Block(block),
                         token: close(reader),
                     })
                 } else {
@@ -184,12 +205,22 @@ mod reading {
         let mut count = 0;
         while let Some(entity) = VariableAssignation::read(&mut reader)? {
             assert_eq!(
-                tests::trim(reader.recent()),
-                tests::trim(&format!("{entity};"))
+                tests::trim_carets(reader.recent()),
+                tests::trim_carets(&format!("{entity};"))
             );
             assert_eq!(
-                tests::trim(&format!("{entity};")),
+                tests::trim_carets(&format!("{entity};")),
                 reader.get_fragment(&entity.token)?.lined
+            );
+            assert_eq!(
+                tests::trim_carets(&entity.name.to_string()),
+                tests::trim_carets(&reader.get_fragment(&entity.name.token)?.content)
+            );
+            assert_eq!(
+                tests::trim_semicolon(&tests::trim_carets(&entity.assignation.to_string())),
+                tests::trim_semicolon(&tests::trim_carets(
+                    &reader.get_fragment(&entity.assignation.token())?.content
+                ))
             );
             count += 1;
         }

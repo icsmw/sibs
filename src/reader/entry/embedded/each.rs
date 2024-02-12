@@ -76,19 +76,15 @@ impl Reading<Each> for Each {
                             } else {
                                 Err(E::NoLoopInput)?
                             };
-                        if reader
-                            .group()
-                            .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
-                            .is_some()
-                        {
-                            let mut token = reader.token()?;
+                        if let Some(block) = Block::read(reader)? {
+                            let token = reader.token()?;
                             if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
                                 Err(E::MissedSemicolon)
                             } else {
                                 Ok(Some(Each {
                                     variable,
                                     input,
-                                    block: Block::read(&mut token.bound)?.ok_or(E::EmptyGroup)?,
+                                    block,
                                     token: token.id,
                                 }))
                             }
@@ -166,8 +162,8 @@ mod reading {
         let mut count = 0;
         while let Some(entity) = Each::read(&mut reader)? {
             assert_eq!(
-                tests::trim(reader.recent()),
-                tests::trim(&format!("{entity};"))
+                tests::trim_carets(reader.recent()),
+                tests::trim_carets(&format!("{entity};"))
             );
             count += 1;
         }

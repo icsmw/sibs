@@ -19,6 +19,8 @@ pub enum E {
     NotAsciiValue(String),
     #[error("Empty value")]
     EmptyValue,
+    #[error("Redundant comma")]
+    RedundantComma,
     #[error("Using reserved chars")]
     UsingReservedChars,
     #[error("Missed semicolon")]
@@ -49,14 +51,14 @@ pub enum E {
     TokenHasInvalidRange(usize, usize, usize, usize),
     #[error("No component name")]
     EmptyComponentName,
+    #[error("No command value")]
+    EmptyCommand,
     #[error("Invalid component name")]
     InvalidComponentName,
     #[error("Fail get last token")]
     FailGetToken,
     #[error("Invalid variable name")]
     InvalidVariableName,
-    #[error("Invalid block [...]")]
-    InvalidBlock,
     #[error("No value after comparing ==")]
     NoValueAfterComparing,
     #[error("Empty path to reference")]

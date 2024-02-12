@@ -19,21 +19,16 @@ pub struct First {
 
 impl Reading<First> for First {
     fn read(reader: &mut Reader) -> Result<Option<First>, E> {
+        let close = reader.open_token();
         if reader.move_to().word(&[&words::FIRST]).is_some() {
-            if reader
-                .group()
-                .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
-                .is_some()
-            {
-                let mut token = reader.token()?;
+            if let Some(mut block) = Block::read(reader)? {
                 if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
                     Err(E::MissedSemicolon)
                 } else {
-                    let mut block = Block::read(&mut token.bound)?.ok_or(E::EmptyGroup)?;
                     block.use_as_first();
                     Ok(Some(First {
                         block,
-                        token: token.id,
+                        token: close(reader),
                     }))
                 }
             } else {
@@ -79,8 +74,8 @@ mod reading {
         let mut count = 0;
         while let Some(entity) = First::read(&mut reader)? {
             assert_eq!(
-                tests::trim(reader.recent()),
-                tests::trim(&format!("{entity};"))
+                tests::trim_carets(reader.recent()),
+                tests::trim_carets(&format!("{entity};"))
             );
             count += 1;
         }

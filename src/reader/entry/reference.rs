@@ -53,6 +53,7 @@ pub struct Reference {
 
 impl Reading<Reference> for Reference {
     fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
+        let close = reader.open_token();
         if reader.move_to().char(&[&chars::COLON]).is_some() {
             let mut path: Vec<String> = vec![];
             let mut inputs: Vec<Input> = vec![];
@@ -130,7 +131,7 @@ impl Reading<Reference> for Reference {
                 }
             }
             Ok(Some(Reference {
-                token: reader.token()?.id,
+                token: close(reader),
                 path,
                 inputs,
             }))
@@ -218,8 +219,8 @@ mod reading {
         let mut count = 0;
         while let Some(entity) = Reference::read(&mut reader)? {
             assert_eq!(
-                tests::trim(reader.recent()),
-                tests::trim(&format!("{entity};"))
+                tests::trim_carets(reader.recent()),
+                tests::trim_carets(&format!("{entity};"))
             );
             count += 1;
         }
