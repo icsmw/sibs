@@ -30,6 +30,7 @@ impl Component {
 
 impl Reading<Component> for Component {
     fn read(reader: &mut Reader) -> Result<Option<Component>, E> {
+        let close = reader.open_token();
         if reader.move_to().char(&[&chars::POUND_SIGN]).is_some() {
             if reader
                 .group()
@@ -86,7 +87,7 @@ impl Reading<Component> for Component {
                     },
                     tasks,
                     meta,
-                    token: reader.token()?.id,
+                    token: close(reader),
                 }))
             } else {
                 Err(E::NoGroup)?
@@ -200,8 +201,45 @@ mod reading {
         while let Some(entity) = Component::read(&mut reader)? {
             assert_eq!(
                 tests::trim_carets(reader.recent()),
-                tests::trim_carets(&format!("{entity}"))
+                tests::trim_carets(&entity.to_string()),
             );
+            count += 1;
+        }
+        assert_eq!(count, components.len());
+        assert!(reader.rest().trim().is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn tokens() -> Result<(), E> {
+        let components = include_str!("../../tests/reading/component.sibs").to_string();
+        let components = components.split('\n').collect::<Vec<&str>>();
+        let tasks = include_str!("../../tests/reading/tasks.sibs");
+        let mut reader = Reader::new(
+            components
+                .iter()
+                .map(|c| format!("{c}\n{tasks}"))
+                .collect::<Vec<String>>()
+                .join("\n"),
+        );
+        let mut count = 0;
+        while let Some(entity) = Component::read(&mut reader)? {
+            assert_eq!(
+                tests::trim_carets(&entity.to_string()),
+                tests::trim_carets(&reader.get_fragment(&entity.token)?.lined)
+            );
+            for func in entity.functions.iter() {
+                assert_eq!(
+                    tests::trim_carets(&format!("{func};")),
+                    tests::trim_carets(&reader.get_fragment(&func.token)?.lined)
+                );
+            }
+            for task in entity.tasks.iter() {
+                assert_eq!(
+                    tests::trim_carets(&format!("{task};")),
+                    tests::trim_carets(&reader.get_fragment(&task.token)?.lined)
+                );
+            }
             count += 1;
         }
         assert_eq!(count, components.len());
