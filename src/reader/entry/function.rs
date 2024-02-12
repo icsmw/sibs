@@ -208,10 +208,36 @@ mod reading {
                 tests::trim_carets(reader.recent()),
                 tests::trim_carets(&format!("{entity};"))
             );
+            count += 1;
+        }
+        assert_eq!(count, len);
+        assert!(reader.rest().trim().is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn tokens() -> Result<(), E> {
+        let content = include_str!("../../tests/reading/function.sibs").to_string();
+        let len = content.split('\n').count();
+        let mut reader = Reader::new(content);
+        let mut count = 0;
+        while let Some(entity) = Function::read(&mut reader)? {
             assert_eq!(
                 tests::trim_carets(&format!("{entity};")),
                 reader.get_fragment(&entity.token)?.content
             );
+            if let Some(args) = entity.args.as_ref() {
+                assert_eq!(
+                    tests::trim_carets(&args.to_string()),
+                    reader.get_fragment(&args.token)?.lined
+                );
+                for arg in args.args.iter() {
+                    assert_eq!(
+                        tests::trim_carets(&arg.to_string()),
+                        reader.get_fragment(&arg.token())?.lined
+                    );
+                }
+            }
             count += 1;
         }
         assert_eq!(count, len);

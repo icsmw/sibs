@@ -220,6 +220,20 @@ mod reading {
         let mut count = 0;
         for sample in samples.iter() {
             let mut reader = Reader::new(sample.to_string());
+            assert!(Values::read(&mut reader)?.is_some());
+            count += 1;
+        }
+        assert_eq!(count, samples.len());
+        Ok(())
+    }
+
+    #[test]
+    fn tokens() -> Result<(), E> {
+        let samples = include_str!("../../tests/reading/values.sibs").to_string();
+        let samples = samples.split('\n').collect::<Vec<&str>>();
+        let mut count = 0;
+        for sample in samples.iter() {
+            let mut reader = Reader::new(sample.to_string());
             let entity = Values::read(&mut reader)?.unwrap();
             assert_eq!(
                 tests::trim_carets(&entity.to_string()),

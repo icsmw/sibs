@@ -7,10 +7,21 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub enum Argument {
-    String(String),
+    String(usize, String),
     ValueString(ValueString),
     VariableName(VariableName),
     Arguments(Arguments),
+}
+
+impl Argument {
+    pub fn token(&self) -> usize {
+        match self {
+            Self::String(token, _) => *token,
+            Self::ValueString(v) => v.token,
+            Self::VariableName(v) => v.token,
+            Self::Arguments(v) => v.token,
+        }
+    }
 }
 
 impl fmt::Display for Argument {
@@ -19,7 +30,7 @@ impl fmt::Display for Argument {
             f,
             "{}",
             match self {
-                Self::String(v) => Reader::serialize(v),
+                Self::String(_, v) => Reader::serialize(v),
                 Self::ValueString(v) => v.to_string(),
                 Self::VariableName(v) => v.to_string(),
                 Self::Arguments(v) => format!("[{v}]"),
@@ -30,7 +41,7 @@ impl fmt::Display for Argument {
 
 #[derive(Debug, Clone)]
 pub struct Arguments {
-    pub args: Vec<(usize, Argument)>,
+    pub args: Vec<Argument>,
     pub token: usize,
 }
 
@@ -40,6 +51,8 @@ impl Reading<Arguments> for Arguments {
             args: vec![],
             token: 0,
         };
+        let close = reader.open_token();
+        let mut close_group = reader.open_token();
         while reader
             .group()
             .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
@@ -48,10 +61,11 @@ impl Reading<Arguments> for Arguments {
             let mut token = reader.token()?;
             let mut group = Arguments {
                 args: vec![],
-                token: token.id,
+                token: close_group(reader),
             };
             group.add_args(&mut token.bound)?;
-            args.args.push((token.id, Argument::Arguments(group)));
+            args.args.push(Argument::Arguments(group));
+            close_group = reader.open_token();
         }
         if !reader.move_to().end().is_empty() {
             args.add_args(&mut reader.token()?.bound)?;
@@ -60,6 +74,7 @@ impl Reading<Arguments> for Arguments {
             Ok(None)
         } else {
             args.token = reader.token()?.id;
+            args.token = close(reader);
             Ok(Some(args))
         }
     }
@@ -67,10 +82,10 @@ impl Reading<Arguments> for Arguments {
 
 impl Arguments {
     pub fn get(&self, index: usize) -> Option<&Argument> {
-        self.args.get(index).map(|(_, arg)| arg)
+        self.args.get(index).map(|arg| arg)
     }
-    pub fn read_string_args(reader: &mut Reader) -> Result<Vec<(usize, Argument)>, E> {
-        let mut arguments: Vec<(usize, Argument)> = vec![];
+    pub fn read_string_args(reader: &mut Reader) -> Result<Vec<Argument>, E> {
+        let mut arguments: Vec<Argument> = vec![];
         while let Some(arg) = reader.until().whitespace() {
             reader.move_to().next();
             if !arg.trim().is_empty() {
@@ -79,11 +94,11 @@ impl Arguments {
                     Err(E::NestedFunction)?
                 }
                 if let Some(variable) = VariableName::read(&mut token.bound)? {
-                    arguments.push((token.id, Argument::VariableName(variable)));
+                    arguments.push(Argument::VariableName(variable));
                 } else if let Some(value_string) = ValueString::read(&mut token.bound)? {
-                    arguments.push((token.id, Argument::ValueString(value_string)));
+                    arguments.push(Argument::ValueString(value_string));
                 } else {
-                    arguments.push((token.id, Argument::String(Reader::unserialize(&arg))));
+                    arguments.push(Argument::String(token.id, Reader::unserialize(&arg)));
                 }
             }
         }
@@ -92,19 +107,19 @@ impl Arguments {
                 Err(E::NestedFunction)?
             }
             if let Some(variable) = VariableName::read(reader)? {
-                arguments.push((reader.token()?.id, Argument::VariableName(variable)));
+                arguments.push(Argument::VariableName(variable));
             } else {
                 let rest = reader.move_to().end();
-                arguments.push((
+                arguments.push(Argument::String(
                     reader.token()?.id,
-                    Argument::String(Reader::unserialize(&rest)),
+                    Reader::unserialize(&rest),
                 ));
             }
         }
         Ok(arguments)
     }
     pub fn add_args(&mut self, reader: &mut Reader) -> Result<(), E> {
-        let mut arguments: Vec<(usize, Argument)> = vec![];
+        let mut arguments: Vec<Argument> = vec![];
         loop {
             if reader.until().char(&[&chars::QUOTES]).is_some() {
                 arguments = [
@@ -113,7 +128,7 @@ impl Arguments {
                 ]
                 .concat();
                 if let Some(value_string) = ValueString::read(reader)? {
-                    arguments.push((0, Argument::ValueString(value_string)));
+                    arguments.push(Argument::ValueString(value_string));
                 } else {
                     Err(E::NoStringEnd)?
                 }
@@ -139,7 +154,7 @@ impl fmt::Display for Arguments {
             "{}",
             self.args
                 .iter()
-                .map(|(_, arg)| arg.to_string())
+                .map(|arg| arg.to_string())
                 .collect::<Vec<String>>()
                 .join(" ")
         )
@@ -165,7 +180,7 @@ mod proptest {
             let permissions = scope.read().unwrap().permissions();
             let mut allowed = vec!["[a-z][a-z0-9]*"
                 .prop_map(String::from)
-                .prop_map(Argument::String)
+                .prop_map(|v| Argument::String(0, v))
                 .boxed()];
             if permissions.variable_name {
                 allowed.push(
@@ -189,12 +204,9 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            prop::collection::vec(
-                (Just(0_usize), Argument::arbitrary_with(scope.clone())),
-                0..=5,
-            )
-            .prop_map(|args| Arguments { args, token: 0 })
-            .boxed()
+            prop::collection::vec(Argument::arbitrary_with(scope.clone()), 0..=5)
+                .prop_map(|args| Arguments { args, token: 0 })
+                .boxed()
         }
     }
 }

@@ -89,6 +89,20 @@ mod reading {
         let mut count = 0;
         for sample in samples.iter() {
             let mut reader = Reader::new(sample.to_string());
+            VariableName::read(&mut reader)?.unwrap();
+            count += 1;
+        }
+        assert_eq!(count, samples.len());
+        Ok(())
+    }
+
+    #[test]
+    fn tokens() -> Result<(), E> {
+        let samples = include_str!("../../tests/reading/variable_name.sibs").to_string();
+        let samples = samples.split('\n').collect::<Vec<&str>>();
+        let mut count = 0;
+        for sample in samples.iter() {
+            let mut reader = Reader::new(sample.to_string());
             let variable_name = VariableName::read(&mut reader)?.unwrap();
             let fragment = reader.get_fragment(&reader.token()?.id)?.content;
             assert_eq!(format!("${}", variable_name.name), fragment);

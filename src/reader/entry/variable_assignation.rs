@@ -208,6 +208,19 @@ mod reading {
                 tests::trim_carets(reader.recent()),
                 tests::trim_carets(&format!("{entity};"))
             );
+            count += 1;
+        }
+        assert_eq!(count, 14);
+        assert!(reader.rest().trim().is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn tokens() -> Result<(), E> {
+        let mut reader =
+            Reader::new(include_str!("../../tests/reading/variable_assignation.sibs").to_string());
+        let mut count = 0;
+        while let Some(entity) = VariableAssignation::read(&mut reader)? {
             assert_eq!(
                 tests::trim_carets(&format!("{entity};")),
                 reader.get_fragment(&entity.token)?.lined
@@ -228,7 +241,6 @@ mod reading {
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
-
     #[test]
     fn error() -> Result<(), E> {
         let samples = include_str!("../../tests/error/variable_assignation.sibs").to_string();

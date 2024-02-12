@@ -165,6 +165,19 @@ mod reading {
                 tests::trim_carets(reader.recent()),
                 tests::trim_carets(&entity.to_string()),
             );
+            count += 1;
+        }
+        assert_eq!(count, 16);
+        assert!(reader.rest().trim().is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn tokens() -> Result<(), E> {
+        let mut reader =
+            Reader::new(include_str!("../../tests/reading/value_string.sibs").to_string());
+        let mut count = 0;
+        while let Some(entity) = ValueString::read(&mut reader)? {
             assert_eq!(
                 tests::trim_carets(&entity.to_string()),
                 reader.get_fragment(&entity.token)?.content
