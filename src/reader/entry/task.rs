@@ -31,6 +31,7 @@ impl Task {
 
 impl Reading<Task> for Task {
     fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
+        let close = reader.open_token();
         if let Some((mut name, stopped_on)) = reader
             .until()
             .char(&[&chars::OPEN_BRACKET, &chars::OPEN_SQ_BRACKET])
@@ -69,7 +70,7 @@ impl Reading<Task> for Task {
                 Ok(Some(Task {
                     name,
                     declarations,
-                    token: reader.token()?.id,
+                    token: close(reader),
                     block: Some(block),
                 }))
             } else {
@@ -164,7 +165,7 @@ impl Operator for Task {
 }
 
 #[cfg(test)]
-mod test_tasks {
+mod reading {
     use crate::{
         inf::tests,
         reader::{
@@ -182,6 +183,44 @@ mod test_tasks {
                 tests::trim_carets(reader.recent()),
                 tests::trim_carets(&format!("{entity};"))
             );
+            count += 1;
+        }
+        assert_eq!(count, 6);
+        assert!(reader.rest().trim().is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn tokens() -> Result<(), E> {
+        let mut reader = Reader::new(include_str!("../../tests/reading/tasks.sibs").to_string());
+        let mut count = 0;
+        while let Some(entity) = Task::read(&mut reader)? {
+            assert_eq!(
+                tests::trim_carets(&format!("{entity};")),
+                tests::trim_carets(&reader.get_fragment(&entity.token)?.lined)
+            );
+            if let Some(block) = entity.block.as_ref() {
+                assert_eq!(
+                    tests::trim_carets(&block.to_string()),
+                    tests::trim_carets(&reader.get_fragment(&block.token)?.lined)
+                );
+            }
+            for declaration in entity.declarations.iter() {
+                assert_eq!(
+                    tests::trim_carets(&declaration.to_string()),
+                    tests::trim_carets(&reader.get_fragment(&declaration.token)?.lined)
+                );
+                assert_eq!(
+                    tests::trim_carets(&declaration.name.to_string()),
+                    tests::trim_carets(&reader.get_fragment(&declaration.name.token)?.lined)
+                );
+                assert_eq!(
+                    tests::trim_carets(&declaration.declaration.to_string()),
+                    tests::trim_carets(
+                        &reader.get_fragment(&declaration.declaration.token())?.lined
+                    )
+                );
+            }
             count += 1;
         }
         assert_eq!(count, 6);

@@ -13,6 +13,29 @@ pub enum Declaration {
     Typed(VariableType),
     Variants(Variants),
 }
+
+impl Declaration {
+    pub fn token(&self) -> usize {
+        match &self {
+            Declaration::Typed(v) => v.token,
+            Declaration::Variants(v) => v.token,
+        }
+    }
+}
+
+impl fmt::Display for Declaration {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match &self {
+                Declaration::Typed(v) => v.to_string(),
+                Declaration::Variants(v) => v.to_string(),
+            }
+        )
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct VariableDeclaration {
     pub name: VariableName,
@@ -39,20 +62,17 @@ impl VariableDeclaration {
 
 impl Reading<VariableDeclaration> for VariableDeclaration {
     fn read(reader: &mut Reader) -> Result<Option<VariableDeclaration>, E> {
+        let close = reader.open_token();
         if let Some(name) = VariableName::read(reader)? {
             if reader.move_to().char(&[&chars::COLON]).is_some() {
                 let declaration = if let Some(variable_type) = VariableType::read(reader)? {
                     Some(VariableDeclaration::typed(
                         name,
                         variable_type,
-                        reader.token()?.id,
+                        close(reader),
                     ))
                 } else if let Some(values) = Variants::read(reader)? {
-                    Some(VariableDeclaration::values(
-                        name,
-                        values,
-                        reader.token()?.id,
-                    ))
+                    Some(VariableDeclaration::values(name, values, close(reader)))
                 } else {
                     return Err(E::NoTypeDeclaration);
                 };

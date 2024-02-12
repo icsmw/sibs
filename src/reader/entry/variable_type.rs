@@ -47,10 +47,11 @@ impl VariableType {
 
 impl Reading<VariableType> for VariableType {
     fn read(reader: &mut Reader) -> Result<Option<VariableType>, E> {
+        let close = reader.open_token();
         if reader.move_to().char(&[&chars::TYPE_OPEN]).is_some() {
             if let Some((word, _char)) = reader.until().char(&[&chars::TYPE_CLOSE]) {
                 reader.move_to().next();
-                Ok(Some(VariableType::new(word, reader.token()?.id)?))
+                Ok(Some(VariableType::new(word, close(reader))?))
             } else {
                 Err(E::NotClosedTypeDeclaration)
             }
