@@ -1,10 +1,7 @@
 use crate::{
+    entry::{VariableName, VariableType, Variants},
     inf::{any::AnyValue, context::Context, operator, term},
-    reader::{
-        chars,
-        entry::{Reader, Reading, VariableName, VariableType, Variants},
-        E,
-    },
+    reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
 
@@ -133,13 +130,13 @@ impl term::Display for VariableDeclaration {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        inf::tests::*,
-        reader::entry::{
+        entry::{
             variable_declaration::{Declaration, VariableDeclaration},
             variable_name::VariableName,
             variable_type::VariableType,
             variants::Variants,
         },
+        inf::tests::*,
     };
     use proptest::prelude::*;
 

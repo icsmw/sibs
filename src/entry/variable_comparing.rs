@@ -1,14 +1,11 @@
 use crate::{
+    entry::{Cmp, Component, VariableName},
     inf::{
         any::AnyValue,
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
     },
-    reader::{
-        chars,
-        entry::{Cmp, Component, Reader, Reading, VariableName},
-        words, E,
-    },
+    reader::{chars, words, Reader, Reading, E},
 };
 use std::fmt;
 
@@ -91,10 +88,10 @@ impl Operator for VariableComparing {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        inf::tests::*,
-        reader::entry::{
+        entry::{
             embedded::If::Cmp, variable_comparing::VariableComparing, variable_name::VariableName,
         },
+        inf::tests::*,
     };
     use proptest::prelude::*;
 

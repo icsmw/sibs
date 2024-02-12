@@ -18,7 +18,6 @@ mod variable_name;
 mod variable_type;
 mod variants;
 
-use crate::reader::{error::E, Reader};
 pub use arguments::{Argument, Arguments};
 pub use block::Block;
 pub use command::Command;
@@ -42,7 +41,3 @@ pub use variable_declaration::VariableDeclaration;
 pub use variable_name::VariableName;
 pub use variable_type::VariableType;
 pub use variants::Variants;
-
-pub trait Reading<T> {
-    fn read(reader: &mut Reader) -> Result<Option<T>, E>;
-}

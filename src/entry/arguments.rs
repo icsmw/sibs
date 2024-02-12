@@ -1,7 +1,6 @@
-use crate::reader::{
-    chars,
-    entry::{PatternString, Reader, Reading, SimpleString, VariableName},
-    E,
+use crate::{
+    entry::{PatternString, SimpleString, VariableName},
+    reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
 
@@ -167,13 +166,13 @@ impl fmt::Display for Arguments {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        inf::tests::*,
-        reader::entry::{
+        entry::{
             arguments::{Argument, Arguments},
             pattern_string::PatternString,
             simple_string::SimpleString,
             variable_name::VariableName,
         },
+        inf::tests::*,
     };
     use proptest::prelude::*;
     impl Arbitrary for Argument {

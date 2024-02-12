@@ -1,14 +1,11 @@
 use crate::{
+    entry::{Function, Meta, SimpleString, Task},
     inf::{
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
         term::{self, Term},
     },
-    reader::{
-        chars,
-        entry::{Function, Meta, Reading, SimpleString, Task},
-        words, Reader, E,
-    },
+    reader::{chars, words, Reader, Reading, E},
 };
 use std::{fmt, path::PathBuf};
 
@@ -182,18 +179,16 @@ impl Operator for Component {
 #[cfg(test)]
 mod reading {
     use crate::{
+        entry::Component,
         inf::tests,
-        reader::{
-            entry::{Component, Reading},
-            Reader, E,
-        },
+        reader::{Reader, Reading, E},
     };
 
     #[test]
     fn reading() -> Result<(), E> {
-        let components = include_str!("../../tests/reading/component.sibs").to_string();
+        let components = include_str!("../tests/reading/component.sibs").to_string();
         let components = components.split('\n').collect::<Vec<&str>>();
-        let tasks = include_str!("../../tests/reading/tasks.sibs");
+        let tasks = include_str!("../tests/reading/tasks.sibs");
         let mut reader = Reader::new(
             components
                 .iter()
@@ -216,9 +211,9 @@ mod reading {
 
     #[test]
     fn tokens() -> Result<(), E> {
-        let components = include_str!("../../tests/reading/component.sibs").to_string();
+        let components = include_str!("../tests/reading/component.sibs").to_string();
         let components = components.split('\n').collect::<Vec<&str>>();
-        let tasks = include_str!("../../tests/reading/tasks.sibs");
+        let tasks = include_str!("../tests/reading/tasks.sibs");
         let mut reader = Reader::new(
             components
                 .iter()
@@ -257,7 +252,7 @@ mod reading {
 
     #[test]
     fn error() -> Result<(), E> {
-        let samples = include_str!("../../tests/error/component.sibs").to_string();
+        let samples = include_str!("../tests/error/component.sibs").to_string();
         let samples = samples
             .split('\n')
             .map(|v| format!("{v} [\n@os;\n];"))
@@ -276,14 +271,12 @@ mod reading {
 #[cfg(test)]
 mod processing {
     use crate::{
+        entry::Component,
         inf::{
             context::Context,
             operator::{Operator, E},
         },
-        reader::{
-            entry::{Component, Reading},
-            Reader,
-        },
+        reader::{Reader, Reading},
     };
 
     const VALUES: &[&[&str]] = &[
@@ -297,7 +290,7 @@ mod processing {
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
         let mut reader =
-            Reader::new(include_str!("../../tests/processing/component.sibs").to_string());
+            Reader::new(include_str!("../tests/processing/component.sibs").to_string());
         let mut cursor: usize = 0;
         let mut components: Vec<Component> = vec![];
         while let Some(component) = Component::read(&mut reader)? {
@@ -332,8 +325,8 @@ mod proptest {
     use std::path::PathBuf;
 
     use crate::{
+        entry::{component::Component, meta::Meta, task::Task, SimpleString},
         inf::tests::*,
-        reader::entry::{component::Component, meta::Meta, task::Task, SimpleString},
     };
     use proptest::prelude::*;
 

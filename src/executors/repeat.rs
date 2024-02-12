@@ -1,7 +1,7 @@
 use crate::{
+    entry::{Argument, Function},
     executors::{Executor, ExecutorPinnedResult, E},
     inf::{any::AnyValue, context::Context, operator::Operator},
-    reader::entry::{Argument, Function},
 };
 use thiserror::Error;
 

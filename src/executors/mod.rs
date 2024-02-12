@@ -3,7 +3,7 @@ pub mod import;
 pub mod os;
 pub mod repeat;
 
-use crate::{inf::any::AnyValue, inf::context::Context, reader::entry::Function};
+use crate::{entry::Function, inf::any::AnyValue, inf::context::Context};
 pub use error::E;
 use std::{future::Future, pin::Pin};
 

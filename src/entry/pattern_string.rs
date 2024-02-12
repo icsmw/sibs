@@ -1,14 +1,11 @@
 use crate::{
+    entry::{Component, Function, VariableName},
     inf::{
         any::AnyValue,
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
     },
-    reader::{
-        chars,
-        entry::{Component, Function, Reader, Reading, VariableName},
-        E,
-    },
+    reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
 
@@ -148,17 +145,15 @@ impl Operator for PatternString {
 #[cfg(test)]
 mod reading {
     use crate::{
+        entry::PatternString,
         inf::tests,
-        reader::{
-            entry::{PatternString, Reading},
-            Reader, E,
-        },
+        reader::{Reader, Reading, E},
     };
 
     #[test]
     fn reading() -> Result<(), E> {
         let mut reader =
-            Reader::new(include_str!("../../tests/reading/value_string.sibs").to_string());
+            Reader::new(include_str!("../tests/reading/value_string.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = PatternString::read(&mut reader)? {
             assert_eq!(
@@ -175,7 +170,7 @@ mod reading {
     #[test]
     fn tokens() -> Result<(), E> {
         let mut reader =
-            Reader::new(include_str!("../../tests/reading/value_string.sibs").to_string());
+            Reader::new(include_str!("../tests/reading/value_string.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = PatternString::read(&mut reader)? {
             assert_eq!(
@@ -199,12 +194,12 @@ mod reading {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        inf::tests::*,
-        reader::entry::{
+        entry::{
             function::Function,
             pattern_string::{Injection, PatternString},
             variable_name::VariableName,
         },
+        inf::tests::*,
     };
     use proptest::prelude::*;
 

@@ -1,16 +1,11 @@
 use crate::{
+    entry::{Block, Component, First, Function, PatternString, Values, VariableName},
     inf::{
         any::AnyValue,
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
     },
-    reader::{
-        chars,
-        entry::{
-            Block, Component, First, Function, PatternString, Reader, Reading, Values, VariableName,
-        },
-        E,
-    },
+    reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
 
@@ -191,17 +186,15 @@ impl Operator for VariableAssignation {
 #[cfg(test)]
 mod reading {
     use crate::{
+        entry::VariableAssignation,
         inf::tests,
-        reader::{
-            entry::{Reading, VariableAssignation},
-            Reader, E,
-        },
+        reader::{Reader, Reading, E},
     };
 
     #[test]
     fn reading() -> Result<(), E> {
         let mut reader =
-            Reader::new(include_str!("../../tests/reading/variable_assignation.sibs").to_string());
+            Reader::new(include_str!("../tests/reading/variable_assignation.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = VariableAssignation::read(&mut reader)? {
             assert_eq!(
@@ -218,7 +211,7 @@ mod reading {
     #[test]
     fn tokens() -> Result<(), E> {
         let mut reader =
-            Reader::new(include_str!("../../tests/reading/variable_assignation.sibs").to_string());
+            Reader::new(include_str!("../tests/reading/variable_assignation.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = VariableAssignation::read(&mut reader)? {
             assert_eq!(
@@ -243,7 +236,7 @@ mod reading {
     }
     #[test]
     fn error() -> Result<(), E> {
-        let samples = include_str!("../../tests/error/variable_assignation.sibs").to_string();
+        let samples = include_str!("../tests/error/variable_assignation.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
@@ -259,14 +252,12 @@ mod reading {
 #[cfg(test)]
 mod processing {
     use crate::{
+        entry::Task,
         inf::{
             context::Context,
             operator::{Operator, E},
         },
-        reader::{
-            entry::{Reading, Task},
-            Reader,
-        },
+        reader::{Reader, Reading},
     };
 
     const VALUES: &[(&str, &str)] = &[
@@ -281,9 +272,8 @@ mod processing {
     #[async_std::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
-        let mut reader = Reader::new(
-            include_str!("../../tests/processing/variable_assignation.sibs").to_string(),
-        );
+        let mut reader =
+            Reader::new(include_str!("../tests/processing/variable_assignation.sibs").to_string());
         while let Some(task) = Task::read(&mut reader)? {
             assert!(task.process(None, &[], &[], &mut cx).await?.is_some());
         }
@@ -300,20 +290,18 @@ mod processing {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        inf::{operator::E, tests::*},
-        reader::{
-            entry::{
-                block::Block,
-                embedded::first::First,
-                function::Function,
-                pattern_string::PatternString,
-                task::Task,
-                values::Values,
-                variable_assignation::{Assignation, VariableAssignation},
-                variable_name::VariableName,
-            },
-            Reader, Reading,
+        entry::{
+            block::Block,
+            embedded::first::First,
+            function::Function,
+            pattern_string::PatternString,
+            task::Task,
+            values::Values,
+            variable_assignation::{Assignation, VariableAssignation},
+            variable_name::VariableName,
         },
+        inf::{operator::E, tests::*},
+        reader::{Reader, Reading},
     };
     use proptest::prelude::*;
     use std::sync::{Arc, RwLock};

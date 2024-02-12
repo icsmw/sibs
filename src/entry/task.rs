@@ -1,14 +1,11 @@
 use crate::{
+    entry::{Block, Component, SimpleString, VariableDeclaration},
     inf::{
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
         term::{self, Term},
     },
-    reader::{
-        chars,
-        entry::{Block, Component, Reading, SimpleString, VariableDeclaration},
-        Reader, E,
-    },
+    reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
 
@@ -173,16 +170,14 @@ impl Operator for Task {
 #[cfg(test)]
 mod reading {
     use crate::{
+        entry::Task,
         inf::tests,
-        reader::{
-            entry::{Reading, Task},
-            Reader, E,
-        },
+        reader::{Reader, Reading, E},
     };
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut reader = Reader::new(include_str!("../../tests/reading/tasks.sibs").to_string());
+        let mut reader = Reader::new(include_str!("../tests/reading/tasks.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Task::read(&mut reader)? {
             assert_eq!(
@@ -198,7 +193,7 @@ mod reading {
 
     #[test]
     fn tokens() -> Result<(), E> {
-        let mut reader = Reader::new(include_str!("../../tests/reading/tasks.sibs").to_string());
+        let mut reader = Reader::new(include_str!("../tests/reading/tasks.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Task::read(&mut reader)? {
             assert_eq!(
@@ -240,7 +235,7 @@ mod reading {
 
     #[test]
     fn error() -> Result<(), E> {
-        let samples = include_str!("../../tests/error/tasks.sibs").to_string();
+        let samples = include_str!("../tests/error/tasks.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
@@ -256,14 +251,12 @@ mod reading {
 #[cfg(test)]
 mod processing {
     use crate::{
+        entry::Task,
         inf::{
             context::Context,
             operator::{Operator, E},
         },
-        reader::{
-            entry::{Reading, Task},
-            Reader,
-        },
+        reader::{Reader, Reading},
     };
 
     const VALUES: &[&[&str]] = &[&["a"], &["a", "b"], &["a"], &["a", "b"], &["a", "b", "c"]];
@@ -271,7 +264,7 @@ mod processing {
     #[async_std::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
-        let mut reader = Reader::new(include_str!("../../tests/processing/tasks.sibs").to_string());
+        let mut reader = Reader::new(include_str!("../tests/processing/tasks.sibs").to_string());
         let mut cursor: usize = 0;
         while let Some(task) = Task::read(&mut reader)? {
             let result = task
@@ -299,11 +292,11 @@ mod processing {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        inf::tests::*,
-        reader::entry::{
+        entry::{
             block::Block, simple_string::SimpleString, task::Task,
             variable_declaration::VariableDeclaration,
         },
+        inf::tests::*,
     };
     use proptest::prelude::*;
 

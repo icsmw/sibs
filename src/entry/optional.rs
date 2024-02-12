@@ -1,16 +1,13 @@
 use crate::{
+    entry::{
+        Block, Command, Component, Function, PatternString, Reference, VariableAssignation,
+        VariableComparing,
+    },
     inf::{
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
     },
-    reader::{
-        chars,
-        entry::{
-            Block, Command, Component, Function, PatternString, Reading, Reference,
-            VariableAssignation, VariableComparing,
-        },
-        words, Reader, E,
-    },
+    reader::{chars, words, Reader, Reading, E},
 };
 use std::fmt;
 
@@ -242,16 +239,14 @@ impl Operator for Optional {
 #[cfg(test)]
 mod reading {
     use crate::{
+        entry::Optional,
         inf::tests,
-        reader::{
-            entry::{Optional, Reading},
-            Reader, E,
-        },
+        reader::{Reader, Reading, E},
     };
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut reader = Reader::new(include_str!("../../tests/reading/optional.sibs").to_string());
+        let mut reader = Reader::new(include_str!("../tests/reading/optional.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Optional::read(&mut reader)? {
             assert_eq!(
@@ -267,7 +262,7 @@ mod reading {
 
     #[test]
     fn tokens() -> Result<(), E> {
-        let mut reader = Reader::new(include_str!("../../tests/reading/optional.sibs").to_string());
+        let mut reader = Reader::new(include_str!("../tests/reading/optional.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Optional::read(&mut reader)? {
             assert_eq!(
@@ -297,7 +292,7 @@ mod reading {
 
     #[test]
     fn error() -> Result<(), E> {
-        let samples = include_str!("../../tests/error/optional.sibs").to_string();
+        let samples = include_str!("../tests/error/optional.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
@@ -313,21 +308,18 @@ mod reading {
 #[cfg(test)]
 mod processing {
     use crate::{
+        entry::Task,
         inf::{
             context::Context,
             operator::{Operator, E},
         },
-        reader::{
-            entry::{Reading, Task},
-            Reader,
-        },
+        reader::{Reader, Reading},
     };
 
     #[async_std::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
-        let mut reader =
-            Reader::new(include_str!("../../tests/processing/optional.sibs").to_string());
+        let mut reader = Reader::new(include_str!("../tests/processing/optional.sibs").to_string());
         while let Some(task) = Task::read(&mut reader)? {
             let result = task
                 .process(None, &[], &[], &mut cx)
@@ -346,21 +338,19 @@ mod processing {
 mod proptest {
 
     use crate::{
-        inf::{operator::E, tests::*},
-        reader::{
-            entry::{
-                block::Block,
-                command::Command,
-                function::Function,
-                optional::{Action, Condition, Optional},
-                pattern_string::PatternString,
-                reference::Reference,
-                task::Task,
-                variable_assignation::VariableAssignation,
-                variable_comparing::VariableComparing,
-            },
-            Reader, Reading,
+        entry::{
+            block::Block,
+            command::Command,
+            function::Function,
+            optional::{Action, Condition, Optional},
+            pattern_string::PatternString,
+            reference::Reference,
+            task::Task,
+            variable_assignation::VariableAssignation,
+            variable_comparing::VariableComparing,
         },
+        inf::{operator::E, tests::*},
+        reader::{Reader, Reading},
     };
     use proptest::prelude::*;
     use std::sync::{Arc, RwLock};

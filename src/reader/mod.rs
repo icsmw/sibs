@@ -1,16 +1,15 @@
 pub mod chars;
-pub mod entry;
 pub mod error;
 #[cfg(test)]
 pub mod tests;
 pub mod words;
 
 use crate::{
+    entry::{Component, Function},
     executors::{import::Import, Executor},
     inf::context::Context,
 };
-use entry::{Component, Function, Reading};
-use error::E;
+pub use error::E;
 use regex::Regex;
 use std::{
     collections::HashMap,
@@ -20,6 +19,10 @@ use std::{
     pin::Pin,
     {cell::RefCell, rc::Rc},
 };
+
+pub trait Reading<T> {
+    fn read(reader: &mut Reader) -> Result<Option<T>, E>;
+}
 
 #[derive(Debug)]
 pub struct Fragment {

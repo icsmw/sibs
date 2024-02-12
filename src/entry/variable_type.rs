@@ -1,10 +1,6 @@
 use crate::{
     inf::term::{self},
-    reader::{
-        chars,
-        entry::{Reader, Reading},
-        E,
-    },
+    reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
 
@@ -100,8 +96,8 @@ impl term::Display for VariableType {
 #[cfg(test)]
 mod proptest {
     use crate::{
+        entry::variable_type::{Types, VariableType},
         inf::tests::*,
-        reader::entry::variable_type::{Types, VariableType},
     };
     use proptest::prelude::*;
 

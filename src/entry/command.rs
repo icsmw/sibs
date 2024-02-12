@@ -1,4 +1,5 @@
 use crate::{
+    entry::Component,
     inf::{
         any::AnyValue,
         context::Context,
@@ -6,7 +7,7 @@ use crate::{
         spawner,
         term::{self, Term},
     },
-    reader::{chars, entry::Component, error::E},
+    reader::{chars, E},
 };
 use std::fmt;
 
@@ -81,7 +82,7 @@ impl Operator for Command {
 #[cfg(test)]
 mod proptest {
 
-    use crate::{inf::tests::*, reader::entry::command::Command};
+    use crate::{entry::command::Command, inf::tests::*};
     use proptest::prelude::*;
 
     impl Arbitrary for Command {

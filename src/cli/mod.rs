@@ -2,6 +2,7 @@ mod args;
 pub mod error;
 
 use crate::{
+    entry::Component,
     inf::{
         context::Context,
         operator::Operator,
@@ -9,7 +10,7 @@ use crate::{
         term::{Display, Term},
         tracker::Tracker,
     },
-    reader::{self, entry::Component},
+    reader,
 };
 use args::Arguments;
 use error::E;

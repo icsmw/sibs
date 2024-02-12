@@ -3,8 +3,8 @@ use crate::{
         args::{Argument, Description},
         error::E,
     },
+    entry::Component,
     inf::context::Context,
-    reader::entry::Component,
 };
 
 const ARGS: [&str; 2] = ["--version", "-v"];

@@ -1,8 +1,8 @@
 use crate::{
+    entry::{Argument, Function},
     executors::{Executor, ExecutorPinnedResult, E},
     inf::any::AnyValue,
     inf::context::Context,
-    reader::entry::{Argument, Function},
 };
 use std::path::PathBuf;
 use thiserror::Error;

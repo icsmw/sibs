@@ -1,10 +1,6 @@
 use crate::{
     inf::term::{self, Term},
-    reader::{
-        chars,
-        entry::{Reader, Reading},
-        words, E,
-    },
+    reader::{chars, words, Reader, Reading, E},
 };
 use std::fmt;
 
@@ -67,7 +63,7 @@ impl term::Display for Meta {
 #[cfg(test)]
 mod proptest {
 
-    use crate::{inf::tests::*, reader::entry::meta::Meta};
+    use crate::{entry::meta::Meta, inf::tests::*};
     use proptest::prelude::*;
 
     impl Arbitrary for Meta {

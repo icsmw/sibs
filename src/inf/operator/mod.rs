@@ -1,7 +1,7 @@
 mod error;
 use crate::{
+    entry::Component,
     inf::{any::AnyValue, context::Context},
-    reader::entry::Component,
 };
 pub use error::E;
 use std::{future::Future, pin::Pin};

@@ -1,13 +1,10 @@
 use crate::{
+    entry::{Component, VariableName},
     inf::{
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
     },
-    reader::{
-        chars,
-        entry::{Component, Reading, VariableName},
-        Reader, E,
-    },
+    reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
 
@@ -206,16 +203,14 @@ impl Operator for Reference {
 #[cfg(test)]
 mod reading {
     use crate::{
+        entry::Reference,
         inf::tests,
-        reader::{
-            entry::{Reading, Reference},
-            Reader, E,
-        },
+        reader::{Reader, Reading, E},
     };
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut reader = Reader::new(include_str!("../../tests/reading/refs.sibs").to_string());
+        let mut reader = Reader::new(include_str!("../tests/reading/refs.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Reference::read(&mut reader)? {
             assert_eq!(
@@ -231,7 +226,7 @@ mod reading {
 
     #[test]
     fn error() -> Result<(), E> {
-        let samples = include_str!("../../tests/error/refs.sibs").to_string();
+        let samples = include_str!("../tests/error/refs.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
@@ -248,11 +243,11 @@ mod reading {
 mod proptest {
 
     use crate::{
-        inf::tests::*,
-        reader::entry::{
+        entry::{
             reference::{Input, Reference},
             variable_name::VariableName,
         },
+        inf::tests::*,
     };
     use proptest::prelude::*;
 

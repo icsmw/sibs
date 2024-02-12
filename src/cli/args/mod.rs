@@ -4,12 +4,12 @@ pub mod version;
 
 use crate::{
     cli::error::E,
+    entry::Component,
     inf::{
         any::DebugAny,
         context::Context,
         term::{self, Term},
     },
-    reader::entry::Component,
 };
 use std::{any::TypeId, collections::HashMap, fmt::Debug};
 

@@ -1,14 +1,11 @@
 use crate::{
+    entry::Component,
     inf::{
         any::AnyValue,
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
     },
-    reader::{
-        chars,
-        entry::{Component, Reader, Reading},
-        E,
-    },
+    reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
 
@@ -77,14 +74,14 @@ impl fmt::Display for VariableName {
 
 #[cfg(test)]
 mod reading {
-    use crate::reader::{
-        entry::{Reading, VariableName},
-        Reader, E,
+    use crate::{
+        entry::VariableName,
+        reader::{Reader, Reading, E},
     };
 
     #[test]
     fn reading() -> Result<(), E> {
-        let samples = include_str!("../../tests/reading/variable_name.sibs").to_string();
+        let samples = include_str!("../tests/reading/variable_name.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
@@ -98,7 +95,7 @@ mod reading {
 
     #[test]
     fn tokens() -> Result<(), E> {
-        let samples = include_str!("../../tests/reading/variable_name.sibs").to_string();
+        let samples = include_str!("../tests/reading/variable_name.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
@@ -115,7 +112,7 @@ mod reading {
 
     #[test]
     fn error() -> Result<(), E> {
-        let samples = include_str!("../../tests/error/variable_name.sibs").to_string();
+        let samples = include_str!("../tests/error/variable_name.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
@@ -130,7 +127,7 @@ mod reading {
 
 #[cfg(test)]
 mod proptest {
-    use crate::reader::entry::variable_name::VariableName;
+    use crate::entry::variable_name::VariableName;
     use proptest::prelude::*;
 
     impl Arbitrary for VariableName {

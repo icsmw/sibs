@@ -1,18 +1,15 @@
 use crate::{
+    entry::{
+        Command, Component, Each, First, Function, If, Meta, Optional, PatternString, Reference,
+        VariableAssignation, VariableName,
+    },
     inf::{
         any::AnyValue,
         context::Context,
         operator::{Operator, OperatorPinnedResult},
         term::{self, Term},
     },
-    reader::{
-        chars,
-        entry::{
-            Command, Component, Each, First, Function, If, Meta, Optional, PatternString, Reading,
-            Reference, VariableAssignation, VariableName,
-        },
-        Reader, E,
-    },
+    reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
 
@@ -240,23 +237,21 @@ impl Operator for Block {
 #[cfg(test)]
 mod reading {
     use crate::{
+        entry::Block,
         inf::tests,
-        reader::{
-            entry::{Block, Reading},
-            Reader, E,
-        },
+        reader::{Reader, Reading, E},
     };
 
     #[test]
     fn reading() -> Result<(), E> {
         let mut reader = Reader::new(format!(
             "[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
-            include_str!("../../tests/reading/if.sibs"),
-            include_str!("../../tests/reading/variable_assignation.sibs"),
-            include_str!("../../tests/reading/function.sibs"),
-            include_str!("../../tests/reading/optional.sibs"),
-            include_str!("../../tests/reading/each.sibs"),
-            include_str!("../../tests/reading/refs.sibs")
+            include_str!("../tests/reading/if.sibs"),
+            include_str!("../tests/reading/variable_assignation.sibs"),
+            include_str!("../tests/reading/function.sibs"),
+            include_str!("../tests/reading/optional.sibs"),
+            include_str!("../tests/reading/each.sibs"),
+            include_str!("../tests/reading/refs.sibs")
         ));
         while let Some(entity) = Block::read(&mut reader)? {
             assert_eq!(
@@ -272,12 +267,12 @@ mod reading {
     fn tokens() -> Result<(), E> {
         let mut reader = Reader::new(format!(
             "[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
-            include_str!("../../tests/reading/if.sibs"),
-            include_str!("../../tests/reading/variable_assignation.sibs"),
-            include_str!("../../tests/reading/function.sibs"),
-            include_str!("../../tests/reading/optional.sibs"),
-            include_str!("../../tests/reading/each.sibs"),
-            include_str!("../../tests/reading/refs.sibs")
+            include_str!("../tests/reading/if.sibs"),
+            include_str!("../tests/reading/variable_assignation.sibs"),
+            include_str!("../tests/reading/function.sibs"),
+            include_str!("../tests/reading/optional.sibs"),
+            include_str!("../tests/reading/each.sibs"),
+            include_str!("../tests/reading/refs.sibs")
         ));
         while let Some(entity) = Block::read(&mut reader)? {
             assert_eq!(
@@ -294,21 +289,19 @@ mod reading {
 mod proptest {
 
     use crate::{
-        inf::{operator::E, tests::*},
-        reader::{
-            entry::{
-                block::{Block, Element},
-                command::Command,
-                embedded::{each::Each, If::If},
-                function::Function,
-                meta::Meta,
-                optional::Optional,
-                reference::Reference,
-                task::Task,
-                variable_assignation::VariableAssignation,
-            },
-            Reader, Reading,
+        entry::{
+            block::{Block, Element},
+            command::Command,
+            embedded::{each::Each, If::If},
+            function::Function,
+            meta::Meta,
+            optional::Optional,
+            reference::Reference,
+            task::Task,
+            variable_assignation::VariableAssignation,
         },
+        inf::{operator::E, tests::*},
+        reader::{Reader, Reading},
     };
     use proptest::prelude::*;
     use std::sync::{Arc, RwLock};

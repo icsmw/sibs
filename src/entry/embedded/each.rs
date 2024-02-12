@@ -1,14 +1,11 @@
 use crate::{
+    entry::{Block, Component, Function, VariableName},
     inf::{
         any::AnyValue,
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
     },
-    reader::{
-        chars,
-        entry::{Block, Component, Function, Reading, VariableName},
-        words, Reader, E,
-    },
+    reader::{chars, words, Reader, Reading, E},
 };
 use std::fmt;
 
@@ -158,16 +155,14 @@ impl Operator for Each {
 #[cfg(test)]
 mod reading {
     use crate::{
+        entry::Each,
         inf::tests,
-        reader::{
-            entry::{Each, Reading, E},
-            Reader,
-        },
+        reader::{Reader, Reading, E},
     };
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut reader = Reader::new(include_str!("../../../tests/reading/each.sibs").to_string());
+        let mut reader = Reader::new(include_str!("../../tests/reading/each.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Each::read(&mut reader)? {
             assert_eq!(
@@ -183,7 +178,7 @@ mod reading {
 
     #[test]
     fn tokens() -> Result<(), E> {
-        let mut reader = Reader::new(include_str!("../../../tests/reading/each.sibs").to_string());
+        let mut reader = Reader::new(include_str!("../../tests/reading/each.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Each::read(&mut reader)? {
             assert_eq!(
@@ -211,7 +206,7 @@ mod reading {
 
     #[test]
     fn error() -> Result<(), E> {
-        let samples = include_str!("../../../tests/error/each.sibs").to_string();
+        let samples = include_str!("../../tests/error/each.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
@@ -227,22 +222,19 @@ mod reading {
 #[cfg(test)]
 mod processing {
     use crate::{
+        entry::Task,
         inf::{
             context::Context,
             operator::{Operator, E},
         },
-        reader::{
-            entry::{Reading, Task},
-            Reader,
-        },
+        reader::{Reader, Reading},
     };
     const VALUES: &[(&str, &str)] = &[("a", "three"), ("b", "two"), ("c", "one")];
 
     #[async_std::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
-        let mut reader =
-            Reader::new(include_str!("../../../tests/processing/each.sibs").to_string());
+        let mut reader = Reader::new(include_str!("../../tests/processing/each.sibs").to_string());
         while let Some(task) = Task::read(&mut reader)? {
             assert!(task.process(None, &[], &[], &mut cx).await?.is_some());
         }
@@ -260,17 +252,15 @@ mod processing {
 mod proptest {
 
     use crate::{
-        inf::{operator::E, tests::*},
-        reader::{
-            entry::{
-                block::Block,
-                embedded::each::{Each, Input},
-                function::Function,
-                task::Task,
-                variable_name::VariableName,
-            },
-            Reader, Reading,
+        entry::{
+            block::Block,
+            embedded::each::{Each, Input},
+            function::Function,
+            task::Task,
+            variable_name::VariableName,
         },
+        inf::{operator::E, tests::*},
+        reader::{Reader, Reading},
     };
     use proptest::prelude::*;
     use std::sync::{Arc, RwLock};

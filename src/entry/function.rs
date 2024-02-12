@@ -1,13 +1,10 @@
 use crate::{
+    entry::{Arguments, Component},
     inf::{
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
     },
-    reader::{
-        chars,
-        entry::{Arguments, Component, Reading},
-        words, Reader, E,
-    },
+    reader::{chars, words, Reader, Reading, E},
 };
 use std::fmt;
 
@@ -190,16 +187,14 @@ impl Operator for Function {
 #[cfg(test)]
 mod reading {
     use crate::{
+        entry::Function,
         inf::tests,
-        reader::{
-            entry::{Function, Reading},
-            Reader, E,
-        },
+        reader::{Reader, Reading, E},
     };
 
     #[test]
     fn reading() -> Result<(), E> {
-        let content = include_str!("../../tests/reading/function.sibs").to_string();
+        let content = include_str!("../tests/reading/function.sibs").to_string();
         let len = content.split('\n').count();
         let mut reader = Reader::new(content);
         let mut count = 0;
@@ -217,7 +212,7 @@ mod reading {
 
     #[test]
     fn tokens() -> Result<(), E> {
-        let content = include_str!("../../tests/reading/function.sibs").to_string();
+        let content = include_str!("../tests/reading/function.sibs").to_string();
         let len = content.split('\n').count();
         let mut reader = Reader::new(content);
         let mut count = 0;
@@ -247,7 +242,7 @@ mod reading {
 
     #[test]
     fn error() -> Result<(), E> {
-        let samples = include_str!("../../tests/error/function.sibs").to_string();
+        let samples = include_str!("../tests/error/function.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
@@ -263,11 +258,9 @@ mod reading {
 #[cfg(test)]
 mod proptest {
     use crate::{
+        entry::{arguments::Arguments, function::Function, task::Task},
         inf::{operator::E, tests::*},
-        reader::{
-            entry::{arguments::Arguments, function::Function, task::Task},
-            Reader, Reading,
-        },
+        reader::{Reader, Reading},
     };
     use proptest::prelude::*;
     use std::sync::{Arc, RwLock};

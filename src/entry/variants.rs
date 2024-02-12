@@ -1,10 +1,6 @@
 use crate::{
     inf::term,
-    reader::{
-        chars,
-        entry::{Reader, Reading},
-        E,
-    },
+    reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
 
@@ -69,15 +65,15 @@ impl term::Display for Variants {
 }
 
 #[cfg(test)]
-mod test_values {
-    use crate::reader::{
-        entry::{Reading, Variants},
-        Reader, E,
+mod reading {
+    use crate::{
+        entry::Variants,
+        reader::{Reader, Reading, E},
     };
 
     #[test]
     fn reading() -> Result<(), E> {
-        let samples = include_str!("../../tests/reading/variants.sibs").to_string();
+        let samples = include_str!("../tests/reading/variants.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
@@ -91,7 +87,7 @@ mod test_values {
 
     #[test]
     fn error() -> Result<(), E> {
-        let samples = include_str!("../../tests/error/variants.sibs").to_string();
+        let samples = include_str!("../tests/error/variants.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
@@ -106,7 +102,7 @@ mod test_values {
 
 #[cfg(test)]
 mod proptest {
-    use crate::{inf::tests::*, reader::entry::variants::Variants};
+    use crate::{entry::variants::Variants, inf::tests::*};
     use proptest::prelude::*;
 
     impl Arbitrary for Variants {
