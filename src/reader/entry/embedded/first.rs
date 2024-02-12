@@ -85,6 +85,26 @@ mod reading {
     }
 
     #[test]
+    fn tokens() -> Result<(), E> {
+        let mut reader = Reader::new(include_str!("../../../tests/reading/first.sibs").to_string());
+        let mut count = 0;
+        while let Some(entity) = First::read(&mut reader)? {
+            assert_eq!(
+                tests::trim_carets(&format!("{entity};")),
+                tests::trim_carets(&reader.get_fragment(&entity.token)?.lined),
+            );
+            assert_eq!(
+                tests::trim_carets(&format!("{}", entity.block)),
+                tests::trim_carets(&reader.get_fragment(&entity.block.token)?.lined),
+            );
+            count += 1;
+        }
+        assert_eq!(count, 2);
+        assert!(reader.rest().trim().is_empty());
+        Ok(())
+    }
+
+    #[test]
     fn error() -> Result<(), E> {
         let samples = include_str!("../../../tests/error/first.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
