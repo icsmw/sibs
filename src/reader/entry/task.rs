@@ -14,7 +14,7 @@ use std::fmt;
 
 #[derive(Debug)]
 pub struct Task {
-    pub name: String,
+    pub name: (usize, String),
     pub declarations: Vec<VariableDeclaration>,
     pub block: Option<Block>,
     pub token: usize,
@@ -27,21 +27,24 @@ impl Task {
             .map(|b| b.meta.is_some())
             .unwrap_or(false)
     }
+    pub fn get_name(&self) -> &str {
+        &self.name.1
+    }
 }
 
 impl Reading<Task> for Task {
     fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
         let close = reader.open_token();
-        if let Some((mut name, stopped_on)) = reader
+        if let Some((n, stopped_on)) = reader
             .until()
             .char(&[&chars::OPEN_BRACKET, &chars::OPEN_SQ_BRACKET])
         {
-            name = name.trim().to_string();
+            let name = (reader.token()?.id, n.trim().to_string());
             if stopped_on == chars::OPEN_BRACKET {
                 reader.move_to().next();
             }
             if !Reader::is_ascii_alphabetic_and_alphanumeric(
-                &name,
+                &name.1,
                 &[&chars::UNDERSCORE, &chars::DASH],
             ) {
                 Err(E::InvalidTaskName)?
@@ -87,7 +90,7 @@ impl fmt::Display for Task {
         write!(
             f,
             "{}{} {}",
-            self.name,
+            self.name.1,
             if self.declarations.is_empty() {
                 String::new()
             } else {
@@ -110,13 +113,13 @@ impl fmt::Display for Task {
 
 impl term::Display for Task {
     fn display(&self, term: &mut Term) {
-        term.bold(format!("{}[{}]", term.offset(), self.name));
+        term.bold(format!("{}[{}]", term.offset(), self.name.1));
         println!();
         term.step_right();
         term.print(format!(
             "{}USAGE: {}{}{}",
             term.offset(),
-            self.name,
+            self.name.1,
             if self.declarations.is_empty() {
                 ""
             } else {
@@ -148,11 +151,11 @@ impl Operator for Task {
             let block = self.block.as_ref().ok_or_else(|| {
                 cx.term.err(format!(
                     "Task \"{}\" doesn't have actions block.\n",
-                    self.name,
+                    self.name.1,
                 ));
-                operator::E::NoTaskBlock(self.name.to_string())
+                operator::E::NoTaskBlock(self.name.1.to_string())
             })?;
-            cx.term.with_title("TASK", &self.name);
+            cx.term.with_title("TASK", &self.name.1);
             if self.declarations.len() != args.len() {
                 Err(operator::E::DismatchTaskArgumentsCount)?;
             }
@@ -198,6 +201,10 @@ mod reading {
             assert_eq!(
                 tests::trim_carets(&format!("{entity};")),
                 tests::trim_carets(&reader.get_fragment(&entity.token)?.lined)
+            );
+            assert_eq!(
+                tests::trim_carets(&entity.name.1),
+                tests::trim_carets(&reader.get_fragment(&entity.name.0)?.lined)
             );
             if let Some(block) = entity.block.as_ref() {
                 assert_eq!(
@@ -309,7 +316,7 @@ mod proptest {
                     declarations,
                     block: Some(block),
                     token: 0,
-                    name,
+                    name: (0, name),
                 })
                 .boxed();
             scope.write().unwrap().exclude(Entity::Task);

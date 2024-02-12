@@ -24,7 +24,7 @@ pub struct Component {
 
 impl Component {
     pub fn get_task(&self, name: &str) -> Option<&Task> {
-        self.tasks.iter().find(|t| t.name == name)
+        self.tasks.iter().find(|t| t.get_name() == name)
     }
 }
 
@@ -160,7 +160,7 @@ impl Operator for Component {
                 ));
                 operator::E::NoTaskForComponent(self.name.to_string())
             })?;
-            let task = self.tasks.iter().find(|t| &t.name == task).ok_or_else(|| {
+            let task = self.tasks.iter().find(|t| &t.get_name() == task).ok_or_else(|| {
                 cx.term.err(format!(
                     "Task \"{task}\" doesn't exist on component \"{}\". Try to use \"sibs {} --help\".\n",
                     self.name, self.name
