@@ -15,7 +15,7 @@ pub enum Error {
     InvalidNumberOfArguments,
     #[error("Invalid argument type; expected string.")]
     InvalidArgumentType,
-    #[error("Fail to extract string value from ValueString entity")]
+    #[error("Fail to extract string value from PatternString entity")]
     NoStringValue,
     #[error("Fail to extract variable name from VariableName entity")]
     NoVariableName,
@@ -53,7 +53,7 @@ impl Executor for Repeat {
                 .ok_or(Error::InvalidNumberOfArguments)?;
             let target = match first {
                 Argument::String(_, value) => value.to_owned(),
-                Argument::ValueString(value_string) => value_string
+                Argument::PatternString(value_string) => value_string
                     .process(None, &[], &[], cx)
                     .await?
                     .ok_or(Error::NoStringValue)?
@@ -71,7 +71,7 @@ impl Executor for Repeat {
             };
             let count = match second {
                 Argument::String(_, value) => value.to_owned(),
-                Argument::ValueString(value_string) => value_string
+                Argument::PatternString(value_string) => value_string
                     .process(None, &[], &[], cx)
                     .await?
                     .ok_or(Error::NoStringValue)?

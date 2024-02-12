@@ -51,7 +51,7 @@ impl Argument<Help> for Help {
             .filter(|comp| comp.cwd.is_some())
             .map(|comp| {
                 (
-                    comp.name.clone(),
+                    comp.name.to_string(),
                     comp.meta
                         .as_ref()
                         .map(|meta| meta.as_string())
@@ -90,7 +90,7 @@ impl Argument<Help> for Help {
         ));
         cx.term.step_left();
         if let Some(component) = self.component.as_ref() {
-            if let Some(component) = components.iter().find(|c| &c.name == component) {
+            if let Some(component) = components.iter().find(|c| &c.name.to_string() == component) {
                 component.display(&mut cx.term);
             } else {
                 cx.term.err(format!("Component \"{component}\" isn't found.\n\n"));

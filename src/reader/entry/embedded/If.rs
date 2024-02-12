@@ -6,7 +6,7 @@ use crate::{
     },
     reader::{
         chars,
-        entry::{Block, Component, Function, Reading, ValueString, VariableName},
+        entry::{Block, Component, Function, PatternString, Reading, VariableName},
         words, Reader, E,
     },
 };
@@ -52,7 +52,7 @@ impl fmt::Display for Combination {
 
 #[derive(Debug, Clone)]
 pub enum Proviso {
-    Variable(VariableName, Cmp, ValueString, usize),
+    Variable(VariableName, Cmp, PatternString, usize),
     // Function, is negative (!)
     Function(Function, bool, usize),
     Combination(Combination, usize),
@@ -287,7 +287,7 @@ impl If {
                 .move_to()
                 .word(&[&words::CMP_TRUE, &words::CMP_FALSE])
             {
-                if let Some(value_string) = ValueString::read(reader)? {
+                if let Some(value_string) = PatternString::read(reader)? {
                     return Ok(Proviso::Variable(
                         variable_name,
                         if word == words::CMP_TRUE {
@@ -517,8 +517,8 @@ mod proptest {
             entry::{
                 embedded::If::{Cmp, Combination, Element, If, Proviso},
                 function::Function,
+                pattern_string::PatternString,
                 task::Task,
-                value_strings::ValueString,
                 variable_name::VariableName,
                 Block,
             },
@@ -564,7 +564,7 @@ mod proptest {
                     let mut allowed = vec![(
                         VariableName::arbitrary(),
                         Cmp::arbitrary_with(scope.clone()),
-                        ValueString::arbitrary_primitive(scope.clone()),
+                        PatternString::arbitrary_primitive(scope.clone()),
                     )
                         .prop_map(|(name, cmp, value)| Proviso::Variable(name, cmp, value, 0))
                         .boxed()];
@@ -580,7 +580,7 @@ mod proptest {
                             (
                                 VariableName::arbitrary(),
                                 Cmp::arbitrary_with(scope.clone()),
-                                ValueString::arbitrary_with(scope.clone()),
+                                PatternString::arbitrary_with(scope.clone()),
                             )
                                 .prop_map(|(name, cmp, value)| {
                                     Proviso::Variable(name, cmp, value, 0)

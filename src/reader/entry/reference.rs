@@ -182,7 +182,7 @@ impl Operator for Reference {
                     } else {
                         components
                             .iter()
-                            .find(|c| c.name == self.path[0])
+                            .find(|c| c.name.to_string() == self.path[0])
                             .ok_or(operator::E::NotFoundComponent(self.path[0].to_owned()))?
                     },
                     &self.path[1],
@@ -192,7 +192,7 @@ impl Operator for Reference {
             };
             let task = parent.get_task(task).ok_or(operator::E::TaskNotFound(
                 task.to_owned(),
-                parent.name.to_owned(),
+                parent.name.to_string(),
             ))?;
             let mut args: Vec<String> = vec![];
             for input in self.inputs.iter() {

@@ -7,7 +7,7 @@ use crate::{
     },
     reader::{
         chars,
-        entry::{Component, Function, Reader, Reading, ValueString, VariableName},
+        entry::{Component, Function, PatternString, Reader, Reading, VariableName},
         E,
     },
 };
@@ -16,7 +16,7 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub enum Element {
     Function(Function),
-    ValueString(ValueString),
+    PatternString(PatternString),
     VariableName(VariableName),
     String(usize, String),
 }
@@ -25,7 +25,7 @@ impl Element {
     pub fn token(&self) -> usize {
         match self {
             Self::Function(v) => v.token,
-            Self::ValueString(v) => v.token,
+            Self::PatternString(v) => v.token,
             Self::VariableName(v) => v.token,
             Self::String(token, _) => *token,
         }
@@ -39,7 +39,7 @@ impl fmt::Display for Element {
             "{}",
             match self {
                 Self::Function(v) => v.to_string(),
-                Self::ValueString(v) => v.to_string(),
+                Self::PatternString(v) => v.to_string(),
                 Self::VariableName(v) => v.to_string(),
                 Self::String(_, v) => v.to_string(),
             }
@@ -58,7 +58,7 @@ impl Operator for Element {
         Box::pin(async move {
             match self {
                 Self::Function(v) => v.process(owner, components, args, cx).await,
-                Self::ValueString(v) => v.process(owner, components, args, cx).await,
+                Self::PatternString(v) => v.process(owner, components, args, cx).await,
                 Self::VariableName(v) => v.process(owner, components, args, cx).await,
                 Self::String(_, v) => Ok(Some(AnyValue::new(v.to_owned()))),
             }
@@ -72,7 +72,7 @@ impl term::Display for Element {
             "[{}]",
             match self {
                 Self::Function(v) => v.to_string(),
-                Self::ValueString(v) => v.to_string(),
+                Self::PatternString(v) => v.to_string(),
                 Self::VariableName(v) => v.to_string(),
                 Self::String(_, v) => v.to_string(),
             }
@@ -126,8 +126,8 @@ impl Reading<Values> for Values {
                     elements.push(Element::Function(el));
                     continue;
                 }
-                if let Some(el) = ValueString::read(&mut reader)? {
-                    elements.push(Element::ValueString(el));
+                if let Some(el) = PatternString::read(&mut reader)? {
+                    elements.push(Element::PatternString(el));
                 } else if reader.rest().trim().is_empty() {
                     Err(E::EmptyValue)?;
                 } else {
@@ -187,7 +187,7 @@ impl Operator for Values {
             for element in self.elements.iter() {
                 if let Some(value) = match element {
                     Element::Function(v) => v.process(owner, components, args, cx).await?,
-                    Element::ValueString(v) => v.process(owner, components, args, cx).await?,
+                    Element::PatternString(v) => v.process(owner, components, args, cx).await?,
                     Element::VariableName(v) => v.process(owner, components, args, cx).await?,
                     Element::String(_, v) => Some(AnyValue::new(v.to_owned())),
                 } {
@@ -316,7 +316,7 @@ mod proptest {
         inf::tests::*,
         reader::entry::{
             function::Function,
-            value_strings::ValueString,
+            pattern_string::PatternString,
             values::{Element, Values},
             variable_name::VariableName,
         },
@@ -342,8 +342,8 @@ mod proptest {
             }
             if permissions.value_string {
                 allowed.push(
-                    ValueString::arbitrary_with(scope.clone())
-                        .prop_map(Self::ValueString)
+                    PatternString::arbitrary_with(scope.clone())
+                        .prop_map(Self::PatternString)
                         .boxed(),
                 );
             }

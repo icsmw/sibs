@@ -6,7 +6,7 @@ use crate::{
     reader::{
         chars,
         entry::{
-            Block, Command, Component, Function, Reading, Reference, ValueString,
+            Block, Command, Component, Function, PatternString, Reading, Reference,
             VariableAssignation, VariableComparing,
         },
         words, Reader, E,
@@ -17,7 +17,7 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub enum Action {
     VariableAssignation(VariableAssignation),
-    ValueString(ValueString),
+    PatternString(PatternString),
     Function(Function),
     Command(Command),
     Block(Block),
@@ -30,7 +30,7 @@ impl Action {
             Self::VariableAssignation(v) => v.token,
             Self::Reference(v) => v.token,
             Self::Function(v) => v.token,
-            Self::ValueString(v) => v.token,
+            Self::PatternString(v) => v.token,
             Self::Command(v) => v.token,
             Self::Block(v) => v.token,
         }
@@ -46,7 +46,7 @@ impl fmt::Display for Action {
                 Self::VariableAssignation(v) => v.to_string(),
                 Self::Reference(v) => v.to_string(),
                 Self::Function(v) => v.to_string(),
-                Self::ValueString(v) => v.to_string(),
+                Self::PatternString(v) => v.to_string(),
                 Self::Command(v) => v.to_string(),
                 Self::Block(v) => v.to_string(),
             }
@@ -67,7 +67,7 @@ impl Operator for Action {
                 Self::VariableAssignation(v) => v.process(owner, components, args, cx).await,
                 Self::Reference(v) => v.process(owner, components, args, cx).await,
                 Self::Function(v) => v.process(owner, components, args, cx).await,
-                Self::ValueString(v) => v.process(owner, components, args, cx).await,
+                Self::PatternString(v) => v.process(owner, components, args, cx).await,
                 Self::Command(v) => v.process(owner, components, args, cx).await,
                 Self::Block(v) => v.process(owner, components, args, cx).await,
             }
@@ -181,8 +181,8 @@ impl Reading<Optional> for Optional {
                             Action::Reference(reference)
                         } else if let Some(func) = Function::read(&mut token.bound)? {
                             Action::Function(func)
-                        } else if let Some(value_string) = ValueString::read(&mut token.bound)? {
-                            Action::ValueString(value_string)
+                        } else if let Some(value_string) = PatternString::read(&mut token.bound)? {
+                            Action::PatternString(value_string)
                         } else if !token.content.trim().is_empty() {
                             Action::Command(Command::new(token.content, close_right_side(reader))?)
                         } else {
@@ -274,7 +274,7 @@ mod reading {
                 tests::trim_carets(&format!("{entity};")),
                 reader.get_fragment(&entity.token)?.lined
             );
-            // In some cases like with ValueString, semicolon can be skipped, because
+            // In some cases like with PatternString, semicolon can be skipped, because
             // belongs to parent entity (Optional).
             assert_eq!(
                 tests::trim_semicolon(&tests::trim_carets(&entity.action.to_string())),
@@ -353,9 +353,9 @@ mod proptest {
                 command::Command,
                 function::Function,
                 optional::{Action, Condition, Optional},
+                pattern_string::PatternString,
                 reference::Reference,
                 task::Task,
-                value_strings::ValueString,
                 variable_assignation::VariableAssignation,
                 variable_comparing::VariableComparing,
             },
@@ -375,7 +375,7 @@ mod proptest {
                 Block::arbitrary_with(scope.clone()).prop_map(Action::Block),
                 VariableAssignation::arbitrary_with(scope.clone())
                     .prop_map(Action::VariableAssignation),
-                ValueString::arbitrary_with(scope.clone()).prop_map(Action::ValueString),
+                PatternString::arbitrary_with(scope.clone()).prop_map(Action::PatternString),
                 Reference::arbitrary_with(scope.clone()).prop_map(Action::Reference),
                 Function::arbitrary_with(scope.clone()).prop_map(Action::Function),
             ]

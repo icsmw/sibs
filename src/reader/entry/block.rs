@@ -8,8 +8,8 @@ use crate::{
     reader::{
         chars,
         entry::{
-            Command, Component, Each, First, Function, If, Meta, Optional, Reading, Reference,
-            ValueString, VariableAssignation, VariableName,
+            Command, Component, Each, First, Function, If, Meta, Optional, PatternString, Reading,
+            Reference, VariableAssignation, VariableName,
         },
         Reader, E,
     },
@@ -25,7 +25,7 @@ pub enum Element {
     VariableAssignation(VariableAssignation),
     Optional(Optional),
     Reference(Reference),
-    ValueString(ValueString),
+    PatternString(PatternString),
     VariableName(VariableName),
     Command(Command),
 }
@@ -44,7 +44,7 @@ impl fmt::Display for Element {
                 Self::VariableAssignation(v) => v.to_string(),
                 Self::Optional(v) => v.to_string(),
                 Self::Reference(v) => v.to_string(),
-                Self::ValueString(v) => v.to_string(),
+                Self::PatternString(v) => v.to_string(),
                 Self::VariableName(v) => v.to_string(),
             }
         )
@@ -69,7 +69,7 @@ impl Operator for Element {
                 Self::VariableAssignation(v) => v.process(owner, components, args, cx).await,
                 Self::Optional(v) => v.process(owner, components, args, cx).await,
                 Self::Reference(v) => v.process(owner, components, args, cx).await,
-                Self::ValueString(v) => v.process(owner, components, args, cx).await,
+                Self::PatternString(v) => v.process(owner, components, args, cx).await,
                 Self::VariableName(v) => v.process(owner, components, args, cx).await,
             }
         })
@@ -140,11 +140,11 @@ impl Reading<Block> for Block {
                     elements.push(Element::Reference(el));
                     continue;
                 }
-                if let Some(el) = ValueString::read(&mut inner)? {
+                if let Some(el) = PatternString::read(&mut inner)? {
                     if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
                         Err(E::MissedSemicolon)?;
                     }
-                    elements.push(Element::ValueString(el));
+                    elements.push(Element::PatternString(el));
                     continue;
                 }
                 if let Some(el) = Function::read(&mut inner)? {

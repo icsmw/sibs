@@ -7,7 +7,7 @@ use crate::{
     reader::{
         chars,
         entry::{
-            Block, Component, First, Function, Reader, Reading, ValueString, Values, VariableName,
+            Block, Component, First, Function, PatternString, Reader, Reading, Values, VariableName,
         },
         E,
     },
@@ -17,7 +17,7 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub enum Assignation {
     Function(Function),
-    ValueString(ValueString),
+    PatternString(PatternString),
     Values(Values),
     Block(Block),
     First(First),
@@ -26,7 +26,7 @@ pub enum Assignation {
 impl Assignation {
     pub fn token(&self) -> usize {
         match self {
-            Assignation::ValueString(v) => v.token,
+            Assignation::PatternString(v) => v.token,
             Assignation::Block(v) => v.token,
             Assignation::Values(v) => v.token,
             Assignation::First(v) => v.token,
@@ -41,7 +41,7 @@ impl fmt::Display for Assignation {
             f,
             "{}",
             match &self {
-                Assignation::ValueString(v) => v.to_string(),
+                Assignation::PatternString(v) => v.to_string(),
                 Assignation::Block(v) => v.to_string(),
                 Assignation::Values(v) => v.to_string(),
                 Assignation::First(v) => v.to_string(),
@@ -62,7 +62,7 @@ impl Operator for Assignation {
         Box::pin(async move {
             match self {
                 Self::Function(v) => v.process(owner, components, args, cx).await,
-                Self::ValueString(v) => v.process(owner, components, args, cx).await,
+                Self::PatternString(v) => v.process(owner, components, args, cx).await,
                 Self::Values(v) => v.process(owner, components, args, cx).await,
                 Self::Block(v) => v.process(owner, components, args, cx).await,
                 Self::First(v) => v.process(owner, components, args, cx).await,
@@ -133,10 +133,10 @@ impl Reading<VariableAssignation> for VariableAssignation {
                         assignation: Assignation::Function(func),
                         token: close(reader),
                     }))
-                } else if let Some(value_string) = ValueString::read(&mut token.bound)? {
+                } else if let Some(value_string) = PatternString::read(&mut token.bound)? {
                     Ok(Some(VariableAssignation {
                         name,
-                        assignation: Assignation::ValueString(value_string),
+                        assignation: Assignation::PatternString(value_string),
                         token: close(reader),
                     }))
                 } else {
@@ -158,7 +158,7 @@ impl fmt::Display for VariableAssignation {
             "{} = {}",
             self.name,
             match &self.assignation {
-                Assignation::ValueString(v) => v.to_string(),
+                Assignation::PatternString(v) => v.to_string(),
                 Assignation::Block(v) => v.to_string(),
                 Assignation::Values(v) => v.to_string(),
                 Assignation::First(v) => v.to_string(),
@@ -306,8 +306,8 @@ mod proptest {
                 block::Block,
                 embedded::first::First,
                 function::Function,
+                pattern_string::PatternString,
                 task::Task,
-                value_strings::ValueString,
                 values::Values,
                 variable_assignation::{Assignation, VariableAssignation},
                 variable_name::VariableName,
@@ -324,8 +324,8 @@ mod proptest {
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             let permissions = scope.read().unwrap().permissions();
-            let mut allowed = vec![ValueString::arbitrary_with(scope.clone())
-                .prop_map(Self::ValueString)
+            let mut allowed = vec![PatternString::arbitrary_with(scope.clone())
+                .prop_map(Self::PatternString)
                 .boxed()];
             if permissions.func {
                 allowed.push(

@@ -64,18 +64,18 @@ impl Operator for Injection {
 }
 
 #[derive(Debug, Clone)]
-pub struct ValueString {
+pub struct PatternString {
     pub pattern: String,
     pub injections: Vec<Injection>,
     pub token: usize,
 }
 
-impl Reading<ValueString> for ValueString {
-    fn read(reader: &mut Reader) -> Result<Option<ValueString>, E> {
+impl Reading<PatternString> for PatternString {
+    fn read(reader: &mut Reader) -> Result<Option<PatternString>, E> {
         let close = reader.open_token();
         if let Some(inner) = reader.group().closed(&chars::QUOTES) {
             let mut token = reader.token()?;
-            Ok(Some(ValueString::new(
+            Ok(Some(PatternString::new(
                 inner,
                 &mut token.bound,
                 close(reader),
@@ -86,7 +86,7 @@ impl Reading<ValueString> for ValueString {
     }
 }
 
-impl ValueString {
+impl PatternString {
     pub fn new(pattern: String, reader: &mut Reader, token: usize) -> Result<Self, E> {
         let mut injections: Vec<Injection> = vec![];
         while reader.seek_to().char(&chars::TYPE_OPEN) {
@@ -106,7 +106,7 @@ impl ValueString {
                 Err(E::NoInjectionClose)?
             }
         }
-        Ok(ValueString {
+        Ok(PatternString {
             pattern,
             injections,
             token,
@@ -114,13 +114,13 @@ impl ValueString {
     }
 }
 
-impl fmt::Display for ValueString {
+impl fmt::Display for PatternString {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "\"{}\"", self.pattern,)
     }
 }
 
-impl Operator for ValueString {
+impl Operator for PatternString {
     fn process<'a>(
         &'a self,
         owner: Option<&'a Component>,
@@ -150,7 +150,7 @@ mod reading {
     use crate::{
         inf::tests,
         reader::{
-            entry::{Reading, ValueString},
+            entry::{PatternString, Reading},
             Reader, E,
         },
     };
@@ -160,7 +160,7 @@ mod reading {
         let mut reader =
             Reader::new(include_str!("../../tests/reading/value_string.sibs").to_string());
         let mut count = 0;
-        while let Some(entity) = ValueString::read(&mut reader)? {
+        while let Some(entity) = PatternString::read(&mut reader)? {
             assert_eq!(
                 tests::trim_carets(reader.recent()),
                 tests::trim_carets(&entity.to_string()),
@@ -177,7 +177,7 @@ mod reading {
         let mut reader =
             Reader::new(include_str!("../../tests/reading/value_string.sibs").to_string());
         let mut count = 0;
-        while let Some(entity) = ValueString::read(&mut reader)? {
+        while let Some(entity) = PatternString::read(&mut reader)? {
             assert_eq!(
                 tests::trim_carets(&entity.to_string()),
                 reader.get_fragment(&entity.token)?.content
@@ -202,7 +202,7 @@ mod proptest {
         inf::tests::*,
         reader::entry::{
             function::Function,
-            value_strings::{Injection, ValueString},
+            pattern_string::{Injection, PatternString},
             variable_name::VariableName,
         },
     };
@@ -228,12 +228,12 @@ mod proptest {
         }
     }
 
-    impl Arbitrary for ValueString {
+    impl Arbitrary for PatternString {
         type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            scope.write().unwrap().include(Entity::ValueString);
+            scope.write().unwrap().include(Entity::PatternString);
             let boxed = (
                 prop::collection::vec(Injection::arbitrary_with(scope.clone()), 1..=10),
                 prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 10),
@@ -243,30 +243,30 @@ mod proptest {
                     for (i, injection) in injections.iter().enumerate() {
                         pattern = format!("{}{{{}}}", noise[i], injection.hook());
                     }
-                    ValueString {
+                    PatternString {
                         injections,
                         pattern,
                         token: 0,
                     }
                 })
                 .boxed();
-            scope.write().unwrap().exclude(Entity::ValueString);
+            scope.write().unwrap().exclude(Entity::PatternString);
             boxed
         }
     }
 
-    impl ValueString {
+    impl PatternString {
         pub fn arbitrary_primitive(scope: SharedScope) -> BoxedStrategy<Self> {
-            scope.write().unwrap().include(Entity::ValueString);
+            scope.write().unwrap().include(Entity::PatternString);
             let boxed = "[a-z][a-z0-9]*"
                 .prop_map(String::from)
-                .prop_map(|pattern| ValueString {
+                .prop_map(|pattern| PatternString {
                     injections: vec![],
                     pattern,
                     token: 0,
                 })
                 .boxed();
-            scope.write().unwrap().exclude(Entity::ValueString);
+            scope.write().unwrap().exclude(Entity::PatternString);
             boxed
         }
     }

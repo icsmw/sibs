@@ -68,7 +68,10 @@ pub async fn read(tracker: &Tracker) -> Result<Option<Context>, E> {
     } else {
         Some(income.remove(0))
     } {
-        if let Some(component) = components.iter().find(|comp| comp.name == component) {
+        if let Some(component) = components
+            .iter()
+            .find(|comp| comp.name.to_string() == component)
+        {
             component
                 .process(Some(component), &components, &income, &mut cx)
                 .await?;

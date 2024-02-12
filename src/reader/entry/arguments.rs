@@ -1,6 +1,6 @@
 use crate::reader::{
     chars,
-    entry::{Reader, Reading, ValueString, VariableName},
+    entry::{PatternString, Reader, Reading, VariableName},
     E,
 };
 use std::fmt;
@@ -8,7 +8,7 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub enum Argument {
     String(usize, String),
-    ValueString(ValueString),
+    PatternString(PatternString),
     VariableName(VariableName),
     Arguments(Arguments),
 }
@@ -17,7 +17,7 @@ impl Argument {
     pub fn token(&self) -> usize {
         match self {
             Self::String(token, _) => *token,
-            Self::ValueString(v) => v.token,
+            Self::PatternString(v) => v.token,
             Self::VariableName(v) => v.token,
             Self::Arguments(v) => v.token,
         }
@@ -31,7 +31,7 @@ impl fmt::Display for Argument {
             "{}",
             match self {
                 Self::String(_, v) => Reader::serialize(v),
-                Self::ValueString(v) => v.to_string(),
+                Self::PatternString(v) => v.to_string(),
                 Self::VariableName(v) => v.to_string(),
                 Self::Arguments(v) => format!("[{v}]"),
             }
@@ -95,8 +95,8 @@ impl Arguments {
                 }
                 if let Some(variable) = VariableName::read(&mut token.bound)? {
                     arguments.push(Argument::VariableName(variable));
-                } else if let Some(value_string) = ValueString::read(&mut token.bound)? {
-                    arguments.push(Argument::ValueString(value_string));
+                } else if let Some(value_string) = PatternString::read(&mut token.bound)? {
+                    arguments.push(Argument::PatternString(value_string));
                 } else {
                     arguments.push(Argument::String(token.id, Reader::unserialize(&arg)));
                 }
@@ -127,8 +127,8 @@ impl Arguments {
                     Arguments::read_string_args(&mut reader.token()?.bound)?,
                 ]
                 .concat();
-                if let Some(value_string) = ValueString::read(reader)? {
-                    arguments.push(Argument::ValueString(value_string));
+                if let Some(value_string) = PatternString::read(reader)? {
+                    arguments.push(Argument::PatternString(value_string));
                 } else {
                     Err(E::NoStringEnd)?
                 }
@@ -167,7 +167,7 @@ mod proptest {
         inf::tests::*,
         reader::entry::{
             arguments::{Argument, Arguments},
-            value_strings::ValueString,
+            pattern_string::PatternString,
             variable_name::VariableName,
         },
     };
@@ -191,8 +191,8 @@ mod proptest {
             }
             if permissions.value_string {
                 allowed.push(
-                    ValueString::arbitrary_with(scope.clone())
-                        .prop_map(Argument::ValueString)
+                    PatternString::arbitrary_with(scope.clone())
+                        .prop_map(Argument::PatternString)
                         .boxed(),
                 );
             }

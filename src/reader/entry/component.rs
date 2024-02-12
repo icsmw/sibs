@@ -6,7 +6,7 @@ use crate::{
     },
     reader::{
         chars,
-        entry::{Function, Meta, Reading, Task},
+        entry::{Function, Meta, Reading, SimpleString, Task},
         words, Reader, E,
     },
 };
@@ -15,7 +15,7 @@ use std::{fmt, path::PathBuf};
 #[derive(Debug)]
 pub struct Component {
     pub cwd: Option<PathBuf>,
-    pub name: String,
+    pub name: SimpleString,
     pub tasks: Vec<Task>,
     pub functions: Vec<Function>,
     pub meta: Option<Meta>,
@@ -55,6 +55,7 @@ impl Reading<Component> for Component {
                 ) {
                     Err(E::InvalidComponentName)?;
                 }
+                let (name, name_token) = (name, inner.token()?.id);
                 let path = inner.rest().trim().to_string();
                 let inner = if let Some((inner, _)) = reader.until().word(&[&words::COMP]) {
                     inner
@@ -78,7 +79,10 @@ impl Reading<Component> for Component {
                     tasks.push(task);
                 }
                 Ok(Some(Component {
-                    name,
+                    name: SimpleString {
+                        value: name,
+                        token: name_token,
+                    },
                     functions,
                     cwd: if path.is_empty() {
                         None
@@ -168,7 +172,7 @@ impl Operator for Component {
                 ));
                 operator::E::TaskNotExists( task.to_owned(),self.name.to_string())
             })?;
-            cx.term.with_title("COMPONENT", &self.name);
+            cx.term.with_title("COMPONENT", &self.name.to_string());
             cx.set_cwd(self.cwd.clone())?;
             task.process(owner, components, &args[1..], cx).await
         })
@@ -227,6 +231,10 @@ mod reading {
             assert_eq!(
                 tests::trim_carets(&entity.to_string()),
                 tests::trim_carets(&reader.get_fragment(&entity.token)?.lined)
+            );
+            assert_eq!(
+                tests::trim_carets(&entity.name.to_string()),
+                tests::trim_carets(&reader.get_fragment(&entity.name.token)?.lined)
             );
             for func in entity.functions.iter() {
                 assert_eq!(
@@ -325,7 +333,7 @@ mod proptest {
 
     use crate::{
         inf::tests::*,
-        reader::entry::{component::Component, meta::Meta, task::Task},
+        reader::entry::{component::Component, meta::Meta, task::Task, SimpleString},
     };
     use proptest::prelude::*;
 
@@ -342,7 +350,10 @@ mod proptest {
                 .prop_map(|(name, tasks, meta)| Component {
                     tasks,
                     meta: Some(meta),
-                    name,
+                    name: SimpleString {
+                        value: name,
+                        token: 0,
+                    },
                     cwd: Some(PathBuf::new()),
                     functions: vec![],
                     token: 0,
