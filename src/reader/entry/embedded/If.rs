@@ -52,12 +52,23 @@ impl fmt::Display for Combination {
 
 #[derive(Debug, Clone)]
 pub enum Proviso {
-    Variable(VariableName, Cmp, ValueString),
+    Variable(VariableName, Cmp, ValueString, usize),
     // Function, is negative (!)
-    Function(Function, bool),
+    Function(Function, bool, usize),
     Combination(Combination, usize),
     // bool: true - if root level; false - if nested group
-    Group(bool, Vec<Proviso>),
+    Group(bool, Vec<Proviso>, usize),
+}
+
+impl Proviso {
+    pub fn token(&self) -> usize {
+        match self {
+            Self::Variable(_, _, _, token) => *token,
+            Self::Combination(_, token) => *token,
+            Self::Function(_, _, token) => *token,
+            Self::Group(_, _, token) => *token,
+        }
+    }
 }
 
 impl Operator for Proviso {
@@ -70,7 +81,7 @@ impl Operator for Proviso {
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             match self {
-                Self::Variable(name, cmp, value) => {
+                Self::Variable(name, cmp, value, _) => {
                     let left = name
                         .process(owner, components, args, cx)
                         .await?
@@ -88,7 +99,7 @@ impl Operator for Proviso {
                         Cmp::NotEqual => left != right,
                     })))
                 }
-                Self::Function(func, negative) => {
+                Self::Function(func, negative, _) => {
                     let result = *func
                         .process(owner, components, args, cx)
                         .await?
@@ -101,7 +112,7 @@ impl Operator for Proviso {
                         result
                     })))
                 }
-                Self::Group(_, provisos) => {
+                Self::Group(_, provisos, _) => {
                     let mut iteration: Option<bool> = None;
                     for proviso in provisos.iter() {
                         if let Proviso::Combination(cmb, _) = proviso {
@@ -143,11 +154,12 @@ impl fmt::Display for Proviso {
             f,
             "{}",
             match self {
-                Self::Variable(variable_name, cmp, value_string) =>
+                Self::Variable(variable_name, cmp, value_string, _) =>
                     format!("{variable_name} {cmp} {value_string}"),
                 Self::Combination(v, _) => v.to_string(),
-                Self::Function(v, negative) => format!("{}{v}", if *negative { "!" } else { "" }),
-                Self::Group(root, provisio) => {
+                Self::Function(v, negative, _) =>
+                    format!("{}{v}", if *negative { "!" } else { "" }),
+                Self::Group(root, provisio, _) => {
                     format!(
                         "{}{}{}",
                         if *root { "" } else { "(" },
@@ -221,6 +233,7 @@ pub struct If {
 impl Reading<If> for If {
     fn read(reader: &mut Reader) -> Result<Option<If>, E> {
         let mut elements: Vec<Element> = vec![];
+        let close = reader.open_token();
         while !reader.rest().trim().is_empty() {
             if reader.move_to().word(&[&words::IF]).is_some() {
                 if reader.until().char(&[&chars::OPEN_SQ_BRACKET]).is_some() {
@@ -241,7 +254,7 @@ impl Reading<If> for If {
             if reader.move_to().char(&[&chars::SEMICOLON]).is_some() {
                 return Ok(Some(If {
                     elements,
-                    token: reader.token()?.id,
+                    token: close(reader),
                 }));
             }
             if reader.move_to().word(&[&words::ELSE]).is_some() {
@@ -250,7 +263,7 @@ impl Reading<If> for If {
                     if reader.move_to().char(&[&chars::SEMICOLON]).is_some() {
                         return Ok(Some(If {
                             elements,
-                            token: reader.token()?.id,
+                            token: close(reader),
                         }));
                     } else {
                         Err(E::MissedSemicolon)?
@@ -268,6 +281,7 @@ impl Reading<If> for If {
 
 impl If {
     pub fn inner(reader: &mut Reader) -> Result<Proviso, E> {
+        let close = reader.open_token();
         if let Some(variable_name) = VariableName::read(reader)? {
             if let Some(word) = reader
                 .move_to()
@@ -282,6 +296,7 @@ impl If {
                             Cmp::NotEqual
                         },
                         value_string,
+                        close(reader),
                     ));
                 } else {
                     Err(E::NoStringValueWithCondition)?
@@ -292,13 +307,14 @@ impl If {
         }
         let negative = reader.move_to().char(&[&chars::EXCLAMATION]).is_some();
         if let Some(func) = Function::read(reader)? {
-            Ok(Proviso::Function(func, negative))
+            Ok(Proviso::Function(func, negative, close(reader)))
         } else {
             Err(E::NoProvisoOfCondition)
         }
     }
     pub fn proviso(reader: &mut Reader, root: bool) -> Result<Proviso, E> {
         let mut proviso: Vec<Proviso> = vec![];
+        let close = reader.open_token();
         while !reader.rest().trim().is_empty() {
             if reader.move_to().char(&[&chars::OPEN_BRACKET]).is_some() {
                 if reader.until().char(&[&chars::CLOSE_BRACKET]).is_some() {
@@ -347,7 +363,7 @@ impl If {
                 Err(E::NoProvisoOfCondition)?
             }
         }
-        Ok(Proviso::Group(root, proviso))
+        Ok(Proviso::Group(root, proviso, close(reader)))
     }
 }
 
@@ -389,7 +405,7 @@ mod reading {
     use crate::{
         inf::tests,
         reader::{
-            entry::{If, Reading},
+            entry::{embedded::If::Element, If, Reading},
             Reader, E,
         },
     };
@@ -403,6 +419,42 @@ mod reading {
                 tests::trim_carets(reader.recent()),
                 tests::trim_carets(&format!("{entity};"))
             );
+            count += 1;
+        }
+        assert_eq!(count, 10);
+        assert!(reader.rest().trim().is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn tokens() -> Result<(), E> {
+        let mut reader = Reader::new(include_str!("../../../tests/reading/if.sibs").to_string());
+        let mut count = 0;
+        while let Some(entity) = If::read(&mut reader)? {
+            assert_eq!(
+                tests::trim_carets(&format!("{entity};")),
+                tests::trim_carets(&reader.get_fragment(&entity.token)?.lined)
+            );
+            for el in entity.elements.iter() {
+                match el {
+                    Element::If(proviso, block) => {
+                        assert_eq!(
+                            tests::trim_carets(&proviso.to_string()),
+                            tests::trim_carets(&reader.get_fragment(&proviso.token())?.lined)
+                        );
+                        assert_eq!(
+                            tests::trim_carets(&block.to_string()),
+                            tests::trim_carets(&reader.get_fragment(&block.token)?.lined)
+                        );
+                    }
+                    Element::Else(block) => {
+                        assert_eq!(
+                            tests::trim_carets(&block.to_string()),
+                            tests::trim_carets(&reader.get_fragment(&block.token)?.lined)
+                        );
+                    }
+                };
+            }
             count += 1;
         }
         assert_eq!(count, 10);
@@ -514,12 +566,12 @@ mod proptest {
                         Cmp::arbitrary_with(scope.clone()),
                         ValueString::arbitrary_primitive(scope.clone()),
                     )
-                        .prop_map(|(name, cmp, value)| Proviso::Variable(name, cmp, value))
+                        .prop_map(|(name, cmp, value)| Proviso::Variable(name, cmp, value, 0))
                         .boxed()];
                     if permissions.func {
                         allowed.push(
                             Function::arbitrary_with(scope.clone())
-                                .prop_map(|f| Proviso::Function(f, false))
+                                .prop_map(|f| Proviso::Function(f, false, 0))
                                 .boxed(),
                         );
                     }
@@ -530,7 +582,9 @@ mod proptest {
                                 Cmp::arbitrary_with(scope.clone()),
                                 ValueString::arbitrary_with(scope.clone()),
                             )
-                                .prop_map(|(name, cmp, value)| Proviso::Variable(name, cmp, value))
+                                .prop_map(|(name, cmp, value)| {
+                                    Proviso::Variable(name, cmp, value, 0)
+                                })
                                 .boxed(),
                         );
                     }
@@ -574,12 +628,12 @@ mod proptest {
                     provisos.push(combination);
                 }
                 if grouping {
-                    provisos.push(Proviso::Group(false, chain));
+                    provisos.push(Proviso::Group(false, chain, 0));
                 } else {
                     provisos = [provisos, chain].concat();
                 }
             }
-            Proviso::Group(true, provisos)
+            Proviso::Group(true, provisos, 0)
         })
         .boxed()
     }
