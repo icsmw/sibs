@@ -81,7 +81,7 @@ impl Reading<Arguments> for Arguments {
 
 impl Arguments {
     pub fn get(&self, index: usize) -> Option<&Argument> {
-        self.args.get(index).map(|arg| arg)
+        self.args.get(index)
     }
     pub fn read_string_args(reader: &mut Reader) -> Result<Vec<Argument>, E> {
         let mut arguments: Vec<Argument> = vec![];
