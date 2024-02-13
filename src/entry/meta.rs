@@ -22,7 +22,7 @@ impl Meta {
 impl Reading<Meta> for Meta {
     fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
         let mut inner: Vec<String> = vec![];
-        while reader.move_to().word(&[&words::META]).is_some() {
+        while reader.move_to().word(&[words::META]).is_some() {
             if let Some((line, _)) = reader.until().char(&[&chars::CARET]) {
                 inner.push(line.trim().to_string());
             } else {

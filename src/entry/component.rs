@@ -54,7 +54,7 @@ impl Reading<Component> for Component {
                 }
                 let (name, name_token) = (name, inner.token()?.id);
                 let path = inner.rest().trim().to_string();
-                let inner = if let Some((inner, _)) = reader.until().word(&[&words::COMP]) {
+                let inner = if let Some((inner, _)) = reader.until().word(&[words::COMP]) {
                     inner
                 } else {
                     reader.move_to().end()

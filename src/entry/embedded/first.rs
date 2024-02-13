@@ -17,7 +17,7 @@ pub struct First {
 impl Reading<First> for First {
     fn read(reader: &mut Reader) -> Result<Option<First>, E> {
         let close = reader.open_token();
-        if reader.move_to().word(&[&words::FIRST]).is_some() {
+        if reader.move_to().word(&[words::FIRST]).is_some() {
             if let Some(mut block) = Block::read(reader)? {
                 if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
                     Err(E::MissedSemicolon)

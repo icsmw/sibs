@@ -149,7 +149,7 @@ impl Reading<Optional> for Optional {
                     } else {
                         Err(E::NoFunctionOnOptionalAction)?
                     };
-                if reader.move_to().word(&[&words::DO_ON]).is_some() {
+                if reader.move_to().word(&[words::DO_ON]).is_some() {
                     if let Some(block) = Block::read(reader)? {
                         if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
                             Err(E::MissedSemicolon)?
@@ -171,7 +171,7 @@ impl Reading<Optional> for Optional {
                     if reader.until().char(&[&chars::SEMICOLON]).is_some() {
                         reader.move_to().next_and_extend();
                         let mut token = reader.token()?;
-                        if token.bound.contains().word(&[&words::DO_ON]) {
+                        if token.bound.contains().word(&[words::DO_ON]) {
                             Err(E::NestedOptionalAction)?
                         }
                         let action = if let Some(reference) = Reference::read(&mut token.bound)? {

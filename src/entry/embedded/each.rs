@@ -66,7 +66,7 @@ pub struct Each {
 impl Reading<Each> for Each {
     fn read(reader: &mut Reader) -> Result<Option<Each>, E> {
         let close = reader.open_token();
-        if reader.move_to().word(&[&words::EACH]).is_some() {
+        if reader.move_to().word(&[words::EACH]).is_some() {
             if reader
                 .group()
                 .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)

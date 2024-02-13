@@ -22,10 +22,7 @@ impl Reading<VariableComparing> for VariableComparing {
         reader.state().set();
         let close = reader.open_token();
         if let Some(name) = VariableName::read(reader)? {
-            if let Some(word) = reader
-                .move_to()
-                .word(&[&words::CMP_TRUE, &words::CMP_FALSE])
-            {
+            if let Some(word) = reader.move_to().word(&[words::CMP_TRUE, words::CMP_FALSE]) {
                 if reader.rest().trim().is_empty() {
                     Err(E::NoValueAfterComparing)
                 } else {

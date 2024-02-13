@@ -64,7 +64,7 @@ impl Reading<Function> for Function {
                     None
                 });
             let mut token = reader.token()?;
-            if token.bound.contains().word(&[&words::DO_ON]) {
+            if token.bound.contains().word(&[words::DO_ON]) {
                 let _ = reader.state().restore();
                 return Ok(None);
             }

@@ -232,7 +232,7 @@ impl Reading<If> for If {
         let mut elements: Vec<Element> = vec![];
         let close = reader.open_token();
         while !reader.rest().trim().is_empty() {
-            if reader.move_to().word(&[&words::IF]).is_some() {
+            if reader.move_to().word(&[words::IF]).is_some() {
                 if reader.until().char(&[&chars::OPEN_SQ_BRACKET]).is_some() {
                     let proviso: Proviso = If::proviso(&mut reader.token()?.bound, true)?;
                     if let Some(block) = Block::read(reader)? {
@@ -254,7 +254,7 @@ impl Reading<If> for If {
                     token: close(reader),
                 }));
             }
-            if reader.move_to().word(&[&words::ELSE]).is_some() {
+            if reader.move_to().word(&[words::ELSE]).is_some() {
                 if let Some(block) = Block::read(reader)? {
                     elements.push(Element::Else(block));
                     if reader.move_to().char(&[&chars::SEMICOLON]).is_some() {
@@ -280,10 +280,7 @@ impl If {
     pub fn inner(reader: &mut Reader) -> Result<Proviso, E> {
         let close = reader.open_token();
         if let Some(variable_name) = VariableName::read(reader)? {
-            if let Some(word) = reader
-                .move_to()
-                .word(&[&words::CMP_TRUE, &words::CMP_FALSE])
-            {
+            if let Some(word) = reader.move_to().word(&[words::CMP_TRUE, words::CMP_FALSE]) {
                 if let Some(value_string) = PatternString::read(reader)? {
                     return Ok(Proviso::Variable(
                         variable_name,
@@ -330,7 +327,7 @@ impl If {
                     Err(E::NotClosedConditionGroup)?
                 }
             }
-            if let Some((_, combination)) = reader.until().word(&[&words::AND, &words::OR]) {
+            if let Some((_, combination)) = reader.until().word(&[words::AND, words::OR]) {
                 let mut token = reader.token()?;
                 if !reader.move_to().whitespace() {
                     Err(E::NoWhitespaceAfterCondition)?;
