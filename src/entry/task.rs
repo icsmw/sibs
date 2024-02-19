@@ -148,21 +148,19 @@ impl Operator for Task {
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
-            let block = self.block.as_ref().ok_or_else(|| {
-                cx.term.err(format!(
-                    "Task \"{}\" doesn't have actions block.\n",
-                    self.name.value,
-                ));
-                operator::E::NoTaskBlock(self.name.value.to_string())
-            })?;
-            cx.term.with_title("TASK", &self.name.value);
+            let job = cx.tracker.create_job(self.get_name(), None).await?;
+            let block = self
+                .block
+                .as_ref()
+                .ok_or_else(|| operator::E::NoTaskBlock(self.name.value.to_string()))?;
             if self.declarations.len() != args.len() {
                 Err(operator::E::DismatchTaskArgumentsCount)?;
             }
             for (i, declaration) in self.declarations.iter().enumerate() {
                 declaration.declare(args[i].to_owned(), cx).await?;
             }
-            block.process(owner, components, args, cx).await
+            job.result(block.process(owner, components, args, cx).await)
+                .await
         })
     }
 }

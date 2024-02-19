@@ -6,6 +6,7 @@ use crate::{
         operator::{self, Operator, OperatorPinnedResult},
         spawner,
         term::{self, Term},
+        tracker::Logs,
     },
     reader::{chars, E},
 };
@@ -53,25 +54,26 @@ impl Operator for Command {
     ) -> OperatorPinnedResult {
         Box::pin(async {
             let cwd = cx.cwd.as_ref().ok_or(operator::E::NoCurrentWorkingFolder)?;
-            let task = cx
+            let job = cx
                 .tracker
-                .start(
+                .create_job(
                     &format!("{}: {}", cx.scenario.to_relative_path(cwd), self.command),
                     None,
                 )
                 .await?;
-            match spawner::spawn(&self.command, cwd, &task).await {
+            match spawner::spawn(&self.command, cwd, &job).await {
                 Ok(result) => {
                     if result.status.success() {
-                        task.success("no errros").await;
+                        job.success().await;
                         Ok(Some(AnyValue::new(())))
                     } else {
-                        task.fail("done with errors").await;
+                        job.fail().await;
                         Err(operator::E::SpawnedProcessExitWithError)
                     }
                 }
                 Err(e) => {
-                    task.fail(&e.to_string()).await;
+                    job.err(&e.to_string()).await;
+                    job.fail().await;
                     Err(e)?
                 }
             }

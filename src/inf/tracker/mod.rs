@@ -1,14 +1,15 @@
 mod error;
 mod logger;
+mod progress;
 mod task;
 
 use async_channel::{bounded, unbounded, Receiver, Sender};
 use console::style;
-use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
-use std::{collections::HashMap, time::Instant};
 
 pub use error::E;
-pub use logger::Logger;
+use logger::Storage;
+pub use logger::{Logger, Logs};
+use progress::Progress;
 pub use task::Task;
 
 #[derive(Clone, Debug)]
@@ -36,18 +37,13 @@ pub enum Tick {
     Progress(usize, Option<u64>),
     Message(usize, String),
     Log(String, logger::Level, String),
-    Finished(usize, OperationResult, String),
+    Finished(usize, OperationResult),
     Shutdown(Sender<()>),
 }
 
 #[derive(Clone, Debug)]
 pub struct Tracker {
     tx: Sender<Tick>,
-}
-
-fn order_offset(num: usize, total: usize) -> String {
-    " ".repeat(format!("[{total}/{total}]").len() - format!("[{num}/{total}]").len())
-        .to_string()
 }
 
 impl Tracker {
@@ -57,11 +53,11 @@ impl Tracker {
         Self { tx }
     }
 
-    pub fn get_logger(&self, owner: String) -> Logger {
+    pub fn create_logger(&self, owner: String) -> Logger {
         Logger::new(self, owner)
     }
 
-    pub async fn start(&self, job: &str, max: Option<u64>) -> Result<Task, E> {
+    pub async fn create_job(&self, job: &str, max: Option<u64>) -> Result<Task, E> {
         let (tx_response, rx_response) = bounded(1);
         self.tx
             .send(Tick::Started(job.to_string(), max, tx_response))
@@ -71,7 +67,7 @@ impl Tracker {
             .recv()
             .await
             .map_err(|e| E::ChannelError(e.to_string()))?;
-        Ok(Task::new(self, id))
+        Ok(Task::new(self, id, job))
     }
 
     async fn send<T>(sender: async_channel::Send<'_, T>) {
@@ -88,21 +84,19 @@ impl Tracker {
         Self::send(self.tx.send(Tick::Message(sequence, log.to_string()))).await;
     }
 
-    pub async fn success(&self, sequence: usize, msg: &str) {
-        Self::send(self.tx.send(Tick::Finished(
-            sequence,
-            OperationResult::Success,
-            msg.to_string(),
-        )))
+    pub async fn success(&self, sequence: usize) {
+        Self::send(
+            self.tx
+                .send(Tick::Finished(sequence, OperationResult::Success)),
+        )
         .await
     }
 
-    pub async fn fail(&self, sequence: usize, msg: &str) {
-        Self::send(self.tx.send(Tick::Finished(
-            sequence,
-            OperationResult::Failed,
-            msg.to_string(),
-        )))
+    pub async fn fail(&self, sequence: usize) {
+        Self::send(
+            self.tx
+                .send(Tick::Finished(sequence, OperationResult::Failed)),
+        )
         .await;
     }
 
@@ -119,97 +113,52 @@ impl Tracker {
     }
 
     async fn run(rx: Receiver<Tick>) -> Result<(), E> {
-        let spinner_style = ProgressStyle::with_template("{spinner} {prefix:.bold.dim} {wide_msg}")
-            .map_err(|e| E::ProgressBarError(e.to_string()))?
-            .tick_chars("▂▃▅▆▇▆▅▃▂ ");
-        async move {
-            let mut sequence: usize = 0;
-            let max = u64::MAX;
-            let mut bars: HashMap<usize, (ProgressBar, Instant, String, Option<OperationResult>)> =
-                HashMap::new();
-            let mp = MultiProgress::new();
-            let mut output: Vec<String> = vec![];
-            while let Ok(tick) = rx.recv().await {
+        let mut storage: Storage = Storage::new();
+        let mut progress: Progress = Progress::new();
+        let err = loop {
+            if let Ok(tick) = rx.recv().await {
                 match tick {
-                    Tick::Started(job, len, tx_response) => {
-                        sequence += 1;
-                        let bar = mp.add(ProgressBar::new(if let Some(len) = len {
-                            len
-                        } else {
-                            max
-                        }));
-                        bar.set_style(spinner_style.clone());
-                        bars.insert(sequence, (bar, Instant::now(), job, None));
-                        bars.iter_mut().for_each(|(k, (bar, _, job, result))| {
-                            let msg = if let Some(result) = result {
-                                format!(
-                                    "[{k}/{sequence}]{}[{result}][{job}]",
-                                    order_offset(*k, sequence)
-                                )
-                            } else {
-                                format!(
-                                    "[{k}/{sequence}]{}[....][{job}]",
-                                    order_offset(*k, sequence)
-                                )
-                            };
-                            output.push(msg.clone());
-                            bar.set_prefix(msg);
-                        });
-                        if let Err(e) = tx_response.send(sequence).await {
-                            let _ = mp.println(format!("Fail to send response: {e}"));
+                    Tick::Started(alias, len, tx_response) => match progress.create(&alias, len) {
+                        Ok(sequence) => {
+                            storage.add(alias.as_ref(), "started", logger::Level::Info);
+                            storage.create_bound(sequence, alias);
+                            if let Err(err) = tx_response.send(sequence).await {
+                                break Some(format!("Fail to send response: {err}"));
+                            }
                         }
-                    }
-                    Tick::Message(sequence, log) => {
-                        if let Some((bar, _, _, _)) = bars.get(&sequence) {
-                            output.push(log.clone());
-                            bar.set_message(log);
+                        Err(err) => {
+                            break Some(format!("Fail to send response: {err}"));
                         }
+                    },
+                    Tick::Message(sequence, msg) => {
+                        progress.set_message(sequence, &msg);
+                        storage.add_bound(&sequence, msg, logger::Level::Info);
                     }
-                    Tick::Log(owner, level, msg) => {
-                        let msg = format!("[{owner}]{level}:{msg}");
-                        println!("{msg}");
-                        output.push(msg);
+                    Tick::Log(alias, level, msg) => {
+                        storage.add(alias, msg, level);
                     }
                     Tick::Progress(sequence, pos) => {
-                        if let Some((bar, _, _, _)) = bars.get(&sequence) {
-                            if let Some(pos) = pos {
-                                bar.set_position(pos);
-                            } else {
-                                bar.inc(1);
-                            }
-                        }
+                        progress.inc(sequence, pos);
                     }
-                    Tick::Finished(seq, result, msg) => {
-                        if let Some((bar, instant, job, res)) = bars.get_mut(&seq) {
-                            bar.set_prefix(format!(
-                                "[{seq}/{sequence}]{}[{result}][{job}]",
-                                order_offset(seq, sequence)
-                            ));
-                            let msg = format!("Done in {}s. {msg}", instant.elapsed().as_secs());
-                            output.push(msg.clone());
-                            bar.finish_with_message(msg);
-                            res.replace(result);
-                        }
+                    Tick::Finished(sequence, result) => {
+                        progress.finish(sequence, result.clone());
+                        storage.finish_bound(&sequence);
                     }
                     Tick::Shutdown(tx_response) => {
-                        bars.iter_mut().for_each(|(_, (bar, instant, _, _))| {
-                            if !bar.is_finished() {
-                                bar.finish_with_message(format!(
-                                    "Done in {}s.",
-                                    instant.elapsed().as_secs()
-                                ));
-                            }
-                        });
-                        bars.clear();
-                        if let Err(e) = tx_response.send(()).await {
-                            let _ = mp.println(format!("Fail to send response: {e}"));
+                        progress.shutdown();
+                        if let Err(err) = tx_response.send(()).await {
+                            break Some(format!("Fail to send response: {err}"));
                         }
-                        break;
+                        break None;
                     }
                 }
+            } else {
+                break None;
             }
+        };
+        if let Some(err) = err {
+            panic!("{}", err);
         }
-        .await;
         Ok(())
     }
 

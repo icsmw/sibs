@@ -5,7 +5,7 @@ use crate::{
         any::AnyValue,
         scenario::Scenario,
         term::Term,
-        tracker::{Logger, Tracker},
+        tracker::{Logger, Logs, Tracker},
     },
 };
 pub use error::E;
@@ -32,7 +32,7 @@ impl Context {
     }
 
     pub fn new(term: Term, tracker: Tracker, scenario: Scenario) -> Result<Self, E> {
-        let logger = tracker.get_logger(String::from("Context"));
+        let logger = tracker.create_logger(String::from("Context"));
         Self::register_functions(Context {
             cwd: None,
             scenario,
@@ -45,7 +45,7 @@ impl Context {
     }
     pub fn from_filename(filename: &Path) -> Result<Self, E> {
         let tracker = Tracker::new();
-        let logger = tracker.get_logger(String::from("Context"));
+        let logger = tracker.create_logger(String::from("Context"));
         Self::register_functions(Context {
             cwd: Some(
                 filename
@@ -64,7 +64,7 @@ impl Context {
 
     pub fn unbound() -> Result<Self, E> {
         let tracker = Tracker::new();
-        let logger = tracker.get_logger(String::from("Context"));
+        let logger = tracker.create_logger(String::from("Context"));
         Self::register_functions(Context {
             cwd: Some(PathBuf::new()),
             scenario: Scenario::dummy(),
@@ -76,9 +76,13 @@ impl Context {
         })
     }
 
-    pub fn set_cwd(&mut self, cwd: Option<PathBuf>) -> Result<(), E> {
+    pub async fn set_cwd(&mut self, cwd: Option<PathBuf>) -> Result<(), E> {
         if let Some(cwd) = cwd.as_ref() {
-            self.cwd = Some(self.scenario.to_abs_path(cwd)?);
+            let cwd = self.scenario.to_abs_path(cwd)?;
+            self.logger
+                .log(format!("cwd: {}", cwd.to_string_lossy()))
+                .await;
+            self.cwd = Some(cwd);
         } else {
             self.cwd = None;
         }
@@ -88,6 +92,7 @@ impl Context {
     pub fn add_fn(&mut self, name: String, func: ExecutorFn) -> Result<(), E> {
         if let Entry::Vacant(e) = self.executors.entry(name.clone()) {
             e.insert(func);
+
             Ok(())
         } else {
             Err(E::FunctionAlreadyExists(name))

@@ -1,7 +1,7 @@
 use crate::{
     entry::{Argument, Function},
     executors::{Executor, ExecutorPinnedResult, E},
-    inf::{any::AnyValue, context::Context, operator::Operator},
+    inf::{any::AnyValue, context::Context, operator::Operator, tracker::Logs},
 };
 use thiserror::Error;
 
@@ -36,7 +36,7 @@ impl Executor for Os {
             if function.name.trim() != NAME {
                 return Ok(None);
             }
-            let logger = cx.tracker.get_logger(format!("@{NAME}"));
+            let logger = cx.tracker.create_logger(format!("@{NAME}"));
             let arg = function
                 .args
                 .as_ref()

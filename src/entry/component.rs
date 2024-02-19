@@ -23,6 +23,9 @@ impl Component {
     pub fn get_task(&self, name: &str) -> Option<&Task> {
         self.tasks.iter().find(|t| t.get_name() == name)
     }
+    pub fn get_name(&self) -> &str {
+        &self.name.value
+    }
 }
 
 impl Reading<Component> for Component {
@@ -169,9 +172,10 @@ impl Operator for Component {
                 ));
                 operator::E::TaskNotExists( task.to_owned(),self.name.to_string())
             })?;
-            cx.term.with_title("COMPONENT", &self.name.to_string());
-            cx.set_cwd(self.cwd.clone())?;
-            task.process(owner, components, &args[1..], cx).await
+            let job = cx.tracker.create_job(self.get_name(), None).await?;
+            cx.set_cwd(self.cwd.clone()).await?;
+            job.result(task.process(owner, components, &args[1..], cx).await)
+                .await
         })
     }
 }
