@@ -1,5 +1,10 @@
-use crate::inf::tracker::Tracker;
-use std::{collections::HashMap, fmt, time::Instant};
+use crate::inf::tracker::{Configuration, Output, Tracker};
+use console::Style;
+use std::{
+    collections::HashMap,
+    fmt,
+    time::{Instant, SystemTime, UNIX_EPOCH},
+};
 
 #[derive(Clone, Debug)]
 pub enum Level {
@@ -15,10 +20,10 @@ impl fmt::Display for Level {
             f,
             "{}",
             match self {
-                Self::Info => "",
-                Self::Warn => "[WARNING]",
-                Self::Err => "[ERROR]",
-                Self::Verb => "[VERBOSE]",
+                Self::Info => "INFO",
+                Self::Warn => "WARNING",
+                Self::Err => "ERROR",
+                Self::Verb => "VERBOSE",
             }
         )
     }
@@ -97,16 +102,58 @@ pub struct LogMessage {
     time: u128,
 }
 
+impl LogMessage {
+    pub fn to_ascii_string(&self, since: u128) -> String {
+        let level = match self.level {
+            Level::Err => Style::new().red().bold().apply_to(self.level.to_string()),
+            Level::Warn => Style::new()
+                .yellow()
+                .bold()
+                .apply_to(self.level.to_string()),
+            Level::Info => Style::new().white().bold().apply_to(self.level.to_string()),
+            Level::Verb => Style::new()
+                .bright()
+                .bold()
+                .apply_to(self.level.to_string()),
+        };
+        format!(
+            "[{}][{level}][{}]: {}",
+            self.time - since,
+            self.alias,
+            self.msg
+        )
+    }
+}
+
+fn timestamp() -> u128 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis()
+}
+
 pub struct Storage {
     messages: Vec<LogMessage>,
     aliases: HashMap<usize, (String, Instant)>,
+    since: u128,
+    cfg: Configuration,
 }
 
 impl Storage {
-    pub fn new() -> Self {
+    fn print(&self) {
+        if let (Some(msg), true) = (
+            self.messages.last(),
+            matches!(self.cfg.output, Output::Logs),
+        ) {
+            println!("{}", msg.to_ascii_string(self.since));
+        }
+    }
+    pub fn new(cfg: Configuration) -> Self {
         Self {
             messages: vec![],
             aliases: HashMap::new(),
+            cfg,
+            since: timestamp(),
         }
     }
     pub fn create_bound(&mut self, sequence: usize, alias: String) {
@@ -120,8 +167,9 @@ impl Storage {
             alias: alias.to_string(),
             msg: msg.to_string(),
             level,
-            time: Instant::now().elapsed().as_millis(),
+            time: timestamp(),
         });
+        self.print();
     }
     pub fn add_bound<'a, T>(&mut self, sequence: &usize, msg: T, level: Level)
     where
@@ -132,8 +180,9 @@ impl Storage {
                 alias: alias.to_string(),
                 msg: msg.to_string(),
                 level,
-                time: Instant::now().elapsed().as_millis(),
+                time: timestamp(),
             });
+            self.print();
         }
     }
     pub fn finish_bound(&mut self, sequence: &usize) {
@@ -142,8 +191,9 @@ impl Storage {
                 alias: alias.to_string(),
                 msg: format!("finished in {}ms", instant.elapsed().as_millis()),
                 level: Level::Info,
-                time: Instant::now().elapsed().as_millis(),
+                time: timestamp(),
             });
+            self.print();
         }
     }
 }

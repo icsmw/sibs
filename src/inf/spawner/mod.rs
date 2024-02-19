@@ -11,8 +11,6 @@ pub use error::E;
 
 #[derive(Clone, Debug)]
 pub struct SpawnResult {
-    pub stdout: Vec<String>,
-    pub stderr: Vec<String>,
     pub status: ExitStatus,
     pub job: String,
 }
@@ -34,9 +32,7 @@ pub async fn spawn(command: &str, cwd: &PathBuf, task: &Task) -> Result<SpawnRes
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()?;
-    let mut stdout_lines: Vec<String> = vec![];
     let drain_stdout = {
-        let storage = &mut stdout_lines;
         let stdout = child.stdout.take().unwrap();
         async move {
             let mut buf = BufReader::new(stdout);
@@ -46,9 +42,8 @@ pub async fn spawn(command: &str, cwd: &PathBuf, task: &Task) -> Result<SpawnRes
                 if read_lines == 0 {
                     break;
                 } else {
-                    task.msg(&line).await;
+                    task.msg(line.trim_end()).await;
                     task.progress(None).await;
-                    storage.push(line);
                 }
             }
             future::pending::<()>().await;
@@ -56,9 +51,7 @@ pub async fn spawn(command: &str, cwd: &PathBuf, task: &Task) -> Result<SpawnRes
         }
     };
 
-    let mut stderr_lines: Vec<String> = vec![];
     let drain_stderr = {
-        let storage = &mut stderr_lines;
         let stderr = child.stderr.take().unwrap();
         async move {
             let mut buf = BufReader::new(stderr);
@@ -68,10 +61,8 @@ pub async fn spawn(command: &str, cwd: &PathBuf, task: &Task) -> Result<SpawnRes
                 if read_lines == 0 {
                     break;
                 } else {
+                    task.msg(line.trim_end()).await;
                     task.progress(None).await;
-                    if !line.trim().is_empty() {
-                        storage.push(line);
-                    }
                 }
             }
             future::pending::<()>().await;
@@ -90,8 +81,6 @@ pub async fn spawn(command: &str, cwd: &PathBuf, task: &Task) -> Result<SpawnRes
     };
     if let Some(status) = status {
         Ok(SpawnResult {
-            stdout: stdout_lines,
-            stderr: stderr_lines,
             status,
             job: cmd.to_owned(),
         })

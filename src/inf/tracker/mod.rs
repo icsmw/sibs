@@ -107,13 +107,12 @@ pub enum Tick {
 #[derive(Clone, Debug)]
 pub struct Tracker {
     tx: Sender<Tick>,
-    cfg: Configuration,
 }
 
 impl Tracker {
-    async fn run(rx: Receiver<Tick>) -> Result<(), E> {
-        let mut storage: Storage = Storage::new();
-        let mut progress: Progress = Progress::new();
+    async fn run(rx: Receiver<Tick>, cfg: Configuration) -> Result<(), E> {
+        let mut storage: Storage = Storage::new(cfg.clone());
+        let mut progress: Progress = Progress::new(cfg);
         loop {
             if let Ok(tick) = rx.recv().await {
                 match tick {
@@ -169,11 +168,8 @@ impl Tracker {
 
     pub fn new(cfg: Configuration) -> Self {
         let (tx, rx): (Sender<Tick>, Receiver<Tick>) = unbounded();
-        async_std::task::spawn(Tracker::run(rx));
-        Self {
-            tx,
-            cfg: Configuration::default(),
-        }
+        async_std::task::spawn(Tracker::run(rx, cfg));
+        Self { tx }
     }
 
     pub fn create_logger(&self, owner: String) -> Logger {
