@@ -18,30 +18,15 @@ pub struct Help {
 
 impl Argument<Help> for Help {
     fn read(args: &mut Vec<String>) -> Result<Option<Help>, E> {
-        if args.is_empty() {
-            return Ok(Some(Self {
-                component: None,
-            }));
-        }
-        for (i, arg) in args.iter().enumerate() {
-            if ARGS.contains(&arg.as_str()) {
-                if i <= 1 {
-                    let component = if i == 0 { None } else { Some(args[i - 1].clone()) };
-                    args.drain(0..=i);
-                    return Ok(Some(Self {
-                        component,
-                    }));
-                } else {
-                    return Err(E::InvalidHelpRequest);
-                }
-            }
-        }
-        Ok(None)
+        Self::find_prev_to_opt(args, &ARGS).map(|component| component.map(|component| Self {
+            component,
+        }))
     }
     fn desc() -> Description {
         Description { 
             key: ARGS.iter().map(|s|s.to_string()).collect::<Vec<String>>(),
-            desc: String::from("shows help. Global cx - shows available options and components. To get help for component use: component --help.")
+            desc: String::from("shows help. Global cx - shows available options and components. To get help for component use: component --help."),            pairs: vec![],
+
         }
     }
     fn action(&mut self, components: &[Component], cx: &mut Context) -> Result<(), E> {

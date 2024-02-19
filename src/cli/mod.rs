@@ -8,15 +8,44 @@ use crate::{
         operator::Operator,
         scenario::Scenario,
         term::{Display, Term},
-        tracker::Tracker,
+        tracker::{self, Tracker},
     },
     reader,
 };
 use args::Arguments;
 use error::E;
-use std::env::{self, current_dir};
+use std::{
+    env::{self, current_dir},
+    path::PathBuf,
+};
 
 use self::args::Argument;
+
+fn get_arguments() -> Result<(Vec<String>, Arguments), E> {
+    let mut income = env::args().collect::<Vec<String>>();
+    if !income.is_empty() {
+        income.remove(0);
+    }
+    let args = Arguments::new(&mut income)?;
+    Ok((income, args))
+}
+
+pub fn get_tracker_configuration() -> Result<tracker::Configuration, E> {
+    let (_, arguments) = get_arguments()?;
+    Ok(tracker::Configuration {
+        output: arguments
+            .get::<args::output::Output>()
+            .map(|arg| arg.output.clone())
+            .unwrap_or(tracker::Output::Progress),
+        log_file: arguments
+            .get::<args::log_file::LogFile>()
+            .map(|arg| PathBuf::from(arg.file.to_owned())),
+        trace: arguments
+            .get::<args::trace::Trace>()
+            .map(|arg| arg.state)
+            .unwrap_or(false),
+    })
+}
 
 pub async fn read(tracker: &Tracker) -> Result<Option<Context>, E> {
     fn run<T: Argument<T> + 'static>(
@@ -24,18 +53,12 @@ pub async fn read(tracker: &Tracker) -> Result<Option<Context>, E> {
         arguments: &mut Arguments,
         cx: &mut Context,
     ) -> Result<(), E> {
-        if let Some(arg) = arguments.get_mut::<T>() {
-            arg.action(components, cx)
-        } else {
-            Ok(())
-        }
-    }
-    let mut income = env::args().collect::<Vec<String>>();
-    if !income.is_empty() {
-        income.remove(0);
+        arguments
+            .get_mut::<T>()
+            .map_or(Ok(()), |arg| arg.action(components, cx))
     }
     let mut term = Term::new();
-    let mut defaults = Arguments::new(&mut income)?;
+    let (mut income, mut defaults) = get_arguments()?;
     if defaults.has::<args::version::Version>() {
         run::<args::version::Version>(&[], &mut defaults, &mut Context::unbound()?)?;
         if !income.is_empty() {

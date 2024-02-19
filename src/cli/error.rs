@@ -9,8 +9,10 @@ use thiserror::Error;
 pub enum E {
     #[error("--scenario requires a path to *.sibs file")]
     NoPathToScenarioFile,
-    #[error("--help (-h) can be used in global scope or in component context. Try --help to see all options.")]
-    InvalidHelpRequest,
+    #[error("Invalid request; expecting addition arguments after: {0}")]
+    InvalidRequestAfter(String),
+    #[error("Invalid request; expecting addition arguments before: {0}")]
+    InvalidRequestBefore(String),
     #[error("No any options/commands. Try --help to see all options.")]
     NoArguments,
     #[error("Component {0} does't exist")]
@@ -29,6 +31,12 @@ pub enum E {
     OperatorError(String),
     #[error("Error: {0}")]
     Other(String),
+}
+
+impl From<String> for E {
+    fn from(e: String) -> Self {
+        E::Other(e)
+    }
 }
 
 impl From<error::E> for E {

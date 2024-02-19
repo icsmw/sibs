@@ -5,7 +5,7 @@ use crate::{
         any::AnyValue,
         scenario::Scenario,
         term::Term,
-        tracker::{Logger, Logs, Tracker},
+        tracker::{self, Logger, Logs, Tracker},
     },
 };
 pub use error::E;
@@ -44,7 +44,7 @@ impl Context {
         })
     }
     pub fn from_filename(filename: &Path) -> Result<Self, E> {
-        let tracker = Tracker::new();
+        let tracker = Tracker::new(tracker::Configuration::default());
         let logger = tracker.create_logger(String::from("Context"));
         Self::register_functions(Context {
             cwd: Some(
@@ -63,7 +63,7 @@ impl Context {
     }
 
     pub fn unbound() -> Result<Self, E> {
-        let tracker = Tracker::new();
+        let tracker = Tracker::new(tracker::Configuration::default());
         let logger = tracker.create_logger(String::from("Context"));
         Self::register_functions(Context {
             cwd: Some(PathBuf::new()),

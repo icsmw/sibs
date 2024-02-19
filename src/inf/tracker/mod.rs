@@ -3,6 +3,11 @@ mod logger;
 mod progress;
 mod task;
 
+use std::{
+    fmt::{self, format},
+    path::PathBuf,
+};
+
 use async_channel::{bounded, unbounded, Receiver, Sender};
 use console::style;
 
@@ -13,13 +18,71 @@ use progress::Progress;
 pub use task::Task;
 
 #[derive(Clone, Debug)]
+pub enum Output {
+    Progress,
+    Logs,
+    None,
+}
+
+impl TryFrom<String> for Output {
+    type Error = String;
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        if value == Output::Logs.to_string() {
+            Ok(Output::Logs)
+        } else if value == Output::Progress.to_string() {
+            Ok(Output::Progress)
+        } else if value == Output::None.to_string() {
+            Ok(Output::None)
+        } else {
+            Err(format!(
+                "Available options: {}",
+                [Output::Logs, Output::Progress, Output::None]
+                    .map(|v| v.to_string())
+                    .join(", ")
+            ))
+        }
+    }
+}
+
+impl fmt::Display for Output {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Output::Progress => "progress",
+                Output::Logs => "logs",
+                Output::None => "none",
+            }
+        )
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct Configuration {
+    pub log_file: Option<PathBuf>,
+    pub output: Output,
+    pub trace: bool,
+}
+
+impl Default for Configuration {
+    fn default() -> Self {
+        Configuration {
+            log_file: None,
+            output: Output::Progress,
+            trace: false,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub enum OperationResult {
     Success,
     Failed,
 }
 
-impl std::fmt::Display for OperationResult {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Display for OperationResult {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
             "{}",
@@ -44,13 +107,73 @@ pub enum Tick {
 #[derive(Clone, Debug)]
 pub struct Tracker {
     tx: Sender<Tick>,
+    cfg: Configuration,
 }
 
 impl Tracker {
-    pub fn new() -> Self {
+    async fn run(rx: Receiver<Tick>) -> Result<(), E> {
+        let mut storage: Storage = Storage::new();
+        let mut progress: Progress = Progress::new();
+        loop {
+            if let Ok(tick) = rx.recv().await {
+                match tick {
+                    Tick::Started(alias, len, tx_response) => match progress.create(&alias, len) {
+                        Ok(sequence) => {
+                            storage.add(alias.as_ref(), "started", logger::Level::Info);
+                            storage.create_bound(sequence, alias);
+                            if let Err(err) = tx_response.send(sequence).await {
+                                break Err(E::ChannelError(err.to_string()));
+                            }
+                        }
+                        Err(err) => {
+                            break Err(err);
+                        }
+                    },
+                    Tick::Message(sequence, msg) => {
+                        progress.set_message(sequence, &msg);
+                        storage.add_bound(&sequence, msg, logger::Level::Info);
+                    }
+                    Tick::Log(alias, level, msg) => {
+                        storage.add(alias, msg, level);
+                    }
+                    Tick::Progress(sequence, pos) => {
+                        progress.inc(sequence, pos);
+                    }
+                    Tick::Finished(sequence, result) => {
+                        progress.finish(sequence, result.clone());
+                        storage.finish_bound(&sequence);
+                    }
+                    Tick::Shutdown(tx_response) => {
+                        progress.shutdown();
+                        if let Err(err) = tx_response.send(()).await {
+                            break Err(E::ChannelError(err.to_string()));
+                        }
+                        break Ok(());
+                    }
+                }
+            } else {
+                break Ok(());
+            }
+        }
+    }
+
+    async fn log(&self, owner: String, level: logger::Level, msg: String) {
+        Self::send(self.tx.send(Tick::Log(owner, level, msg))).await
+    }
+
+    async fn send<T>(sender: async_channel::Send<'_, T>) {
+        if let Err(e) = sender.await {
+            panic!("Fail to communicate with tracker: {e}");
+        }
+    }
+
+    pub fn new(cfg: Configuration) -> Self {
         let (tx, rx): (Sender<Tick>, Receiver<Tick>) = unbounded();
         async_std::task::spawn(Tracker::run(rx));
-        Self { tx }
+        Self {
+            tx,
+            cfg: Configuration::default(),
+        }
     }
 
     pub fn create_logger(&self, owner: String) -> Logger {
@@ -68,12 +191,6 @@ impl Tracker {
             .await
             .map_err(|e| E::ChannelError(e.to_string()))?;
         Ok(Task::new(self, id, job))
-    }
-
-    async fn send<T>(sender: async_channel::Send<'_, T>) {
-        if let Err(e) = sender.await {
-            Self::err(e);
-        }
     }
 
     pub async fn progress(&self, sequence: usize, pos: Option<u64>) {
@@ -110,63 +227,5 @@ impl Tracker {
             .recv()
             .await
             .map_err(|e| E::ChannelError(e.to_string()))
-    }
-
-    async fn run(rx: Receiver<Tick>) -> Result<(), E> {
-        let mut storage: Storage = Storage::new();
-        let mut progress: Progress = Progress::new();
-        let err = loop {
-            if let Ok(tick) = rx.recv().await {
-                match tick {
-                    Tick::Started(alias, len, tx_response) => match progress.create(&alias, len) {
-                        Ok(sequence) => {
-                            storage.add(alias.as_ref(), "started", logger::Level::Info);
-                            storage.create_bound(sequence, alias);
-                            if let Err(err) = tx_response.send(sequence).await {
-                                break Some(format!("Fail to send response: {err}"));
-                            }
-                        }
-                        Err(err) => {
-                            break Some(format!("Fail to send response: {err}"));
-                        }
-                    },
-                    Tick::Message(sequence, msg) => {
-                        progress.set_message(sequence, &msg);
-                        storage.add_bound(&sequence, msg, logger::Level::Info);
-                    }
-                    Tick::Log(alias, level, msg) => {
-                        storage.add(alias, msg, level);
-                    }
-                    Tick::Progress(sequence, pos) => {
-                        progress.inc(sequence, pos);
-                    }
-                    Tick::Finished(sequence, result) => {
-                        progress.finish(sequence, result.clone());
-                        storage.finish_bound(&sequence);
-                    }
-                    Tick::Shutdown(tx_response) => {
-                        progress.shutdown();
-                        if let Err(err) = tx_response.send(()).await {
-                            break Some(format!("Fail to send response: {err}"));
-                        }
-                        break None;
-                    }
-                }
-            } else {
-                break None;
-            }
-        };
-        if let Some(err) = err {
-            panic!("{}", err);
-        }
-        Ok(())
-    }
-
-    async fn log(&self, owner: String, level: logger::Level, msg: String) {
-        Self::send(self.tx.send(Tick::Log(owner, level, msg))).await
-    }
-
-    fn err<E: std::fmt::Display>(e: E) {
-        eprintln!("Fail to communicate with tracker: {e}");
     }
 }

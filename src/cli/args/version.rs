@@ -31,6 +31,7 @@ impl Argument<Version> for Version {
         Description {
             key: ARGS.iter().map(|s| s.to_string()).collect::<Vec<String>>(),
             desc: String::from("show version of sibs"),
+            pairs: vec![],
         }
     }
     fn action(&mut self, _components: &[Component], _context: &mut Context) -> Result<(), E> {
