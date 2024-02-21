@@ -7,6 +7,7 @@ use crate::{
         term::Term,
         tracker::{self, Logger, Logs, Tracker},
     },
+    reader::map::Map,
 };
 pub use error::E;
 use std::{
@@ -20,6 +21,7 @@ pub struct Context {
     pub term: Term,
     pub tracker: Tracker,
     pub scenario: Scenario,
+    pub map: Map,
     vars: HashMap<String, AnyValue>,
     executors: HashMap<String, ExecutorFn>,
     logger: Logger,
@@ -38,6 +40,7 @@ impl Context {
             scenario,
             tracker,
             term,
+            map: Map::new(String::new()),
             vars: HashMap::new(),
             executors: HashMap::new(),
             logger,
@@ -55,6 +58,7 @@ impl Context {
             ),
             scenario: Scenario::from(filename)?,
             tracker,
+            map: Map::new(String::new()),
             term: Term::new(),
             vars: HashMap::new(),
             executors: HashMap::new(),
@@ -69,11 +73,16 @@ impl Context {
             cwd: Some(PathBuf::new()),
             scenario: Scenario::dummy(),
             tracker,
+            map: Map::new(String::new()),
             term: Term::new(),
             vars: HashMap::new(),
             executors: HashMap::new(),
             logger,
         })
+    }
+
+    pub fn set_map(&mut self, map: Map) {
+        self.map = map;
     }
 
     pub async fn set_cwd(&mut self, cwd: Option<PathBuf>) -> Result<(), E> {

@@ -381,8 +381,7 @@ mod reading {
             .unwrap()
             .join("./src/tests/reading/full/build.sibs");
         let mut cx = Context::from_filename(&target)?;
-        let components = read_file(&mut cx).await?;
-        assert_eq!(components.len(), 9);
+        assert_eq!(read_file(&mut cx).await?.len(), 9);
         Ok(())
     }
 }

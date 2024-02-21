@@ -154,6 +154,7 @@ impl Operator for Task {
                 .as_ref()
                 .ok_or_else(|| operator::E::NoTaskBlock(self.name.value.to_string()))?;
             if self.declarations.len() != args.len() {
+                cx.map.print_until(&self.name.token)?;
                 Err(operator::E::DismatchTaskArgumentsCount)?;
             }
             for (i, declaration) in self.declarations.iter().enumerate() {

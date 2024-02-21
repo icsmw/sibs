@@ -1,5 +1,6 @@
 pub mod chars;
 pub mod error;
+pub mod map;
 #[cfg(test)]
 pub mod tests;
 pub mod words;
@@ -10,9 +11,8 @@ use crate::{
     inf::context::Context,
 };
 pub use error::E;
-use regex::Regex;
+use map::{Fragment, Map};
 use std::{
-    collections::HashMap,
     fs,
     future::Future,
     path::PathBuf,
@@ -22,86 +22,6 @@ use std::{
 
 pub trait Reading<T> {
     fn read(reader: &mut Reader) -> Result<Option<T>, E>;
-}
-
-#[derive(Debug)]
-pub struct Fragment {
-    pub content: String,
-    pub lined: String,
-    pub from: usize,
-    pub len: usize,
-    pub to: usize,
-}
-
-impl Fragment {
-    pub fn new(content: String, from: usize, len: usize) -> Self {
-        let lined = Regex::new(r"[\n\r]\s*")
-            .expect("Regex [\\n\\r]\\s* should be constructed")
-            .replace_all(&content, "")
-            .to_string();
-        Fragment {
-            content,
-            lined,
-            from,
-            len,
-            to: from + len,
-        }
-    }
-}
-#[derive(Debug)]
-pub struct Map {
-    //          <id,    (from,  len  )>
-    map: HashMap<usize, (usize, usize)>,
-    content: String,
-    index: usize,
-}
-
-impl Map {
-    pub fn new() -> Self {
-        Self {
-            map: HashMap::new(),
-            content: String::new(),
-            index: 0,
-        }
-    }
-    pub fn last(&self) -> Option<(usize, (usize, usize))> {
-        if self.index > 0 {
-            let index = self.index - 1;
-            self.map.get(&index).map(|coors| (index, *coors))
-        } else {
-            None
-        }
-    }
-    fn add(&mut self, from: usize, len: usize) -> usize {
-        self.map.insert(self.index, (from, len));
-        self.index += 1;
-        self.index - 1
-    }
-    fn get_fragment(&self, token: &usize) -> Result<Fragment, E> {
-        let (from, len) = self.map.get(token).ok_or(E::TokenNotFound(*token))?;
-        if self.content.len() < from + len {
-            Err(E::TokenHasInvalidRange(
-                *token,
-                self.content.len(),
-                *from,
-                from + len,
-            ))?;
-        }
-        Ok(Fragment::new(
-            self.content[*from..(from + len)].to_string(),
-            *from,
-            *len,
-        ))
-    }
-    fn extend(&mut self) {
-        if self.index == 0 {
-            return;
-        }
-        let index = self.index - 1;
-        self.map.entry(index).and_modify(|(_from, len)| {
-            *len += 1;
-        });
-    }
 }
 
 #[derive(Debug)]
@@ -539,15 +459,13 @@ pub struct Reader {
 
 impl Reader {
     pub fn new(content: String) -> Self {
-        let mut map = Map::new();
-        map.content = content.clone();
         Self {
-            content,
+            content: content.clone(),
             pos: 0,
             chars: &[],
             fixed: None,
             _offset: 0,
-            _map: Rc::new(RefCell::new(map)),
+            _map: Rc::new(RefCell::new(Map::new(content))),
             _recent: 0,
         }
     }
@@ -668,6 +586,9 @@ impl Reader {
     pub fn get_fragment(&self, token: &usize) -> Result<Fragment, E> {
         self._map.borrow().get_fragment(token)
     }
+    pub fn get_map(&self) -> Map {
+        self._map.borrow().clone()
+    }
     #[cfg(test)]
     pub fn recent(&mut self) -> &str {
         if self.pos == 0 {
@@ -712,6 +633,7 @@ pub fn read_file<'a>(
         while let Some(component) = Component::read(&mut reader)? {
             components.push(component);
         }
+        cx.set_map(reader.get_map());
         Ok(components)
     })
 }
