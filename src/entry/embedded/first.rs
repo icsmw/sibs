@@ -65,7 +65,8 @@ mod reading {
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut reader = Reader::new(include_str!("../../tests/reading/first.sibs").to_string());
+        let mut reader =
+            Reader::unbound(include_str!("../../tests/reading/first.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = First::read(&mut reader)? {
             assert_eq!(
@@ -81,7 +82,8 @@ mod reading {
 
     #[test]
     fn tokens() -> Result<(), E> {
-        let mut reader = Reader::new(include_str!("../../tests/reading/first.sibs").to_string());
+        let mut reader =
+            Reader::unbound(include_str!("../../tests/reading/first.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = First::read(&mut reader)? {
             assert_eq!(
@@ -105,7 +107,7 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::new(sample.to_string());
+            let mut reader = Reader::unbound(sample.to_string());
             assert!(First::read(&mut reader).is_err());
             count += 1;
         }
@@ -128,7 +130,8 @@ mod processing {
     #[async_std::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
-        let mut reader = Reader::new(include_str!("../../tests/processing/first.sibs").to_string());
+        let mut reader =
+            Reader::unbound(include_str!("../../tests/processing/first.sibs").to_string());
         while let Some(task) = Task::read(&mut reader)? {
             let result = task
                 .process(None, &[], &[], &mut cx)
@@ -171,7 +174,7 @@ mod proptest {
     fn reading(first: First) -> Result<(), E> {
         async_io::block_on(async {
             let origin = format!("test [\n{first};\n];");
-            let mut reader = Reader::new(origin.clone());
+            let mut reader = Reader::unbound(origin.clone());
             while let Some(task) = Task::read(&mut reader)? {
                 assert_eq!(format!("{task};"), origin);
             }

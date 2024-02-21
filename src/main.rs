@@ -27,7 +27,7 @@ fn main() {
                 }
                 if let Err(err) = result {
                     eprintln!("{err}");
-                    cx.map.post_reports();
+                    cx.map.borrow().post_reports();
                     exit(1);
                 }
             }

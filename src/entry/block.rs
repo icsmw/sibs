@@ -244,7 +244,7 @@ mod reading {
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut reader = Reader::new(format!(
+        let mut reader = Reader::unbound(format!(
             "[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
             include_str!("../tests/reading/if.sibs"),
             include_str!("../tests/reading/variable_assignation.sibs"),
@@ -265,7 +265,7 @@ mod reading {
 
     #[test]
     fn tokens() -> Result<(), E> {
-        let mut reader = Reader::new(format!(
+        let mut reader = Reader::unbound(format!(
             "[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
             include_str!("../tests/reading/if.sibs"),
             include_str!("../tests/reading/variable_assignation.sibs"),
@@ -386,7 +386,7 @@ mod proptest {
     fn reading(block: Block) -> Result<(), E> {
         async_io::block_on(async {
             let origin = format!("test {block};");
-            let mut reader = Reader::new(origin.clone());
+            let mut reader = Reader::unbound(origin.clone());
             while let Some(task) = Task::read(&mut reader)? {
                 assert_eq!(format!("{task};"), origin);
             }

@@ -193,7 +193,7 @@ mod reading {
         let components = include_str!("../tests/reading/component.sibs").to_string();
         let components = components.split('\n').collect::<Vec<&str>>();
         let tasks = include_str!("../tests/reading/tasks.sibs");
-        let mut reader = Reader::new(
+        let mut reader = Reader::unbound(
             components
                 .iter()
                 .map(|c| format!("{c}\n{tasks}"))
@@ -218,7 +218,7 @@ mod reading {
         let components = include_str!("../tests/reading/component.sibs").to_string();
         let components = components.split('\n').collect::<Vec<&str>>();
         let tasks = include_str!("../tests/reading/tasks.sibs");
-        let mut reader = Reader::new(
+        let mut reader = Reader::unbound(
             components
                 .iter()
                 .map(|c| format!("{c}\n{tasks}"))
@@ -263,7 +263,7 @@ mod reading {
             .collect::<Vec<String>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::new(sample.to_string());
+            let mut reader = Reader::unbound(sample.to_string());
             assert!(Component::read(&mut reader).is_err());
             count += 1;
         }
@@ -294,7 +294,7 @@ mod processing {
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
         let mut reader =
-            Reader::new(include_str!("../tests/processing/component.sibs").to_string());
+            Reader::unbound(include_str!("../tests/processing/component.sibs").to_string());
         let mut cursor: usize = 0;
         let mut components: Vec<Component> = vec![];
         while let Some(component) = Component::read(&mut reader)? {

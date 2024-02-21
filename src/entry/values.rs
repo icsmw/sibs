@@ -217,7 +217,7 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::new(sample.to_string());
+            let mut reader = Reader::unbound(sample.to_string());
             assert!(Values::read(&mut reader)?.is_some());
             count += 1;
         }
@@ -231,7 +231,7 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::new(sample.to_string());
+            let mut reader = Reader::unbound(sample.to_string());
             let entity = Values::read(&mut reader)?.unwrap();
             assert_eq!(
                 tests::trim_carets(&entity.to_string()),
@@ -255,7 +255,7 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::new(sample.to_string());
+            let mut reader = Reader::unbound(sample.to_string());
             assert!(Values::read(&mut reader).is_err());
             count += 1;
         }
@@ -286,7 +286,8 @@ mod processing {
     #[async_std::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
-        let mut reader = Reader::new(include_str!("../tests/processing/values.sibs").to_string());
+        let mut reader =
+            Reader::unbound(include_str!("../tests/processing/values.sibs").to_string());
         while let Some(task) = Task::read(&mut reader)? {
             assert!(task.process(None, &[], &[], &mut cx).await?.is_some());
         }

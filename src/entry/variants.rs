@@ -77,7 +77,7 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::new(sample.to_string());
+            let mut reader = Reader::unbound(sample.to_string());
             assert!(Variants::read(&mut reader).is_ok());
             count += 1;
         }
@@ -91,7 +91,7 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::new(sample.to_string());
+            let mut reader = Reader::unbound(sample.to_string());
             assert!(Variants::read(&mut reader).is_err());
             count += 1;
         }

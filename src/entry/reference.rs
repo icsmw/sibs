@@ -210,7 +210,7 @@ mod reading {
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut reader = Reader::new(include_str!("../tests/reading/refs.sibs").to_string());
+        let mut reader = Reader::unbound(include_str!("../tests/reading/refs.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Reference::read(&mut reader)? {
             assert_eq!(
@@ -230,7 +230,7 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::new(sample.to_string());
+            let mut reader = Reader::unbound(sample.to_string());
             assert!(Reference::read(&mut reader).is_err());
             count += 1;
         }

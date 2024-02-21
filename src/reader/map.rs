@@ -1,7 +1,7 @@
 use crate::reader::E;
 use console::Style;
 use regex::Regex;
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 #[derive(Debug)]
 pub struct Fragment {
@@ -40,13 +40,19 @@ pub struct Map {
 }
 
 impl Map {
-    pub fn new(content: String) -> Self {
+    pub fn new_wrapped(content: &str) -> Rc<RefCell<Map>> {
+        Rc::new(RefCell::new(Map::new(content)))
+    }
+    pub fn new(content: &str) -> Self {
         Self {
             map: HashMap::new(),
             reports: vec![],
-            content,
+            content: content.to_owned(),
             index: 0,
         }
+    }
+    pub fn set_content(&mut self, content: &str) {
+        self.content = content.to_owned();
     }
     pub fn last(&self) -> Option<(usize, (usize, usize))> {
         if self.index > 0 {
@@ -90,58 +96,89 @@ impl Map {
     where
         T: 'a + ToOwned + ToString,
     {
-        let (from, _len) = self.map.get(token).ok_or(E::TokenNotFound(*token))?;
+        let (from, len) = self.map.get(token).ok_or(E::TokenNotFound(*token))?;
         let num_rate = self.content.split('\n').count().to_string().len() + 1;
-        let mut pos: usize = 0;
+        let mut cursor: usize = 0;
         let from_ln = &self.content[0..*from]
             .split('\n')
             .last()
             .map(|s| s.len())
             .unwrap_or(0);
-        let mut error_ln: usize = 0;
+        let error_range = *from..(from + len);
+        let error_lns = self
+            .content
+            .split('\n')
+            .enumerate()
+            .filter_map(|(i, ln)| {
+                let range = cursor..=cursor + ln.len();
+                cursor += ln.len() + 1;
+                if range.contains(from)
+                    || range.contains(&(from + len))
+                    || error_range.contains(range.start())
+                    || error_range.contains(range.end())
+                {
+                    Some(i)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<usize>>();
+        if error_lns.is_empty() {
+            self.reports.push(format!(
+                "{} {}\n",
+                Style::new().red().bold().apply_to("ERROR:"),
+                Style::new().white().apply_to(msg.to_string())
+            ));
+            return Ok(());
+        }
+        cursor = 0;
+        let error_first_ln = *error_lns.first().unwrap_or(&0);
+        let error_last_ln = *error_lns.last().unwrap_or(&0);
         let report = self
             .content
             .split('\n')
             .enumerate()
             .map(|(i, ln)| {
+                cursor += ln.len() + 1;
                 let filler = " ".repeat(num_rate - (i + 1).to_string().len());
-                let output = if *from > pos && *from < pos + ln.len() {
-                    error_ln = i;
-                    let offset = " "
-                        .repeat(*from_ln + filler.len() + (i + 1).to_string().len() + "| ".len());
-                    format!(
-                        "{}{filler}│ {ln}\n{offset}{}\n{offset}{} {}\n",
-                        i + 1,
-                        Style::new()
-                            .red()
-                            .bold()
-                            .apply_to("^".repeat(ln.len() - *from_ln - 1)),
-                        Style::new().red().bold().apply_to("ERROR:"),
-                        Style::new().white().apply_to(msg.to_string())
-                    )
+                if error_lns.contains(&i) {
+                    if error_lns.len() == 1 {
+                        let offset = " ".repeat(
+                            *from_ln + filler.len() + (i + 1).to_string().len() + "| ".len(),
+                        );
+                        format!(
+                            "{}{filler}│ {ln}\n{offset}{}\n{offset}{} {}\n",
+                            i + 1,
+                            Style::new()
+                                .red()
+                                .bold()
+                                .apply_to("^".repeat(ln.len() - *from_ln - 1)),
+                            Style::new().red().bold().apply_to("ERROR:"),
+                            Style::new().white().apply_to(msg.to_string())
+                        )
+                    } else if error_last_ln != i {
+                        format!(
+                            "{}{filler}{} {ln}",
+                            i + 1,
+                            Style::new().red().bold().apply_to(">")
+                        )
+                    } else {
+                        format!(
+                            "{}{filler}{} {ln}\n{} {}\n",
+                            i + 1,
+                            Style::new().red().bold().apply_to(">"),
+                            Style::new().red().bold().apply_to("ERROR:"),
+                            Style::new().white().apply_to(msg.to_string())
+                        )
+                    }
                 } else {
                     format!("{}{filler}│ {ln}", i + 1)
-                };
-                /*
-                else if *from < pos + ln.len() && from + len > pos + ln.len() {
-                                    let offset = " ".repeat(filler.len() + (i + 1).to_string().len() + "| ".len());
-                                    format!(
-                                        "{}{filler}│ {ln}\n{offset}{}",
-                                        i + 1,
-                                        Style::new()
-                                            .red()
-                                            .bold()
-                                            .apply_to("^".repeat(ln.len() - *from_ln - 1)),
-                                    )
-                                }
-                */
-                pos += ln.len();
-                output
+                }
             })
             .collect::<Vec<String>>();
         self.reports.push(
-            report[(error_ln - error_ln.min(REPORT_LN_AROUND))
-                ..report.len().min(error_ln + REPORT_LN_AROUND)]
+            report[(error_first_ln - error_first_ln.min(REPORT_LN_AROUND))
+                ..report.len().min(error_last_ln + REPORT_LN_AROUND)]
                 .join("\n"),
         );
         Ok(())

@@ -458,14 +458,27 @@ pub struct Reader {
 }
 
 impl Reader {
-    pub fn new(content: String) -> Self {
+    pub fn bound(content: String, cx: &Context) -> Self {
+        cx.map.borrow_mut().set_content(&content);
         Self {
-            content: content.clone(),
+            content,
             pos: 0,
             chars: &[],
             fixed: None,
             _offset: 0,
-            _map: Rc::new(RefCell::new(Map::new(content))),
+            _map: cx.get_map_ref(),
+            _recent: 0,
+        }
+    }
+    pub fn unbound(content: String) -> Self {
+        let map = Map::new_wrapped(&content);
+        Self {
+            content,
+            pos: 0,
+            chars: &[],
+            fixed: None,
+            _offset: 0,
+            _map: map,
             _recent: 0,
         }
     }
@@ -613,7 +626,7 @@ pub fn read_file<'a>(
                 cx.scenario.filename.to_string_lossy().to_string(),
             ))?
         }
-        let mut reader = Reader::new(fs::read_to_string(&cx.scenario.filename)?);
+        let mut reader = Reader::bound(fs::read_to_string(&cx.scenario.filename)?, cx);
         let mut imports: Vec<PathBuf> = vec![];
         while let Some(mut func) = Function::read(&mut reader)? {
             let handle = cx
@@ -636,7 +649,6 @@ pub fn read_file<'a>(
         while let Some(component) = Component::read(&mut reader)? {
             components.push(component);
         }
-        cx.set_map(reader.get_map());
         Ok(components)
     })
 }

@@ -196,7 +196,7 @@ mod reading {
     fn reading() -> Result<(), E> {
         let content = include_str!("../tests/reading/function.sibs").to_string();
         let len = content.split('\n').count();
-        let mut reader = Reader::new(content);
+        let mut reader = Reader::unbound(content);
         let mut count = 0;
         while let Some(entity) = Function::read(&mut reader)? {
             assert_eq!(
@@ -214,7 +214,7 @@ mod reading {
     fn tokens() -> Result<(), E> {
         let content = include_str!("../tests/reading/function.sibs").to_string();
         let len = content.split('\n').count();
-        let mut reader = Reader::new(content);
+        let mut reader = Reader::unbound(content);
         let mut count = 0;
         while let Some(entity) = Function::read(&mut reader)? {
             assert_eq!(
@@ -246,7 +246,7 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::new(sample.to_string());
+            let mut reader = Reader::unbound(sample.to_string());
             assert!(Function::read(&mut reader).is_err());
             count += 1;
         }
@@ -291,7 +291,7 @@ mod proptest {
     fn reading(func: Function) -> Result<(), E> {
         async_io::block_on(async {
             let origin = format!("test [\n{func};\n];");
-            let mut reader = Reader::new(origin.clone());
+            let mut reader = Reader::unbound(origin.clone());
             while let Some(task) = Task::read(&mut reader)? {
                 assert_eq!(format!("{task};"), origin);
             }

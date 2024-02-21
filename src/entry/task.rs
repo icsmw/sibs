@@ -47,7 +47,7 @@ impl Reading<Task> for Task {
                 reader
                     .map_ref()
                     .borrow_mut()
-                    .gen_report(&name_token, format!("\"{name}\" is invalid"))?;
+                    .gen_report(&name_token, format!("\"{name}\" is invalid name of task"))?;
                 Err(E::InvalidTaskName)?
             }
             let declarations: Vec<VariableDeclaration> = if stopped_on == chars::OPEN_SQ_BRACKET {
@@ -158,7 +158,7 @@ impl Operator for Task {
                 .as_ref()
                 .ok_or_else(|| operator::E::NoTaskBlock(self.name.value.to_string()))?;
             if self.declarations.len() != args.len() {
-                cx.map.gen_report(
+                cx.map.borrow_mut().gen_report(
                     &self.name.token,
                     format!(
                         "Declared {} argument(s) ([{}]); passed {} argument(s) ([{}])",
@@ -193,7 +193,7 @@ mod reading {
 
     #[test]
     fn reading() -> Result<(), E> {
-        let mut reader = Reader::new(include_str!("../tests/reading/tasks.sibs").to_string());
+        let mut reader = Reader::unbound(include_str!("../tests/reading/tasks.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Task::read(&mut reader)? {
             assert_eq!(
@@ -209,7 +209,7 @@ mod reading {
 
     #[test]
     fn tokens() -> Result<(), E> {
-        let mut reader = Reader::new(include_str!("../tests/reading/tasks.sibs").to_string());
+        let mut reader = Reader::unbound(include_str!("../tests/reading/tasks.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Task::read(&mut reader)? {
             assert_eq!(
@@ -255,7 +255,7 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::new(sample.to_string());
+            let mut reader = Reader::unbound(sample.to_string());
             assert!(Task::read(&mut reader).is_err());
             count += 1;
         }
@@ -280,7 +280,8 @@ mod processing {
     #[async_std::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
-        let mut reader = Reader::new(include_str!("../tests/processing/tasks.sibs").to_string());
+        let mut reader =
+            Reader::unbound(include_str!("../tests/processing/tasks.sibs").to_string());
         let mut cursor: usize = 0;
         while let Some(task) = Task::read(&mut reader)? {
             let result = task

@@ -8,7 +8,7 @@ mod walker {
         let splitters = [" ", "\t", " \t "];
         let mut count = 0;
         splitters.iter().for_each(|splitter| {
-            let mut bound = Reader::new(words.join(splitter));
+            let mut bound = Reader::unbound(words.join(splitter));
             let mut cursor: usize = 0;
             words.iter().for_each(|word| {
                 let read = if let Some(read) = bound.until().whitespace() {
@@ -34,7 +34,7 @@ mod walker {
         let targets = ['@', '$', '_'];
         let mut count = 0;
         targets.iter().for_each(|target| {
-            let mut bound = Reader::new(words.join(&target.to_string()));
+            let mut bound = Reader::unbound(words.join(&target.to_string()));
             let mut cursor: usize = 0;
             words.iter().for_each(|word| {
                 let (read, char) = if let Some((read, char)) = bound.until().char(&[target]) {
@@ -61,7 +61,7 @@ mod walker {
         let targets = [">", "==", "!=", "=>"];
         let mut count = 0;
         targets.iter().for_each(|target| {
-            let mut bound = Reader::new(words.join(target.as_ref()));
+            let mut bound = Reader::unbound(words.join(target.as_ref()));
             let mut cursor: usize = 0;
             words.iter().for_each(|word| {
                 let (read, stopped) = if let Some((read, stopped)) = bound.until().word(&[*target])
@@ -95,7 +95,7 @@ mod walker {
                 for _ in 0..times {
                     content = format!("{content}{word}{target}");
                 }
-                let mut bound = Reader::new(content);
+                let mut bound = Reader::unbound(content);
                 for n in 0..times {
                     let stopped = bound.move_to().char(&[target]).unwrap();
                     let token = bound.token().unwrap();
@@ -122,7 +122,7 @@ mod walker {
                 for _ in 0..times {
                     content = format!("{content}{word}{target}");
                 }
-                let mut bound = Reader::new(content);
+                let mut bound = Reader::unbound(content);
                 for n in 0..times {
                     let stopped = bound.move_to().word(&[target]).unwrap();
                     let token = bound.token().unwrap();
@@ -148,7 +148,7 @@ mod walker {
             for _ in 0..times {
                 content = format!("{content}{word}{whitespace}");
             }
-            let mut bound = Reader::new(content);
+            let mut bound = Reader::unbound(content);
             for n in 0..times {
                 assert!(bound.move_to().whitespace());
                 let token = bound.token().unwrap();
@@ -167,11 +167,11 @@ mod walker {
         let chars = ['@', '$', '%'];
         let mut count = 0;
         chars.iter().for_each(|char| {
-            let mut bound = Reader::new(format!("{char}{word}"));
+            let mut bound = Reader::unbound(format!("{char}{word}"));
             assert!(bound.contains().char(char));
-            let mut bound = Reader::new(format!(r"\\{char}{char}{word}"));
+            let mut bound = Reader::unbound(format!(r"\\{char}{char}{word}"));
             assert!(bound.contains().char(char));
-            let mut bound = Reader::new(format!(r"\\{char}{word}"));
+            let mut bound = Reader::unbound(format!(r"\\{char}{word}"));
             assert!(!bound.contains().char(char));
             count += 1;
         });
@@ -183,11 +183,11 @@ mod walker {
         let targets = [">", "==", "!=", "=>"];
         let mut count = 0;
         targets.iter().for_each(|target| {
-            let mut bound = Reader::new(format!("{target}{word}"));
+            let mut bound = Reader::unbound(format!("{target}{word}"));
             assert!(bound.contains().word(&[target]));
-            let mut bound = Reader::new(format!(r"\\{target}{target}{word}"));
+            let mut bound = Reader::unbound(format!(r"\\{target}{target}{word}"));
             assert!(bound.contains().word(&[target]));
-            let mut bound = Reader::new(format!(r"\\{target}{word}"));
+            let mut bound = Reader::unbound(format!(r"\\{target}{word}"));
             assert!(!bound.contains().word(&[target]));
             count += 1;
         });
@@ -202,12 +202,12 @@ mod walker {
             {
                 // Nested groups
                 let content = format!("{left}{noise}{right}{noise}\\{left}{noise}\\{right}{noise}");
-                let mut bound = Reader::new(format!(" \t\n {left}{content}{right}{noise}"));
+                let mut bound = Reader::unbound(format!(" \t\n {left}{content}{right}{noise}"));
                 let between = bound.group().between(left, right).unwrap();
                 assert_eq!(between, content);
                 let token = bound.token().unwrap();
                 assert_eq!(token.content, between);
-                let mut bound = Reader::new(between);
+                let mut bound = Reader::unbound(between);
                 let between = bound.group().between(left, right).unwrap();
                 let token = bound.token().unwrap();
                 assert_eq!(token.content, between);
@@ -216,12 +216,12 @@ mod walker {
             {
                 // Nested shifted groups
                 let content = format!("{noise}\\{left}{left}{noise}{right}\\{right}{noise}");
-                let mut bound = Reader::new(format!("{left}{content}{right}{noise}"));
+                let mut bound = Reader::unbound(format!("{left}{content}{right}{noise}"));
                 let between = bound.group().between(left, right).unwrap();
                 assert_eq!(between, content);
                 let token = bound.token().unwrap();
                 assert_eq!(token.content, between);
-                let mut bound = Reader::new(between);
+                let mut bound = Reader::unbound(between);
                 bound.until().char(&[left]);
                 let between = bound.group().between(left, right).unwrap();
                 let token = bound.token().unwrap();
@@ -231,7 +231,7 @@ mod walker {
             {
                 // Following groups with spaces between
                 let content = format!("{noise}\\{left}{noise}\\{right}{noise}");
-                let mut bound = Reader::new(format!(
+                let mut bound = Reader::unbound(format!(
                     "{left}{content}{right} \t \n{left}{content}{right}"
                 ));
                 let between = bound.group().between(left, right).unwrap();
@@ -247,7 +247,7 @@ mod walker {
                 // Following groups without spaces
                 let content = format!("{noise}\\{left}{noise}\\{right}{noise}");
                 let mut bound =
-                    Reader::new(format!("{left}{content}{right}{left}{content}{right}"));
+                    Reader::unbound(format!("{left}{content}{right}{left}{content}{right}"));
                 let between = bound.group().between(left, right).unwrap();
                 assert_eq!(between, content);
                 let token = bound.token().unwrap();
@@ -268,7 +268,7 @@ mod walker {
         let mut count = 0;
         borders.iter().for_each(|border| {
             {
-                let mut bound = Reader::new(format!(" \t\n {border}{noise}{border}"));
+                let mut bound = Reader::unbound(format!(" \t\n {border}{noise}{border}"));
                 let between = bound.group().closed(border).unwrap();
                 assert_eq!(between, noise);
                 let token = bound.token().unwrap();
@@ -276,7 +276,7 @@ mod walker {
             }
             {
                 let content = format!("\\{border}{noise}\\{border}");
-                let mut bound = Reader::new(format!("{border}{content}{border}"));
+                let mut bound = Reader::unbound(format!("{border}{content}{border}"));
                 let between = bound.group().closed(border).unwrap();
                 assert_eq!(between, content);
                 let token = bound.token().unwrap();
@@ -285,7 +285,7 @@ mod walker {
             {
                 // Following groups without spaces
                 let content = format!("\\{border}{noise}\\{border}");
-                let mut bound = Reader::new(format!(
+                let mut bound = Reader::unbound(format!(
                     "{border}{content}{border}{border}{content}{border}"
                 ));
                 let between = bound.group().closed(border).unwrap();
@@ -300,7 +300,7 @@ mod walker {
             {
                 // Following groups with spaces
                 let content = format!("\\{border}{noise}\\{border}");
-                let mut bound = Reader::new(format!(
+                let mut bound = Reader::unbound(format!(
                     "{border}{content}{border} \n \t{border}{content}{border}"
                 ));
                 let between = bound.group().closed(border).unwrap();
@@ -320,7 +320,7 @@ mod walker {
     fn mapping() {
         let noise = "=================";
         let inner = format!("<{noise}>{noise}");
-        let mut bound = Reader::new(format!("[{inner}]"));
+        let mut bound = Reader::unbound(format!("[{inner}]"));
         let between = bound.group().between(&'[', &']').unwrap();
         assert_eq!(between, inner);
         let mut token = bound.token().unwrap();
@@ -337,14 +337,14 @@ mod walker {
     #[test]
     fn to_end() {
         let noise = "=================";
-        let mut bound = Reader::new(noise.to_string());
+        let mut bound = Reader::unbound(noise.to_string());
         let full = bound.move_to().end();
         assert_eq!(full, noise);
         let token = bound.token().unwrap();
         assert_eq!(token.content, noise);
         assert_eq!(token.from, 0);
         assert_eq!(token.len, noise.len());
-        let mut bound = Reader::new(format!("{noise}@{noise}"));
+        let mut bound = Reader::unbound(format!("{noise}@{noise}"));
         bound.until().char(&[&'@']).unwrap();
         bound.move_to().next();
         let rest = bound.move_to().end();
@@ -357,7 +357,7 @@ mod walker {
     #[test]
     fn seek_to() {
         let noise = "=================";
-        let mut bound = Reader::new(format!("{noise}@{noise}@{noise}"));
+        let mut bound = Reader::unbound(format!("{noise}@{noise}@{noise}"));
         bound.seek_to().char(&'@');
         assert_eq!(bound.pos, noise.len());
         bound.seek_to().char(&'@');

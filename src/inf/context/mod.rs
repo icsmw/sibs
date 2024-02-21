@@ -11,8 +11,10 @@ use crate::{
 };
 pub use error::E;
 use std::{
+    cell::RefCell,
     collections::{hash_map::Entry, HashMap},
     path::{Path, PathBuf},
+    rc::Rc,
 };
 
 #[derive(Debug)]
@@ -21,7 +23,7 @@ pub struct Context {
     pub term: Term,
     pub tracker: Tracker,
     pub scenario: Scenario,
-    pub map: Map,
+    pub map: Rc<RefCell<Map>>,
     vars: HashMap<String, AnyValue>,
     executors: HashMap<String, ExecutorFn>,
     logger: Logger,
@@ -40,7 +42,7 @@ impl Context {
             scenario: Scenario::dummy(),
             tracker,
             term: Term::new(),
-            map: Map::new(String::new()),
+            map: Map::new_wrapped(""),
             vars: HashMap::new(),
             executors: HashMap::new(),
             logger,
@@ -58,7 +60,7 @@ impl Context {
             ),
             scenario: Scenario::from(filename)?,
             tracker,
-            map: Map::new(String::new()),
+            map: Map::new_wrapped(""),
             term: Term::new(),
             vars: HashMap::new(),
             executors: HashMap::new(),
@@ -73,7 +75,7 @@ impl Context {
             cwd: Some(PathBuf::new()),
             scenario: Scenario::dummy(),
             tracker,
-            map: Map::new(String::new()),
+            map: Map::new_wrapped(""),
             term: Term::new(),
             vars: HashMap::new(),
             executors: HashMap::new(),
@@ -81,8 +83,8 @@ impl Context {
         })
     }
 
-    pub fn set_map(&mut self, map: Map) {
-        self.map = map;
+    pub fn get_map_ref(&self) -> Rc<RefCell<Map>> {
+        self.map.clone()
     }
 
     pub fn set_scenario(&mut self, scenario: Scenario) {

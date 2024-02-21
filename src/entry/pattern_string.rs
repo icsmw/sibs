@@ -153,7 +153,7 @@ mod reading {
     #[test]
     fn reading() -> Result<(), E> {
         let mut reader =
-            Reader::new(include_str!("../tests/reading/value_string.sibs").to_string());
+            Reader::unbound(include_str!("../tests/reading/value_string.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = PatternString::read(&mut reader)? {
             assert_eq!(
@@ -170,7 +170,7 @@ mod reading {
     #[test]
     fn tokens() -> Result<(), E> {
         let mut reader =
-            Reader::new(include_str!("../tests/reading/value_string.sibs").to_string());
+            Reader::unbound(include_str!("../tests/reading/value_string.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = PatternString::read(&mut reader)? {
             assert_eq!(
