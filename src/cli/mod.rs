@@ -47,7 +47,7 @@ pub fn get_tracker_configuration() -> Result<tracker::Configuration, E> {
     })
 }
 
-pub async fn read(tracker: &Tracker) -> Result<Option<Context>, E> {
+pub async fn read(cx: &mut Context) -> Result<(), E> {
     fn run<T: Argument<T> + 'static>(
         components: &[Component],
         arguments: &mut Arguments,
@@ -64,7 +64,7 @@ pub async fn read(tracker: &Tracker) -> Result<Option<Context>, E> {
         if !income.is_empty() {
             term.err(format!("Ingore next arguments: {}", income.join(", ")));
         }
-        return Ok(None);
+        return Ok(());
     }
     let scenario = if let Some(target) = defaults.get::<args::target::Target>() {
         Scenario::from(&current_dir()?.join(target.get()).canonicalize()?)?
@@ -76,16 +76,16 @@ pub async fn read(tracker: &Tracker) -> Result<Option<Context>, E> {
                 term.bold("OPTIONS\n");
                 term.step_right();
                 defaults.display(&mut term);
-                return Ok(None);
+                return Ok(());
             }
         }
     };
-    let mut cx = Context::new(term, tracker.clone(), scenario)?;
-    let components = reader::read_file(&mut cx).await?;
+    cx.set_scenario(scenario);
+    let components = reader::read_file(cx).await?;
     let no_actions = defaults.has::<args::help::Help>() || income.is_empty();
-    run::<args::help::Help>(&components, &mut defaults, &mut cx)?;
+    run::<args::help::Help>(&components, &mut defaults, cx)?;
     if no_actions {
-        return Ok(Some(cx));
+        return Ok(());
     }
     if let Some(component) = if components.is_empty() {
         None
@@ -97,9 +97,9 @@ pub async fn read(tracker: &Tracker) -> Result<Option<Context>, E> {
             .find(|comp| comp.name.to_string() == component)
         {
             component
-                .process(Some(component), &components, &income, &mut cx)
+                .process(Some(component), &components, &income, cx)
                 .await?;
-            Ok(Some(cx))
+            Ok(())
         } else {
             Err(E::ComponentNotExists(component.to_string()))
         }

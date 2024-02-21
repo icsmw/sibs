@@ -33,13 +33,13 @@ impl Context {
         Ok(cx)
     }
 
-    pub fn new(term: Term, tracker: Tracker, scenario: Scenario) -> Result<Self, E> {
+    pub fn with_tracker(tracker: Tracker) -> Result<Self, E> {
         let logger = tracker.create_logger(String::from("Context"));
         Self::register_functions(Context {
             cwd: None,
-            scenario,
+            scenario: Scenario::dummy(),
             tracker,
-            term,
+            term: Term::new(),
             map: Map::new(String::new()),
             vars: HashMap::new(),
             executors: HashMap::new(),
@@ -83,6 +83,10 @@ impl Context {
 
     pub fn set_map(&mut self, map: Map) {
         self.map = map;
+    }
+
+    pub fn set_scenario(&mut self, scenario: Scenario) {
+        self.scenario = scenario;
     }
 
     pub async fn set_cwd(&mut self, cwd: Option<PathBuf>) -> Result<(), E> {

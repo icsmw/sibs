@@ -44,6 +44,10 @@ impl Reading<Task> for Task {
                 &name,
                 &[&chars::UNDERSCORE, &chars::DASH],
             ) {
+                reader
+                    .map_ref()
+                    .borrow_mut()
+                    .gen_report(&name_token, format!("\"{name}\" is invalid"))?;
                 Err(E::InvalidTaskName)?
             }
             let declarations: Vec<VariableDeclaration> = if stopped_on == chars::OPEN_SQ_BRACKET {
@@ -154,7 +158,20 @@ impl Operator for Task {
                 .as_ref()
                 .ok_or_else(|| operator::E::NoTaskBlock(self.name.value.to_string()))?;
             if self.declarations.len() != args.len() {
-                cx.map.print_until(&self.name.token)?;
+                cx.map.gen_report(
+                    &self.name.token,
+                    format!(
+                        "Declared {} argument(s) ([{}]); passed {} argument(s) ([{}])",
+                        self.declarations.len(),
+                        self.declarations
+                            .iter()
+                            .map(|d| d.to_string())
+                            .collect::<Vec<String>>()
+                            .join(", "),
+                        args.len(),
+                        args.join(", ")
+                    ),
+                )?;
                 Err(operator::E::DismatchTaskArgumentsCount)?;
             }
             for (i, declaration) in self.declarations.iter().enumerate() {

@@ -589,6 +589,9 @@ impl Reader {
     pub fn get_map(&self) -> Map {
         self._map.borrow().clone()
     }
+    pub fn map_ref(&self) -> Rc<RefCell<Map>> {
+        self._map.clone()
+    }
     #[cfg(test)]
     pub fn recent(&mut self) -> &str {
         if self.pos == 0 {
