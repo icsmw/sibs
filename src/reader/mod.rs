@@ -599,11 +599,11 @@ impl Reader {
     pub fn get_fragment(&self, token: &usize) -> Result<Fragment, E> {
         self._map.borrow().get_fragment(token)
     }
-    pub fn get_map(&self) -> Map {
-        self._map.borrow().clone()
-    }
-    pub fn map_ref(&self) -> Rc<RefCell<Map>> {
-        self._map.clone()
+    pub fn gen_report<'a, T>(&self, token: &usize, msg: T) -> Result<(), E>
+    where
+        T: 'a + ToOwned + ToString,
+    {
+        self._map.borrow_mut().gen_report(token, msg)
     }
     #[cfg(test)]
     pub fn recent(&mut self) -> &str {

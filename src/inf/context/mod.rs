@@ -82,11 +82,16 @@ impl Context {
             logger,
         })
     }
-
     pub fn get_map_ref(&self) -> Rc<RefCell<Map>> {
         self.map.clone()
     }
-
+    pub fn gen_report<'a, T>(&self, token: &usize, msg: T) -> Result<(), E>
+    where
+        T: 'a + ToOwned + ToString,
+    {
+        self.map.borrow_mut().gen_report(token, msg)?;
+        Ok(())
+    }
     pub fn set_scenario(&mut self, scenario: Scenario) {
         self.scenario = scenario;
     }

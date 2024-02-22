@@ -44,10 +44,7 @@ impl Reading<Task> for Task {
                 &name,
                 &[&chars::UNDERSCORE, &chars::DASH],
             ) {
-                reader
-                    .map_ref()
-                    .borrow_mut()
-                    .gen_report(&name_token, format!("\"{name}\" is invalid name of task"))?;
+                reader.gen_report(&name_token, format!("\"{name}\" is invalid name of task"))?;
                 Err(E::InvalidTaskName)?
             }
             let declarations: Vec<VariableDeclaration> = if stopped_on == chars::OPEN_SQ_BRACKET {
@@ -61,10 +58,21 @@ impl Reading<Task> for Task {
                     declarations.push(variable_declaration);
                 }
                 if !token.bound.rest().trim().is_empty() {
+                    reader.gen_report(
+                        &token.id,
+                        format!(
+                            "\"{}\" cannot parse task arguments",
+                            token.bound.rest().trim()
+                        ),
+                    )?;
                     Err(E::InvalidTaskArguments)?
                 }
                 declarations
             } else {
+                reader.gen_report(
+                    &name_token,
+                    "Cannot parse task arguments; probably missed \")\"",
+                )?;
                 Err(E::NoTaskArguments)?
             };
             if let Some(block) = Block::read(reader)? {
@@ -81,6 +89,7 @@ impl Reading<Task> for Task {
                     block: Some(block),
                 }))
             } else {
+                reader.gen_report(&name_token, "Cannot find task's actions")?;
                 Err(E::FailFindTaskActions)
             }
         } else {
@@ -158,7 +167,7 @@ impl Operator for Task {
                 .as_ref()
                 .ok_or_else(|| operator::E::NoTaskBlock(self.name.value.to_string()))?;
             if self.declarations.len() != args.len() {
-                cx.map.borrow_mut().gen_report(
+                cx.gen_report(
                     &self.name.token,
                     format!(
                         "Declared {} argument(s) ([{}]); passed {} argument(s) ([{}])",
