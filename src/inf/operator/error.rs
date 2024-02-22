@@ -14,15 +14,15 @@ pub enum E {
     #[error("No current working folder")]
     NoCurrentWorkingFolder,
     #[error("Tracker error: {0}")]
-    TrackerError(String),
+    TrackerError(tracker::E),
     #[error("Spawing process error: {0}")]
-    SpawningError(String),
+    SpawningError(spawner::E),
     #[error("Context error: {0}")]
-    ContextError(String),
+    ContextError(context::E),
     #[error("Executor error: {0}")]
-    ExecutorError(String),
+    ExecutorError(executors::E),
     #[error("Reader error: {0}")]
-    ReaderError(String),
+    ReaderError(reader::E),
     #[error("No task for component: {0}")]
     NoTaskForComponent(String),
     #[error("No task \"{0}\" for component \"{1}\" doesn't exist")]
@@ -73,30 +73,30 @@ pub enum E {
 
 impl From<tracker::E> for E {
     fn from(e: tracker::E) -> Self {
-        Self::TrackerError(e.to_string())
+        Self::TrackerError(e)
     }
 }
 
 impl From<spawner::E> for E {
     fn from(e: spawner::E) -> Self {
-        Self::SpawningError(e.to_string())
+        Self::SpawningError(e)
     }
 }
 
 impl From<context::E> for E {
     fn from(e: context::E) -> Self {
-        Self::ContextError(e.to_string())
+        Self::ContextError(e)
     }
 }
 
 impl From<executors::E> for E {
     fn from(e: executors::E) -> Self {
-        Self::ExecutorError(e.to_string())
+        Self::ExecutorError(e)
     }
 }
 
 impl From<reader::error::E> for E {
     fn from(e: reader::error::E) -> Self {
-        Self::ReaderError(e.to_string())
+        Self::ReaderError(e)
     }
 }

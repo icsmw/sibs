@@ -10,7 +10,7 @@ pub enum E {
     #[error("Executors error: {0}")]
     ExecutorsError(executors::E),
     #[error("Reader error: {0}")]
-    ReaderError(reader::E),
+    ReaderError(String),
     #[error("Fail register function \"{0}\" because it's already exists")]
     FunctionAlreadyExists(String),
 }
@@ -29,6 +29,6 @@ impl From<executors::E> for E {
 
 impl From<reader::E> for E {
     fn from(e: reader::E) -> Self {
-        E::ReaderError(e)
+        E::ReaderError(e.to_string())
     }
 }

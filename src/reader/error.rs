@@ -116,9 +116,9 @@ pub enum E {
     #[error("{0}: {1}")]
     OwnedError(String, String),
     #[error("Context error: {0}")]
-    ContextError(String),
+    ContextError(context::E),
     #[error("Executor error: {0}")]
-    ExecutorError(String),
+    ExecutorError(executors::E),
 }
 
 impl From<error::E> for E {
@@ -129,12 +129,12 @@ impl From<error::E> for E {
 
 impl From<context::E> for E {
     fn from(e: context::E) -> Self {
-        E::ContextError(e.to_string())
+        E::ContextError(e)
     }
 }
 
 impl From<executors::E> for E {
     fn from(e: executors::E) -> Self {
-        E::ExecutorError(e.to_string())
+        E::ExecutorError(e)
     }
 }

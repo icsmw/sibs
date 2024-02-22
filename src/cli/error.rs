@@ -24,11 +24,11 @@ pub enum E {
     #[error("Syntax error: {0}")]
     Reader(#[from] reader::error::E),
     #[error("Context error: {0}")]
-    ContextError(String),
+    ContextError(context::E),
     #[error("Scenario error: {0}")]
-    ScenarioError(String),
+    ScenarioError(scenario::E),
     #[error("Operator error: {0}")]
-    OperatorError(String),
+    OperatorError(operator::E),
     #[error("Error: {0}")]
     Other(String),
 }
@@ -47,18 +47,18 @@ impl From<error::E> for E {
 
 impl From<context::E> for E {
     fn from(e: context::E) -> Self {
-        E::ContextError(e.to_string())
+        E::ContextError(e)
     }
 }
 
 impl From<scenario::E> for E {
     fn from(e: scenario::E) -> Self {
-        E::ScenarioError(e.to_string())
+        E::ScenarioError(e)
     }
 }
 
 impl From<operator::E> for E {
     fn from(e: operator::E) -> Self {
-        E::OperatorError(e.to_string())
+        E::OperatorError(e)
     }
 }
