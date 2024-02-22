@@ -47,12 +47,14 @@ impl Reading<Component> for Component {
                     })
                     .unwrap_or_else(|| inner.move_to().end());
                 if name.trim().is_empty() {
+                    reader.gen_report(&inner.token()?.id, "Empty name of component")?;
                     Err(E::EmptyComponentName)?;
                 }
                 if !Reader::is_ascii_alphabetic_and_alphanumeric(
                     &name,
                     &[&chars::UNDERSCORE, &chars::DASH],
                 ) {
+                    reader.gen_report(&inner.token()?.id, "Invalid name of component")?;
                     Err(E::InvalidComponentName)?;
                 }
                 let (name, name_token) = (name, inner.token()?.id);
@@ -63,6 +65,7 @@ impl Reading<Component> for Component {
                     reader.move_to().end()
                 };
                 if inner.trim().is_empty() {
+                    reader.gen_report(&name_token, E::NoComponentBody.to_string())?;
                     Err(E::NoComponentBody)?
                 }
                 let mut task_reader = reader.token()?.bound;
@@ -94,6 +97,7 @@ impl Reading<Component> for Component {
                     token: close(reader),
                 }))
             } else {
+                reader.gen_report(&reader.token()?.id, E::NoGroup.to_string())?;
                 Err(E::NoGroup)?
             }
         } else {
