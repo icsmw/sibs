@@ -1,5 +1,5 @@
 use crate::{cli, reader};
-use std::{error, fmt};
+use std::fmt;
 
 #[derive(Debug)]
 pub struct E {
@@ -12,8 +12,6 @@ impl fmt::Display for E {
         write!(f, "{}", self.msg)
     }
 }
-
-impl error::Error for E {}
 
 impl From<cli::error::E> for E {
     fn from(e: cli::error::E) -> Self {
