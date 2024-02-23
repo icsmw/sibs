@@ -12,13 +12,7 @@ use crate::{
 };
 pub use error::E;
 use map::{Fragment, Map};
-use std::{
-    fs,
-    future::Future,
-    path::PathBuf,
-    pin::Pin,
-    {cell::RefCell, rc::Rc},
-};
+use std::{cell::RefCell, fmt::Display, fs, future::Future, path::PathBuf, pin::Pin, rc::Rc};
 
 pub trait Reading<T> {
     fn read(reader: &mut Reader) -> Result<Option<T>, E>;
@@ -599,11 +593,18 @@ impl Reader {
     pub fn get_fragment(&self, token: &usize) -> Result<Fragment, E> {
         self._map.borrow().get_fragment(token)
     }
-    pub fn gen_report<'a, T>(&self, token: &usize, msg: T) -> Result<(), E>
+    // pub fn gen_report<'a, T>(&self, token: &usize, msg: T) -> Result<(), E>
+    // where
+    //     T: 'a + ToOwned + ToString,
+    // {
+    //     self._map.borrow_mut().gen_report(token, msg)
+    // }
+    pub fn report_err<T>(&self, token: &usize, err: T) -> Result<T, E>
     where
-        T: 'a + ToOwned + ToString,
+        T: std::error::Error + Display,
     {
-        self._map.borrow_mut().gen_report(token, msg)
+        self._map.borrow_mut().gen_report(token, err.to_string())?;
+        Ok(err)
     }
     #[cfg(test)]
     pub fn recent(&mut self) -> &str {

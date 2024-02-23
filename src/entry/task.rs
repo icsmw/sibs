@@ -44,8 +44,7 @@ impl Reading<Task> for Task {
                 &name,
                 &[&chars::UNDERSCORE, &chars::DASH],
             ) {
-                reader.gen_report(&name_token, format!("\"{name}\" is invalid name of task"))?;
-                Err(E::InvalidTaskName)?
+                Err(reader.report_err(&name_token, E::InvalidTaskName(name.clone()))?)?
             }
             let declarations: Vec<VariableDeclaration> = if stopped_on == chars::OPEN_SQ_BRACKET {
                 vec![]
@@ -58,22 +57,14 @@ impl Reading<Task> for Task {
                     declarations.push(variable_declaration);
                 }
                 if !token.bound.rest().trim().is_empty() {
-                    reader.gen_report(
+                    Err(reader.report_err(
                         &token.id,
-                        format!(
-                            "\"{}\" cannot parse task arguments",
-                            token.bound.rest().trim()
-                        ),
-                    )?;
-                    Err(E::InvalidTaskArguments)?
+                        E::InvalidTaskArguments(token.bound.rest().trim().to_string()),
+                    )?)?
                 }
                 declarations
             } else {
-                reader.gen_report(
-                    &name_token,
-                    "Cannot parse task arguments; probably missed \")\"",
-                )?;
-                Err(E::NoTaskArguments)?
+                Err(reader.report_err(&name_token, E::NoTaskArguments)?)?
             };
             if let Some(block) = Block::read(reader)? {
                 if reader.move_to().char(&[&chars::SEMICOLON]).is_some() {
@@ -89,8 +80,7 @@ impl Reading<Task> for Task {
                     block: Some(block),
                 }))
             } else {
-                reader.gen_report(&name_token, "Cannot find task's actions")?;
-                Err(E::FailFindTaskActions)
+                Err(reader.report_err(&name_token, E::FailFindTaskActions)?)
             }
         } else {
             Ok(None)

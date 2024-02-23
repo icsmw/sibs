@@ -139,8 +139,7 @@ impl Reading<Block> for Block {
                 }
                 if let Some(el) = PatternString::read(&mut inner)? {
                     if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
-                        reader.gen_report(&inner.token()?.id, E::MissedSemicolon.to_string())?;
-                        Err(E::MissedSemicolon)?;
+                        Err(reader.report_err(&inner.token()?.id, E::MissedSemicolon)?)?;
                     }
                     elements.push(Element::PatternString(el));
                     continue;

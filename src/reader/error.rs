@@ -27,13 +27,13 @@ pub enum E {
     MissedSemicolon,
     #[error("Unexpected semicolon")]
     UnexpectedSemicolon,
-    #[error("Invalid task arguments")]
-    InvalidTaskArguments,
-    #[error("No task arguments")]
+    #[error("\"{0}\" cannot parse task arguments")]
+    InvalidTaskArguments(String),
+    #[error("No task arguments: cannot parse task arguments; probably missed \")\"")]
     NoTaskArguments,
-    #[error("Invalid task name")]
-    InvalidTaskName,
-    #[error("Fail find task actions, missed ]")]
+    #[error("\"{0}\" is invalid name of task")]
+    InvalidTaskName(String),
+    #[error("Fail find task actions, probably missed \"]\"")]
     FailFindTaskActions,
     #[error("Nested functions arn't supported")]
     NestedFunction,
@@ -53,8 +53,8 @@ pub enum E {
     EmptyComponentName,
     #[error("No command value")]
     EmptyCommand,
-    #[error("Invalid component name")]
-    InvalidComponentName,
+    #[error("\"{0}\" is an invalid component name")]
+    InvalidComponentName(String),
     #[error("Fail get last token")]
     FailGetToken,
     #[error("Invalid variable name")]

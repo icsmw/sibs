@@ -90,8 +90,7 @@ impl Arguments {
             if !arg.trim().is_empty() {
                 let mut token = reader.token()?;
                 if token.bound.contains().char(&chars::AT) {
-                    reader.gen_report(&token.id, E::NestedFunction.to_string())?;
-                    Err(E::NestedFunction)?
+                    Err(reader.report_err(&token.id, E::NestedFunction)?)?
                 }
                 if let Some(variable) = VariableName::read(&mut token.bound)? {
                     arguments.push(Argument::VariableName(variable));
@@ -107,8 +106,7 @@ impl Arguments {
         }
         if !reader.rest().trim().is_empty() {
             if reader.contains().char(&chars::AT) {
-                reader.gen_report(&reader.token()?.id, E::NestedFunction.to_string())?;
-                Err(E::NestedFunction)?
+                Err(reader.report_err(&reader.token()?.id, E::NestedFunction)?)?
             }
             if let Some(variable) = VariableName::read(reader)? {
                 arguments.push(Argument::VariableName(variable));
@@ -134,8 +132,7 @@ impl Arguments {
                 if let Some(value_string) = PatternString::read(reader)? {
                     arguments.push(Argument::PatternString(value_string));
                 } else {
-                    reader.gen_report(&reader.token()?.id, E::NoStringEnd.to_string())?;
-                    Err(E::NoStringEnd)?
+                    Err(reader.report_err(&reader.token()?.id, E::NoStringEnd)?)?
                 }
             } else {
                 arguments = [arguments, Arguments::read_string_args(reader)?].concat();
