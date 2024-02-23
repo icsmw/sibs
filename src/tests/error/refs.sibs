@@ -4,3 +4,5 @@
 :self: :build(dev, prod);
 :selyyf::build(dev, prod);
 :self:bui=ld(dev, $p#rod);
+:self:build(dev, $prod) dust;
+:self:build dust;

@@ -116,6 +116,9 @@ impl Reading<Reference> for Reference {
                             },
                         );
                     }
+                    if !token.bound.rest().trim().is_empty() {
+                        Err(E::UnrecognizedCode(token.bound.rest().to_string()))?;
+                    }
                 }
                 path.push(name);
             }
@@ -124,7 +127,7 @@ impl Reading<Reference> for Reference {
                     part,
                     &[&chars::UNDERSCORE, &chars::DASH],
                 ) {
-                    Err(E::InvalidReference)?
+                    Err(E::InvalidReference(part.to_owned()))?
                 }
             }
             Ok(Some(Reference {

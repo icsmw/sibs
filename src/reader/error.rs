@@ -53,6 +53,8 @@ pub enum E {
     EmptyComponentName,
     #[error("No command value")]
     EmptyCommand,
+    #[error("Fail to recognize code: \"{0}\"")]
+    UnrecognizedCode(String),
     #[error("\"{0}\" is an invalid component name")]
     InvalidComponentName(String),
     #[error("Fail get last token")]
@@ -63,8 +65,8 @@ pub enum E {
     NoValueAfterComparing,
     #[error("Empty path to reference")]
     EmptyPathToReference,
-    #[error("Invalid reference")]
-    InvalidReference,
+    #[error("\"{0}\" is an invalid reference")]
+    InvalidReference(String),
     #[error("No destination function after >")]
     NoDestFunction,
     #[error("Missed comparing operator: == or !=")]
