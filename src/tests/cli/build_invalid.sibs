@@ -1,9 +1,6 @@
 #[test: ./tmp]
     /// Test SIBS
-    try 
-    df
-    fds
-    failed[
+    try [
         /// Will try to execute terminal command
         ls -lsa;
         @os windows;
@@ -16,6 +13,7 @@
         IF @os linux [
             :self:build(smth, prod);
         ];
+        
     ];
     build($input_a: {string}; $mode: dev | prod;) [
         $a_str = "value_a";
