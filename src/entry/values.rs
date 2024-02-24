@@ -18,17 +18,6 @@ pub enum Element {
     SimpleString(SimpleString),
 }
 
-impl Element {
-    pub fn token(&self) -> usize {
-        match self {
-            Self::Function(v) => v.token,
-            Self::PatternString(v) => v.token,
-            Self::VariableName(v) => v.token,
-            Self::SimpleString(v) => v.token,
-        }
-    }
-}
-
 impl fmt::Display for Element {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -45,7 +34,15 @@ impl fmt::Display for Element {
 }
 
 impl Operator for Element {
-    fn process<'a>(
+    fn token(&self) -> usize {
+        match self {
+            Self::Function(v) => v.token,
+            Self::PatternString(v) => v.token,
+            Self::VariableName(v) => v.token,
+            Self::SimpleString(v) => v.token,
+        }
+    }
+    fn perform<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -54,9 +51,9 @@ impl Operator for Element {
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             match self {
-                Self::Function(v) => v.process(owner, components, args, cx).await,
-                Self::PatternString(v) => v.process(owner, components, args, cx).await,
-                Self::VariableName(v) => v.process(owner, components, args, cx).await,
+                Self::Function(v) => v.execute(owner, components, args, cx).await,
+                Self::PatternString(v) => v.execute(owner, components, args, cx).await,
+                Self::VariableName(v) => v.execute(owner, components, args, cx).await,
                 Self::SimpleString(v) => Ok(Some(AnyValue::new(v.to_string()))),
             }
         })
@@ -175,7 +172,10 @@ impl term::Display for Values {
 }
 
 impl Operator for Values {
-    fn process<'a>(
+    fn token(&self) -> usize {
+        self.token
+    }
+    fn perform<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -186,9 +186,9 @@ impl Operator for Values {
             let mut values: Vec<String> = vec![];
             for element in self.elements.iter() {
                 if let Some(value) = match element {
-                    Element::Function(v) => v.process(owner, components, args, cx).await?,
-                    Element::PatternString(v) => v.process(owner, components, args, cx).await?,
-                    Element::VariableName(v) => v.process(owner, components, args, cx).await?,
+                    Element::Function(v) => v.execute(owner, components, args, cx).await?,
+                    Element::PatternString(v) => v.execute(owner, components, args, cx).await?,
+                    Element::VariableName(v) => v.execute(owner, components, args, cx).await?,
                     Element::SimpleString(v) => Some(AnyValue::new(v.to_string())),
                 } {
                     if let Some(value) = value.get_as_string() {
@@ -207,7 +207,7 @@ impl Operator for Values {
 mod reading {
     use crate::{
         entry::Values,
-        inf::tests,
+        inf::{operator::Operator, tests},
         reader::{Reader, Reading, E},
     };
 
@@ -289,7 +289,7 @@ mod processing {
         let mut reader =
             Reader::unbound(include_str!("../tests/processing/values.sibs").to_string());
         while let Some(task) = Task::read(&mut reader)? {
-            assert!(task.process(None, &[], &[], &mut cx).await?.is_some());
+            assert!(task.execute(None, &[], &[], &mut cx).await?.is_some());
         }
         for (name, value) in VALUES.iter() {
             assert_eq!(

@@ -151,7 +151,10 @@ impl term::Display for Component {
 }
 
 impl Operator for Component {
-    fn process<'a>(
+    fn token(&self) -> usize {
+        self.token
+    }
+    fn perform<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -175,7 +178,7 @@ impl Operator for Component {
             })?;
             let job = cx.tracker.create_job(self.get_name(), None).await?;
             cx.set_cwd(self.cwd.clone()).await?;
-            job.result(task.process(owner, components, &args[1..], cx).await)
+            job.result(task.execute(owner, components, &args[1..], cx).await)
                 .await
         })
     }
@@ -303,7 +306,7 @@ mod processing {
         }
         for component in components.iter() {
             let result = component
-                .process(
+                .execute(
                     Some(component),
                     &components,
                     &VALUES[cursor]

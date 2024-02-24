@@ -164,7 +164,10 @@ impl fmt::Display for Reference {
 }
 
 impl Operator for Reference {
-    fn process<'a>(
+    fn token(&self) -> usize {
+        self.token
+    }
+    fn perform<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -198,7 +201,7 @@ impl Operator for Reference {
             for input in self.inputs.iter() {
                 args.push(input.as_arg(cx).await?);
             }
-            task.process(owner, components, &args, cx).await
+            task.execute(owner, components, &args, cx).await
         })
     }
 }

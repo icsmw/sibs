@@ -49,7 +49,21 @@ impl fmt::Display for Element {
 }
 
 impl Operator for Element {
-    fn process<'a>(
+    fn token(&self) -> usize {
+        match self {
+            Self::Command(v) => v.token(),
+            Self::Function(v) => v.token(),
+            Self::If(v) => v.token(),
+            Self::Each(v) => v.token(),
+            Self::First(v) => v.token(),
+            Self::VariableAssignation(v) => v.token(),
+            Self::Optional(v) => v.token(),
+            Self::Reference(v) => v.token(),
+            Self::PatternString(v) => v.token(),
+            Self::VariableName(v) => v.token(),
+        }
+    }
+    fn perform<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -58,16 +72,16 @@ impl Operator for Element {
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             match self {
-                Self::Command(v) => v.process(owner, components, args, cx).await,
-                Self::Function(v) => v.process(owner, components, args, cx).await,
-                Self::If(v) => v.process(owner, components, args, cx).await,
-                Self::Each(v) => v.process(owner, components, args, cx).await,
-                Self::First(v) => v.process(owner, components, args, cx).await,
-                Self::VariableAssignation(v) => v.process(owner, components, args, cx).await,
-                Self::Optional(v) => v.process(owner, components, args, cx).await,
-                Self::Reference(v) => v.process(owner, components, args, cx).await,
-                Self::PatternString(v) => v.process(owner, components, args, cx).await,
-                Self::VariableName(v) => v.process(owner, components, args, cx).await,
+                Self::Command(v) => v.execute(owner, components, args, cx).await,
+                Self::Function(v) => v.execute(owner, components, args, cx).await,
+                Self::If(v) => v.execute(owner, components, args, cx).await,
+                Self::Each(v) => v.execute(owner, components, args, cx).await,
+                Self::First(v) => v.execute(owner, components, args, cx).await,
+                Self::VariableAssignation(v) => v.execute(owner, components, args, cx).await,
+                Self::Optional(v) => v.execute(owner, components, args, cx).await,
+                Self::Reference(v) => v.execute(owner, components, args, cx).await,
+                Self::PatternString(v) => v.execute(owner, components, args, cx).await,
+                Self::VariableName(v) => v.execute(owner, components, args, cx).await,
             }
         })
     }
@@ -209,7 +223,10 @@ impl term::Display for Block {
 }
 
 impl Operator for Block {
-    fn process<'a>(
+    fn token(&self) -> usize {
+        self.token
+    }
+    fn perform<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -219,7 +236,7 @@ impl Operator for Block {
         Box::pin(async move {
             let mut output: Option<AnyValue> = None;
             for element in self.elements.iter() {
-                output = element.process(owner, components, args, cx).await?;
+                output = element.execute(owner, components, args, cx).await?;
                 if self.by_first && output.is_some() {
                     return Ok(output);
                 }

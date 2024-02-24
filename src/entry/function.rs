@@ -168,7 +168,10 @@ impl fmt::Display for Function {
 }
 
 impl Operator for Function {
-    fn process<'a>(
+    fn token(&self) -> usize {
+        self.token
+    }
+    fn perform<'a>(
         &'a self,
         _: Option<&'a Component>,
         _: &'a [Component],

@@ -22,12 +22,6 @@ impl Injection {
             Self::Function(hook, _) => hook,
         }
     }
-    pub fn token(&self) -> usize {
-        match self {
-            Self::VariableName(_, v) => v.token,
-            Self::Function(_, v) => v.token,
-        }
-    }
 }
 
 impl fmt::Display for Injection {
@@ -44,7 +38,13 @@ impl fmt::Display for Injection {
 }
 
 impl Operator for Injection {
-    fn process<'a>(
+    fn token(&self) -> usize {
+        match self {
+            Self::VariableName(_, v) => v.token,
+            Self::Function(_, v) => v.token,
+        }
+    }
+    fn perform<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -53,8 +53,8 @@ impl Operator for Injection {
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             match self {
-                Self::VariableName(_, v) => v.process(owner, components, args, cx).await,
-                Self::Function(_, v) => v.process(owner, components, args, cx).await,
+                Self::VariableName(_, v) => v.execute(owner, components, args, cx).await,
+                Self::Function(_, v) => v.execute(owner, components, args, cx).await,
             }
         })
     }
@@ -118,7 +118,10 @@ impl fmt::Display for PatternString {
 }
 
 impl Operator for PatternString {
-    fn process<'a>(
+    fn token(&self) -> usize {
+        self.token
+    }
+    fn perform<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -129,7 +132,7 @@ impl Operator for PatternString {
             let mut output = self.pattern.clone();
             for injection in self.injections.iter() {
                 let val = injection
-                    .process(owner, components, args, cx)
+                    .execute(owner, components, args, cx)
                     .await?
                     .ok_or(operator::E::FailToExtractValue)?
                     .get_as_string()
@@ -146,7 +149,7 @@ impl Operator for PatternString {
 mod reading {
     use crate::{
         entry::PatternString,
-        inf::tests,
+        inf::{operator::Operator, tests},
         reader::{Reader, Reading, E},
     };
 

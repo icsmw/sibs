@@ -97,7 +97,7 @@ pub async fn read(cx: &mut Context) -> Result<(), E> {
             .find(|comp| comp.name.to_string() == component)
         {
             component
-                .process(Some(component), &components, &income, cx)
+                .execute(Some(component), &components, &income, cx)
                 .await?;
             Ok(())
         } else {

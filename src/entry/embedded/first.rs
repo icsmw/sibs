@@ -44,14 +44,17 @@ impl fmt::Display for First {
 }
 
 impl Operator for First {
-    fn process<'a>(
+    fn token(&self) -> usize {
+        self.token
+    }
+    fn perform<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
-        Box::pin(async move { self.block.process(owner, components, args, cx).await })
+        Box::pin(async move { self.block.execute(owner, components, args, cx).await })
     }
 }
 
@@ -134,7 +137,7 @@ mod processing {
             Reader::unbound(include_str!("../../tests/processing/first.sibs").to_string());
         while let Some(task) = Task::read(&mut reader)? {
             let result = task
-                .process(None, &[], &[], &mut cx)
+                .execute(None, &[], &[], &mut cx)
                 .await?
                 .expect("Task returns some value");
             assert_eq!(

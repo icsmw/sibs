@@ -21,19 +21,6 @@ pub enum Action {
     Reference(Reference),
 }
 
-impl Action {
-    pub fn token(&self) -> usize {
-        match self {
-            Self::VariableAssignation(v) => v.token,
-            Self::Reference(v) => v.token,
-            Self::Function(v) => v.token,
-            Self::PatternString(v) => v.token,
-            Self::Command(v) => v.token,
-            Self::Block(v) => v.token,
-        }
-    }
-}
-
 impl fmt::Display for Action {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -52,7 +39,17 @@ impl fmt::Display for Action {
 }
 
 impl Operator for Action {
-    fn process<'a>(
+    fn token(&self) -> usize {
+        match self {
+            Self::VariableAssignation(v) => v.token,
+            Self::Reference(v) => v.token,
+            Self::Function(v) => v.token,
+            Self::PatternString(v) => v.token,
+            Self::Command(v) => v.token,
+            Self::Block(v) => v.token,
+        }
+    }
+    fn perform<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -61,12 +58,12 @@ impl Operator for Action {
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             match self {
-                Self::VariableAssignation(v) => v.process(owner, components, args, cx).await,
-                Self::Reference(v) => v.process(owner, components, args, cx).await,
-                Self::Function(v) => v.process(owner, components, args, cx).await,
-                Self::PatternString(v) => v.process(owner, components, args, cx).await,
-                Self::Command(v) => v.process(owner, components, args, cx).await,
-                Self::Block(v) => v.process(owner, components, args, cx).await,
+                Self::VariableAssignation(v) => v.execute(owner, components, args, cx).await,
+                Self::Reference(v) => v.execute(owner, components, args, cx).await,
+                Self::Function(v) => v.execute(owner, components, args, cx).await,
+                Self::PatternString(v) => v.execute(owner, components, args, cx).await,
+                Self::Command(v) => v.execute(owner, components, args, cx).await,
+                Self::Block(v) => v.execute(owner, components, args, cx).await,
             }
         })
     }
@@ -76,15 +73,6 @@ impl Operator for Action {
 pub enum Condition {
     Function(Function),
     VariableComparing(VariableComparing),
-}
-
-impl Condition {
-    pub fn token(&self) -> usize {
-        match self {
-            Self::Function(v) => v.token,
-            Self::VariableComparing(v) => v.token,
-        }
-    }
 }
 
 impl fmt::Display for Condition {
@@ -101,7 +89,13 @@ impl fmt::Display for Condition {
 }
 
 impl Operator for Condition {
-    fn process<'a>(
+    fn token(&self) -> usize {
+        match self {
+            Self::Function(v) => v.token,
+            Self::VariableComparing(v) => v.token,
+        }
+    }
+    fn perform<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -110,8 +104,8 @@ impl Operator for Condition {
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             match self {
-                Self::Function(v) => v.process(owner, components, args, cx).await,
-                Self::VariableComparing(v) => v.process(owner, components, args, cx).await,
+                Self::Function(v) => v.execute(owner, components, args, cx).await,
+                Self::VariableComparing(v) => v.execute(owner, components, args, cx).await,
             }
         })
     }
@@ -212,7 +206,10 @@ impl fmt::Display for Optional {
 }
 
 impl Operator for Optional {
-    fn process<'a>(
+    fn token(&self) -> usize {
+        self.token
+    }
+    fn perform<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -222,7 +219,7 @@ impl Operator for Optional {
         Box::pin(async move {
             let condition = *self
                 .condition
-                .process(owner, components, args, cx)
+                .execute(owner, components, args, cx)
                 .await?
                 .ok_or(operator::E::FailToExtractConditionValue)?
                 .get_as::<bool>()
@@ -230,7 +227,7 @@ impl Operator for Optional {
             if !condition {
                 Ok(None)
             } else {
-                self.action.process(owner, components, args, cx).await
+                self.action.execute(owner, components, args, cx).await
             }
         })
     }
@@ -240,7 +237,7 @@ impl Operator for Optional {
 mod reading {
     use crate::{
         entry::Optional,
-        inf::tests,
+        inf::{operator::Operator, tests},
         reader::{Reader, Reading, E},
     };
 
@@ -325,7 +322,7 @@ mod processing {
             Reader::unbound(include_str!("../tests/processing/optional.sibs").to_string());
         while let Some(task) = Task::read(&mut reader)? {
             let result = task
-                .process(None, &[], &[], &mut cx)
+                .execute(None, &[], &[], &mut cx)
                 .await?
                 .expect("Task returns some value");
             assert_eq!(

@@ -1,7 +1,7 @@
 use crate::reader::E;
 use console::Style;
 use regex::Regex;
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, fmt::Display, rc::Rc};
 
 #[derive(Debug)]
 pub struct Fragment {
@@ -36,6 +36,7 @@ pub struct Map {
     pub map: HashMap<usize, (usize, usize)>,
     pub reports: Vec<String>,
     pub content: String,
+    cursor: Option<usize>,
     index: usize,
 }
 
@@ -48,11 +49,15 @@ impl Map {
             map: HashMap::new(),
             reports: vec![],
             content: content.to_owned(),
+            cursor: None,
             index: 0,
         }
     }
     pub fn set_content(&mut self, content: &str) {
         self.content = content.to_owned();
+    }
+    pub fn set_cursor(&mut self, token: usize) {
+        self.cursor = Some(token);
     }
     pub fn last(&self) -> Option<(usize, (usize, usize))> {
         if self.index > 0 {
@@ -182,6 +187,18 @@ impl Map {
                 .join("\n"),
         );
         Ok(())
+    }
+    pub fn assign_error<T>(&mut self, err: &T) -> Result<(), E>
+    where
+        T: std::error::Error + Display + ToString,
+    {
+        if !self.reports.is_empty() {
+            Ok(())
+        } else if let (true, Some(token)) = (self.reports.is_empty(), self.cursor) {
+            self.gen_report(&token, err.to_string())
+        } else {
+            Ok(())
+        }
     }
     pub fn post_reports(&self) {
         self.reports.iter().for_each(|report| {

@@ -143,7 +143,10 @@ impl term::Display for Task {
 }
 
 impl Operator for Task {
-    fn process<'a>(
+    fn token(&self) -> usize {
+        self.token
+    }
+    fn perform<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -176,7 +179,7 @@ impl Operator for Task {
             for (i, declaration) in self.declarations.iter().enumerate() {
                 declaration.declare(args[i].to_owned(), cx).await?;
             }
-            job.result(block.process(owner, components, args, cx).await)
+            job.result(block.execute(owner, components, args, cx).await)
                 .await
         })
     }
@@ -284,7 +287,7 @@ mod processing {
         let mut cursor: usize = 0;
         while let Some(task) = Task::read(&mut reader)? {
             let result = task
-                .process(
+                .execute(
                     None,
                     &[],
                     &VALUES[cursor]

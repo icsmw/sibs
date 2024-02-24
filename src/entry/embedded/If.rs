@@ -57,8 +57,8 @@ pub enum Proviso {
     Group(bool, Vec<Proviso>, usize),
 }
 
-impl Proviso {
-    pub fn token(&self) -> usize {
+impl Operator for Proviso {
+    fn token(&self) -> usize {
         match self {
             Self::Variable(_, _, _, token) => *token,
             Self::Combination(_, token) => *token,
@@ -66,10 +66,7 @@ impl Proviso {
             Self::Group(_, _, token) => *token,
         }
     }
-}
-
-impl Operator for Proviso {
-    fn process<'a>(
+    fn perform<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -80,13 +77,13 @@ impl Operator for Proviso {
             match self {
                 Self::Variable(name, cmp, value, _) => {
                     let left = name
-                        .process(owner, components, args, cx)
+                        .execute(owner, components, args, cx)
                         .await?
                         .ok_or(operator::E::VariableIsNotAssigned(name.name.clone()))?
                         .get_as_string()
                         .ok_or(operator::E::FailToGetValueAsString)?;
                     let right = value
-                        .process(owner, components, args, cx)
+                        .execute(owner, components, args, cx)
                         .await?
                         .ok_or(operator::E::FailToGetStringValue)?
                         .get_as_string()
@@ -98,7 +95,7 @@ impl Operator for Proviso {
                 }
                 Self::Function(func, negative, _) => {
                     let result = *func
-                        .process(owner, components, args, cx)
+                        .execute(owner, components, args, cx)
                         .await?
                         .ok_or(operator::E::NoBoolResultFromFunction)?
                         .get_as::<bool>()
@@ -127,7 +124,7 @@ impl Operator for Proviso {
                         } else {
                             iteration = Some(
                                 *proviso
-                                    .process(owner, components, args, cx)
+                                    .execute(owner, components, args, cx)
                                     .await?
                                     .ok_or(operator::E::NoResultFromProviso)?
                                     .get_as::<bool>()
@@ -180,7 +177,13 @@ pub enum Element {
 }
 
 impl Operator for Element {
-    fn process<'a>(
+    fn token(&self) -> usize {
+        match self {
+            Self::If(proviso, _) => proviso.token(),
+            Self::Else(block) => block.token(),
+        }
+    }
+    fn perform<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -191,18 +194,18 @@ impl Operator for Element {
             match self {
                 Self::If(proviso, block) => {
                     if *proviso
-                        .process(owner, components, args, cx)
+                        .execute(owner, components, args, cx)
                         .await?
                         .ok_or(operator::E::NoResultFromProviso)?
                         .get_as::<bool>()
                         .ok_or(operator::E::NoBoolResultFromProviso)?
                     {
-                        block.process(owner, components, args, cx).await
+                        block.execute(owner, components, args, cx).await
                     } else {
                         Ok(None)
                     }
                 }
-                Self::Else(block) => block.process(owner, components, args, cx).await,
+                Self::Else(block) => block.execute(owner, components, args, cx).await,
             }
         })
     }
@@ -376,7 +379,10 @@ impl fmt::Display for If {
 }
 
 impl Operator for If {
-    fn process<'a>(
+    fn token(&self) -> usize {
+        self.token
+    }
+    fn perform<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -385,7 +391,7 @@ impl Operator for If {
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             for element in self.elements.iter() {
-                if let Some(output) = element.process(owner, components, args, cx).await? {
+                if let Some(output) = element.execute(owner, components, args, cx).await? {
                     return Ok(Some(output));
                 }
             }
@@ -398,7 +404,7 @@ impl Operator for If {
 mod reading {
     use crate::{
         entry::{embedded::If::Element, If},
-        inf::tests,
+        inf::{operator::Operator, tests},
         reader::{Reader, Reading, E},
     };
 
@@ -487,7 +493,7 @@ mod processing {
             Reader::unbound(include_str!("../../tests/processing/if.sibs").to_string());
         while let Some(task) = Task::read(&mut reader)? {
             let result = task
-                .process(None, &[], &[], &mut cx)
+                .execute(None, &[], &[], &mut cx)
                 .await?
                 .expect("IF returns some value");
             assert_eq!(

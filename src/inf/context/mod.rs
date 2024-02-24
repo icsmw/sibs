@@ -92,10 +92,12 @@ impl Context {
         self.map.borrow_mut().gen_report(token, msg)?;
         Ok(())
     }
+    pub fn set_map_cursor(&self, token: usize) {
+        self.map.borrow_mut().set_cursor(token);
+    }
     pub fn set_scenario(&mut self, scenario: Scenario) {
         self.scenario = scenario;
     }
-
     pub async fn set_cwd(&mut self, cwd: Option<PathBuf>) -> Result<(), E> {
         if let Some(cwd) = cwd.as_ref() {
             let cwd = self.scenario.to_abs_path(cwd)?;

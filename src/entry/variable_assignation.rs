@@ -18,18 +18,6 @@ pub enum Assignation {
     First(First),
 }
 
-impl Assignation {
-    pub fn token(&self) -> usize {
-        match self {
-            Assignation::PatternString(v) => v.token,
-            Assignation::Block(v) => v.token,
-            Assignation::Values(v) => v.token,
-            Assignation::First(v) => v.token,
-            Assignation::Function(v) => v.token,
-        }
-    }
-}
-
 impl fmt::Display for Assignation {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -47,7 +35,16 @@ impl fmt::Display for Assignation {
 }
 
 impl Operator for Assignation {
-    fn process<'a>(
+    fn token(&self) -> usize {
+        match self {
+            Assignation::PatternString(v) => v.token,
+            Assignation::Block(v) => v.token,
+            Assignation::Values(v) => v.token,
+            Assignation::First(v) => v.token,
+            Assignation::Function(v) => v.token,
+        }
+    }
+    fn perform<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -56,11 +53,11 @@ impl Operator for Assignation {
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             match self {
-                Self::Function(v) => v.process(owner, components, args, cx).await,
-                Self::PatternString(v) => v.process(owner, components, args, cx).await,
-                Self::Values(v) => v.process(owner, components, args, cx).await,
-                Self::Block(v) => v.process(owner, components, args, cx).await,
-                Self::First(v) => v.process(owner, components, args, cx).await,
+                Self::Function(v) => v.execute(owner, components, args, cx).await,
+                Self::PatternString(v) => v.execute(owner, components, args, cx).await,
+                Self::Values(v) => v.execute(owner, components, args, cx).await,
+                Self::Block(v) => v.execute(owner, components, args, cx).await,
+                Self::First(v) => v.execute(owner, components, args, cx).await,
             }
         })
     }
@@ -164,7 +161,10 @@ impl fmt::Display for VariableAssignation {
 }
 
 impl Operator for VariableAssignation {
-    fn process<'a>(
+    fn token(&self) -> usize {
+        self.token
+    }
+    fn perform<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -174,7 +174,7 @@ impl Operator for VariableAssignation {
         Box::pin(async move {
             let assignation = &self.assignation;
             let value = assignation
-                .process(owner, components, args, cx)
+                .execute(owner, components, args, cx)
                 .await?
                 .ok_or(operator::E::NoValueToAssign(self.name.name.clone()))?;
             cx.set_var(self.name.name.clone(), value).await;
@@ -187,7 +187,7 @@ impl Operator for VariableAssignation {
 mod reading {
     use crate::{
         entry::VariableAssignation,
-        inf::tests,
+        inf::{operator::Operator, tests},
         reader::{Reader, Reading, E},
     };
 
@@ -276,7 +276,7 @@ mod processing {
             include_str!("../tests/processing/variable_assignation.sibs").to_string(),
         );
         while let Some(task) = Task::read(&mut reader)? {
-            assert!(task.process(None, &[], &[], &mut cx).await?.is_some());
+            assert!(task.execute(None, &[], &[], &mut cx).await?.is_some());
         }
         for (name, value) in VALUES.iter() {
             assert_eq!(

@@ -54,14 +54,14 @@ impl Executor for Repeat {
             let target = match first {
                 Argument::SimpleString(s) => s.to_string(),
                 Argument::PatternString(value_string) => value_string
-                    .process(None, &[], &[], cx)
+                    .execute(None, &[], &[], cx)
                     .await?
                     .ok_or(Error::NoStringValue)?
                     .get_as::<String>()
                     .ok_or(Error::InvalidArgumentType)?
                     .to_owned(),
                 Argument::VariableName(variable) => variable
-                    .process(None, &[], &[], cx)
+                    .execute(None, &[], &[], cx)
                     .await?
                     .ok_or(Error::NoVariableName)?
                     .get_as::<String>()
@@ -72,14 +72,14 @@ impl Executor for Repeat {
             let count = match second {
                 Argument::SimpleString(s) => s.to_string(),
                 Argument::PatternString(value_string) => value_string
-                    .process(None, &[], &[], cx)
+                    .execute(None, &[], &[], cx)
                     .await?
                     .ok_or(Error::NoStringValue)?
                     .get_as::<String>()
                     .ok_or(Error::InvalidArgumentType)?
                     .to_owned(),
                 Argument::VariableName(variable) => variable
-                    .process(None, &[], &[], cx)
+                    .execute(None, &[], &[], cx)
                     .await?
                     .ok_or(Error::NoVariableName)?
                     .get_as::<String>()

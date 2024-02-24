@@ -15,17 +15,14 @@ pub enum Input {
     Function(Function),
 }
 
-impl Input {
-    pub fn token(&self) -> usize {
+impl Operator for Input {
+    fn token(&self) -> usize {
         match self {
             Self::Function(v) => v.token,
             Self::VariableName(v) => v.token,
         }
     }
-}
-
-impl Operator for Input {
-    fn process<'a>(
+    fn perform<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -34,8 +31,8 @@ impl Operator for Input {
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             match self {
-                Self::VariableName(v) => v.process(owner, components, args, cx),
-                Self::Function(v) => v.process(owner, components, args, cx),
+                Self::VariableName(v) => v.execute(owner, components, args, cx),
+                Self::Function(v) => v.execute(owner, components, args, cx),
             }
             .await
         })
@@ -119,7 +116,10 @@ impl fmt::Display for Each {
 }
 
 impl Operator for Each {
-    fn process<'a>(
+    fn token(&self) -> usize {
+        self.token
+    }
+    fn perform<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -129,7 +129,7 @@ impl Operator for Each {
         Box::pin(async move {
             let inputs = self
                 .input
-                .process(owner, components, args, cx)
+                .execute(owner, components, args, cx)
                 .await?
                 .ok_or(operator::E::NoInputForEach)?
                 .get_as_strings()
@@ -141,7 +141,7 @@ impl Operator for Each {
                     AnyValue::new(iteration.to_string()),
                 )
                 .await;
-                output = self.block.process(owner, components, args, cx).await?;
+                output = self.block.execute(owner, components, args, cx).await?;
             }
             Ok(if output.is_none() {
                 Some(AnyValue::new(()))
@@ -156,7 +156,7 @@ impl Operator for Each {
 mod reading {
     use crate::{
         entry::Each,
-        inf::tests,
+        inf::{operator::Operator, tests},
         reader::{Reader, Reading, E},
     };
 
@@ -237,7 +237,7 @@ mod processing {
         let mut reader =
             Reader::unbound(include_str!("../../tests/processing/each.sibs").to_string());
         while let Some(task) = Task::read(&mut reader)? {
-            assert!(task.process(None, &[], &[], &mut cx).await?.is_some());
+            assert!(task.execute(None, &[], &[], &mut cx).await?.is_some());
         }
         for (name, value) in VALUES.iter() {
             assert_eq!(

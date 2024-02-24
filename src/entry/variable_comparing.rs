@@ -59,7 +59,10 @@ impl fmt::Display for VariableComparing {
 }
 
 impl Operator for VariableComparing {
-    fn process<'a>(
+    fn token(&self) -> usize {
+        self.token
+    }
+    fn perform<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -69,7 +72,7 @@ impl Operator for VariableComparing {
         Box::pin(async move {
             let value = self
                 .name
-                .process(owner, components, args, cx)
+                .execute(owner, components, args, cx)
                 .await?
                 .ok_or(operator::E::VariableIsNotAssigned(self.name.name.clone()))?
                 .get_as_string()

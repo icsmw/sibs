@@ -46,7 +46,10 @@ impl VariableName {
 }
 
 impl Operator for VariableName {
-    fn process<'a>(
+    fn token(&self) -> usize {
+        self.token
+    }
+    fn perform<'a>(
         &'a self,
         _: Option<&'a Component>,
         _: &'a [Component],

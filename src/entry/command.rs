@@ -45,7 +45,10 @@ impl term::Display for Command {
 }
 
 impl Operator for Command {
-    fn process<'a>(
+    fn token(&self) -> usize {
+        self.token
+    }
+    fn perform<'a>(
         &'a self,
         _: Option<&'a Component>,
         _: &'a [Component],
