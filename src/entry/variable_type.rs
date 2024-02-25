@@ -59,7 +59,7 @@ impl Reading<VariableType> for VariableType {
 }
 
 impl VariableType {
-    pub fn new(var_type: String, token: usize) -> Result<Self, E> {
+    pub fn new(var_type: String, token: usize) -> Result<Self, LinkedErr<E>> {
         if Types::String.to_string() == var_type {
             return Ok(Self {
                 var_type: Types::String,
@@ -78,7 +78,7 @@ impl VariableType {
                 token,
             });
         }
-        Err(E::UnknownVariableType(var_type))
+        Err(E::UnknownVariableType(var_type).linked(&token))
     }
 }
 

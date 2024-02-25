@@ -154,10 +154,7 @@ impl Map {
                         format!(
                             "{}{filler}│ {ln}\n{offset}{}\n{offset}{} {}\n",
                             i + 1,
-                            Style::new()
-                                .red()
-                                .bold()
-                                .apply_to("^".repeat(ln.len() - *from_ln - 1)),
+                            Style::new().red().bold().apply_to("^".repeat(*len)),
                             Style::new().red().bold().apply_to("ERROR:"),
                             Style::new().white().apply_to(msg.to_string())
                         )

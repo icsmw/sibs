@@ -1,5 +1,6 @@
 mod error;
 use crate::{
+    error::LinkedErr,
     executors::{self, ExecutorFn},
     inf::{
         any::AnyValue,
@@ -13,6 +14,7 @@ pub use error::E;
 use std::{
     cell::RefCell,
     collections::{hash_map::Entry, HashMap},
+    fmt,
     path::{Path, PathBuf},
     rc::Rc,
 };
@@ -90,6 +92,15 @@ impl Context {
         T: 'a + ToOwned + ToString,
     {
         self.map.borrow_mut().gen_report(token, msg)?;
+        Ok(())
+    }
+    pub fn gen_report_from_err<T>(&self, err: &LinkedErr<T>) -> Result<(), E>
+    where
+        T: fmt::Display + ToString,
+    {
+        if let Some(token) = err.token.as_ref() {
+            self.map.borrow_mut().gen_report(token, err.e.to_string())?;
+        }
         Ok(())
     }
     pub fn set_map_cursor(&self, token: usize) {

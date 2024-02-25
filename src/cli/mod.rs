@@ -81,7 +81,13 @@ pub async fn read(cx: &mut Context) -> Result<(), E> {
         }
     };
     cx.set_scenario(scenario);
-    let components = reader::read_file(cx).await?;
+    let components = match reader::read_file(cx).await {
+        Ok(components) => components,
+        Err(err) => {
+            cx.gen_report_from_err(&err)?;
+            return Err(E::ReaderError(err.e));
+        }
+    };
     let no_actions = defaults.has::<args::help::Help>() || income.is_empty();
     run::<args::help::Help>(&components, &mut defaults, cx)?;
     if no_actions {
