@@ -1,5 +1,6 @@
 use crate::{
     entry::{Function, Meta, SimpleString, Task},
+    error::LinkedErr,
     inf::{
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
@@ -29,7 +30,7 @@ impl Component {
 }
 
 impl Reading<Component> for Component {
-    fn read(reader: &mut Reader) -> Result<Option<Component>, E> {
+    fn read(reader: &mut Reader) -> Result<Option<Component>, LinkedErr<E>> {
         let close = reader.open_token();
         if reader.move_to().char(&[&chars::POUND_SIGN]).is_some() {
             if reader
@@ -47,14 +48,13 @@ impl Reading<Component> for Component {
                     })
                     .unwrap_or_else(|| inner.move_to().end());
                 if name.trim().is_empty() {
-                    Err(reader.report_err(&inner.token()?.id, E::EmptyComponentName)?)?;
+                    Err(E::EmptyComponentName.by_reader(reader))?;
                 }
                 if !Reader::is_ascii_alphabetic_and_alphanumeric(
                     &name,
                     &[&chars::UNDERSCORE, &chars::DASH],
                 ) {
-                    Err(reader
-                        .report_err(&inner.token()?.id, E::InvalidComponentName(name.clone()))?)?;
+                    Err(E::InvalidComponentName(name.clone()).by_reader(reader))?;
                 }
                 let (name, name_token) = (name, inner.token()?.id);
                 let path = inner.rest().trim().to_string();
@@ -64,7 +64,7 @@ impl Reading<Component> for Component {
                     reader.move_to().end()
                 };
                 if inner.trim().is_empty() {
-                    Err(reader.report_err(&name_token, E::NoComponentBody)?)?
+                    Err(E::NoComponentBody.linked(&name_token))?
                 }
                 let mut task_reader = reader.token()?.bound;
                 let mut meta: Option<Meta> = None;
@@ -95,7 +95,7 @@ impl Reading<Component> for Component {
                     token: close(reader),
                 }))
             } else {
-                Err(reader.report_err(&reader.token()?.id, E::NoGroup)?)?
+                Err(E::NoGroup.by_reader(reader))?
             }
         } else {
             Ok(None)
@@ -188,12 +188,13 @@ impl Operator for Component {
 mod reading {
     use crate::{
         entry::Component,
+        error::LinkedErr,
         inf::tests,
         reader::{Reader, Reading, E},
     };
 
     #[test]
-    fn reading() -> Result<(), E> {
+    fn reading() -> Result<(), LinkedErr<E>> {
         let components = include_str!("../tests/reading/component.sibs").to_string();
         let components = components.split('\n').collect::<Vec<&str>>();
         let tasks = include_str!("../tests/reading/tasks.sibs");
@@ -218,7 +219,7 @@ mod reading {
     }
 
     #[test]
-    fn tokens() -> Result<(), E> {
+    fn tokens() -> Result<(), LinkedErr<E>> {
         let components = include_str!("../tests/reading/component.sibs").to_string();
         let components = components.split('\n').collect::<Vec<&str>>();
         let tasks = include_str!("../tests/reading/tasks.sibs");

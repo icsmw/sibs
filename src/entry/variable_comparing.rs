@@ -1,5 +1,6 @@
 use crate::{
     entry::{Cmp, Component, VariableName},
+    error::LinkedErr,
     inf::{
         any::AnyValue,
         context::Context,
@@ -18,13 +19,13 @@ pub struct VariableComparing {
 }
 
 impl Reading<VariableComparing> for VariableComparing {
-    fn read(reader: &mut Reader) -> Result<Option<VariableComparing>, E> {
+    fn read(reader: &mut Reader) -> Result<Option<VariableComparing>, LinkedErr<E>> {
         reader.state().set();
         let close = reader.open_token();
         if let Some(name) = VariableName::read(reader)? {
             if let Some(word) = reader.move_to().word(&[words::CMP_TRUE, words::CMP_FALSE]) {
                 if reader.rest().trim().is_empty() {
-                    Err(E::NoValueAfterComparing)
+                    Err(E::NoValueAfterComparing.by_reader(reader))
                 } else {
                     let mut value = reader.move_to().end().trim().to_string();
                     let mut token = reader.token()?;

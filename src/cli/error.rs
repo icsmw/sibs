@@ -1,5 +1,6 @@
 use crate::{
     error,
+    error::LinkedErr,
     inf::{context, operator, scenario},
     reader,
 };
@@ -22,7 +23,7 @@ pub enum E {
     #[error("IO error: {0}")]
     IO(#[from] std::io::Error),
     #[error("Syntax error: {0}")]
-    Reader(#[from] reader::error::E),
+    ReaderError(reader::error::E),
     #[error("Context error: {0}")]
     ContextError(context::E),
     #[error("Scenario error: {0}")]
@@ -39,6 +40,16 @@ impl From<String> for E {
     }
 }
 
+impl From<reader::error::E> for E {
+    fn from(e: reader::error::E) -> Self {
+        E::ReaderError(e)
+    }
+}
+impl From<LinkedErr<reader::error::E>> for E {
+    fn from(e: LinkedErr<reader::error::E>) -> Self {
+        E::ReaderError(e.e)
+    }
+}
 impl From<error::E> for E {
     fn from(e: error::E) -> Self {
         E::Other(e.msg.to_owned())

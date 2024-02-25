@@ -1,5 +1,6 @@
 use crate::{
     entry::{Block, Component},
+    error::LinkedErr,
     inf::{
         context::Context,
         operator::{Operator, OperatorPinnedResult},
@@ -15,12 +16,12 @@ pub struct First {
 }
 
 impl Reading<First> for First {
-    fn read(reader: &mut Reader) -> Result<Option<First>, E> {
+    fn read(reader: &mut Reader) -> Result<Option<First>, LinkedErr<E>> {
         let close = reader.open_token();
         if reader.move_to().word(&[words::FIRST]).is_some() {
             if let Some(mut block) = Block::read(reader)? {
                 if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
-                    Err(E::MissedSemicolon)
+                    Err(E::MissedSemicolon.linked(&block.token))
                 } else {
                     block.use_as_first();
                     Ok(Some(First {
@@ -29,7 +30,7 @@ impl Reading<First> for First {
                     }))
                 }
             } else {
-                Err(E::NoGroup)
+                Err(E::NoGroup.linked(&reader.token()?.id))
             }
         } else {
             Ok(None)
@@ -62,12 +63,13 @@ impl Operator for First {
 mod reading {
     use crate::{
         entry::First,
+        error::LinkedErr,
         inf::tests,
         reader::{Reader, Reading, E},
     };
 
     #[test]
-    fn reading() -> Result<(), E> {
+    fn reading() -> Result<(), LinkedErr<E>> {
         let mut reader =
             Reader::unbound(include_str!("../../tests/reading/first.sibs").to_string());
         let mut count = 0;
@@ -84,7 +86,7 @@ mod reading {
     }
 
     #[test]
-    fn tokens() -> Result<(), E> {
+    fn tokens() -> Result<(), LinkedErr<E>> {
         let mut reader =
             Reader::unbound(include_str!("../../tests/reading/first.sibs").to_string());
         let mut count = 0;

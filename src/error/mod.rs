@@ -2,6 +2,18 @@ use crate::{cli, reader};
 use std::fmt;
 
 #[derive(Debug)]
+pub struct LinkedErr<T: fmt::Display> {
+    pub token: Option<usize>,
+    pub e: T,
+}
+
+impl<T: fmt::Display> fmt::Display for LinkedErr<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.e)
+    }
+}
+
+#[derive(Debug)]
 pub struct E {
     pub msg: String,
     pub sig: String,

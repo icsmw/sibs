@@ -3,6 +3,7 @@ use crate::{
         Block, Command, Component, Function, PatternString, Reference, VariableAssignation,
         VariableComparing,
     },
+    error::LinkedErr,
     inf::{
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
@@ -119,7 +120,7 @@ pub struct Optional {
 }
 
 impl Reading<Optional> for Optional {
-    fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
+    fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
         reader.state().set();
         let close = reader.open_token();
         if reader
@@ -141,12 +142,12 @@ impl Reading<Optional> for Optional {
                     } else if let Some(function) = Function::read(&mut token.bound)? {
                         Condition::Function(function)
                     } else {
-                        Err(E::NoFunctionOnOptionalAction)?
+                        Err(E::NoFunctionOnOptionalAction.by_reader(reader))?
                     };
                 if reader.move_to().word(&[words::DO_ON]).is_some() {
                     if let Some(block) = Block::read(reader)? {
                         if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
-                            Err(E::MissedSemicolon)?
+                            Err(E::MissedSemicolon.linked(&block.token))?
                         }
                         return Ok(Some(Optional {
                             token: close(reader),
@@ -166,7 +167,7 @@ impl Reading<Optional> for Optional {
                         reader.move_to().next_and_extend();
                         let mut token = reader.token()?;
                         if token.bound.contains().word(&[words::DO_ON]) {
-                            Err(E::NestedOptionalAction)?
+                            Err(E::NestedOptionalAction.by_reader(reader))?
                         }
                         let action = if let Some(reference) = Reference::read(&mut token.bound)? {
                             Action::Reference(reference)
@@ -177,7 +178,7 @@ impl Reading<Optional> for Optional {
                         } else if !token.content.trim().is_empty() {
                             Action::Command(Command::new(token.content, close_right_side(reader))?)
                         } else {
-                            Err(E::NotActionForCondition)?
+                            Err(E::NotActionForCondition.by_reader(reader))?
                         };
                         Ok(Some(Optional {
                             token: close(reader),
@@ -185,10 +186,10 @@ impl Reading<Optional> for Optional {
                             condition,
                         }))
                     } else {
-                        Err(E::MissedSemicolon)?
+                        Err(E::MissedSemicolon.by_reader(reader))?
                     }
                 } else {
-                    Err(E::FailParseOptionalAction)?
+                    Err(E::FailParseOptionalAction.by_reader(reader))?
                 }
             } else {
                 Ok(None)
@@ -237,12 +238,13 @@ impl Operator for Optional {
 mod reading {
     use crate::{
         entry::Optional,
+        error::LinkedErr,
         inf::{operator::Operator, tests},
         reader::{Reader, Reading, E},
     };
 
     #[test]
-    fn reading() -> Result<(), E> {
+    fn reading() -> Result<(), LinkedErr<E>> {
         let mut reader =
             Reader::unbound(include_str!("../tests/reading/optional.sibs").to_string());
         let mut count = 0;
@@ -259,7 +261,7 @@ mod reading {
     }
 
     #[test]
-    fn tokens() -> Result<(), E> {
+    fn tokens() -> Result<(), LinkedErr<E>> {
         let mut reader =
             Reader::unbound(include_str!("../tests/reading/optional.sibs").to_string());
         let mut count = 0;

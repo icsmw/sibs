@@ -1,5 +1,6 @@
 use crate::{
     entry::{Block, Component, First, Function, PatternString, Values, VariableName},
+    error::LinkedErr,
     inf::{
         any::AnyValue,
         context::Context,
@@ -71,7 +72,7 @@ pub struct VariableAssignation {
 }
 
 impl Reading<VariableAssignation> for VariableAssignation {
-    fn read(reader: &mut Reader) -> Result<Option<VariableAssignation>, E> {
+    fn read(reader: &mut Reader) -> Result<Option<VariableAssignation>, LinkedErr<E>> {
         reader.state().set();
         let close = reader.open_token();
         if let Some(name) = VariableName::read(reader)? {
@@ -132,10 +133,10 @@ impl Reading<VariableAssignation> for VariableAssignation {
                         token: close(reader),
                     }))
                 } else {
-                    Err(E::NoComparingOrAssignation)?
+                    Err(E::NoComparingOrAssignation.linked(&token.id))?
                 }
             } else {
-                Err(E::NoComparingOrAssignation)?
+                Err(E::NoComparingOrAssignation.by_reader(reader))?
             }
         } else {
             Ok(None)
@@ -187,12 +188,13 @@ impl Operator for VariableAssignation {
 mod reading {
     use crate::{
         entry::VariableAssignation,
+        error::LinkedErr,
         inf::{operator::Operator, tests},
         reader::{Reader, Reading, E},
     };
 
     #[test]
-    fn reading() -> Result<(), E> {
+    fn reading() -> Result<(), LinkedErr<E>> {
         let mut reader =
             Reader::unbound(include_str!("../tests/reading/variable_assignation.sibs").to_string());
         let mut count = 0;
@@ -209,7 +211,7 @@ mod reading {
     }
 
     #[test]
-    fn tokens() -> Result<(), E> {
+    fn tokens() -> Result<(), LinkedErr<E>> {
         let mut reader =
             Reader::unbound(include_str!("../tests/reading/variable_assignation.sibs").to_string());
         let mut count = 0;
@@ -235,7 +237,7 @@ mod reading {
         Ok(())
     }
     #[test]
-    fn error() -> Result<(), E> {
+    fn error() -> Result<(), LinkedErr<E>> {
         let samples = include_str!("../tests/error/variable_assignation.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;

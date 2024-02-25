@@ -1,6 +1,6 @@
 #[test: ./tmp]
     /// Test SIBS
-    try [
+    try dsds[
         /// Will try to execute terminal command
         ls -lsa;
         @os windows;

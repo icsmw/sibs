@@ -1,5 +1,6 @@
 use crate::{
     entry::{Component, Function, VariableName},
+    error::LinkedErr,
     inf::{
         any::AnyValue,
         context::Context,
@@ -68,7 +69,7 @@ pub struct PatternString {
 }
 
 impl Reading<PatternString> for PatternString {
-    fn read(reader: &mut Reader) -> Result<Option<PatternString>, E> {
+    fn read(reader: &mut Reader) -> Result<Option<PatternString>, LinkedErr<E>> {
         let close = reader.open_token();
         if let Some(inner) = reader.group().closed(&chars::QUOTES) {
             let mut token = reader.token()?;
@@ -84,7 +85,7 @@ impl Reading<PatternString> for PatternString {
 }
 
 impl PatternString {
-    pub fn new(pattern: String, reader: &mut Reader, token: usize) -> Result<Self, E> {
+    pub fn new(pattern: String, reader: &mut Reader, token: usize) -> Result<Self, LinkedErr<E>> {
         let mut injections: Vec<Injection> = vec![];
         while reader.seek_to().char(&chars::TYPE_OPEN) {
             reader.move_to().next();
@@ -97,10 +98,10 @@ impl PatternString {
                 } else if let Some(func) = Function::read(&mut token.bound)? {
                     injections.push(Injection::Function(hook, func));
                 } else {
-                    Err(E::NoVariableReference)?
+                    Err(E::NoVariableReference.linked(&token.id))?
                 }
             } else {
-                Err(E::NoInjectionClose)?
+                Err(E::NoInjectionClose.by_reader(reader))?
             }
         }
         Ok(PatternString {
@@ -149,12 +150,13 @@ impl Operator for PatternString {
 mod reading {
     use crate::{
         entry::PatternString,
+        error::LinkedErr,
         inf::{operator::Operator, tests},
         reader::{Reader, Reading, E},
     };
 
     #[test]
-    fn reading() -> Result<(), E> {
+    fn reading() -> Result<(), LinkedErr<E>> {
         let mut reader =
             Reader::unbound(include_str!("../tests/reading/value_string.sibs").to_string());
         let mut count = 0;
@@ -171,7 +173,7 @@ mod reading {
     }
 
     #[test]
-    fn tokens() -> Result<(), E> {
+    fn tokens() -> Result<(), LinkedErr<E>> {
         let mut reader =
             Reader::unbound(include_str!("../tests/reading/value_string.sibs").to_string());
         let mut count = 0;

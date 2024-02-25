@@ -3,6 +3,7 @@ use crate::{
         Command, Component, Each, First, Function, If, Meta, Optional, PatternString, Reference,
         VariableAssignation, VariableName,
     },
+    error::LinkedErr,
     inf::{
         any::AnyValue,
         context::Context,
@@ -102,7 +103,7 @@ impl Block {
 }
 
 impl Reading<Block> for Block {
-    fn read(reader: &mut Reader) -> Result<Option<Block>, E> {
+    fn read(reader: &mut Reader) -> Result<Option<Block>, LinkedErr<E>> {
         let close = reader.open_token();
         if reader
             .group()
@@ -153,7 +154,7 @@ impl Reading<Block> for Block {
                 }
                 if let Some(el) = PatternString::read(&mut inner)? {
                     if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
-                        Err(reader.report_err(&inner.token()?.id, E::MissedSemicolon)?)?;
+                        Err(E::MissedSemicolon.by_reader(reader))?;
                     }
                     elements.push(Element::PatternString(el));
                     continue;
@@ -255,12 +256,13 @@ impl Operator for Block {
 mod reading {
     use crate::{
         entry::Block,
+        error::LinkedErr,
         inf::tests,
         reader::{Reader, Reading, E},
     };
 
     #[test]
-    fn reading() -> Result<(), E> {
+    fn reading() -> Result<(), LinkedErr<E>> {
         let mut reader = Reader::unbound(format!(
             "[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
             include_str!("../tests/reading/if.sibs"),
@@ -281,7 +283,7 @@ mod reading {
     }
 
     #[test]
-    fn tokens() -> Result<(), E> {
+    fn tokens() -> Result<(), LinkedErr<E>> {
         let mut reader = Reader::unbound(format!(
             "[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
             include_str!("../tests/reading/if.sibs"),

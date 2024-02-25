@@ -1,5 +1,6 @@
 use crate::{
     entry::{VariableName, VariableType, Variants},
+    error::LinkedErr,
     inf::{any::AnyValue, context::Context, operator, term},
     reader::{chars, Reader, Reading, E},
 };
@@ -58,7 +59,7 @@ impl VariableDeclaration {
 }
 
 impl Reading<VariableDeclaration> for VariableDeclaration {
-    fn read(reader: &mut Reader) -> Result<Option<VariableDeclaration>, E> {
+    fn read(reader: &mut Reader) -> Result<Option<VariableDeclaration>, LinkedErr<E>> {
         let close = reader.open_token();
         if let Some(name) = VariableName::read(reader)? {
             if reader.move_to().char(&[&chars::COLON]).is_some() {
@@ -71,7 +72,7 @@ impl Reading<VariableDeclaration> for VariableDeclaration {
                 } else if let Some(values) = Variants::read(reader)? {
                     Some(VariableDeclaration::values(name, values, close(reader)))
                 } else {
-                    return Err(E::NoTypeDeclaration);
+                    return Err(E::NoTypeDeclaration.by_reader(reader));
                 };
                 reader.trim();
                 if matches!(reader.next().char(), Some(chars::SEMICOLON)) {
@@ -79,7 +80,7 @@ impl Reading<VariableDeclaration> for VariableDeclaration {
                 }
                 Ok(declaration)
             } else {
-                Err(E::NoTypeDeclaration)
+                Err(E::NoTypeDeclaration.linked(&name.token))
             }
         } else {
             Ok(None)

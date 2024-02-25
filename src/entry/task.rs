@@ -1,5 +1,6 @@
 use crate::{
     entry::{Block, Component, SimpleString, VariableDeclaration},
+    error::LinkedErr,
     inf::{
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
@@ -30,7 +31,7 @@ impl Task {
 }
 
 impl Reading<Task> for Task {
-    fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
+    fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
         let close = reader.open_token();
         if let Some((name, stopped_on)) = reader
             .until()
@@ -44,7 +45,7 @@ impl Reading<Task> for Task {
                 &name,
                 &[&chars::UNDERSCORE, &chars::DASH],
             ) {
-                Err(reader.report_err(&name_token, E::InvalidTaskName(name.clone()))?)?
+                Err(E::InvalidTaskName(name.clone()).linked(&name_token))?
             }
             let declarations: Vec<VariableDeclaration> = if stopped_on == chars::OPEN_SQ_BRACKET {
                 vec![]
@@ -57,14 +58,14 @@ impl Reading<Task> for Task {
                     declarations.push(variable_declaration);
                 }
                 if !token.bound.rest().trim().is_empty() {
-                    Err(reader.report_err(
-                        &token.id,
-                        E::InvalidTaskArguments(token.bound.rest().trim().to_string()),
-                    )?)?
+                    Err(
+                        E::InvalidTaskArguments(token.bound.rest().trim().to_string())
+                            .linked(&token.id),
+                    )?
                 }
                 declarations
             } else {
-                Err(reader.report_err(&name_token, E::NoTaskArguments)?)?
+                Err(E::NoTaskArguments.linked(&name_token))?
             };
             if let Some(block) = Block::read(reader)? {
                 if reader.move_to().char(&[&chars::SEMICOLON]).is_some() {
@@ -80,7 +81,7 @@ impl Reading<Task> for Task {
                     block: Some(block),
                 }))
             } else {
-                Err(reader.report_err(&name_token, E::FailFindTaskActions)?)
+                Err(E::FailFindTaskActions.linked(&name_token))
             }
         } else {
             Ok(None)
@@ -189,12 +190,13 @@ impl Operator for Task {
 mod reading {
     use crate::{
         entry::Task,
+        error::LinkedErr,
         inf::tests,
         reader::{Reader, Reading, E},
     };
 
     #[test]
-    fn reading() -> Result<(), E> {
+    fn reading() -> Result<(), LinkedErr<E>> {
         let mut reader = Reader::unbound(include_str!("../tests/reading/tasks.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Task::read(&mut reader)? {
@@ -210,7 +212,7 @@ mod reading {
     }
 
     #[test]
-    fn tokens() -> Result<(), E> {
+    fn tokens() -> Result<(), LinkedErr<E>> {
         let mut reader = Reader::unbound(include_str!("../tests/reading/tasks.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Task::read(&mut reader)? {
@@ -270,6 +272,7 @@ mod reading {
 mod processing {
     use crate::{
         entry::Task,
+        error::LinkedErr,
         inf::{
             context::Context,
             operator::{Operator, E},

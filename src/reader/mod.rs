@@ -7,6 +7,7 @@ pub mod words;
 
 use crate::{
     entry::{Component, Function},
+    error::LinkedErr,
     executors::{import::Import, Executor},
     inf::context::Context,
 };
@@ -15,7 +16,7 @@ use map::{Fragment, Map};
 use std::{cell::RefCell, fmt::Display, fs, future::Future, path::PathBuf, pin::Pin, rc::Rc};
 
 pub trait Reading<T> {
-    fn read(reader: &mut Reader) -> Result<Option<T>, E>;
+    fn read(reader: &mut Reader) -> Result<Option<T>, LinkedErr<E>>;
 }
 
 #[derive(Debug)]
@@ -599,13 +600,13 @@ impl Reader {
     // {
     //     self._map.borrow_mut().gen_report(token, msg)
     // }
-    pub fn report_err<T>(&self, token: &usize, err: T) -> Result<T, E>
-    where
-        T: std::error::Error + Display,
-    {
-        self._map.borrow_mut().gen_report(token, err.to_string())?;
-        Ok(err)
-    }
+    // pub fn report_err<T>(&self, token: &usize, err: T) -> Result<T, E>
+    // where
+    //     T: std::error::Error + Display,
+    // {
+    //     self._map.borrow_mut().gen_report(token, err.to_string())?;
+    //     Ok(err)
+    // }
     #[cfg(test)]
     pub fn recent(&mut self) -> &str {
         if self.pos == 0 {
@@ -620,7 +621,7 @@ impl Reader {
 
 pub fn read_file<'a>(
     cx: &'a mut Context,
-) -> Pin<Box<dyn Future<Output = Result<Vec<Component>, E>> + 'a>> {
+) -> Pin<Box<dyn Future<Output = Result<Vec<Component>, LinkedErr<E>>> + 'a>> {
     Box::pin(async {
         if !cx.scenario.filename.exists() {
             Err(E::FileNotExists(

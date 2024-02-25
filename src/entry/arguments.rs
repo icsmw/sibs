@@ -1,5 +1,6 @@
 use crate::{
     entry::{PatternString, SimpleString, VariableName},
+    error::LinkedErr,
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -45,7 +46,7 @@ pub struct Arguments {
 }
 
 impl Reading<Arguments> for Arguments {
-    fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
+    fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
         let mut args = Arguments {
             args: vec![],
             token: 0,
@@ -83,14 +84,14 @@ impl Arguments {
     pub fn get(&self, index: usize) -> Option<&Argument> {
         self.args.get(index)
     }
-    pub fn read_string_args(reader: &mut Reader) -> Result<Vec<Argument>, E> {
+    pub fn read_string_args(reader: &mut Reader) -> Result<Vec<Argument>, LinkedErr<E>> {
         let mut arguments: Vec<Argument> = vec![];
         while let Some(arg) = reader.until().whitespace() {
             reader.move_to().next();
             if !arg.trim().is_empty() {
                 let mut token = reader.token()?;
                 if token.bound.contains().char(&chars::AT) {
-                    Err(reader.report_err(&token.id, E::NestedFunction)?)?
+                    Err(E::NestedFunction.by_reader(&reader))?
                 }
                 if let Some(variable) = VariableName::read(&mut token.bound)? {
                     arguments.push(Argument::VariableName(variable));
@@ -106,7 +107,7 @@ impl Arguments {
         }
         if !reader.rest().trim().is_empty() {
             if reader.contains().char(&chars::AT) {
-                Err(reader.report_err(&reader.token()?.id, E::NestedFunction)?)?
+                Err(E::NestedFunction.by_reader(reader))?
             }
             if let Some(variable) = VariableName::read(reader)? {
                 arguments.push(Argument::VariableName(variable));
@@ -120,7 +121,7 @@ impl Arguments {
         }
         Ok(arguments)
     }
-    pub fn add_args(&mut self, reader: &mut Reader) -> Result<(), E> {
+    pub fn add_args(&mut self, reader: &mut Reader) -> Result<(), LinkedErr<E>> {
         let mut arguments: Vec<Argument> = vec![];
         loop {
             if reader.until().char(&[&chars::QUOTES]).is_some() {
@@ -132,7 +133,7 @@ impl Arguments {
                 if let Some(value_string) = PatternString::read(reader)? {
                     arguments.push(Argument::PatternString(value_string));
                 } else {
-                    Err(reader.report_err(&reader.token()?.id, E::NoStringEnd)?)?
+                    Err(E::NoStringEnd.by_reader(reader))?
                 }
             } else {
                 arguments = [arguments, Arguments::read_string_args(reader)?].concat();

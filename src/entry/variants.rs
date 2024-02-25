@@ -1,4 +1,5 @@
 use crate::{
+    error::LinkedErr,
     inf::term,
     reader::{chars, Reader, Reading, E},
 };
@@ -11,7 +12,7 @@ pub struct Variants {
 }
 
 impl Reading<Variants> for Variants {
-    fn read(reader: &mut Reader) -> Result<Option<Variants>, E> {
+    fn read(reader: &mut Reader) -> Result<Option<Variants>, LinkedErr<E>> {
         let content = reader
             .until()
             .char(&[&chars::SEMICOLON])
@@ -22,23 +23,23 @@ impl Reading<Variants> for Variants {
 }
 
 impl Variants {
-    pub fn new(input: String, token: usize) -> Result<Self, E> {
+    pub fn new(input: String, token: usize) -> Result<Self, LinkedErr<E>> {
         let mut values: Vec<String> = vec![];
         for value in input.split('|') {
             let value = value.trim();
             if !value.is_ascii() {
-                Err(E::NotAsciiValue(value.to_string()))?;
+                Err(E::NotAsciiValue(value.to_string()).linked(&token))?;
             }
             if chars::has_reserved(value) {
-                Err(E::UsingReservedChars)?
+                Err(E::UsingReservedChars.linked(&token))?
             }
             if value.is_empty() {
-                Err(E::EmptyValue)?;
+                Err(E::EmptyValue.linked(&token))?;
             }
             values.push(value.to_string());
         }
         if values.is_empty() {
-            Err(E::NoVariableValues)?;
+            Err(E::NoVariableValues.linked(&token))?;
         }
         Ok(Variants { values, token })
     }

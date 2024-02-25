@@ -1,4 +1,6 @@
-use crate::{error, executors, inf::context};
+use std::fmt;
+
+use crate::{error, error::LinkedErr, executors, inf::context, reader::Reader};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -75,6 +77,8 @@ pub enum E {
     NoProvisoOfCondition,
     #[error("No loop variable EACH($var)")]
     NoLoopVariable,
+    #[error("No loop variable declaration; expecting: EACH($var)")]
+    NoLoopInitialization,
     #[error("After AND or OR should be proviso")]
     RepeatedCombinationOperator,
     #[error("Only string values can be used with conditions")]
@@ -121,6 +125,51 @@ pub enum E {
     ContextError(context::E),
     #[error("Executor error: {0}")]
     ExecutorError(executors::E),
+}
+
+impl E {
+    pub fn linked(self, token: &usize) -> LinkedErr<E> {
+        LinkedErr {
+            token: Some(*token),
+            e: self,
+        }
+    }
+    pub fn by_reader(self, reader: &Reader) -> LinkedErr<E> {
+        match reader.token() {
+            Ok(token) => self.linked(&token.id),
+            Err(e) => e.unlinked(),
+        }
+    }
+    pub fn unlinked(self) -> LinkedErr<E> {
+        LinkedErr {
+            token: None,
+            e: self,
+        }
+    }
+}
+
+impl From<E> for LinkedErr<E> {
+    fn from(e: E) -> Self {
+        e.unlinked()
+    }
+}
+
+impl From<context::E> for LinkedErr<E> {
+    fn from(e: context::E) -> Self {
+        E::ContextError(e).unlinked()
+    }
+}
+
+impl From<executors::E> for LinkedErr<E> {
+    fn from(e: executors::E) -> Self {
+        E::ExecutorError(e).unlinked()
+    }
+}
+
+impl From<std::io::Error> for LinkedErr<E> {
+    fn from(e: std::io::Error) -> Self {
+        E::IO(e).unlinked()
+    }
 }
 
 impl From<error::E> for E {

@@ -371,12 +371,13 @@ mod walker {
 #[cfg(test)]
 mod reading {
     use crate::{
+        error::LinkedErr,
         inf::context::Context,
         reader::{error::E, read_file},
     };
 
     #[async_std::test]
-    async fn reading() -> Result<(), E> {
+    async fn reading() -> Result<(), LinkedErr<E>> {
         let target = std::env::current_dir()
             .unwrap()
             .join("./src/tests/reading/full/build.sibs");

@@ -1,5 +1,6 @@
 use crate::{
     entry::{Arguments, Component},
+    error::LinkedErr,
     inf::{
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
@@ -18,7 +19,7 @@ pub struct Function {
 }
 
 impl Reading<Function> for Function {
-    fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
+    fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
         reader.state().set();
         reader.move_to().any();
         let close = reader.open_token();
@@ -37,7 +38,7 @@ impl Reading<Function> for Function {
                 &name,
                 &[&chars::UNDERSCORE, &chars::DASH],
             ) {
-                Err(E::InvalidFunctionName)?;
+                Err(E::InvalidFunctionName.by_reader(reader))?;
             }
             if matches!(ends_with, Some(chars::SEMICOLON)) {
                 reader.move_to().next();
@@ -51,7 +52,7 @@ impl Reading<Function> for Function {
                 reader.move_to().next();
                 if let Some(next) = reader.next().char() {
                     if !next.is_whitespace() {
-                        Err(E::InvalidFunctionName)?;
+                        Err(E::InvalidFunctionName.by_reader(reader))?;
                     }
                 }
             }
@@ -73,7 +74,7 @@ impl Reading<Function> for Function {
                 if matches!(reader.prev().word(2).as_deref(), Some(words::DO_ON))
                     && !matches!(reader.prev().nth(3), Some(chars::SERIALIZING))
                 {
-                    Err(E::NestedOptionalAction)?
+                    Err(E::NestedOptionalAction.by_reader(reader))?
                 }
                 let feed = Self::new(
                     close(reader),
@@ -86,7 +87,7 @@ impl Reading<Function> for Function {
                     parent_func.set_token(close(reader));
                     Ok(Some(parent_func))
                 } else {
-                    Err(E::NoDestFunction)
+                    Err(E::NoDestFunction.linked(&feed.token))
                 }
             } else {
                 Ok(Some(Self::new(
@@ -108,7 +109,7 @@ impl Function {
         mut reader: Option<&mut Reader>,
         name: String,
         tolerance: bool,
-    ) -> Result<Self, E> {
+    ) -> Result<Self, LinkedErr<E>> {
         Ok(Self {
             token,
             name,
@@ -191,12 +192,13 @@ impl Operator for Function {
 mod reading {
     use crate::{
         entry::Function,
+        error::LinkedErr,
         inf::tests,
         reader::{Reader, Reading, E},
     };
 
     #[test]
-    fn reading() -> Result<(), E> {
+    fn reading() -> Result<(), LinkedErr<E>> {
         let content = include_str!("../tests/reading/function.sibs").to_string();
         let len = content.split('\n').count();
         let mut reader = Reader::unbound(content);
@@ -214,7 +216,7 @@ mod reading {
     }
 
     #[test]
-    fn tokens() -> Result<(), E> {
+    fn tokens() -> Result<(), LinkedErr<E>> {
         let content = include_str!("../tests/reading/function.sibs").to_string();
         let len = content.split('\n').count();
         let mut reader = Reader::unbound(content);

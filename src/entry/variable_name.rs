@@ -1,5 +1,6 @@
 use crate::{
     entry::Component,
+    error::LinkedErr,
     inf::{
         any::AnyValue,
         context::Context,
@@ -16,7 +17,7 @@ pub struct VariableName {
 }
 
 impl Reading<VariableName> for VariableName {
-    fn read(reader: &mut Reader) -> Result<Option<VariableName>, E> {
+    fn read(reader: &mut Reader) -> Result<Option<VariableName>, LinkedErr<E>> {
         reader.move_to().any();
         let close = reader.open_token();
         if reader.move_to().char(&[&chars::DOLLAR]).is_some() {
@@ -33,12 +34,12 @@ impl Reading<VariableName> for VariableName {
 }
 
 impl VariableName {
-    pub fn new(mut name: String, token: usize) -> Result<Self, E> {
+    pub fn new(mut name: String, token: usize) -> Result<Self, LinkedErr<E>> {
         name = name.trim().to_string();
         if !Reader::is_ascii_alphabetic_and_alphanumeric(&name, &[&chars::UNDERSCORE, &chars::DASH])
             || name.is_empty()
         {
-            Err(E::InvalidVariableName)
+            Err(E::InvalidVariableName.linked(&token))
         } else {
             Ok(Self { name, token })
         }
@@ -79,11 +80,12 @@ impl fmt::Display for VariableName {
 mod reading {
     use crate::{
         entry::VariableName,
+        error::LinkedErr,
         reader::{Reader, Reading, E},
     };
 
     #[test]
-    fn reading() -> Result<(), E> {
+    fn reading() -> Result<(), LinkedErr<E>> {
         let samples = include_str!("../tests/reading/variable_name.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
@@ -97,7 +99,7 @@ mod reading {
     }
 
     #[test]
-    fn tokens() -> Result<(), E> {
+    fn tokens() -> Result<(), LinkedErr<E>> {
         let samples = include_str!("../tests/reading/variable_name.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
@@ -114,7 +116,7 @@ mod reading {
     }
 
     #[test]
-    fn error() -> Result<(), E> {
+    fn error() -> Result<(), LinkedErr<E>> {
         let samples = include_str!("../tests/error/variable_name.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;

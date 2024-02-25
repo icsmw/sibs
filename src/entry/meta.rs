@@ -1,4 +1,5 @@
 use crate::{
+    error::LinkedErr,
     inf::term::{self, Term},
     reader::{chars, words, Reader, Reading, E},
 };
@@ -20,13 +21,13 @@ impl Meta {
 }
 
 impl Reading<Meta> for Meta {
-    fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
+    fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
         let mut inner: Vec<String> = vec![];
         while reader.move_to().word(&[words::META]).is_some() {
             if let Some((line, _)) = reader.until().char(&[&chars::CARET]) {
                 inner.push(line.trim().to_string());
             } else {
-                Err(E::NoMetaContent)?
+                Err(E::NoMetaContent.by_reader(reader))?
             }
         }
         if inner.is_empty() {

@@ -1,4 +1,5 @@
 use crate::{
+    error::LinkedErr,
     executors,
     inf::{context, spawner, tracker},
     reader,
@@ -98,5 +99,11 @@ impl From<executors::E> for E {
 impl From<reader::error::E> for E {
     fn from(e: reader::error::E) -> Self {
         Self::ReaderError(e)
+    }
+}
+
+impl From<LinkedErr<reader::error::E>> for E {
+    fn from(e: LinkedErr<reader::error::E>) -> Self {
+        Self::ReaderError(e.e)
     }
 }

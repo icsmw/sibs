@@ -1,5 +1,6 @@
 use crate::{
     entry::{Block, Component, Function, PatternString, VariableName},
+    error::LinkedErr,
     inf::{
         any::AnyValue,
         context::Context,
@@ -231,7 +232,7 @@ pub struct If {
 }
 
 impl Reading<If> for If {
-    fn read(reader: &mut Reader) -> Result<Option<If>, E> {
+    fn read(reader: &mut Reader) -> Result<Option<If>, LinkedErr<E>> {
         let mut elements: Vec<Element> = vec![];
         let close = reader.open_token();
         while !reader.rest().trim().is_empty() {
@@ -241,11 +242,11 @@ impl Reading<If> for If {
                     if let Some(block) = Block::read(reader)? {
                         elements.push(Element::If(proviso, block));
                     } else {
-                        Err(E::NotClosedGroup)?
+                        Err(E::NotClosedGroup.linked(&proviso.token()))?
                     }
                     continue;
                 } else {
-                    Err(E::NoGroup)?
+                    Err(E::NoGroup.by_reader(reader))?
                 }
             }
             if elements.is_empty() {
@@ -266,13 +267,13 @@ impl Reading<If> for If {
                             token: close(reader),
                         }));
                     } else {
-                        Err(E::MissedSemicolon)?
+                        Err(E::MissedSemicolon.by_reader(reader))?
                     }
                 } else {
-                    Err(E::NoGroup)?
+                    Err(E::NoGroup.by_reader(reader))?
                 }
             } else {
-                Err(E::MissedSemicolon)?
+                Err(E::MissedSemicolon.by_reader(reader))?
             }
         }
         Ok(None)
@@ -280,7 +281,7 @@ impl Reading<If> for If {
 }
 
 impl If {
-    pub fn inner(reader: &mut Reader) -> Result<Proviso, E> {
+    pub fn inner(reader: &mut Reader) -> Result<Proviso, LinkedErr<E>> {
         let close = reader.open_token();
         if let Some(variable_name) = VariableName::read(reader)? {
             if let Some(word) = reader.move_to().word(&[words::CMP_TRUE, words::CMP_FALSE]) {
@@ -296,20 +297,20 @@ impl If {
                         close(reader),
                     ));
                 } else {
-                    Err(E::NoStringValueWithCondition)?
+                    Err(E::NoStringValueWithCondition.linked(&variable_name.token))?
                 }
             } else {
-                Err(E::MissedComparingOperator)?
+                Err(E::MissedComparingOperator.linked(&variable_name.token))?
             }
         }
         let negative = reader.move_to().char(&[&chars::EXCLAMATION]).is_some();
         if let Some(func) = Function::read(reader)? {
             Ok(Proviso::Function(func, negative, close(reader)))
         } else {
-            Err(E::NoProvisoOfCondition)
+            Err(E::NoProvisoOfCondition.linked(&reader.token()?.id))
         }
     }
-    pub fn proviso(reader: &mut Reader, root: bool) -> Result<Proviso, E> {
+    pub fn proviso(reader: &mut Reader, root: bool) -> Result<Proviso, LinkedErr<E>> {
         let mut proviso: Vec<Proviso> = vec![];
         let close = reader.open_token();
         while !reader.rest().trim().is_empty() {
@@ -322,27 +323,27 @@ impl If {
                         .char(&[&chars::OPEN_BRACKET])
                         .is_some()
                     {
-                        Err(E::NestedConditionGroups)?
+                        Err(E::NestedConditionGroups.by_reader(reader))?
                     }
                     proviso.push(If::proviso(&mut group_reader, false)?);
                     continue;
                 } else {
-                    Err(E::NotClosedConditionGroup)?
+                    Err(E::NotClosedConditionGroup.by_reader(reader))?
                 }
             }
             if let Some((_, combination)) = reader.until().word(&[words::AND, words::OR]) {
                 let mut token = reader.token()?;
                 if !reader.move_to().whitespace() {
-                    Err(E::NoWhitespaceAfterCondition)?;
+                    Err(E::NoWhitespaceAfterCondition.by_reader(reader))?;
                 }
                 if proviso.last().is_none() && token.content.trim().is_empty() {
-                    Err(E::NoProvisoOfCondition)?
+                    Err(E::NoProvisoOfCondition.by_reader(reader))?
                 }
                 if !token.content.trim().is_empty() {
                     proviso.push(If::inner(&mut token.bound)?);
                 }
                 if let Some(Proviso::Combination(_, _)) = proviso.last() {
-                    Err(E::RepeatedCombinationOperator)?
+                    Err(E::RepeatedCombinationOperator.by_reader(reader))?
                 }
                 proviso.push(Proviso::Combination(
                     if combination == words::AND {
@@ -357,7 +358,7 @@ impl If {
             if matches!(proviso.last(), Some(Proviso::Combination(_, _))) || proviso.is_empty() {
                 proviso.push(If::inner(reader)?);
             } else {
-                Err(E::NoProvisoOfCondition)?
+                Err(E::NoProvisoOfCondition.by_reader(reader))?
             }
         }
         Ok(Proviso::Group(root, proviso, close(reader)))
@@ -404,12 +405,13 @@ impl Operator for If {
 mod reading {
     use crate::{
         entry::{embedded::If::Element, If},
+        error::LinkedErr,
         inf::{operator::Operator, tests},
         reader::{Reader, Reading, E},
     };
 
     #[test]
-    fn reading() -> Result<(), E> {
+    fn reading() -> Result<(), LinkedErr<E>> {
         let mut reader = Reader::unbound(include_str!("../../tests/reading/if.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = If::read(&mut reader)? {
@@ -425,7 +427,7 @@ mod reading {
     }
 
     #[test]
-    fn tokens() -> Result<(), E> {
+    fn tokens() -> Result<(), LinkedErr<E>> {
         let mut reader = Reader::unbound(include_str!("../../tests/reading/if.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = If::read(&mut reader)? {

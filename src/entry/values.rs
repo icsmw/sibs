@@ -1,5 +1,6 @@
 use crate::{
     entry::{Component, Function, PatternString, SimpleString, VariableName},
+    error::LinkedErr,
     inf::{
         any::AnyValue,
         context::Context,
@@ -81,7 +82,7 @@ pub struct Values {
 }
 
 impl Reading<Values> for Values {
-    fn read(reader: &mut Reader) -> Result<Option<Values>, E> {
+    fn read(reader: &mut Reader) -> Result<Option<Values>, LinkedErr<E>> {
         let close = reader.open_token();
         if reader
             .group()
@@ -92,7 +93,7 @@ impl Reading<Values> for Values {
             let mut inner = token.bound;
             let mut elements: Vec<Element> = vec![];
             if inner.rest().trim().is_empty() {
-                Err(E::EmptyValue)?;
+                Err(E::EmptyValue.linked(&token.id))?;
             }
             let mut count = 0usize;
             while !inner.rest().trim().is_empty() {
@@ -100,10 +101,10 @@ impl Reading<Values> for Values {
                     inner.until().char(&[&chars::COMMA, &chars::SEMICOLON])
                 {
                     if char == chars::SEMICOLON {
-                        Err(E::UnexpectedSemicolon)?;
+                        Err(E::UnexpectedSemicolon.by_reader(reader))?;
                     }
                     if candidate.trim().is_empty() {
-                        Err(E::EmptyValue)?;
+                        Err(E::EmptyValue.by_reader(reader))?;
                     }
                     inner.move_to().next();
                     count += 1;
@@ -123,7 +124,7 @@ impl Reading<Values> for Values {
                 if let Some(el) = PatternString::read(&mut reader)? {
                     elements.push(Element::PatternString(el));
                 } else if reader.rest().trim().is_empty() {
-                    Err(E::EmptyValue)?;
+                    Err(E::EmptyValue.by_reader(&reader))?;
                 } else {
                     elements.push(Element::SimpleString(SimpleString {
                         value: reader.rest().trim().to_owned(),
@@ -131,13 +132,11 @@ impl Reading<Values> for Values {
                     }));
                 }
             }
+            let token = close(reader);
             if count + 1 != elements.len() {
-                Err(E::RedundantComma)?;
+                Err(E::RedundantComma.linked(&token))?;
             }
-            Ok(Some(Values {
-                token: close(reader),
-                elements,
-            }))
+            Ok(Some(Values { token, elements }))
         } else {
             Ok(None)
         }
@@ -207,12 +206,13 @@ impl Operator for Values {
 mod reading {
     use crate::{
         entry::Values,
+        error::LinkedErr,
         inf::{operator::Operator, tests},
         reader::{Reader, Reading, E},
     };
 
     #[test]
-    fn reading() -> Result<(), E> {
+    fn reading() -> Result<(), LinkedErr<E>> {
         let samples = include_str!("../tests/reading/values.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
@@ -226,7 +226,7 @@ mod reading {
     }
 
     #[test]
-    fn tokens() -> Result<(), E> {
+    fn tokens() -> Result<(), LinkedErr<E>> {
         let samples = include_str!("../tests/reading/values.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
@@ -250,7 +250,7 @@ mod reading {
     }
 
     #[test]
-    fn error() -> Result<(), E> {
+    fn error() -> Result<(), LinkedErr<E>> {
         let samples = include_str!("../tests/error/values.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;

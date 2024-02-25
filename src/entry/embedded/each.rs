@@ -1,5 +1,6 @@
 use crate::{
     entry::{Block, Component, Function, VariableName},
+    error::LinkedErr,
     inf::{
         any::AnyValue,
         context::Context,
@@ -61,7 +62,7 @@ pub struct Each {
 }
 
 impl Reading<Each> for Each {
-    fn read(reader: &mut Reader) -> Result<Option<Each>, E> {
+    fn read(reader: &mut Reader) -> Result<Option<Each>, LinkedErr<E>> {
         let close = reader.open_token();
         if reader.move_to().word(&[words::EACH]).is_some() {
             if reader
@@ -71,18 +72,19 @@ impl Reading<Each> for Each {
             {
                 if let Some(variable) = VariableName::read(&mut reader.token()?.bound)? {
                     if reader.until().char(&[&chars::OPEN_SQ_BRACKET]).is_some() {
-                        let mut inner_reader = reader.token()?.bound;
+                        let mut inner_token = reader.token()?;
+                        let mut inner_reader = inner_token.bound;
                         let input =
                             if let Some(variable_name) = VariableName::read(&mut inner_reader)? {
                                 Input::VariableName(variable_name)
                             } else if let Some(function) = Function::read(&mut inner_reader)? {
                                 Input::Function(function)
                             } else {
-                                Err(E::NoLoopInput)?
+                                Err(E::NoLoopInput.linked(&inner_token.id))?
                             };
                         if let Some(block) = Block::read(reader)? {
                             if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
-                                Err(E::MissedSemicolon)
+                                Err(E::MissedSemicolon.linked(&inner_token.id))
                             } else {
                                 Ok(Some(Each {
                                     variable,
@@ -92,16 +94,16 @@ impl Reading<Each> for Each {
                                 }))
                             }
                         } else {
-                            Err(E::NoGroup)
+                            Err(E::NoGroup.linked(&inner_token.id))
                         }
                     } else {
-                        Err(E::NoGroup)
+                        Err(E::NoGroup.linked(&variable.token))
                     }
                 } else {
-                    Err(E::NoLoopVariable)
+                    Err(E::NoLoopVariable.linked(&reader.token()?.id))
                 }
             } else {
-                Err(E::NoLoopVariable)
+                Err(E::NoLoopInitialization.linked(&reader.token()?.id))
             }
         } else {
             Ok(None)
@@ -156,12 +158,13 @@ impl Operator for Each {
 mod reading {
     use crate::{
         entry::Each,
+        error::LinkedErr,
         inf::{operator::Operator, tests},
         reader::{Reader, Reading, E},
     };
 
     #[test]
-    fn reading() -> Result<(), E> {
+    fn reading() -> Result<(), LinkedErr<E>> {
         let mut reader = Reader::unbound(include_str!("../../tests/reading/each.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Each::read(&mut reader)? {
@@ -177,7 +180,7 @@ mod reading {
     }
 
     #[test]
-    fn tokens() -> Result<(), E> {
+    fn tokens() -> Result<(), LinkedErr<E>> {
         let mut reader = Reader::unbound(include_str!("../../tests/reading/each.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Each::read(&mut reader)? {

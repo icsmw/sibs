@@ -1,5 +1,6 @@
 use crate::{
     entry::{Component, VariableName},
+    error::LinkedErr,
     inf::{
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
@@ -49,7 +50,7 @@ pub struct Reference {
 }
 
 impl Reading<Reference> for Reference {
-    fn read(reader: &mut Reader) -> Result<Option<Self>, E> {
+    fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
         let close = reader.open_token();
         if reader.move_to().char(&[&chars::COLON]).is_some() {
             let mut path: Vec<String> = vec![];
@@ -67,7 +68,7 @@ impl Reading<Reference> for Reference {
                 })
             {
                 if content.trim().is_empty() {
-                    Err(E::EmptyPathToReference)?
+                    Err(E::EmptyPathToReference.by_reader(reader))?
                 }
                 path.push(content);
                 reader.move_to().next();
@@ -117,21 +118,22 @@ impl Reading<Reference> for Reference {
                         );
                     }
                     if !token.bound.rest().trim().is_empty() {
-                        Err(E::UnrecognizedCode(token.bound.rest().to_string()))?;
+                        Err(E::UnrecognizedCode(token.bound.rest().to_string()).by_reader(reader))?;
                     }
                 }
                 path.push(name);
             }
+            let token = close(reader);
             for part in path.iter() {
                 if !Reader::is_ascii_alphabetic_and_alphanumeric(
                     part,
                     &[&chars::UNDERSCORE, &chars::DASH],
                 ) {
-                    Err(E::InvalidReference(part.to_owned()))?
+                    Err(E::InvalidReference(part.to_owned()).linked(&token))?
                 }
             }
             Ok(Some(Reference {
-                token: close(reader),
+                token,
                 path,
                 inputs,
             }))
@@ -210,12 +212,13 @@ impl Operator for Reference {
 mod reading {
     use crate::{
         entry::Reference,
+        error::LinkedErr,
         inf::tests,
         reader::{Reader, Reading, E},
     };
 
     #[test]
-    fn reading() -> Result<(), E> {
+    fn reading() -> Result<(), LinkedErr<E>> {
         let mut reader = Reader::unbound(include_str!("../tests/reading/refs.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Reference::read(&mut reader)? {
@@ -231,7 +234,7 @@ mod reading {
     }
 
     #[test]
-    fn error() -> Result<(), E> {
+    fn error() -> Result<(), LinkedErr<E>> {
         let samples = include_str!("../tests/error/refs.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
