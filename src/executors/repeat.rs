@@ -11,7 +11,7 @@ const NAME: &str = "repeat";
 pub enum Error {
     #[error("No arguments; path required")]
     NoArguments,
-    #[error("Only one argument is required: path")]
+    #[error("Expecting 2 arguments: @repeat {{string}} {{count}};")]
     InvalidNumberOfArguments,
     #[error("Invalid argument type; expected string.")]
     InvalidArgumentType,

@@ -1,0 +1,8 @@
+test [
+    $a = @get_os;
+    @os $a;
+];
+test [
+    $a = @get_os;
+    @os $a > @repeat 3;
+];

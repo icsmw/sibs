@@ -11,7 +11,7 @@ const NAME: &str = "os";
 pub enum Error {
     #[error("No arguments; path required")]
     NoArguments,
-    #[error("Only one argument is required: path")]
+    #[error("Expecting string as a single argument; ex: @os linux;")]
     InvalidNumberOfArguments,
     #[error("Invalid argument type; expected string.")]
     InvalidArgumentType,

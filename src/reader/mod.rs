@@ -594,19 +594,6 @@ impl Reader {
     pub fn get_fragment(&self, token: &usize) -> Result<Fragment, E> {
         self._map.borrow().get_fragment(token)
     }
-    // pub fn gen_report<'a, T>(&self, token: &usize, msg: T) -> Result<(), E>
-    // where
-    //     T: 'a + ToOwned + ToString,
-    // {
-    //     self._map.borrow_mut().gen_report(token, msg)
-    // }
-    // pub fn report_err<T>(&self, token: &usize, err: T) -> Result<T, E>
-    // where
-    //     T: std::error::Error + Display,
-    // {
-    //     self._map.borrow_mut().gen_report(token, err.to_string())?;
-    //     Ok(err)
-    // }
     #[cfg(test)]
     pub fn recent(&mut self) -> &str {
         if self.pos == 0 {
@@ -619,9 +606,9 @@ impl Reader {
     }
 }
 
-pub fn read_file<'a>(
-    cx: &'a mut Context,
-) -> Pin<Box<dyn Future<Output = Result<Vec<Component>, LinkedErr<E>>> + 'a>> {
+pub type ReadFileResult = Result<Vec<Component>, LinkedErr<E>>;
+
+pub fn read_file<'a>(cx: &'a mut Context) -> Pin<Box<dyn Future<Output = ReadFileResult> + 'a>> {
     Box::pin(async {
         if !cx.scenario.filename.exists() {
             Err(E::FileNotExists(

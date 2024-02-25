@@ -1,4 +1,5 @@
 mod error;
+pub mod get_os;
 pub mod import;
 pub mod os;
 pub mod repeat;
@@ -26,6 +27,9 @@ pub fn register(cx: &mut Context) -> Result<(), E> {
         repeat::Repeat::get_name(),
         <repeat::Repeat as Executor>::execute,
     )?;
-
+    cx.add_fn(
+        get_os::GetOs::get_name(),
+        <get_os::GetOs as Executor>::execute,
+    )?;
     Ok(())
 }

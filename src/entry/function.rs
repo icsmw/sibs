@@ -180,6 +180,14 @@ impl Operator for Function {
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async {
+            if let Some(func) = self.feed.as_ref() {
+                let _result = cx
+                    .get_fn(&func.name)
+                    .ok_or(operator::E::NoFunctionExecutor(self.name.clone()))?(
+                    func, cx
+                )
+                .await?;
+            }
             let executor = cx
                 .get_fn(&self.name)
                 .ok_or(operator::E::NoFunctionExecutor(self.name.clone()))?;
@@ -256,6 +264,36 @@ mod reading {
             count += 1;
         }
         assert_eq!(count, samples.len());
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod processing {
+    use crate::{
+        entry::Task,
+        inf::{
+            context::Context,
+            operator::{Operator, E},
+        },
+        reader::{Reader, Reading},
+    };
+
+    #[async_std::test]
+    async fn reading() -> Result<(), E> {
+        let mut cx = Context::unbound()?;
+        let mut reader =
+            Reader::unbound(include_str!("../tests/processing/functions.sibs").to_string());
+        while let Some(task) = Task::read(&mut reader)? {
+            let result = task
+                .execute(None, &[], &[], &mut cx)
+                .await?
+                .expect("Task returns some value");
+            assert_eq!(
+                result.get_as_string().expect("Task returns string value"),
+                "true".to_owned()
+            );
+        }
         Ok(())
     }
 }
