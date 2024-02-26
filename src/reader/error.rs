@@ -93,6 +93,8 @@ pub enum E {
     RepeatedCombinationOperator,
     #[error("Only string values can be used with conditions")]
     NoStringValueWithCondition,
+    #[error("Only variables can be compared with string")]
+    OnlyVariableCanBeCompared,
     #[error("Expecting = or ==")]
     NoComparingOrAssignation,
     #[error("No component body")]

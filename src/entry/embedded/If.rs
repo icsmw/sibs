@@ -283,31 +283,32 @@ impl Reading<If> for If {
 impl If {
     pub fn inner(reader: &mut Reader) -> Result<Proviso, LinkedErr<E>> {
         let close = reader.open_token();
-        if let Some(variable_name) = VariableName::read(reader)? {
-            if let Some(word) = reader.move_to().word(&[words::CMP_TRUE, words::CMP_FALSE]) {
-                if let Some(value_string) = PatternString::read(reader)? {
-                    return Ok(Proviso::Variable(
-                        variable_name,
-                        if word == words::CMP_TRUE {
-                            Cmp::Equal
-                        } else {
-                            Cmp::NotEqual
-                        },
-                        value_string,
-                        close(reader),
-                    ));
-                } else {
-                    Err(E::NoStringValueWithCondition.linked(&variable_name.token))?
-                }
+        if let Some((_, word)) = reader.until().word(&[words::CMP_TRUE, words::CMP_FALSE]) {
+            let mut inner = reader.token()?;
+            let _ = reader.move_to().word(&[words::CMP_TRUE, words::CMP_FALSE]);
+            let value_string = PatternString::read(reader)?
+                .ok_or(E::NoStringValueWithCondition.linked(&inner.id))?;
+            if let Some(variable_name) = VariableName::read(&mut inner.bound)? {
+                Ok(Proviso::Variable(
+                    variable_name,
+                    if word == words::CMP_TRUE {
+                        Cmp::Equal
+                    } else {
+                        Cmp::NotEqual
+                    },
+                    value_string,
+                    close(reader),
+                ))
             } else {
-                Err(E::MissedComparingOperator.linked(&variable_name.token))?
+                Err(E::OnlyVariableCanBeCompared.linked(&inner.id))
             }
-        }
-        let negative = reader.move_to().char(&[&chars::EXCLAMATION]).is_some();
-        if let Some(func) = Function::read(reader)? {
-            Ok(Proviso::Function(func, negative, close(reader)))
         } else {
-            Err(E::NoProvisoOfCondition.linked(&reader.token()?.id))
+            let negative = reader.move_to().char(&[&chars::EXCLAMATION]).is_some();
+            if let Some(func) = Function::read(reader)? {
+                Ok(Proviso::Function(func, negative, close(reader)))
+            } else {
+                Err(E::NoProvisoOfCondition.linked(&reader.token()?.id))
+            }
         }
     }
     pub fn proviso(reader: &mut Reader, root: bool) -> Result<Proviso, LinkedErr<E>> {
