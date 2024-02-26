@@ -282,12 +282,13 @@ impl Reading<If> for If {
 
 impl If {
     pub fn inner(reader: &mut Reader) -> Result<Proviso, LinkedErr<E>> {
+        let fragment_token_id = reader.token()?.id;
         let close = reader.open_token();
         if let Some((_, word)) = reader.until().word(&[words::CMP_TRUE, words::CMP_FALSE]) {
             let mut inner = reader.token()?;
             let _ = reader.move_to().word(&[words::CMP_TRUE, words::CMP_FALSE]);
             let value_string = PatternString::read(reader)?
-                .ok_or(E::NoStringValueWithCondition.linked(&inner.id))?;
+                .ok_or(E::NoStringValueWithCondition.linked(&fragment_token_id))?;
             if let Some(variable_name) = VariableName::read(&mut inner.bound)? {
                 Ok(Proviso::Variable(
                     variable_name,
@@ -300,14 +301,14 @@ impl If {
                     close(reader),
                 ))
             } else {
-                Err(E::OnlyVariableCanBeCompared.linked(&inner.id))
+                Err(E::OnlyVariableCanBeCompared.linked(&fragment_token_id))
             }
         } else {
             let negative = reader.move_to().char(&[&chars::EXCLAMATION]).is_some();
             if let Some(func) = Function::read(reader)? {
                 Ok(Proviso::Function(func, negative, close(reader)))
             } else {
-                Err(E::NoProvisoOfCondition.linked(&reader.token()?.id))
+                Err(E::NoProvisoOfCondition.linked(&fragment_token_id))
             }
         }
     }
