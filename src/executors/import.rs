@@ -1,5 +1,4 @@
 use crate::{
-    entry::{Argument, Function},
     executors::{Executor, ExecutorPinnedResult, E},
     inf::any::AnyValue,
     inf::context::Context,
@@ -11,14 +10,10 @@ const NAME: &str = "import";
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("No arguments; path required")]
-    NoArguments,
-    #[error("Only one argument is required: path")]
-    InvalidNumberOfArguments,
-    #[error("As path expected string value")]
-    InvalidPathArgument,
     #[error("File {0} doesn't exist")]
     NoFile(String),
+    #[error("Import function is used only during reading of file")]
+    IsNotUsedInRuntime,
     #[error("Import action required CWD")]
     NoCurrentWorkingFolder,
 }
@@ -32,30 +27,21 @@ impl From<Error> for E {
 #[derive(Debug)]
 pub struct Import {}
 
+impl Import {
+    pub fn get(mut path: PathBuf, cx: &mut Context) -> Result<PathBuf, E> {
+        let cwd = cx.cwd.as_ref().ok_or(Error::NoCurrentWorkingFolder)?;
+        if path.is_relative() {
+            path = cwd.join(path);
+        }
+        if !path.exists() {
+            Err(Error::NoFile(path.to_string_lossy().to_string()))?;
+        }
+        Ok(path)
+    }
+}
 impl Executor for Import {
-    fn execute<'a>(function: &'a Function, cx: &'a mut Context) -> ExecutorPinnedResult<'a> {
-        Box::pin(async {
-            if function.name.trim() != NAME {
-                return Ok(None);
-            }
-            let cwd = cx.cwd.as_ref().ok_or(Error::NoCurrentWorkingFolder)?;
-            let args = function.args.as_ref().ok_or(Error::NoArguments)?;
-            if args.args.len() != 1 {
-                Err(Error::InvalidNumberOfArguments)?;
-            }
-            let mut path = if let Argument::SimpleString(s) = &args.args[0] {
-                PathBuf::from(s.to_string())
-            } else {
-                Err(Error::InvalidPathArgument)?
-            };
-            if path.is_relative() {
-                path = cwd.join(path);
-            }
-            if !path.exists() {
-                Err(Error::NoFile(path.to_string_lossy().to_string()))?;
-            }
-            Ok(Some(AnyValue::new(path)))
-        })
+    fn execute<'a>(_: Vec<AnyValue>, cx: &'a mut Context) -> ExecutorPinnedResult<'a> {
+        Box::pin(async { Err(Error::IsNotUsedInRuntime.into()) })
     }
 
     fn get_name() -> String {

@@ -1,6 +1,11 @@
 use crate::{
-    entry::{PatternString, SimpleString, VariableName},
+    entry::{Component, PatternString, SimpleString, VariableName},
     error::LinkedErr,
+    inf::{
+        any::AnyValue,
+        context::Context,
+        operator::{self, Operator, OperatorPinnedResult},
+    },
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -14,12 +19,11 @@ pub enum Argument {
 }
 
 impl Argument {
-    pub fn token(&self) -> usize {
-        match self {
-            Self::SimpleString(v) => v.token,
-            Self::PatternString(v) => v.token,
-            Self::VariableName(v) => v.token,
-            Self::Arguments(v) => v.token,
+    pub fn as_string(&self) -> Option<String> {
+        if let Self::SimpleString(s) = self {
+            Some(s.to_string())
+        } else {
+            None
         }
     }
 }
@@ -39,10 +43,74 @@ impl fmt::Display for Argument {
     }
 }
 
+impl Operator for Argument {
+    fn token(&self) -> usize {
+        match self {
+            Self::SimpleString(v) => v.token,
+            Self::PatternString(v) => v.token,
+            Self::VariableName(v) => v.token,
+            Self::Arguments(v) => v.token,
+        }
+    }
+    fn perform<'a>(
+        &'a self,
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async move {
+            Ok(match self {
+                Self::SimpleString(v) => Some(AnyValue::new(v.value.to_string())),
+                Self::PatternString(v) => v.perform(owner, components, args, cx).await?,
+                Self::VariableName(v) => v.perform(owner, components, args, cx).await?,
+                Self::Arguments(v) => v.perform(owner, components, args, cx).await?,
+            })
+        })
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Arguments {
     pub args: Vec<Argument>,
     pub token: usize,
+}
+
+impl Arguments {
+    pub async fn get_processed_args<'a>(
+        &'a self,
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
+    ) -> Result<Vec<AnyValue>, operator::E> {
+        let mut output: Vec<AnyValue> = vec![];
+        for arg in self.args.iter() {
+            if let Some(result) = arg.perform(owner, components, args, cx).await? {
+                output.push(result);
+            }
+        }
+        Ok(output)
+    }
+}
+
+impl Operator for Arguments {
+    fn token(&self) -> usize {
+        self.token
+    }
+    fn perform<'a>(
+        &'a self,
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async move {
+            Ok(Some(AnyValue::new(
+                self.get_processed_args(owner, components, args, cx).await?,
+            )))
+        })
+    }
 }
 
 impl Reading<Arguments> for Arguments {

@@ -2,6 +2,7 @@ use crate::{
     entry::{Arguments, Component},
     error::LinkedErr,
     inf::{
+        any::AnyValue,
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
     },
@@ -132,6 +133,19 @@ impl Function {
     pub fn set_token(&mut self, token: usize) {
         self.token = token;
     }
+    pub async fn get_processed_args<'a>(
+        &self,
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+        inputs: &'a [String],
+        cx: &'a mut Context,
+    ) -> Result<Vec<AnyValue>, operator::E> {
+        if let Some(args) = self.args.as_ref() {
+            args.get_processed_args(owner, components, inputs, cx).await
+        } else {
+            Ok(vec![])
+        }
+    }
 }
 
 impl fmt::Display for Function {
@@ -174,24 +188,31 @@ impl Operator for Function {
     }
     fn perform<'a>(
         &'a self,
-        _: Option<&'a Component>,
-        _: &'a [Component],
-        _: &'a [String],
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+        inputs: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
-        Box::pin(async {
-            if let Some(func) = self.feed.as_ref() {
-                let _result = cx
-                    .get_fn(&func.name)
-                    .ok_or(operator::E::NoFunctionExecutor(self.name.clone()))?(
-                    func, cx
-                )
+        Box::pin(async move {
+            let mut args: Vec<AnyValue> = self
+                .get_processed_args(owner, components, inputs, cx)
                 .await?;
-            }
+            if let Some(func) = self.feed.as_ref() {
+                args.insert(
+                    0,
+                    cx.get_fn(&func.name)
+                        .ok_or(operator::E::NoFunctionExecutor(self.name.clone()))?(
+                        func.get_processed_args(owner, components, inputs, cx)
+                            .await?,
+                        cx,
+                    )
+                    .await?,
+                );
+            };
             let executor = cx
                 .get_fn(&self.name)
                 .ok_or(operator::E::NoFunctionExecutor(self.name.clone()))?;
-            Ok(executor(self, cx).await?)
+            Ok(Some(executor(args, cx).await?))
         })
     }
 }
@@ -201,7 +222,7 @@ mod reading {
     use crate::{
         entry::Function,
         error::LinkedErr,
-        inf::tests,
+        inf::{operator::Operator, tests},
         reader::{Reader, Reading, E},
     };
 

@@ -1,5 +1,4 @@
 use crate::{
-    entry::Function,
     executors::{Executor, ExecutorPinnedResult, E},
     inf::{any::AnyValue, context::Context, tracker::Logs},
 };
@@ -23,19 +22,16 @@ impl From<Error> for E {
 pub struct GetOs {}
 
 impl Executor for GetOs {
-    fn execute<'a>(function: &'a Function, cx: &'a mut Context) -> ExecutorPinnedResult<'a> {
-        Box::pin(async {
-            if function.name.trim() != NAME {
-                return Ok(None);
-            }
+    fn execute<'a>(args: Vec<AnyValue>, cx: &'a mut Context) -> ExecutorPinnedResult<'a> {
+        Box::pin(async move {
             let logger = cx.tracker.create_logger(format!("@{NAME}"));
-            if function.args.is_some() {
+            if !args.is_empty() {
                 Err(Error::InvalidNumberOfArguments)?;
             }
             logger
                 .log(format!("result \"{}\"", std::env::consts::OS))
                 .await;
-            Ok(Some(AnyValue::new(std::env::consts::OS.to_string())))
+            Ok(AnyValue::new(std::env::consts::OS.to_string()))
         })
     }
 

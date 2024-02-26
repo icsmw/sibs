@@ -1,7 +1,6 @@
 use crate::{
-    entry::{Argument, Function},
     executors::{Executor, ExecutorPinnedResult, E},
-    inf::{any::AnyValue, context::Context, operator::Operator, tracker::Logs},
+    inf::{any::AnyValue, context::Context, tracker::Logs},
 };
 use thiserror::Error;
 
@@ -15,10 +14,6 @@ pub enum Error {
     InvalidNumberOfArguments,
     #[error("Invalid argument type; expected string.")]
     InvalidArgumentType,
-    #[error("Fail to extract string value from PatternString entity")]
-    NoStringValue,
-    #[error("Fail to extract variable name from VariableName entity")]
-    NoVariableName,
 }
 
 impl From<Error> for E {
@@ -31,36 +26,18 @@ impl From<Error> for E {
 pub struct Os {}
 
 impl Executor for Os {
-    fn execute<'a>(function: &'a Function, cx: &'a mut Context) -> ExecutorPinnedResult<'a> {
-        Box::pin(async {
-            if function.name.trim() != NAME {
-                return Ok(None);
-            }
+    fn execute<'a>(args: Vec<AnyValue>, cx: &'a mut Context) -> ExecutorPinnedResult<'a> {
+        Box::pin(async move {
             let logger = cx.tracker.create_logger(format!("@{NAME}"));
-            let arg = function
-                .args
-                .as_ref()
-                .ok_or(Error::NoArguments)?
-                .get(0)
-                .ok_or(Error::InvalidNumberOfArguments)?;
-            let probe = match arg {
-                Argument::SimpleString(s) => s.to_string(),
-                Argument::PatternString(value_string) => value_string
-                    .execute(None, &[], &[], cx)
-                    .await?
-                    .ok_or(Error::NoStringValue)?
-                    .get_as::<String>()
-                    .ok_or(Error::InvalidArgumentType)?
-                    .to_owned(),
-                Argument::VariableName(variable) => variable
-                    .execute(None, &[], &[], cx)
-                    .await?
-                    .ok_or(Error::NoVariableName)?
-                    .get_as::<String>()
-                    .ok_or(Error::InvalidArgumentType)?
-                    .to_owned(),
-                _ => Err(Error::InvalidArgumentType)?,
-            };
+            if args.is_empty() {
+                Err(Error::NoArguments)?;
+            }
+            if args.len() != 1 {
+                Err(Error::InvalidNumberOfArguments)?;
+            }
+            let probe = args[0]
+                .get_as::<String>()
+                .ok_or(Error::InvalidArgumentType)?;
             logger
                 .log(format!(
                     "checking for \"{}\"; result: {}",
@@ -68,9 +45,7 @@ impl Executor for Os {
                     probe.to_lowercase() == std::env::consts::OS
                 ))
                 .await;
-            Ok(Some(AnyValue::new(
-                probe.to_lowercase() == std::env::consts::OS,
-            )))
+            Ok(AnyValue::new(probe.to_lowercase() == std::env::consts::OS))
         })
     }
 

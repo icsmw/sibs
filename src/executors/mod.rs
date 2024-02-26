@@ -4,16 +4,16 @@ pub mod import;
 pub mod os;
 pub mod repeat;
 
-use crate::{entry::Function, inf::any::AnyValue, inf::context::Context};
+use crate::{inf::any::AnyValue, inf::context::Context};
 pub use error::E;
 use std::{future::Future, pin::Pin};
 
 pub type ExecutorPinnedResult<'a> = Pin<Box<dyn Future<Output = ExecutorResult> + 'a>>;
-pub type ExecutorResult = Result<Option<AnyValue>, E>;
-pub type ExecutorFn = for<'a> fn(&'a Function, &'a mut Context) -> ExecutorPinnedResult<'a>;
+pub type ExecutorResult = Result<AnyValue, E>;
+pub type ExecutorFn = for<'a> fn(Vec<AnyValue>, &'a mut Context) -> ExecutorPinnedResult<'a>;
 
 pub trait Executor {
-    fn execute<'a>(function: &'a Function, cx: &'a mut Context) -> ExecutorPinnedResult<'a>;
+    fn execute<'a>(args: Vec<AnyValue>, cx: &'a mut Context) -> ExecutorPinnedResult<'a>;
     fn get_name() -> String;
 }
 

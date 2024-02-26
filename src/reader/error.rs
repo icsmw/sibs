@@ -1,6 +1,10 @@
-use std::fmt;
-
-use crate::{error, error::LinkedErr, executors, inf::context, reader::Reader};
+use crate::{
+    error,
+    error::LinkedErr,
+    executors,
+    inf::{context, operator},
+    reader::Reader,
+};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -55,6 +59,12 @@ pub enum E {
     EmptyComponentName,
     #[error("No command value")]
     EmptyCommand,
+    #[error("Function @import has invalid arguments")]
+    ImportFunctionInvalidArgs,
+    #[error("Function @import doesn't have arguments")]
+    ImportFunctionNoArgs,
+    #[error("Function @import expects a string as argument")]
+    ImportFunctionInvalidPathArg,
     #[error("Fail to recognize code: \"{0}\"")]
     UnrecognizedCode(String),
     #[error("\"{0}\" is an invalid component name")]
@@ -125,6 +135,8 @@ pub enum E {
     ContextError(context::E),
     #[error("Executor error: {0}")]
     ExecutorError(executors::E),
+    #[error("Operator error: {0}")]
+    OperatorError(String),
 }
 
 impl E {
@@ -151,6 +163,11 @@ impl E {
 impl From<E> for LinkedErr<E> {
     fn from(e: E) -> Self {
         e.unlinked()
+    }
+}
+impl From<operator::E> for LinkedErr<E> {
+    fn from(e: operator::E) -> Self {
+        E::OperatorError(e.to_string()).unlinked()
     }
 }
 

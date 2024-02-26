@@ -1,7 +1,6 @@
 use crate::{
-    entry::{Argument, Function},
     executors::{Executor, ExecutorPinnedResult, E},
-    inf::{any::AnyValue, context::Context, operator::Operator, tracker::Logs},
+    inf::{any::AnyValue, context::Context, tracker::Logs},
 };
 use thiserror::Error;
 
@@ -14,8 +13,10 @@ pub enum Error {
     #[error("Expecting 2 arguments: @repeat {{string}} {{count}};")]
     InvalidNumberOfArguments,
     #[error("Invalid argument type; expected string.")]
-    InvalidArgumentType,
-    #[error("Fail to extract string value from PatternString entity")]
+    InvalidTargetType,
+    #[error("Fail to extract string value from argument")]
+    InvalidCountType(String),
+    #[error("Fail to extract count (usize) from argument")]
     NoStringValue,
     #[error("Fail to extract variable name from VariableName entity")]
     NoVariableName,
@@ -33,66 +34,25 @@ impl From<Error> for E {
 pub struct Repeat {}
 
 impl Executor for Repeat {
-    fn execute<'a>(function: &'a Function, cx: &'a mut Context) -> ExecutorPinnedResult<'a> {
-        Box::pin(async {
-            if function.name.trim() != NAME {
-                return Ok(None);
+    fn execute<'a>(args: Vec<AnyValue>, cx: &'a mut Context) -> ExecutorPinnedResult<'a> {
+        Box::pin(async move {
+            if args.is_empty() {
+                Err(Error::NoArguments)?;
+            }
+            if args.len() != 2 {
+                Err(Error::InvalidNumberOfArguments)?;
             }
             let logger = cx.tracker.create_logger(format!("@{NAME}"));
-            let first = function
-                .args
-                .as_ref()
-                .ok_or(Error::NoArguments)?
-                .get(0)
-                .ok_or(Error::InvalidNumberOfArguments)?;
-            let second = function
-                .args
-                .as_ref()
-                .ok_or(Error::NoArguments)?
-                .get(1)
-                .ok_or(Error::InvalidNumberOfArguments)?;
-            let target = match first {
-                Argument::SimpleString(s) => s.to_string(),
-                Argument::PatternString(value_string) => value_string
-                    .execute(None, &[], &[], cx)
-                    .await?
-                    .ok_or(Error::NoStringValue)?
-                    .get_as::<String>()
-                    .ok_or(Error::InvalidArgumentType)?
-                    .to_owned(),
-                Argument::VariableName(variable) => variable
-                    .execute(None, &[], &[], cx)
-                    .await?
-                    .ok_or(Error::NoVariableName)?
-                    .get_as::<String>()
-                    .ok_or(Error::InvalidArgumentType)?
-                    .to_owned(),
-                _ => Err(Error::InvalidArgumentType)?,
-            };
-            let count = match second {
-                Argument::SimpleString(s) => s.to_string(),
-                Argument::PatternString(value_string) => value_string
-                    .execute(None, &[], &[], cx)
-                    .await?
-                    .ok_or(Error::NoStringValue)?
-                    .get_as::<String>()
-                    .ok_or(Error::InvalidArgumentType)?
-                    .to_owned(),
-                Argument::VariableName(variable) => variable
-                    .execute(None, &[], &[], cx)
-                    .await?
-                    .ok_or(Error::NoVariableName)?
-                    .get_as::<String>()
-                    .ok_or(Error::InvalidArgumentType)?
-                    .to_owned(),
-                _ => Err(Error::InvalidArgumentType)?,
-            }
-            .parse::<usize>()
-            .map_err(|_| Error::FailToGetRepeatingNumber)?;
+            let target = args[0].get_as_string().ok_or(Error::InvalidTargetType)?;
+            let count = args[1]
+                .get_as_string()
+                .ok_or(Error::InvalidCountType(format!("{:?}", args[1])))?
+                .parse::<usize>()
+                .map_err(|_| Error::InvalidCountType(format!("{:?}", args[1])))?;
             logger
                 .log(format!("repeating \"{target}\" {count} times;",))
                 .await;
-            Ok(Some(AnyValue::new(target.repeat(count))))
+            Ok(AnyValue::new(target.repeat(count)))
         })
     }
 

@@ -4,5 +4,8 @@ test [
 ];
 test [
     $a = @get_os;
-    @os $a > @repeat 3;
+    $b = @os $a > @repeat 3;
+    IF $b == "truetruetrue" [
+        "true";
+    ];
 ];

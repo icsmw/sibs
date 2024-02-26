@@ -125,7 +125,6 @@ impl Context {
     pub fn add_fn(&mut self, name: String, func: ExecutorFn) -> Result<(), E> {
         if let Entry::Vacant(e) = self.executors.entry(name.clone()) {
             e.insert(func);
-
             Ok(())
         } else {
             Err(E::FunctionAlreadyExists(name))

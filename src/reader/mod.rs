@@ -609,7 +609,7 @@ impl Reader {
 pub type ReadFileResult = Result<Vec<Component>, LinkedErr<E>>;
 
 pub fn read_file<'a>(cx: &'a mut Context) -> Pin<Box<dyn Future<Output = ReadFileResult> + 'a>> {
-    Box::pin(async {
+    Box::pin(async move {
         if !cx.scenario.filename.exists() {
             Err(E::FileNotExists(
                 cx.scenario.filename.to_string_lossy().to_string(),
@@ -617,18 +617,23 @@ pub fn read_file<'a>(cx: &'a mut Context) -> Pin<Box<dyn Future<Output = ReadFil
         }
         let mut reader = Reader::bound(fs::read_to_string(&cx.scenario.filename)?, cx);
         let mut imports: Vec<PathBuf> = vec![];
-        while let Some(mut func) = Function::read(&mut reader)? {
-            let handle = cx
-                .get_fn(&Import::get_name())
-                .ok_or(E::FunctionIsNotRegistred)?;
-            imports.push(
-                handle(&mut func, cx)
-                    .await?
-                    .ok_or(E::NotAllowedFunction)?
-                    .get_as::<PathBuf>()
-                    .ok_or(E::InvalidFunctionReturn)?
-                    .clone(),
-            );
+        while let Some(func) = Function::read(&mut reader)? {
+            let path_to_import = if let Some(args) = func.args.as_ref() {
+                if args.args.len() != 1 {
+                    Err(E::ImportFunctionInvalidArgs.unlinked())?;
+                }
+                Import::get(
+                    PathBuf::from(
+                        args.args[0]
+                            .as_string()
+                            .ok_or(E::ImportFunctionInvalidPathArg.unlinked())?,
+                    ),
+                    cx,
+                )?
+            } else {
+                return Err(E::ImportFunctionNoArgs.unlinked());
+            };
+            imports.push(path_to_import);
         }
         let mut components: Vec<Component> = vec![];
         for import_path in imports.iter_mut() {
