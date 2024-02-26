@@ -13,3 +13,4 @@ IF $variable == "one" [ @os; ] IF $variable == "one [ ] ELSE [ ];
 IF $variable == "one" [ @os; ] [ @abs; ] E [ @abs; ];
 IF;
 IF ELSE;
+IF @get_os == "linux" [ @os; ];
