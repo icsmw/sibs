@@ -60,7 +60,7 @@ impl Progress {
     where
         T: 'a + ToOwned + ToString,
     {
-        if let Some((Some(bar), _, alias, _)) = self.bars.get(&sequence) {
+        if let Some((Some(bar), _, _alias, _)) = self.bars.get(&sequence) {
             bar.set_message(msg.to_string());
             self.reprint();
         }
