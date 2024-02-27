@@ -295,9 +295,9 @@ mod proptest {
     use crate::{
         entry::{
             block::Block,
-            embedded::first::First,
             function::Function,
             pattern_string::PatternString,
+            statements::first::First,
             task::Task,
             values::Values,
             variable_assignation::{Assignation, VariableAssignation},

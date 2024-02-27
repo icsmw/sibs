@@ -466,7 +466,7 @@ impl Operator for If {
 #[cfg(test)]
 mod reading {
     use crate::{
-        entry::{embedded::If::Element, If},
+        entry::{statements::If::Element, If},
         error::LinkedErr,
         inf::{operator::Operator, tests},
         reader::{Reader, Reading, E},
@@ -574,9 +574,9 @@ mod proptest {
 
     use crate::{
         entry::{
-            embedded::If::{Cmp, CmpSubject, Combination, Element, If, Proviso},
             function::Function,
             pattern_string::PatternString,
+            statements::If::{Cmp, CmpSubject, Combination, Element, If, Proviso},
             task::Task,
             variable_name::VariableName,
             Block,

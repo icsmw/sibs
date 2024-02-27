@@ -258,8 +258,8 @@ mod proptest {
     use crate::{
         entry::{
             block::Block,
-            embedded::each::{Each, Input},
             function::Function,
+            statements::each::{Each, Input},
             task::Task,
             variable_name::VariableName,
         },

@@ -311,11 +311,11 @@ mod proptest {
         entry::{
             block::{Block, Element},
             command::Command,
-            embedded::{each::Each, If::If},
             function::Function,
             meta::Meta,
             optional::Optional,
             reference::Reference,
+            statements::{each::Each, If::If},
             task::Task,
             variable_assignation::VariableAssignation,
         },

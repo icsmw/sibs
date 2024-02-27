@@ -155,7 +155,7 @@ mod processing {
 mod proptest {
 
     use crate::{
-        entry::{block::Block, embedded::first::First, task::Task},
+        entry::{block::Block, statements::first::First, task::Task},
         inf::{operator::E, tests::*},
         reader::{Reader, Reading},
     };

@@ -90,7 +90,7 @@ impl Operator for VariableComparing {
 mod proptest {
     use crate::{
         entry::{
-            embedded::If::Cmp, variable_comparing::VariableComparing, variable_name::VariableName,
+            statements::If::Cmp, variable_comparing::VariableComparing, variable_name::VariableName,
         },
         inf::tests::*,
     };
