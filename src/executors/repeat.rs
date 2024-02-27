@@ -34,7 +34,7 @@ impl From<Error> for E {
 pub struct Repeat {}
 
 impl Executor for Repeat {
-    fn execute<'a>(args: Vec<AnyValue>, cx: &'a mut Context) -> ExecutorPinnedResult<'a> {
+    fn execute(args: Vec<AnyValue>, cx: &mut Context) -> ExecutorPinnedResult {
         Box::pin(async move {
             if args.is_empty() {
                 Err(Error::NoArguments)?;

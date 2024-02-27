@@ -26,7 +26,7 @@ impl From<Error> for E {
 pub struct Os {}
 
 impl Executor for Os {
-    fn execute<'a>(args: Vec<AnyValue>, cx: &'a mut Context) -> ExecutorPinnedResult<'a> {
+    fn execute(args: Vec<AnyValue>, cx: &mut Context) -> ExecutorPinnedResult {
         Box::pin(async move {
             let logger = cx.tracker.create_logger(format!("@{NAME}"));
             if args.is_empty() {

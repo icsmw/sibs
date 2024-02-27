@@ -13,7 +13,7 @@ pub type ExecutorResult = Result<AnyValue, E>;
 pub type ExecutorFn = for<'a> fn(Vec<AnyValue>, &'a mut Context) -> ExecutorPinnedResult<'a>;
 
 pub trait Executor {
-    fn execute<'a>(args: Vec<AnyValue>, cx: &'a mut Context) -> ExecutorPinnedResult<'a>;
+    fn execute(args: Vec<AnyValue>, cx: &mut Context) -> ExecutorPinnedResult;
     fn get_name() -> String;
 }
 
