@@ -1,19 +1,17 @@
 mod error;
 
-use crate::inf::tracker::Task;
+use crate::inf::tracker::{Logs, Task};
 
-use futures_lite::{future, FutureExt};
 use std::{
-    env::vars,
     path::PathBuf,
     process::{ExitStatus, Stdio},
 };
 use tokio::{
-    process::{Child, ChildStderr, ChildStdout, Command},
-    select,
+    join,
+    process::{Child, Command},
 };
 use tokio_stream::StreamExt;
-use tokio_util::codec::{self, FramedRead, LinesCodec};
+use tokio_util::codec::{self, LinesCodec, LinesCodecError};
 
 pub use error::E;
 
@@ -66,16 +64,31 @@ pub async fn run(command: &str, cwd: &PathBuf, task: &Task) -> Result<ExitStatus
             .ok_or_else(|| E::Setup(String::from("Fail to get stderr handle")))?,
         LinesCodec::default(),
     );
-    while let Some(line) = select! {
-        res = stdout.next() => res,
-        res = stderr.next() => res
-    } {
-        let line = line.map_err(|e| E::Output(e.to_string()))?;
-        task.msg(line.trim_end());
-        task.progress(None);
+    fn post_logs(line: Result<String, LinesCodecError>, task: &Task) {
+        match line {
+            Ok(line) => {
+                task.msg(line.trim_end());
+                task.progress(None);
+            }
+            Err(err) => {
+                task.err(format!("Error during decoding command output: {err}",));
+            }
+        }
     }
-    Ok(child
+    join!(
+        async {
+            while let Some(line) = stdout.next().await {
+                post_logs(line, task);
+            }
+        },
+        async {
+            while let Some(line) = stderr.next().await {
+                post_logs(line, task);
+            }
+        }
+    );
+    child
         .wait()
         .await
-        .map_err(|e| E::Executing(command.to_string(), e.to_string()))?)
+        .map_err(|e| E::Executing(command.to_string(), e.to_string()))
 }
