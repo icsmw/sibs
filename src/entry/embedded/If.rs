@@ -49,8 +49,73 @@ impl fmt::Display for Combination {
 }
 
 #[derive(Debug, Clone)]
+pub enum CmpSubject {
+    VariableName(VariableName),
+    PatternString(PatternString),
+    Function(Function),
+}
+
+impl CmpSubject {
+    pub fn read(reader: &mut Reader) -> Result<Self, LinkedErr<E>> {
+        let subject = if let Some(variable) = VariableName::read(reader)? {
+            Self::VariableName(variable)
+        } else if let Some(pattern) = PatternString::read(reader)? {
+            Self::PatternString(pattern)
+        } else if let Some(func) = Function::read(reader)? {
+            Self::Function(func)
+        } else {
+            return Err(E::NotSupportedInputForIF.linked(&reader.token()?.id));
+        };
+        if !reader.rest().trim().is_empty() {
+            Err(E::FailToParseSideOfComparing.linked(&reader.token()?.id))
+        } else {
+            Ok(subject)
+        }
+    }
+}
+
+impl fmt::Display for CmpSubject {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::VariableName(v) => v.to_string(),
+                Self::PatternString(v) => v.to_string(),
+                Self::Function(v) => v.to_string(),
+            }
+        )
+    }
+}
+
+impl Operator for CmpSubject {
+    fn token(&self) -> usize {
+        match self {
+            Self::VariableName(v) => v.token(),
+            Self::PatternString(v) => v.token(),
+            Self::Function(v) => v.token(),
+        }
+    }
+    fn perform<'a>(
+        &'a self,
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async move {
+            match self {
+                Self::VariableName(v) => v.perform(owner, components, args, cx).await,
+                Self::PatternString(v) => v.perform(owner, components, args, cx).await,
+                Self::Function(v) => v.perform(owner, components, args, cx).await,
+            }
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
 pub enum Proviso {
-    Variable(VariableName, Cmp, PatternString, usize),
+    Comparing(CmpSubject, Cmp, CmpSubject, usize),
     // Function, is negative (!)
     Function(Function, bool, usize),
     Combination(Combination, usize),
@@ -61,7 +126,7 @@ pub enum Proviso {
 impl Operator for Proviso {
     fn token(&self) -> usize {
         match self {
-            Self::Variable(_, _, _, token) => *token,
+            Self::Comparing(_, _, _, token) => *token,
             Self::Combination(_, token) => *token,
             Self::Function(_, _, token) => *token,
             Self::Group(_, _, token) => *token,
@@ -76,17 +141,17 @@ impl Operator for Proviso {
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             match self {
-                Self::Variable(name, cmp, value, _) => {
-                    let left = name
+                Self::Comparing(left, cmp, right, _) => {
+                    let left = left
                         .execute(owner, components, args, cx)
                         .await?
-                        .ok_or(operator::E::VariableIsNotAssigned(name.name.clone()))?
+                        .ok_or(operator::E::FailExtractValueForIFStatement)?
                         .get_as_string()
                         .ok_or(operator::E::FailToGetValueAsString)?;
-                    let right = value
+                    let right = right
                         .execute(owner, components, args, cx)
                         .await?
-                        .ok_or(operator::E::FailToGetStringValue)?
+                        .ok_or(operator::E::FailExtractValueForIFStatement)?
                         .get_as_string()
                         .ok_or(operator::E::FailToGetValueAsString)?;
                     Ok(Some(AnyValue::new(match cmp.clone() {
@@ -149,8 +214,7 @@ impl fmt::Display for Proviso {
             f,
             "{}",
             match self {
-                Self::Variable(variable_name, cmp, value_string, _) =>
-                    format!("{variable_name} {cmp} {value_string}"),
+                Self::Comparing(left, cmp, right, _) => format!("{left} {cmp} {right}"),
                 Self::Combination(v, _) => v.to_string(),
                 Self::Function(v, negative, _) =>
                     format!("{}{v}", if *negative { "!" } else { "" }),
@@ -285,24 +349,20 @@ impl If {
         let fragment_token_id = reader.token()?.id;
         let close = reader.open_token();
         if let Some((_, word)) = reader.until().word(&[words::CMP_TRUE, words::CMP_FALSE]) {
-            let mut inner = reader.token()?;
+            let left = CmpSubject::read(&mut reader.token()?.bound)?;
             let _ = reader.move_to().word(&[words::CMP_TRUE, words::CMP_FALSE]);
-            let value_string = PatternString::read(reader)?
-                .ok_or(E::NoStringValueWithCondition.linked(&fragment_token_id))?;
-            if let Some(variable_name) = VariableName::read(&mut inner.bound)? {
-                Ok(Proviso::Variable(
-                    variable_name,
-                    if word == words::CMP_TRUE {
-                        Cmp::Equal
-                    } else {
-                        Cmp::NotEqual
-                    },
-                    value_string,
-                    close(reader),
-                ))
-            } else {
-                Err(E::OnlyVariableCanBeCompared.linked(&fragment_token_id))
-            }
+            reader.move_to().end();
+            let right = CmpSubject::read(&mut reader.token()?.bound)?;
+            Ok(Proviso::Comparing(
+                left,
+                if word == words::CMP_TRUE {
+                    Cmp::Equal
+                } else {
+                    Cmp::NotEqual
+                },
+                right,
+                close(reader),
+            ))
         } else {
             let negative = reader.move_to().char(&[&chars::EXCLAMATION]).is_some();
             if let Some(func) = Function::read(reader)? {
@@ -514,7 +574,7 @@ mod proptest {
 
     use crate::{
         entry::{
-            embedded::If::{Cmp, Combination, Element, If, Proviso},
+            embedded::If::{Cmp, CmpSubject, Combination, Element, If, Proviso},
             function::Function,
             pattern_string::PatternString,
             task::Task,
@@ -545,6 +605,20 @@ mod proptest {
         }
     }
 
+    impl Arbitrary for CmpSubject {
+        type Parameters = SharedScope;
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_scope: Self::Parameters) -> Self::Strategy {
+            prop_oneof![
+                VariableName::arbitrary().prop_map(|v| CmpSubject::VariableName(v)),
+                PatternString::arbitrary().prop_map(|v| CmpSubject::PatternString(v)),
+                Function::arbitrary().prop_map(|v| CmpSubject::Function(v)),
+            ]
+            .boxed()
+        }
+    }
+
     // Gives flat Proviso with:
     // - Combination
     // - Variable
@@ -561,11 +635,11 @@ mod proptest {
                 {
                     let permissions = scope.read().unwrap().permissions();
                     let mut allowed = vec![(
-                        VariableName::arbitrary(),
+                        CmpSubject::arbitrary_with(scope.clone()),
                         Cmp::arbitrary_with(scope.clone()),
-                        PatternString::arbitrary_primitive(scope.clone()),
+                        CmpSubject::arbitrary_with(scope.clone()),
                     )
-                        .prop_map(|(name, cmp, value)| Proviso::Variable(name, cmp, value, 0))
+                        .prop_map(|(left, cmp, right)| Proviso::Comparing(left, cmp, right, 0))
                         .boxed()];
                     if permissions.func {
                         allowed.push(
@@ -574,15 +648,16 @@ mod proptest {
                                 .boxed(),
                         );
                     }
+                    // TODO: remove this condition
                     if permissions.value_string {
                         allowed.push(
                             (
-                                VariableName::arbitrary(),
+                                CmpSubject::arbitrary_with(scope.clone()),
                                 Cmp::arbitrary_with(scope.clone()),
-                                PatternString::arbitrary_with(scope.clone()),
+                                CmpSubject::arbitrary_with(scope.clone()),
                             )
-                                .prop_map(|(name, cmp, value)| {
-                                    Proviso::Variable(name, cmp, value, 0)
+                                .prop_map(|(left, cmp, right)| {
+                                    Proviso::Comparing(left, cmp, right, 0)
                                 })
                                 .boxed(),
                         );

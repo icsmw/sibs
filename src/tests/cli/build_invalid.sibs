@@ -13,6 +13,7 @@
         IF @os linux [
             :self:build(smth, prod);
         ];
+        IF @get_os == "linux" [ @os; ];
     ];
     build($input_a: {string}; $mode: dev | prod;) [
         $a_str = "value_a";

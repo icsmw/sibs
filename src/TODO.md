@@ -8,3 +8,4 @@
 - support modules for functions grouping; like @os.get
 - add simple assignation $a = $b
 - add web-server for remote access
+- dry-run: run and ignore terminal commands & show a map of executing

@@ -50,6 +50,8 @@ pub enum E {
     WrongConditionsOrderInIf,
     #[error("Variable \"{0}\" isn't assigned")]
     VariableIsNotAssigned(String),
+    #[error("Fail to extract value for IF statement")]
+    FailExtractValueForIFStatement,
     #[error("Function \"{0}\" doesn't have registred executor")]
     NoFunctionExecutor(String),
     #[error("Fail assign variable \"{0}\"; no value")]

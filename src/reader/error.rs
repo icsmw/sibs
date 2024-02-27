@@ -97,6 +97,10 @@ pub enum E {
     OnlyVariableCanBeCompared,
     #[error("Expecting = or ==")]
     NoComparingOrAssignation,
+    #[error("Fail to parse one of sides of IF comparing")]
+    FailToParseSideOfComparing,
+    #[error("Not supported input for IF statement; supported: string, variable, function")]
+    NotSupportedInputForIF,
     #[error("No component body")]
     NoComponentBody,
     #[error("Group [...] is expecting")]

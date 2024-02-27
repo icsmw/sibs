@@ -89,3 +89,35 @@ test [
         "false";
     ];
 ];
+test [
+    $a = @get_os;
+    IF @os $a == "true" [
+        "true";
+    ] ELSE [
+        "false";
+    ];
+];
+test [
+    $a = @get_os;
+    IF "true" == @os $a [
+        "true";
+    ] ELSE [
+        "false";
+    ];
+];
+test [
+    $a = @get_os;
+    IF "true" == @os $a AND @os $a == "true"[
+        "true";
+    ] ELSE [
+        "false";
+    ];
+];
+test [
+    $a = @get_os;
+    IF "true" == @os $a OR @os $a == "true"[
+        "true";
+    ] ELSE [
+        "false";
+    ];
+];
