@@ -178,7 +178,7 @@ impl Operator for VariableAssignation {
                 .execute(owner, components, args, cx)
                 .await?
                 .ok_or(operator::E::NoValueToAssign(self.name.name.clone()))?;
-            cx.set_var(self.name.name.clone(), value).await;
+            cx.set_var(self.name.name.clone(), value);
             Ok(Some(AnyValue::new(())))
         })
     }
@@ -271,7 +271,7 @@ mod processing {
         ("f", "\\{$a\\}\\{$b\\}\\{$c\\}"),
     ];
 
-    #[async_std::test]
+    #[tokio::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
         let mut reader = Reader::unbound(
@@ -282,7 +282,7 @@ mod processing {
         }
         for (name, value) in VALUES.iter() {
             assert_eq!(
-                cx.get_var(name).await.unwrap().get_as_string().unwrap(),
+                cx.get_var(name).unwrap().get_as_string().unwrap(),
                 value.to_string()
             );
         }
@@ -376,7 +376,7 @@ mod proptest {
     }
 
     fn reading(assignation: VariableAssignation) -> Result<(), E> {
-        async_io::block_on(async {
+        get_rt().block_on(async {
             let origin = format!("test [\n{assignation};\n];");
             let mut reader = Reader::unbound(origin.clone());
             while let Some(task) = Task::read(&mut reader)? {

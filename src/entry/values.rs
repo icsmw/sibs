@@ -283,7 +283,7 @@ mod processing {
         ("a4", "aa,bb,cc"),
     ];
 
-    #[async_std::test]
+    #[tokio::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
         let mut reader =
@@ -294,7 +294,6 @@ mod processing {
         for (name, value) in VALUES.iter() {
             assert_eq!(
                 cx.get_var(name)
-                    .await
                     .unwrap()
                     .get_as_strings()
                     .unwrap()

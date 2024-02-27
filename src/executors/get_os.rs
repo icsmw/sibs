@@ -28,9 +28,7 @@ impl Executor for GetOs {
             if !args.is_empty() {
                 Err(Error::InvalidNumberOfArguments)?;
             }
-            logger
-                .log(format!("result \"{}\"", std::env::consts::OS))
-                .await;
+            logger.log(format!("result \"{}\"", std::env::consts::OS));
             Ok(AnyValue::new(std::env::consts::OS.to_string()))
         })
     }

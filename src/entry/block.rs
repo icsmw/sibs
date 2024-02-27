@@ -403,7 +403,7 @@ mod proptest {
     }
 
     fn reading(block: Block) -> Result<(), E> {
-        async_io::block_on(async {
+        get_rt().block_on(async {
             let origin = format!("test {block};");
             let mut reader = Reader::unbound(origin.clone());
             while let Some(task) = Task::read(&mut reader)? {

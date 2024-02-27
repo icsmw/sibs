@@ -64,19 +64,19 @@ impl Operator for Command {
                     None,
                 )
                 .await?;
-            match spawner::spawn(&self.command, cwd, &job).await {
-                Ok(result) => {
-                    if result.status.success() {
-                        job.success().await;
+            match spawner::run(&self.command, cwd, &job).await {
+                Ok(status) => {
+                    if status.success() {
+                        job.success();
                         Ok(Some(AnyValue::new(())))
                     } else {
-                        job.fail().await;
+                        job.fail();
                         Err(operator::E::SpawnedProcessExitWithError)
                     }
                 }
                 Err(e) => {
-                    job.err(&e.to_string()).await;
-                    job.fail().await;
+                    job.err(&e.to_string());
+                    job.fail();
                     Err(e)?
                 }
             }

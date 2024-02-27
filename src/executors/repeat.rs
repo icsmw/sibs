@@ -49,9 +49,7 @@ impl Executor for Repeat {
                 .ok_or(Error::InvalidCountType(format!("{:?}", args[1])))?
                 .parse::<usize>()
                 .map_err(|_| Error::InvalidCountType(format!("{:?}", args[1])))?;
-            logger
-                .log(format!("repeating \"{target}\" {count} times;",))
-                .await;
+            logger.log(format!("repeating \"{target}\" {count} times;",));
             Ok(AnyValue::new(target.repeat(count)))
         })
     }

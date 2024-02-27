@@ -81,8 +81,6 @@ pub enum E {
     InvalidReference(String),
     #[error("No destination function after >")]
     NoDestFunction,
-    #[error("Missed comparing operator: == or !=")]
-    MissedComparingOperator,
     #[error("Fail to find proviso of condition")]
     NoProvisoOfCondition,
     #[error("No loop variable EACH($var)")]
@@ -91,10 +89,6 @@ pub enum E {
     NoLoopInitialization,
     #[error("After AND or OR should be proviso")]
     RepeatedCombinationOperator,
-    #[error("Only string values can be used with conditions")]
-    NoStringValueWithCondition,
-    #[error("Only variables can be compared with string")]
-    OnlyVariableCanBeCompared,
     #[error("Expecting = or ==")]
     NoComparingOrAssignation,
     #[error("Fail to parse one of sides of IF comparing")]

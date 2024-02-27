@@ -109,12 +109,10 @@ impl Context {
     pub fn set_scenario(&mut self, scenario: Scenario) {
         self.scenario = scenario;
     }
-    pub async fn set_cwd(&mut self, cwd: Option<PathBuf>) -> Result<(), E> {
+    pub fn set_cwd(&mut self, cwd: Option<PathBuf>) -> Result<(), E> {
         if let Some(cwd) = cwd.as_ref() {
             let cwd = self.scenario.to_abs_path(cwd)?;
-            self.logger
-                .log(format!("cwd: {}", cwd.to_string_lossy()))
-                .await;
+            self.logger.log(format!("cwd: {}", cwd.to_string_lossy()));
             self.cwd = Some(cwd);
         } else {
             self.cwd = None;
@@ -135,22 +133,16 @@ impl Context {
         self.executors.get(name)
     }
 
-    pub async fn get_var(&self, name: &str) -> Option<&AnyValue> {
-        self.logger
-            .log(format!("Reading variable: ${name};",))
-            .await;
+    pub fn get_var(&self, name: &str) -> Option<&AnyValue> {
+        self.logger.log(format!("Reading variable: ${name};",));
         if !self.vars.contains_key(name) {
-            self.logger
-                .err(format!("Variable: ${name} doesn't exist;"))
-                .await;
+            self.logger.err(format!("Variable: ${name} doesn't exist;"));
         }
         self.vars.get(name)
     }
 
-    pub async fn set_var(&mut self, name: String, value: AnyValue) {
-        self.logger
-            .log(format!("Assignation: ${name} = {value}"))
-            .await;
+    pub fn set_var(&mut self, name: String, value: AnyValue) {
+        self.logger.log(format!("Assignation: ${name} = {value}"));
         self.vars.insert(name, value);
     }
 }

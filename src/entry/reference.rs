@@ -35,7 +35,6 @@ impl Input {
             Self::String(v) => v.to_owned(),
             Self::VariableName(name) => cx
                 .get_var(&name.name)
-                .await
                 .ok_or(operator::E::VariableIsNotAssigned(name.name.to_owned()))?
                 .get_as_string()
                 .ok_or(operator::E::FailToGetStringValue)?,

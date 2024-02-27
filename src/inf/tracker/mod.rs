@@ -3,19 +3,19 @@ mod logger;
 mod progress;
 mod task;
 
-use std::{
-    fmt::{self, format},
-    path::PathBuf,
-};
-
-use async_channel::{bounded, unbounded, Receiver, Sender};
 use console::style;
-
 pub use error::E;
 use logger::Storage;
 pub use logger::{Logger, Logs};
 use progress::Progress;
+use std::{fmt, path::PathBuf};
 pub use task::Task;
+use tokio::{
+    self,
+    sync::mpsc::{
+        channel, error::SendError, unbounded_channel, Sender, UnboundedReceiver, UnboundedSender,
+    },
+};
 
 #[derive(Clone, Debug)]
 pub enum Output {
@@ -106,15 +106,15 @@ pub enum Tick {
 
 #[derive(Clone, Debug)]
 pub struct Tracker {
-    tx: Sender<Tick>,
+    tx: UnboundedSender<Tick>,
 }
 
 impl Tracker {
-    async fn run(rx: Receiver<Tick>, cfg: Configuration) -> Result<(), E> {
+    async fn run(mut rx: UnboundedReceiver<Tick>, cfg: Configuration) -> Result<(), E> {
         let mut storage: Storage = Storage::new(cfg.clone());
         let mut progress: Progress = Progress::new(cfg);
         loop {
-            if let Ok(tick) = rx.recv().await {
+            if let Some(tick) = rx.recv().await {
                 match tick {
                     Tick::Started(alias, len, tx_response) => match progress.create(&alias, len) {
                         Ok(sequence) => {
@@ -156,19 +156,19 @@ impl Tracker {
         }
     }
 
-    async fn log(&self, owner: String, level: logger::Level, msg: String) {
-        Self::send(self.tx.send(Tick::Log(owner, level, msg))).await
+    fn log(&self, owner: String, level: logger::Level, msg: String) {
+        Self::send(self.tx.send(Tick::Log(owner, level, msg)))
     }
 
-    async fn send<T>(sender: async_channel::Send<'_, T>) {
-        if let Err(e) = sender.await {
+    fn send<T>(result: Result<(), SendError<T>>) {
+        if let Err(e) = result {
             panic!("Fail to communicate with tracker: {e}");
         }
     }
 
     pub fn new(cfg: Configuration) -> Self {
-        let (tx, rx): (Sender<Tick>, Receiver<Tick>) = unbounded();
-        async_std::task::spawn(Tracker::run(rx, cfg));
+        let (tx, rx): (UnboundedSender<Tick>, UnboundedReceiver<Tick>) = unbounded_channel();
+        tokio::task::spawn(Tracker::run(rx, cfg));
         Self { tx }
     }
 
@@ -177,51 +177,47 @@ impl Tracker {
     }
 
     pub async fn create_job(&self, job: &str, max: Option<u64>) -> Result<Task, E> {
-        let (tx_response, rx_response) = bounded(1);
+        let (tx_response, mut rx_response) = channel(1);
         self.tx
             .send(Tick::Started(job.to_string(), max, tx_response))
-            .await
             .map_err(|e| E::ChannelError(format!("Fail to send tick: {e}")))?;
         let id = rx_response
             .recv()
             .await
-            .map_err(|e| E::ChannelError(e.to_string()))?;
+            .ok_or(E::ChannelError("Fail to get job's id".to_string()))?;
         Ok(Task::new(self, id, job))
     }
 
-    pub async fn progress(&self, sequence: usize, pos: Option<u64>) {
-        Self::send(self.tx.send(Tick::Progress(sequence, pos))).await;
+    pub fn progress(&self, sequence: usize, pos: Option<u64>) {
+        Self::send(self.tx.send(Tick::Progress(sequence, pos)));
     }
 
-    pub async fn msg(&self, sequence: usize, log: &str) {
-        Self::send(self.tx.send(Tick::Message(sequence, log.to_string()))).await;
+    pub fn msg(&self, sequence: usize, log: &str) {
+        Self::send(self.tx.send(Tick::Message(sequence, log.to_string())));
     }
 
-    pub async fn success(&self, sequence: usize) {
+    pub fn success(&self, sequence: usize) {
         Self::send(
             self.tx
                 .send(Tick::Finished(sequence, OperationResult::Success)),
         )
-        .await
     }
 
-    pub async fn fail(&self, sequence: usize) {
+    pub fn fail(&self, sequence: usize) {
         Self::send(
             self.tx
                 .send(Tick::Finished(sequence, OperationResult::Failed)),
-        )
-        .await;
+        );
     }
 
     pub async fn shutdown(&self) -> Result<(), E> {
-        let (tx_response, rx_response) = bounded(1);
+        let (tx_response, mut rx_response) = channel(1);
         self.tx
             .send(Tick::Shutdown(tx_response))
-            .await
             .map_err(|e| E::ChannelError(format!("Fail to send tick: {e}")))?;
         rx_response
             .recv()
             .await
-            .map_err(|e| E::ChannelError(e.to_string()))
+            .ok_or(E::ChannelError("Fail to confirm shutdown".to_string()))
     }
 }

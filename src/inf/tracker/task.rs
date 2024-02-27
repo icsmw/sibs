@@ -19,28 +19,28 @@ impl Task {
         }
     }
 
-    pub async fn progress(&self, pos: Option<u64>) {
-        self.tracker.progress(self.id, pos).await;
+    pub fn progress(&self, pos: Option<u64>) {
+        self.tracker.progress(self.id, pos);
     }
 
-    pub async fn msg(&self, log: &str) {
-        self.tracker.msg(self.id, log).await;
+    pub fn msg(&self, log: &str) {
+        self.tracker.msg(self.id, log);
     }
 
-    pub async fn success(&self) {
-        self.tracker.success(self.id).await;
+    pub fn success(&self) {
+        self.tracker.success(self.id);
     }
 
-    pub async fn fail(&self) {
-        self.tracker.fail(self.id).await;
+    pub fn fail(&self) {
+        self.tracker.fail(self.id);
     }
 
-    pub async fn result(&self, result: OperatorResult) -> OperatorResult {
+    pub fn result(&self, result: OperatorResult) -> OperatorResult {
         match result.as_ref() {
-            Ok(_) => self.success().await,
+            Ok(_) => self.success(),
             Err(err) => {
-                self.err(err.to_string()).await;
-                self.fail().await;
+                self.err(err.to_string());
+                self.fail();
             }
         };
         result

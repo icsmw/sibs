@@ -376,7 +376,7 @@ mod reading {
         reader::{error::E, read_file},
     };
 
-    #[async_std::test]
+    #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
         let target = std::env::current_dir()
             .unwrap()

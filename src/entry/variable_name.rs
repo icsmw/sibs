@@ -60,7 +60,6 @@ impl Operator for VariableName {
         Box::pin(async {
             let value = cx
                 .get_var(&self.name)
-                .await
                 .ok_or(operator::E::VariableIsNotAssigned(self.name.to_owned()))?;
             Ok(value
                 .get_as_string()

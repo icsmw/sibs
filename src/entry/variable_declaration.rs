@@ -52,8 +52,7 @@ impl VariableDeclaration {
                 }
                 .ok_or(operator::E::NoValueToDeclareTaskArgument)?,
             ),
-        )
-        .await;
+        );
         Ok(())
     }
 }

@@ -181,7 +181,6 @@ impl Operator for Task {
                 declaration.declare(args[i].to_owned(), cx).await?;
             }
             job.result(block.execute(owner, components, args, cx).await)
-                .await
         })
     }
 }
@@ -282,7 +281,7 @@ mod processing {
 
     const VALUES: &[&[&str]] = &[&["a"], &["a", "b"], &["a"], &["a", "b"], &["a", "b", "c"]];
 
-    #[async_std::test]
+    #[tokio::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
         let mut reader =

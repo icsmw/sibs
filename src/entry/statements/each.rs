@@ -141,8 +141,7 @@ impl Operator for Each {
                 cx.set_var(
                     self.variable.name.to_owned(),
                     AnyValue::new(iteration.to_string()),
-                )
-                .await;
+                );
                 output = self.block.execute(owner, components, args, cx).await?;
             }
             Ok(if output.is_none() {
@@ -234,7 +233,7 @@ mod processing {
     };
     const VALUES: &[(&str, &str)] = &[("a", "three"), ("b", "two"), ("c", "one")];
 
-    #[async_std::test]
+    #[tokio::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
         let mut reader =
@@ -244,7 +243,7 @@ mod processing {
         }
         for (name, value) in VALUES.iter() {
             assert_eq!(
-                cx.get_var(name).await.unwrap().get_as_string().unwrap(),
+                cx.get_var(name).unwrap().get_as_string().unwrap(),
                 value.to_string()
             );
         }
@@ -313,7 +312,7 @@ mod proptest {
     }
 
     fn reading(each: Each) -> Result<(), E> {
-        async_io::block_on(async {
+        get_rt().block_on(async {
             let origin = format!("test [\n{each};\n];");
             let mut reader = Reader::unbound(origin.clone());
             while let Some(task) = Task::read(&mut reader)? {

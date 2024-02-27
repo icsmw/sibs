@@ -38,13 +38,11 @@ impl Executor for Os {
             let probe = args[0]
                 .get_as::<String>()
                 .ok_or(Error::InvalidArgumentType)?;
-            logger
-                .log(format!(
-                    "checking for \"{}\"; result: {}",
-                    probe.to_lowercase(),
-                    probe.to_lowercase() == std::env::consts::OS
-                ))
-                .await;
+            logger.log(format!(
+                "checking for \"{}\"; result: {}",
+                probe.to_lowercase(),
+                probe.to_lowercase() == std::env::consts::OS
+            ));
             Ok(AnyValue::new(probe.to_lowercase() == std::env::consts::OS))
         })
     }

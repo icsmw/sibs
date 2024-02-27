@@ -177,9 +177,8 @@ impl Operator for Component {
                 operator::E::TaskNotExists( task.to_owned(),self.name.to_string())
             })?;
             let job = cx.tracker.create_job(self.get_name(), None).await?;
-            cx.set_cwd(self.cwd.clone()).await?;
+            cx.set_cwd(self.cwd.clone())?;
             job.result(task.execute(owner, components, &args[1..], cx).await)
-                .await
         })
     }
 }
@@ -295,7 +294,7 @@ mod processing {
         &["test", "a", "b", "c"],
     ];
 
-    #[async_std::test]
+    #[tokio::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
         let mut reader =

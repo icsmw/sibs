@@ -2,6 +2,7 @@ mod scope;
 pub use scope::*;
 
 use crate::reader::chars;
+use tokio::runtime::{Builder, Runtime};
 
 pub fn trim_carets(src: &str) -> String {
     src.split('\n')
@@ -16,15 +17,12 @@ pub fn trim_semicolon(src: &str) -> String {
         src.to_owned()
     }
 }
-// use proptest::{prelude::*, strategy::ValueTree, test_runner::TestRunner};
 
-// pub fn extract<T>(strategy: impl Strategy<Value = T>) -> T {
-//     strategy
-//         .new_tree(&mut TestRunner::default())
-//         .unwrap()
-//         .current()
-// }
-
-// pub fn random_bool() -> impl Strategy<Value = bool> {
-//     prop_oneof![Just(true), Just(false)]
-// }
+pub fn get_rt() -> Runtime {
+    Builder::new_multi_thread()
+        .worker_threads(4)
+        .thread_name("runtime")
+        .thread_stack_size(3 * 1024 * 1024)
+        .build()
+        .expect("Create tokio runtime")
+}

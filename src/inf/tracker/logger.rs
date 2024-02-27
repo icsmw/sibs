@@ -34,40 +34,36 @@ pub trait Logs {
 
     fn get_alias(&self) -> &'_ str;
 
-    async fn log<'a, T>(&self, msg: T)
+    fn log<'a, T>(&self, msg: T)
     where
         T: 'a + ToOwned + ToString,
     {
         self.get_tracker()
-            .log(self.get_alias().to_owned(), Level::Info, msg.to_string())
-            .await;
+            .log(self.get_alias().to_owned(), Level::Info, msg.to_string());
     }
 
-    async fn warn<'a, T>(&self, msg: T)
+    fn warn<'a, T>(&self, msg: T)
     where
         T: 'a + ToOwned + ToString,
     {
         self.get_tracker()
-            .log(self.get_alias().to_owned(), Level::Warn, msg.to_string())
-            .await;
+            .log(self.get_alias().to_owned(), Level::Warn, msg.to_string());
     }
 
-    async fn verb<'a, T>(&self, msg: T)
+    fn verb<'a, T>(&self, msg: T)
     where
         T: 'a + ToOwned + ToString,
     {
         self.get_tracker()
-            .log(self.get_alias().to_owned(), Level::Verb, msg.to_string())
-            .await;
+            .log(self.get_alias().to_owned(), Level::Verb, msg.to_string());
     }
 
-    async fn err<'a, T>(&self, msg: T)
+    fn err<'a, T>(&self, msg: T)
     where
         T: 'a + ToOwned + ToString,
     {
         self.get_tracker()
-            .log(self.get_alias().to_owned(), Level::Err, msg.to_string())
-            .await;
+            .log(self.get_alias().to_owned(), Level::Err, msg.to_string());
     }
 }
 

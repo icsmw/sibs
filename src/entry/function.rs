@@ -300,7 +300,7 @@ mod processing {
         reader::{Reader, Reading},
     };
 
-    #[async_std::test]
+    #[tokio::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
         let mut reader =
@@ -353,7 +353,7 @@ mod proptest {
     }
 
     fn reading(func: Function) -> Result<(), E> {
-        async_io::block_on(async {
+        get_rt().block_on(async {
             let origin = format!("test [\n{func};\n];");
             let mut reader = Reader::unbound(origin.clone());
             while let Some(task) = Task::read(&mut reader)? {
