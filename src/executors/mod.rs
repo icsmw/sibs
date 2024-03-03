@@ -1,4 +1,6 @@
+pub mod env;
 mod error;
+pub mod fs;
 pub mod get_os;
 pub mod import;
 pub mod os;
@@ -17,6 +19,10 @@ pub trait Executor {
     fn get_name() -> String;
 }
 
+pub trait TryAnyTo<T> {
+    fn try_to(&self) -> Result<T, E>;
+}
+
 pub fn register(cx: &mut Context) -> Result<(), E> {
     cx.add_fn(
         import::Import::get_name(),
@@ -31,5 +37,7 @@ pub fn register(cx: &mut Context) -> Result<(), E> {
         get_os::GetOs::get_name(),
         <get_os::GetOs as Executor>::execute,
     )?;
+    fs::register(cx)?;
+    env::register(cx)?;
     Ok(())
 }

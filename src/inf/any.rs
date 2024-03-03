@@ -1,3 +1,4 @@
+use crate::executors::{TryAnyTo, E};
 use std::{
     any::{Any, TypeId},
     fmt,
@@ -120,5 +121,23 @@ impl AnyValue {
 impl fmt::Display for AnyValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", self.value)
+    }
+}
+
+impl TryAnyTo<std::path::PathBuf> for AnyValue {
+    fn try_to(&self) -> Result<std::path::PathBuf, E> {
+        Ok(std::path::PathBuf::from(
+            self.get_as_string()
+                .ok_or(E::Converting(String::from("PathBuf")))?,
+        ))
+    }
+}
+
+impl TryAnyTo<String> for AnyValue {
+    fn try_to(&self) -> Result<String, E> {
+        Ok(self
+            .get_as::<String>()
+            .ok_or(E::Converting(String::from("String")))?
+            .to_owned())
     }
 }

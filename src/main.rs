@@ -1,5 +1,4 @@
 use std::process::exit;
-
 mod cli;
 mod entry;
 mod error;

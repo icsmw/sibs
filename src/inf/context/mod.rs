@@ -120,12 +120,15 @@ impl Context {
         Ok(())
     }
 
-    pub fn add_fn(&mut self, name: String, func: ExecutorFn) -> Result<(), E> {
-        if let Entry::Vacant(e) = self.executors.entry(name.clone()) {
+    pub fn add_fn<'a, T>(&mut self, name: T, func: ExecutorFn) -> Result<(), E>
+    where
+        T: 'a + ToOwned + ToString,
+    {
+        if let Entry::Vacant(e) = self.executors.entry(name.to_string()) {
             e.insert(func);
             Ok(())
         } else {
-            Err(E::FunctionAlreadyExists(name))
+            Err(E::FunctionAlreadyExists(name.to_string()))
         }
     }
 
