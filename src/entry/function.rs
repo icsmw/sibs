@@ -37,7 +37,7 @@ impl Reading<Function> for Function {
                 .unwrap_or_else(|| (reader.move_to().end(), None));
             if !Reader::is_ascii_alphabetic_and_alphanumeric(
                 &name,
-                &[&chars::UNDERSCORE, &chars::DASH],
+                &[&chars::UNDERSCORE, &chars::DASH, &chars::COLON],
             ) {
                 Err(E::InvalidFunctionName.by_reader(reader))?;
             }

@@ -58,6 +58,11 @@ impl AnyValue {
             .or_else(|| reference.downcast_ref::<i32>().map(|v| v.to_string()))
             .or_else(|| reference.downcast_ref::<i64>().map(|v| v.to_string()))
             .or_else(|| reference.downcast_ref::<bool>().map(|v| v.to_string()))
+            .or_else(|| {
+                reference
+                    .downcast_ref::<std::path::PathBuf>()
+                    .map(|v| v.to_string_lossy().to_string())
+            })
     }
 
     pub fn get_as_strings(&self) -> Option<Vec<String>> {
@@ -114,6 +119,15 @@ impl AnyValue {
                 reference
                     .downcast_ref::<Vec<bool>>()
                     .map(|v| v.iter().map(|v| v.to_string()).collect::<Vec<String>>())
+            })
+            .or_else(|| {
+                reference
+                    .downcast_ref::<Vec<std::path::PathBuf>>()
+                    .map(|v| {
+                        v.iter()
+                            .map(|v| v.to_string_lossy().to_string())
+                            .collect::<Vec<String>>()
+                    })
             })
     }
 }

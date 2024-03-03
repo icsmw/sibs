@@ -7,7 +7,15 @@ use importer::import;
 pub fn register(cx: &mut Context) -> Result<(), E> {
     #[import(env)]
     fn var(key: String) -> Result<String, E> {
-        Ok(std::env::var(key)?)
+        Ok(match std::env::var(key) {
+            Ok(v) => v,
+            Err(_) => String::from(""),
+        })
+    }
+    #[import(env)]
+    fn set_var(key: String, value: String) -> Result<(), E> {
+        std::env::set_var(key, value);
+        Ok(())
     }
     #[import(env)]
     fn remove_var(key: String) -> Result<(), E> {
@@ -31,4 +39,61 @@ pub fn register(cx: &mut Context) -> Result<(), E> {
         Ok(std::env::consts::FAMILY.to_string())
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        entry::Task,
+        inf::{
+            context::Context,
+            operator::{Operator, E},
+        },
+        reader::{Reader, Reading},
+    };
+
+    const TESTS: &[&str] = &[
+        r#"IF @env::var TEST_VAR == "__test_var__" ["true";] ELSE ["false";];"#,
+        r#"IF @env::family == "__family__" ["true";] ELSE ["false";];"#,
+        r#"IF @env::os == "__os__" ["true";] ELSE ["false";];"#,
+        r#"IF @env::arch == "__arch__" ["true";] ELSE ["false";];"#,
+        r#"IF @env::temp_dir == "__temp_dir__" ["true";] ELSE ["false";];"#,
+        r#"@env::remove_var TEST_VAR; IF @env::var TEST_VAR == "" ["true";] ELSE ["false";];"#,
+        r#"@env::set_var TEST_VAR "VALUE"; IF @env::var TEST_VAR == "VALUE" ["true";] ELSE ["false";];"#,
+    ];
+
+    #[tokio::test]
+    async fn reading() -> Result<(), E> {
+        std::env::set_var("TEST_VAR", "TEST");
+        let temp_dir = std::env::temp_dir().to_string_lossy().to_string();
+        let hooks: &[(&str, &str)] = &[
+            ("__test_var__", "TEST"),
+            ("__family__", std::env::consts::FAMILY),
+            ("__os__", std::env::consts::OS),
+            ("__arch__", std::env::consts::ARCH),
+            ("__temp_dir__", temp_dir.as_ref()),
+        ];
+        fn apply_hooks(mut src: String, hooks: &[(&str, &str)]) -> String {
+            hooks.iter().for_each(|(hook, value)| {
+                src = src.replace(hook, value);
+            });
+            src
+        }
+        for test in TESTS.iter() {
+            let mut cx = Context::unbound()?;
+            let mut reader = Reader::unbound(apply_hooks(format!("test[{test}]"), hooks));
+            while let Some(task) = Task::read(&mut reader)? {
+                let result = task
+                    .execute(None, &[], &[], &mut cx)
+                    .await?
+                    .expect("test returns some value");
+                assert_eq!(
+                    result.get_as_string().expect("test returns string value"),
+                    "true".to_owned()
+                );
+            }
+        }
+
+        Ok(())
+    }
 }
