@@ -9,3 +9,4 @@
 - add simple assignation $a = $b
 - add web-server for remote access
 - dry-run: run and ignore terminal commands & show a map of executing
+- this is valid "@fs::path_join [$tmp_path $file_name];", this is NOT "@fs::path_join [$tmp_path; $file_name;];" or "@fs::path_join [$tmp_path ,$file_name];". Error should be shown.

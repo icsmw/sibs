@@ -63,6 +63,11 @@ impl AnyValue {
                     .downcast_ref::<std::path::PathBuf>()
                     .map(|v| v.to_string_lossy().to_string())
             })
+            .or_else(|| {
+                reference
+                    .downcast_ref::<AnyValue>()
+                    .and_then(|v| v.get_as_string())
+            })
     }
 
     pub fn get_as_strings(&self) -> Option<Vec<String>> {
@@ -129,6 +134,20 @@ impl AnyValue {
                             .collect::<Vec<String>>()
                     })
             })
+            .or_else(|| {
+                let try_collect = |values: Option<&Vec<AnyValue>>| -> Result<Vec<String>, ()> {
+                    let values = values.ok_or(())?;
+                    let mut strings: Vec<String> = vec![];
+                    for v in values.iter() {
+                        strings.push(v.get_as_string().ok_or(())?);
+                    }
+                    Ok(strings)
+                };
+                match try_collect(reference.downcast_ref::<Vec<AnyValue>>()) {
+                    Ok(v) => Some(v),
+                    Err(_) => None,
+                }
+            })
     }
 }
 
@@ -144,6 +163,18 @@ impl TryAnyTo<std::path::PathBuf> for AnyValue {
             self.get_as_string()
                 .ok_or(E::Converting(String::from("PathBuf")))?,
         ))
+    }
+}
+
+impl TryAnyTo<Vec<std::path::PathBuf>> for AnyValue {
+    fn try_to(&self) -> Result<Vec<std::path::PathBuf>, E> {
+        let vec = Ok(self
+            .get_as_strings()
+            .ok_or(E::Converting(String::from("PathBuf")))?
+            .iter()
+            .map(std::path::PathBuf::from)
+            .collect::<Vec<std::path::PathBuf>>());
+        vec
     }
 }
 

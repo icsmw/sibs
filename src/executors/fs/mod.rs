@@ -46,6 +46,17 @@ pub fn register(cx: &mut Context) -> Result<(), E> {
         Ok(std::fs::read_to_string(path)?)
     }
     #[import(fs)]
+    fn write(path: std::path::PathBuf, data: String) -> Result<(), E> {
+        Ok(std::fs::write(path, data)?)
+    }
+    #[import(fs)]
+    fn append(path: std::path::PathBuf, data: String) -> Result<(), E> {
+        use std::fs::OpenOptions;
+        use std::io::Write;
+        let mut file = OpenOptions::new().append(true).open(path)?;
+        Ok(writeln!(file, "{data}")?)
+    }
+    #[import(fs)]
     fn is_file(path: std::path::PathBuf) -> Result<bool, E> {
         Ok(std::fs::metadata(path)?.is_file())
     }
@@ -94,5 +105,62 @@ pub fn register(cx: &mut Context) -> Result<(), E> {
             .duration_since(std::time::UNIX_EPOCH)?
             .as_millis())
     }
+    #[import(fs)]
+    fn path_join(paths: Vec<std::path::PathBuf>) -> Result<std::path::PathBuf, E> {
+        let mut path = std::path::PathBuf::new();
+        paths.iter().for_each(|part| {
+            path.push(part);
+        });
+        Ok(path)
+    }
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        entry::Task,
+        inf::{
+            context::Context,
+            operator::{Operator, E},
+        },
+        reader::{Reader, Reading},
+    };
+
+    const TESTS: &[&str] = &[
+        r#"$tmp_path = @env::temp_dir; $file_name = "test.txt"; $file = @fs::path_join [$tmp_path $file_name]; IF $file == "__temp_file__" ["true";] ELSE ["false";];"#,
+        // r#"$file = @fs::path_join [@env::temp_dir "test.txt"]; IF $file == "__temp_file__" ["true";] ELSE ["false";];"#,
+    ];
+
+    #[tokio::test]
+    async fn reading() -> Result<(), E> {
+        std::env::set_var("TEST_VAR", "TEST");
+        let temp_file = std::env::temp_dir()
+            .join("test.txt")
+            .to_string_lossy()
+            .to_string();
+        let hooks: &[(&str, &str)] = &[("__temp_file__", &temp_file)];
+        fn apply_hooks(mut src: String, hooks: &[(&str, &str)]) -> String {
+            hooks.iter().for_each(|(hook, value)| {
+                src = src.replace(hook, value);
+            });
+            src
+        }
+        for test in TESTS.iter() {
+            let mut cx = Context::unbound()?;
+            let mut reader = Reader::unbound(apply_hooks(format!("test[{test}]"), hooks));
+            while let Some(task) = Task::read(&mut reader)? {
+                let result = task
+                    .execute(None, &[], &[], &mut cx)
+                    .await?
+                    .expect("test returns some value");
+                assert_eq!(
+                    result.get_as_string().expect("test returns string value"),
+                    "true".to_owned()
+                );
+            }
+        }
+
+        Ok(())
+    }
 }
