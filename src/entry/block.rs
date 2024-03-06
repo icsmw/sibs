@@ -1,7 +1,7 @@
 use crate::{
     entry::{
         Command, Component, Each, First, Function, If, Meta, Optional, PatternString, Reference,
-        VariableAssignation, VariableName,
+        Values, VariableAssignation, VariableName,
     },
     error::LinkedErr,
     inf::{
@@ -26,6 +26,7 @@ pub enum Element {
     PatternString(PatternString),
     VariableName(VariableName),
     Command(Command),
+    Values(Values),
 }
 
 impl fmt::Display for Element {
@@ -44,6 +45,7 @@ impl fmt::Display for Element {
                 Self::Reference(v) => v.to_string(),
                 Self::PatternString(v) => v.to_string(),
                 Self::VariableName(v) => v.to_string(),
+                Self::Values(v) => v.to_string(),
             }
         )
     }
@@ -62,6 +64,7 @@ impl Operator for Element {
             Self::Reference(v) => v.token(),
             Self::PatternString(v) => v.token(),
             Self::VariableName(v) => v.token(),
+            Self::Values(v) => v.token(),
         }
     }
     fn perform<'a>(
@@ -83,6 +86,7 @@ impl Operator for Element {
                 Self::Reference(v) => v.execute(owner, components, args, cx).await,
                 Self::PatternString(v) => v.execute(owner, components, args, cx).await,
                 Self::VariableName(v) => v.execute(owner, components, args, cx).await,
+                Self::Values(v) => v.execute(owner, components, args, cx).await,
             }
         })
     }
@@ -161,6 +165,13 @@ impl Reading<Block> for Block {
                 }
                 if let Some(el) = Function::read(&mut inner)? {
                     elements.push(Element::Function(el));
+                    continue;
+                }
+                if let Some(el) = Values::read(&mut inner)? {
+                    if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
+                        Err(E::MissedSemicolon.by_reader(reader))?;
+                    }
+                    elements.push(Element::Values(el));
                     continue;
                 }
                 if let Some((cmd, _)) = inner.until().char(&[&chars::SEMICOLON]) {

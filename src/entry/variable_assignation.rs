@@ -74,6 +74,7 @@ pub struct VariableAssignation {
 impl Reading<VariableAssignation> for VariableAssignation {
     fn read(reader: &mut Reader) -> Result<Option<VariableAssignation>, LinkedErr<E>> {
         reader.state().set();
+        //TODO: doesn't restore position if reads in function
         let close = reader.open_token();
         if let Some(name) = VariableName::read(reader)? {
             if reader.move_to().char(&[&chars::EQUAL]).is_some() {
@@ -136,7 +137,7 @@ impl Reading<VariableAssignation> for VariableAssignation {
                     Err(E::NoComparingOrAssignation.linked(&token.id))?
                 }
             } else {
-                Err(E::NoComparingOrAssignation.by_reader(reader))?
+                Ok(None)
             }
         } else {
             Ok(None)

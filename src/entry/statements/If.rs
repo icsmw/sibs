@@ -649,7 +649,7 @@ mod proptest {
                         );
                     }
                     // TODO: remove this condition
-                    if permissions.value_string {
+                    if permissions.pattern_string {
                         allowed.push(
                             (
                                 CmpSubject::arbitrary_with(scope.clone()),

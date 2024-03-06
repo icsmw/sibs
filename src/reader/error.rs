@@ -59,6 +59,8 @@ pub enum E {
     EmptyComponentName,
     #[error("No command value")]
     EmptyCommand,
+    #[error("This type of argument cannot be used in references")]
+    InvalidArgumentForReference,
     #[error("Function @import has invalid arguments")]
     ImportFunctionInvalidArgs,
     #[error("Function @import doesn't have arguments")]

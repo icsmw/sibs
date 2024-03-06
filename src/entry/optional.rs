@@ -1,7 +1,7 @@
 use crate::{
     entry::{
-        Block, Command, Component, Function, PatternString, Reference, VariableAssignation,
-        VariableComparing,
+        Block, Command, Component, Element, Function, PatternString, Reference,
+        VariableAssignation, VariableComparing,
     },
     error::LinkedErr,
     inf::{

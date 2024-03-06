@@ -159,7 +159,7 @@ impl Arguments {
             if !arg.trim().is_empty() {
                 let mut token = reader.token()?;
                 if token.bound.contains().char(&chars::AT) {
-                    Err(E::NestedFunction.by_reader(&reader))?
+                    Err(E::NestedFunction.by_reader(reader))?
                 }
                 if let Some(variable) = VariableName::read(&mut token.bound)? {
                     arguments.push(Argument::VariableName(variable));
@@ -191,21 +191,38 @@ impl Arguments {
     }
     pub fn add_args(&mut self, reader: &mut Reader) -> Result<(), LinkedErr<E>> {
         let mut arguments: Vec<Argument> = vec![];
-        loop {
-            if reader.until().char(&[&chars::QUOTES]).is_some() {
-                arguments = [
-                    arguments,
-                    Arguments::read_string_args(&mut reader.token()?.bound)?,
-                ]
-                .concat();
-                if let Some(value_string) = PatternString::read(reader)? {
+        while let Some(arg) = reader.until().whitespace() {
+            reader.move_to().next();
+            if !arg.trim().is_empty() {
+                let mut token = reader.token()?;
+                if token.bound.contains().char(&chars::AT) {
+                    Err(E::NestedFunction.by_reader(reader))?
+                }
+                if let Some(variable) = VariableName::read(&mut token.bound)? {
+                    arguments.push(Argument::VariableName(variable));
+                } else if let Some(value_string) = PatternString::read(&mut token.bound)? {
                     arguments.push(Argument::PatternString(value_string));
                 } else {
-                    Err(E::NoStringEnd.by_reader(reader))?
+                    arguments.push(Argument::SimpleString(SimpleString {
+                        value: Reader::unserialize(&arg),
+                        token: token.id,
+                    }));
                 }
+            }
+        }
+        if !reader.rest().trim().is_empty() {
+            if reader.contains().char(&chars::AT) {
+                println!(">>>>>>>>>>>>>>>>>>>:__{}__", reader.rest());
+                Err(E::NestedFunction.by_reader(reader))?
+            }
+            if let Some(variable) = VariableName::read(reader)? {
+                arguments.push(Argument::VariableName(variable));
             } else {
-                arguments = [arguments, Arguments::read_string_args(reader)?].concat();
-                break;
+                let rest = reader.move_to().end();
+                arguments.push(Argument::SimpleString(SimpleString {
+                    value: Reader::unserialize(&rest),
+                    token: reader.token()?.id,
+                }));
             }
         }
         if !arguments.is_empty() {
@@ -261,7 +278,7 @@ mod proptest {
                         .boxed(),
                 );
             }
-            if permissions.value_string {
+            if permissions.pattern_string {
                 allowed.push(
                     PatternString::arbitrary_with(scope.clone())
                         .prop_map(Argument::PatternString)

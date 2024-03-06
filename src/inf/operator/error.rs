@@ -10,6 +10,8 @@ use thiserror::Error;
 pub enum E {
     #[error("Operator method isn't supported")]
     NotSupported,
+    #[error("Function's argument doesn't have return value")]
+    NotAllArguamentsHasReturn,
     #[error("Spawned process exist with error")]
     SpawnedProcessExitWithError,
     #[error("No current working folder")]
@@ -38,6 +40,8 @@ pub enum E {
     FailToGetValueAsString,
     #[error("Fail to get string value")]
     FailToGetStringValue,
+    #[error("Fail to get any value for task's argument")]
+    FailToGetAnyValueAsTaskArg,
     #[error("Function doesn't return bool result")]
     NoBoolResultFromFunction,
     #[error("If=proviso doesn't return bool result")]

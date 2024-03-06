@@ -15,7 +15,7 @@ pub const META: usize = 10;
 pub const OPTIONAL: usize = 1;
 pub const REFERENCE: usize = 10;
 pub const TASK: usize = 1;
-pub const VALUE_STRING: usize = 1;
+pub const PATTERN_STRING: usize = 1;
 pub const VARIABLE_ASSIGNATION: usize = 10;
 pub const VARIABLE_COMPARING: usize = 10;
 pub const VARIABLE_DECLARATION: usize = 10;
@@ -45,6 +45,7 @@ pub enum Entity {
     VariableType,
     Variants,
     Values,
+    SimpleString,
 }
 
 pub struct Permissions {
@@ -59,7 +60,7 @@ pub struct Permissions {
     pub meta: bool,
     pub reference: bool,
     pub task: bool,
-    pub value_string: bool,
+    pub pattern_string: bool,
     pub variable_assignation: bool,
     pub variable_comparing: bool,
     pub variable_declaration: bool,
@@ -108,7 +109,7 @@ impl Scope {
             component: self.count_of(Entity::Component) < COMPONENT,
             meta: self.count_of(Entity::Meta) < META,
             reference: self.count_of(Entity::Reference) < REFERENCE,
-            value_string: self.count_of(Entity::PatternString) < VALUE_STRING,
+            pattern_string: self.count_of(Entity::PatternString) < PATTERN_STRING,
             variable_assignation: self.count_of(Entity::VariableAssignation) < VARIABLE_ASSIGNATION,
             variable_comparing: self.count_of(Entity::VariableComparing) < VARIABLE_COMPARING,
             variable_declaration: self.count_of(Entity::VariableDeclaration) < VARIABLE_DECLARATION,

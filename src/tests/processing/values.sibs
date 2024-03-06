@@ -16,3 +16,9 @@ test [
 test [
     $a4 = (@repeat "a" 2, @repeat "b" 2, @repeat "c" 2);
 ];
+test [
+    $a5 = (:a:test, :b:test);
+];
+test [
+    $a6 = (:c:test, :d:test);
+];

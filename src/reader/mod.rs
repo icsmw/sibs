@@ -409,6 +409,20 @@ impl<'a> Next<'a> {
         }
         self.bound.content[self.bound.pos..].chars().next()
     }
+    // pub fn is_char(&mut self, target: &[&char]) -> bool {
+    //     if self.bound.done() {
+    //         return false;
+    //     }
+    //     let content = &self.bound.content[self.bound.pos..];
+    //     let mut serialized: bool = false;
+    //     for char in content.chars() {
+    //         if char.is_whitespace() {
+    //             continue;
+    //         }
+    //         return target.contains(&&char);
+    //     }
+    //     false
+    // }
 }
 
 #[derive(Debug)]
@@ -568,6 +582,9 @@ impl Reader {
     pub fn done(&self) -> bool {
         self.pos == self.content.len()
     }
+    pub fn is_empty(&self) -> bool {
+        self.content.trim().is_empty()
+    }
     pub fn unserialize(content: &str) -> String {
         content
             .to_string()
@@ -617,24 +634,24 @@ pub fn read_file<'a>(cx: &'a mut Context) -> Pin<Box<dyn Future<Output = ReadFil
         }
         let mut reader = Reader::bound(fs::read_to_string(&cx.scenario.filename)?, cx);
         let mut imports: Vec<PathBuf> = vec![];
-        while let Some(func) = Function::read(&mut reader)? {
-            let path_to_import = if let Some(args) = func.args.as_ref() {
-                if args.args.len() != 1 {
-                    Err(E::ImportFunctionInvalidArgs.unlinked())?;
-                }
-                Import::get(
-                    PathBuf::from(
-                        args.args[0]
-                            .as_string()
-                            .ok_or(E::ImportFunctionInvalidPathArg.unlinked())?,
-                    ),
-                    cx,
-                )?
-            } else {
-                return Err(E::ImportFunctionNoArgs.unlinked());
-            };
-            imports.push(path_to_import);
-        }
+        // while let Some(func) = Function::read(&mut reader)? {
+        //     let path_to_import = if let Some(args) = func.args.as_ref() {
+        //         if args.args.len() != 1 {
+        //             Err(E::ImportFunctionInvalidArgs.unlinked())?;
+        //         }
+        //         Import::get(
+        //             PathBuf::from(
+        //                 args.args[0]
+        //                     .as_string()
+        //                     .ok_or(E::ImportFunctionInvalidPathArg.unlinked())?,
+        //             ),
+        //             cx,
+        //         )?
+        //     } else {
+        //         return Err(E::ImportFunctionNoArgs.unlinked());
+        //     };
+        //     imports.push(path_to_import);
+        // }
         let mut components: Vec<Component> = vec![];
         for import_path in imports.iter_mut() {
             let mut cx = Context::from_filename(import_path)?;

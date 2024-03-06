@@ -1,5 +1,5 @@
 use crate::{
-    entry::{Component, VariableName},
+    entry::{Component, Element, ElementExd, SimpleString},
     error::LinkedErr,
     inf::{
         context::Context,
@@ -12,39 +12,9 @@ use std::fmt;
 const SELF: &str = "self";
 
 #[derive(Debug, Clone)]
-pub enum Input {
-    VariableName(VariableName),
-    String(String),
-}
-
-impl fmt::Display for Input {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Self::String(s) => s.to_string(),
-                Self::VariableName(v) => v.to_string(),
-            }
-        )
-    }
-}
-impl Input {
-    async fn as_arg(&self, cx: &mut Context) -> Result<String, operator::E> {
-        Ok(match self {
-            Self::String(v) => v.to_owned(),
-            Self::VariableName(name) => cx
-                .get_var(&name.name)
-                .ok_or(operator::E::VariableIsNotAssigned(name.name.to_owned()))?
-                .get_as_string()
-                .ok_or(operator::E::FailToGetStringValue)?,
-        })
-    }
-}
-#[derive(Debug, Clone)]
 pub struct Reference {
     pub path: Vec<String>,
-    pub inputs: Vec<Input>,
+    pub inputs: Vec<ElementExd>,
     pub token: usize,
 }
 
@@ -53,74 +23,64 @@ impl Reading<Reference> for Reference {
         let close = reader.open_token();
         if reader.move_to().char(&[&chars::COLON]).is_some() {
             let mut path: Vec<String> = vec![];
-            let mut inputs: Vec<Input> = vec![];
-            while let Some((content, stopped_on)) = reader
-                .until()
-                .char(&[&chars::COLON, &chars::SEMICOLON])
-                .map(|(content, stopped_on)| (content, Some(stopped_on)))
-                .or_else(|| {
-                    if reader.rest().trim().is_empty() {
-                        None
-                    } else {
-                        Some((reader.move_to().end(), None))
-                    }
-                })
-            {
+            let mut inputs: Vec<ElementExd> = vec![];
+            reader.trim();
+            while let Some((content, stopped)) = reader.until().char(&[
+                &chars::COLON,
+                &chars::WS,
+                &chars::OPEN_BRACKET,
+                &chars::SEMICOLON,
+            ]) {
                 if content.trim().is_empty() {
                     Err(E::EmptyPathToReference.by_reader(reader))?
                 }
                 path.push(content);
-                reader.move_to().next();
-                if matches!(stopped_on, Some(chars::SEMICOLON)) {
+                if stopped != chars::COLON {
                     break;
+                } else {
+                    reader.move_to().next();
+                    reader.trim();
                 }
             }
-            if path.pop().is_some() {
-                let mut token = reader.token()?;
-                let name = token
-                    .bound
+            if !reader.rest().trim().is_empty() && path.is_empty() {
+                path.push(reader.move_to().end());
+            }
+            if reader
+                .group()
+                .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
+                .is_some()
+            {
+                let mut inner = reader.token()?.bound;
+                while let Some(value) = inner
                     .until()
-                    .char(&[&chars::OPEN_BRACKET])
-                    .map(|(value, _)| value)
-                    .unwrap_or_else(|| token.bound.rest().to_string());
-                if token
-                    .bound
-                    .group()
-                    .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
-                    .is_some()
+                    .char(&[&chars::COMMA])
+                    .map(|(v, _)| {
+                        inner.move_to().next();
+                        v
+                    })
+                    .or_else(|| {
+                        if inner.done() {
+                            None
+                        } else {
+                            Some(inner.move_to().end())
+                        }
+                    })
                 {
-                    let mut inner = token.bound.token()?.bound;
-                    let mut last = false;
-                    while let Some(value) = inner
-                        .until()
-                        .char(&[&chars::COMMA])
-                        .map(|(v, _)| {
-                            inner.move_to().next();
-                            v
-                        })
-                        .or_else(|| {
-                            if !last {
-                                last = true;
-                                Some(inner.move_to().end())
-                            } else {
-                                None
+                    let mut inner = inner.token()?.bound;
+                    inputs.push(if let Some(el) = Element::read(&mut inner)? {
+                        match &el {
+                            Element::Meta(_) | Element::Reference(_) => {
+                                return Err(E::InvalidArgumentForReference.linked(&el.token()))
                             }
+                            _ => ElementExd::Element(el),
+                        }
+                    } else {
+                        ElementExd::SimpleString(SimpleString {
+                            value: value.trim().to_string(),
+                            token: inner.token()?.id,
                         })
-                    {
-                        let mut value_reader = inner.token()?.bound;
-                        inputs.push(
-                            if let Some(variable_name) = VariableName::read(&mut value_reader)? {
-                                Input::VariableName(variable_name)
-                            } else {
-                                Input::String(value.trim().to_string())
-                            },
-                        );
-                    }
-                    if !token.bound.rest().trim().is_empty() {
-                        Err(E::UnrecognizedCode(token.bound.rest().to_string()).by_reader(reader))?;
-                    }
+                    });
                 }
-                path.push(name);
             }
             let token = close(reader);
             for part in path.iter() {
@@ -128,6 +88,7 @@ impl Reading<Reference> for Reference {
                     part,
                     &[&chars::UNDERSCORE, &chars::DASH],
                 ) {
+                    println!("{path:?}");
                     Err(E::InvalidReference(part.to_owned()).linked(&token))?
                 }
             }
@@ -172,7 +133,7 @@ impl Operator for Reference {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        _: &'a [String],
+        inputs: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
@@ -200,7 +161,14 @@ impl Operator for Reference {
             ))?;
             let mut args: Vec<String> = vec![];
             for input in self.inputs.iter() {
-                args.push(input.as_arg(cx).await?);
+                args.push(
+                    input
+                        .execute(owner, components, inputs, cx)
+                        .await?
+                        .ok_or(operator::E::FailToGetAnyValueAsTaskArg)?
+                        .get_as_string()
+                        .ok_or(operator::E::FailToGetStringValue)?,
+                );
             }
             task.execute(owner, components, &args, cx).await
         })
@@ -213,7 +181,7 @@ mod reading {
         entry::Reference,
         error::LinkedErr,
         inf::tests,
-        reader::{Reader, Reading, E},
+        reader::{chars, Reader, Reading, E},
     };
 
     #[test]
@@ -221,6 +189,7 @@ mod reading {
         let mut reader = Reader::unbound(include_str!("../tests/reading/refs.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Reference::read(&mut reader)? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(reader.recent()),
                 tests::trim_carets(&format!("{entity};"))
@@ -251,28 +220,10 @@ mod reading {
 mod proptest {
 
     use crate::{
-        entry::{
-            reference::{Input, Reference},
-            variable_name::VariableName,
-        },
+        entry::{element::ElementExd, reference::Reference},
         inf::tests::*,
     };
     use proptest::prelude::*;
-
-    impl Arbitrary for Input {
-        type Parameters = SharedScope;
-        type Strategy = BoxedStrategy<Self>;
-
-        fn arbitrary_with(_scope: Self::Parameters) -> Self::Strategy {
-            prop_oneof![
-                "[a-z][a-z0-9]*"
-                    .prop_map(String::from)
-                    .prop_map(Input::String),
-                VariableName::arbitrary().prop_map(Input::VariableName),
-            ]
-            .boxed()
-        }
-    }
 
     impl Arbitrary for Reference {
         type Parameters = SharedScope;
@@ -282,7 +233,7 @@ mod proptest {
             scope.write().unwrap().include(Entity::Reference);
             let boxed = (
                 prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 2),
-                prop::collection::vec(Input::arbitrary_with(scope.clone()), 0..5),
+                prop::collection::vec(ElementExd::arbitrary_with(scope.clone()), 0..5),
             )
                 .prop_map(|(path, inputs)| Reference {
                     path,
