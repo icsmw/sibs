@@ -20,10 +20,11 @@ pub struct Task {
 
 impl Task {
     pub fn has_meta(&self) -> bool {
-        self.block
-            .as_ref()
-            .map(|b| b.meta.is_some())
-            .unwrap_or(false)
+        true
+        // self.block
+        //     .as_ref()
+        //     .map(|b| b.meta.is_some())
+        //     .unwrap_or(false)
     }
     pub fn get_name(&self) -> &str {
         &self.name.value

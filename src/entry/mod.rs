@@ -23,7 +23,7 @@ pub use arguments::{Argument, Arguments};
 pub use block::Block;
 pub use command::Command;
 pub use component::Component;
-pub use element::{Element, ElementExd};
+pub use element::{ElTarget, Element, ElementExd};
 pub use function::Function;
 pub use meta::Meta;
 pub use optional::Optional;

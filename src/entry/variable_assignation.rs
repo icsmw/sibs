@@ -1,144 +1,57 @@
 use crate::{
-    entry::{Block, Component, First, Function, PatternString, Values, VariableName},
+    entry::{Component, ElTarget, Element, VariableName},
     error::LinkedErr,
     inf::{
         any::AnyValue,
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
     },
-    reader::{chars, Reader, Reading, E},
+    reader::{chars, words, Reader, Reading, E},
 };
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub enum Assignation {
-    Function(Function),
-    PatternString(PatternString),
-    Values(Values),
-    Block(Block),
-    First(First),
-}
-
-impl fmt::Display for Assignation {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match &self {
-                Assignation::PatternString(v) => v.to_string(),
-                Assignation::Block(v) => v.to_string(),
-                Assignation::Values(v) => v.to_string(),
-                Assignation::First(v) => v.to_string(),
-                Assignation::Function(v) => v.to_string(),
-            },
-        )
-    }
-}
-
-impl Operator for Assignation {
-    fn token(&self) -> usize {
-        match self {
-            Assignation::PatternString(v) => v.token,
-            Assignation::Block(v) => v.token,
-            Assignation::Values(v) => v.token,
-            Assignation::First(v) => v.token,
-            Assignation::Function(v) => v.token,
-        }
-    }
-    fn perform<'a>(
-        &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
-        args: &'a [String],
-        cx: &'a mut Context,
-    ) -> OperatorPinnedResult {
-        Box::pin(async move {
-            match self {
-                Self::Function(v) => v.execute(owner, components, args, cx).await,
-                Self::PatternString(v) => v.execute(owner, components, args, cx).await,
-                Self::Values(v) => v.execute(owner, components, args, cx).await,
-                Self::Block(v) => v.execute(owner, components, args, cx).await,
-                Self::First(v) => v.execute(owner, components, args, cx).await,
-            }
-        })
-    }
-}
-
-#[derive(Debug, Clone)]
 pub struct VariableAssignation {
-    pub name: VariableName,
-    pub assignation: Assignation,
+    pub variable: VariableName,
+    pub assignation: Box<Element>,
     pub token: usize,
 }
 
 impl Reading<VariableAssignation> for VariableAssignation {
     fn read(reader: &mut Reader) -> Result<Option<VariableAssignation>, LinkedErr<E>> {
-        reader.state().set();
-        //TODO: doesn't restore position if reads in function
+        let restore = reader.pin();
         let close = reader.open_token();
-        if let Some(name) = VariableName::read(reader)? {
-            if reader.move_to().char(&[&chars::EQUAL]).is_some() {
-                if let Some(chars::EQUAL) = reader.next().char() {
-                    // This is condition
-                    reader.state().restore()?;
-                    return Ok(None);
-                }
-                let assignation = if let Some(first) = First::read(reader)? {
-                    Some(VariableAssignation {
-                        name: name.clone(),
-                        assignation: Assignation::First(first),
-                        token: close(reader),
-                    })
-                } else if let Some(values) = Values::read(reader)? {
-                    reader
-                        .move_to()
-                        .char(&[&chars::SEMICOLON])
-                        .ok_or(E::MissedSemicolon)?;
-                    Some(VariableAssignation {
-                        name: name.clone(),
-                        assignation: Assignation::Values(values),
-                        token: close(reader),
-                    })
-                } else if let Some(block) = Block::read(reader)? {
-                    reader
-                        .move_to()
-                        .char(&[&chars::SEMICOLON])
-                        .ok_or(E::MissedSemicolon)?;
-                    Some(VariableAssignation {
-                        name: name.clone(),
-                        assignation: Assignation::Block(block),
-                        token: close(reader),
-                    })
-                } else {
-                    None
-                };
-                if assignation.is_some() {
-                    return Ok(assignation);
-                }
-                reader
-                    .until()
-                    .char(&[&chars::SEMICOLON])
-                    .ok_or(E::MissedSemicolon)?;
-                reader.move_to().next();
-                let mut token = reader.token()?;
-                if let Some(func) = Function::read(&mut token.bound)? {
-                    Ok(Some(VariableAssignation {
-                        name,
-                        assignation: Assignation::Function(func),
-                        token: close(reader),
-                    }))
-                } else if let Some(value_string) = PatternString::read(&mut token.bound)? {
-                    Ok(Some(VariableAssignation {
-                        name,
-                        assignation: Assignation::PatternString(value_string),
-                        token: close(reader),
-                    }))
-                } else {
-                    Err(E::NoComparingOrAssignation.linked(&token.id))?
-                }
-            } else {
-                Ok(None)
+        if let Some(Element::VariableName(variable)) =
+            Element::include(reader, &[ElTarget::VariableName])?
+        {
+            let rest = reader.rest().trim();
+            if rest.starts_with(words::DO_ON)
+                || rest.starts_with(words::CMP_TRUE)
+                || !rest.starts_with(chars::EQUAL)
+            {
+                restore(reader);
+                return Ok(None);
             }
+            let _ = reader.move_to().char(&[&chars::EQUAL]);
+            let assignation = Element::include(
+                reader,
+                &[
+                    ElTarget::Block,
+                    ElTarget::First,
+                    ElTarget::Function,
+                    ElTarget::If,
+                    ElTarget::PatternString,
+                    ElTarget::Values,
+                    ElTarget::VariableComparing,
+                    ElTarget::VariableName,
+                ],
+            )?
+            .ok_or(E::FailToParseRightSideOfAssignation.by_reader(reader))?;
+            Ok(Some(VariableAssignation {
+                variable,
+                assignation: Box::new(assignation),
+                token: close(reader),
+            }))
         } else {
             Ok(None)
         }
@@ -147,18 +60,7 @@ impl Reading<VariableAssignation> for VariableAssignation {
 
 impl fmt::Display for VariableAssignation {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{} = {}",
-            self.name,
-            match &self.assignation {
-                Assignation::PatternString(v) => v.to_string(),
-                Assignation::Block(v) => v.to_string(),
-                Assignation::Values(v) => v.to_string(),
-                Assignation::First(v) => v.to_string(),
-                Assignation::Function(v) => v.to_string(),
-            },
-        )
+        write!(f, "{} = {}", self.variable, self.assignation)
     }
 }
 
@@ -178,8 +80,8 @@ impl Operator for VariableAssignation {
             let value = assignation
                 .execute(owner, components, args, cx)
                 .await?
-                .ok_or(operator::E::NoValueToAssign(self.name.name.clone()))?;
-            cx.set_var(self.name.name.clone(), value);
+                .ok_or(operator::E::NoValueToAssign(self.variable.name.clone()))?;
+            cx.set_var(self.variable.name.clone(), value);
             Ok(Some(AnyValue::new(())))
         })
     }
@@ -222,8 +124,8 @@ mod reading {
                 reader.get_fragment(&entity.token)?.lined
             );
             assert_eq!(
-                tests::trim_carets(&entity.name.to_string()),
-                tests::trim_carets(&reader.get_fragment(&entity.name.token)?.content)
+                tests::trim_carets(&entity.variable.to_string()),
+                tests::trim_carets(&reader.get_fragment(&entity.variable.token)?.content)
             );
             assert_eq!(
                 tests::trim_semicolon(&tests::trim_carets(&entity.assignation.to_string())),
@@ -295,13 +197,7 @@ mod processing {
 mod proptest {
     use crate::{
         entry::{
-            block::Block,
-            function::Function,
-            pattern_string::PatternString,
-            statements::first::First,
-            task::Task,
-            values::Values,
-            variable_assignation::{Assignation, VariableAssignation},
+            element::Element, task::Task, variable_assignation::VariableAssignation,
             variable_name::VariableName,
         },
         inf::{operator::E, tests::*},
@@ -309,47 +205,6 @@ mod proptest {
     };
     use proptest::prelude::*;
     use std::sync::{Arc, RwLock};
-
-    impl Arbitrary for Assignation {
-        type Parameters = SharedScope;
-        type Strategy = BoxedStrategy<Self>;
-
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            let permissions = scope.read().unwrap().permissions();
-            let mut allowed = vec![PatternString::arbitrary_with(scope.clone())
-                .prop_map(Self::PatternString)
-                .boxed()];
-            if permissions.func {
-                allowed.push(
-                    Function::arbitrary_with(scope.clone())
-                        .prop_map(Self::Function)
-                        .boxed(),
-                );
-            }
-            if permissions.first {
-                allowed.push(
-                    First::arbitrary_with(scope.clone())
-                        .prop_map(Self::First)
-                        .boxed(),
-                );
-            }
-            if permissions.block {
-                allowed.push(
-                    Block::arbitrary_with(scope.clone())
-                        .prop_map(Self::Block)
-                        .boxed(),
-                );
-            }
-            if permissions.values {
-                allowed.push(
-                    Values::arbitrary_with(scope.clone())
-                        .prop_map(Self::Values)
-                        .boxed(),
-                );
-            }
-            prop::strategy::Union::new(allowed).boxed()
-        }
-    }
 
     impl Arbitrary for VariableAssignation {
         type Parameters = SharedScope;
@@ -359,14 +214,17 @@ mod proptest {
             scope.write().unwrap().include(Entity::VariableAssignation);
             let inner = scope.clone();
             let boxed = (
-                Assignation::arbitrary_with(scope.clone()),
+                Element::arbitrary_with(scope.clone()),
                 VariableName::arbitrary(),
             )
-                .prop_map(move |(assignation, name)| {
-                    inner.write().unwrap().add_assignation(name.name.clone());
+                .prop_map(move |(assignation, variable)| {
+                    inner
+                        .write()
+                        .unwrap()
+                        .add_assignation(variable.name.clone());
                     VariableAssignation {
-                        assignation,
-                        name,
+                        assignation: Box::new(assignation),
+                        variable,
                         token: 0,
                     }
                 })

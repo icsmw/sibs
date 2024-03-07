@@ -72,8 +72,18 @@ impl Reading<Function> for Function {
             } else {
                 false
             };
+            //TODO: prevent BLOCK as argument (conflict with EACH)
             let mut elements: Vec<ElementExd> = vec![];
             loop {
+                if reader.rest().trim().starts_with(words::DO_ON) {
+                    return Ok(Some(Self::new(
+                        close(reader),
+                        args_close(reader),
+                        elements,
+                        name,
+                        tolerance,
+                    )?));
+                }
                 if let Some(el) = Element::read(reader)? {
                     elements.push(ElementExd::Element(el));
                     continue;
@@ -90,7 +100,9 @@ impl Reading<Function> for Function {
                         }));
                         continue;
                     }
-                    if content.trim().ends_with(words::DO_ON) || stopped == chars::SEMICOLON {
+                    if stopped == chars::SEMICOLON
+                        || (stopped == chars::REDIRECT && content.trim().ends_with(words::DO_ON))
+                    {
                         return Ok(Some(Self::new(
                             close(reader),
                             args_close(reader),
@@ -116,6 +128,14 @@ impl Reading<Function> for Function {
                             Err(E::NoDestFunction.linked(&reader.token()?.id))
                         };
                     }
+                } else {
+                    let content = reader.move_to().end();
+                    if !content.trim().is_empty() {
+                        elements.push(ElementExd::SimpleString(SimpleString {
+                            value: content.to_string(),
+                            token: reader.token()?.id,
+                        }));
+                    }
                 }
                 if reader.done() {
                     break;
@@ -128,65 +148,6 @@ impl Reading<Function> for Function {
                 name,
                 tolerance,
             )?))
-            // while let Some((content, stopped)) =
-            //     reader
-            //         .until()
-            //         .char(&[&chars::WS, &chars::SEMICOLON, &chars::REDIRECT])
-            // {
-            //     let mut inner = reader.token()?;
-            //     println!(">>>>>>>>>>>>>>>>>> TO_READ:__{}__", inner.bound.rest());
-            //     if let Some(el) = Element::read(&mut inner.bound)? {
-            //         elements.push(ElementExd::Element(el));
-            //     } else if !content.trim().is_empty() {
-            //         elements.push(ElementExd::SimpleString(SimpleString {
-            //             value: content.trim().to_string(),
-            //             token: inner.id,
-            //         }))
-            //     }
-            //     if content.trim().ends_with(words::DO_ON) || stopped == chars::SEMICOLON {
-            //         return Ok(Some(Self::new(
-            //             close(reader),
-            //             args_close(reader),
-            //             elements,
-            //             name,
-            //             tolerance,
-            //         )?));
-            //     }
-            //     reader.move_to().next();
-            //     if stopped == chars::REDIRECT {
-            //         let feed_func_token_id = close(reader);
-            //         let feed_func_args_token_id = args_close(reader);
-            //         return if let Some(Element::Function(mut dest)) = Element::read(reader)? {
-            //             dest.feeding(Self::new(
-            //                 feed_func_token_id,
-            //                 feed_func_args_token_id,
-            //                 elements,
-            //                 name,
-            //                 tolerance,
-            //             )?);
-            //             Ok(Some(dest))
-            //         } else {
-            //             Err(E::NoDestFunction.linked(&inner.id))
-            //         };
-            //     }
-            // }
-            // if !reader.is_empty() {
-            //     if let Some(el) = Element::read(reader)? {
-            //         elements.push(ElementExd::Element(el));
-            //     } else {
-            //         elements.push(ElementExd::SimpleString(SimpleString {
-            //             value: reader.rest().trim().to_string(),
-            //             token: reader.token()?.id,
-            //         }))
-            //     }
-            // }
-            // Ok(Some(Self::new(
-            //     close(reader),
-            //     args_close(reader),
-            //     elements,
-            //     name,
-            //     tolerance,
-            // )?))
         } else {
             Ok(None)
         }
@@ -323,7 +284,6 @@ mod reading {
         let mut count = 0;
         while let Some(entity) = Function::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-            println!("{entity:?}");
             assert_eq!(
                 tests::trim_carets(reader.recent()),
                 tests::trim_carets(&format!("{entity};"))

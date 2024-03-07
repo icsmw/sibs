@@ -1,5 +1,5 @@
 use crate::{
-    entry::{Block, Component, Function, VariableName},
+    entry::{Block, Component, ElTarget, Element, Function, VariableName},
     error::LinkedErr,
     inf::{
         any::AnyValue,
@@ -9,54 +9,10 @@ use crate::{
     reader::{chars, words, Reader, Reading, E},
 };
 use std::fmt;
-
-#[derive(Debug, Clone)]
-pub enum Input {
-    VariableName(VariableName),
-    Function(Function),
-}
-
-impl Operator for Input {
-    fn token(&self) -> usize {
-        match self {
-            Self::Function(v) => v.token,
-            Self::VariableName(v) => v.token,
-        }
-    }
-    fn perform<'a>(
-        &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
-        args: &'a [String],
-        cx: &'a mut Context,
-    ) -> OperatorPinnedResult {
-        Box::pin(async move {
-            match self {
-                Self::VariableName(v) => v.execute(owner, components, args, cx),
-                Self::Function(v) => v.execute(owner, components, args, cx),
-            }
-            .await
-        })
-    }
-}
-
-impl fmt::Display for Input {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Self::Function(v) => v.to_string(),
-                Self::VariableName(v) => v.to_string(),
-            }
-        )
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct Each {
     pub variable: VariableName,
-    pub input: Input,
+    pub input: Box<Element>,
     pub block: Block,
     pub token: usize,
 }
@@ -65,46 +21,41 @@ impl Reading<Each> for Each {
     fn read(reader: &mut Reader) -> Result<Option<Each>, LinkedErr<E>> {
         let close = reader.open_token();
         if reader.move_to().word(&[words::EACH]).is_some() {
-            if reader
+            let variable = if reader
                 .group()
                 .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
                 .is_some()
             {
-                if let Some(variable) = VariableName::read(&mut reader.token()?.bound)? {
-                    if reader.until().char(&[&chars::OPEN_SQ_BRACKET]).is_some() {
-                        let mut inner_token = reader.token()?;
-                        let mut inner_reader = inner_token.bound;
-                        let input =
-                            if let Some(variable_name) = VariableName::read(&mut inner_reader)? {
-                                Input::VariableName(variable_name)
-                            } else if let Some(function) = Function::read(&mut inner_reader)? {
-                                Input::Function(function)
-                            } else {
-                                Err(E::NoLoopInput.linked(&inner_token.id))?
-                            };
-                        if let Some(block) = Block::read(reader)? {
-                            if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
-                                Err(E::MissedSemicolon.linked(&inner_token.id))
-                            } else {
-                                Ok(Some(Each {
-                                    variable,
-                                    input,
-                                    block,
-                                    token: close(reader),
-                                }))
-                            }
-                        } else {
-                            Err(E::NoGroup.linked(&inner_token.id))
-                        }
-                    } else {
-                        Err(E::NoGroup.linked(&variable.token))
-                    }
+                if let Some(Element::VariableName(variable)) =
+                    Element::include(reader, &[ElTarget::VariableName])?
+                {
+                    variable
                 } else {
-                    Err(E::NoLoopVariable.linked(&reader.token()?.id))
+                    return Err(E::NoLoopVariable.linked(&reader.token()?.id));
                 }
             } else {
-                Err(E::NoLoopInitialization.linked(&reader.token()?.id))
-            }
+                return Err(E::NoLoopInitialization.linked(&reader.token()?.id));
+            };
+            let input = if let Some(el) =
+                Element::include(reader, &[ElTarget::Function, ElTarget::VariableName])?
+            {
+                Box::new(el)
+            } else {
+                Err(E::NoLoopInput.by_reader(reader))?
+            };
+            let block = if let Some(Element::Block(block)) =
+                Element::include(reader, &[ElTarget::Block])?
+            {
+                block
+            } else {
+                Err(E::NoGroup.by_reader(reader))?
+            };
+            Ok(Some(Each {
+                input,
+                variable,
+                block,
+                token: close(reader),
+            }))
         } else {
             Ok(None)
         }
@@ -256,10 +207,7 @@ mod proptest {
 
     use crate::{
         entry::{
-            block::Block,
-            function::Function,
-            statements::each::{Each, Input},
-            task::Task,
+            block::Block, element::Element, statements::each::Each, task::Task,
             variable_name::VariableName,
         },
         inf::{operator::E, tests::*},
@@ -267,26 +215,6 @@ mod proptest {
     };
     use proptest::prelude::*;
     use std::sync::{Arc, RwLock};
-
-    impl Arbitrary for Input {
-        type Parameters = SharedScope;
-        type Strategy = BoxedStrategy<Self>;
-
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            let permissions = scope.read().unwrap().permissions();
-            let mut allowed = vec![VariableName::arbitrary()
-                .prop_map(Input::VariableName)
-                .boxed()];
-            if permissions.func {
-                allowed.push(
-                    Function::arbitrary_with(scope.clone())
-                        .prop_map(Input::Function)
-                        .boxed(),
-                );
-            }
-            prop::strategy::Union::new(allowed).boxed()
-        }
-    }
 
     impl Arbitrary for Each {
         type Parameters = SharedScope;
@@ -297,12 +225,12 @@ mod proptest {
             let boxed = (
                 Block::arbitrary_with(scope.clone()),
                 VariableName::arbitrary(),
-                Input::arbitrary_with(scope.clone()),
+                Element::arbitrary_with(scope.clone()),
             )
                 .prop_map(|(block, variable, input)| Each {
                     block,
                     variable,
-                    input,
+                    input: Box::new(input),
                     token: 0,
                 })
                 .boxed();

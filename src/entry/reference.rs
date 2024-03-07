@@ -69,7 +69,7 @@ impl Reading<Reference> for Reference {
                     let mut inner = inner.token()?.bound;
                     inputs.push(if let Some(el) = Element::read(&mut inner)? {
                         match &el {
-                            Element::Meta(_) | Element::Reference(_) => {
+                            Element::Block(_) | Element::Meta(_) | Element::Reference(_) => {
                                 return Err(E::InvalidArgumentForReference.linked(&el.token()))
                             }
                             _ => ElementExd::Element(el),
@@ -88,7 +88,6 @@ impl Reading<Reference> for Reference {
                     part,
                     &[&chars::UNDERSCORE, &chars::DASH],
                 ) {
-                    println!("{path:?}");
                     Err(E::InvalidReference(part.to_owned()).linked(&token))?
                 }
             }

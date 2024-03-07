@@ -1,8 +1,5 @@
 use crate::{
-    entry::{
-        Command, Component, Each, First, Function, If, Meta, Optional, PatternString, Reference,
-        Values, VariableAssignation, VariableName,
-    },
+    entry::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
         any::AnyValue,
@@ -15,94 +12,15 @@ use crate::{
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub enum Element {
-    Function(Function),
-    If(If),
-    Each(Each),
-    First(First),
-    VariableAssignation(VariableAssignation),
-    Optional(Optional),
-    Reference(Reference),
-    PatternString(PatternString),
-    VariableName(VariableName),
-    Command(Command),
-    Values(Values),
-}
-
-impl fmt::Display for Element {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Self::Command(v) => v.to_string(),
-                Self::Function(v) => v.to_string(),
-                Self::If(v) => v.to_string(),
-                Self::Each(v) => v.to_string(),
-                Self::First(v) => v.to_string(),
-                Self::VariableAssignation(v) => v.to_string(),
-                Self::Optional(v) => v.to_string(),
-                Self::Reference(v) => v.to_string(),
-                Self::PatternString(v) => v.to_string(),
-                Self::VariableName(v) => v.to_string(),
-                Self::Values(v) => v.to_string(),
-            }
-        )
-    }
-}
-
-impl Operator for Element {
-    fn token(&self) -> usize {
-        match self {
-            Self::Command(v) => v.token(),
-            Self::Function(v) => v.token(),
-            Self::If(v) => v.token(),
-            Self::Each(v) => v.token(),
-            Self::First(v) => v.token(),
-            Self::VariableAssignation(v) => v.token(),
-            Self::Optional(v) => v.token(),
-            Self::Reference(v) => v.token(),
-            Self::PatternString(v) => v.token(),
-            Self::VariableName(v) => v.token(),
-            Self::Values(v) => v.token(),
-        }
-    }
-    fn perform<'a>(
-        &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
-        args: &'a [String],
-        cx: &'a mut Context,
-    ) -> OperatorPinnedResult {
-        Box::pin(async move {
-            match self {
-                Self::Command(v) => v.execute(owner, components, args, cx).await,
-                Self::Function(v) => v.execute(owner, components, args, cx).await,
-                Self::If(v) => v.execute(owner, components, args, cx).await,
-                Self::Each(v) => v.execute(owner, components, args, cx).await,
-                Self::First(v) => v.execute(owner, components, args, cx).await,
-                Self::VariableAssignation(v) => v.execute(owner, components, args, cx).await,
-                Self::Optional(v) => v.execute(owner, components, args, cx).await,
-                Self::Reference(v) => v.execute(owner, components, args, cx).await,
-                Self::PatternString(v) => v.execute(owner, components, args, cx).await,
-                Self::VariableName(v) => v.execute(owner, components, args, cx).await,
-                Self::Values(v) => v.execute(owner, components, args, cx).await,
-            }
-        })
-    }
-}
-
-#[derive(Debug, Clone)]
 pub struct Block {
-    pub meta: Option<Meta>,
     pub elements: Vec<Element>,
-    pub by_first: bool,
+    pub owner: Option<ElTarget>,
     pub token: usize,
 }
 
 impl Block {
-    pub fn use_as_first(&mut self) {
-        self.by_first = true;
+    pub fn set_owner(&mut self, owner: ElTarget) {
+        self.owner = Some(owner);
     }
 }
 
@@ -116,81 +34,24 @@ impl Reading<Block> for Block {
         {
             let mut inner = reader.token()?.bound;
             let mut elements: Vec<Element> = vec![];
-            let mut meta: Option<Meta> = None;
-            while !inner.rest().trim().is_empty() {
-                if let Some(md) = Meta::read(&mut inner)? {
-                    meta = Some(md);
+            loop {
+                if let Some(el) = Element::exclude(&mut inner, &[ElTarget::Block])? {
+                    elements.push(el);
+                    let _ = inner.move_to().char(&[&chars::SEMICOLON]);
                     continue;
                 }
-                if let Some(el) = If::read(&mut inner)? {
-                    elements.push(Element::If(el));
-                    continue;
-                }
-                if let Some(el) = Optional::read(&mut inner)? {
-                    elements.push(Element::Optional(el));
-                    continue;
-                }
-                inner.state().set();
-                if let Some(el) = VariableName::read(&mut inner)? {
-                    if let Some(chars::SEMICOLON) =
-                        inner.move_to().char(&[&chars::SEMICOLON, &chars::EQUAL])
-                    {
-                        elements.push(Element::VariableName(el));
-                        continue;
-                    }
-                }
-                inner.state().restore()?;
-                if let Some(el) = VariableAssignation::read(&mut inner)? {
-                    elements.push(Element::VariableAssignation(el));
-                    continue;
-                }
-                if let Some(el) = Each::read(&mut inner)? {
-                    elements.push(Element::Each(el));
-                    continue;
-                }
-                if let Some(el) = First::read(&mut inner)? {
-                    elements.push(Element::First(el));
-                    continue;
-                }
-                if let Some(el) = Reference::read(&mut inner)? {
-                    elements.push(Element::Reference(el));
-                    continue;
-                }
-                if let Some(el) = PatternString::read(&mut inner)? {
-                    if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
-                        Err(E::MissedSemicolon.by_reader(reader))?;
-                    }
-                    elements.push(Element::PatternString(el));
-                    continue;
-                }
-                if let Some(el) = Function::read(&mut inner)? {
-                    elements.push(Element::Function(el));
-                    continue;
-                }
-                if let Some(el) = Values::read(&mut inner)? {
-                    if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
-                        Err(E::MissedSemicolon.by_reader(reader))?;
-                    }
-                    elements.push(Element::Values(el));
-                    continue;
-                }
-                if let Some((cmd, _)) = inner.until().char(&[&chars::SEMICOLON]) {
-                    inner.move_to().next();
-                    elements.push(Element::Command(Command::new(cmd, inner.token()?.id)?));
+                if inner.rest().trim().is_empty() {
+                    break Ok(Some(Block {
+                        elements,
+                        owner: None,
+                        token: close(reader),
+                    }));
                 } else {
-                    break;
+                    break Err(
+                        E::UnrecognizedCode(inner.token()?.content.to_owned()).by_reader(&inner)
+                    );
                 }
             }
-            Ok(if elements.is_empty() {
-                None
-            } else {
-                Some(Block {
-                    elements,
-                    meta,
-                    token: close(reader),
-                    by_first: false,
-                })
-            })
         } else {
             Ok(None)
         }
@@ -201,21 +62,7 @@ impl fmt::Display for Block {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "[\n{}{}{}]",
-            self.meta
-                .as_ref()
-                .map(|meta| {
-                    format!(
-                        "{}{}",
-                        meta.inner
-                            .iter()
-                            .map(|v| format!("/// {v}"))
-                            .collect::<Vec<String>>()
-                            .join("\n"),
-                        if meta.inner.is_empty() { "" } else { "\n" }
-                    )
-                })
-                .unwrap_or_default(),
+            "[\n{}{}]",
             self.elements
                 .iter()
                 .map(|el| format!("{el};"))
@@ -228,9 +75,10 @@ impl fmt::Display for Block {
 
 impl term::Display for Block {
     fn display(&self, term: &mut Term) {
-        if let Some(meta) = self.meta.as_ref() {
-            meta.display(term);
-        }
+        self.elements
+            .iter()
+            .filter(|el| matches!(el, Element::Meta(_)))
+            .for_each(|el| el.display(term));
     }
 }
 
@@ -249,7 +97,7 @@ impl Operator for Block {
             let mut output: Option<AnyValue> = None;
             for element in self.elements.iter() {
                 output = element.execute(owner, components, args, cx).await?;
-                if self.by_first && output.is_some() {
+                if let (Some(ElTarget::First), true) = (self.owner.as_ref(), output.is_some()) {
                     return Ok(output);
                 }
             }
@@ -319,77 +167,12 @@ mod reading {
 mod proptest {
 
     use crate::{
-        entry::{
-            block::{Block, Element},
-            command::Command,
-            function::Function,
-            meta::Meta,
-            optional::Optional,
-            reference::Reference,
-            statements::{each::Each, If::If},
-            task::Task,
-            variable_assignation::VariableAssignation,
-        },
+        entry::{block::Block, element::Element, meta::Meta, task::Task},
         inf::{operator::E, tests::*},
         reader::{Reader, Reading},
     };
     use proptest::prelude::*;
     use std::sync::{Arc, RwLock};
-
-    impl Arbitrary for Element {
-        type Parameters = SharedScope;
-        type Strategy = BoxedStrategy<Self>;
-
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            let permissions = scope.read().unwrap().permissions();
-            let mut allowed = vec![Command::arbitrary_with(scope.clone())
-                .prop_map(Element::Command)
-                .boxed()];
-            if permissions.func {
-                allowed.push(
-                    Function::arbitrary_with(scope.clone())
-                        .prop_map(Element::Function)
-                        .boxed(),
-                );
-            }
-            if permissions.each {
-                allowed.push(
-                    Each::arbitrary_with(scope.clone())
-                        .prop_map(Element::Each)
-                        .boxed(),
-                );
-            }
-            if permissions.r#if {
-                allowed.push(
-                    If::arbitrary_with(scope.clone())
-                        .prop_map(Element::If)
-                        .boxed(),
-                );
-            }
-            if permissions.optional {
-                allowed.push(
-                    Optional::arbitrary_with(scope.clone())
-                        .prop_map(Element::Optional)
-                        .boxed(),
-                );
-            }
-            if permissions.variable_assignation {
-                allowed.push(
-                    VariableAssignation::arbitrary_with(scope.clone())
-                        .prop_map(Element::VariableAssignation)
-                        .boxed(),
-                );
-            }
-            if permissions.reference {
-                allowed.push(
-                    Reference::arbitrary_with(scope.clone())
-                        .prop_map(Element::Reference)
-                        .boxed(),
-                );
-            }
-            prop::strategy::Union::new(allowed).boxed()
-        }
-    }
 
     impl Arbitrary for Block {
         type Parameters = SharedScope;
@@ -403,9 +186,8 @@ mod proptest {
             )
                 .prop_map(|(elements, meta)| Block {
                     elements,
-                    meta: Some(meta),
+                    owner: None,
                     token: 0,
-                    by_first: false,
                 })
                 .boxed();
             scope.write().unwrap().exclude(Entity::Block);

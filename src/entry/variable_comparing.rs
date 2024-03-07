@@ -1,52 +1,72 @@
 use crate::{
-    entry::{Cmp, Component, VariableName},
+    entry::{Cmp, Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
         any::AnyValue,
         context::Context,
-        operator::{self, Operator, OperatorPinnedResult},
+        operator::{Operator, OperatorPinnedResult},
     },
-    reader::{chars, words, Reader, Reading, E},
+    reader::{words, Reader, Reading, E},
 };
 use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct VariableComparing {
-    pub name: VariableName,
+    pub left: Box<Element>,
     pub cmp: Cmp,
-    pub value: String,
+    pub right: Box<Element>,
     pub token: usize,
 }
 
 impl Reading<VariableComparing> for VariableComparing {
     fn read(reader: &mut Reader) -> Result<Option<VariableComparing>, LinkedErr<E>> {
-        reader.state().set();
+        let restore = reader.pin();
         let close = reader.open_token();
-        if let Some(name) = VariableName::read(reader)? {
-            if let Some(word) = reader.move_to().word(&[words::CMP_TRUE, words::CMP_FALSE]) {
-                if reader.rest().trim().is_empty() {
-                    Err(E::NoValueAfterComparing.by_reader(reader))
-                } else {
-                    let mut value = reader.move_to().end().trim().to_string();
-                    let mut token = reader.token()?;
-                    if let Some(serialized) = token.bound.group().closed(&chars::QUOTES) {
-                        value = serialized;
-                    }
-                    Ok(Some(VariableComparing {
-                        name,
-                        cmp: if word == words::CMP_TRUE {
-                            Cmp::Equal
-                        } else {
-                            Cmp::NotEqual
-                        },
-                        value,
-                        token: close(reader),
-                    }))
-                }
+        if reader
+            .until()
+            .word(&[words::CMP_TRUE, words::CMP_FALSE])
+            .is_some()
+        {
+            let mut inner = reader.token()?.bound;
+            let left = if let Some(el) =
+                Element::include(&mut inner, &[ElTarget::VariableName, ElTarget::Function])?
+            {
+                Box::new(el)
             } else {
-                reader.state().restore()?;
-                Ok(None)
-            }
+                restore(reader);
+                return Ok(None);
+            };
+            let cmp =
+                if let Some(word) = reader.move_to().word(&[words::CMP_TRUE, words::CMP_FALSE]) {
+                    if word == words::CMP_TRUE {
+                        Cmp::Equal
+                    } else {
+                        Cmp::NotEqual
+                    }
+                } else {
+                    restore(reader);
+                    return Ok(None);
+                };
+            let right = if let Some(el) = Element::include(
+                reader,
+                &[
+                    ElTarget::VariableName,
+                    ElTarget::Function,
+                    ElTarget::PatternString,
+                    ElTarget::Values,
+                ],
+            )? {
+                Box::new(el)
+            } else {
+                restore(reader);
+                return Ok(None);
+            };
+            Ok(Some(VariableComparing {
+                left,
+                cmp,
+                right,
+                token: close(reader),
+            }))
         } else {
             Ok(None)
         }
@@ -55,7 +75,7 @@ impl Reading<VariableComparing> for VariableComparing {
 
 impl fmt::Display for VariableComparing {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} {} {}", self.name, self.cmp, self.value)
+        write!(f, "{} {} {}", self.left, self.cmp, self.right)
     }
 }
 
@@ -71,17 +91,14 @@ impl Operator for VariableComparing {
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
-            let value = self
-                .name
-                .execute(owner, components, args, cx)
-                .await?
-                .ok_or(operator::E::VariableIsNotAssigned(self.name.name.clone()))?
-                .get_as_string()
-                .ok_or(operator::E::FailToGetValueAsString)?;
-            Ok(Some(AnyValue::new(match self.cmp {
-                Cmp::Equal => value == self.value,
-                Cmp::NotEqual => value != self.value,
-            })))
+            let left = self.left.execute(owner, components, args, cx).await?;
+            let right = self.right.execute(owner, components, args, cx).await?;
+            Ok(None)
+            //TODO: finish implementation
+            // Ok(Some(AnyValue::new(match self.cmp {
+            //     Cmp::Equal => left == right,
+            //     Cmp::NotEqual => left != right,
+            // })))
         })
     }
 }
@@ -89,9 +106,7 @@ impl Operator for VariableComparing {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        entry::{
-            statements::If::Cmp, variable_comparing::VariableComparing, variable_name::VariableName,
-        },
+        entry::{element::Element, statements::If::Cmp, variable_comparing::VariableComparing},
         inf::tests::*,
     };
     use proptest::prelude::*;
@@ -102,14 +117,14 @@ mod proptest {
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             (
+                Element::arbitrary_with(scope.clone()),
                 Cmp::arbitrary_with(scope.clone()),
-                VariableName::arbitrary(),
-                "[a-z][a-z0-9]*".prop_map(String::from),
+                Element::arbitrary_with(scope.clone()),
             )
-                .prop_map(|(cmp, name, value)| VariableComparing {
+                .prop_map(|(left, cmp, right)| VariableComparing {
                     cmp,
-                    value,
-                    name,
+                    left: Box::new(left),
+                    right: Box::new(right),
                     token: 0,
                 })
                 .boxed()

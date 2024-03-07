@@ -1,22 +1,25 @@
 @os window => $file_name = "release{$version}-win.zip";
 @os linux => $file_name = "release{$version}-linux.zip";
 @os darwin => $file_name = "release{$version}-darwin.zip";
-@os linux => tgz ./release/unpacked-linux {$file_name};
+@os linux => @sh "tgz ./release/unpacked-linux {$file_name}";
 @os window => "release{$version}-win2.zip";
+@os darwin => @os darwin;
+$mode == "dev" => "release{$version}-win.zip";
+$mode == "dev" => :client:build(dev);
+@os window => "release{$version}-win.zip";
+@os linux => "release{$version}-linux.zip";
+@os darwin => "release{$version}-darwin.zip";
 @os window => [
     @cd something1;
-    zip ./release/unpacked-win {$file_name};
+    @sh "zip ./release/unpacked-win {$file_name}";
     @cd ..;
 ];
-$mode == dev => "release{$version}-win.zip";
-$mode != dev => [
+$mode != "dev" => [
     @cd something2;
-    zip ./release/unpacked-win {$file_name};
+    @sh "zip ./release/unpacked-win {$file_name}";
     @cd ..;
 ];
-$mode == dev => :client:build(dev);
-@os darwin => @os darwin;
-@os window => $file_name = FIRST [
+@os something => $file_name = FIRST [
     @os window => "release{$version}-win.zip";
     @os linux => "release{$version}-linux.zip";
     @os darwin => "release{$version}-darwin.zip";

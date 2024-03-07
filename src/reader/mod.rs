@@ -352,22 +352,7 @@ impl<'a> Group<'a> {
         None
     }
 }
-#[derive(Debug)]
-pub struct State<'a> {
-    bound: &'a mut Reader,
-}
-impl<'a> State<'a> {
-    pub fn new(bound: &'a mut Reader) -> Self {
-        Self { bound }
-    }
-    pub fn set(&mut self) {
-        self.bound.fixed = Some(self.bound.pos);
-    }
-    pub fn restore(&mut self) -> Result<(), E> {
-        self.bound.pos = self.bound.fixed.ok_or(E::EmptyGroup)?;
-        Ok(())
-    }
-}
+
 #[derive(Debug)]
 pub struct SeekTo<'a> {
     bound: &'a mut Reader,
@@ -517,9 +502,6 @@ impl Reader {
     pub fn group(&mut self) -> Group<'_> {
         Group::new(self)
     }
-    pub fn state(&mut self) -> State<'_> {
-        State::new(self)
-    }
     pub fn next(&self) -> Next<'_> {
         Next::new(self)
     }
@@ -574,6 +556,12 @@ impl Reader {
                 ._map
                 .borrow_mut()
                 .add(from, (reader.pos + reader._offset) - from)
+        }
+    }
+    pub fn pin(&mut self) -> impl Fn(&mut Reader) {
+        let from = self.pos;
+        move |reader: &mut Reader| {
+            reader.pos = from;
         }
     }
     pub fn extend_token(&mut self) {

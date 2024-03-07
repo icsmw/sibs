@@ -21,6 +21,10 @@ pub enum E {
     NoVariableReference,
     #[error("Fail to find closing \"}}\" injection into string")]
     NoInjectionClose,
+    #[error("Fail to find injection into string")]
+    FailToFineInjection,
+    #[error("Fail to parse right side of assignation")]
+    FailToParseRightSideOfAssignation,
     #[error("Not ascii variable value: {0}")]
     NotAsciiValue(String),
     #[error("Empty value")]
@@ -99,8 +103,16 @@ pub enum E {
     NotSupportedInputForIF,
     #[error("No component body")]
     NoComponentBody,
+    #[error("No FIRST statement body")]
+    NoFIRSTStatementBody,
     #[error("Group [...] is expecting")]
     NoGroup,
+    #[error("Fail to find optional redirection: \"=>\"")]
+    NoOptionalRedirection,
+    #[error("Invalid action is used for optional statements")]
+    InvalidActionForOptional,
+    #[error("Fail to detect an action for optional statements")]
+    FailFindActionForOptional,
     #[error("Expecting whitespace after condition like OR, AND")]
     NoWhitespaceAfterCondition,
     #[error("No loop input EACH($var) input [...]")]

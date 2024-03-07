@@ -17,3 +17,4 @@
 @copy "filename-{$platform}.zip" ./node_modules $dest;
 @hash ("./src"; "./dist"; :client; :shared; :wrapper) (:build(dev));
 @hash ("./path"; "./path/to"; "./path with spaces"; :componentA; :componentB; :componentC) (:build(dev));
+@cd something1;

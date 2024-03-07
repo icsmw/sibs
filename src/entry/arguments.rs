@@ -212,7 +212,6 @@ impl Arguments {
         }
         if !reader.rest().trim().is_empty() {
             if reader.contains().char(&chars::AT) {
-                println!(">>>>>>>>>>>>>>>>>>>:__{}__", reader.rest());
                 Err(E::NestedFunction.by_reader(reader))?
             }
             if let Some(variable) = VariableName::read(reader)? {

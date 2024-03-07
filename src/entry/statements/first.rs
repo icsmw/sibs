@@ -1,11 +1,11 @@
 use crate::{
-    entry::{Block, Component},
+    entry::{Block, Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
         context::Context,
         operator::{Operator, OperatorPinnedResult},
     },
-    reader::{chars, words, Reader, Reading, E},
+    reader::{words, Reader, Reading, E},
 };
 use std::fmt;
 
@@ -19,19 +19,18 @@ impl Reading<First> for First {
     fn read(reader: &mut Reader) -> Result<Option<First>, LinkedErr<E>> {
         let close = reader.open_token();
         if reader.move_to().word(&[words::FIRST]).is_some() {
-            if let Some(mut block) = Block::read(reader)? {
-                if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
-                    Err(E::MissedSemicolon.linked(&block.token))
-                } else {
-                    block.use_as_first();
-                    Ok(Some(First {
-                        block,
-                        token: close(reader),
-                    }))
-                }
+            let mut block = if let Some(Element::Block(block)) =
+                Element::include(reader, &[ElTarget::Block])?
+            {
+                block
             } else {
-                Err(E::NoGroup.linked(&reader.token()?.id))
-            }
+                return Err(E::NoFIRSTStatementBody.by_reader(reader));
+            };
+            block.set_owner(ElTarget::First);
+            Ok(Some(First {
+                block,
+                token: close(reader),
+            }))
         } else {
             Ok(None)
         }

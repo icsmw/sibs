@@ -1,17 +1,35 @@
 use crate::{
     entry::{
         Block, Component, Each, First, Function, If, Meta, Optional, PatternString, Reference,
-        SimpleString, Values, VariableAssignation, VariableName,
+        SimpleString, Values, VariableAssignation, VariableComparing, VariableName,
     },
     error::LinkedErr,
     inf::{
         any::AnyValue,
         context::Context,
         operator::{Operator, OperatorPinnedResult},
+        term::{self, Term},
     },
     reader::{Reader, Reading, E},
 };
 use std::fmt;
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum ElTarget {
+    Function,
+    If,
+    Each,
+    First,
+    VariableAssignation,
+    Optional,
+    Reference,
+    PatternString,
+    VariableName,
+    VariableComparing,
+    Values,
+    Block,
+    Meta,
+}
 
 #[derive(Debug, Clone)]
 pub enum Element {
@@ -24,9 +42,99 @@ pub enum Element {
     Reference(Reference),
     PatternString(PatternString),
     VariableName(VariableName),
+    VariableComparing(VariableComparing),
     Values(Values),
     Block(Block),
     Meta(Meta),
+}
+
+impl Element {
+    fn parse(
+        reader: &mut Reader,
+        targets: &[ElTarget],
+        includes: bool,
+    ) -> Result<Option<Element>, LinkedErr<E>> {
+        if includes == targets.contains(&ElTarget::Meta) {
+            if let Some(el) = Meta::read(reader)? {
+                return Ok(Some(Element::Meta(el)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::If) {
+            if let Some(el) = If::read(reader)? {
+                return Ok(Some(Element::If(el)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::Optional) {
+            if let Some(el) = Optional::read(reader)? {
+                return Ok(Some(Element::Optional(el)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::Function) {
+            if let Some(el) = Function::read(reader)? {
+                return Ok(Some(Element::Function(el)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::VariableComparing) {
+            if let Some(el) = VariableComparing::read(reader)? {
+                return Ok(Some(Element::VariableComparing(el)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::VariableName) {
+            if let Some(el) = VariableName::read(reader)? {
+                return Ok(Some(Element::VariableName(el)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::VariableAssignation) {
+            if let Some(el) = VariableAssignation::read(reader)? {
+                return Ok(Some(Element::VariableAssignation(el)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::Each) {
+            if let Some(el) = Each::read(reader)? {
+                return Ok(Some(Element::Each(el)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::First) {
+            if let Some(el) = First::read(reader)? {
+                return Ok(Some(Element::First(el)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::Reference) {
+            if let Some(el) = Reference::read(reader)? {
+                return Ok(Some(Element::Reference(el)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::PatternString) {
+            if let Some(el) = PatternString::read(reader)? {
+                return Ok(Some(Element::PatternString(el)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::Block) {
+            if let Some(el) = Block::read(reader)? {
+                return Ok(Some(Element::Block(el)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::Values) {
+            if let Some(el) = Values::read(reader)? {
+                return Ok(Some(Element::Values(el)));
+            }
+        }
+        Ok(None)
+    }
+
+    pub fn exclude(
+        reader: &mut Reader,
+        targets: &[ElTarget],
+    ) -> Result<Option<Element>, LinkedErr<E>> {
+        Self::parse(reader, targets, false)
+    }
+
+    pub fn include(
+        reader: &mut Reader,
+        targets: &[ElTarget],
+    ) -> Result<Option<Element>, LinkedErr<E>> {
+        Self::parse(reader, targets, true)
+    }
 }
 
 impl fmt::Display for Element {
@@ -40,6 +148,7 @@ impl fmt::Display for Element {
                 Self::Each(v) => v.to_string(),
                 Self::First(v) => v.to_string(),
                 Self::VariableAssignation(v) => v.to_string(),
+                Self::VariableComparing(v) => v.to_string(),
                 Self::Optional(v) => v.to_string(),
                 Self::Reference(v) => v.to_string(),
                 Self::PatternString(v) => v.to_string(),
@@ -52,6 +161,12 @@ impl fmt::Display for Element {
     }
 }
 
+impl term::Display for Element {
+    fn display(&self, term: &mut Term) {
+        // term.print_fmt(&self.as_lines());
+    }
+}
+
 impl Operator for Element {
     fn token(&self) -> usize {
         match self {
@@ -60,6 +175,7 @@ impl Operator for Element {
             Self::Each(v) => v.token(),
             Self::First(v) => v.token(),
             Self::VariableAssignation(v) => v.token(),
+            Self::VariableComparing(v) => v.token(),
             Self::Optional(v) => v.token(),
             Self::Reference(v) => v.token(),
             Self::PatternString(v) => v.token(),
@@ -83,6 +199,7 @@ impl Operator for Element {
                 Self::Each(v) => v.execute(owner, components, args, cx).await,
                 Self::First(v) => v.execute(owner, components, args, cx).await,
                 Self::VariableAssignation(v) => v.execute(owner, components, args, cx).await,
+                Self::VariableComparing(v) => v.execute(owner, components, args, cx).await,
                 Self::Optional(v) => v.execute(owner, components, args, cx).await,
                 Self::Reference(v) => v.execute(owner, components, args, cx).await,
                 Self::PatternString(v) => v.execute(owner, components, args, cx).await,
@@ -103,6 +220,10 @@ impl Reading<Element> for Element {
             Some(Element::If(el))
         } else if let Some(el) = Optional::read(reader)? {
             Some(Element::Optional(el))
+        } else if let Some(el) = Function::read(reader)? {
+            Some(Element::Function(el))
+        } else if let Some(el) = VariableComparing::read(reader)? {
+            Some(Element::VariableComparing(el))
         } else if let Some(el) = VariableName::read(reader)? {
             Some(Element::VariableName(el))
         } else if let Some(el) = VariableAssignation::read(reader)? {
@@ -115,8 +236,6 @@ impl Reading<Element> for Element {
             Some(Element::Reference(el))
         } else if let Some(el) = PatternString::read(reader)? {
             Some(Element::PatternString(el))
-        } else if let Some(el) = Function::read(reader)? {
-            Some(Element::Function(el))
         } else if let Some(el) = Block::read(reader)? {
             Some(Element::Block(el))
         } else {

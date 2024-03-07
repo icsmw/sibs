@@ -31,13 +31,11 @@ impl Reading<Values> for Values {
             if inner.rest().trim().is_empty() {
                 Err(E::EmptyValue.linked(&token.id))?;
             }
-            println!(">>>>>>>>>>>>>>>>>>>>VALUES TO READ:__{}__", inner.rest());
             while let Some(el) = Element::read(&mut inner)? {
                 elements.push(el);
                 if inner.move_to().char(&[&chars::SEMICOLON]).is_none()
                     && !inner.rest().trim().is_empty()
                 {
-                    println!(">>>>>>>>>>>>>>>>>>>>ERR:__{}__", inner.rest());
                     Err(E::MissedSemicolon.by_reader(&inner))?;
                 }
             }
@@ -79,7 +77,7 @@ impl term::Display for Values {
             "({})",
             self.elements
                 .iter()
-                .map(|el| el.to_string())
+                .map(term::Display::to_string)
                 .collect::<Vec<String>>()
                 .join("; ")
         )
