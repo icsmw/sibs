@@ -28,14 +28,24 @@ impl Reading<VariableComparing> for VariableComparing {
             .is_some()
         {
             let mut inner = reader.token()?.bound;
-            let left = if let Some(el) =
-                Element::include(&mut inner, &[ElTarget::VariableName, ElTarget::Function])?
-            {
+            let left = if let Some(el) = Element::include(
+                &mut inner,
+                &[
+                    ElTarget::VariableName,
+                    ElTarget::Function,
+                    ElTarget::PatternString,
+                    ElTarget::Values,
+                ],
+            )? {
                 Box::new(el)
             } else {
                 restore(reader);
                 return Ok(None);
             };
+            if !inner.is_empty() {
+                restore(reader);
+                return Ok(None);
+            }
             let cmp =
                 if let Some(word) = reader.move_to().word(&[words::CMP_TRUE, words::CMP_FALSE]) {
                     if word == words::CMP_TRUE {
@@ -100,6 +110,79 @@ impl Operator for VariableComparing {
             //     Cmp::NotEqual => left != right,
             // })))
         })
+    }
+}
+
+#[cfg(test)]
+mod reading {
+    use crate::{
+        entry::VariableComparing,
+        error::LinkedErr,
+        inf::tests,
+        reader::{chars, Reader, Reading, E},
+    };
+
+    #[test]
+    fn reading() -> Result<(), LinkedErr<E>> {
+        let mut reader =
+            Reader::unbound(include_str!("../tests/reading/comparing.sibs").to_string());
+        let mut count = 0;
+        while let Some(entity) = VariableComparing::read(&mut reader)? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+            assert_eq!(
+                tests::trim_carets(reader.recent()),
+                tests::trim_carets(&format!("{entity};"))
+            );
+            count += 1;
+        }
+        assert_eq!(count, 12);
+        assert!(reader.rest().trim().is_empty());
+        Ok(())
+    }
+
+    // #[test]
+    // fn tokens() -> Result<(), LinkedErr<E>> {
+    //     let mut reader =
+    //         Reader::unbound(include_str!("../tests/reading/comparing.sibs").to_string());
+    //     let mut count = 0;
+    //     while let Some(entity) = VariableComparing::read(&mut reader)? {
+    //         assert_eq!(
+    //             tests::trim_carets(&format!("{entity};")),
+    //             reader.get_fragment(&entity.token)?.lined
+    //         );
+    //         // In some cases like with PatternString, semicolon can be skipped, because
+    //         // belongs to parent entity (VariableComparing).
+    //         assert_eq!(
+    //             tests::trim_semicolon(&tests::trim_carets(&entity.action.to_string())),
+    //             tests::trim_semicolon(&tests::trim_carets(
+    //                 &reader.get_fragment(&entity.action.token())?.lined
+    //             )),
+    //         );
+    //         assert_eq!(
+    //             tests::trim_semicolon(&tests::trim_carets(&entity.condition.to_string())),
+    //             tests::trim_semicolon(&tests::trim_carets(
+    //                 &reader.get_fragment(&entity.condition.token())?.lined
+    //             )),
+    //         );
+    //         count += 1;
+    //     }
+    //     assert_eq!(count, 11);
+    //     assert!(reader.rest().trim().is_empty());
+    //     Ok(())
+    // }
+
+    #[test]
+    fn error() -> Result<(), E> {
+        let samples = include_str!("../tests/error/optional.sibs").to_string();
+        let samples = samples.split('\n').collect::<Vec<&str>>();
+        let mut count = 0;
+        for sample in samples.iter() {
+            let mut reader = Reader::unbound(sample.to_string());
+            assert!(VariableComparing::read(&mut reader).is_err());
+            count += 1;
+        }
+        assert_eq!(count, samples.len());
+        Ok(())
     }
 }
 

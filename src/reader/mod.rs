@@ -571,7 +571,7 @@ impl Reader {
         self.pos == self.content.len()
     }
     pub fn is_empty(&self) -> bool {
-        self.content.trim().is_empty()
+        self.rest().trim().is_empty()
     }
     pub fn unserialize(content: &str) -> String {
         content
