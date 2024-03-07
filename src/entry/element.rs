@@ -1,7 +1,7 @@
 use crate::{
     entry::{
-        Block, Component, Each, First, Function, If, Meta, Optional, PatternString, Reference,
-        SimpleString, Values, VariableAssignation, VariableComparing, VariableName,
+        Block, Command, Component, Each, First, Function, If, Meta, Optional, PatternString,
+        Reference, SimpleString, Values, VariableAssignation, VariableComparing, VariableName,
     },
     error::LinkedErr,
     inf::{
@@ -29,6 +29,7 @@ pub enum ElTarget {
     Values,
     Block,
     Meta,
+    Command,
 }
 
 #[derive(Debug, Clone)]
@@ -46,6 +47,7 @@ pub enum Element {
     Values(Values),
     Block(Block),
     Meta(Meta),
+    Command(Command),
 }
 
 impl Element {
@@ -57,6 +59,11 @@ impl Element {
         if includes == targets.contains(&ElTarget::Meta) {
             if let Some(el) = Meta::read(reader)? {
                 return Ok(Some(Element::Meta(el)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::Command) {
+            if let Some(el) = Command::read(reader)? {
+                return Ok(Some(Element::Command(el)));
             }
         }
         if includes == targets.contains(&ElTarget::If) {
@@ -156,6 +163,7 @@ impl fmt::Display for Element {
                 Self::Values(v) => v.to_string(),
                 Self::Meta(v) => v.to_string(),
                 Self::Block(v) => v.to_string(),
+                Self::Command(v) => v.to_string(),
             }
         )
     }
@@ -183,6 +191,7 @@ impl Operator for Element {
             Self::Values(v) => v.token(),
             Self::Block(v) => v.token(),
             Self::Meta(v) => v.token,
+            Self::Command(v) => v.token(),
         }
     }
     fn perform<'a>(
@@ -206,6 +215,7 @@ impl Operator for Element {
                 Self::VariableName(v) => v.execute(owner, components, args, cx).await,
                 Self::Values(v) => v.execute(owner, components, args, cx).await,
                 Self::Block(v) => v.execute(owner, components, args, cx).await,
+                Self::Command(v) => v.execute(owner, components, args, cx).await,
                 Self::Meta(_) => Ok(None),
             }
         })
@@ -216,6 +226,8 @@ impl Reading<Element> for Element {
     fn read(reader: &mut Reader) -> Result<Option<Element>, LinkedErr<E>> {
         Ok(if let Some(el) = Meta::read(reader)? {
             Some(Element::Meta(el))
+        } else if let Some(el) = Command::read(reader)? {
+            Some(Element::Command(el))
         } else if let Some(el) = If::read(reader)? {
             Some(Element::If(el))
         } else if let Some(el) = Optional::read(reader)? {

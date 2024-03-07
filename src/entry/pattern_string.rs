@@ -1,5 +1,5 @@
 use crate::{
-    entry::{Component, ElTarget, Element, Function, VariableName},
+    entry::{pattern_string_reader, Component, Element},
     error::LinkedErr,
     inf::{
         any::AnyValue,
@@ -19,29 +19,13 @@ pub struct PatternString {
 
 impl Reading<PatternString> for PatternString {
     fn read(reader: &mut Reader) -> Result<Option<PatternString>, LinkedErr<E>> {
-        let close = reader.open_token();
-        if let Some(pattern) = reader.group().closed(&chars::QUOTES) {
-            let mut injections: Vec<(String, Element)> = vec![];
-            let mut inner = reader.token()?.bound;
-            while inner.seek_to().char(&chars::TYPE_OPEN) {
-                if let Some(hook) = inner.group().between(&chars::TYPE_OPEN, &chars::TYPE_CLOSE) {
-                    let mut inner = inner.token()?.bound;
-                    if let Some(el) = Element::include(
-                        &mut inner,
-                        &[ElTarget::VariableName, ElTarget::Function, ElTarget::If],
-                    )? {
-                        injections.push((hook, el));
-                    } else {
-                        Err(E::FailToFineInjection.by_reader(&inner))?
-                    }
-                } else {
-                    Err(E::NoInjectionClose.by_reader(reader))?
-                }
-            }
+        if let Some((pattern, injections, token)) =
+            pattern_string_reader::read(reader, chars::QUOTES)?
+        {
             Ok(Some(PatternString {
                 pattern,
                 injections,
-                token: close(reader),
+                token,
             }))
         } else {
             Ok(None)
@@ -95,7 +79,7 @@ mod reading {
     #[test]
     fn reading() -> Result<(), LinkedErr<E>> {
         let mut reader =
-            Reader::unbound(include_str!("../tests/reading/value_string.sibs").to_string());
+            Reader::unbound(include_str!("../tests/reading/pattern_string.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = PatternString::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
@@ -113,7 +97,7 @@ mod reading {
     #[test]
     fn tokens() -> Result<(), LinkedErr<E>> {
         let mut reader =
-            Reader::unbound(include_str!("../tests/reading/value_string.sibs").to_string());
+            Reader::unbound(include_str!("../tests/reading/pattern_string.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = PatternString::read(&mut reader)? {
             assert_eq!(

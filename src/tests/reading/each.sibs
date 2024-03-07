@@ -26,3 +26,8 @@ EACH($file; @ls ../output/files) [
         @sh tgz ./release/{$file};
     ];
 ];
+EACH($file; @ls ../output/files) [
+    IF $file != "." AND $file != ".." [
+        `tgz ./release/{$file}`;
+    ];
+];

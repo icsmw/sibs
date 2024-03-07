@@ -1,3 +1,4 @@
+@os linux => `tgz ./release/unpacked-linux {$file_name}`;
 @os window => $file_name = "release{$version}-win.zip";
 @os linux => $file_name = "release{$version}-linux.zip";
 @os darwin => $file_name = "release{$version}-darwin.zip";

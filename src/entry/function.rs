@@ -94,6 +94,7 @@ impl Reading<Function> for Function {
                         ElTarget::Reference,
                         ElTarget::VariableComparing,
                         ElTarget::VariableName,
+                        ElTarget::Command,
                     ],
                 )? {
                     elements.push(ElementExd::Element(el));

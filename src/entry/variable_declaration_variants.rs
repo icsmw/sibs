@@ -103,7 +103,7 @@ mod reading {
 
 #[cfg(test)]
 mod proptest {
-    use crate::{entry::variants::Variants, inf::tests::*};
+    use crate::{entry::variable_declaration_variants::Variants, inf::tests::*};
     use proptest::prelude::*;
 
     impl Arbitrary for Variants {

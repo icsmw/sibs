@@ -1,5 +1,5 @@
 use crate::{
-    entry::{Block, Component, SimpleString, VariableDeclaration},
+    entry::{Block, Component, ElTarget, Element, SimpleString, VariableDeclaration},
     error::LinkedErr,
     inf::{
         context::Context,
@@ -110,7 +110,7 @@ impl fmt::Display for Task {
             },
             self.block
                 .as_ref()
-                .map(|b| format!("{b}"))
+                .map(|b| b.to_string())
                 .unwrap_or_default()
         )
     }
@@ -236,8 +236,8 @@ mod reading {
                     tests::trim_carets(&reader.get_fragment(&declaration.token)?.lined)
                 );
                 assert_eq!(
-                    tests::trim_carets(&declaration.name.to_string()),
-                    tests::trim_carets(&reader.get_fragment(&declaration.name.token)?.lined)
+                    tests::trim_carets(&declaration.variable.to_string()),
+                    tests::trim_carets(&reader.get_fragment(&declaration.variable.token)?.lined)
                 );
                 assert_eq!(
                     tests::trim_carets(&declaration.declaration.to_string()),

@@ -54,6 +54,7 @@ impl Reading<Optional> for Optional {
                 ElTarget::Each,
                 ElTarget::First,
                 ElTarget::PatternString,
+                ElTarget::Command,
             ],
         )? {
             Box::new(el)
@@ -124,7 +125,7 @@ mod reading {
             );
             count += 1;
         }
-        assert_eq!(count, 14);
+        assert_eq!(count, 15);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }

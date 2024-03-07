@@ -1,5 +1,5 @@
 use crate::{
-    entry::{Component, Element},
+    entry::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
         any::AnyValue,
@@ -31,7 +31,19 @@ impl Reading<Values> for Values {
             if inner.rest().trim().is_empty() {
                 Err(E::EmptyValue.linked(&token.id))?;
             }
-            while let Some(el) = Element::read(&mut inner)? {
+            while let Some(el) = Element::include(
+                &mut inner,
+                &[
+                    ElTarget::Command,
+                    ElTarget::Function,
+                    ElTarget::If,
+                    ElTarget::PatternString,
+                    ElTarget::Reference,
+                    ElTarget::Values,
+                    ElTarget::VariableComparing,
+                    ElTarget::VariableName,
+                ],
+            )? {
                 elements.push(el);
                 if inner.move_to().char(&[&chars::SEMICOLON]).is_none()
                     && !inner.rest().trim().is_empty()

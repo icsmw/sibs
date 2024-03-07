@@ -35,7 +35,7 @@ impl Reading<Component> for Component {
         if reader.move_to().char(&[&chars::POUND_SIGN]).is_some() {
             if reader
                 .group()
-                .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
+                .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
                 .is_some()
             {
                 let mut inner = reader.token()?.bound;
@@ -107,7 +107,7 @@ impl fmt::Display for Component {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "#[{}{}]{}{}\n{}",
+            "#({}{}){}{}\n{}",
             self.name,
             self.cwd
                 .as_ref()

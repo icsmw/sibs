@@ -1,0 +1,16 @@
+`release{$version}-win.zip`
+`release-linux.zip`
+`release{$version}-win.zip`
+`release-\`linux.zip`
+`release{$version}bla{$a}-win.zip`
+`release\`{$version}\`bla\`{$a}\`-win.zip`
+`release{$version}bla{$a}-win.zip{$b}`
+`release\`{$version}\`bla\`{$a}\`-win.zip{$b}`
+`{$c}release{$version}bla{$a}-win.zip{$b}`
+`\`{$c}\`release\`{$version}\`bla\`{$a}\`-win.zip{$b}`
+`release\`\{$version\}\`-win.zip`
+`release{@os}-win.zip`
+`release{@os windows}-win.zip`
+`release{@ls ./path/*.txt}-win.zip`
+`release{@ls ./path/*.txt ./another/path}-win.zip`
+`release{@ls ./path/*.txt ./another\ path\ with\ spaces/path}-win.zip`

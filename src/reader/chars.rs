@@ -15,6 +15,7 @@ pub const EQUAL: char = '=';
 pub const CARET: char = '\n';
 pub const SERIALIZING: char = '\\';
 pub const QUOTES: char = '"';
+pub const TILDA: char = '`';
 pub const REDIRECT: char = '>';
 pub const WS: char = ' ';
 pub const COMMA: char = ',';

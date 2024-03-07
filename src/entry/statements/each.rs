@@ -130,7 +130,7 @@ mod reading {
             );
             count += 1;
         }
-        assert_eq!(count, 6);
+        assert_eq!(count, 7);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }

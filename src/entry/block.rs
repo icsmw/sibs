@@ -65,7 +65,14 @@ impl fmt::Display for Block {
             "[\n{}{}]",
             self.elements
                 .iter()
-                .map(|el| format!("{el};"))
+                .map(|el| format!(
+                    "{el}{}",
+                    if matches!(el, Element::Meta(_)) {
+                        ""
+                    } else {
+                        ";"
+                    }
+                ))
                 .collect::<Vec<String>>()
                 .join("\n"),
             if self.elements.is_empty() { "" } else { "\n" }
