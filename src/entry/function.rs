@@ -1,5 +1,5 @@
 use crate::{
-    entry::{Component, Element, ElementExd, SimpleString},
+    entry::{Component, ElTarget, Element, ElementExd, SimpleString},
     error::LinkedErr,
     inf::{
         any::AnyValue,
@@ -84,7 +84,18 @@ impl Reading<Function> for Function {
                         tolerance,
                     )?));
                 }
-                if let Some(el) = Element::read(reader)? {
+                if let Some(el) = Element::include(
+                    reader,
+                    &[
+                        ElTarget::Values,
+                        ElTarget::Function,
+                        ElTarget::If,
+                        ElTarget::PatternString,
+                        ElTarget::Reference,
+                        ElTarget::VariableComparing,
+                        ElTarget::VariableName,
+                    ],
+                )? {
                     elements.push(ElementExd::Element(el));
                     continue;
                 }
@@ -115,7 +126,9 @@ impl Reading<Function> for Function {
                     if stopped == chars::REDIRECT {
                         let feed_func_token_id = close(reader);
                         let feed_func_args_token_id = args_close(reader);
-                        return if let Some(Element::Function(mut dest)) = Element::read(reader)? {
+                        return if let Some(Element::Function(mut dest)) =
+                            Element::include(reader, &[ElTarget::Function])?
+                        {
                             dest.feeding(Self::new(
                                 feed_func_token_id,
                                 feed_func_args_token_id,

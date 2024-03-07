@@ -64,7 +64,7 @@ mod reading {
         entry::First,
         error::LinkedErr,
         inf::tests,
-        reader::{Reader, Reading, E},
+        reader::{chars, Reader, Reading, E},
     };
 
     #[test]
@@ -73,6 +73,7 @@ mod reading {
             Reader::unbound(include_str!("../../tests/reading/first.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = First::read(&mut reader)? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(reader.recent()),
                 tests::trim_carets(&format!("{entity};"))

@@ -21,27 +21,32 @@ impl Reading<Each> for Each {
     fn read(reader: &mut Reader) -> Result<Option<Each>, LinkedErr<E>> {
         let close = reader.open_token();
         if reader.move_to().word(&[words::EACH]).is_some() {
-            let variable = if reader
+            let (variable, input) = if reader
                 .group()
                 .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
                 .is_some()
             {
-                if let Some(Element::VariableName(variable)) =
-                    Element::include(reader, &[ElTarget::VariableName])?
+                let mut inner = reader.token()?.bound;
+                let variable = if let Some(Element::VariableName(variable)) =
+                    Element::include(&mut inner, &[ElTarget::VariableName])?
                 {
+                    if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
+                        return Err(E::MissedSemicolon.linked(&inner.token()?.id));
+                    }
                     variable
                 } else {
-                    return Err(E::NoLoopVariable.linked(&reader.token()?.id));
-                }
+                    return Err(E::NoLoopVariable.linked(&inner.token()?.id));
+                };
+                let input = if let Some(el) =
+                    Element::include(&mut inner, &[ElTarget::Function, ElTarget::VariableName])?
+                {
+                    Box::new(el)
+                } else {
+                    Err(E::NoLoopInput.by_reader(&inner))?
+                };
+                (variable, input)
             } else {
                 return Err(E::NoLoopInitialization.linked(&reader.token()?.id));
-            };
-            let input = if let Some(el) =
-                Element::include(reader, &[ElTarget::Function, ElTarget::VariableName])?
-            {
-                Box::new(el)
-            } else {
-                Err(E::NoLoopInput.by_reader(reader))?
             };
             let block = if let Some(Element::Block(block)) =
                 Element::include(reader, &[ElTarget::Block])?
@@ -64,7 +69,7 @@ impl Reading<Each> for Each {
 
 impl fmt::Display for Each {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "EACH({}) {} {}", self.variable, self.input, self.block)
+        write!(f, "EACH({}; {}) {}", self.variable, self.input, self.block)
     }
 }
 
@@ -110,7 +115,7 @@ mod reading {
         entry::Each,
         error::LinkedErr,
         inf::{operator::Operator, tests},
-        reader::{Reader, Reading, E},
+        reader::{chars, Reader, Reading, E},
     };
 
     #[test]
@@ -118,6 +123,7 @@ mod reading {
         let mut reader = Reader::unbound(include_str!("../../tests/reading/each.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Each::read(&mut reader)? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(reader.recent()),
                 tests::trim_carets(&format!("{entity};"))
