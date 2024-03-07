@@ -1,5 +1,6 @@
 mod block;
 mod command;
+mod comparing;
 mod component;
 mod element;
 mod function;
@@ -13,7 +14,6 @@ mod statements;
 mod task;
 mod values;
 mod variable_assignation;
-mod variable_comparing;
 mod variable_declaration;
 mod variable_declaration_variants;
 mod variable_name;
@@ -21,6 +21,7 @@ mod variable_type;
 
 pub use block::Block;
 pub use command::Command;
+pub use comparing::Comparing;
 pub use component::Component;
 pub use element::{ElTarget, Element, ElementExd};
 pub use function::Function;
@@ -37,7 +38,6 @@ pub use statements::{
 pub use task::Task;
 pub use values::Values;
 pub use variable_assignation::VariableAssignation;
-pub use variable_comparing::VariableComparing;
 pub use variable_declaration::VariableDeclaration;
 pub use variable_declaration_variants::Variants;
 pub use variable_name::VariableName;

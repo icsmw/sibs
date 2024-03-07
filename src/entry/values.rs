@@ -40,7 +40,7 @@ impl Reading<Values> for Values {
                     ElTarget::PatternString,
                     ElTarget::Reference,
                     ElTarget::Values,
-                    ElTarget::VariableComparing,
+                    ElTarget::Comparing,
                     ElTarget::VariableName,
                 ],
             )? {

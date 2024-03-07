@@ -30,7 +30,7 @@ impl Reading<Optional> for Optional {
                 ElTarget::VariableName,
                 ElTarget::Block,
                 ElTarget::Reference,
-                ElTarget::VariableComparing,
+                ElTarget::Comparing,
             ],
         )? {
             Box::new(el)

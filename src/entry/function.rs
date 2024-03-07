@@ -92,7 +92,7 @@ impl Reading<Function> for Function {
                         ElTarget::If,
                         ElTarget::PatternString,
                         ElTarget::Reference,
-                        ElTarget::VariableComparing,
+                        ElTarget::Comparing,
                         ElTarget::VariableName,
                         ElTarget::Command,
                     ],

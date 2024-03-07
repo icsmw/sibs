@@ -1,7 +1,7 @@
 use crate::{
     entry::{
-        Block, Command, Component, Each, First, Function, If, Meta, Optional, PatternString,
-        Reference, SimpleString, Values, VariableAssignation, VariableComparing, VariableName,
+        Block, Command, Comparing, Component, Each, First, Function, If, Meta, Optional,
+        PatternString, Reference, SimpleString, Values, VariableAssignation, VariableName,
     },
     error::LinkedErr,
     inf::{
@@ -25,7 +25,7 @@ pub enum ElTarget {
     Reference,
     PatternString,
     VariableName,
-    VariableComparing,
+    Comparing,
     Values,
     Block,
     Meta,
@@ -43,7 +43,7 @@ pub enum Element {
     Reference(Reference),
     PatternString(PatternString),
     VariableName(VariableName),
-    VariableComparing(VariableComparing),
+    Comparing(Comparing),
     Values(Values),
     Block(Block),
     Meta(Meta),
@@ -81,9 +81,9 @@ impl Element {
                 return Ok(Some(Element::Function(el)));
             }
         }
-        if includes == targets.contains(&ElTarget::VariableComparing) {
-            if let Some(el) = VariableComparing::read(reader)? {
-                return Ok(Some(Element::VariableComparing(el)));
+        if includes == targets.contains(&ElTarget::Comparing) {
+            if let Some(el) = Comparing::read(reader)? {
+                return Ok(Some(Element::Comparing(el)));
             }
         }
         if includes == targets.contains(&ElTarget::VariableName) {
@@ -155,7 +155,7 @@ impl fmt::Display for Element {
                 Self::Each(v) => v.to_string(),
                 Self::First(v) => v.to_string(),
                 Self::VariableAssignation(v) => v.to_string(),
-                Self::VariableComparing(v) => v.to_string(),
+                Self::Comparing(v) => v.to_string(),
                 Self::Optional(v) => v.to_string(),
                 Self::Reference(v) => v.to_string(),
                 Self::PatternString(v) => v.to_string(),
@@ -183,7 +183,7 @@ impl Operator for Element {
             Self::Each(v) => v.token(),
             Self::First(v) => v.token(),
             Self::VariableAssignation(v) => v.token(),
-            Self::VariableComparing(v) => v.token(),
+            Self::Comparing(v) => v.token(),
             Self::Optional(v) => v.token(),
             Self::Reference(v) => v.token(),
             Self::PatternString(v) => v.token(),
@@ -208,7 +208,7 @@ impl Operator for Element {
                 Self::Each(v) => v.execute(owner, components, args, cx).await,
                 Self::First(v) => v.execute(owner, components, args, cx).await,
                 Self::VariableAssignation(v) => v.execute(owner, components, args, cx).await,
-                Self::VariableComparing(v) => v.execute(owner, components, args, cx).await,
+                Self::Comparing(v) => v.execute(owner, components, args, cx).await,
                 Self::Optional(v) => v.execute(owner, components, args, cx).await,
                 Self::Reference(v) => v.execute(owner, components, args, cx).await,
                 Self::PatternString(v) => v.execute(owner, components, args, cx).await,
@@ -234,8 +234,8 @@ impl Reading<Element> for Element {
             Some(Element::Optional(el))
         } else if let Some(el) = Function::read(reader)? {
             Some(Element::Function(el))
-        } else if let Some(el) = VariableComparing::read(reader)? {
-            Some(Element::VariableComparing(el))
+        } else if let Some(el) = Comparing::read(reader)? {
+            Some(Element::Comparing(el))
         } else if let Some(el) = VariableName::read(reader)? {
             Some(Element::VariableName(el))
         } else if let Some(el) = VariableAssignation::read(reader)? {

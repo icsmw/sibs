@@ -42,7 +42,7 @@ impl Reading<VariableAssignation> for VariableAssignation {
                     ElTarget::If,
                     ElTarget::PatternString,
                     ElTarget::Values,
-                    ElTarget::VariableComparing,
+                    ElTarget::Comparing,
                     ElTarget::VariableName,
                 ],
             )?

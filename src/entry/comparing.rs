@@ -11,15 +11,15 @@ use crate::{
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub struct VariableComparing {
+pub struct Comparing {
     pub left: Box<Element>,
     pub cmp: Cmp,
     pub right: Box<Element>,
     pub token: usize,
 }
 
-impl Reading<VariableComparing> for VariableComparing {
-    fn read(reader: &mut Reader) -> Result<Option<VariableComparing>, LinkedErr<E>> {
+impl Reading<Comparing> for Comparing {
+    fn read(reader: &mut Reader) -> Result<Option<Comparing>, LinkedErr<E>> {
         let restore = reader.pin();
         let close = reader.open_token();
         if reader
@@ -71,7 +71,7 @@ impl Reading<VariableComparing> for VariableComparing {
                 restore(reader);
                 return Ok(None);
             };
-            Ok(Some(VariableComparing {
+            Ok(Some(Comparing {
                 left,
                 cmp,
                 right,
@@ -83,13 +83,13 @@ impl Reading<VariableComparing> for VariableComparing {
     }
 }
 
-impl fmt::Display for VariableComparing {
+impl fmt::Display for Comparing {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{} {} {}", self.left, self.cmp, self.right)
     }
 }
 
-impl Operator for VariableComparing {
+impl Operator for Comparing {
     fn token(&self) -> usize {
         self.token
     }
@@ -116,7 +116,7 @@ impl Operator for VariableComparing {
 #[cfg(test)]
 mod reading {
     use crate::{
-        entry::VariableComparing,
+        entry::Comparing,
         error::LinkedErr,
         inf::tests,
         reader::{chars, Reader, Reading, E},
@@ -127,7 +127,7 @@ mod reading {
         let mut reader =
             Reader::unbound(include_str!("../tests/reading/comparing.sibs").to_string());
         let mut count = 0;
-        while let Some(entity) = VariableComparing::read(&mut reader)? {
+        while let Some(entity) = Comparing::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(reader.recent()),
@@ -145,13 +145,13 @@ mod reading {
     //     let mut reader =
     //         Reader::unbound(include_str!("../tests/reading/comparing.sibs").to_string());
     //     let mut count = 0;
-    //     while let Some(entity) = VariableComparing::read(&mut reader)? {
+    //     while let Some(entity) = Comparing::read(&mut reader)? {
     //         assert_eq!(
     //             tests::trim_carets(&format!("{entity};")),
     //             reader.get_fragment(&entity.token)?.lined
     //         );
     //         // In some cases like with PatternString, semicolon can be skipped, because
-    //         // belongs to parent entity (VariableComparing).
+    //         // belongs to parent entity (Comparing).
     //         assert_eq!(
     //             tests::trim_semicolon(&tests::trim_carets(&entity.action.to_string())),
     //             tests::trim_semicolon(&tests::trim_carets(
@@ -178,7 +178,7 @@ mod reading {
         let mut count = 0;
         for sample in samples.iter() {
             let mut reader = Reader::unbound(sample.to_string());
-            assert!(VariableComparing::read(&mut reader).is_err());
+            assert!(Comparing::read(&mut reader).is_err());
             count += 1;
         }
         assert_eq!(count, samples.len());
@@ -189,12 +189,12 @@ mod reading {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        entry::{element::Element, statements::If::Cmp, variable_comparing::VariableComparing},
+        entry::{comparing::Comparing, element::Element, statements::If::Cmp},
         inf::tests::*,
     };
     use proptest::prelude::*;
 
-    impl Arbitrary for VariableComparing {
+    impl Arbitrary for Comparing {
         type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
@@ -204,7 +204,7 @@ mod proptest {
                 Cmp::arbitrary_with(scope.clone()),
                 Element::arbitrary_with(scope.clone()),
             )
-                .prop_map(|(left, cmp, right)| VariableComparing {
+                .prop_map(|(left, cmp, right)| Comparing {
                     cmp,
                     left: Box::new(left),
                     right: Box::new(right),
