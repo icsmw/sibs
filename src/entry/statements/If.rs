@@ -243,28 +243,38 @@ impl Reading<If> for If {
             if elements.is_empty() {
                 return Ok(None);
             }
-            if reader.move_to().char(&[&chars::SEMICOLON]).is_some() {
+            let restore = reader.pin();
+            if let Some(content) = reader.move_to().word(&[words::ELSE]) {
+                if content.trim() != words::ELSE {
+                    restore(reader);
+                    return Ok(Some(If {
+                        elements,
+                        token: close(reader),
+                    }));
+                }
+                if let Some(block) = Block::read(reader)? {
+                    elements.push(Segment::Else(block));
+                    return Ok(Some(If {
+                        elements,
+                        token: close(reader),
+                    }));
+                } else {
+                    Err(E::NoGroup.by_reader(reader))?
+                }
+            }
+            if let Some(content) = reader.move_to().word(&[words::IF]) {
+                if content.trim() != words::IF {
+                    restore(reader);
+                    return Ok(Some(If {
+                        elements,
+                        token: close(reader),
+                    }));
+                }
+            } else {
                 return Ok(Some(If {
                     elements,
                     token: close(reader),
                 }));
-            }
-            if reader.move_to().word(&[words::ELSE]).is_some() {
-                if let Some(block) = Block::read(reader)? {
-                    elements.push(Segment::Else(block));
-                    if reader.move_to().char(&[&chars::SEMICOLON]).is_some() {
-                        return Ok(Some(If {
-                            elements,
-                            token: close(reader),
-                        }));
-                    } else {
-                        Err(E::MissedSemicolon.by_reader(reader))?
-                    }
-                } else {
-                    Err(E::NoGroup.by_reader(reader))?
-                }
-            } else {
-                Err(E::MissedSemicolon.by_reader(reader))?
             }
         }
         Ok(None)
@@ -377,7 +387,7 @@ mod reading {
         entry::{statements::If::Segment, If},
         error::LinkedErr,
         inf::{operator::Operator, tests},
-        reader::{Reader, Reading, E},
+        reader::{chars, Reader, Reading, E},
     };
 
     #[test]
@@ -385,6 +395,7 @@ mod reading {
         let mut reader = Reader::unbound(include_str!("../../tests/reading/if.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = If::read(&mut reader)? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(reader.recent()),
                 tests::trim_carets(&format!("{entity};"))
