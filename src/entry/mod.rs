@@ -21,7 +21,7 @@ mod variable_type;
 
 pub use block::Block;
 pub use command::Command;
-pub use comparing::Comparing;
+pub use comparing::{Cmp, Comparing};
 pub use component::Component;
 pub use element::{ElTarget, Element, ElementExd};
 pub use function::Function;
@@ -30,11 +30,7 @@ pub use optional::Optional;
 pub use pattern_string::PatternString;
 pub use reference::Reference;
 pub use simple_string::SimpleString;
-pub use statements::{
-    each::Each,
-    first::First,
-    If::{Cmp, If},
-};
+pub use statements::{each::Each, first::First, If::If};
 pub use task::Task;
 pub use values::Values;
 pub use variable_assignation::VariableAssignation;

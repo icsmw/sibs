@@ -1,5 +1,5 @@
 use crate::{
-    entry::{Cmp, Component, ElTarget, Element},
+    entry::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
         any::AnyValue,
@@ -10,6 +10,24 @@ use crate::{
 };
 use std::fmt;
 
+#[derive(Debug, Clone)]
+pub enum Cmp {
+    Equal,
+    NotEqual,
+}
+
+impl fmt::Display for Cmp {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Equal => words::CMP_TRUE,
+                Self::NotEqual => words::CMP_FALSE,
+            }
+        )
+    }
+}
 #[derive(Debug, Clone)]
 pub struct Comparing {
     pub left: Box<Element>,
@@ -189,7 +207,10 @@ mod reading {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        entry::{comparing::Comparing, element::Element, statements::If::Cmp},
+        entry::{
+            comparing::{Cmp, Comparing},
+            element::Element,
+        },
         inf::tests::*,
     };
     use proptest::prelude::*;

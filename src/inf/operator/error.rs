@@ -70,6 +70,8 @@ pub enum E {
     NoValueToDeclareTaskArgument,
     #[error("Reference has invalid number of parts")]
     InvalidPartsInReference,
+    #[error("Unsupported condition of IF statement")]
+    UnsupportedCondition,
     #[error("Owner component isn't defined")]
     NoOwnerComponent,
     #[error("Fail to find component \"{0}\"")]

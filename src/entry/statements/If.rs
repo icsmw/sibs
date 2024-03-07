@@ -1,5 +1,5 @@
 use crate::{
-    entry::{Block, Component, Function, PatternString, VariableName},
+    entry::{Block, Cmp, Component, ElTarget, Element, Function, PatternString, VariableName},
     error::LinkedErr,
     inf::{
         any::AnyValue,
@@ -8,26 +8,7 @@ use crate::{
     },
     reader::{chars, words, Reader, Reading, E},
 };
-use std::fmt;
-
-#[derive(Debug, Clone)]
-pub enum Cmp {
-    Equal,
-    NotEqual,
-}
-
-impl fmt::Display for Cmp {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Self::Equal => words::CMP_TRUE,
-                Self::NotEqual => words::CMP_FALSE,
-            }
-        )
-    }
-}
+use std::{fmt, ops::Deref};
 
 #[derive(Debug, Clone)]
 pub enum Combination {
@@ -48,76 +29,37 @@ impl fmt::Display for Combination {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum CmpSubject {
-    VariableName(VariableName),
-    PatternString(PatternString),
-    Function(Function),
-}
+// #[derive(Debug, Clone)]
+// pub enum CmpSubject {
+//     VariableName(VariableName),
+//     PatternString(PatternString),
+//     Function(Function),
+// }
 
-impl CmpSubject {
-    pub fn read(reader: &mut Reader) -> Result<Self, LinkedErr<E>> {
-        let subject = if let Some(variable) = VariableName::read(reader)? {
-            Self::VariableName(variable)
-        } else if let Some(pattern) = PatternString::read(reader)? {
-            Self::PatternString(pattern)
-        } else if let Some(func) = Function::read(reader)? {
-            Self::Function(func)
-        } else {
-            return Err(E::NotSupportedInputForIF.linked(&reader.token()?.id));
-        };
-        if !reader.rest().trim().is_empty() {
-            Err(E::FailToParseSideOfComparing.linked(&reader.token()?.id))
-        } else {
-            Ok(subject)
-        }
-    }
-}
-
-impl fmt::Display for CmpSubject {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Self::VariableName(v) => v.to_string(),
-                Self::PatternString(v) => v.to_string(),
-                Self::Function(v) => v.to_string(),
-            }
-        )
-    }
-}
-
-impl Operator for CmpSubject {
-    fn token(&self) -> usize {
-        match self {
-            Self::VariableName(v) => v.token(),
-            Self::PatternString(v) => v.token(),
-            Self::Function(v) => v.token(),
-        }
-    }
-    fn perform<'a>(
-        &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
-        args: &'a [String],
-        cx: &'a mut Context,
-    ) -> OperatorPinnedResult {
-        Box::pin(async move {
-            match self {
-                Self::VariableName(v) => v.perform(owner, components, args, cx).await,
-                Self::PatternString(v) => v.perform(owner, components, args, cx).await,
-                Self::Function(v) => v.perform(owner, components, args, cx).await,
-            }
-        })
-    }
-}
+// impl CmpSubject {
+//     pub fn read(reader: &mut Reader) -> Result<Self, LinkedErr<E>> {
+//         let subject = if let Some(variable) = VariableName::read(reader)? {
+//             Self::VariableName(variable)
+//         } else if let Some(pattern) = PatternString::read(reader)? {
+//             Self::PatternString(pattern)
+//         } else if let Some(func) = Function::read(reader)? {
+//             Self::Function(func)
+//         } else {
+//             return Err(E::NotSupportedInputForIF.linked(&reader.token()?.id));
+//         };
+//         if !reader.rest().trim().is_empty() {
+//             Err(E::FailToParseSideOfComparing.linked(&reader.token()?.id))
+//         } else {
+//             Ok(subject)
+//         }
+//     }
+// }
 
 #[derive(Debug, Clone)]
 pub enum Proviso {
-    Comparing(CmpSubject, Cmp, CmpSubject, usize),
-    // Function, is negative (!)
-    Function(Function, bool, usize),
+    // bool -          true  - negative;
+    //                 false - positive;
+    Condition(Element, bool),
     Combination(Combination, usize),
     // bool: true - if root level; false - if nested group
     Group(bool, Vec<Proviso>, usize),
@@ -126,9 +68,8 @@ pub enum Proviso {
 impl Operator for Proviso {
     fn token(&self) -> usize {
         match self {
-            Self::Comparing(_, _, _, token) => *token,
+            Self::Condition(el, _) => el.token(),
             Self::Combination(_, token) => *token,
-            Self::Function(_, _, token) => *token,
             Self::Group(_, _, token) => *token,
         }
     }
@@ -141,37 +82,24 @@ impl Operator for Proviso {
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             match self {
-                Self::Comparing(left, cmp, right, _) => {
-                    let left = left
-                        .execute(owner, components, args, cx)
-                        .await?
-                        .ok_or(operator::E::FailExtractValueForIFStatement)?
-                        .get_as_string()
-                        .ok_or(operator::E::FailToGetValueAsString)?;
-                    let right = right
-                        .execute(owner, components, args, cx)
-                        .await?
-                        .ok_or(operator::E::FailExtractValueForIFStatement)?
-                        .get_as_string()
-                        .ok_or(operator::E::FailToGetValueAsString)?;
-                    Ok(Some(AnyValue::new(match cmp.clone() {
-                        Cmp::Equal => left == right,
-                        Cmp::NotEqual => left != right,
-                    })))
-                }
-                Self::Function(func, negative, _) => {
-                    let result = *func
-                        .execute(owner, components, args, cx)
-                        .await?
-                        .ok_or(operator::E::NoBoolResultFromFunction)?
-                        .get_as::<bool>()
-                        .ok_or(operator::E::NoBoolResultFromFunction)?;
+                Self::Condition(el, negative) => {
+                    let result = *match el {
+                        Element::Comparing(el) => el.execute(owner, components, args, cx).await?,
+                        Element::Function(el) => el.execute(owner, components, args, cx).await?,
+                        _ => {
+                            return Err(operator::E::UnsupportedCondition);
+                        }
+                    }
+                    .ok_or(operator::E::FailExtractValueForIFStatement)?
+                    .get_as::<bool>()
+                    .ok_or(operator::E::NoBoolResultFromFunction)?;
                     Ok(Some(AnyValue::new(if *negative {
                         !result
                     } else {
                         result
                     })))
                 }
+
                 Self::Group(_, provisos, _) => {
                     let mut iteration: Option<bool> = None;
                     for proviso in provisos.iter() {
@@ -214,10 +142,9 @@ impl fmt::Display for Proviso {
             f,
             "{}",
             match self {
-                Self::Comparing(left, cmp, right, _) => format!("{left} {cmp} {right}"),
+                Self::Condition(el, negative) =>
+                    format!("{}{el}", if *negative { "!" } else { "" }),
                 Self::Combination(v, _) => v.to_string(),
-                Self::Function(v, negative, _) =>
-                    format!("{}{v}", if *negative { "!" } else { "" }),
                 Self::Group(root, provisio, _) => {
                     format!(
                         "{}{}{}",
@@ -236,12 +163,12 @@ impl fmt::Display for Proviso {
 }
 
 #[derive(Debug, Clone)]
-pub enum Element {
+pub enum Segment {
     If(Proviso, Block),
     Else(Block),
 }
 
-impl Operator for Element {
+impl Operator for Segment {
     fn token(&self) -> usize {
         match self {
             Self::If(proviso, _) => proviso.token(),
@@ -276,14 +203,14 @@ impl Operator for Element {
     }
 }
 
-impl fmt::Display for Element {
+impl fmt::Display for Segment {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
             "{}",
             match self {
-                Element::If(provisio, block) => format!("IF {provisio} {block}"),
-                Element::Else(block) => format!("ELSE {block}"),
+                Segment::If(provisio, block) => format!("IF {provisio} {block}"),
+                Segment::Else(block) => format!("ELSE {block}"),
             }
         )
     }
@@ -291,20 +218,20 @@ impl fmt::Display for Element {
 
 #[derive(Debug, Clone)]
 pub struct If {
-    pub elements: Vec<Element>,
+    pub elements: Vec<Segment>,
     pub token: usize,
 }
 
 impl Reading<If> for If {
     fn read(reader: &mut Reader) -> Result<Option<If>, LinkedErr<E>> {
-        let mut elements: Vec<Element> = vec![];
+        let mut elements: Vec<Segment> = vec![];
         let close = reader.open_token();
         while !reader.rest().trim().is_empty() {
             if reader.move_to().word(&[words::IF]).is_some() {
                 if reader.until().char(&[&chars::OPEN_SQ_BRACKET]).is_some() {
                     let proviso: Proviso = If::proviso(&mut reader.token()?.bound, true)?;
                     if let Some(block) = Block::read(reader)? {
-                        elements.push(Element::If(proviso, block));
+                        elements.push(Segment::If(proviso, block));
                     } else {
                         Err(E::NotClosedGroup.linked(&proviso.token()))?
                     }
@@ -324,7 +251,7 @@ impl Reading<If> for If {
             }
             if reader.move_to().word(&[words::ELSE]).is_some() {
                 if let Some(block) = Block::read(reader)? {
-                    elements.push(Element::Else(block));
+                    elements.push(Segment::Else(block));
                     if reader.move_to().char(&[&chars::SEMICOLON]).is_some() {
                         return Ok(Some(If {
                             elements,
@@ -346,30 +273,11 @@ impl Reading<If> for If {
 
 impl If {
     pub fn inner(reader: &mut Reader) -> Result<Proviso, LinkedErr<E>> {
-        let fragment_token_id = reader.token()?.id;
-        let close = reader.open_token();
-        if let Some((_, word)) = reader.until().word(&[words::CMP_TRUE, words::CMP_FALSE]) {
-            let left = CmpSubject::read(&mut reader.token()?.bound)?;
-            let _ = reader.move_to().word(&[words::CMP_TRUE, words::CMP_FALSE]);
-            reader.move_to().end();
-            let right = CmpSubject::read(&mut reader.token()?.bound)?;
-            Ok(Proviso::Comparing(
-                left,
-                if word == words::CMP_TRUE {
-                    Cmp::Equal
-                } else {
-                    Cmp::NotEqual
-                },
-                right,
-                close(reader),
-            ))
+        let negative = reader.move_to().char(&[&chars::EXCLAMATION]).is_some();
+        if let Some(el) = Element::include(reader, &[ElTarget::Comparing, ElTarget::Function])? {
+            Ok(Proviso::Condition(el, negative))
         } else {
-            let negative = reader.move_to().char(&[&chars::EXCLAMATION]).is_some();
-            if let Some(func) = Function::read(reader)? {
-                Ok(Proviso::Function(func, negative, close(reader)))
-            } else {
-                Err(E::NoProvisoOfCondition.linked(&fragment_token_id))
-            }
+            Err(E::NoProvisoOfCondition.by_reader(&reader))
         }
     }
     pub fn proviso(reader: &mut Reader, root: bool) -> Result<Proviso, LinkedErr<E>> {
@@ -466,7 +374,7 @@ impl Operator for If {
 #[cfg(test)]
 mod reading {
     use crate::{
-        entry::{statements::If::Element, If},
+        entry::{statements::If::Segment, If},
         error::LinkedErr,
         inf::{operator::Operator, tests},
         reader::{Reader, Reading, E},
@@ -499,7 +407,7 @@ mod reading {
             );
             for el in entity.elements.iter() {
                 match el {
-                    Element::If(proviso, block) => {
+                    Segment::If(proviso, block) => {
                         assert_eq!(
                             tests::trim_carets(&proviso.to_string()),
                             tests::trim_carets(&reader.get_fragment(&proviso.token())?.lined)
@@ -509,7 +417,7 @@ mod reading {
                             tests::trim_carets(&reader.get_fragment(&block.token)?.lined)
                         );
                     }
-                    Element::Else(block) => {
+                    Segment::Else(block) => {
                         assert_eq!(
                             tests::trim_carets(&block.to_string()),
                             tests::trim_carets(&reader.get_fragment(&block.token)?.lined)
@@ -574,11 +482,10 @@ mod proptest {
 
     use crate::{
         entry::{
-            function::Function,
-            pattern_string::PatternString,
-            statements::If::{Cmp, CmpSubject, Combination, Element, If, Proviso},
+            comparing::Cmp,
+            element::Element,
+            statements::If::{Combination, If, Proviso, Segment},
             task::Task,
-            variable_name::VariableName,
             Block,
         },
         inf::{operator::E, tests::*},
@@ -605,20 +512,6 @@ mod proptest {
         }
     }
 
-    impl Arbitrary for CmpSubject {
-        type Parameters = SharedScope;
-        type Strategy = BoxedStrategy<Self>;
-
-        fn arbitrary_with(_scope: Self::Parameters) -> Self::Strategy {
-            prop_oneof![
-                VariableName::arbitrary().prop_map(|v| CmpSubject::VariableName(v)),
-                PatternString::arbitrary().prop_map(|v| CmpSubject::PatternString(v)),
-                Function::arbitrary().prop_map(|v| CmpSubject::Function(v)),
-            ]
-            .boxed()
-        }
-    }
-
     // Gives flat Proviso with:
     // - Combination
     // - Variable
@@ -632,39 +525,9 @@ mod proptest {
                 max,
             ),
             prop::collection::vec(
-                {
-                    let permissions = scope.read().unwrap().permissions();
-                    let mut allowed = vec![(
-                        CmpSubject::arbitrary_with(scope.clone()),
-                        Cmp::arbitrary_with(scope.clone()),
-                        CmpSubject::arbitrary_with(scope.clone()),
-                    )
-                        .prop_map(|(left, cmp, right)| Proviso::Comparing(left, cmp, right, 0))
-                        .boxed()];
-                    if permissions.func {
-                        allowed.push(
-                            Function::arbitrary_with(scope.clone())
-                                .prop_map(|f| Proviso::Function(f, false, 0))
-                                .boxed(),
-                        );
-                    }
-                    // TODO: remove this condition
-                    if permissions.pattern_string {
-                        allowed.push(
-                            (
-                                CmpSubject::arbitrary_with(scope.clone()),
-                                Cmp::arbitrary_with(scope.clone()),
-                                CmpSubject::arbitrary_with(scope.clone()),
-                            )
-                                .prop_map(|(left, cmp, right)| {
-                                    Proviso::Comparing(left, cmp, right, 0)
-                                })
-                                .boxed(),
-                        );
-                    }
-                    prop::strategy::Union::new(allowed).boxed()
-                },
-                1..max,
+                Element::arbitrary_with(scope.clone())
+                    .prop_map(|cmb| Proviso::Condition(cmb, false)),
+                max,
             ),
         )
             .prop_map(|(mut combinations, conditions)| {
@@ -712,7 +575,7 @@ mod proptest {
         .boxed()
     }
 
-    impl Arbitrary for Element {
+    impl Arbitrary for Segment {
         /// 0 - generate IF
         /// 1 - generate ELSE
         type Parameters = (u8, SharedScope);
@@ -724,10 +587,10 @@ mod proptest {
                     get_proviso(scope.clone()),
                     Block::arbitrary_with(scope.clone()),
                 )
-                    .prop_map(|(p, b)| Element::If(p, b))
+                    .prop_map(|(p, b)| Segment::If(p, b))
                     .boxed(),
                 _ => Block::arbitrary_with(scope.clone())
-                    .prop_map(Element::Else)
+                    .prop_map(Segment::Else)
                     .boxed(),
             }
         }
@@ -740,8 +603,8 @@ mod proptest {
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             scope.write().unwrap().include(Entity::If);
             let boxed = (
-                prop::collection::vec(Element::arbitrary_with((0, scope.clone())), 1..5),
-                prop::collection::vec(Element::arbitrary_with((1, scope.clone())), 0..1),
+                prop::collection::vec(Segment::arbitrary_with((0, scope.clone())), 1..5),
+                prop::collection::vec(Segment::arbitrary_with((1, scope.clone())), 0..1),
             )
                 .prop_map(|(elements, else_element)| If {
                     elements: [elements, else_element].concat(),
