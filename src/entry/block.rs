@@ -37,7 +37,9 @@ impl Reading<Block> for Block {
             loop {
                 if let Some(el) = Element::exclude(&mut inner, &[ElTarget::Block])? {
                     elements.push(el);
-                    let _ = inner.move_to().char(&[&chars::SEMICOLON]);
+                    if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
+                        return Err(E::MissedSemicolon.by_reader(&inner));
+                    }
                     continue;
                 }
                 if inner.rest().trim().is_empty() {
@@ -138,6 +140,7 @@ mod reading {
             include_str!("../tests/reading/each.sibs"),
             include_str!("../tests/reading/refs.sibs")
         ));
+
         while let Some(entity) = Block::read(&mut reader)? {
             assert_eq!(
                 tests::trim_carets(reader.recent()),

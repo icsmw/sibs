@@ -93,7 +93,7 @@ mod reading {
         entry::VariableAssignation,
         error::LinkedErr,
         inf::{operator::Operator, tests},
-        reader::{Reader, Reading, E},
+        reader::{chars, Reader, Reading, E},
     };
 
     #[test]
@@ -103,13 +103,14 @@ mod reading {
         );
         let mut count = 0;
         while let Some(entity) = VariableAssignation::read(&mut reader)? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(reader.recent()),
                 tests::trim_carets(&format!("{entity};"))
             );
             count += 1;
         }
-        assert_eq!(count, 14);
+        assert_eq!(count, 13);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }

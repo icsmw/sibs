@@ -86,14 +86,14 @@ impl Element {
                 return Ok(Some(Element::Comparing(el)));
             }
         }
-        if includes == targets.contains(&ElTarget::VariableName) {
-            if let Some(el) = VariableName::read(reader)? {
-                return Ok(Some(Element::VariableName(el)));
-            }
-        }
         if includes == targets.contains(&ElTarget::VariableAssignation) {
             if let Some(el) = VariableAssignation::read(reader)? {
                 return Ok(Some(Element::VariableAssignation(el)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::VariableName) {
+            if let Some(el) = VariableName::read(reader)? {
+                return Ok(Some(Element::VariableName(el)));
             }
         }
         if includes == targets.contains(&ElTarget::Each) {
@@ -236,10 +236,10 @@ impl Reading<Element> for Element {
             Some(Element::Function(el))
         } else if let Some(el) = Comparing::read(reader)? {
             Some(Element::Comparing(el))
-        } else if let Some(el) = VariableName::read(reader)? {
-            Some(Element::VariableName(el))
         } else if let Some(el) = VariableAssignation::read(reader)? {
             Some(Element::VariableAssignation(el))
+        } else if let Some(el) = VariableName::read(reader)? {
+            Some(Element::VariableName(el))
         } else if let Some(el) = Each::read(reader)? {
             Some(Element::Each(el))
         } else if let Some(el) = First::read(reader)? {

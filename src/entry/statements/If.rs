@@ -1,5 +1,5 @@
 use crate::{
-    entry::{Block, Cmp, Component, ElTarget, Element, Function, PatternString, VariableName},
+    entry::{Block, Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
         any::AnyValue,
@@ -8,7 +8,7 @@ use crate::{
     },
     reader::{chars, words, Reader, Reading, E},
 };
-use std::{fmt, ops::Deref};
+use std::fmt;
 
 #[derive(Debug, Clone)]
 pub enum Combination {
@@ -28,32 +28,6 @@ impl fmt::Display for Combination {
         )
     }
 }
-
-// #[derive(Debug, Clone)]
-// pub enum CmpSubject {
-//     VariableName(VariableName),
-//     PatternString(PatternString),
-//     Function(Function),
-// }
-
-// impl CmpSubject {
-//     pub fn read(reader: &mut Reader) -> Result<Self, LinkedErr<E>> {
-//         let subject = if let Some(variable) = VariableName::read(reader)? {
-//             Self::VariableName(variable)
-//         } else if let Some(pattern) = PatternString::read(reader)? {
-//             Self::PatternString(pattern)
-//         } else if let Some(func) = Function::read(reader)? {
-//             Self::Function(func)
-//         } else {
-//             return Err(E::NotSupportedInputForIF.linked(&reader.token()?.id));
-//         };
-//         if !reader.rest().trim().is_empty() {
-//             Err(E::FailToParseSideOfComparing.linked(&reader.token()?.id))
-//         } else {
-//             Ok(subject)
-//         }
-//     }
-// }
 
 #[derive(Debug, Clone)]
 pub enum Proviso {
@@ -287,7 +261,7 @@ impl If {
         if let Some(el) = Element::include(reader, &[ElTarget::Comparing, ElTarget::Function])? {
             Ok(Proviso::Condition(el, negative))
         } else {
-            Err(E::NoProvisoOfCondition.by_reader(&reader))
+            Err(E::NoProvisoOfCondition.by_reader(reader))
         }
     }
     pub fn proviso(reader: &mut Reader, root: bool) -> Result<Proviso, LinkedErr<E>> {
