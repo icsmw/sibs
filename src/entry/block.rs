@@ -36,10 +36,13 @@ impl Reading<Block> for Block {
             let mut elements: Vec<Element> = vec![];
             loop {
                 if let Some(el) = Element::exclude(&mut inner, &[ElTarget::Block])? {
-                    elements.push(el);
-                    if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
+                    if let (true, true) = (
+                        !matches!(el, Element::Meta(_)),
+                        inner.move_to().char(&[&chars::SEMICOLON]).is_none(),
+                    ) {
                         return Err(E::MissedSemicolon.by_reader(&inner));
                     }
+                    elements.push(el);
                     continue;
                 }
                 if inner.rest().trim().is_empty() {
