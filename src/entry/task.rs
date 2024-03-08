@@ -314,10 +314,7 @@ mod processing {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        entry::{
-            block::Block, simple_string::SimpleString, task::Task,
-            variable_declaration::VariableDeclaration,
-        },
+        entry::{Block, SimpleString, Task, VariableDeclaration},
         inf::tests::*,
     };
     use proptest::prelude::*;

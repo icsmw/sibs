@@ -85,7 +85,7 @@ mod reading {
 
     #[test]
     fn reading() -> Result<(), LinkedErr<E>> {
-        let samples = include_str!("../tests/reading/variable_name.sibs").to_string();
+        let samples = include_str!("../../tests/reading/variable_name.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
@@ -99,7 +99,7 @@ mod reading {
 
     #[test]
     fn tokens() -> Result<(), LinkedErr<E>> {
-        let samples = include_str!("../tests/reading/variable_name.sibs").to_string();
+        let samples = include_str!("../../tests/reading/variable_name.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
@@ -116,7 +116,7 @@ mod reading {
 
     #[test]
     fn error() -> Result<(), LinkedErr<E>> {
-        let samples = include_str!("../tests/error/variable_name.sibs").to_string();
+        let samples = include_str!("../../tests/error/variable_name.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
@@ -131,7 +131,7 @@ mod reading {
 
 #[cfg(test)]
 mod proptest {
-    use crate::entry::variable_name::VariableName;
+    use crate::entry::variable::VariableName;
     use proptest::prelude::*;
 
     impl Arbitrary for VariableName {

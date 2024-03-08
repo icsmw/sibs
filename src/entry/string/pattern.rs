@@ -1,31 +1,26 @@
 use crate::{
-    entry::{pattern_string_reader, Component, Element},
+    entry::{string, Component, Element},
     error::LinkedErr,
     inf::{
         any::AnyValue,
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
-        spawner,
-        term::{self, Term},
-        tracker::Logs,
     },
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub struct Command {
+pub struct PatternString {
     pub pattern: String,
     pub injections: Vec<(String, Element)>,
     pub token: usize,
 }
 
-impl Reading<Command> for Command {
-    fn read(reader: &mut Reader) -> Result<Option<Command>, LinkedErr<E>> {
-        if let Some((pattern, injections, token)) =
-            pattern_string_reader::read(reader, chars::TILDA)?
-        {
-            Ok(Some(Command {
+impl Reading<PatternString> for PatternString {
+    fn read(reader: &mut Reader) -> Result<Option<PatternString>, LinkedErr<E>> {
+        if let Some((pattern, injections, token)) = string::read(reader, chars::QUOTES)? {
+            Ok(Some(PatternString {
                 pattern,
                 injections,
                 token,
@@ -36,19 +31,13 @@ impl Reading<Command> for Command {
     }
 }
 
-impl fmt::Display for Command {
+impl fmt::Display for PatternString {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "`{}`", self.pattern,)
+        write!(f, "\"{}\"", self.pattern,)
     }
 }
 
-impl term::Display for Command {
-    fn display(&self, term: &mut Term) {
-        term.printnl(&self.pattern);
-    }
-}
-
-impl Operator for Command {
+impl Operator for PatternString {
     fn token(&self) -> usize {
         self.token
     }
@@ -56,14 +45,14 @@ impl Operator for Command {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        inputs: &'a [String],
+        args: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let mut output = self.pattern.clone();
             for (hook, injection) in self.injections.iter() {
                 let val = injection
-                    .execute(owner, components, inputs, cx)
+                    .execute(owner, components, args, cx)
                     .await?
                     .ok_or(operator::E::FailToExtractValue)?
                     .get_as_string()
@@ -71,30 +60,7 @@ impl Operator for Command {
                 let hook = format!("{{{}}}", hook);
                 output = output.replace(&hook, &val);
             }
-            let cwd = cx.cwd.as_ref().ok_or(operator::E::NoCurrentWorkingFolder)?;
-            let job = cx
-                .tracker
-                .create_job(
-                    &format!("{}: {}", cx.scenario.to_relative_path(cwd), output),
-                    None,
-                )
-                .await?;
-            match spawner::run(&output, cwd, &job).await {
-                Ok(status) => {
-                    if status.success() {
-                        job.success();
-                        Ok(Some(AnyValue::new(())))
-                    } else {
-                        job.fail();
-                        Err(operator::E::SpawnedProcessExitWithError)
-                    }
-                }
-                Err(e) => {
-                    job.err(e.to_string());
-                    job.fail();
-                    Err(e)?
-                }
-            }
+            Ok(Some(AnyValue::new(output)))
         })
     }
 }
@@ -102,7 +68,7 @@ impl Operator for Command {
 #[cfg(test)]
 mod reading {
     use crate::{
-        entry::Command,
+        entry::string::PatternString,
         error::LinkedErr,
         inf::{operator::Operator, tests},
         reader::{chars, Reader, Reading, E},
@@ -110,9 +76,10 @@ mod reading {
 
     #[test]
     fn reading() -> Result<(), LinkedErr<E>> {
-        let mut reader = Reader::unbound(include_str!("../tests/reading/command.sibs").to_string());
+        let mut reader =
+            Reader::unbound(include_str!("../../tests/reading/pattern_string.sibs").to_string());
         let mut count = 0;
-        while let Some(entity) = Command::read(&mut reader)? {
+        while let Some(entity) = PatternString::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(reader.recent()),
@@ -127,9 +94,10 @@ mod reading {
 
     #[test]
     fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut reader = Reader::unbound(include_str!("../tests/reading/command.sibs").to_string());
+        let mut reader =
+            Reader::unbound(include_str!("../../tests/reading/pattern_string.sibs").to_string());
         let mut count = 0;
-        while let Some(entity) = Command::read(&mut reader)? {
+        while let Some(entity) = PatternString::read(&mut reader)? {
             assert_eq!(
                 tests::trim_carets(&entity.to_string()),
                 reader.get_fragment(&entity.token)?.content
@@ -147,19 +115,18 @@ mod reading {
 
 #[cfg(test)]
 mod proptest {
-
     use crate::{
-        entry::command::{Command, Element},
+        entry::{string::PatternString, Element},
         inf::tests::*,
     };
     use proptest::prelude::*;
 
-    impl Arbitrary for Command {
+    impl Arbitrary for PatternString {
         type Parameters = SharedScope;
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            scope.write().unwrap().include(Entity::Command);
+            scope.write().unwrap().include(Entity::PatternString);
             let boxed = (
                 prop::collection::vec(Element::arbitrary_with(scope.clone()), 1..=10),
                 prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 10),
@@ -170,7 +137,7 @@ mod proptest {
                     for (i, _el) in injections.iter().enumerate() {
                         pattern = format!("{}{{{}}}", noise[i], hooks[i].clone());
                     }
-                    Command {
+                    PatternString {
                         injections: injections
                             .iter()
                             .enumerate()
@@ -181,23 +148,23 @@ mod proptest {
                     }
                 })
                 .boxed();
-            scope.write().unwrap().exclude(Entity::Command);
+            scope.write().unwrap().exclude(Entity::PatternString);
             boxed
         }
     }
 
-    impl Command {
+    impl PatternString {
         pub fn arbitrary_primitive(scope: SharedScope) -> BoxedStrategy<Self> {
-            scope.write().unwrap().include(Entity::Command);
+            scope.write().unwrap().include(Entity::PatternString);
             let boxed = "[a-z][a-z0-9]*"
                 .prop_map(String::from)
-                .prop_map(|pattern| Command {
+                .prop_map(|pattern| PatternString {
                     injections: vec![],
                     pattern,
                     token: 0,
                 })
                 .boxed();
-            scope.write().unwrap().exclude(Entity::Command);
+            scope.write().unwrap().exclude(Entity::PatternString);
             boxed
         }
     }

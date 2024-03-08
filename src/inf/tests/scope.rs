@@ -43,7 +43,7 @@ pub enum Entity {
     VariableDeclaration,
     VariableName,
     VariableType,
-    Variants,
+    VariableVariants,
     Values,
     SimpleString,
 }
@@ -115,7 +115,7 @@ impl Scope {
             variable_declaration: self.count_of(Entity::VariableDeclaration) < VARIABLE_DECLARATION,
             variable_name: self.count_of(Entity::VariableName) < VARIABLE_NAME,
             variable_type: self.count_of(Entity::VariableType) < VARIABLE_TYPE,
-            variants: self.count_of(Entity::Variants) < VARIANTS,
+            variants: self.count_of(Entity::VariableVariants) < VARIANTS,
             task: self.count_of(Entity::Task) < TASK,
             values: self.count_of(Entity::Values) < VALUES,
         }

@@ -97,7 +97,7 @@ impl term::Display for VariableType {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        entry::variable_type::{Types, VariableType},
+        entry::variable::{Types, VariableType},
         inf::tests::*,
     };
     use proptest::prelude::*;

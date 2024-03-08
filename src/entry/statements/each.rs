@@ -214,7 +214,7 @@ mod proptest {
     use crate::{
         entry::{
             block::Block, element::Element, statements::each::Each, task::Task,
-            variable_name::VariableName,
+            variable::VariableName,
         },
         inf::{operator::E, tests::*},
         reader::{Reader, Reading},

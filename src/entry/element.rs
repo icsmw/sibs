@@ -303,17 +303,8 @@ mod proptest {
 
     use crate::{
         entry::{
-            block::Block,
-            element::{Element, ElementExd},
-            function::Function,
-            meta::Meta,
-            optional::Optional,
-            pattern_string::PatternString,
-            reference::Reference,
-            simple_string::SimpleString,
-            statements::{each::Each, first::First, If::If},
-            values::Values,
-            variable_assignation::VariableAssignation,
+            Block, Each, Element, ElementExd, First, Function, If, Meta, Optional, PatternString,
+            Reference, SimpleString, Values, VariableAssignation,
         },
         inf::{operator::E, tests::*},
         reader::{Reader, Reading},

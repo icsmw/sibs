@@ -98,8 +98,9 @@ mod reading {
 
     #[test]
     fn reading() -> Result<(), LinkedErr<E>> {
-        let mut reader =
-            Reader::unbound(include_str!("../tests/reading/variable_assignation.sibs").to_string());
+        let mut reader = Reader::unbound(
+            include_str!("../../tests/reading/variable_assignation.sibs").to_string(),
+        );
         let mut count = 0;
         while let Some(entity) = VariableAssignation::read(&mut reader)? {
             assert_eq!(
@@ -115,8 +116,9 @@ mod reading {
 
     #[test]
     fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut reader =
-            Reader::unbound(include_str!("../tests/reading/variable_assignation.sibs").to_string());
+        let mut reader = Reader::unbound(
+            include_str!("../../tests/reading/variable_assignation.sibs").to_string(),
+        );
         let mut count = 0;
         while let Some(entity) = VariableAssignation::read(&mut reader)? {
             assert_eq!(
@@ -141,7 +143,7 @@ mod reading {
     }
     #[test]
     fn error() -> Result<(), LinkedErr<E>> {
-        let samples = include_str!("../tests/error/variable_assignation.sibs").to_string();
+        let samples = include_str!("../../tests/error/variable_assignation.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
@@ -178,7 +180,7 @@ mod processing {
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
         let mut reader = Reader::unbound(
-            include_str!("../tests/processing/variable_assignation.sibs").to_string(),
+            include_str!("../../tests/processing/variable_assignation.sibs").to_string(),
         );
         while let Some(task) = Task::read(&mut reader)? {
             assert!(task.execute(None, &[], &[], &mut cx).await?.is_some());
@@ -197,8 +199,7 @@ mod processing {
 mod proptest {
     use crate::{
         entry::{
-            element::Element, task::Task, variable_assignation::VariableAssignation,
-            variable_name::VariableName,
+            element::Element, task::Task, variable::VariableAssignation, variable::VariableName,
         },
         inf::{operator::E, tests::*},
         reader::{Reader, Reading},

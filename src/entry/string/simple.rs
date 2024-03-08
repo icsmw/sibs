@@ -15,7 +15,7 @@ impl fmt::Display for SimpleString {
 #[cfg(test)]
 mod proptest {
 
-    use crate::{entry::simple_string::SimpleString, inf::tests::*};
+    use crate::{entry::SimpleString, inf::tests::*};
     use proptest::prelude::*;
 
     impl Arbitrary for SimpleString {

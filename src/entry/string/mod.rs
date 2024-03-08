@@ -1,3 +1,11 @@
+pub mod command;
+pub mod pattern;
+pub mod simple;
+
+pub use command::*;
+pub use pattern::*;
+pub use simple::*;
+
 use crate::{
     entry::{ElTarget, Element},
     error::LinkedErr,
