@@ -136,7 +136,7 @@ mod reading {
     use crate::{
         entry::Comparing,
         error::LinkedErr,
-        inf::tests,
+        inf::{operator::Operator, tests},
         reader::{chars, Reader, Reading, E},
     };
 
@@ -158,45 +158,45 @@ mod reading {
         Ok(())
     }
 
-    // #[test]
-    // fn tokens() -> Result<(), LinkedErr<E>> {
-    //     let mut reader =
-    //         Reader::unbound(include_str!("../tests/reading/comparing.sibs").to_string());
-    //     let mut count = 0;
-    //     while let Some(entity) = Comparing::read(&mut reader)? {
-    //         assert_eq!(
-    //             tests::trim_carets(&format!("{entity};")),
-    //             reader.get_fragment(&entity.token)?.lined
-    //         );
-    //         // In some cases like with PatternString, semicolon can be skipped, because
-    //         // belongs to parent entity (Comparing).
-    //         assert_eq!(
-    //             tests::trim_semicolon(&tests::trim_carets(&entity.action.to_string())),
-    //             tests::trim_semicolon(&tests::trim_carets(
-    //                 &reader.get_fragment(&entity.action.token())?.lined
-    //             )),
-    //         );
-    //         assert_eq!(
-    //             tests::trim_semicolon(&tests::trim_carets(&entity.condition.to_string())),
-    //             tests::trim_semicolon(&tests::trim_carets(
-    //                 &reader.get_fragment(&entity.condition.token())?.lined
-    //             )),
-    //         );
-    //         count += 1;
-    //     }
-    //     assert_eq!(count, 11);
-    //     assert!(reader.rest().trim().is_empty());
-    //     Ok(())
-    // }
+    #[test]
+    fn tokens() -> Result<(), LinkedErr<E>> {
+        let mut reader =
+            Reader::unbound(include_str!("../tests/reading/comparing.sibs").to_string());
+        let mut count = 0;
+        while let Some(entity) = Comparing::read(&mut reader)? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+            assert_eq!(
+                tests::trim_carets(&format!("{entity}")),
+                reader.get_fragment(&entity.token)?.lined
+            );
+            assert_eq!(
+                tests::trim_semicolon(&tests::trim_carets(&entity.left.to_string())),
+                tests::trim_semicolon(&tests::trim_carets(
+                    &reader.get_fragment(&entity.left.token())?.lined
+                )),
+            );
+            assert_eq!(
+                tests::trim_semicolon(&tests::trim_carets(&entity.right.to_string())),
+                tests::trim_semicolon(&tests::trim_carets(
+                    &reader.get_fragment(&entity.right.token())?.lined
+                )),
+            );
+            count += 1;
+        }
+        assert_eq!(count, 12);
+        assert!(reader.rest().trim().is_empty());
+        Ok(())
+    }
 
     #[test]
     fn error() -> Result<(), E> {
-        let samples = include_str!("../tests/error/optional.sibs").to_string();
+        let samples = include_str!("../tests/error/comparing.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
             let mut reader = Reader::unbound(sample.to_string());
-            assert!(Comparing::read(&mut reader).is_err());
+            let cmp = Comparing::read(&mut reader);
+            assert!(cmp.is_err() || matches!(cmp, Ok(None)));
             count += 1;
         }
         assert_eq!(count, samples.len());

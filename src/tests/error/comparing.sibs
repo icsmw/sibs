@@ -1,0 +1,12 @@
+$mode != = "dev";
+$mode != ! "dev";
+@os window == "true;
+@os window != true";
+@os window == ("a", "b");
+@os window != ("a"; "b",);
+"dev" == =$mode;
+"dev" != $=mode;
+"true == @os window;
+"true" !== @os window;
+("a", "b") == @os window;
+("a" "b") != @os window;
