@@ -386,8 +386,9 @@ mod reading {
         let mut reader = Reader::unbound(include_str!("../../tests/reading/if.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = If::read(&mut reader)? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
-                tests::trim_carets(&format!("{entity};")),
+                tests::trim_carets(&format!("{entity}")),
                 tests::trim_carets(&reader.get_fragment(&entity.token)?.lined)
             );
             for el in entity.elements.iter() {

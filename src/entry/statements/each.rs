@@ -140,8 +140,9 @@ mod reading {
         let mut reader = Reader::unbound(include_str!("../../tests/reading/each.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Each::read(&mut reader)? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
-                tests::trim_carets(&format!("{entity};")),
+                tests::trim_carets(&format!("{entity}")),
                 tests::trim_carets(&reader.get_fragment(&entity.token)?.lined),
             );
             assert_eq!(
@@ -158,7 +159,7 @@ mod reading {
             );
             count += 1;
         }
-        assert_eq!(count, 6);
+        assert_eq!(count, 7);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
