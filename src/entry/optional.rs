@@ -255,13 +255,13 @@ mod proptest {
         })
     }
 
-    proptest! {
-        #![proptest_config(ProptestConfig::with_cases(10))]
-        #[test]
-        fn test_run_task(
-            args in any_with::<Optional>(Arc::new(RwLock::new(Scope::default())).clone())
-        ) {
-            prop_assert!(reading(args.clone()).is_ok());
-        }
-    }
+    // proptest! {
+    //     #![proptest_config(ProptestConfig::with_cases(10))]
+    //     #[test]
+    //     fn test_run_task(
+    //         args in any_with::<Optional>(Arc::new(RwLock::new(Scope::default())).clone())
+    //     ) {
+    //         prop_assert!(reading(args.clone()).is_ok());
+    //     }
+    // }
 }

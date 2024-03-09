@@ -10,7 +10,7 @@ use crate::{
 };
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Task {
     pub name: SimpleString,
     pub declarations: Vec<VariableDeclaration>,
@@ -69,9 +69,6 @@ impl Reading<Task> for Task {
                 Err(E::NoTaskArguments.linked(&name_token))?
             };
             if let Some(block) = Block::read(reader)? {
-                if reader.move_to().char(&[&chars::SEMICOLON]).is_some() {
-                    reader.move_to().next();
-                }
                 Ok(Some(Task {
                     name: SimpleString {
                         value: name,
@@ -192,7 +189,7 @@ mod reading {
         entry::Task,
         error::LinkedErr,
         inf::tests,
-        reader::{Reader, Reading, E},
+        reader::{chars, Reader, Reading, E},
     };
 
     #[test]
@@ -200,6 +197,7 @@ mod reading {
         let mut reader = Reader::unbound(include_str!("../tests/reading/tasks.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Task::read(&mut reader)? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(reader.recent()),
                 tests::trim_carets(&format!("{entity};"))
@@ -216,8 +214,9 @@ mod reading {
         let mut reader = Reader::unbound(include_str!("../tests/reading/tasks.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Task::read(&mut reader)? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
-                tests::trim_carets(&format!("{entity};")),
+                tests::trim_carets(&format!("{entity}")),
                 tests::trim_carets(&reader.get_fragment(&entity.token)?.lined)
             );
             assert_eq!(

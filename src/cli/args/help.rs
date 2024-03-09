@@ -37,10 +37,9 @@ impl Argument<Help> for Help {
             .map(|comp| {
                 (
                     comp.name.to_string(),
-                    comp.meta
-                        .as_ref()
+                    comp.get_meta().iter()
                         .map(|meta| meta.as_string())
-                        .unwrap_or_default(),
+                        .collect::<Vec<String>>().join("\n"),
                 )
             })
             .collect::<Vec<(String, String)>>();
@@ -60,7 +59,7 @@ impl Argument<Help> for Help {
                 .iter()
                 .filter(|comp| comp.cwd.is_none())
                 .for_each(|comp| {
-                    comp.tasks.iter().filter(|t| t.has_meta()).for_each(|task| {
+                    comp.get_tasks().iter().filter(|t| t.has_meta()).for_each(|task| {
                         task.display(&mut cx.term);
                     });
                 });

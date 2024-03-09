@@ -111,6 +111,8 @@ pub enum E {
     NoFIRSTStatementBody,
     #[error("Group [...] is expecting")]
     NoGroup,
+    #[error("No component definition #(...)")]
+    NoComponentDefinition,
     #[error("Fail to find optional redirection: \"=>\"")]
     NoOptionalRedirection,
     #[error("Invalid action is used for optional statements")]
