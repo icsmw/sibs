@@ -51,6 +51,7 @@ impl Reading<Reference> for Reference {
                 .is_some()
             {
                 let mut inner = reader.token()?.bound;
+                let inputs_token_id = reader.token()?.id;
                 while let Some(value) = inner
                     .until()
                     .char(&[&chars::COMMA])
@@ -80,6 +81,9 @@ impl Reading<Reference> for Reference {
                             token: inner.token()?.id,
                         })
                     });
+                }
+                if inputs.is_empty() {
+                    return Err(E::InvalidArgumentForReference.linked(&inputs_token_id));
                 }
             }
             let token = close(reader);

@@ -137,6 +137,7 @@ impl Reading<Function> for Function {
                                 name,
                                 tolerance,
                             )?);
+                            dest.set_token(close(reader));
                             Ok(Some(dest))
                         } else {
                             Err(E::NoDestFunction.linked(&reader.token()?.id))
@@ -316,20 +317,17 @@ mod reading {
         let mut reader = Reader::unbound(content);
         let mut count = 0;
         while let Some(entity) = Function::read(&mut reader)? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
-                tests::trim_carets(&format!("{entity};")),
+                tests::trim_carets(&format!("{entity}")),
                 reader.get_fragment(&entity.token)?.content
             );
-            // assert_eq!(
-            //     tests::trim_carets(&args.to_string()),
-            //     reader.get_fragment(&args.token)?.lined
-            // );
-            // for arg in args.args.iter() {
-            //     assert_eq!(
-            //         tests::trim_carets(&arg.to_string()),
-            //         reader.get_fragment(&arg.token())?.lined
-            //     );
-            // }
+            for arg in entity.args.iter() {
+                assert_eq!(
+                    tests::trim_carets(&arg.to_string()),
+                    reader.get_fragment(&arg.token())?.lined
+                );
+            }
             count += 1;
         }
         assert_eq!(count, len);

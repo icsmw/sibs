@@ -136,8 +136,9 @@ mod reading {
             Reader::unbound(include_str!("../tests/reading/optional.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Optional::read(&mut reader)? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
-                tests::trim_carets(&format!("{entity};")),
+                tests::trim_carets(&format!("{entity}")),
                 reader.get_fragment(&entity.token)?.lined
             );
             // In some cases like with PatternString, semicolon can be skipped, because
@@ -156,7 +157,7 @@ mod reading {
             );
             count += 1;
         }
-        assert_eq!(count, 11);
+        assert_eq!(count, 15);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
@@ -168,7 +169,9 @@ mod reading {
         let mut count = 0;
         for sample in samples.iter() {
             let mut reader = Reader::unbound(sample.to_string());
-            assert!(Optional::read(&mut reader).is_err());
+            let opt = Optional::read(&mut reader);
+            println!("{opt:?}");
+            assert!(opt.is_err());
             count += 1;
         }
         assert_eq!(count, samples.len());

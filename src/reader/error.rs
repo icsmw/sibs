@@ -55,6 +55,8 @@ pub enum E {
     FailParseOptionalAction,
     #[error("Empty group")]
     EmptyGroup,
+    #[error("Empty block")]
+    EmptyBlock,
     #[error("Token {0} not found")]
     TokenNotFound(usize),
     #[error("Token {0} has invalid range; string len={1}; range [{2},{3}]")]
@@ -65,6 +67,8 @@ pub enum E {
     EmptyCommand,
     #[error("This type of argument cannot be used in references")]
     InvalidArgumentForReference,
+    #[error("No arguments are defined for reference")]
+    NoArgumentsForReference,
     #[error("Function @import has invalid arguments")]
     ImportFunctionInvalidArgs,
     #[error("Function @import doesn't have arguments")]

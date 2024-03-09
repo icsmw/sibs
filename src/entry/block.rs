@@ -33,6 +33,7 @@ impl Reading<Block> for Block {
             .is_some()
         {
             let mut inner = reader.token()?.bound;
+            let block_token_id = reader.token()?.id;
             let mut elements: Vec<Element> = vec![];
             loop {
                 if let Some(el) = Element::exclude(&mut inner, &[ElTarget::Block])? {
@@ -46,11 +47,15 @@ impl Reading<Block> for Block {
                     continue;
                 }
                 if inner.rest().trim().is_empty() {
-                    break Ok(Some(Block {
-                        elements,
-                        owner: None,
-                        token: close(reader),
-                    }));
+                    break if elements.is_empty() {
+                        Err(E::EmptyBlock.linked(&block_token_id))
+                    } else {
+                        Ok(Some(Block {
+                            elements,
+                            owner: None,
+                            token: close(reader),
+                        }))
+                    };
                 } else {
                     break Err(
                         E::UnrecognizedCode(inner.token()?.content.to_owned()).by_reader(&inner)
