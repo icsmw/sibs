@@ -1,4 +1,4 @@
-#[defaults]
+#(defaults)
     build [
         /// Build application
         :app:build;
@@ -8,17 +8,17 @@
         /// lint rust >> run clippy for all rust modules;
         /// lint ts >> run eslint for all TypeScript modules;
         /// lint all >> check all modules of application;
-        $target == rust => [
+        $target == "rust" => [
             :module:lint;
             :binding:lint;
         ];
-        $target == ts => [
+        $target == "ts" => [
             :client:lint;
             :shared:lint;
             :wrapper:lint;
             :app:lint;
         ];
-        $target == all => [
+        $target == "all" => [
             :self:lint(rust);
             :self:lint(ts);
         ];

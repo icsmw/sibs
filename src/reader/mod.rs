@@ -622,24 +622,17 @@ pub fn read_file<'a>(cx: &'a mut Context) -> Pin<Box<dyn Future<Output = ReadFil
         }
         let mut reader = Reader::bound(fs::read_to_string(&cx.scenario.filename)?, cx);
         let mut imports: Vec<PathBuf> = vec![];
-        // while let Some(func) = Function::read(&mut reader)? {
-        //     let path_to_import = if let Some(args) = func.args.as_ref() {
-        //         if args.args.len() != 1 {
-        //             Err(E::ImportFunctionInvalidArgs.unlinked())?;
-        //         }
-        //         Import::get(
-        //             PathBuf::from(
-        //                 args.args[0]
-        //                     .as_string()
-        //                     .ok_or(E::ImportFunctionInvalidPathArg.unlinked())?,
-        //             ),
-        //             cx,
-        //         )?
-        //     } else {
-        //         return Err(E::ImportFunctionNoArgs.unlinked());
-        //     };
-        //     imports.push(path_to_import);
-        // }
+        while let Some(func) = Function::read(&mut reader)? {
+            let path_to_import = if func.args.len() == 1 {
+                Import::get(PathBuf::from(func.args[0].to_string()), cx)?
+            } else {
+                return Err(E::ImportFunctionInvalidArgs.unlinked())?;
+            };
+            imports.push(path_to_import);
+            if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
+                Err(E::MissedSemicolon.by_reader(&reader))?;
+            }
+        }
         let mut components: Vec<Component> = vec![];
         for import_path in imports.iter_mut() {
             let mut cx = Context::from_filename(import_path)?;

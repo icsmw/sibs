@@ -103,6 +103,9 @@ impl Context {
         }
         Ok(())
     }
+    pub fn post_reports(&self) {
+        self.map.borrow().post_reports();
+    }
     pub fn set_map_cursor(&self, token: usize) {
         self.map.borrow_mut().set_cursor(token);
     }
