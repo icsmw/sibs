@@ -71,7 +71,7 @@ impl Context {
     }
 
     pub fn unbound() -> Result<Self, E> {
-        let tracker = Tracker::new(tracker::Configuration::default());
+        let tracker = Tracker::new(tracker::Configuration::logs());
         let logger = tracker.create_logger(String::from("Context"));
         Self::register_functions(Context {
             cwd: Some(PathBuf::new()),

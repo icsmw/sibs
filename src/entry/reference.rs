@@ -42,7 +42,12 @@ impl Reading<Reference> for Reference {
                     reader.trim();
                 }
             }
-            if !reader.rest().trim().is_empty() && path.is_empty() {
+            if !reader.rest().trim().is_empty()
+                && Reader::is_ascii_alphabetic_and_alphanumeric(
+                    reader.rest().trim(),
+                    &[&chars::UNDERSCORE, &chars::DASH],
+                )
+            {
                 path.push(reader.move_to().end());
             }
             if reader

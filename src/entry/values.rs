@@ -44,12 +44,12 @@ impl Reading<Values> for Values {
                     ElTarget::VariableName,
                 ],
             )? {
-                elements.push(el);
                 if inner.move_to().char(&[&chars::SEMICOLON]).is_none()
                     && !inner.rest().trim().is_empty()
                 {
                     Err(E::MissedSemicolon.by_reader(&inner))?;
                 }
+                elements.push(el);
             }
             if !inner.rest().trim().is_empty() {
                 if inner.until().char(&[&chars::SEMICOLON]).is_some() {
@@ -108,9 +108,13 @@ impl Operator for Values {
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
-            let mut values: Vec<Option<AnyValue>> = vec![];
+            let mut values: Vec<AnyValue> = vec![];
             for el in self.elements.iter() {
-                values.push(el.execute(owner, components, args, cx).await?);
+                values.push(
+                    el.execute(owner, components, args, cx)
+                        .await?
+                        .unwrap_or(AnyValue::new(())),
+                );
             }
             Ok(Some(AnyValue::new(values)))
         })
@@ -184,21 +188,22 @@ mod processing {
     use crate::{
         entry::{Component, Task},
         inf::{
+            any::AnyValue,
             context::Context,
             operator::{Operator, E},
         },
-        reader::{Reader, Reading},
+        reader::{chars, Reader, Reading},
     };
 
     const VALUES: &[(&str, &str)] = &[
         ("a0", "a"),
-        ("a1", "a,b"),
-        ("a2", "a,b,c"),
-        ("a3", "a,b,c"),
-        ("a4", "aa,bb,cc"),
-        ("a5", "a:a,b:b"),
-        ("a6", "c:a,d:b,d:c"),
+        ("a1", "a;b"),
+        ("a2", "a;b;c"),
+        ("a3", "a;b;c"),
+        ("a4", "aa;bb;cc"),
+        ("a5", "a:a;b:b"),
     ];
+    const NESTED_VALUES: &[(&str, &str)] = &[("a6", "c:a;d:b;d:c")];
 
     #[tokio::test]
     async fn reading() -> Result<(), E> {
@@ -209,10 +214,10 @@ mod processing {
         while let Some(component) = Component::read(&mut reader)? {
             components.push(component);
         }
-
         let mut reader =
             Reader::unbound(include_str!("../tests/processing/values.sibs").to_string());
         while let Some(task) = Task::read(&mut reader)? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert!(task
                 .execute(components.first(), &components, &[], &mut cx)
                 .await?
@@ -227,6 +232,15 @@ mod processing {
                     .join(";"),
                 value.to_string()
             );
+        }
+        for (name, value) in NESTED_VALUES.iter() {
+            let stored = cx.get_var(name).unwrap();
+            let values = stored.get_as::<Vec<AnyValue>>().unwrap();
+            let mut output: Vec<String> = vec![];
+            for value in values.iter() {
+                output = [output, value.get_as_strings().unwrap()].concat();
+            }
+            assert_eq!(output.join(";"), value.to_string());
         }
         Ok(())
     }

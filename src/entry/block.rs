@@ -121,12 +121,7 @@ impl Operator for Block {
                     return Ok(output);
                 }
             }
-            // Block always should return some value.
-            Ok(if output.is_none() {
-                Some(AnyValue::new(()))
-            } else {
-                output
-            })
+            Ok(output)
         })
     }
 }
