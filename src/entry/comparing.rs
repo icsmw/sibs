@@ -4,7 +4,7 @@ use crate::{
     inf::{
         any::AnyValue,
         context::Context,
-        operator::{Operator, OperatorPinnedResult},
+        operator::{self, Operator, OperatorPinnedResult},
     },
     reader::{words, Reader, Reading, E},
 };
@@ -119,9 +119,24 @@ impl Operator for Comparing {
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
-            let left = self.left.execute(owner, components, args, cx).await?;
-            let right = self.right.execute(owner, components, args, cx).await?;
-            Ok(None)
+            let left = self
+                .left
+                .execute(owner, components, args, cx)
+                .await?
+                .ok_or(operator::E::NoResultFromLeftOnComparing)?
+                .get_as_string()
+                .ok_or(operator::E::FailToGetStringValue)?;
+            let right = self
+                .right
+                .execute(owner, components, args, cx)
+                .await?
+                .ok_or(operator::E::NoResultFromRightOnComparing)?
+                .get_as_string()
+                .ok_or(operator::E::FailToGetStringValue)?;
+            Ok(Some(AnyValue::new(match self.cmp {
+                Cmp::Equal => left == right,
+                Cmp::NotEqual => left != right,
+            })))
             //TODO: finish implementation
             // Ok(Some(AnyValue::new(match self.cmp {
             //     Cmp::Equal => left == right,
