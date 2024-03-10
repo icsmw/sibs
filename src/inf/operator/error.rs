@@ -46,6 +46,10 @@ pub enum E {
     NoBoolResultFromFunction,
     #[error("If=proviso doesn't return bool result")]
     NoBoolResultFromProviso,
+    #[error("Left side of comparing statement doesn't return result")]
+    NoResultFromLeftOnComparing,
+    #[error("Right side of comparing statement doesn't return result")]
+    NoResultFromRightOnComparing,
     #[error("If=(proviso AND/OR proviso) doesn't return bool result")]
     NoBoolResultFromProvisoGroup,
     #[error("If=proviso doesn't return any result")]

@@ -192,20 +192,20 @@ impl fmt::Display for Segment {
 
 #[derive(Debug, Clone)]
 pub struct If {
-    pub elements: Vec<Segment>,
+    pub segments: Vec<Segment>,
     pub token: usize,
 }
 
 impl Reading<If> for If {
     fn read(reader: &mut Reader) -> Result<Option<If>, LinkedErr<E>> {
-        let mut elements: Vec<Segment> = vec![];
+        let mut segments: Vec<Segment> = vec![];
         let close = reader.open_token();
         while !reader.rest().trim().is_empty() {
             if reader.move_to().word(&[words::IF]).is_some() {
                 if reader.until().char(&[&chars::OPEN_SQ_BRACKET]).is_some() {
                     let proviso: Proviso = If::proviso(&mut reader.token()?.bound, true)?;
                     if let Some(block) = Block::read(reader)? {
-                        elements.push(Segment::If(proviso, block));
+                        segments.push(Segment::If(proviso, block));
                     } else {
                         Err(E::NotClosedGroup.linked(&proviso.token()))?
                     }
@@ -214,7 +214,7 @@ impl Reading<If> for If {
                     Err(E::NoGroup.by_reader(reader))?
                 }
             }
-            if elements.is_empty() {
+            if segments.is_empty() {
                 return Ok(None);
             }
             let restore = reader.pin();
@@ -222,14 +222,14 @@ impl Reading<If> for If {
                 if content.trim() != words::ELSE {
                     restore(reader);
                     return Ok(Some(If {
-                        elements,
+                        segments,
                         token: close(reader),
                     }));
                 }
                 if let Some(block) = Block::read(reader)? {
-                    elements.push(Segment::Else(block));
+                    segments.push(Segment::Else(block));
                     return Ok(Some(If {
-                        elements,
+                        segments,
                         token: close(reader),
                     }));
                 } else {
@@ -240,13 +240,13 @@ impl Reading<If> for If {
                 if content.trim() != words::IF {
                     restore(reader);
                     return Ok(Some(If {
-                        elements,
+                        segments,
                         token: close(reader),
                     }));
                 }
             } else {
                 return Ok(Some(If {
-                    elements,
+                    segments,
                     token: close(reader),
                 }));
             }
@@ -324,7 +324,7 @@ impl fmt::Display for If {
         write!(
             f,
             "{}",
-            self.elements
+            self.segments
                 .iter()
                 .map(|el| el.to_string())
                 .collect::<Vec<String>>()
@@ -345,8 +345,8 @@ impl Operator for If {
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
-            for element in self.elements.iter() {
-                if let Some(output) = element.execute(owner, components, args, cx).await? {
+            for segment in self.segments.iter() {
+                if let Some(output) = segment.execute(owner, components, args, cx).await? {
                     return Ok(Some(output));
                 }
             }
@@ -391,7 +391,7 @@ mod reading {
                 tests::trim_carets(&format!("{entity}")),
                 tests::trim_carets(&reader.get_fragment(&entity.token)?.lined)
             );
-            for el in entity.elements.iter() {
+            for el in entity.segments.iter() {
                 match el {
                     Segment::If(proviso, block) => {
                         assert_eq!(
@@ -592,8 +592,8 @@ mod proptest {
                 prop::collection::vec(Segment::arbitrary_with((0, scope.clone())), 1..5),
                 prop::collection::vec(Segment::arbitrary_with((1, scope.clone())), 0..1),
             )
-                .prop_map(|(elements, else_element)| If {
-                    elements: [elements, else_element].concat(),
+                .prop_map(|(segments, else_element)| If {
+                    segments: [segments, else_element].concat(),
                     token: 0,
                 })
                 .boxed();
