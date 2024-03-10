@@ -5,16 +5,16 @@ test [
 ];
 test [
     $a = "one";
-    $a == one => $b = "true";
+    $a == "one" => $b = "true";
     $b;
 ];
 test [
     $a = "one";
-    $a == one => $b = @repeat "true" 1;
+    $a == "one" => $b = @repeat("true"; 1);
     $b;
 ];
 test [
     $a = "one";
-    $a == one => $b = @repeat true 1;
+    $a == "one" => $b = @repeat(true; 1);
     $b;
 ];

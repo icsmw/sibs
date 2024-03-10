@@ -276,7 +276,7 @@ mod processing {
             context::Context,
             operator::{Operator, E},
         },
-        reader::{Reader, Reading},
+        reader::{Reader, Reading, chars},
     };
 
     const VALUES: &[&[&str]] = &[&["a"], &["a", "b"], &["a"], &["a", "b"], &["a", "b", "c"]];
@@ -300,6 +300,7 @@ mod processing {
                 )
                 .await?
                 .expect("Task returns some value");
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             cursor += 1;
             assert_eq!(
                 result.get_as_string().expect("Task returns string value"),

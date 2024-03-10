@@ -1,54 +1,54 @@
 IF $variable == "one" OR $variable == "two" [
-    @cd ./linux;
+    @cd(./linux);
 ] ELSE [
-    @cd ./linux;
+    @cd(./linux);
 ];
 IF $variable == "one" [
-    @cd ./linux;
+    @cd(./linux);
 ];
 IF $variable == "one" OR $variable == "two" [
-    @cd ./linux;
+    @cd(./linux);
 ];
 IF $variable == "one" OR $variable == "two" [
-    @cd ./linux;
+    @cd(./linux);
 ] ELSE [
-    @cd ./linux;
+    @cd(./linux);
 ];
-IF @os linux [
-    @cd ./linux;
+IF @os(linux) [
+    @cd(./linux);
 ];
-IF !@os linux [
-    @cd ./linux;
+IF !@os(linux) [
+    @cd(./linux);
 ];
-IF @os linux [
+IF @os(linux) [
     "release{$version}-linux.zip";
-] IF @os darwin [
+] IF @os(darwin) [
     "release{$version}-mac.zip";
-] IF @os windows [
+] IF @os(windows) [
     "release{$version}-win.zip";
 ] ELSE [
-    @exit 1 "Unsupported OS: {@os}";
+    @exit(1; "Unsupported OS: {@os}");
 ];
-IF @os linux OR @os darwin [
+IF @os(linux) OR @os(darwin) [
     "release{$version}-normal_os.zip";
 ] ELSE [
     "release{$version}-windows.zip";
 ];
-IF @os linux [
-    @cd ./linux;
-] IF @os darwin [
-    @cd ./mac;
-] IF @os windows [
-    @cd ./windows;
+IF @os(linux) [
+    @cd(./linux);
+] IF @os(darwin) [
+    @cd(./mac);
+] IF @os(windows) [
+    @cd(./windows);
 ] ELSE [
-    @exit 1 "Unsupported OS: {@os}";
+    @exit(1; "Unsupported OS: {@os}");
 ];
 IF $variable == "one" [
-    @cd ./linux;
+    @cd(./linux);
 ] IF $variable == "two" [
-    @cd ./mac;
+    @cd(./mac);
 ] IF $variable == "three" [
-    @cd ./windows;
+    @cd(./windows);
 ] ELSE [
-    @exit 1 "Unsupported OS: {@os}";
+    @exit(1; "Unsupported OS: {@os}");
 ];

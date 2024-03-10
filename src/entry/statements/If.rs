@@ -441,7 +441,7 @@ mod processing {
             context::Context,
             operator::{Operator, E},
         },
-        reader::{Reader, Reading},
+        reader::{chars, Reader, Reading},
     };
 
     #[tokio::test]
@@ -454,6 +454,7 @@ mod processing {
                 .execute(None, &[], &[], &mut cx)
                 .await?
                 .expect("IF returns some value");
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 result.get_as_string().expect("IF returns string value"),
                 "true".to_owned()

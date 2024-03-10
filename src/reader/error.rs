@@ -29,6 +29,10 @@ pub enum E {
     NotAsciiValue(String),
     #[error("Empty value")]
     EmptyValue,
+    #[error("No content before semicolon")]
+    NoContentBeforeSemicolon,
+    #[error("No function arguments")]
+    NoFunctionArguments,
     #[error("Redundant comma")]
     RedundantComma,
     #[error("Using reserved chars")]

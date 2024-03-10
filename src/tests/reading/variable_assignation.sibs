@@ -1,22 +1,22 @@
-$dev = @envvar DEV_MODE;
+$dev = @envvar(DEV_MODE);
 $file = "release{$version}-win.zip";
 $file = "release{$version}-{@os}.zip";
-$file = "release{@ls ./path/*.txt ./another\ path\ with\ spaces/path}-win.zip";
-$dev = @read_as_string ./package.json > @find /\"version\":\ \"([\d\.])\"/gi;
-$dev = @read_as_string ./package.json > @find /\"version\":\ \"([\d\.])\"/gi > @filter 123;
-$dev = @read_as_string ./package.json > @another 000 > @onemore 111 > @lastone 222;
+$file = "release{@ls(./path/*.txt; ./another\ path\ with\ spaces/path)}-win.zip";
+$dev = @read_as_string(./package.json) > @find(/\"version\":\ \"([\d\.])\"/gi);
+$dev = @read_as_string(./package.json) > @find(/\"version\":\ \"([\d\.])\"/gi) > @filter(123);
+$dev = @read_as_string(./package.json) > @another(000) > @onemore(111) > @lastone(222);
 $file_name = [
-    @os windo2w => "release{$version}-win.zip";
-    @os linux => "release{$version}-linux.zip";
-    @os darwin => "release{$version}-darwin.zip";
+    @os(windo2w) => "release{$version}-win.zip";
+    @os(linux) => "release{$version}-linux.zip";
+    @os(darwin) => "release{$version}-darwin.zip";
 ];
-$file_name = [@os windo2w => "release{$version}-win.zip";@os linux => "release{$version}-linux.zip";@os darwin => "release{$version}-darwin.zip";];
+$file_name = [@os(windo2w) => "release{$version}-win.zip";@os(linux) => "release{$version}-linux.zip";@os(darwin) => "release{$version}-darwin.zip";];
 $file_name = FIRST [
-    @os window => "release{$version}-win.zip";
-    @os linux => "release{$version}-linux.zip";
-    @os darwin => "release{$version}-darwin.zip";
-    @exit 1 "Unsupported OS: {@os}";
+    @os(window) => "release{$version}-win.zip";
+    @os(linux) => "release{$version}-linux.zip";
+    @os(darwin) => "release{$version}-darwin.zip";
+    @exit(1; "Unsupported OS: {@os}");
 ];
-$file_name = FIRST [@os window => "release{$version}-win.zip";@os linux => "release{$version}-linux.zip";@os darwin => "release{$version}-darwin.zip";@exit 1 "Unsupported OS: {@os}";];
+$file_name = FIRST [@os(window) => "release{$version}-win.zip";@os(linux) => "release{$version}-linux.zip";@os(darwin) => "release{$version}-darwin.zip";@exit(1; "Unsupported OS: {@os}");];
 $values = ("one"; "two"; "three");
 $values = ($one; $two; $three);

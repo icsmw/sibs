@@ -2,34 +2,34 @@ test($a: a | b) [
     IF $a == "a" [
         "true";
     ] ELSE [
-        "false;
+        "false";
     ];
 ];
 test($a: a | b; $b: a | b) [
     IF $a == "a" AND $b == "b" [
         "true";
     ] ELSE [
-        "false;
+        "false";
     ];
 ];
 test($a: {string}) [
     IF $a == "a" [
         "true";
     ] ELSE [
-        "false;
+        "false";
     ];
 ];
 test($a: {string}; $b: a | b) [
     IF $a == "a" AND $b == "b" [
         "true";
     ] ELSE [
-        "false;
+        "false";
     ];
 ];
 test($a: {string}; $b: a | b; $c: {string}) [
     IF $a == "a" AND $b == "b" AND $c == "c" [
         "true";
     ] ELSE [
-        "false;
+        "false";
     ];
 ];

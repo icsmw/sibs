@@ -187,7 +187,7 @@ mod processing {
             context::Context,
             operator::{Operator, E},
         },
-        reader::{Reader, Reading},
+        reader::{chars, Reader, Reading},
     };
     const VALUES: &[(&str, &str)] = &[("a", "three"), ("b", "two"), ("c", "one")];
 
@@ -197,6 +197,7 @@ mod processing {
         let mut reader =
             Reader::unbound(include_str!("../../tests/processing/each.sibs").to_string());
         while let Some(task) = Task::read(&mut reader)? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert!(task.execute(None, &[], &[], &mut cx).await?.is_some());
         }
         for (name, value) in VALUES.iter() {

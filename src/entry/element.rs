@@ -80,14 +80,14 @@ impl Element {
                 return Ok(Some(Element::Optional(el)));
             }
         }
-        if includes == targets.contains(&ElTarget::Function) {
-            if let Some(el) = Function::read(reader)? {
-                return Ok(Some(Element::Function(el)));
-            }
-        }
         if includes == targets.contains(&ElTarget::Comparing) {
             if let Some(el) = Comparing::read(reader)? {
                 return Ok(Some(Element::Comparing(el)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::Function) {
+            if let Some(el) = Function::read(reader)? {
+                return Ok(Some(Element::Function(el)));
             }
         }
         if includes == targets.contains(&ElTarget::VariableAssignation) {
@@ -252,10 +252,10 @@ impl Reading<Element> for Element {
             Some(Element::If(el))
         } else if let Some(el) = Optional::read(reader)? {
             Some(Element::Optional(el))
-        } else if let Some(el) = Function::read(reader)? {
-            Some(Element::Function(el))
         } else if let Some(el) = Comparing::read(reader)? {
             Some(Element::Comparing(el))
+        } else if let Some(el) = Function::read(reader)? {
+            Some(Element::Function(el))
         } else if let Some(el) = VariableAssignation::read(reader)? {
             Some(Element::VariableAssignation(el))
         } else if let Some(el) = VariableName::read(reader)? {

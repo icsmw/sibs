@@ -91,7 +91,7 @@ test [
 ];
 test [
     $a = @get_os;
-    IF @os $a == "true" [
+    IF @os($a) == "true" [
         "true";
     ] ELSE [
         "false";
@@ -99,7 +99,7 @@ test [
 ];
 test [
     $a = @get_os;
-    IF "true" == @os $a [
+    IF "true" == @os($a) [
         "true";
     ] ELSE [
         "false";
@@ -107,7 +107,7 @@ test [
 ];
 test [
     $a = @get_os;
-    IF "true" == @os $a AND @os $a == "true"[
+    IF "true" == @os($a) AND @os($a) == "true"[
         "true";
     ] ELSE [
         "false";
@@ -115,7 +115,7 @@ test [
 ];
 test [
     $a = @get_os;
-    IF "true" == @os $a OR @os $a == "true"[
+    IF "true" == @os($a) OR @os($a) == "true"[
         "true";
     ] ELSE [
         "false";

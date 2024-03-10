@@ -2,140 +2,140 @@ build($mode: dev | prod) [
     /// Building electron application
     /// [$mode:dev] build developing version
     /// [$mode:prod] build production version
-    @os window => $file_name = "release{$version}-win.zip";
-    @os linux => $file_name = "release{$version}-linux.zip";
-    @os darwin => $file_name = "release{$version}-darwin.zip";
-    @os linux => `tgz ./release/unpacked-linux {$file_name}`;
-    @os window => "release{$version}-win.zip";
-    @os window => [
-        @cd something;
+    @os(window) => $file_name = "release{$version}-win.zip";
+    @os(linux) => $file_name = "release{$version}-linux.zip";
+    @os(darwin) => $file_name = "release{$version}-darwin.zip";
+    @os(linux) => `tgz ./release/unpacked-linux {$file_name}`;
+    @os(window) => "release{$version}-win.zip";
+    @os(window) => [
+        @cd(something);
         `zip ./release/unpacked-win {$file_name}`;
-        @cd ..;
+        @cd(..);
     ];
     IF $variable == "one" OR $variable == "two" [
-        @cd ./linux;
+        @cd(./linux);
     ] ELSE [
-        @cd ./linux;
+        @cd(./linux);
     ];
     IF $variable == "one" [
-        @cd ./linux;
+        @cd(./linux);
     ];
     IF $variable == "one" OR $variable == "two" [
-        @cd ./linux;
+        @cd(./linux);
     ];
 ];
 custom($input: {string}) [
-    @os window => $file_name = "release{$version}-win.zip";
-    @os linux => $file_name = "release{$version}-linux.zip";
-    @os darwin => $file_name = "release{$version}-darwin.zip";
-    @os linux => `tgz ./release/unpacked-linux {$file_name}`;
-    @os window => "release{$version}-win.zip";
-    @os window => [
-        @cd something;
+    @os(window) => $file_name = "release{$version}-win.zip";
+    @os(linux) => $file_name = "release{$version}-linux.zip";
+    @os(darwin) => $file_name = "release{$version}-darwin.zip";
+    @os(linux) => `tgz ./release/unpacked-linux {$file_name}`;
+    @os(window) => "release{$version}-win.zip";
+    @os(window) => [
+        @cd(something);
         `zip ./release/unpacked-win {$file_name}`;
-        @cd ..;
+        @cd(..);
     ];
     IF $variable == "one" OR $variable == "two" [
-        @cd ./linux;
+        @cd(./linux);
     ] ELSE [
-        @cd ./linux;
+        @cd(./linux);
     ];
     IF $variable == "one" [
-        @cd ./linux;
+        @cd(./linux);
     ];
     IF $variable == "one" OR $variable == "two" [
-        @cd ./linux;
+        @cd(./linux);
     ];
 ];
 build_multi($mode: dev | prod; $target: win | linux) [
-    @os window => $file_name = "release{$version}-win.zip";
-    @os linux => $file_name = "release{$version}-linux.zip";
-    @os darwin => $file_name = "release{$version}-darwin.zip";
-    @os linux => `tgz ./release/unpacked-linux {$file_name}`;
-    @os window => "release{$version}-win.zip";
-    @os window => [
-        @cd something;
+    @os(window) => $file_name = "release{$version}-win.zip";
+    @os(linux) => $file_name = "release{$version}-linux.zip";
+    @os(darwin) => $file_name = "release{$version}-darwin.zip";
+    @os(linux) => `tgz ./release/unpacked-linux {$file_name}`;
+    @os(window) => "release{$version}-win.zip";
+    @os(window) => [
+        @cd(something);
         `zip ./release/unpacked-win {$file_name}`;
-        @cd ..;
+        @cd(..);
     ];
     IF $variable == "one" OR $variable == "two" [
-        @cd ./linux;
+        @cd(./linux);
     ] ELSE [
-        @cd ./linux;
+        @cd(./linux);
     ];
     IF $variable == "one" [
-        @cd ./linux;
+        @cd(./linux);
     ];
     IF $variable == "one" OR $variable == "two" [
-        @cd ./linux;
+        @cd(./linux);
     ];
 ];
 build_b($mode: dev | prod; $target: win | linux; $input: {string}) [
-    @os window => $file_name = "release{$version}-win.zip";
-    @os linux => $file_name = "release{$version}-linux.zip";
-    @os darwin => $file_name = "release{$version}-darwin.zip";
-    @os linux => `tgz ./release/unpacked-linux {$file_name}`;
-    @os window => "release{$version}-win.zip";
-    @os window => [
-        @cd something;
+    @os(window) => $file_name = "release{$version}-win.zip";
+    @os(linux) => $file_name = "release{$version}-linux.zip";
+    @os(darwin) => $file_name = "release{$version}-darwin.zip";
+    @os(linux) => `tgz ./release/unpacked-linux {$file_name}`;
+    @os(window) => "release{$version}-win.zip";
+    @os(window) => [
+        @cd(something);
         `zip ./release/unpacked-win {$file_name}`;
-        @cd ..;
+        @cd(..);
     ];
     IF $variable == "one" OR $variable == "two" [
-        @cd ./linux;
+        @cd(./linux);
     ] ELSE [
-        @cd ./linux;
+        @cd(./linux);
     ];
     IF $variable == "one" [
-        @cd ./linux;
+        @cd(./linux);
     ];
     IF $variable == "one" OR $variable == "two" [
-        @cd ./linux;
+        @cd(./linux);
     ];
 ];
 build_c($input_a: {string}; $mode: dev | prod; $target: win | linux; $input_b: {string}) [
-    @os window => $file_name = "release{$version}-win.zip";
-    @os linux => $file_name = "release{$version}-linux.zip";
-    @os darwin => $file_name = "release{$version}-darwin.zip";
-    @os linux => `tgz ./release/unpacked-linux {$file_name}`;
-    @os window => "release{$version}-win.zip";
-    @os window => [
-        @cd something;
+    @os(window) => $file_name = "release{$version}-win.zip";
+    @os(linux) => $file_name = "release{$version}-linux.zip";
+    @os(darwin) => $file_name = "release{$version}-darwin.zip";
+    @os(linux) => `tgz ./release/unpacked-linux {$file_name}`;
+    @os(window) => "release{$version}-win.zip";
+    @os(window) => [
+        @cd(something);
         `zip ./release/unpacked-win {$file_name}`;
-        @cd ..;
+        @cd(..);
     ];
     IF $variable == "one" OR $variable == "two" [
-        @cd ./linux;
+        @cd(./linux);
     ] ELSE [
-        @cd ./linux;
+        @cd(./linux);
     ];
     IF $variable == "one" [
-        @cd ./linux;
+        @cd(./linux);
     ];
     IF $variable == "one" OR $variable == "two" [
-        @cd ./linux;
+        @cd(./linux);
     ];
 ];
 distribution [
-    @os window => $file_name = "release{$version}-win.zip";
-    @os linux => $file_name = "release{$version}-linux.zip";
-    @os darwin => $file_name = "release{$version}-darwin.zip";
-    @os linux => `tgz ./release/unpacked-linux {$file_name}`;
-    @os window => "release{$version}-win.zip";
-    @os window => [
-        @cd something;
+    @os(window) => $file_name = "release{$version}-win.zip";
+    @os(linux) => $file_name = "release{$version}-linux.zip";
+    @os(darwin) => $file_name = "release{$version}-darwin.zip";
+    @os(linux) => `tgz ./release/unpacked-linux {$file_name}`;
+    @os(window) => "release{$version}-win.zip";
+    @os(window) => [
+        @cd(something);
         `zip ./release/unpacked-win {$file_name}`;
-        @cd ..;
+        @cd(..);
     ];
     IF $variable == "one" OR $variable == "two" [
-        @cd ./linux;
+        @cd(./linux);
     ] ELSE [
-        @cd ./linux;
+        @cd(./linux);
     ];
     IF $variable == "one" [
-        @cd ./linux;
+        @cd(./linux);
     ];
     IF $variable == "one" OR $variable == "two" [
-        @cd ./linux;
+        @cd(./linux);
     ];
 ];

@@ -32,6 +32,7 @@ impl Reading<Function> for Function {
                     &chars::QUESTION,
                     &chars::SEMICOLON,
                     &chars::WS,
+                    &chars::OPEN_BRACKET,
                 ])
                 .map(|(str, char)| (str, Some(char)))
                 .unwrap_or_else(|| (reader.move_to().end(), None));
@@ -63,98 +64,87 @@ impl Reading<Function> for Function {
             reader.trim();
             let tolerance = if matches!(ends_with, Some(chars::QUESTION)) {
                 reader.move_to().next();
-                if let Some(next) = reader.next().char() {
-                    if !next.is_whitespace() {
-                        Err(E::InvalidFunctionName.by_reader(reader))?;
-                    }
-                }
                 true
             } else {
                 false
             };
-            //TODO: prevent BLOCK as argument (conflict with EACH)
             let mut elements: Vec<ElementExd> = vec![];
-            loop {
-                if reader.rest().trim().starts_with(words::DO_ON) {
-                    return Ok(Some(Self::new(
-                        close(reader),
-                        args_close(reader),
+            if reader
+                .group()
+                .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
+                .is_some()
+            {
+                let mut inner = reader.token()?.bound;
+                while !inner.is_empty() {
+                    if let Some(el) = Element::include(
+                        &mut inner,
+                        &[
+                            ElTarget::Values,
+                            ElTarget::Function,
+                            ElTarget::If,
+                            ElTarget::PatternString,
+                            ElTarget::Reference,
+                            ElTarget::Comparing,
+                            ElTarget::VariableName,
+                            ElTarget::Command,
+                        ],
+                    )? {
+                        if inner.move_to().char(&[&chars::SEMICOLON]).is_none() && !inner.is_empty()
+                        {
+                            Err(E::MissedSemicolon.by_reader(&inner))?;
+                        }
+                        elements.push(ElementExd::Element(el));
+                    } else if let Some((content, _)) = inner.until().char(&[&chars::SEMICOLON]) {
+                        if content.trim().is_empty() {
+                            Err(E::NoContentBeforeSemicolon.by_reader(&inner))?;
+                        }
+                        elements.push(ElementExd::SimpleString(SimpleString {
+                            value: content.trim().to_string(),
+                            token: inner.token()?.id,
+                        }));
+                        let _ = inner.move_to().char(&[&chars::SEMICOLON]);
+                    } else if !inner.is_empty() {
+                        let value = inner.rest().trim().to_string();
+                        inner.move_to().end();
+                        elements.push(ElementExd::SimpleString(SimpleString {
+                            value,
+                            token: inner.token()?.id,
+                        }));
+                    }
+                }
+                if elements.is_empty() {
+                    Err(E::NoFunctionArguments.by_reader(&inner))?;
+                }
+            }
+            if reader.rest().trim().starts_with(words::DO_ON) {
+                return Ok(Some(Self::new(
+                    close(reader),
+                    args_close(reader),
+                    elements,
+                    name,
+                    tolerance,
+                )?));
+            }
+            if reader.rest().trim().starts_with(chars::REDIRECT) {
+                reader.trim();
+                reader.move_to().next();
+                let feed_func_token_id = close(reader);
+                let feed_func_args_token_id = args_close(reader);
+                return if let Some(Element::Function(mut dest)) =
+                    Element::include(reader, &[ElTarget::Function])?
+                {
+                    dest.feeding(Self::new(
+                        feed_func_token_id,
+                        feed_func_args_token_id,
                         elements,
                         name,
                         tolerance,
-                    )?));
-                }
-                if let Some(el) = Element::include(
-                    reader,
-                    &[
-                        ElTarget::Values,
-                        ElTarget::Function,
-                        ElTarget::If,
-                        ElTarget::PatternString,
-                        ElTarget::Reference,
-                        ElTarget::Comparing,
-                        ElTarget::VariableName,
-                        ElTarget::Command,
-                    ],
-                )? {
-                    elements.push(ElementExd::Element(el));
-                    continue;
-                }
-                if let Some((content, stopped)) =
-                    reader
-                        .until()
-                        .char(&[&chars::WS, &chars::SEMICOLON, &chars::REDIRECT])
-                {
-                    if !content.trim().is_empty() {
-                        elements.push(ElementExd::SimpleString(SimpleString {
-                            value: content.trim().to_string(),
-                            token: reader.token()?.id,
-                        }));
-                        continue;
-                    }
-                    if stopped == chars::SEMICOLON
-                        || (stopped == chars::REDIRECT && content.trim().ends_with(words::DO_ON))
-                    {
-                        return Ok(Some(Self::new(
-                            close(reader),
-                            args_close(reader),
-                            elements,
-                            name,
-                            tolerance,
-                        )?));
-                    }
-                    reader.move_to().next();
-                    if stopped == chars::REDIRECT {
-                        let feed_func_token_id = close(reader);
-                        let feed_func_args_token_id = args_close(reader);
-                        return if let Some(Element::Function(mut dest)) =
-                            Element::include(reader, &[ElTarget::Function])?
-                        {
-                            dest.feeding(Self::new(
-                                feed_func_token_id,
-                                feed_func_args_token_id,
-                                elements,
-                                name,
-                                tolerance,
-                            )?);
-                            dest.set_token(close(reader));
-                            Ok(Some(dest))
-                        } else {
-                            Err(E::NoDestFunction.linked(&reader.token()?.id))
-                        };
-                    }
+                    )?);
+                    dest.set_token(close(reader));
+                    Ok(Some(dest))
                 } else {
-                    let content = reader.move_to().end();
-                    if !content.trim().is_empty() {
-                        elements.push(ElementExd::SimpleString(SimpleString {
-                            value: content.to_string(),
-                            token: reader.token()?.id,
-                        }));
-                    }
-                }
-                if reader.done() {
-                    break;
-                }
+                    Err(E::NoDestFunction.linked(&reader.token()?.id))
+                };
             }
             Ok(Some(Self::new(
                 close(reader),
@@ -219,15 +209,16 @@ impl fmt::Display for Function {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fn to_string(func: &Function) -> String {
             format!(
-                "@{}{}{}{}",
+                "@{}{}{}{}{}",
                 func.name,
                 if func.tolerance { "?" } else { "" },
-                if func.args.is_empty() { "" } else { " " },
+                if func.args.is_empty() { "" } else { "(" },
                 func.args
                     .iter()
                     .map(|arg| arg.to_string())
                     .collect::<Vec<String>>()
-                    .join(" ")
+                    .join("; "),
+                if func.args.is_empty() { "" } else { ")" }
             )
         }
         let mut nested: Vec<String> = vec![];
@@ -342,7 +333,9 @@ mod reading {
         let mut count = 0;
         for sample in samples.iter() {
             let mut reader = Reader::unbound(sample.to_string());
-            assert!(Function::read(&mut reader).is_err());
+            let func = Function::read(&mut reader);
+            println!("{func:?}");
+            assert!(func.is_err());
             count += 1;
         }
         assert_eq!(count, samples.len());
@@ -358,7 +351,7 @@ mod processing {
             context::Context,
             operator::{Operator, E},
         },
-        reader::{Reader, Reading},
+        reader::{chars, Reader, Reading},
     };
 
     #[tokio::test]
@@ -371,6 +364,7 @@ mod processing {
                 .execute(None, &[], &[], &mut cx)
                 .await?
                 .expect("Task returns some value");
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 result.get_as_string().expect("Task returns string value"),
                 "true".to_owned()
