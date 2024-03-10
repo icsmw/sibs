@@ -315,8 +315,10 @@ mod processing {
     #[tokio::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
-        let mut reader =
-            Reader::unbound(include_str!("../tests/processing/component.sibs").to_string());
+        let mut reader = Reader::bound(
+            include_str!("../tests/processing/component.sibs").to_string(),
+            &cx,
+        );
         let mut cursor: usize = 0;
         let mut components: Vec<Component> = vec![];
         while let Some(component) = Component::read(&mut reader)? {

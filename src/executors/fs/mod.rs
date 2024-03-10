@@ -123,6 +123,7 @@ mod test {
         inf::{
             context::Context,
             operator::{Operator, E},
+            tests::*,
         },
         reader::{chars, Reader, Reading},
     };
@@ -148,12 +149,10 @@ mod test {
         }
         for test in TESTS.iter() {
             let mut cx = Context::unbound()?;
-            let mut reader = Reader::unbound(apply_hooks(format!("test[{test}]"), hooks));
+            let mut reader = Reader::bound(apply_hooks(format!("test[{test}]"), hooks), &cx);
             while let Some(task) = Task::read(&mut reader)? {
-                let result = task
-                    .execute(None, &[], &[], &mut cx)
-                    .await?
-                    .expect("test returns some value");
+                let result = task.execute(None, &[], &[], &mut cx).await;
+                let result = post_if_err(&cx, result)?.expect("test returns some value");
                 let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                 assert_eq!(
                     result.get_as_string().expect("test returns string value"),

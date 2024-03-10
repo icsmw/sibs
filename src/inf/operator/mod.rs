@@ -18,8 +18,14 @@ pub trait Operator {
         args: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
-        cx.set_map_cursor(self.token());
-        self.perform(owner, components, args, cx)
+        Box::pin(async move {
+            cx.set_map_cursor(self.token());
+            let result = self.perform(owner, components, args, cx).await;
+            if let Err(err) = result.as_ref() {
+                cx.assign_error(err)?;
+            }
+            result
+        })
     }
     fn perform<'a>(
         &'a self,

@@ -1,7 +1,11 @@
 mod scope;
 pub use scope::*;
 
-use crate::reader::chars;
+use crate::{
+    error::LinkedErr,
+    inf::{context::Context, operator::E},
+    reader::chars,
+};
 use tokio::runtime::{Builder, Runtime};
 
 pub fn trim_carets(src: &str) -> String {
@@ -16,6 +20,23 @@ pub fn trim_semicolon(src: &str) -> String {
     } else {
         src.to_owned()
     }
+}
+
+pub fn report_if_err<T, E: std::fmt::Display>(
+    cx: &Context,
+    result: Result<T, LinkedErr<E>>,
+) -> Result<T, LinkedErr<E>> {
+    if let Err(err) = result.as_ref() {
+        cx.gen_report_from_err(err).expect("Generate error report");
+        cx.post_reports();
+    }
+    result
+}
+pub fn post_if_err<T, E>(cx: &Context, result: Result<T, E>) -> Result<T, E> {
+    if result.is_err() {
+        cx.post_reports();
+    }
+    result
 }
 
 pub fn get_rt() -> Runtime {

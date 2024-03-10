@@ -276,7 +276,7 @@ mod processing {
             context::Context,
             operator::{Operator, E},
         },
-        reader::{Reader, Reading, chars},
+        reader::{chars, Reader, Reading},
     };
 
     const VALUES: &[&[&str]] = &[&["a"], &["a", "b"], &["a"], &["a", "b"], &["a", "b", "c"]];
@@ -284,8 +284,10 @@ mod processing {
     #[tokio::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
-        let mut reader =
-            Reader::unbound(include_str!("../tests/processing/tasks.sibs").to_string());
+        let mut reader = Reader::bound(
+            include_str!("../tests/processing/tasks.sibs").to_string(),
+            &cx,
+        );
         let mut cursor: usize = 0;
         while let Some(task) = Task::read(&mut reader)? {
             let result = task

@@ -181,8 +181,9 @@ mod processing {
     #[tokio::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
-        let mut reader = Reader::unbound(
+        let mut reader = Reader::bound(
             include_str!("../../tests/processing/variable_assignation.sibs").to_string(),
+            &cx,
         );
         while let Some(task) = Task::read(&mut reader)? {
             assert!(task.execute(None, &[], &[], &mut cx).await?.is_some());

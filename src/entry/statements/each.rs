@@ -194,8 +194,10 @@ mod processing {
     #[tokio::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
-        let mut reader =
-            Reader::unbound(include_str!("../../tests/processing/each.sibs").to_string());
+        let mut reader = Reader::bound(
+            include_str!("../../tests/processing/each.sibs").to_string(),
+            &cx,
+        );
         while let Some(task) = Task::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert!(task.execute(None, &[], &[], &mut cx).await?.is_some());

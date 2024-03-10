@@ -106,6 +106,15 @@ impl Context {
     pub fn post_reports(&self) {
         self.map.borrow().post_reports();
     }
+    pub fn assign_error<T>(&mut self, err: &T) -> Result<(), E>
+    where
+        T: std::error::Error + fmt::Display + ToString,
+    {
+        self.map
+            .borrow_mut()
+            .assign_error(err)
+            .map_err(|e| e.into())
+    }
     pub fn set_map_cursor(&self, token: usize) {
         self.map.borrow_mut().set_cursor(token);
     }

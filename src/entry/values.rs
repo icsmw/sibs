@@ -208,14 +208,18 @@ mod processing {
     #[tokio::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
-        let mut reader =
-            Reader::unbound(include_str!("../tests/processing/values_components.sibs").to_string());
+        let mut reader = Reader::bound(
+            include_str!("../tests/processing/values_components.sibs").to_string(),
+            &cx,
+        );
         let mut components: Vec<Component> = vec![];
         while let Some(component) = Component::read(&mut reader)? {
             components.push(component);
         }
-        let mut reader =
-            Reader::unbound(include_str!("../tests/processing/values.sibs").to_string());
+        let mut reader = Reader::bound(
+            include_str!("../tests/processing/values.sibs").to_string(),
+            &cx,
+        );
         while let Some(task) = Task::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert!(task
