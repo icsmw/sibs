@@ -49,17 +49,17 @@ mod test {
             context::Context,
             operator::{Operator, E},
         },
-        reader::{Reader, Reading},
+        reader::{chars, Reader, Reading},
     };
 
     const TESTS: &[&str] = &[
-        r#"IF @env::var TEST_VAR == "__test_var__" ["true";] ELSE ["false";];"#,
+        r#"IF @env::var(TEST_VAR) == "__test_var__" ["true";] ELSE ["false";];"#,
         r#"IF @env::family == "__family__" ["true";] ELSE ["false";];"#,
         r#"IF @env::os == "__os__" ["true";] ELSE ["false";];"#,
         r#"IF @env::arch == "__arch__" ["true";] ELSE ["false";];"#,
         r#"IF @env::temp_dir == "__temp_dir__" ["true";] ELSE ["false";];"#,
-        r#"@env::remove_var TEST_VAR; IF @env::var TEST_VAR == "" ["true";] ELSE ["false";];"#,
-        r#"@env::set_var TEST_VAR "VALUE"; IF @env::var TEST_VAR == "VALUE" ["true";] ELSE ["false";];"#,
+        r#"@env::remove_var(TEST_VAR); IF @env::var(TEST_VAR) == "" ["true";] ELSE ["false";];"#,
+        r#"@env::set_var(TEST_VAR; "VALUE"); IF @env::var(TEST_VAR) == "VALUE" ["true";] ELSE ["false";];"#,
     ];
 
     #[tokio::test]
@@ -87,6 +87,7 @@ mod test {
                     .execute(None, &[], &[], &mut cx)
                     .await?
                     .expect("test returns some value");
+                let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                 assert_eq!(
                     result.get_as_string().expect("test returns string value"),
                     "true".to_owned()
