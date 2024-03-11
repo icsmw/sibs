@@ -197,14 +197,14 @@ mod proptest {
             prop::collection::vec(
                 Element::arbitrary_with(vec![
                     ElTarget::Meta,
-                    // ElTarget::Function,
-                    // ElTarget::VariableAssignation,
-                    // ElTarget::If,
-                    // ElTarget::Optional,
-                    // ElTarget::First,
-                    // ElTarget::Each,
+                    ElTarget::Function,
+                    ElTarget::VariableAssignation,
+                    ElTarget::If,
+                    ElTarget::Optional,
+                    ElTarget::First,
+                    ElTarget::Each,
                     ElTarget::Command,
-                    // ElTarget::Reference,
+                    ElTarget::Reference,
                 ]),
                 1..=10,
             )
