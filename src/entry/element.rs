@@ -345,7 +345,7 @@ mod proptest {
         static ref VARIABLE_ASSIGNATION: RwLock<i16> = RwLock::new(200);
         static ref OPTIONAL: RwLock<i16> = RwLock::new(200);
         static ref REFERENCE: RwLock<i16> = RwLock::new(500);
-        static ref PATTERN_STRING: RwLock<i16> = RwLock::new(2000);
+        static ref PATTERN_STRING: RwLock<i16> = RwLock::new(5000);
         static ref VARIABLE_NAME: RwLock<i16> = RwLock::new(5000);
         static ref COMPARING: RwLock<i16> = RwLock::new(200);
         static ref VALUES: RwLock<i16> = RwLock::new(200);
@@ -368,6 +368,87 @@ mod proptest {
             .boxed()
         }
     }
+    fn generate_out_of_limits(targets: Vec<ElTarget>) -> BoxedStrategy<Element> {
+        let mut collected = vec![];
+        if targets.contains(&ElTarget::Block) {
+            *BLOCK.write().unwrap() -= 1;
+            collected.push(Block::arbitrary().prop_map(Element::Block).boxed());
+        }
+        if targets.contains(&ElTarget::Command) {
+            *COMMAND.write().unwrap() -= 1;
+            collected.push(Command::arbitrary().prop_map(Element::Command).boxed());
+        }
+        if targets.contains(&ElTarget::Comparing) {
+            *COMPARING.write().unwrap() -= 1;
+            collected.push(Comparing::arbitrary().prop_map(Element::Comparing).boxed());
+        }
+        if targets.contains(&ElTarget::Component) {
+            *COMPONENT.write().unwrap() -= 1;
+            collected.push(Component::arbitrary().prop_map(Element::Component).boxed());
+        }
+        if targets.contains(&ElTarget::Each) {
+            *EACH.write().unwrap() -= 1;
+            collected.push(Each::arbitrary().prop_map(Element::Each).boxed());
+        }
+        if targets.contains(&ElTarget::First) {
+            *FIRST.write().unwrap() -= 1;
+            collected.push(First::arbitrary().prop_map(Element::First).boxed());
+        }
+        if targets.contains(&ElTarget::Function) {
+            *FUNCTION.write().unwrap() -= 1;
+            collected.push(Function::arbitrary().prop_map(Element::Function).boxed());
+        }
+        if targets.contains(&ElTarget::If) {
+            *IF.write().unwrap() -= 1;
+            collected.push(If::arbitrary().prop_map(Element::If).boxed());
+        }
+        if targets.contains(&ElTarget::Meta) {
+            *META.write().unwrap() -= 1;
+            collected.push(Meta::arbitrary().prop_map(Element::Meta).boxed());
+        }
+        if targets.contains(&ElTarget::Optional) {
+            *OPTIONAL.write().unwrap() -= 1;
+            collected.push(Optional::arbitrary().prop_map(Element::Optional).boxed());
+        }
+        if targets.contains(&ElTarget::PatternString) {
+            *PATTERN_STRING.write().unwrap() -= 1;
+            collected.push(
+                PatternString::arbitrary()
+                    .prop_map(Element::PatternString)
+                    .boxed(),
+            );
+        }
+        if targets.contains(&ElTarget::Reference) {
+            *REFERENCE.write().unwrap() -= 1;
+            collected.push(Reference::arbitrary().prop_map(Element::Reference).boxed());
+        }
+        if targets.contains(&ElTarget::Task) {
+            *TASK.write().unwrap() -= 1;
+            collected.push(Task::arbitrary().prop_map(Element::Task).boxed());
+        }
+        if targets.contains(&ElTarget::Values) {
+            *VALUES.write().unwrap() -= 1;
+            collected.push(Values::arbitrary().prop_map(Element::Values).boxed());
+        }
+        if targets.contains(&ElTarget::VariableAssignation) {
+            *VARIABLE_ASSIGNATION.write().unwrap() -= 1;
+            collected.push(
+                VariableAssignation::arbitrary()
+                    .prop_map(Element::VariableAssignation)
+                    .boxed(),
+            );
+        }
+        if targets.contains(&ElTarget::VariableName) {
+            *VARIABLE_NAME.write().unwrap() -= 1;
+            collected.push(
+                VariableName::arbitrary()
+                    .prop_map(Element::VariableName)
+                    .boxed(),
+            );
+        }
+        prop::strategy::Union::new(collected).boxed()
+    }
+
     impl Arbitrary for Element {
         type Parameters = Vec<ElTarget>;
         type Strategy = BoxedStrategy<Self>;
@@ -452,7 +533,11 @@ mod proptest {
                         .boxed(),
                 );
             }
-            prop::strategy::Union::new(collected).boxed()
+            if collected.is_empty() {
+                generate_out_of_limits(targets)
+            } else {
+                prop::strategy::Union::new(collected).boxed()
+            }
         }
     }
 
