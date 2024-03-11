@@ -159,24 +159,20 @@ mod processing {
 mod proptest {
 
     use crate::{
-        entry::{block::Block, statements::first::First, task::Task},
+        entry::{Block, First, Task},
         inf::{operator::E, tests::*},
         reader::{Reader, Reading},
     };
     use proptest::prelude::*;
-    use std::sync::{Arc, RwLock};
 
     impl Arbitrary for First {
-        type Parameters = SharedScope;
+        type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            scope.write().unwrap().include(Entity::First);
-            let boxed = Block::arbitrary_with(scope.clone())
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+            Block::arbitrary()
                 .prop_map(|block| First { block, token: 0 })
-                .boxed();
-            scope.write().unwrap().exclude(Entity::First);
-            boxed
+                .boxed()
         }
     }
 
@@ -191,13 +187,20 @@ mod proptest {
         })
     }
 
-    // proptest! {
-    //     #![proptest_config(ProptestConfig::with_cases(10))]
-    //     #[test]
-    //     fn test_run_task(
-    //         args in any_with::<First>(Arc::new(RwLock::new(Scope::default())).clone())
-    //     ) {
-    //         prop_assert!(reading(args.clone()).is_ok());
-    //     }
-    // }
+    proptest! {
+        #![proptest_config(ProptestConfig {
+            max_shrink_iters: 5000,
+            ..ProptestConfig::with_cases(10)
+        })]
+        #[test]
+        fn test_run_task(
+            args in any_with::<First>(())
+        ) {
+            let res = reading(args.clone());
+            if res.is_err() {
+                println!("{res:?}");
+            }
+            prop_assert!(res.is_ok());
+        }
+    }
 }

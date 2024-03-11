@@ -87,7 +87,7 @@ mod reading {
             );
             count += 1;
         }
-        assert_eq!(count, 16);
+        assert_eq!(count, 17);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
@@ -107,7 +107,7 @@ mod reading {
             }
             count += 1;
         }
-        assert_eq!(count, 16);
+        assert_eq!(count, 17);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
@@ -115,57 +115,52 @@ mod reading {
 
 #[cfg(test)]
 mod proptest {
-    use crate::{
-        entry::{string::PatternString, Element},
-        inf::tests::*,
-    };
+    use crate::entry::{ElTarget, Element, PatternString};
     use proptest::prelude::*;
 
+    impl Default for PatternString {
+        fn default() -> Self {
+            PatternString {
+                injections: vec![],
+                pattern: String::from("default"),
+                token: 0,
+            }
+        }
+    }
     impl Arbitrary for PatternString {
-        type Parameters = SharedScope;
+        type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            scope.write().unwrap().include(Entity::PatternString);
-            let boxed = (
-                prop::collection::vec(Element::arbitrary_with(scope.clone()), 1..=10),
-                prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 10),
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+            (
+                prop::collection::vec(
+                    Element::arbitrary_with(vec![ElTarget::VariableName, ElTarget::Function]),
+                    0..=10,
+                ),
                 prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 10),
             )
-                .prop_map(|(injections, noise, hooks)| {
+                .prop_map(|(injections, noise)| {
                     let mut pattern: String = String::new();
-                    for (i, _el) in injections.iter().enumerate() {
-                        pattern = format!("{}{{{}}}", noise[i], hooks[i].clone());
+                    for (i, el) in injections.iter().enumerate() {
+                        pattern = format!(
+                            "{}{{{el}}}",
+                            if noise[i].is_empty() {
+                                "min"
+                            } else {
+                                &noise[i]
+                            }
+                        );
                     }
                     PatternString {
                         injections: injections
                             .iter()
-                            .enumerate()
-                            .map(|(i, el)| (hooks[i].clone(), el.clone()))
+                            .map(|el| (el.to_string(), el.clone()))
                             .collect::<Vec<(String, Element)>>(),
                         pattern,
                         token: 0,
                     }
                 })
-                .boxed();
-            scope.write().unwrap().exclude(Entity::PatternString);
-            boxed
-        }
-    }
-
-    impl PatternString {
-        pub fn arbitrary_primitive(scope: SharedScope) -> BoxedStrategy<Self> {
-            scope.write().unwrap().include(Entity::PatternString);
-            let boxed = "[a-z][a-z0-9]*"
-                .prop_map(String::from)
-                .prop_map(|pattern| PatternString {
-                    injections: vec![],
-                    pattern,
-                    token: 0,
-                })
-                .boxed();
-            scope.write().unwrap().exclude(Entity::PatternString);
-            boxed
+                .boxed()
         }
     }
 }

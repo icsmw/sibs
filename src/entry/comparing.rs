@@ -221,24 +221,18 @@ mod reading {
 
 #[cfg(test)]
 mod proptest {
-    use crate::{
-        entry::{
-            comparing::{Cmp, Comparing},
-            element::Element,
-        },
-        inf::tests::*,
-    };
+    use crate::entry::{Cmp, Comparing, ElTarget, Element};
     use proptest::prelude::*;
 
     impl Arbitrary for Comparing {
-        type Parameters = SharedScope;
+        type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             (
-                Element::arbitrary_with(scope.clone()),
+                Element::arbitrary_with(vec![ElTarget::VariableName, ElTarget::Function]),
                 Cmp::arbitrary_with(scope.clone()),
-                Element::arbitrary_with(scope.clone()),
+                Element::arbitrary_with(vec![ElTarget::VariableName, ElTarget::Function]),
             )
                 .prop_map(|(left, cmp, right)| Comparing {
                     cmp,

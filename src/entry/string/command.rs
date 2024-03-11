@@ -149,56 +149,58 @@ mod reading {
 mod proptest {
 
     use crate::{
-        entry::command::{Command, Element},
+        entry::{Command, ElTarget, Element},
         inf::tests::*,
     };
     use proptest::prelude::*;
 
     impl Arbitrary for Command {
-        type Parameters = SharedScope;
+        type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            scope.write().unwrap().include(Entity::Command);
-            let boxed = (
-                prop::collection::vec(Element::arbitrary_with(scope.clone()), 1..=10),
-                prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 10),
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+            (
+                prop::collection::vec(
+                    Element::arbitrary_with(vec![ElTarget::VariableName, ElTarget::Function]),
+                    0..=10,
+                ),
                 prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 10),
             )
-                .prop_map(|(injections, noise, hooks)| {
+                .prop_map(|(injections, noise)| {
                     let mut pattern: String = String::new();
-                    for (i, _el) in injections.iter().enumerate() {
-                        pattern = format!("{}{{{}}}", noise[i], hooks[i].clone());
+                    for (i, el) in injections.iter().enumerate() {
+                        pattern = format!(
+                            "{}{{{el}}}",
+                            if noise[i].is_empty() {
+                                "min"
+                            } else {
+                                &noise[i]
+                            }
+                        );
                     }
                     Command {
                         injections: injections
                             .iter()
-                            .enumerate()
-                            .map(|(i, el)| (hooks[i].clone(), el.clone()))
+                            .map(|el| (el.to_string(), el.clone()))
                             .collect::<Vec<(String, Element)>>(),
                         pattern,
                         token: 0,
                     }
                 })
-                .boxed();
-            scope.write().unwrap().exclude(Entity::Command);
-            boxed
+                .boxed()
         }
     }
 
     impl Command {
-        pub fn arbitrary_primitive(scope: SharedScope) -> BoxedStrategy<Self> {
-            scope.write().unwrap().include(Entity::Command);
-            let boxed = "[a-z][a-z0-9]*"
+        pub fn arbitrary_primitive() -> BoxedStrategy<Self> {
+            "[a-z][a-z0-9]*"
                 .prop_map(String::from)
                 .prop_map(|pattern| Command {
                     injections: vec![],
                     pattern,
                     token: 0,
                 })
-                .boxed();
-            scope.write().unwrap().exclude(Entity::Command);
-            boxed
+                .boxed()
         }
     }
 }

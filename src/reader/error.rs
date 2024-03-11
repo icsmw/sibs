@@ -9,6 +9,8 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum E {
+    #[error("Out of string bounds")]
+    OutOfStringBounds,
     #[error("Unknown variable type: {0}")]
     UnknownVariableType(String),
     #[error("Not closed variable type declaration")]
@@ -22,7 +24,7 @@ pub enum E {
     #[error("Fail to find closing \"}}\" injection into string")]
     NoInjectionClose,
     #[error("Fail to find injection into string")]
-    FailToFineInjection,
+    FailToFindInjection,
     #[error("Fail to parse right side of assignation")]
     FailToParseRightSideOfAssignation,
     #[error("Not ascii variable value: {0}")]

@@ -324,103 +324,135 @@ impl Operator for ElementExd {
 
 #[cfg(test)]
 mod proptest {
-
     use crate::{
         entry::{
-            Block, Each, Element, ElementExd, First, Function, If, Meta, Optional, PatternString,
-            Reference, SimpleString, Values, VariableAssignation,
+            Block, Command, Comparing, Component, Each, ElTarget, Element, ElementExd, First,
+            Function, If, Meta, Optional, PatternString, Reference, SimpleString, Task, Values,
+            VariableAssignation, VariableName,
         },
         inf::{operator::E, tests::*},
         reader::{Reader, Reading},
     };
+    use lazy_static::lazy_static;
     use proptest::prelude::*;
-    use std::sync::{Arc, RwLock};
+    use std::sync::RwLock;
+
+    lazy_static! {
+        static ref FUNCTION: RwLock<i16> = RwLock::new(100);
+        static ref IF: RwLock<i16> = RwLock::new(0);
+        static ref EACH: RwLock<i16> = RwLock::new(50);
+        static ref FIRST: RwLock<i16> = RwLock::new(50);
+        static ref VARIABLE_ASSIGNATION: RwLock<i16> = RwLock::new(200);
+        static ref OPTIONAL: RwLock<i16> = RwLock::new(200);
+        static ref REFERENCE: RwLock<i16> = RwLock::new(500);
+        static ref PATTERN_STRING: RwLock<i16> = RwLock::new(2000);
+        static ref VARIABLE_NAME: RwLock<i16> = RwLock::new(5000);
+        static ref COMPARING: RwLock<i16> = RwLock::new(200);
+        static ref VALUES: RwLock<i16> = RwLock::new(200);
+        static ref BLOCK: RwLock<i16> = RwLock::new(500);
+        static ref META: RwLock<i16> = RwLock::new(1000);
+        static ref COMMAND: RwLock<i16> = RwLock::new(200);
+        static ref TASK: RwLock<i16> = RwLock::new(50);
+        static ref COMPONENT: RwLock<i16> = RwLock::new(50);
+    }
 
     impl Arbitrary for ElementExd {
-        type Parameters = SharedScope;
+        type Parameters = Vec<ElTarget>;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(targets: Self::Parameters) -> Self::Strategy {
             prop_oneof![
-                SimpleString::arbitrary_with(scope.clone()).prop_map(ElementExd::SimpleString),
-                Element::arbitrary_with(scope.clone()).prop_map(ElementExd::Element),
+                SimpleString::arbitrary().prop_map(ElementExd::SimpleString),
+                Element::arbitrary_with(targets).prop_map(ElementExd::Element),
             ]
             .boxed()
         }
     }
     impl Arbitrary for Element {
-        type Parameters = SharedScope;
+        type Parameters = Vec<ElTarget>;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            let permissions = scope.read().unwrap().permissions();
-            let mut allowed = vec![Meta::arbitrary_with(scope.clone())
-                .prop_map(Element::Meta)
-                .boxed()];
-            if permissions.func {
-                allowed.push(
-                    Function::arbitrary_with(scope.clone())
-                        .prop_map(Element::Function)
-                        .boxed(),
-                );
+        fn arbitrary_with(targets: Self::Parameters) -> Self::Strategy {
+            let mut collected = vec![];
+            if targets.contains(&ElTarget::Block) && *BLOCK.read().unwrap() > 0 {
+                *BLOCK.write().unwrap() -= 1;
+                collected.push(Block::arbitrary().prop_map(Element::Block).boxed());
             }
-            if permissions.values {
-                allowed.push(
-                    Values::arbitrary_with(scope.clone())
-                        .prop_map(Element::Values)
-                        .boxed(),
-                );
+            if targets.contains(&ElTarget::Command) && *COMMAND.read().unwrap() > 0 {
+                *COMMAND.write().unwrap() -= 1;
+                collected.push(Command::arbitrary().prop_map(Element::Command).boxed());
             }
-            if permissions.first {
-                allowed.push(
-                    First::arbitrary_with(scope.clone())
-                        .prop_map(Element::First)
-                        .boxed(),
-                );
+            if targets.contains(&ElTarget::Comparing) && *COMPARING.read().unwrap() > 0 {
+                *COMPARING.write().unwrap() -= 1;
+                collected.push(Comparing::arbitrary().prop_map(Element::Comparing).boxed());
             }
-            if permissions.pattern_string {
-                allowed.push(
-                    PatternString::arbitrary_with(scope.clone())
+            if targets.contains(&ElTarget::Component) && *COMPONENT.read().unwrap() > 0 {
+                *COMPONENT.write().unwrap() -= 1;
+                collected.push(Component::arbitrary().prop_map(Element::Component).boxed());
+            }
+            if targets.contains(&ElTarget::Each) && *EACH.read().unwrap() > 0 {
+                *EACH.write().unwrap() -= 1;
+                collected.push(Each::arbitrary().prop_map(Element::Each).boxed());
+            }
+            if targets.contains(&ElTarget::First) && *FIRST.read().unwrap() > 0 {
+                *FIRST.write().unwrap() -= 1;
+                collected.push(First::arbitrary().prop_map(Element::First).boxed());
+            }
+            if targets.contains(&ElTarget::Function) && *FUNCTION.read().unwrap() > 0 {
+                *FUNCTION.write().unwrap() -= 1;
+                collected.push(Function::arbitrary().prop_map(Element::Function).boxed());
+            }
+            if targets.contains(&ElTarget::If) && *IF.read().unwrap() > 0 {
+                *IF.write().unwrap() -= 1;
+                collected.push(If::arbitrary().prop_map(Element::If).boxed());
+            }
+            if targets.contains(&ElTarget::Meta) && *META.read().unwrap() > 0 {
+                *META.write().unwrap() -= 1;
+                collected.push(Meta::arbitrary().prop_map(Element::Meta).boxed());
+            }
+            if targets.contains(&ElTarget::Optional) && *OPTIONAL.read().unwrap() > 0 {
+                *OPTIONAL.write().unwrap() -= 1;
+                collected.push(Optional::arbitrary().prop_map(Element::Optional).boxed());
+            }
+            if targets.contains(&ElTarget::PatternString) && *PATTERN_STRING.read().unwrap() > 0 {
+                *PATTERN_STRING.write().unwrap() -= 1;
+                collected.push(
+                    PatternString::arbitrary()
                         .prop_map(Element::PatternString)
                         .boxed(),
                 );
             }
-            if permissions.each {
-                allowed.push(
-                    Each::arbitrary_with(scope.clone())
-                        .prop_map(Element::Each)
-                        .boxed(),
-                );
+            if targets.contains(&ElTarget::Reference) && *REFERENCE.read().unwrap() > 0 {
+                *REFERENCE.write().unwrap() -= 1;
+                collected.push(Reference::arbitrary().prop_map(Element::Reference).boxed());
             }
-            if permissions.r#if {
-                allowed.push(
-                    If::arbitrary_with(scope.clone())
-                        .prop_map(Element::If)
-                        .boxed(),
-                );
+            if targets.contains(&ElTarget::Task) && *TASK.read().unwrap() > 0 {
+                *TASK.write().unwrap() -= 1;
+                collected.push(Task::arbitrary().prop_map(Element::Task).boxed());
             }
-            if permissions.optional {
-                allowed.push(
-                    Optional::arbitrary_with(scope.clone())
-                        .prop_map(Element::Optional)
-                        .boxed(),
-                );
+            if targets.contains(&ElTarget::Values) && *VALUES.read().unwrap() > 0 {
+                *VALUES.write().unwrap() -= 1;
+                collected.push(Values::arbitrary().prop_map(Element::Values).boxed());
             }
-            if permissions.variable_assignation {
-                allowed.push(
-                    VariableAssignation::arbitrary_with(scope.clone())
+            if targets.contains(&ElTarget::VariableAssignation)
+                && *VARIABLE_ASSIGNATION.read().unwrap() > 0
+            {
+                *VARIABLE_ASSIGNATION.write().unwrap() -= 1;
+                collected.push(
+                    VariableAssignation::arbitrary()
                         .prop_map(Element::VariableAssignation)
                         .boxed(),
                 );
             }
-            if permissions.reference {
-                allowed.push(
-                    Reference::arbitrary_with(scope.clone())
-                        .prop_map(Element::Reference)
+            if targets.contains(&ElTarget::VariableName) && *VARIABLE_NAME.read().unwrap() > 0 {
+                *VARIABLE_NAME.write().unwrap() -= 1;
+                collected.push(
+                    VariableName::arbitrary()
+                        .prop_map(Element::VariableName)
                         .boxed(),
                 );
             }
-            prop::strategy::Union::new(allowed).boxed()
+            prop::strategy::Union::new(collected).boxed()
         }
     }
 
@@ -435,13 +467,20 @@ mod proptest {
         })
     }
 
-    // proptest! {
-    //     #![proptest_config(ProptestConfig::with_cases(10))]
-    //     #[test]
-    //     fn test_run_task(
-    //         args in any_with::<Element>(Arc::new(RwLock::new(Scope::default())).clone())
-    //     ) {
-    //         prop_assert!(reading(args.clone()).is_ok());
-    //     }
-    // }
+    proptest! {
+        #![proptest_config(ProptestConfig {
+            max_shrink_iters: 5000,
+            ..ProptestConfig::with_cases(10)
+        })]
+        #[test]
+        fn test_run_task(
+            args in any_with::<Element>(vec![ElTarget::Function])
+        ) {
+            let res = reading(args.clone());
+            if res.is_err() {
+                println!("{res:?}");
+            }
+            prop_assert!(res.is_ok());
+        }
+    }
 }

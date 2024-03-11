@@ -232,28 +232,38 @@ mod reading {
 mod proptest {
 
     use crate::{
-        entry::{element::ElementExd, reference::Reference},
+        entry::{ElTarget, ElementExd, Reference},
         inf::tests::*,
     };
     use proptest::prelude::*;
 
     impl Arbitrary for Reference {
-        type Parameters = SharedScope;
+        type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            scope.write().unwrap().include(Entity::Reference);
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
             let boxed = (
                 prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 2),
-                prop::collection::vec(ElementExd::arbitrary_with(scope.clone()), 0..5),
+                prop::collection::vec(
+                    ElementExd::arbitrary_with(vec![ElTarget::VariableName]),
+                    0..5,
+                ),
             )
                 .prop_map(|(path, inputs)| Reference {
-                    path,
+                    path: path
+                        .iter()
+                        .map(|p| {
+                            if p.is_empty() {
+                                "min".to_owned()
+                            } else {
+                                p.to_owned()
+                            }
+                        })
+                        .collect::<Vec<String>>(),
                     inputs,
                     token: 0,
                 })
                 .boxed();
-            scope.write().unwrap().exclude(Entity::Reference);
             boxed
         }
     }

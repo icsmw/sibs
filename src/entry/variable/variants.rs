@@ -103,16 +103,28 @@ mod reading {
 
 #[cfg(test)]
 mod proptest {
-    use crate::{entry::variable::VariableVariants, inf::tests::*};
+    use crate::entry::VariableVariants;
     use proptest::prelude::*;
 
     impl Arbitrary for VariableVariants {
-        type Parameters = SharedScope;
+        type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_scope: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
             prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 0..=10)
-                .prop_map(|values| VariableVariants { values, token: 0 })
+                .prop_map(|values| VariableVariants {
+                    values: values
+                        .iter()
+                        .map(|v| {
+                            if v.is_empty() {
+                                "min".to_owned()
+                            } else {
+                                v.to_owned()
+                            }
+                        })
+                        .collect::<Vec<String>>(),
+                    token: 0,
+                })
                 .boxed()
         }
     }

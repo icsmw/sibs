@@ -216,25 +216,20 @@ mod processing {
 mod proptest {
 
     use crate::{
-        entry::{
-            optional::{Element, Optional},
-            task::Task,
-        },
+        entry::{ElTarget, Element, Optional, Task},
         inf::{operator::E, tests::*},
         reader::{Reader, Reading},
     };
     use proptest::prelude::*;
-    use std::sync::{Arc, RwLock};
 
     impl Arbitrary for Optional {
-        type Parameters = SharedScope;
+        type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            scope.write().unwrap().include(Entity::Optional);
             let boxed = (
-                Element::arbitrary_with(scope.clone()),
-                Element::arbitrary_with(scope.clone()),
+                Element::arbitrary_with(vec![ElTarget::VariableName, ElTarget::Function]),
+                Element::arbitrary_with(vec![ElTarget::Function, ElTarget::VariableAssignation]),
             )
                 .prop_map(|(condition, action)| Optional {
                     condition: Box::new(condition),
@@ -242,7 +237,6 @@ mod proptest {
                     token: 0,
                 })
                 .boxed();
-            scope.write().unwrap().exclude(Entity::Optional);
             boxed
         }
     }
@@ -258,13 +252,20 @@ mod proptest {
         })
     }
 
-    // proptest! {
-    //     #![proptest_config(ProptestConfig::with_cases(10))]
-    //     #[test]
-    //     fn test_run_task(
-    //         args in any_with::<Optional>(Arc::new(RwLock::new(Scope::default())).clone())
-    //     ) {
-    //         prop_assert!(reading(args.clone()).is_ok());
-    //     }
-    // }
+    proptest! {
+        #![proptest_config(ProptestConfig {
+            max_shrink_iters: 5000,
+            ..ProptestConfig::with_cases(10)
+        })]
+        #[test]
+        fn test_run_task(
+            args in any_with::<Optional>(())
+        ) {
+            let res = reading(args.clone());
+            if res.is_err() {
+                println!("{res:?}");
+            }
+            prop_assert!(res.is_ok());
+        }
+    }
 }

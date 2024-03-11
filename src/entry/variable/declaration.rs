@@ -129,46 +129,36 @@ impl term::Display for VariableDeclaration {
 
 #[cfg(test)]
 mod proptest {
-    use crate::{
-        entry::variable::{
-            Declaration, VariableDeclaration, VariableName, VariableType, VariableVariants,
-        },
-        inf::tests::*,
+    use crate::entry::variable::{
+        Declaration, VariableDeclaration, VariableName, VariableType, VariableVariants,
     };
     use proptest::prelude::*;
 
     impl Arbitrary for Declaration {
-        type Parameters = SharedScope;
+        type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
             prop_oneof![
-                VariableVariants::arbitrary_with(scope.clone())
-                    .prop_map(Declaration::VariableVariants),
-                VariableType::arbitrary_with(scope.clone()).prop_map(Declaration::Typed),
+                VariableVariants::arbitrary().prop_map(Declaration::VariableVariants),
+                VariableType::arbitrary().prop_map(Declaration::Typed),
             ]
             .boxed()
         }
     }
     impl Arbitrary for VariableDeclaration {
-        type Parameters = SharedScope;
+        type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
             (
-                Declaration::arbitrary_with(scope.clone()).prop_map(|v| v),
+                Declaration::arbitrary().prop_map(|v| v),
                 VariableName::arbitrary().prop_map(|v| v),
             )
-                .prop_map(move |(declaration, variable)| {
-                    scope
-                        .write()
-                        .unwrap()
-                        .add_declaration(variable.name.clone());
-                    VariableDeclaration {
-                        declaration,
-                        variable,
-                        token: 0,
-                    }
+                .prop_map(move |(declaration, variable)| VariableDeclaration {
+                    declaration,
+                    variable,
+                    token: 0,
                 })
                 .boxed()
         }

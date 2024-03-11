@@ -201,39 +201,27 @@ mod processing {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        entry::{
-            element::Element, task::Task, variable::VariableAssignation, variable::VariableName,
-        },
+        entry::{ElTarget, Element, Task, VariableAssignation, VariableName},
         inf::{operator::E, tests::*},
         reader::{Reader, Reading},
     };
     use proptest::prelude::*;
-    use std::sync::{Arc, RwLock};
 
     impl Arbitrary for VariableAssignation {
-        type Parameters = SharedScope;
+        type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            scope.write().unwrap().include(Entity::VariableAssignation);
-            let inner = scope.clone();
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
             let boxed = (
-                Element::arbitrary_with(scope.clone()),
+                Element::arbitrary_with(vec![ElTarget::Function, ElTarget::PatternString]),
                 VariableName::arbitrary(),
             )
-                .prop_map(move |(assignation, variable)| {
-                    inner
-                        .write()
-                        .unwrap()
-                        .add_assignation(variable.name.clone());
-                    VariableAssignation {
-                        assignation: Box::new(assignation),
-                        variable,
-                        token: 0,
-                    }
+                .prop_map(move |(assignation, variable)| VariableAssignation {
+                    assignation: Box::new(assignation),
+                    variable,
+                    token: 0,
                 })
                 .boxed();
-            scope.write().unwrap().exclude(Entity::VariableAssignation);
             boxed
         }
     }
@@ -249,13 +237,20 @@ mod proptest {
         })
     }
 
-    // proptest! {
-    //     #![proptest_config(ProptestConfig::with_cases(10))]
-    //     #[test]
-    //     fn test_run_task(
-    //         args in any_with::<VariableAssignation>(Arc::new(RwLock::new(Scope::default())).clone())
-    //     ) {
-    //         prop_assert!(reading(args.clone()).is_ok());
-    //     }
-    // }
+    proptest! {
+        #![proptest_config(ProptestConfig {
+            max_shrink_iters: 5000,
+            ..ProptestConfig::with_cases(10)
+        })]
+        #[test]
+        fn test_run_task(
+            args in any_with::<VariableAssignation>(())
+        ) {
+            let res = reading(args.clone());
+            if res.is_err() {
+                println!("{res:?}");
+            }
+            prop_assert!(res.is_ok());
+        }
+    }
 }

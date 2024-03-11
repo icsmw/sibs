@@ -322,14 +322,13 @@ mod proptest {
     use proptest::prelude::*;
 
     impl Arbitrary for Task {
-        type Parameters = SharedScope;
+        type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            scope.write().unwrap().include(Entity::Task);
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
             let boxed = (
-                prop::collection::vec(VariableDeclaration::arbitrary_with(scope.clone()), 0..=5),
-                Block::arbitrary_with(scope.clone()),
+                prop::collection::vec(VariableDeclaration::arbitrary(), 0..=5),
+                Block::arbitrary(),
                 "[a-zA-Z_]*".prop_map(String::from),
             )
                 .prop_map(|(declarations, block, name)| Task {
@@ -342,7 +341,6 @@ mod proptest {
                     },
                 })
                 .boxed();
-            scope.write().unwrap().exclude(Entity::Task);
             boxed
         }
     }

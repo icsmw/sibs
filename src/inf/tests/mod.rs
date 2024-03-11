@@ -1,11 +1,4 @@
-mod scope;
-pub use scope::*;
-
-use crate::{
-    error::LinkedErr,
-    inf::{context::Context, operator::E},
-    reader::chars,
-};
+use crate::{error::LinkedErr, inf::context::Context, reader::chars};
 use tokio::runtime::{Builder, Runtime};
 
 pub fn trim_carets(src: &str) -> String {

@@ -257,6 +257,13 @@ mod walker {
                 assert_eq!(token.content, between);
                 assert_eq!(between, content);
             }
+            {
+                let mut bound = Reader::unbound(format!("{left}{right}"));
+                let between = bound.group().between(left, right).unwrap();
+                assert_eq!(between, "");
+                let token = bound.token().unwrap();
+                assert_eq!(token.content, between);
+            }
             count += 1;
         });
         assert_eq!(count, borders.len());
@@ -309,6 +316,13 @@ mod walker {
                 assert_eq!(token.content, between);
                 let between = bound.group().closed(border).unwrap();
                 assert_eq!(between, content);
+                let token = bound.token().unwrap();
+                assert_eq!(token.content, between);
+            }
+            {
+                let mut bound = Reader::unbound(format!("{border}{border}"));
+                let between = bound.group().closed(border).unwrap();
+                assert_eq!(between, "");
                 let token = bound.token().unwrap();
                 assert_eq!(token.content, between);
             }

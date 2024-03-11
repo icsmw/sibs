@@ -15,21 +15,25 @@ impl fmt::Display for SimpleString {
 #[cfg(test)]
 mod proptest {
 
-    use crate::{entry::SimpleString, inf::tests::*};
+    use crate::entry::SimpleString;
     use proptest::prelude::*;
 
     impl Arbitrary for SimpleString {
-        type Parameters = SharedScope;
+        type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            scope.write().unwrap().include(Entity::SimpleString);
-            let boxed = "[a-z][a-z0-9]*"
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+            "[a-z][a-z0-9]*"
                 .prop_map(String::from)
-                .prop_map(|value| SimpleString { value, token: 0 })
-                .boxed();
-            scope.write().unwrap().exclude(Entity::SimpleString);
-            boxed
+                .prop_map(|value| SimpleString {
+                    value: if value.is_empty() {
+                        "min".to_owned()
+                    } else {
+                        value
+                    },
+                    token: 0,
+                })
+                .boxed()
         }
     }
 }

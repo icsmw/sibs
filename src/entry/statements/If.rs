@@ -470,33 +470,26 @@ mod processing {
 mod proptest {
 
     use crate::{
-        entry::{
-            comparing::Cmp,
-            element::Element,
-            statements::If::{Combination, If, Proviso, Segment},
-            task::Task,
-            Block,
-        },
+        entry::{task::Task, Block, Cmp, Combination, ElTarget, Element, If, Proviso, Segment},
         inf::{operator::E, tests::*},
         reader::{Reader, Reading},
     };
     use proptest::prelude::*;
-    use std::sync::{Arc, RwLock};
 
     impl Arbitrary for Cmp {
-        type Parameters = SharedScope;
+        type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_scope: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
             prop_oneof![Just(Cmp::Equal), Just(Cmp::NotEqual),].boxed()
         }
     }
 
     impl Arbitrary for Combination {
-        type Parameters = SharedScope;
+        type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_scope: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
             prop_oneof![Just(Combination::And), Just(Combination::Or),].boxed()
         }
     }
@@ -505,16 +498,15 @@ mod proptest {
     // - Combination
     // - Variable
     // - Function
-    fn get_proviso_chain(scope: SharedScope) -> BoxedStrategy<Vec<Proviso>> {
+    fn get_proviso_chain() -> BoxedStrategy<Vec<Proviso>> {
         let max = 6;
         (
             prop::collection::vec(
-                Combination::arbitrary_with(scope.clone())
-                    .prop_map(|cmb| Proviso::Combination(cmb, 0)),
+                Combination::arbitrary().prop_map(|cmb| Proviso::Combination(cmb, 0)),
                 max,
             ),
             prop::collection::vec(
-                Element::arbitrary_with(scope.clone())
+                Element::arbitrary_with(vec![ElTarget::Comparing])
                     .prop_map(|cmb| Proviso::Condition(cmb, false)),
                 max,
             ),
@@ -533,13 +525,12 @@ mod proptest {
     }
 
     // Returns Proviso::Group
-    fn get_proviso(scope: SharedScope) -> BoxedStrategy<Proviso> {
+    fn get_proviso() -> BoxedStrategy<Proviso> {
         let max = 5;
         prop::collection::vec(
             (
-                get_proviso_chain(scope.clone()),
-                Combination::arbitrary_with(scope.clone())
-                    .prop_map(|cmb| Proviso::Combination(cmb, 0)),
+                get_proviso_chain(),
+                Combination::arbitrary().prop_map(|cmb| Proviso::Combination(cmb, 0)),
                 prop_oneof![Just(true), Just(false)],
             ),
             1..max,
@@ -567,41 +558,33 @@ mod proptest {
     impl Arbitrary for Segment {
         /// 0 - generate IF
         /// 1 - generate ELSE
-        type Parameters = (u8, SharedScope);
+        type Parameters = u8;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with((el, scope): Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(el: Self::Parameters) -> Self::Strategy {
             match el {
-                0 => (
-                    get_proviso(scope.clone()),
-                    Block::arbitrary_with(scope.clone()),
-                )
+                0 => (get_proviso(), Block::arbitrary())
                     .prop_map(|(p, b)| Segment::If(p, b))
                     .boxed(),
-                _ => Block::arbitrary_with(scope.clone())
-                    .prop_map(Segment::Else)
-                    .boxed(),
+                _ => Block::arbitrary().prop_map(Segment::Else).boxed(),
             }
         }
     }
 
     impl Arbitrary for If {
-        type Parameters = SharedScope;
+        type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            scope.write().unwrap().include(Entity::If);
-            let boxed = (
-                prop::collection::vec(Segment::arbitrary_with((0, scope.clone())), 1..5),
-                prop::collection::vec(Segment::arbitrary_with((1, scope.clone())), 0..1),
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+            (
+                prop::collection::vec(Segment::arbitrary_with(0), 1..5),
+                prop::collection::vec(Segment::arbitrary_with(1), 0..1),
             )
                 .prop_map(|(segments, else_element)| If {
                     segments: [segments, else_element].concat(),
                     token: 0,
                 })
-                .boxed();
-            scope.write().unwrap().exclude(Entity::If);
-            boxed
+                .boxed()
         }
     }
 
@@ -616,13 +599,20 @@ mod proptest {
         })
     }
 
-    // proptest! {
-    //     #![proptest_config(ProptestConfig::with_cases(10))]
-    //     #[test]
-    //     fn test_run_task(
-    //         args in any_with::<If>(Arc::new(RwLock::new(Scope::default())).clone())
-    //     ) {
-    //         prop_assert!(reading(args.clone()).is_ok());
-    //     }
-    // }
+    proptest! {
+        #![proptest_config(ProptestConfig {
+            max_shrink_iters: 5000,
+            ..ProptestConfig::with_cases(10)
+        })]
+        #[test]
+        fn test_run_task(
+            args in any_with::<If>(())
+        ) {
+            let res = reading(args.clone());
+            if res.is_err() {
+                println!("{res:?}");
+            }
+            prop_assert!(res.is_ok());
+        }
+    }
 }

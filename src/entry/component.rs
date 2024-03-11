@@ -352,36 +352,31 @@ mod processing {
 mod proptest {
     use std::path::PathBuf;
 
-    use crate::{
-        entry::{Component, Element, Function, Meta, SimpleString, Task},
-        inf::tests::*,
-    };
+    use crate::entry::{Component, Element, Function, Meta, SimpleString, Task};
     use proptest::prelude::*;
 
     impl Arbitrary for Component {
-        type Parameters = SharedScope;
+        type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
             (
                 "[a-zA-Z]*".prop_map(String::from),
-                prop::collection::vec(Task::arbitrary_with(scope.clone()), 2..6).prop_map(|v| {
+                prop::collection::vec(Task::arbitrary(), 2..6).prop_map(|v| {
                     v.iter()
                         .map(|v| Element::Task(v.clone()))
                         .collect::<Vec<Element>>()
                 }),
-                prop::collection::vec(Meta::arbitrary_with(scope.clone()), 0..3).prop_map(|v| {
+                prop::collection::vec(Meta::arbitrary(), 0..3).prop_map(|v| {
                     v.iter()
                         .map(|v| Element::Meta(v.clone()))
                         .collect::<Vec<Element>>()
                 }),
-                prop::collection::vec(Function::arbitrary_with(scope.clone()), 0..3).prop_map(
-                    |v| {
-                        v.iter()
-                            .map(|v| Element::Function(v.clone()))
-                            .collect::<Vec<Element>>()
-                    },
-                ),
+                prop::collection::vec(Function::arbitrary(), 0..3).prop_map(|v| {
+                    v.iter()
+                        .map(|v| Element::Function(v.clone()))
+                        .collect::<Vec<Element>>()
+                }),
             )
                 .prop_map(|(name, tasks, meta, funcs)| Component {
                     elements: [meta, funcs, tasks].concat(),

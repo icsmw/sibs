@@ -14,3 +14,4 @@
 "release{@ls(./path/*.txt)}-win.zip"
 "release{@ls(./path/*.txt; ./another/path)}-win.zip"
 "release{@ls(./path/*.txt; ./another\ path\ with\ spaces/path)}-win.zip"
+"nexted{@a("a{@a("super")}")}complicated{@a("a{@a("very")}")}string"

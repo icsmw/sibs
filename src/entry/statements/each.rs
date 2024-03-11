@@ -216,26 +216,21 @@ mod processing {
 mod proptest {
 
     use crate::{
-        entry::{
-            block::Block, element::Element, statements::each::Each, task::Task,
-            variable::VariableName,
-        },
+        entry::{task::Task, Block, Each, ElTarget, Element, VariableName},
         inf::{operator::E, tests::*},
         reader::{Reader, Reading},
     };
     use proptest::prelude::*;
-    use std::sync::{Arc, RwLock};
 
     impl Arbitrary for Each {
-        type Parameters = SharedScope;
+        type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            scope.write().unwrap().include(Entity::Each);
-            let boxed = (
-                Block::arbitrary_with(scope.clone()),
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+            (
+                Block::arbitrary(),
                 VariableName::arbitrary(),
-                Element::arbitrary_with(scope.clone()),
+                Element::arbitrary_with(vec![ElTarget::VariableName]),
             )
                 .prop_map(|(block, variable, input)| Each {
                     block,
@@ -243,9 +238,7 @@ mod proptest {
                     input: Box::new(input),
                     token: 0,
                 })
-                .boxed();
-            scope.write().unwrap().exclude(Entity::Each);
-            boxed
+                .boxed()
         }
     }
 
@@ -260,13 +253,20 @@ mod proptest {
         })
     }
 
-    // proptest! {
-    //     #![proptest_config(ProptestConfig::with_cases(10))]
-    //     #[test]
-    //     fn test_run_task(
-    //         args in any_with::<Each>(Arc::new(RwLock::new(Scope::default())).clone())
-    //     ) {
-    //         prop_assert!(reading(args.clone()).is_ok());
-    //     }
-    // }
+    proptest! {
+        #![proptest_config(ProptestConfig {
+            max_shrink_iters: 5000,
+            ..ProptestConfig::with_cases(10)
+        })]
+        #[test]
+        fn test_run_task(
+            args in any_with::<Each>(())
+        ) {
+            let res = reading(args.clone());
+            if res.is_err() {
+                println!("{res:?}");
+            }
+            prop_assert!(res.is_ok());
+        }
+    }
 }

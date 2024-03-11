@@ -183,31 +183,37 @@ mod reading {
 mod proptest {
 
     use crate::{
-        entry::{block::Block, element::Element, meta::Meta, task::Task},
+        entry::{Block, ElTarget, Element, Meta, Task},
         inf::{operator::E, tests::*},
         reader::{Reader, Reading},
     };
     use proptest::prelude::*;
-    use std::sync::{Arc, RwLock};
 
     impl Arbitrary for Block {
-        type Parameters = SharedScope;
+        type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            scope.write().unwrap().include(Entity::Block);
-            let boxed = (
-                prop::collection::vec(Element::arbitrary_with(scope.clone()), 1..=10),
-                Meta::arbitrary_with(scope.clone()),
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+            prop::collection::vec(
+                Element::arbitrary_with(vec![
+                    ElTarget::Meta,
+                    // ElTarget::Function,
+                    // ElTarget::VariableAssignation,
+                    // ElTarget::If,
+                    // ElTarget::Optional,
+                    // ElTarget::First,
+                    // ElTarget::Each,
+                    ElTarget::Command,
+                    // ElTarget::Reference,
+                ]),
+                1..=10,
             )
-                .prop_map(|(elements, meta)| Block {
-                    elements,
-                    owner: None,
-                    token: 0,
-                })
-                .boxed();
-            scope.write().unwrap().exclude(Entity::Block);
-            boxed
+            .prop_map(|elements| Block {
+                elements,
+                owner: None,
+                token: 0,
+            })
+            .boxed()
         }
     }
 
@@ -222,13 +228,20 @@ mod proptest {
         })
     }
 
-    // proptest! {
-    //     #![proptest_config(ProptestConfig::with_cases(10))]
-    //     #[test]
-    //     fn test_run_task(
-    //         args in any_with::<Block>(Arc::new(RwLock::new(Scope::default())).clone())
-    //     ) {
-    //         prop_assert!(reading(args.clone()).is_ok());
-    //     }
-    // }
+    proptest! {
+        #![proptest_config(ProptestConfig {
+            max_shrink_iters: 5000,
+            ..ProptestConfig::with_cases(10)
+        })]
+        #[test]
+        fn test_run_task(
+            args in any_with::<Block>(())
+        ) {
+            let res = reading(args.clone());
+            if res.is_err() {
+                println!("{res:?}");
+            }
+            prop_assert!(res.is_ok());
+        }
+    }
 }

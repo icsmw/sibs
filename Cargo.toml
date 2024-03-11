@@ -19,3 +19,4 @@ importer = { path = "./importer" }
 
 [dev-dependencies]
 proptest = "1.4.0"
+lazy_static = "1.4.0"
