@@ -53,6 +53,13 @@ impl Map {
             index: 0,
         }
     }
+    pub fn pin(&self) -> impl Fn(&mut Map) {
+        let last = self.index;
+        move |map: &mut Map| {
+            map.index = last;
+            map.map.retain(|k, _| k <= &last);
+        }
+    }
     pub fn set_content(&mut self, content: &str) {
         self.content = content.to_owned();
     }

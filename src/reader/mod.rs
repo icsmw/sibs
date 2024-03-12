@@ -63,36 +63,19 @@ impl<'a> MoveTo<'a> {
         if self.bound.done() {
             return None;
         }
-        let content = &self.bound.content[self.bound.pos..];
-        let mut matched: Option<(String, usize, usize)> = None;
-        for (pos, char) in content.chars().enumerate() {
-            if char.is_whitespace() {
-                continue;
-            }
-            let current = self.bound.pos + pos;
-            let mut skipped = false;
-            for word in words.iter() {
-                if matched.is_some() {
-                    break;
-                }
-                let next = current + (word.len() - 1);
-                if next > self.bound.content.len() - 1 {
-                    skipped = true;
-                    continue;
-                }
-                let fragment = self.bound.content[current..=next].to_string();
-                if fragment == *word {
-                    matched = Some((fragment, next + 1, pos));
-                }
-            }
-            if matched.is_some() || !skipped {
+        let content = &self.bound.content[self.bound.pos..].trim();
+        let mut found: Option<String> = None;
+        for word in words.iter() {
+            if content.starts_with(word) {
+                found = Some(word.to_string());
                 break;
             }
         }
-        if let Some((word, next, pos)) = matched {
-            self.bound.index(self.bound.pos, pos);
-            self.bound.pos = next;
-            Some(word)
+        if let Some(found) = found {
+            self.any();
+            self.bound.index(self.bound.pos, found.len());
+            self.bound.pos += found.len();
+            Some(found)
         } else {
             None
         }
@@ -394,28 +377,6 @@ impl<'a> Next<'a> {
         }
         self.bound.content[self.bound.pos..].chars().next()
     }
-    pub fn word(&self, word: &str) -> bool {
-        if self.bound.done() {
-            return false;
-        }
-        self.bound.content[self.bound.pos..]
-            .trim()
-            .starts_with(word)
-    }
-    // pub fn is_char(&mut self, target: &[&char]) -> bool {
-    //     if self.bound.done() {
-    //         return false;
-    //     }
-    //     let content = &self.bound.content[self.bound.pos..];
-    //     let mut serialized: bool = false;
-    //     for char in content.chars() {
-    //         if char.is_whitespace() {
-    //             continue;
-    //         }
-    //         return target.contains(&&char);
-    //     }
-    //     false
-    // }
 }
 
 #[derive(Debug)]
@@ -568,8 +529,10 @@ impl Reader {
     }
     pub fn pin(&mut self) -> impl Fn(&mut Reader) {
         let from = self.pos;
+        let restore_map = self._map.borrow().pin();
         move |reader: &mut Reader| {
             reader.pos = from;
+            restore_map(&mut reader._map.borrow_mut());
         }
     }
     pub fn extend_token(&mut self) {
