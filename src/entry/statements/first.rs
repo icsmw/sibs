@@ -18,9 +18,6 @@ pub struct First {
 impl Reading<First> for First {
     fn read(reader: &mut Reader) -> Result<Option<First>, LinkedErr<E>> {
         let close = reader.open_token();
-        if !reader.next().word(words::FIRST) {
-            return Ok(None);
-        }
         if reader.move_to().word(&[words::FIRST]).is_some() {
             let mut block = if let Some(Element::Block(block)) =
                 Element::include(reader, &[ElTarget::Block])?

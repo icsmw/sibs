@@ -200,9 +200,7 @@ impl Reading<If> for If {
     fn read(reader: &mut Reader) -> Result<Option<If>, LinkedErr<E>> {
         let mut segments: Vec<Segment> = vec![];
         let close = reader.open_token();
-        if !reader.next().word(words::IF) {
-            return Ok(None);
-        }
+
         while !reader.rest().trim().is_empty() {
             if reader.move_to().word(&[words::IF]).is_some() {
                 if reader.until().char(&[&chars::OPEN_SQ_BRACKET]).is_some() {

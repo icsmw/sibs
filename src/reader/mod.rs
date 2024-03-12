@@ -72,9 +72,10 @@ impl<'a> MoveTo<'a> {
             }
         }
         if let Some(found) = found {
+            let from = self.bound.pos;
             self.any();
-            self.bound.index(self.bound.pos, found.len());
             self.bound.pos += found.len();
+            self.bound.index(from, self.bound.pos - from);
             Some(found)
         } else {
             None

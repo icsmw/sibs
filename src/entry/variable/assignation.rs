@@ -43,7 +43,7 @@ impl Reading<VariableAssignation> for VariableAssignation {
                     ElTarget::PatternString,
                     ElTarget::Values,
                     ElTarget::Comparing,
-                    // ElTarget::Command,
+                    ElTarget::Command,
                     ElTarget::VariableName,
                 ],
             )?
@@ -114,7 +114,7 @@ mod reading {
             );
             count += 1;
         }
-        assert_eq!(count, 13);
+        assert_eq!(count, 63);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
@@ -143,7 +143,7 @@ mod reading {
             );
             count += 1;
         }
-        assert_eq!(count, 13);
+        assert_eq!(count, 63);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }

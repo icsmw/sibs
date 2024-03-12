@@ -127,10 +127,10 @@ mod walker {
                     let stopped = bound.move_to().word(&[target]).unwrap();
                     let token = bound.token().unwrap();
                     assert_eq!(stopped, *target);
-                    assert_eq!(token.content, *word);
+                    assert_eq!(token.content.trim(), *target);
                     let from = n * (word.len() + target.len());
                     assert_eq!(token.from, from);
-                    assert_eq!(token.len, word.len());
+                    assert_eq!(token.len, word.len() + target.len());
                     count += 1;
                 }
             });
