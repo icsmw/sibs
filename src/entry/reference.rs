@@ -231,10 +231,7 @@ mod reading {
 #[cfg(test)]
 mod proptest {
 
-    use crate::{
-        entry::{ElTarget, ElementExd, Reference},
-        inf::tests::*,
-    };
+    use crate::entry::{ElTarget, ElementExd, Reference};
     use proptest::prelude::*;
 
     impl Arbitrary for Reference {
@@ -242,7 +239,7 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-            let boxed = (
+            (
                 prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 2),
                 prop::collection::vec(
                     ElementExd::arbitrary_with(vec![ElTarget::VariableName]),
@@ -263,8 +260,7 @@ mod proptest {
                     inputs,
                     token: 0,
                 })
-                .boxed();
-            boxed
+                .boxed()
         }
     }
 }

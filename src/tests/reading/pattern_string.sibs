@@ -15,3 +15,5 @@
 "release{@ls(./path/*.txt; ./another/path)}-win.zip"
 "release{@ls(./path/*.txt; ./another\ path\ with\ spaces/path)}-win.zip"
 "nexted{@a("a{@a("super")}")}complicated{@a("a{@a("very")}")}string"
+"release{IF @os == "true" ["eys";]}-win.zip"
+"release{IF (@os == "true" AND @os == "true") ["eys";]}-win.zip"

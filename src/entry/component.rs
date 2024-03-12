@@ -359,7 +359,7 @@ mod proptest {
         type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
             (
                 "[a-zA-Z]*".prop_map(String::from),
                 prop::collection::vec(Task::arbitrary(), 2..6).prop_map(|v| {

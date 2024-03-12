@@ -252,29 +252,30 @@ mod processing {
 
 #[cfg(test)]
 mod proptest {
-    use crate::{
-        entry::values::{ElTarget, Element, Values},
-        inf::tests::*,
-    };
+    use crate::entry::values::{ElTarget, Element, Values};
     use proptest::prelude::*;
 
     impl Arbitrary for Values {
         type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
             let max = 5;
-            let boxed = prop::collection::vec(
+            prop::collection::vec(
                 Element::arbitrary_with(vec![
+                    ElTarget::Command,
+                    ElTarget::Function,
+                    ElTarget::If,
                     ElTarget::PatternString,
-                    ElTarget::VariableName,
                     ElTarget::Reference,
+                    ElTarget::Values,
+                    ElTarget::Comparing,
+                    ElTarget::VariableName,
                 ]),
                 1..max,
             )
             .prop_map(|elements| Values { elements, token: 0 })
-            .boxed();
-            boxed
+            .boxed()
         }
     }
 }

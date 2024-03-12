@@ -137,11 +137,6 @@ impl Operator for Comparing {
                 Cmp::Equal => left == right,
                 Cmp::NotEqual => left != right,
             })))
-            //TODO: finish implementation
-            // Ok(Some(AnyValue::new(match self.cmp {
-            //     Cmp::Equal => left == right,
-            //     Cmp::NotEqual => left != right,
-            // })))
         })
     }
 }
@@ -228,11 +223,19 @@ mod proptest {
         type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
             (
-                Element::arbitrary_with(vec![ElTarget::VariableName, ElTarget::Function]),
-                Cmp::arbitrary_with(scope.clone()),
-                Element::arbitrary_with(vec![ElTarget::VariableName, ElTarget::Function]),
+                Element::arbitrary_with(vec![
+                    ElTarget::VariableName,
+                    ElTarget::Function,
+                    ElTarget::PatternString,
+                ]),
+                Cmp::arbitrary(),
+                Element::arbitrary_with(vec![
+                    ElTarget::VariableName,
+                    ElTarget::Function,
+                    ElTarget::PatternString,
+                ]),
             )
                 .prop_map(|(left, cmp, right)| Comparing {
                     cmp,

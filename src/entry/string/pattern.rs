@@ -70,16 +70,19 @@ mod reading {
     use crate::{
         entry::string::PatternString,
         error::LinkedErr,
-        inf::{operator::Operator, tests},
+        inf::{context::Context, operator::Operator, tests},
         reader::{chars, Reader, Reading, E},
     };
 
-    #[test]
-    fn reading() -> Result<(), LinkedErr<E>> {
-        let mut reader =
-            Reader::unbound(include_str!("../../tests/reading/pattern_string.sibs").to_string());
+    #[tokio::test]
+    async fn reading() -> Result<(), LinkedErr<E>> {
+        let cx = Context::unbound()?;
+        let mut reader = Reader::bound(
+            include_str!("../../tests/reading/pattern_string.sibs").to_string(),
+            &cx,
+        );
         let mut count = 0;
-        while let Some(entity) = PatternString::read(&mut reader)? {
+        while let Some(entity) = tests::post_if_err(&cx, PatternString::read(&mut reader))? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(reader.recent()),
@@ -87,7 +90,7 @@ mod reading {
             );
             count += 1;
         }
-        assert_eq!(count, 17);
+        assert_eq!(count, 19);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
@@ -107,7 +110,7 @@ mod reading {
             }
             count += 1;
         }
-        assert_eq!(count, 17);
+        assert_eq!(count, 19);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
@@ -134,8 +137,12 @@ mod proptest {
         fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
             (
                 prop::collection::vec(
-                    Element::arbitrary_with(vec![ElTarget::VariableName, ElTarget::Function]),
-                    0..=10,
+                    Element::arbitrary_with(vec![
+                        ElTarget::VariableName,
+                        ElTarget::Function,
+                        ElTarget::If,
+                    ]),
+                    0..=2,
                 ),
                 prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 10),
             )

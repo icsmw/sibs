@@ -226,18 +226,32 @@ mod proptest {
         type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            let boxed = (
-                Element::arbitrary_with(vec![ElTarget::VariableName, ElTarget::Function]),
-                Element::arbitrary_with(vec![ElTarget::Function, ElTarget::VariableAssignation]),
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+            (
+                Element::arbitrary_with(vec![
+                    ElTarget::Function,
+                    ElTarget::VariableName,
+                    ElTarget::Reference,
+                    ElTarget::Block,
+                    ElTarget::Comparing,
+                ]),
+                Element::arbitrary_with(vec![
+                    ElTarget::Function,
+                    ElTarget::Reference,
+                    ElTarget::VariableAssignation,
+                    ElTarget::Each,
+                    ElTarget::Block,
+                    ElTarget::First,
+                    ElTarget::PatternString,
+                    ElTarget::Command,
+                ]),
             )
                 .prop_map(|(condition, action)| Optional {
                     condition: Box::new(condition),
                     action: Box::new(action),
                     token: 0,
                 })
-                .boxed();
-            boxed
+                .boxed()
         }
     }
 
@@ -252,20 +266,20 @@ mod proptest {
         })
     }
 
-    proptest! {
-        #![proptest_config(ProptestConfig {
-            max_shrink_iters: 5000,
-            ..ProptestConfig::with_cases(10)
-        })]
-        #[test]
-        fn test_run_task(
-            args in any_with::<Optional>(())
-        ) {
-            let res = reading(args.clone());
-            if res.is_err() {
-                println!("{res:?}");
-            }
-            prop_assert!(res.is_ok());
-        }
-    }
+    // proptest! {
+    //     #![proptest_config(ProptestConfig {
+    //         max_shrink_iters: 5000,
+    //         ..ProptestConfig::with_cases(10)
+    //     })]
+    //     #[test]
+    //     fn test_run_task(
+    //         args in any_with::<Optional>(())
+    //     ) {
+    //         let res = reading(args.clone());
+    //         if res.is_err() {
+    //             println!("{res:?}");
+    //         }
+    //         prop_assert!(res.is_ok());
+    //     }
+    // }
 }

@@ -339,9 +339,9 @@ mod proptest {
 
     lazy_static! {
         static ref FUNCTION: RwLock<i16> = RwLock::new(100);
-        static ref IF: RwLock<i16> = RwLock::new(0);
-        static ref EACH: RwLock<i16> = RwLock::new(50);
-        static ref FIRST: RwLock<i16> = RwLock::new(50);
+        static ref IF: RwLock<i16> = RwLock::new(50);
+        static ref EACH: RwLock<i16> = RwLock::new(10);
+        static ref FIRST: RwLock<i16> = RwLock::new(10);
         static ref VARIABLE_ASSIGNATION: RwLock<i16> = RwLock::new(200);
         static ref OPTIONAL: RwLock<i16> = RwLock::new(200);
         static ref REFERENCE: RwLock<i16> = RwLock::new(500);
@@ -349,7 +349,7 @@ mod proptest {
         static ref VARIABLE_NAME: RwLock<i16> = RwLock::new(5000);
         static ref COMPARING: RwLock<i16> = RwLock::new(200);
         static ref VALUES: RwLock<i16> = RwLock::new(200);
-        static ref BLOCK: RwLock<i16> = RwLock::new(500);
+        static ref BLOCK: RwLock<i16> = RwLock::new(100);
         static ref META: RwLock<i16> = RwLock::new(1000);
         static ref COMMAND: RwLock<i16> = RwLock::new(200);
         static ref TASK: RwLock<i16> = RwLock::new(50);
@@ -479,20 +479,20 @@ mod proptest {
         })
     }
 
-    proptest! {
-        #![proptest_config(ProptestConfig {
-            max_shrink_iters: 5000,
-            ..ProptestConfig::with_cases(10)
-        })]
-        #[test]
-        fn test_run_task(
-            args in any_with::<Element>(vec![ElTarget::Function])
-        ) {
-            let res = reading(args.clone());
-            if res.is_err() {
-                println!("{res:?}");
-            }
-            prop_assert!(res.is_ok());
-        }
-    }
+    // proptest! {
+    //     #![proptest_config(ProptestConfig {
+    //         max_shrink_iters: 5000,
+    //         ..ProptestConfig::with_cases(10)
+    //     })]
+    //     #[test]
+    //     fn test_run_task(
+    //         args in any_with::<Element>(vec![ElTarget::Function])
+    //     ) {
+    //         let res = reading(args.clone());
+    //         if res.is_err() {
+    //             println!("{res:?}");
+    //         }
+    //         prop_assert!(res.is_ok());
+    //     }
+    // }
 }

@@ -315,10 +315,7 @@ mod processing {
 
 #[cfg(test)]
 mod proptest {
-    use crate::{
-        entry::{Block, SimpleString, Task, VariableDeclaration},
-        inf::tests::*,
-    };
+    use crate::entry::{Block, SimpleString, Task, VariableDeclaration};
     use proptest::prelude::*;
 
     impl Arbitrary for Task {
@@ -326,7 +323,7 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-            let boxed = (
+            (
                 prop::collection::vec(VariableDeclaration::arbitrary(), 0..=5),
                 Block::arbitrary(),
                 "[a-zA-Z_]*".prop_map(String::from),
@@ -340,8 +337,7 @@ mod proptest {
                         token: 0,
                     },
                 })
-                .boxed();
-            boxed
+                .boxed()
         }
     }
 }

@@ -1,3 +1,6 @@
+IF (@functionH("arg8") == $var3) AND ($var4 != "mismatch" OR $var4 == "mismatch") ["Condition met";];
+IF $variable == "one" ["true";];
+IF @one == "one" ["true";];
 IF $variable == "one" OR $variable == "two" [
     @cd(./linux);
 ] ELSE [

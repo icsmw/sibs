@@ -394,6 +394,14 @@ impl<'a> Next<'a> {
         }
         self.bound.content[self.bound.pos..].chars().next()
     }
+    pub fn word(&self, word: &str) -> bool {
+        if self.bound.done() {
+            return false;
+        }
+        self.bound.content[self.bound.pos..]
+            .trim()
+            .starts_with(word)
+    }
     // pub fn is_char(&mut self, target: &[&char]) -> bool {
     //     if self.bound.done() {
     //         return false;

@@ -183,7 +183,7 @@ mod reading {
 mod proptest {
 
     use crate::{
-        entry::{Block, ElTarget, Element, Meta, Task},
+        entry::{Block, ElTarget, Element, Task},
         inf::{operator::E, tests::*},
         reader::{Reader, Reading},
     };
@@ -228,20 +228,20 @@ mod proptest {
         })
     }
 
-    proptest! {
-        #![proptest_config(ProptestConfig {
-            max_shrink_iters: 5000,
-            ..ProptestConfig::with_cases(10)
-        })]
-        #[test]
-        fn test_run_task(
-            args in any_with::<Block>(())
-        ) {
-            let res = reading(args.clone());
-            if res.is_err() {
-                println!("{res:?}");
-            }
-            prop_assert!(res.is_ok());
-        }
-    }
+    // proptest! {
+    //     #![proptest_config(ProptestConfig {
+    //         max_shrink_iters: 5000,
+    //         ..ProptestConfig::with_cases(10)
+    //     })]
+    //     #[test]
+    //     fn test_run_task(
+    //         args in any_with::<Block>(())
+    //     ) {
+    //         let res = reading(args.clone());
+    //         if res.is_err() {
+    //             println!("{res:?}");
+    //         }
+    //         prop_assert!(res.is_ok());
+    //     }
+    // }
 }

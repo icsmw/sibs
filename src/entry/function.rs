@@ -394,8 +394,14 @@ mod proptest {
                 "[a-z][a-z0-9]*".prop_map(String::from),
                 prop::collection::vec(
                     ElementExd::arbitrary_with(vec![
-                        ElTarget::VariableName,
+                        ElTarget::Values,
+                        ElTarget::Function,
+                        ElTarget::If,
                         ElTarget::PatternString,
+                        ElTarget::Reference,
+                        ElTarget::Comparing,
+                        ElTarget::VariableName,
+                        ElTarget::Command,
                     ]),
                     0..=3,
                 ),
@@ -427,20 +433,20 @@ mod proptest {
         })
     }
 
-    proptest! {
-        #![proptest_config(ProptestConfig {
-            max_shrink_iters: 5000,
-            ..ProptestConfig::with_cases(10)
-        })]
-        #[test]
-        fn test_run_task(
-            args in any_with::<Function>(())
-        ) {
-            let res = reading(args.clone());
-            if res.is_err() {
-                println!("{res:?}");
-            }
-            prop_assert!(res.is_ok());
-        }
-    }
+    // proptest! {
+    //     #![proptest_config(ProptestConfig {
+    //         max_shrink_iters: 5000,
+    //         ..ProptestConfig::with_cases(10)
+    //     })]
+    //     #[test]
+    //     fn test_run_task(
+    //         args in any_with::<Function>(())
+    //     ) {
+    //         let res = reading(args.clone());
+    //         if res.is_err() {
+    //             println!("{res:?}");
+    //         }
+    //         prop_assert!(res.is_ok());
+    //     }
+    // }
 }

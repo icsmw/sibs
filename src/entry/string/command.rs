@@ -148,10 +148,7 @@ mod reading {
 #[cfg(test)]
 mod proptest {
 
-    use crate::{
-        entry::{Command, ElTarget, Element},
-        inf::tests::*,
-    };
+    use crate::entry::{Command, ElTarget, Element};
     use proptest::prelude::*;
 
     impl Arbitrary for Command {
@@ -161,8 +158,12 @@ mod proptest {
         fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
             (
                 prop::collection::vec(
-                    Element::arbitrary_with(vec![ElTarget::VariableName, ElTarget::Function]),
-                    0..=10,
+                    Element::arbitrary_with(vec![
+                        ElTarget::VariableName,
+                        ElTarget::Function,
+                        ElTarget::If,
+                    ]),
+                    0..=2,
                 ),
                 prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 10),
             )
