@@ -12,3 +12,10 @@
 - this is valid "@fs::path_join [$tmp_path $file_name];", this is NOT "@fs::path_join [$tmp_path; $file_name;];" or "@fs::path_join [$tmp_path ,$file_name];". Error should be shown.
 - add named arguments for functions @hash track::(bla, bla) run::(bla)
 - prevent dead-loop related to nested Element parsing
+
+NO Errors:
+`create-user --name={$user_name} --role={IF $is_admin == "true" ["admin";]  ["user";]}`
+Doesn't give error                                                        ^^ missed ELSE
+
+`convert image.jpg -pointsize 24 -fill blue -annotate +100+100 'Text with \`backtick\`
+                                                                                     ^^ no closed ` (no errors if it's end of a line)

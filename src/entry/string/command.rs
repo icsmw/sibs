@@ -102,24 +102,38 @@ mod reading {
     use crate::{
         entry::Command,
         error::LinkedErr,
-        inf::{operator::Operator, tests},
+        inf::{context::Context, operator::Operator, tests},
         reader::{chars, Reader, Reading, E},
     };
 
-    #[test]
-    fn reading() -> Result<(), LinkedErr<E>> {
-        let mut reader =
-            Reader::unbound(include_str!("../../tests/reading/command.sibs").to_string());
+    #[tokio::test]
+    async fn reading() -> Result<(), LinkedErr<E>> {
+        let cx: Context = Context::unbound()?;
+        let mut reader = Reader::bound(
+            include_str!("../../tests/reading/command.sibs").to_string(),
+            &cx,
+        );
+        let origins = include_str!("../../tests/reading/command.sibs")
+            .to_string()
+            .split('\n')
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>();
         let mut count = 0;
-        while let Some(entity) = Command::read(&mut reader)? {
+        while let Some(entity) = tests::report_if_err(&cx, Command::read(&mut reader))? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(reader.recent()),
                 tests::trim_carets(&entity.to_string()),
             );
+            assert_eq!(
+                origins[count],
+                tests::trim_carets(&entity.to_string()),
+                "line {}",
+                count + 1
+            );
             count += 1;
         }
-        assert_eq!(count, 16);
+        assert_eq!(count, 130);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
@@ -139,7 +153,7 @@ mod reading {
             }
             count += 1;
         }
-        assert_eq!(count, 16);
+        assert_eq!(count, 130);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }

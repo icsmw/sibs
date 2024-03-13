@@ -146,16 +146,19 @@ mod reading {
     use crate::{
         entry::Comparing,
         error::LinkedErr,
-        inf::{operator::Operator, tests},
+        inf::{context::Context, operator::Operator, tests},
         reader::{chars, Reader, Reading, E},
     };
 
-    #[test]
-    fn reading() -> Result<(), LinkedErr<E>> {
-        let mut reader =
-            Reader::unbound(include_str!("../tests/reading/comparing.sibs").to_string());
+    #[tokio::test]
+    async fn reading() -> Result<(), LinkedErr<E>> {
+        let cx: Context = Context::unbound()?;
+        let mut reader = Reader::bound(
+            include_str!("../tests/reading/comparing.sibs").to_string(),
+            &cx,
+        );
         let mut count = 0;
-        while let Some(entity) = Comparing::read(&mut reader)? {
+        while let Some(entity) = tests::report_if_err(&cx, Comparing::read(&mut reader))? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(reader.recent()),
