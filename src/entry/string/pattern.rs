@@ -71,7 +71,7 @@ mod reading {
         entry::string::PatternString,
         error::LinkedErr,
         inf::{context::Context, operator::Operator, tests},
-        reader::{chars, Reader, Reading, E},
+        reader::{Reader, Reading, E},
     };
 
     #[tokio::test]
@@ -81,16 +81,26 @@ mod reading {
             include_str!("../../tests/reading/pattern_string.sibs").to_string(),
             &cx,
         );
+        let origins = include_str!("../../tests/reading/pattern_string.sibs")
+            .to_string()
+            .split('\n')
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>();
         let mut count = 0;
-        while let Some(entity) = tests::post_if_err(&cx, PatternString::read(&mut reader))? {
-            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+        while let Some(entity) = tests::report_if_err(&cx, PatternString::read(&mut reader))? {
             assert_eq!(
                 tests::trim_carets(reader.recent()),
                 tests::trim_carets(&entity.to_string()),
             );
+            assert_eq!(
+                origins[count],
+                tests::trim_carets(&entity.to_string()),
+                "line {}",
+                count + 1
+            );
             count += 1;
         }
-        assert_eq!(count, 19);
+        assert_eq!(count, 96);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
@@ -110,7 +120,7 @@ mod reading {
             }
             count += 1;
         }
-        assert_eq!(count, 19);
+        assert_eq!(count, 96);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
