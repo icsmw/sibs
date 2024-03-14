@@ -21,17 +21,24 @@ Meta,
 Command,
 Task,
 Component,
+Integer,
+Boolean,
 }
 
 ```
+# Integer
+Equal to rust `isize` type
 
-VariableName
+# Boolean
+Standard bool type: true / false
+
+# VariableName
 Name of variable starts from $ and include alphabetic and numeric symbols, also “-” and “_”. Examples of variable names: 
 $var
 $var_a
 $var-b
 
-VariableAssignation,
+# VariableAssignation
 Very classic way, using “=”. Examples:
 $var = “string”;
 
@@ -44,8 +51,10 @@ as value can be:
     - Values,
     - Comparing,
     - VariableName,
+    - Integer,
+    - Boolean,
 
-Function
+# Function
 Name of function starts from @ and include alphabetic and numeric symbols, also “-” and “_”. Examples of function names: 
 @get
 @get_os
@@ -53,7 +62,7 @@ Name of function starts from @ and include alphabetic and numeric symbols, also 
 
 function can have arguments in “(…)” and divided with “;”. For example:
 @find(“something”)
-@find(“one”; “two”)
+@find(“one”; “two”; 123; true; false)
 
 As argument function can get:
 - Values,
@@ -64,8 +73,10 @@ As argument function can get:
 - Comparing,
 - VariableName,
 - Command,
+- Integer,
+- Boolean,
 
-Comparing
+# Comparing
 This is construction, which returns true/false. In can be:
 left == right
 left != right
@@ -75,12 +86,14 @@ As left and right can be:
 - Function,
 - PatternString,
 - Values,
+- Integer,
+- Boolean,
 
 For example
 $var_a == “one”;
 $var_b != “one”
 
-PatternString
+# PatternString
 String closed with quotes, like: “this is my string”;
 PatternString supports injections, which can be defined between {…}. For example:
 
@@ -91,7 +104,7 @@ As injection can be used:
 - Function,
 - If
 
-Command
+# Command
 Same as PatternString but instead quotes uses tilda… For example `npm build app`;
 As PatternString supports injections:
 
@@ -102,7 +115,7 @@ As injection can be used:
 - Function,
 - If
 
-Optional
+# Optional
 This is optional action. If condition returns true, action will be fired. Condition and action divided with “=>”: condition => action
 
 For example:
@@ -125,8 +138,10 @@ As action can be used:
 - First,
 - PatternString,
 - Command,
+- Integer,
+- Boolean,
 
-Values
+# Values
 This is collection of values. Like an array or vector. Values should be defined between (…) and divided with “;”. For example
 
 (“one”; “two”; @get_three)
@@ -140,8 +155,10 @@ As value can be used:
 - Values,
 - Comparing,
 - VariableName,
+- Integer,
+- Boolean,
 
-Block
+# Block
 Block is a collection/list of others. Content of block locked between “[…]”. For example:
 
 [
@@ -168,8 +185,10 @@ Inside block can be:
 - Block,
 - Meta,
 - Command,
+- Integer,
+- Boolean,
 
-If statement
+# If statement
 Very classic statement:
 
 IF conditions [
@@ -198,8 +217,7 @@ As condition can be used:
 - Comparing,
 - Function
 
-
-First
+# First
 Statements starts with key-word FIRST and has after Block with actions. 
 
 Example:
@@ -213,7 +231,7 @@ FIRST [
 
 First runs actions one by one and returns the first value from some actions (not all actions return values)
 
-Each
+# Each
 
 Iterate values
 

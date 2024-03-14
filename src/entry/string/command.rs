@@ -123,11 +123,13 @@ mod reading {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(reader.recent()),
-                tests::trim_carets(&entity.to_string()),
+                tests::trim_carets(&format!("{entity};")),
+                "line {}",
+                count + 1
             );
             assert_eq!(
                 origins[count],
-                tests::trim_carets(&entity.to_string()),
+                tests::trim_carets(&format!("{entity};")),
                 "line {}",
                 count + 1
             );
@@ -144,6 +146,7 @@ mod reading {
             Reader::unbound(include_str!("../../tests/reading/command.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Command::read(&mut reader)? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(&entity.to_string()),
                 reader.get_fragment(&entity.token)?.content

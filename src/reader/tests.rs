@@ -324,11 +324,19 @@ mod walker {
                 assert_eq!(between, content);
             }
             {
+                // Empty groups
                 let mut bound = Reader::unbound(format!("{left}{right}"));
-                let between = bound.group().between(left, right).unwrap();
+                let between: String = bound.group().between(left, right).unwrap();
                 assert_eq!(between, "");
                 let token = bound.token().unwrap();
                 assert_eq!(token.content, between);
+            }
+            {
+                // Group without ending
+                let mut bound = Reader::unbound(format!("{left}----------"));
+                assert!(bound.group().between(left, right).is_none());
+                let mut bound = Reader::unbound(format!("{left}----------\\{left}"));
+                assert!(bound.group().between(left, right).is_none());
             }
             count += 1;
         });
@@ -337,7 +345,7 @@ mod walker {
     #[test]
     fn group_closed() {
         let noise = "abcdefg123456";
-        let borders = ['"', '|', '\''];
+        let borders = ['"', '|', '\'', '`'];
         let mut count = 0;
         borders.iter().for_each(|border| {
             {
@@ -386,11 +394,19 @@ mod walker {
                 assert_eq!(token.content, between);
             }
             {
+                // Empty groups
                 let mut bound = Reader::unbound(format!("{border}{border}"));
                 let between = bound.group().closed(border).unwrap();
                 assert_eq!(between, "");
                 let token = bound.token().unwrap();
                 assert_eq!(token.content, between);
+            }
+            {
+                // Unclosed groups
+                let mut bound = Reader::unbound(format!("{border}-------------"));
+                assert!(bound.group().closed(border).is_none());
+                let mut bound = Reader::unbound(format!("{border}-------------\\{border}"));
+                assert!(bound.group().closed(border).is_none());
             }
             count += 1;
         });
