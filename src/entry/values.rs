@@ -42,6 +42,8 @@ impl Reading<Values> for Values {
                     ElTarget::Values,
                     ElTarget::Comparing,
                     ElTarget::VariableName,
+                    ElTarget::Integer,
+                    ElTarget::Boolean,
                 ],
             )? {
                 if inner.move_to().char(&[&chars::SEMICOLON]).is_none()

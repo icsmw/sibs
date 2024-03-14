@@ -45,6 +45,8 @@ impl Reading<VariableAssignation> for VariableAssignation {
                     ElTarget::Comparing,
                     ElTarget::Command,
                     ElTarget::VariableName,
+                    ElTarget::Integer,
+                    ElTarget::Boolean,
                 ],
             )?
             .ok_or(E::FailToParseRightSideOfAssignation.by_reader(reader))?;

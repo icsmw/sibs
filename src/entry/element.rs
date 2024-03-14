@@ -1,7 +1,8 @@
 use crate::{
     entry::{
-        Block, Command, Comparing, Component, Each, First, Function, If, Meta, Optional,
-        PatternString, Reference, SimpleString, Task, Values, VariableAssignation, VariableName,
+        Block, Boolean, Command, Comparing, Component, Each, First, Function, If, Integer, Meta,
+        Optional, PatternString, Reference, SimpleString, Task, Values, VariableAssignation,
+        VariableName,
     },
     error::LinkedErr,
     inf::{
@@ -32,6 +33,8 @@ pub enum ElTarget {
     Command,
     Task,
     Component,
+    Integer,
+    Boolean,
 }
 
 #[derive(Debug, Clone)]
@@ -52,6 +55,8 @@ pub enum Element {
     Command(Command),
     Task(Task),
     Component(Component),
+    Boolean(Boolean),
+    Integer(Integer),
 }
 
 impl Element {
@@ -60,6 +65,16 @@ impl Element {
         targets: &[ElTarget],
         includes: bool,
     ) -> Result<Option<Element>, LinkedErr<E>> {
+        if includes == targets.contains(&ElTarget::Integer) {
+            if let Some(el) = Meta::read(reader)? {
+                return Ok(Some(Element::Meta(el)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::Boolean) {
+            if let Some(el) = Meta::read(reader)? {
+                return Ok(Some(Element::Meta(el)));
+            }
+        }
         if includes == targets.contains(&ElTarget::Meta) {
             if let Some(el) = Meta::read(reader)? {
                 return Ok(Some(Element::Meta(el)));
@@ -180,6 +195,8 @@ impl fmt::Display for Element {
                 Self::Command(v) => v.to_string(),
                 Self::Task(v) => v.to_string(),
                 Self::Component(v) => v.to_string(),
+                Self::Boolean(v) => v.to_string(),
+                Self::Integer(v) => v.to_string(),
             }
         )
     }
@@ -210,6 +227,8 @@ impl Operator for Element {
             Self::Command(v) => v.token(),
             Self::Task(v) => v.token(),
             Self::Component(v) => v.token(),
+            Self::Integer(v) => v.token(),
+            Self::Boolean(v) => v.token(),
         }
     }
     fn perform<'a>(
@@ -236,6 +255,8 @@ impl Operator for Element {
                 Self::Command(v) => v.execute(owner, components, args, cx).await,
                 Self::Task(v) => v.execute(owner, components, args, cx).await,
                 Self::Component(v) => v.execute(owner, components, args, cx).await,
+                Self::Integer(v) => v.execute(owner, components, args, cx).await,
+                Self::Boolean(v) => v.execute(owner, components, args, cx).await,
                 Self::Meta(_) => Ok(None),
             }
         })
@@ -244,7 +265,11 @@ impl Operator for Element {
 
 impl Reading<Element> for Element {
     fn read(reader: &mut Reader) -> Result<Option<Element>, LinkedErr<E>> {
-        Ok(if let Some(el) = Meta::read(reader)? {
+        Ok(if let Some(el) = Integer::read(reader)? {
+            Some(Element::Integer(el))
+        } else if let Some(el) = Boolean::read(reader)? {
+            Some(Element::Boolean(el))
+        } else if let Some(el) = Meta::read(reader)? {
             Some(Element::Meta(el))
         } else if let Some(el) = Command::read(reader)? {
             Some(Element::Command(el))
@@ -326,9 +351,9 @@ impl Operator for ElementExd {
 mod proptest {
     use crate::{
         entry::{
-            Block, Command, Comparing, Component, Each, ElTarget, Element, ElementExd, First,
-            Function, If, Meta, Optional, PatternString, Reference, SimpleString, Task, Values,
-            VariableAssignation, VariableName,
+            Block, Boolean, Command, Comparing, Component, Each, ElTarget, Element, ElementExd,
+            First, Function, If, Integer, Meta, Optional, PatternString, Reference, SimpleString,
+            Task, Values, VariableAssignation, VariableName,
         },
         inf::{operator::E, tests::*},
         reader::{Reader, Reading},
@@ -354,6 +379,8 @@ mod proptest {
         static ref COMMAND: RwLock<i16> = RwLock::new(200);
         static ref TASK: RwLock<i16> = RwLock::new(50);
         static ref COMPONENT: RwLock<i16> = RwLock::new(50);
+        static ref INTEGER: RwLock<i16> = RwLock::new(10000);
+        static ref BOOLEAN: RwLock<i16> = RwLock::new(10000);
     }
 
     impl Arbitrary for ElementExd {
@@ -370,6 +397,14 @@ mod proptest {
     }
     fn generate(targets: &[ElTarget], no_limits: bool) -> Vec<BoxedStrategy<Element>> {
         let mut collected = vec![];
+        if targets.contains(&ElTarget::Integer) && (*BLOCK.read().unwrap() > 0 || no_limits) {
+            *INTEGER.write().unwrap() -= 1;
+            collected.push(Integer::arbitrary().prop_map(Element::Integer).boxed());
+        }
+        if targets.contains(&ElTarget::Boolean) && (*BLOCK.read().unwrap() > 0 || no_limits) {
+            *BOOLEAN.write().unwrap() -= 1;
+            collected.push(Boolean::arbitrary().prop_map(Element::Boolean).boxed());
+        }
         if targets.contains(&ElTarget::Block) && (*BLOCK.read().unwrap() > 0 || no_limits) {
             *BLOCK.write().unwrap() -= 1;
             collected.push(Block::arbitrary().prop_map(Element::Block).boxed());

@@ -87,6 +87,8 @@ impl Reading<Function> for Function {
                             ElTarget::Comparing,
                             ElTarget::VariableName,
                             ElTarget::Command,
+                            ElTarget::Integer,
+                            ElTarget::Boolean,
                         ],
                     )? {
                         if inner.move_to().char(&[&chars::SEMICOLON]).is_none() && !inner.is_empty()

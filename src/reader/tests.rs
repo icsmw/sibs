@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod walker {
-    use crate::reader::Reader;
+    use crate::reader::{chars, Reader};
 
     #[test]
     fn until_whitespace() {
@@ -54,6 +54,37 @@ mod walker {
             });
         });
         assert_eq!(count, words.len() * targets.len());
+    }
+    #[test]
+    fn move_to_none_numeric() {
+        let words = ["one", "two", "-one", "\\-two"];
+        let targets = [
+            ("111", "111", 111),
+            ("-222", "-222", -222),
+            ("1", "1", 1),
+            ("-1", "-1", -1),
+            (" - 111", "-111", -111),
+            ("-  222", "-222", -222),
+            (" - 1", "-1", -1),
+            ("       -   1", "-1", -1),
+        ];
+        targets.iter().for_each(|target| {
+            words.iter().for_each(|word| {
+                let mut reader = Reader::unbound(format!("{}{word}", target.0));
+                if let Some(value) = reader.move_to().none_numeric() {
+                    let token = reader.token().unwrap();
+                    assert_eq!(target.0, token.content);
+                    assert_eq!(target.1, value);
+                    assert_eq!(target.2, value.trim().parse::<isize>().unwrap());
+                    assert_eq!(
+                        reader.next().char().unwrap().to_string(),
+                        word.get(0..1).unwrap()
+                    );
+                } else {
+                    panic!("Fail to read numeric value");
+                }
+            });
+        });
     }
     #[test]
     fn until_word() {
@@ -111,9 +142,36 @@ mod walker {
         assert_eq!(count, words.len() * targets.len() * times);
     }
     #[test]
-    fn move_to_word() {
+    fn move_to_expression() {
         let words = ["    ", "\t\t\t\n\n\n", "\t \n \t \n"];
         let targets = [">", "==", "!=", "=>"];
+        let mut count = 0;
+        let times = 4;
+        words.iter().for_each(|word| {
+            targets.iter().for_each(|target| {
+                let mut content = String::new();
+                for _ in 0..times {
+                    content = format!("{content}{word}{target}");
+                }
+                let mut bound = Reader::unbound(content);
+                for n in 0..times {
+                    let stopped = bound.move_to().expression(&[target]).unwrap();
+                    let token = bound.token().unwrap();
+                    assert_eq!(stopped, *target);
+                    assert_eq!(token.content.trim(), *target);
+                    let from = n * (word.len() + target.len());
+                    assert_eq!(token.from, from);
+                    assert_eq!(token.len, word.len() + target.len());
+                    count += 1;
+                }
+            });
+        });
+        assert_eq!(count, words.len() * targets.len() * times);
+    }
+    #[test]
+    fn move_to_word() {
+        let words = ["    ", "\t\t\t\n\n\n", "\t \n \t \n"];
+        let targets = ["true", "false", "with space"];
         let mut count = 0;
         let times = 4;
         words.iter().for_each(|word| {
@@ -136,6 +194,14 @@ mod walker {
             });
         });
         assert_eq!(count, words.len() * targets.len() * times);
+        count = 0;
+        targets.iter().for_each(|target| {
+            let content = format!("{target}{target}");
+            let mut bound = Reader::unbound(content);
+            assert!(bound.move_to().word(&[target]).is_none());
+            count += 1;
+        });
+        assert_eq!(count, targets.len());
     }
     #[test]
     fn move_to_whitespace() {

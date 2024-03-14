@@ -13,7 +13,9 @@ use crate::{
 };
 pub use error::E;
 use map::{Fragment, Map};
-use std::{cell::RefCell, fmt::Display, fs, future::Future, path::PathBuf, pin::Pin, rc::Rc};
+use std::{
+    cell::RefCell, collections::HashSet, fs, future::Future, path::PathBuf, pin::Pin, rc::Rc,
+};
 
 pub trait Reading<T> {
     fn read(reader: &mut Reader) -> Result<Option<T>, LinkedErr<E>>;
@@ -67,6 +69,11 @@ impl<'a> MoveTo<'a> {
         let mut found: Option<String> = None;
         for word in words.iter() {
             if content.starts_with(word) {
+                if let Some(char) = content.chars().nth(word.len()) {
+                    if char.is_alphabetic() {
+                        continue;
+                    }
+                }
                 found = Some(word.to_string());
                 break;
             }
@@ -80,6 +87,59 @@ impl<'a> MoveTo<'a> {
         } else {
             None
         }
+    }
+    pub fn expression(&mut self, words: &[&str]) -> Option<String> {
+        if self.bound.done() {
+            return None;
+        }
+        let content = &self.bound.content[self.bound.pos..].trim();
+        let mut found: Option<String> = None;
+        for word in words.iter() {
+            if content.starts_with(word) {
+                found = Some(word.to_string());
+                break;
+            }
+        }
+        if let Some(found) = found {
+            let from = self.bound.pos;
+            self.any();
+            self.bound.pos += found.len();
+            self.bound.index(from, self.bound.pos - from);
+            Some(found)
+        } else {
+            None
+        }
+    }
+    pub fn none_numeric(&mut self) -> Option<String> {
+        if self.bound.done() {
+            return None;
+        }
+        let mut str: String = String::new();
+        let content = &self.bound.content[self.bound.pos..];
+        let mut negative = false;
+        let mut first: bool = false;
+        for (pos, char) in content.chars().enumerate() {
+            if char.is_whitespace() && !first {
+                continue;
+            }
+            if char == '-' && !negative && !first {
+                negative = true;
+                str.push(char);
+                continue;
+            } else if char.is_numeric() {
+                first = true;
+                str.push(char);
+                continue;
+            }
+            if !str.is_empty() && str != "-" {
+                self.bound.index(self.bound.pos, pos);
+                self.bound.pos += pos;
+                return Some(str);
+            } else {
+                return None;
+            }
+        }
+        None
     }
     pub fn whitespace(&mut self) -> bool {
         if self.bound.done() {

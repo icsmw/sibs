@@ -31,6 +31,8 @@ pub enum E {
     NotAsciiValue(String),
     #[error("Empty value")]
     EmptyValue,
+    #[error("Error parsing an integer from string: {0}")]
+    IntegerParsingError(String),
     #[error("No content before semicolon")]
     NoContentBeforeSemicolon,
     #[error("No function arguments")]

@@ -41,7 +41,7 @@ impl Reading<Optional> for Optional {
             restore(reader);
             return Ok(None);
         }
-        if reader.move_to().word(&[words::DO_ON]).is_none() {
+        if reader.move_to().expression(&[words::DO_ON]).is_none() {
             return Err(E::NoOptionalRedirection.by_reader(reader));
         }
         let action = if let Some(el) = Element::include(
@@ -55,6 +55,8 @@ impl Reading<Optional> for Optional {
                 ElTarget::First,
                 ElTarget::PatternString,
                 ElTarget::Command,
+                ElTarget::Integer,
+                ElTarget::Boolean,
             ],
         )? {
             Box::new(el)

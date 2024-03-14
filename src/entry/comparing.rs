@@ -53,6 +53,8 @@ impl Reading<Comparing> for Comparing {
                     ElTarget::Function,
                     ElTarget::PatternString,
                     ElTarget::Values,
+                    ElTarget::Integer,
+                    ElTarget::Boolean,
                 ],
             )? {
                 Box::new(el)
@@ -64,17 +66,19 @@ impl Reading<Comparing> for Comparing {
                 restore(reader);
                 return Ok(None);
             }
-            let cmp =
-                if let Some(word) = reader.move_to().word(&[words::CMP_TRUE, words::CMP_FALSE]) {
-                    if word == words::CMP_TRUE {
-                        Cmp::Equal
-                    } else {
-                        Cmp::NotEqual
-                    }
+            let cmp = if let Some(word) = reader
+                .move_to()
+                .expression(&[words::CMP_TRUE, words::CMP_FALSE])
+            {
+                if word == words::CMP_TRUE {
+                    Cmp::Equal
                 } else {
-                    restore(reader);
-                    return Ok(None);
-                };
+                    Cmp::NotEqual
+                }
+            } else {
+                restore(reader);
+                return Ok(None);
+            };
             let right = if let Some(el) = Element::include(
                 reader,
                 &[
@@ -82,6 +86,8 @@ impl Reading<Comparing> for Comparing {
                     ElTarget::Function,
                     ElTarget::PatternString,
                     ElTarget::Values,
+                    ElTarget::Integer,
+                    ElTarget::Boolean,
                 ],
             )? {
                 Box::new(el)
