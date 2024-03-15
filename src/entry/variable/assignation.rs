@@ -112,11 +112,11 @@ mod reading {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(reader.recent()),
-                tests::trim_carets(&format!("{entity};"))
+                tests::trim_carets(&format!("{entity};")),
             );
             count += 1;
         }
-        assert_eq!(count, 63);
+        assert_eq!(count, 113);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
@@ -145,7 +145,7 @@ mod reading {
             );
             count += 1;
         }
-        assert_eq!(count, 63);
+        assert_eq!(count, 113);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }

@@ -66,13 +66,13 @@ impl Element {
         includes: bool,
     ) -> Result<Option<Element>, LinkedErr<E>> {
         if includes == targets.contains(&ElTarget::Integer) {
-            if let Some(el) = Meta::read(reader)? {
-                return Ok(Some(Element::Meta(el)));
+            if let Some(el) = Integer::read(reader)? {
+                return Ok(Some(Element::Integer(el)));
             }
         }
         if includes == targets.contains(&ElTarget::Boolean) {
-            if let Some(el) = Meta::read(reader)? {
-                return Ok(Some(Element::Meta(el)));
+            if let Some(el) = Boolean::read(reader)? {
+                return Ok(Some(Element::Boolean(el)));
             }
         }
         if includes == targets.contains(&ElTarget::Meta) {

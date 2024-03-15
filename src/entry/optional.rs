@@ -50,6 +50,7 @@ impl Reading<Optional> for Optional {
                 ElTarget::Function,
                 ElTarget::Reference,
                 ElTarget::VariableAssignation,
+                ElTarget::VariableName,
                 ElTarget::Block,
                 ElTarget::Each,
                 ElTarget::First,
