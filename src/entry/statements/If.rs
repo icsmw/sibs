@@ -266,7 +266,14 @@ impl Reading<If> for If {
 impl If {
     pub fn inner(reader: &mut Reader) -> Result<Proviso, LinkedErr<E>> {
         let negative = reader.move_to().char(&[&chars::EXCLAMATION]).is_some();
-        if let Some(el) = Element::include(reader, &[ElTarget::Comparing, ElTarget::Function])? {
+        if let Some(el) = Element::include(
+            reader,
+            &[
+                ElTarget::Comparing,
+                ElTarget::Function,
+                ElTarget::VariableName,
+            ],
+        )? {
             Ok(Proviso::Condition(el, negative))
         } else {
             Err(E::NoProvisoOfCondition.by_reader(reader))
@@ -516,8 +523,12 @@ mod proptest {
                 max,
             ),
             prop::collection::vec(
-                Element::arbitrary_with(vec![ElTarget::Comparing])
-                    .prop_map(|cmb| Proviso::Condition(cmb, false)),
+                Element::arbitrary_with(vec![
+                    ElTarget::Comparing,
+                    ElTarget::Function,
+                    ElTarget::VariableName,
+                ])
+                .prop_map(|cmb| Proviso::Condition(cmb, false)),
                 max,
             ),
         )

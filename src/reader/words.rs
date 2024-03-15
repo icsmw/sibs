@@ -11,3 +11,4 @@ pub const META: &str = "///";
 pub const COMP: &str = "#(";
 pub const TRUE: &str = "true";
 pub const FALSE: &str = "false";
+pub const REDIRECT: &str = ">>";

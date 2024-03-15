@@ -36,7 +36,7 @@
     ];
     distribution [
         /// Name and compress release artifacts
-        $version = @read_as_string(./package.json) > @find(/"version": "([\d\.])"/gi);
+        $version = @read_as_string(./package.json) >> @find(/"version": "([\d\.])"/gi);
         IF @os(linux) OR @os(darwin) [ "release{$version}-win.zip"; ] ELSE [ "bla"; ];
         @os(window) => $file_name = "release{$version}-win.zip";
         @os(linux) => $file_name = "release{$version}-linux.zip";
@@ -54,7 +54,7 @@
         EACH($file; $files) [
             `tgz ./release/{$file}`;
         ];
-        $files = @ls(./path) > @as_lines;
+        $files = @ls(./path) >> @as_lines;
         EACH($file; $files) [
             IF $file != "." AND $file != ".." [
                 `tgz ./release/{$file}`;

@@ -127,9 +127,7 @@ impl Reading<Function> for Function {
                     tolerance,
                 )?));
             }
-            if reader.rest().trim().starts_with(chars::REDIRECT) {
-                reader.trim();
-                reader.move_to().next();
+            if reader.move_to().expression(&[words::REDIRECT]).is_some() {
                 let feed_func_token_id = close(reader);
                 let feed_func_args_token_id = args_close(reader);
                 return if let Some(Element::Function(mut dest)) =
@@ -233,8 +231,8 @@ impl fmt::Display for Function {
         write!(
             f,
             "{}{}{}",
-            nested.join(" > "),
-            if nested.is_empty() { "" } else { " > " },
+            nested.join(" >> "),
+            if nested.is_empty() { "" } else { " >> " },
             to_string(self)
         )
     }
@@ -336,8 +334,17 @@ mod reading {
         for sample in samples.iter() {
             let mut reader = Reader::unbound(sample.to_string());
             let func = Function::read(&mut reader);
-            println!("{func:?}");
-            assert!(func.is_err());
+            if func.is_ok() {
+                let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                assert!(
+                    !reader.rest().trim().is_empty(),
+                    "Line {}: func: {:?}",
+                    count + 1,
+                    func
+                );
+            } else {
+                assert!(func.is_err(), "Line {}: func: {:?}", count + 1, func);
+            }
             count += 1;
         }
         assert_eq!(count, samples.len());
