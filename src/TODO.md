@@ -15,7 +15,5 @@
 - add types: bool, number
 NO Errors:
 `create-user --name={$user_name} --role={IF $is_admin == "true" ["admin";]  ["user";]}`
-Doesn't give error                                                        ^^ missed ELSE
+$is_verified AND $has_permission => @proceed_with_action;
 
-`convert image.jpg -pointsize 24 -fill blue -annotate +100+100 'Text with \`backtick\`
-                                                                                     ^^ no closed ` (no errors if it's end of a line)

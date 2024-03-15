@@ -111,24 +111,29 @@ mod reading {
     use crate::{
         entry::Optional,
         error::LinkedErr,
-        inf::{operator::Operator, tests},
+        inf::{context::Context, operator::Operator, tests},
         reader::{chars, Reader, Reading, E},
     };
 
-    #[test]
-    fn reading() -> Result<(), LinkedErr<E>> {
-        let mut reader =
-            Reader::unbound(include_str!("../tests/reading/optional.sibs").to_string());
+    #[tokio::test]
+    async fn reading() -> Result<(), LinkedErr<E>> {
+        let cx: Context = Context::unbound()?;
+        let mut reader = Reader::bound(
+            include_str!("../tests/reading/optional.sibs").to_string(),
+            &cx,
+        );
         let mut count = 0;
-        while let Some(entity) = Optional::read(&mut reader)? {
+        while let Some(entity) = tests::report_if_err(&cx, Optional::read(&mut reader))? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(reader.recent()),
-                tests::trim_carets(&format!("{entity};"))
+                tests::trim_carets(&format!("{entity};")),
+                "Line: {}",
+                count + 1
             );
             count += 1;
         }
-        assert_eq!(count, 15);
+        assert_eq!(count, 106);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
@@ -142,7 +147,9 @@ mod reading {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(&format!("{entity}")),
-                reader.get_fragment(&entity.token)?.lined
+                reader.get_fragment(&entity.token)?.lined,
+                "Line: {}",
+                count + 1
             );
             // In some cases like with PatternString, semicolon can be skipped, because
             // belongs to parent entity (Optional).
@@ -151,16 +158,20 @@ mod reading {
                 tests::trim_semicolon(&tests::trim_carets(
                     &reader.get_fragment(&entity.action.token())?.lined
                 )),
+                "Line: {}",
+                count + 1
             );
             assert_eq!(
                 tests::trim_semicolon(&tests::trim_carets(&entity.condition.to_string())),
                 tests::trim_semicolon(&tests::trim_carets(
                     &reader.get_fragment(&entity.condition.token())?.lined
                 )),
+                "Line: {}",
+                count + 1
             );
             count += 1;
         }
-        assert_eq!(count, 15);
+        assert_eq!(count, 106);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
