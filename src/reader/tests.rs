@@ -83,6 +83,15 @@ mod walker {
                 } else {
                     panic!("Fail to read numeric value");
                 }
+                let mut reader = Reader::unbound(target.0.to_string());
+                if let Some(value) = reader.move_to().none_numeric() {
+                    let token = reader.token().unwrap();
+                    assert_eq!(target.0, token.content);
+                    assert_eq!(target.1, value);
+                    assert_eq!(target.2, value.trim().parse::<isize>().unwrap());
+                } else {
+                    panic!("Fail to read numeric value");
+                }
             });
         });
     }

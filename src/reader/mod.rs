@@ -117,17 +117,17 @@ impl<'a> MoveTo<'a> {
         let mut str: String = String::new();
         let content = &self.bound.content[self.bound.pos..];
         let mut negative = false;
-        let mut first: bool = false;
+        let mut first: Option<usize> = None;
         for (pos, char) in content.chars().enumerate() {
-            if char.is_whitespace() && !first {
+            if char.is_whitespace() && first.is_none() {
                 continue;
             }
-            if char == '-' && !negative && !first {
+            if char == '-' && !negative && first.is_none() {
                 negative = true;
                 str.push(char);
                 continue;
             } else if char.is_numeric() {
-                first = true;
+                first = Some(pos);
                 str.push(char);
                 continue;
             }
@@ -139,7 +139,14 @@ impl<'a> MoveTo<'a> {
                 return None;
             }
         }
-        None
+        if !str.is_empty() && str != "-" {
+            let last = content.len();
+            self.bound.index(self.bound.pos, last);
+            self.bound.pos += last;
+            Some(str)
+        } else {
+            None
+        }
     }
     pub fn whitespace(&mut self) -> bool {
         if self.bound.done() {

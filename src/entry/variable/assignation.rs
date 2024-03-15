@@ -113,6 +113,8 @@ mod reading {
             assert_eq!(
                 tests::trim_carets(reader.recent()),
                 tests::trim_carets(&format!("{entity};")),
+                "Line: {}",
+                count + 1
             );
             count += 1;
         }
@@ -131,17 +133,23 @@ mod reading {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(&format!("{entity}")),
-                reader.get_fragment(&entity.token)?.lined
+                reader.get_fragment(&entity.token)?.lined,
+                "Line: {}",
+                count + 1
             );
             assert_eq!(
                 tests::trim_carets(&entity.variable.to_string()),
-                tests::trim_carets(&reader.get_fragment(&entity.variable.token)?.content)
+                tests::trim_carets(&reader.get_fragment(&entity.variable.token)?.content),
+                "Line: {}",
+                count + 1
             );
             assert_eq!(
                 tests::trim_semicolon(&tests::trim_carets(&entity.assignation.to_string())),
                 tests::trim_semicolon(&tests::trim_carets(
                     &reader.get_fragment(&entity.assignation.token())?.content
-                ))
+                )),
+                "Line: {}",
+                count + 1
             );
             count += 1;
         }

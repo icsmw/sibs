@@ -80,6 +80,8 @@ As argument function can get:
 This is construction, which returns true/false. In can be:
 left == right
 left != right
+left < right
+left > right
 
 As left and right can be:
 - VariableName,
@@ -92,6 +94,9 @@ As left and right can be:
 For example
 $var_a == “one”;
 $var_b != “one”
+$var_b != 42
+$var > 42
+$var < 24
 
 # PatternString
 String closed with quotes, like: “this is my string”;

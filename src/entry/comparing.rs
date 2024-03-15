@@ -209,7 +209,7 @@ mod reading {
             );
             count += 1;
         }
-        assert_eq!(count, 189);
+        assert_eq!(count, 237);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
@@ -239,7 +239,7 @@ mod reading {
             );
             count += 1;
         }
-        assert_eq!(count, 189);
+        assert_eq!(count, 237);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
