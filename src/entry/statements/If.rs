@@ -498,7 +498,13 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-            prop_oneof![Just(Cmp::Equal), Just(Cmp::NotEqual),].boxed()
+            prop_oneof![
+                Just(Cmp::Equal),
+                Just(Cmp::NotEqual),
+                Just(Cmp::LeftBig),
+                Just(Cmp::RightBig)
+            ]
+            .boxed()
         }
     }
 

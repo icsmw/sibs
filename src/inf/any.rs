@@ -43,12 +43,82 @@ impl AnyValue {
         }
     }
 
+    pub fn get_as_integer(&self) -> Option<isize> {
+        let reference = self.value.as_ref().as_any();
+        reference
+            .downcast_ref::<String>()
+            .map(|v| v.parse::<isize>().map_or(None, Some))
+            .or_else(|| {
+                reference
+                    .downcast_ref::<usize>()
+                    .map(|v| isize::try_from(*v).map_or(None, Some))
+            })
+            .or_else(|| reference.downcast_ref::<isize>().map(|v| Some(*v)))
+            .or_else(|| {
+                reference
+                    .downcast_ref::<u128>()
+                    .map(|v| isize::try_from(*v).map_or(None, Some))
+            })
+            .or_else(|| {
+                reference
+                    .downcast_ref::<u64>()
+                    .map(|v| isize::try_from(*v).map_or(None, Some))
+            })
+            .or_else(|| {
+                reference
+                    .downcast_ref::<u32>()
+                    .map(|v| isize::try_from(*v).map_or(None, Some))
+            })
+            .or_else(|| {
+                reference
+                    .downcast_ref::<u16>()
+                    .map(|v| isize::try_from(*v).map_or(None, Some))
+            })
+            .or_else(|| {
+                reference
+                    .downcast_ref::<u8>()
+                    .map(|v| isize::try_from(*v).map_or(None, Some))
+            })
+            .or_else(|| {
+                reference
+                    .downcast_ref::<i128>()
+                    .map(|v| isize::try_from(*v).map_or(None, Some))
+            })
+            .or_else(|| {
+                reference
+                    .downcast_ref::<i64>()
+                    .map(|v| isize::try_from(*v).map_or(None, Some))
+            })
+            .or_else(|| {
+                reference
+                    .downcast_ref::<i32>()
+                    .map(|v| isize::try_from(*v).map_or(None, Some))
+            })
+            .or_else(|| {
+                reference
+                    .downcast_ref::<i16>()
+                    .map(|v| isize::try_from(*v).map_or(None, Some))
+            })
+            .or_else(|| {
+                reference
+                    .downcast_ref::<i8>()
+                    .map(|v| isize::try_from(*v).map_or(None, Some))
+            })
+            .or_else(|| {
+                reference
+                    .downcast_ref::<AnyValue>()
+                    .and_then(|v| Some(v.get_as_integer()))
+            })
+            .unwrap_or(None)
+    }
+
     pub fn get_as_string(&self) -> Option<String> {
         let reference = self.value.as_ref().as_any();
         reference
             .downcast_ref::<String>()
             .map(|v| v.to_owned())
             .or_else(|| reference.downcast_ref::<usize>().map(|v| v.to_string()))
+            .or_else(|| reference.downcast_ref::<isize>().map(|v| v.to_string()))
             .or_else(|| reference.downcast_ref::<u8>().map(|v| v.to_string()))
             .or_else(|| reference.downcast_ref::<u16>().map(|v| v.to_string()))
             .or_else(|| reference.downcast_ref::<u32>().map(|v| v.to_string()))
@@ -78,6 +148,11 @@ impl AnyValue {
             .or_else(|| {
                 reference
                     .downcast_ref::<Vec<usize>>()
+                    .map(|v| v.iter().map(|v| v.to_string()).collect::<Vec<String>>())
+            })
+            .or_else(|| {
+                reference
+                    .downcast_ref::<Vec<isize>>()
                     .map(|v| v.iter().map(|v| v.to_string()).collect::<Vec<String>>())
             })
             .or_else(|| {

@@ -14,6 +14,20 @@ use std::fmt;
 pub enum Cmp {
     Equal,
     NotEqual,
+    LeftBig,
+    RightBig,
+}
+
+impl Cmp {
+    pub fn from_str(value: &str) -> Result<Self, E> {
+        match value {
+            words::CMP_TRUE => Ok(Self::Equal),
+            words::CMP_FALSE => Ok(Self::NotEqual),
+            words::CMP_RBIG => Ok(Self::RightBig),
+            words::CMP_LBIG => Ok(Self::LeftBig),
+            _ => Err(E::UnrecognizedCode(value.to_string())),
+        }
+    }
 }
 
 impl fmt::Display for Cmp {
@@ -24,6 +38,8 @@ impl fmt::Display for Cmp {
             match self {
                 Self::Equal => words::CMP_TRUE,
                 Self::NotEqual => words::CMP_FALSE,
+                Self::LeftBig => words::CMP_LBIG,
+                Self::RightBig => words::CMP_RBIG,
             }
         )
     }
@@ -42,7 +58,12 @@ impl Reading<Comparing> for Comparing {
         let close = reader.open_token();
         if reader
             .until()
-            .word(&[words::CMP_TRUE, words::CMP_FALSE])
+            .word(&[
+                words::CMP_TRUE,
+                words::CMP_FALSE,
+                words::CMP_LBIG,
+                words::CMP_RBIG,
+            ])
             .is_some()
         {
             let mut inner = reader.token()?.bound;
@@ -66,15 +87,13 @@ impl Reading<Comparing> for Comparing {
                 restore(reader);
                 return Ok(None);
             }
-            let cmp = if let Some(word) = reader
-                .move_to()
-                .expression(&[words::CMP_TRUE, words::CMP_FALSE])
-            {
-                if word == words::CMP_TRUE {
-                    Cmp::Equal
-                } else {
-                    Cmp::NotEqual
-                }
+            let cmp = if let Some(word) = reader.move_to().expression(&[
+                words::CMP_TRUE,
+                words::CMP_FALSE,
+                words::CMP_LBIG,
+                words::CMP_RBIG,
+            ]) {
+                Cmp::from_str(&word)?
             } else {
                 restore(reader);
                 return Ok(None);
@@ -129,20 +148,38 @@ impl Operator for Comparing {
                 .left
                 .execute(owner, components, args, cx)
                 .await?
-                .ok_or(operator::E::NoResultFromLeftOnComparing)?
-                .get_as_string()
-                .ok_or(operator::E::FailToGetStringValue)?;
+                .ok_or(operator::E::NoResultFromLeftOnComparing)?;
             let right = self
                 .right
                 .execute(owner, components, args, cx)
                 .await?
-                .ok_or(operator::E::NoResultFromRightOnComparing)?
-                .get_as_string()
-                .ok_or(operator::E::FailToGetStringValue)?;
-            Ok(Some(AnyValue::new(match self.cmp {
-                Cmp::Equal => left == right,
-                Cmp::NotEqual => left != right,
-            })))
+                .ok_or(operator::E::NoResultFromRightOnComparing)?;
+            Ok(Some(match self.cmp {
+                Cmp::LeftBig | Cmp::RightBig => {
+                    let left = left
+                        .get_as_integer()
+                        .ok_or(operator::E::FailToGetIntegerValue)?;
+                    let right = right
+                        .get_as_integer()
+                        .ok_or(operator::E::FailToGetIntegerValue)?;
+                    AnyValue::new(
+                        (matches!(self.cmp, Cmp::LeftBig) && left > right)
+                            || matches!(self.cmp, Cmp::RightBig) && left < right,
+                    )
+                }
+                _ => {
+                    let left = left
+                        .get_as_string()
+                        .ok_or(operator::E::FailToGetStringValue)?;
+                    let right = right
+                        .get_as_string()
+                        .ok_or(operator::E::FailToGetStringValue)?;
+                    AnyValue::new(
+                        (matches!(self.cmp, Cmp::Equal) && left == right)
+                            || (matches!(self.cmp, Cmp::NotEqual) && left != right),
+                    )
+                }
+            }))
         })
     }
 }

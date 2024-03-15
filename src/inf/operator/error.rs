@@ -40,6 +40,8 @@ pub enum E {
     FailToGetValueAsString,
     #[error("Fail to get string value")]
     FailToGetStringValue,
+    #[error("Fail to get integer value")]
+    FailToGetIntegerValue,
     #[error("Fail to get any value for task's argument")]
     FailToGetAnyValueAsTaskArg,
     #[error("Function doesn't return bool result")]
