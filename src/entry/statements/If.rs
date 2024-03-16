@@ -382,18 +382,20 @@ mod reading {
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
         let cx: Context = Context::unbound()?;
-        let mut reader =
-            Reader::bound(include_str!("../../tests/reading/if.sibs").to_string(), &cx);
+        let content = include_str!("../../tests/reading/if.sibs").to_string();
+        let mut reader = Reader::bound(content.clone(), &cx);
         let mut count = 0;
         while let Some(entity) = tests::report_if_err(&cx, If::read(&mut reader))? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(reader.recent()),
-                tests::trim_carets(&format!("{entity};"))
+                tests::trim_carets(&format!("{entity};")),
+                "Line: {}",
+                count + 1
             );
             count += 1;
         }
-        assert_eq!(count, 13);
+        assert_eq!(count, content.split("\n").count());
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
@@ -487,7 +489,7 @@ mod processing {
 mod proptest {
 
     use crate::{
-        entry::{task::Task, Block, Cmp, Combination, ElTarget, Element, If, Proviso, Segment},
+        entry::{task::Task, Block, Combination, ElTarget, Element, If, Proviso, Segment},
         inf::{operator::E, tests::*},
         reader::{Reader, Reading},
     };

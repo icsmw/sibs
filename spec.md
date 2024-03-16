@@ -221,6 +221,7 @@ As action If has Block element.
 As condition can be used: 
 - Comparing,
 - Function
+- VariableName
 
 # First
 Statements starts with key-word FIRST and has after Block with actions. 
