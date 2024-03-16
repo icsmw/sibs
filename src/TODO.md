@@ -16,4 +16,4 @@
 NO Errors:
 `create-user --name={$user_name} --role={IF $is_admin == "true" ["admin";]  ["user";]}`
 $is_verified AND $has_permission => @proceed_with_action;
-
+true != false doesn't work

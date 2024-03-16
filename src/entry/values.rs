@@ -128,18 +128,27 @@ mod reading {
     use crate::{
         entry::Values,
         error::LinkedErr,
-        inf::{operator::Operator, tests},
+        inf::{context::Context, operator::Operator, tests},
         reader::{Reader, Reading, E},
     };
 
-    #[test]
-    fn reading() -> Result<(), LinkedErr<E>> {
+    #[tokio::test]
+    async fn reading() -> Result<(), LinkedErr<E>> {
+        let cx: Context = Context::unbound()?;
         let samples = include_str!("../tests/reading/values.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::unbound(sample.to_string());
-            assert!(Values::read(&mut reader)?.is_some());
+            let mut reader = Reader::bound(sample.to_string(), &cx);
+            let entity = tests::report_if_err(&cx, Values::read(&mut reader))?;
+            assert!(entity.is_some(), "Line: {}", count + 1);
+            let entity = entity.unwrap();
+            assert_eq!(
+                tests::trim_carets(reader.recent()),
+                tests::trim_carets(&format!("{entity}")),
+                "Line: {}",
+                count + 1
+            );
             count += 1;
         }
         assert_eq!(count, samples.len());
@@ -156,12 +165,16 @@ mod reading {
             let entity = Values::read(&mut reader)?.unwrap();
             assert_eq!(
                 tests::trim_carets(&entity.to_string()),
-                reader.get_fragment(&entity.token)?.lined
+                reader.get_fragment(&entity.token)?.lined,
+                "Line: {}",
+                count + 1
             );
             for el in entity.elements.iter() {
                 assert_eq!(
                     tests::trim_carets(&el.to_string()),
-                    tests::trim_carets(&reader.get_fragment(&el.token())?.content)
+                    tests::trim_carets(&reader.get_fragment(&el.token())?.content),
+                    "Line: {}",
+                    count + 1
                 );
             }
             count += 1;

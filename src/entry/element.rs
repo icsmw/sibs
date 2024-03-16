@@ -65,16 +65,6 @@ impl Element {
         targets: &[ElTarget],
         includes: bool,
     ) -> Result<Option<Element>, LinkedErr<E>> {
-        if includes == targets.contains(&ElTarget::Integer) {
-            if let Some(el) = Integer::read(reader)? {
-                return Ok(Some(Element::Integer(el)));
-            }
-        }
-        if includes == targets.contains(&ElTarget::Boolean) {
-            if let Some(el) = Boolean::read(reader)? {
-                return Ok(Some(Element::Boolean(el)));
-            }
-        }
         if includes == targets.contains(&ElTarget::Meta) {
             if let Some(el) = Meta::read(reader)? {
                 return Ok(Some(Element::Meta(el)));
@@ -98,6 +88,16 @@ impl Element {
         if includes == targets.contains(&ElTarget::Comparing) {
             if let Some(el) = Comparing::read(reader)? {
                 return Ok(Some(Element::Comparing(el)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::Integer) {
+            if let Some(el) = Integer::read(reader)? {
+                return Ok(Some(Element::Integer(el)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::Boolean) {
+            if let Some(el) = Boolean::read(reader)? {
+                return Ok(Some(Element::Boolean(el)));
             }
         }
         if includes == targets.contains(&ElTarget::Function) {
@@ -265,11 +265,7 @@ impl Operator for Element {
 
 impl Reading<Element> for Element {
     fn read(reader: &mut Reader) -> Result<Option<Element>, LinkedErr<E>> {
-        Ok(if let Some(el) = Integer::read(reader)? {
-            Some(Element::Integer(el))
-        } else if let Some(el) = Boolean::read(reader)? {
-            Some(Element::Boolean(el))
-        } else if let Some(el) = Meta::read(reader)? {
+        Ok(if let Some(el) = Meta::read(reader)? {
             Some(Element::Meta(el))
         } else if let Some(el) = Command::read(reader)? {
             Some(Element::Command(el))
@@ -279,6 +275,10 @@ impl Reading<Element> for Element {
             Some(Element::Optional(el))
         } else if let Some(el) = Comparing::read(reader)? {
             Some(Element::Comparing(el))
+        } else if let Some(el) = Integer::read(reader)? {
+            Some(Element::Integer(el))
+        } else if let Some(el) = Boolean::read(reader)? {
+            Some(Element::Boolean(el))
         } else if let Some(el) = Function::read(reader)? {
             Some(Element::Function(el))
         } else if let Some(el) = VariableAssignation::read(reader)? {
