@@ -278,21 +278,24 @@ mod reading {
     use crate::{
         entry::Function,
         error::LinkedErr,
-        inf::{operator::Operator, tests},
+        inf::{context::Context, operator::Operator, tests},
         reader::{chars, Reader, Reading, E},
     };
 
-    #[test]
-    fn reading() -> Result<(), LinkedErr<E>> {
+    #[tokio::test]
+    async fn reading() -> Result<(), LinkedErr<E>> {
+        let cx: Context = Context::unbound()?;
         let content = include_str!("../tests/reading/function.sibs").to_string();
         let len = content.split('\n').count();
-        let mut reader = Reader::unbound(content);
+        let mut reader = Reader::bound(content, &cx);
         let mut count = 0;
-        while let Some(entity) = Function::read(&mut reader)? {
+        while let Some(entity) = tests::report_if_err(&cx, Function::read(&mut reader))? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(reader.recent()),
-                tests::trim_carets(&format!("{entity};"))
+                tests::trim_carets(&format!("{entity};")),
+                "Line: {}",
+                count + 1
             );
             count += 1;
         }
