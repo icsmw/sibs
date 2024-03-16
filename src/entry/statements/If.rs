@@ -493,21 +493,6 @@ mod proptest {
     };
     use proptest::prelude::*;
 
-    impl Arbitrary for Cmp {
-        type Parameters = ();
-        type Strategy = BoxedStrategy<Self>;
-
-        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-            prop_oneof![
-                Just(Cmp::Equal),
-                Just(Cmp::NotEqual),
-                Just(Cmp::LeftBig),
-                Just(Cmp::RightBig)
-            ]
-            .boxed()
-        }
-    }
-
     impl Arbitrary for Combination {
         type Parameters = ();
         type Strategy = BoxedStrategy<Self>;

@@ -235,3 +235,7 @@ false < $var36;
 false != @is_even($var38);
 $var39 < 0;
 0 > $var40;
+60 <= $var32;
+60 >= $var32;
+$var32 >= 32;
+$var32 <= $var34;

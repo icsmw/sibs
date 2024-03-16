@@ -16,6 +16,8 @@ pub enum Cmp {
     NotEqual,
     LeftBig,
     RightBig,
+    LeftBigInc,
+    RightBigInc,
 }
 
 impl Cmp {
@@ -25,6 +27,8 @@ impl Cmp {
             words::CMP_FALSE => Ok(Self::NotEqual),
             words::CMP_RBIG => Ok(Self::RightBig),
             words::CMP_LBIG => Ok(Self::LeftBig),
+            words::CMP_LBIG_INC => Ok(Self::LeftBigInc),
+            words::CMP_RBIG_INC => Ok(Self::RightBigInc),
             _ => Err(E::UnrecognizedCode(value.to_string())),
         }
     }
@@ -40,6 +44,8 @@ impl fmt::Display for Cmp {
                 Self::NotEqual => words::CMP_FALSE,
                 Self::LeftBig => words::CMP_LBIG,
                 Self::RightBig => words::CMP_RBIG,
+                Self::LeftBigInc => words::CMP_LBIG_INC,
+                Self::RightBigInc => words::CMP_RBIG_INC,
             }
         )
     }
@@ -61,6 +67,8 @@ impl Reading<Comparing> for Comparing {
             .word(&[
                 words::CMP_TRUE,
                 words::CMP_FALSE,
+                words::CMP_LBIG_INC,
+                words::CMP_RBIG_INC,
                 words::CMP_LBIG,
                 words::CMP_RBIG,
             ])
@@ -90,6 +98,8 @@ impl Reading<Comparing> for Comparing {
             let cmp = if let Some(word) = reader.move_to().expression(&[
                 words::CMP_TRUE,
                 words::CMP_FALSE,
+                words::CMP_LBIG_INC,
+                words::CMP_RBIG_INC,
                 words::CMP_LBIG,
                 words::CMP_RBIG,
             ]) {
@@ -167,6 +177,18 @@ impl Operator for Comparing {
                             || matches!(self.cmp, Cmp::RightBig) && left < right,
                     )
                 }
+                Cmp::LeftBigInc | Cmp::RightBigInc => {
+                    let left = left
+                        .get_as_integer()
+                        .ok_or(operator::E::FailToGetIntegerValue)?;
+                    let right = right
+                        .get_as_integer()
+                        .ok_or(operator::E::FailToGetIntegerValue)?;
+                    AnyValue::new(
+                        (matches!(self.cmp, Cmp::LeftBigInc) && left >= right)
+                            || matches!(self.cmp, Cmp::RightBigInc) && left <= right,
+                    )
+                }
                 _ => {
                     let left = left
                         .get_as_string()
@@ -209,7 +231,7 @@ mod reading {
             );
             count += 1;
         }
-        assert_eq!(count, 237);
+        assert_eq!(count, 241);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
@@ -239,7 +261,7 @@ mod reading {
             );
             count += 1;
         }
-        assert_eq!(count, 237);
+        assert_eq!(count, 241);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
@@ -264,6 +286,23 @@ mod reading {
 mod proptest {
     use crate::entry::{Cmp, Comparing, ElTarget, Element};
     use proptest::prelude::*;
+
+    impl Arbitrary for Cmp {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+            prop_oneof![
+                Just(Cmp::Equal),
+                Just(Cmp::NotEqual),
+                Just(Cmp::LeftBig),
+                Just(Cmp::RightBig),
+                Just(Cmp::LeftBigInc),
+                Just(Cmp::RightBigInc)
+            ]
+            .boxed()
+        }
+    }
 
     impl Arbitrary for Comparing {
         type Parameters = ();

@@ -8,6 +8,8 @@ pub const CMP_TRUE: &str = "==";
 pub const CMP_FALSE: &str = "!=";
 pub const CMP_RBIG: &str = "<";
 pub const CMP_LBIG: &str = ">";
+pub const CMP_RBIG_INC: &str = "<=";
+pub const CMP_LBIG_INC: &str = ">=";
 pub const DO_ON: &str = "=>";
 pub const META: &str = "///";
 pub const COMP: &str = "#(";
