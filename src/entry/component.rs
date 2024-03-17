@@ -1,5 +1,5 @@
 use crate::{
-    entry::{ElTarget, Element, Function, Meta, SimpleString, Task},
+    entry::{ElTarget, Element, Meta, SimpleString, Task},
     error::LinkedErr,
     inf::{
         context::Context,
@@ -210,26 +210,32 @@ impl Operator for Component {
 #[cfg(test)]
 mod reading {
     use crate::{
-        entry::{Component, Element},
+        entry::Component,
         error::LinkedErr,
-        inf::{operator::Operator, tests},
+        inf::{
+            context::Context,
+            operator::Operator,
+            tests::{self, report_if_err},
+        },
         reader::{Reader, Reading, E},
     };
 
-    #[test]
-    fn reading() -> Result<(), LinkedErr<E>> {
+    #[tokio::test]
+    async fn reading() -> Result<(), LinkedErr<E>> {
+        let cx: Context = Context::unbound()?;
         let components = include_str!("../tests/reading/component.sibs").to_string();
         let components = components.split('\n').collect::<Vec<&str>>();
         let tasks = include_str!("../tests/reading/tasks.sibs");
-        let mut reader = Reader::unbound(
+        let mut reader = Reader::bound(
             components
                 .iter()
                 .map(|c| format!("{c}\n{tasks}"))
                 .collect::<Vec<String>>()
                 .join("\n"),
+            &cx,
         );
         let mut count = 0;
-        while let Some(entity) = Component::read(&mut reader)? {
+        while let Some(entity) = report_if_err(&cx, Component::read(&mut reader))? {
             assert_eq!(
                 tests::trim_carets(reader.recent()),
                 tests::trim_carets(&entity.to_string()),

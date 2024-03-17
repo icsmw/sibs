@@ -1,12 +1,11 @@
 use crate::{
-    entry::{Block, Component, ElTarget, Element},
+    entry::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        any::AnyValue,
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
     },
-    reader::{chars, words, Reader, Reading, E},
+    reader::{words, Reader, Reading, E},
 };
 use std::fmt;
 

@@ -69,17 +69,20 @@ impl term::Display for VariableVariants {
 mod reading {
     use crate::{
         entry::VariableVariants,
+        error::LinkedErr,
+        inf::{context::Context, tests::*},
         reader::{Reader, Reading, E},
     };
 
-    #[test]
-    fn reading() -> Result<(), E> {
+    #[tokio::test]
+    async fn reading() -> Result<(), LinkedErr<E>> {
+        let cx: Context = Context::unbound()?;
         let samples = include_str!("../../tests/reading/variants.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::unbound(sample.to_string());
-            assert!(VariableVariants::read(&mut reader).is_ok());
+            let mut reader = Reader::bound(sample.to_string(), &cx);
+            assert!(report_if_err(&cx, VariableVariants::read(&mut reader)).is_ok());
             count += 1;
         }
         assert_eq!(count, samples.len());

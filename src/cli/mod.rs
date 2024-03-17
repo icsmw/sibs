@@ -8,7 +8,7 @@ use crate::{
         operator::Operator,
         scenario::Scenario,
         term::{Display, Term},
-        tracker::{self, Tracker},
+        tracker::{self},
     },
     reader,
 };

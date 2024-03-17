@@ -12,6 +12,7 @@ pub enum Declaration {
     VariableVariants(VariableVariants),
 }
 
+#[cfg(test)]
 impl Declaration {
     pub fn token(&self) -> usize {
         match &self {

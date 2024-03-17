@@ -138,26 +138,29 @@ mod reading {
     use crate::{
         entry::Block,
         error::LinkedErr,
-        inf::tests,
+        inf::{context::Context, tests::*},
         reader::{Reader, Reading, E},
     };
 
-    #[test]
-    fn reading() -> Result<(), LinkedErr<E>> {
-        let mut reader = Reader::unbound(format!(
-            "[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
-            include_str!("../tests/reading/if.sibs"),
-            include_str!("../tests/reading/variable_assignation.sibs"),
-            include_str!("../tests/reading/function.sibs"),
-            include_str!("../tests/reading/optional.sibs"),
-            include_str!("../tests/reading/each.sibs"),
-            include_str!("../tests/reading/refs.sibs")
-        ));
-
-        while let Some(entity) = Block::read(&mut reader)? {
+    #[tokio::test]
+    async fn reading() -> Result<(), LinkedErr<E>> {
+        let cx: Context = Context::unbound()?;
+        let mut reader = Reader::bound(
+            format!(
+                "[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
+                include_str!("../tests/reading/if.sibs"),
+                include_str!("../tests/reading/variable_assignation.sibs"),
+                include_str!("../tests/reading/function.sibs"),
+                include_str!("../tests/reading/optional.sibs"),
+                include_str!("../tests/reading/each.sibs"),
+                include_str!("../tests/reading/refs.sibs")
+            ),
+            &cx,
+        );
+        while let Some(entity) = report_if_err(&cx, Block::read(&mut reader))? {
             assert_eq!(
-                tests::trim_carets(reader.recent()),
-                tests::trim_carets(&entity.to_string())
+                trim_carets(reader.recent()),
+                trim_carets(&entity.to_string())
             );
         }
         assert!(reader.rest().trim().is_empty());
@@ -177,7 +180,7 @@ mod reading {
         ));
         while let Some(entity) = Block::read(&mut reader)? {
             assert_eq!(
-                tests::trim_carets(&entity.to_string()),
+                trim_carets(&entity.to_string()),
                 reader.get_fragment(&entity.token)?.lined
             );
         }

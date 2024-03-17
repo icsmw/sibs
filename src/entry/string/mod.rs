@@ -9,7 +9,7 @@ pub use simple::*;
 use crate::{
     entry::{ElTarget, Element},
     error::LinkedErr,
-    reader::{self, chars, Reader, E},
+    reader::{chars, Reader, E},
 };
 
 pub type PatternStringResult = (String, Vec<(String, Element)>, usize);

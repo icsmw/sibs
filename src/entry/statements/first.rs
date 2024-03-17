@@ -63,20 +63,23 @@ mod reading {
     use crate::{
         entry::First,
         error::LinkedErr,
-        inf::tests,
+        inf::{context::Context, tests::*},
         reader::{chars, Reader, Reading, E},
     };
 
-    #[test]
-    fn reading() -> Result<(), LinkedErr<E>> {
-        let mut reader =
-            Reader::unbound(include_str!("../../tests/reading/first.sibs").to_string());
+    #[tokio::test]
+    async fn reading() -> Result<(), LinkedErr<E>> {
+        let cx: Context = Context::unbound()?;
+        let mut reader = Reader::bound(
+            include_str!("../../tests/reading/first.sibs").to_string(),
+            &cx,
+        );
         let mut count = 0;
-        while let Some(entity) = First::read(&mut reader)? {
+        while let Some(entity) = report_if_err(&cx, First::read(&mut reader))? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
-                tests::trim_carets(reader.recent()),
-                tests::trim_carets(&format!("{entity};"))
+                trim_carets(reader.recent()),
+                trim_carets(&format!("{entity};"))
             );
             count += 1;
         }
@@ -93,12 +96,12 @@ mod reading {
         while let Some(entity) = First::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
-                tests::trim_carets(&format!("{entity}")),
-                tests::trim_carets(&reader.get_fragment(&entity.token)?.lined),
+                trim_carets(&format!("{entity}")),
+                trim_carets(&reader.get_fragment(&entity.token)?.lined),
             );
             assert_eq!(
-                tests::trim_carets(&entity.block.to_string()),
-                tests::trim_carets(&reader.get_fragment(&entity.block.token)?.lined),
+                trim_carets(&entity.block.to_string()),
+                trim_carets(&reader.get_fragment(&entity.block.token)?.lined),
             );
             count += 1;
         }

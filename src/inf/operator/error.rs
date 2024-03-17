@@ -44,24 +44,16 @@ pub enum E {
     FailToGetIntegerValue,
     #[error("Fail to get any value for task's argument")]
     FailToGetAnyValueAsTaskArg,
-    #[error("Function doesn't return bool result")]
-    NoBoolResultFromFunction,
     #[error("If=proviso doesn't return bool result")]
     NoBoolResultFromProviso,
     #[error("Left side of comparing statement doesn't return result")]
     NoResultFromLeftOnComparing,
     #[error("Right side of comparing statement doesn't return result")]
     NoResultFromRightOnComparing,
-    #[error("If=(proviso AND/OR proviso) doesn't return bool result")]
-    NoBoolResultFromProvisoGroup,
     #[error("If=proviso doesn't return any result")]
     NoResultFromProviso,
-    #[error("Combination operator (AND, OR) should follow after proviso")]
-    WrongConditionsOrderInIf,
     #[error("Variable \"{0}\" isn't assigned")]
     VariableIsNotAssigned(String),
-    #[error("Fail to extract value for IF statement")]
-    FailExtractValueForIFStatement,
     #[error("Function \"{0}\" doesn't have registred executor")]
     NoFunctionExecutor(String),
     #[error("Fail assign variable \"{0}\"; no value")]
@@ -76,8 +68,6 @@ pub enum E {
     NoValueToDeclareTaskArgument,
     #[error("Reference has invalid number of parts")]
     InvalidPartsInReference,
-    #[error("Unsupported condition of IF statement")]
-    UnsupportedCondition,
     #[error("Owner component isn't defined")]
     NoOwnerComponent,
     #[error("Fail to find component \"{0}\"")]

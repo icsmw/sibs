@@ -192,7 +192,7 @@ mod reading {
         entry::Comparing,
         error::LinkedErr,
         inf::{context::Context, operator::Operator, tests},
-        reader::{chars, Reader, Reading, E},
+        reader::{Reader, Reading, E},
     };
 
     #[tokio::test]

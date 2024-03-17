@@ -8,14 +8,12 @@ pub mod words;
 use crate::{
     entry::{Component, Function},
     error::LinkedErr,
-    executors::{import::Import, Executor},
+    executors::import::Import,
     inf::context::Context,
 };
 pub use error::E;
 use map::{Fragment, Map};
-use std::{
-    cell::RefCell, collections::HashSet, fs, future::Future, path::PathBuf, pin::Pin, rc::Rc,
-};
+use std::{cell::RefCell, fs, future::Future, path::PathBuf, pin::Pin, rc::Rc};
 
 pub trait Reading<T> {
     fn read(reader: &mut Reader) -> Result<Option<T>, LinkedErr<E>>;
@@ -148,32 +146,9 @@ impl<'a> MoveTo<'a> {
             None
         }
     }
-    pub fn whitespace(&mut self) -> bool {
-        if self.bound.done() {
-            return false;
-        }
-        let content = &self.bound.content[self.bound.pos..];
-        for (pos, char) in content.chars().enumerate() {
-            if char.is_whitespace() {
-                self.bound.index(self.bound.pos, pos);
-                self.bound.pos += pos + 1;
-                return true;
-            }
-        }
-        false
-    }
     pub fn next(&mut self) -> bool {
         if self.bound.pos < self.bound.content.len() {
             self.bound.pos += 1;
-            true
-        } else {
-            false
-        }
-    }
-    pub fn next_and_extend(&mut self) -> bool {
-        if self.bound.pos < self.bound.content.len() {
-            self.bound.pos += 1;
-            self.bound.extend_token();
             true
         } else {
             false
@@ -261,71 +236,6 @@ impl<'a> Until<'a> {
         }
         None
     }
-    pub fn whitespace(&mut self) -> Option<String> {
-        if self.bound.done() {
-            return None;
-        }
-        let content = &self.bound.content[self.bound.pos..];
-        let mut serialized: bool = false;
-        let mut str: String = String::new();
-        for (pos, char) in content.chars().enumerate() {
-            if !serialized && char != chars::SERIALIZING && char.is_whitespace() {
-                self.bound.index(self.bound.pos, pos);
-                self.bound.pos += pos;
-                return Some(str);
-            }
-            serialized = char == chars::SERIALIZING;
-            str.push(char);
-        }
-        None
-    }
-}
-
-#[derive(Debug)]
-pub struct Contains<'a> {
-    bound: &'a mut Reader,
-}
-impl<'a> Contains<'a> {
-    pub fn new(bound: &'a mut Reader) -> Self {
-        Self { bound }
-    }
-    pub fn char(&mut self, target: &char) -> bool {
-        if self.bound.done() {
-            return false;
-        }
-        let content = &self.bound.content[self.bound.pos..];
-        let mut serialized: bool = false;
-        for char in content.chars() {
-            if serialized || char == chars::SERIALIZING {
-                serialized = char == chars::SERIALIZING;
-                continue;
-            }
-            if char == *target {
-                return true;
-            }
-        }
-        false
-    }
-    pub fn word(&mut self, targets: &[&str]) -> bool {
-        if self.bound.done() {
-            return false;
-        }
-        let mut str: String = String::new();
-        let mut serialized: bool = false;
-        let content = &self.bound.content[self.bound.pos..];
-        for char in content.chars() {
-            if !serialized && char != chars::SERIALIZING {
-                str.push(char);
-            }
-            serialized = char == chars::SERIALIZING;
-            for word in targets.iter() {
-                if str.ends_with(word) {
-                    return true;
-                }
-            }
-        }
-        false
-    }
 }
 
 #[derive(Debug)]
@@ -372,65 +282,8 @@ impl<'a> Group<'a> {
         }
         None
     }
-    pub fn closed(&mut self, border: &char) -> Option<String> {
-        if self.bound.done() {
-            return None;
-        }
-        let mut str: String = String::new();
-        let mut serialized: bool = false;
-        let content = &self.bound.content[self.bound.pos..];
-        let mut opened: Option<usize> = None;
-        for (pos, char) in content.chars().enumerate() {
-            if char.is_whitespace() && opened.is_none() {
-                continue;
-            }
-            if !char.is_whitespace() && opened.is_none() && char != *border {
-                return None;
-            }
-            if char == *border && !serialized {
-                if let Some(opened) = opened {
-                    self.bound.index(opened, str.len());
-                    self.bound.pos += pos + 1;
-                    return Some(str);
-                } else {
-                    opened = Some(self.bound.pos + pos + 1);
-                    continue;
-                }
-            }
-            serialized = char == chars::SERIALIZING;
-            str.push(char);
-        }
-        None
-    }
 }
 
-#[derive(Debug)]
-pub struct SeekTo<'a> {
-    bound: &'a mut Reader,
-}
-impl<'a> SeekTo<'a> {
-    pub fn new(bound: &'a mut Reader) -> Self {
-        Self { bound }
-    }
-    pub fn char(&mut self, target: &char) -> bool {
-        if self.bound.done() {
-            return false;
-        }
-        let content = &self.bound.content[self.bound.pos..];
-        let mut serialized: bool = false;
-        for (pos, char) in content.chars().enumerate() {
-            if serialized || char == chars::SERIALIZING {
-                serialized = char == chars::SERIALIZING;
-                continue;
-            }
-            if char == *target {
-                self.bound.pos += pos;
-                return true;
-            }
-        }
-        false
-    }
-}
 #[derive(Debug)]
 pub struct Next<'a> {
     bound: &'a Reader,
@@ -460,27 +313,6 @@ impl<'a> Next<'a> {
 }
 
 #[derive(Debug)]
-pub struct Prev<'a> {
-    bound: &'a Reader,
-}
-impl<'a> Prev<'a> {
-    pub fn new(bound: &'a Reader) -> Self {
-        Self { bound }
-    }
-    pub fn nth(&self, offset: usize) -> Option<char> {
-        if self.bound.pos < offset {
-            return None;
-        }
-        self.bound.content.chars().nth(self.bound.pos - offset)
-    }
-    pub fn word(&self, len: usize) -> Option<String> {
-        if self.bound.pos < len {
-            return None;
-        }
-        Some(self.bound.content[(self.bound.pos - len)..self.bound.pos].to_string())
-    }
-}
-#[derive(Debug)]
 pub struct Token {
     pub content: String,
     pub id: usize,
@@ -494,7 +326,6 @@ pub struct Reader {
     pub content: String,
     pos: usize,
     chars: &'static [&'static char],
-    fixed: Option<usize>,
     _map: Rc<RefCell<Map>>,
     _offset: usize,
     _recent: usize,
@@ -507,19 +338,18 @@ impl Reader {
             content,
             pos: 0,
             chars: &[],
-            fixed: None,
             _offset: 0,
             _map: cx.get_map_ref(),
             _recent: 0,
         }
     }
+    #[cfg(test)]
     pub fn unbound(content: String) -> Self {
         let map = Map::new_wrapped(&content);
         Self {
             content,
             pos: 0,
             chars: &[],
-            fixed: None,
             _offset: 0,
             _map: map,
             _recent: 0,
@@ -530,7 +360,6 @@ impl Reader {
             content,
             pos: 0,
             chars: &[],
-            fixed: None,
             _offset: offset,
             _map: map,
             _recent: 0,
@@ -539,14 +368,8 @@ impl Reader {
     pub fn move_to(&mut self) -> MoveTo<'_> {
         MoveTo::new(self)
     }
-    pub fn seek_to(&mut self) -> SeekTo<'_> {
-        SeekTo::new(self)
-    }
     pub fn until(&mut self) -> Until<'_> {
         Until::new(self)
-    }
-    pub fn contains(&mut self) -> Contains<'_> {
-        Contains::new(self)
     }
     pub fn group(&mut self) -> Group<'_> {
         Group::new(self)
@@ -554,23 +377,16 @@ impl Reader {
     pub fn next(&self) -> Next<'_> {
         Next::new(self)
     }
-    pub fn prev(&self) -> Prev<'_> {
-        Prev::new(self)
-    }
-    pub fn cancel_on(&mut self, chars: &'static [&'static char]) -> &mut Self {
-        self.chars = chars;
-        self
-    }
     pub fn rest(&self) -> &str {
         &self.content[self.pos..]
     }
-    pub fn around(&self, offset: usize) -> &str {
-        &self.content[if self.pos > offset {
-            self.pos - offset
-        } else {
-            0
-        }..]
-    }
+    // pub fn around(&self, offset: usize) -> &str {
+    //     &self.content[if self.pos > offset {
+    //         self.pos - offset
+    //     } else {
+    //         0
+    //     }..]
+    // }
     pub fn trim(&mut self) {
         let content = &self.content[self.pos..];
         for (pos, char) in content.chars().enumerate() {
@@ -622,26 +438,11 @@ impl Reader {
             restore_map(&mut reader._map.borrow_mut());
         }
     }
-    pub fn extend_token(&mut self) {
-        self._map.borrow_mut().extend()
-    }
     pub fn done(&self) -> bool {
         self.pos == self.content.len()
     }
     pub fn is_empty(&self) -> bool {
         self.rest().trim().is_empty()
-    }
-    pub fn unserialize(content: &str) -> String {
-        content
-            .to_string()
-            .replace("\\\"", "\"")
-            .replace("\\ ", " ")
-    }
-    pub fn serialize(content: &str) -> String {
-        content
-            .to_string()
-            .replace('\"', "\\\"")
-            .replace(' ', "\\ ")
     }
     pub fn is_ascii_alphabetic_and_alphanumeric(content: &str, exceptions: &[&char]) -> bool {
         for char in content.chars() {

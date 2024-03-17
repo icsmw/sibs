@@ -40,7 +40,7 @@ impl Import {
     }
 }
 impl Executor for Import {
-    fn execute(_: Vec<AnyValue>, cx: &mut Context) -> ExecutorPinnedResult {
+    fn execute(_: Vec<AnyValue>, _cx: &mut Context) -> ExecutorPinnedResult {
         Box::pin(async { Err(Error::IsNotUsedInRuntime.into()) })
     }
 

@@ -1,10 +1,10 @@
 use crate::{
-    entry::{Cmb, Combination, Component, ElTarget, Element},
+    entry::{Cmb, Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
         any::AnyValue,
         context::Context,
-        operator::{self, Operator, OperatorPinnedResult},
+        operator::{Operator, OperatorPinnedResult},
     },
     reader::{chars, words, Reader, Reading, E},
 };

@@ -95,15 +95,6 @@ impl Map {
             *len,
         ))
     }
-    pub fn extend(&mut self) {
-        if self.index == 0 {
-            return;
-        }
-        let index = self.index - 1;
-        self.map.entry(index).and_modify(|(_from, len)| {
-            *len += 1;
-        });
-    }
     pub fn gen_report<'a, T>(&mut self, token: &usize, msg: T) -> Result<(), E>
     where
         T: 'a + ToOwned + ToString,

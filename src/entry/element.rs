@@ -227,7 +227,7 @@ impl fmt::Display for Element {
 }
 
 impl term::Display for Element {
-    fn display(&self, term: &mut Term) {
+    fn display(&self, _term: &mut Term) {
         // term.print_fmt(&self.as_lines());
     }
 }

@@ -80,17 +80,19 @@ mod reading {
     use crate::{
         entry::VariableName,
         error::LinkedErr,
+        inf::{context::Context, tests::*},
         reader::{Reader, Reading, E},
     };
 
-    #[test]
-    fn reading() -> Result<(), LinkedErr<E>> {
+    #[tokio::test]
+    async fn reading() -> Result<(), LinkedErr<E>> {
+        let cx: Context = Context::unbound()?;
         let samples = include_str!("../../tests/reading/variable_name.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::unbound(sample.to_string());
-            VariableName::read(&mut reader)?.unwrap();
+            let mut reader = Reader::bound(sample.to_string(), &cx);
+            report_if_err(&cx, VariableName::read(&mut reader))?.unwrap();
             count += 1;
         }
         assert_eq!(count, samples.len());
