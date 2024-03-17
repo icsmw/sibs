@@ -493,7 +493,6 @@ dependencies = [
  "futures-lite",
  "importer",
  "indicatif",
- "lazy_static",
  "proptest",
  "regex",
  "terminal_size",

@@ -267,30 +267,51 @@ mod processing {
 
 #[cfg(test)]
 mod proptest {
-    use crate::entry::values::{ElTarget, Element, Values};
+    use crate::{
+        entry::values::{ElTarget, Element, Values},
+        inf::tests::*,
+    };
     use proptest::prelude::*;
 
     impl Arbitrary for Values {
-        type Parameters = ();
+        type Parameters = usize;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-            let max = 5;
-            prop::collection::vec(
-                Element::arbitrary_with(vec![
-                    ElTarget::Command,
-                    ElTarget::Function,
-                    ElTarget::If,
-                    ElTarget::PatternString,
-                    ElTarget::Reference,
-                    ElTarget::Values,
-                    ElTarget::Comparing,
-                    ElTarget::VariableName,
-                ]),
-                1..max,
-            )
-            .prop_map(|elements| Values { elements, token: 0 })
-            .boxed()
+        fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
+            if deep > MAX_DEEP {
+                let max = 5;
+                prop::collection::vec(
+                    Element::arbitrary_with((
+                        vec![ElTarget::VariableName, ElTarget::Integer, ElTarget::Boolean],
+                        deep,
+                    )),
+                    1..max,
+                )
+                .prop_map(|elements| Values { elements, token: 0 })
+                .boxed()
+            } else {
+                let max = 5;
+                prop::collection::vec(
+                    Element::arbitrary_with((
+                        vec![
+                            ElTarget::Command,
+                            ElTarget::Function,
+                            ElTarget::If,
+                            ElTarget::PatternString,
+                            ElTarget::Reference,
+                            ElTarget::Values,
+                            ElTarget::Comparing,
+                            ElTarget::VariableName,
+                            ElTarget::Integer,
+                            ElTarget::Boolean,
+                        ],
+                        deep,
+                    )),
+                    1..max,
+                )
+                .prop_map(|elements| Values { elements, token: 0 })
+                .boxed()
+            }
         }
     }
 }

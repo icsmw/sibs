@@ -1,6 +1,8 @@
 use crate::{error::LinkedErr, inf::context::Context, reader::chars};
 use tokio::runtime::{Builder, Runtime};
 
+pub const MAX_DEEP: usize = 5;
+
 pub fn trim_carets(src: &str) -> String {
     src.split('\n')
         .map(|s| s.trim())

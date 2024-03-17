@@ -166,11 +166,11 @@ mod proptest {
     use proptest::prelude::*;
 
     impl Arbitrary for First {
-        type Parameters = ();
+        type Parameters = usize;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-            Block::arbitrary()
+        fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
+            Block::arbitrary_with(deep)
                 .prop_map(|block| First { block, token: 0 })
                 .boxed()
         }
@@ -187,20 +187,20 @@ mod proptest {
         })
     }
 
-    // proptest! {
-    //     #![proptest_config(ProptestConfig {
-    //         max_shrink_iters: 5000,
-    //         ..ProptestConfig::with_cases(10)
-    //     })]
-    //     #[test]
-    //     fn test_run_task(
-    //         args in any_with::<First>(())
-    //     ) {
-    //         let res = reading(args.clone());
-    //         if res.is_err() {
-    //             println!("{res:?}");
-    //         }
-    //         prop_assert!(res.is_ok());
-    //     }
-    // }
+    proptest! {
+        #![proptest_config(ProptestConfig {
+            max_shrink_iters: 5000,
+            ..ProptestConfig::with_cases(10)
+        })]
+        #[test]
+        fn test_run_task(
+            args in any_with::<First>(0)
+        ) {
+            let res = reading(args.clone());
+            if res.is_err() {
+                println!("{res:?}");
+            }
+            prop_assert!(res.is_ok());
+        }
+    }
 }

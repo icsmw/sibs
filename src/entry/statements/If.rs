@@ -11,141 +11,15 @@ use crate::{
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub enum Combination {
-    And,
-    Or,
+pub enum Thread {
+    If(Element, Element),
+    Else(Element),
 }
 
-impl fmt::Display for Combination {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Self::And => words::AND,
-                Self::Or => words::OR,
-            }
-        )
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum Proviso {
-    // bool -          true  - negative;
-    //                 false - positive;
-    Condition(Element, bool),
-    Combination(Combination, usize),
-    // bool: true - if root level; false - if nested group
-    Group(bool, Vec<Proviso>, usize),
-}
-
-impl Operator for Proviso {
+impl Operator for Thread {
     fn token(&self) -> usize {
         match self {
-            Self::Condition(el, _) => el.token(),
-            Self::Combination(_, token) => *token,
-            Self::Group(_, _, token) => *token,
-        }
-    }
-    fn perform<'a>(
-        &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
-        args: &'a [String],
-        cx: &'a mut Context,
-    ) -> OperatorPinnedResult {
-        Box::pin(async move {
-            match self {
-                Self::Condition(el, negative) => {
-                    let result = *match el {
-                        Element::Comparing(el) => el.execute(owner, components, args, cx).await?,
-                        Element::Function(el) => el.execute(owner, components, args, cx).await?,
-                        _ => {
-                            return Err(operator::E::UnsupportedCondition);
-                        }
-                    }
-                    .ok_or(operator::E::FailExtractValueForIFStatement)?
-                    .get_as::<bool>()
-                    .ok_or(operator::E::NoBoolResultFromFunction)?;
-                    Ok(Some(AnyValue::new(if *negative {
-                        !result
-                    } else {
-                        result
-                    })))
-                }
-
-                Self::Group(_, provisos, _) => {
-                    let mut iteration: Option<bool> = None;
-                    for proviso in provisos.iter() {
-                        if let Proviso::Combination(cmb, _) = proviso {
-                            if iteration.is_none() {
-                                Err(operator::E::WrongConditionsOrderInIf)?;
-                            }
-                            if let (true, Some(true)) = (matches!(cmb, Combination::Or), iteration)
-                            {
-                                return Ok(Some(AnyValue::new(true)));
-                            } else if let (true, Some(false)) =
-                                (matches!(cmb, Combination::And), iteration)
-                            {
-                                return Ok(Some(AnyValue::new(false)));
-                            }
-                        } else {
-                            iteration = Some(
-                                *proviso
-                                    .execute(owner, components, args, cx)
-                                    .await?
-                                    .ok_or(operator::E::NoResultFromProviso)?
-                                    .get_as::<bool>()
-                                    .ok_or(operator::E::NoBoolResultFromProviso)?,
-                            );
-                        }
-                    }
-                    Ok(Some(AnyValue::new(
-                        iteration.ok_or(operator::E::NoBoolResultFromProvisoGroup)?,
-                    )))
-                }
-                Self::Combination(_, _) => Err(operator::E::WrongConditionsOrderInIf),
-            }
-        })
-    }
-}
-
-impl fmt::Display for Proviso {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Self::Condition(el, negative) =>
-                    format!("{}{el}", if *negative { "!" } else { "" }),
-                Self::Combination(v, _) => v.to_string(),
-                Self::Group(root, provisio, _) => {
-                    format!(
-                        "{}{}{}",
-                        if *root { "" } else { "(" },
-                        provisio
-                            .iter()
-                            .map(|p| p.to_string())
-                            .collect::<Vec<String>>()
-                            .join(" "),
-                        if *root { "" } else { ")" }
-                    )
-                }
-            }
-        )
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum Segment {
-    If(Proviso, Block),
-    Else(Block),
-}
-
-impl Operator for Segment {
-    fn token(&self) -> usize {
-        match self {
-            Self::If(proviso, _) => proviso.token(),
+            Self::If(el, _) => el.token(),
             Self::Else(block) => block.token(),
         }
     }
@@ -158,8 +32,8 @@ impl Operator for Segment {
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             match self {
-                Self::If(proviso, block) => {
-                    if *proviso
+                Self::If(subsequence, block) => {
+                    if *subsequence
                         .execute(owner, components, args, cx)
                         .await?
                         .ok_or(operator::E::NoResultFromProviso)?
@@ -177,14 +51,14 @@ impl Operator for Segment {
     }
 }
 
-impl fmt::Display for Segment {
+impl fmt::Display for Thread {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
             "{}",
             match self {
-                Segment::If(provisio, block) => format!("IF {provisio} {block}"),
-                Segment::Else(block) => format!("ELSE {block}"),
+                Self::If(el, block) => format!("IF {el} {block}"),
+                Self::Else(block) => format!("ELSE {block}"),
             }
         )
     }
@@ -192,145 +66,41 @@ impl fmt::Display for Segment {
 
 #[derive(Debug, Clone)]
 pub struct If {
-    pub segments: Vec<Segment>,
+    pub threads: Vec<Thread>,
     pub token: usize,
 }
 
 impl Reading<If> for If {
     fn read(reader: &mut Reader) -> Result<Option<If>, LinkedErr<E>> {
-        let mut segments: Vec<Segment> = vec![];
+        let mut threads: Vec<Thread> = vec![];
         let close = reader.open_token();
-
         while !reader.rest().trim().is_empty() {
             if reader.move_to().word(&[words::IF]).is_some() {
-                if reader.until().char(&[&chars::OPEN_SQ_BRACKET]).is_some() {
-                    let proviso: Proviso = If::proviso(&mut reader.token()?.bound, true)?;
-                    if let Some(block) = Block::read(reader)? {
-                        segments.push(Segment::If(proviso, block));
-                    } else {
-                        Err(E::NotClosedGroup.linked(&proviso.token()))?
-                    }
-                    continue;
-                } else {
-                    Err(E::NoGroup.by_reader(reader))?
+                let conditions =
+                    Element::include(reader, &[ElTarget::Subsequence, ElTarget::Condition])?
+                        .ok_or(E::NoConditionForIfStatement.by_reader(reader))?;
+                let block = Element::include(reader, &[ElTarget::Block])?
+                    .ok_or(E::NoBlockForIfStatement.by_reader(reader))?;
+                threads.push(Thread::If(conditions, block));
+            } else if reader.move_to().word(&[words::ELSE]).is_some() {
+                if threads.is_empty() {
+                    Err(E::NoMainBlockForIfStatement.by_reader(reader))?;
                 }
-            }
-            if segments.is_empty() {
-                return Ok(None);
-            }
-            let restore = reader.pin();
-            if let Some(content) = reader.move_to().word(&[words::ELSE]) {
-                if content.trim() != words::ELSE {
-                    restore(reader);
-                    return Ok(Some(If {
-                        segments,
-                        token: close(reader),
-                    }));
-                }
-                if let Some(block) = Block::read(reader)? {
-                    segments.push(Segment::Else(block));
-                    return Ok(Some(If {
-                        segments,
-                        token: close(reader),
-                    }));
-                } else {
-                    Err(E::NoGroup.by_reader(reader))?
-                }
-            }
-            if let Some(content) = reader.move_to().word(&[words::IF]) {
-                if content.trim() != words::IF {
-                    restore(reader);
-                    return Ok(Some(If {
-                        segments,
-                        token: close(reader),
-                    }));
-                }
+                let block = Element::include(reader, &[ElTarget::Block])?
+                    .ok_or(E::NoBlockForIfStatement.by_reader(reader))?;
+                threads.push(Thread::Else(block));
             } else {
-                return Ok(Some(If {
-                    segments,
-                    token: close(reader),
-                }));
+                break;
             }
         }
-        if segments.is_empty() {
+        if threads.is_empty() {
             Ok(None)
         } else {
             Ok(Some(If {
-                segments,
+                threads,
                 token: close(reader),
             }))
         }
-    }
-}
-
-impl If {
-    pub fn inner(reader: &mut Reader) -> Result<Proviso, LinkedErr<E>> {
-        let negative = reader.move_to().char(&[&chars::EXCLAMATION]).is_some();
-        if let Some(el) = Element::include(
-            reader,
-            &[
-                ElTarget::Comparing,
-                ElTarget::Function,
-                ElTarget::VariableName,
-            ],
-        )? {
-            Ok(Proviso::Condition(el, negative))
-        } else {
-            Err(E::NoProvisoOfCondition.by_reader(reader))
-        }
-    }
-    pub fn proviso(reader: &mut Reader, root: bool) -> Result<Proviso, LinkedErr<E>> {
-        let mut proviso: Vec<Proviso> = vec![];
-        let close = reader.open_token();
-        while !reader.rest().trim().is_empty() {
-            if reader
-                .group()
-                .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
-                .is_some()
-            {
-                let mut group_reader = reader.token()?.bound;
-                let _ = reader.move_to().next();
-                if group_reader
-                    .move_to()
-                    .char(&[&chars::OPEN_BRACKET])
-                    .is_some()
-                {
-                    Err(E::NestedConditionGroups.by_reader(reader))?
-                }
-                proviso.push(If::proviso(&mut group_reader, false)?);
-                continue;
-            }
-            if let Some((_, combination)) = reader.until().word(&[words::AND, words::OR]) {
-                let mut token = reader.token()?;
-                if !reader.move_to().whitespace() {
-                    Err(E::NoWhitespaceAfterCondition.by_reader(reader))?;
-                }
-                if proviso.last().is_none() && token.content.trim().is_empty() {
-                    Err(E::NoProvisoOfCondition.by_reader(reader))?
-                }
-                if !token.content.trim().is_empty() {
-                    proviso.push(If::inner(&mut token.bound)?);
-                }
-                if let Some(Proviso::Combination(_, _)) = proviso.last() {
-                    Err(E::RepeatedCombinationOperator.by_reader(reader))?
-                }
-                proviso.push(Proviso::Combination(
-                    if combination == words::AND {
-                        Combination::And
-                    } else {
-                        Combination::Or
-                    },
-                    token.id,
-                ));
-                continue;
-            }
-            if matches!(proviso.last(), Some(Proviso::Combination(_, _))) || proviso.is_empty() {
-                proviso.push(If::inner(reader)?);
-            } else {
-                Err(E::NoProvisoOfCondition.by_reader(reader))?
-            }
-        }
-        Ok(Proviso::Group(root, proviso, close(reader)))
     }
 }
 
@@ -339,7 +109,7 @@ impl fmt::Display for If {
         write!(
             f,
             "{}",
-            self.segments
+            self.threads
                 .iter()
                 .map(|el| el.to_string())
                 .collect::<Vec<String>>()
@@ -360,8 +130,8 @@ impl Operator for If {
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
-            for segment in self.segments.iter() {
-                if let Some(output) = segment.execute(owner, components, args, cx).await? {
+            for thread in self.threads.iter() {
+                if let Some(output) = thread.execute(owner, components, args, cx).await? {
                     return Ok(Some(output));
                 }
             }
@@ -373,7 +143,7 @@ impl Operator for If {
 #[cfg(test)]
 mod reading {
     use crate::{
-        entry::{statements::If::Segment, If},
+        entry::{If, Thread},
         error::LinkedErr,
         inf::{context::Context, operator::Operator, tests},
         reader::{chars, Reader, Reading, E},
@@ -395,44 +165,47 @@ mod reading {
             );
             count += 1;
         }
-        assert_eq!(count, content.split("\n").count());
+        assert_eq!(count, content.split('\n').count());
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
 
     #[test]
     fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut reader = Reader::unbound(include_str!("../../tests/reading/if.sibs").to_string());
+        let content = include_str!("../../tests/reading/if.sibs").to_string();
+        let mut reader = Reader::unbound(content.clone());
         let mut count = 0;
         while let Some(entity) = If::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(&format!("{entity}")),
-                tests::trim_carets(&reader.get_fragment(&entity.token)?.lined)
+                tests::trim_carets(&reader.get_fragment(&entity.token)?.lined),
+                "Line: {}",
+                count + 1
             );
-            for el in entity.segments.iter() {
-                match el {
-                    Segment::If(proviso, block) => {
+            for thr in entity.threads.iter() {
+                match thr {
+                    Thread::If(el, block) => {
                         assert_eq!(
-                            tests::trim_carets(&proviso.to_string()),
-                            tests::trim_carets(&reader.get_fragment(&proviso.token())?.lined)
+                            tests::trim_carets(&el.to_string()),
+                            tests::trim_carets(&reader.get_fragment(&el.token())?.lined)
                         );
                         assert_eq!(
                             tests::trim_carets(&block.to_string()),
-                            tests::trim_carets(&reader.get_fragment(&block.token)?.lined)
+                            tests::trim_carets(&reader.get_fragment(&block.token())?.lined)
                         );
                     }
-                    Segment::Else(block) => {
+                    Thread::Else(block) => {
                         assert_eq!(
                             tests::trim_carets(&block.to_string()),
-                            tests::trim_carets(&reader.get_fragment(&block.token)?.lined)
+                            tests::trim_carets(&reader.get_fragment(&block.token())?.lined)
                         );
                     }
                 };
             }
             count += 1;
         }
-        assert_eq!(count, 13);
+        assert_eq!(count, content.split('\n').count());
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
@@ -489,113 +262,46 @@ mod processing {
 mod proptest {
 
     use crate::{
-        entry::{task::Task, Block, Combination, ElTarget, Element, If, Proviso, Segment},
+        entry::{task::Task, ElTarget, Element, If, Thread},
         inf::{operator::E, tests::*},
         reader::{Reader, Reading},
     };
     use proptest::prelude::*;
 
-    impl Arbitrary for Combination {
-        type Parameters = ();
+    impl Arbitrary for Thread {
+        type Parameters = (u8, usize);
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-            prop_oneof![Just(Combination::And), Just(Combination::Or),].boxed()
-        }
-    }
-
-    // Gives flat Proviso with:
-    // - Combination
-    // - Variable
-    // - Function
-    fn get_proviso_chain() -> BoxedStrategy<Vec<Proviso>> {
-        let max = 6;
-        (
-            prop::collection::vec(
-                Combination::arbitrary().prop_map(|cmb| Proviso::Combination(cmb, 0)),
-                max,
-            ),
-            prop::collection::vec(
-                Element::arbitrary_with(vec![
-                    ElTarget::Comparing,
-                    ElTarget::Function,
-                    ElTarget::VariableName,
-                ])
-                .prop_map(|cmb| Proviso::Condition(cmb, false)),
-                max,
-            ),
-        )
-            .prop_map(|(mut combinations, conditions)| {
-                let mut provisos: Vec<Proviso> = conditions
-                    .into_iter()
-                    .flat_map(|condition| [condition, combinations.remove(0)])
-                    .collect();
-                if let Some(Proviso::Combination(_, _)) = provisos.last() {
-                    let _ = provisos.pop();
-                }
-                provisos
-            })
-            .boxed()
-    }
-
-    // Returns Proviso::Group
-    fn get_proviso() -> BoxedStrategy<Proviso> {
-        let max = 5;
-        prop::collection::vec(
-            (
-                get_proviso_chain(),
-                Combination::arbitrary().prop_map(|cmb| Proviso::Combination(cmb, 0)),
-                prop_oneof![Just(true), Just(false)],
-            ),
-            1..max,
-        )
-        .prop_map(|mut combinations| {
-            let mut provisos: Vec<Proviso> = vec![];
-            while let Some((chain, combination, grouping)) = combinations.pop() {
-                if chain.is_empty() {
-                    continue;
-                }
-                if !provisos.is_empty() {
-                    provisos.push(combination);
-                }
-                if grouping {
-                    provisos.push(Proviso::Group(false, chain, 0));
-                } else {
-                    provisos = [provisos, chain].concat();
-                }
-            }
-            Proviso::Group(true, provisos, 0)
-        })
-        .boxed()
-    }
-
-    impl Arbitrary for Segment {
-        /// 0 - generate IF
-        /// 1 - generate ELSE
-        type Parameters = u8;
-        type Strategy = BoxedStrategy<Self>;
-
-        fn arbitrary_with(el: Self::Parameters) -> Self::Strategy {
-            match el {
-                0 => (get_proviso(), Block::arbitrary())
-                    .prop_map(|(p, b)| Segment::If(p, b))
-                    .boxed(),
-                _ => Block::arbitrary().prop_map(Segment::Else).boxed(),
+        fn arbitrary_with((target, deep): Self::Parameters) -> Self::Strategy {
+            if target == 0 {
+                (
+                    Element::arbitrary_with((
+                        vec![ElTarget::Subsequence, ElTarget::Condition],
+                        deep,
+                    )),
+                    Element::arbitrary_with((vec![ElTarget::Block], deep)),
+                )
+                    .prop_map(|(subsequence, block)| Thread::If(subsequence, block))
+                    .boxed()
+            } else {
+                Element::arbitrary_with((vec![ElTarget::Block], deep))
+                    .prop_map(Thread::Else)
+                    .boxed()
             }
         }
     }
 
     impl Arbitrary for If {
-        type Parameters = ();
+        type Parameters = usize;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             (
-                prop::collection::vec(Segment::arbitrary_with(0), 1..5),
-                prop::collection::vec(Segment::arbitrary_with(1), 0..1),
+                prop::collection::vec(Thread::arbitrary_with((0, deep)), 1..=3),
+                prop::collection::vec(Thread::arbitrary_with((1, deep)), 1..=1),
             )
-                .prop_map(|(segments, else_element)| If {
-                    segments: [segments, else_element].concat(),
+                .prop_map(|(ifs, elses)| If {
+                    threads: [ifs, elses].concat(),
                     token: 0,
                 })
                 .boxed()
@@ -613,20 +319,20 @@ mod proptest {
         })
     }
 
-    // proptest! {
-    //     #![proptest_config(ProptestConfig {
-    //         max_shrink_iters: 5000,
-    //         ..ProptestConfig::with_cases(10)
-    //     })]
-    //     #[test]
-    //     fn test_run_task(
-    //         args in any_with::<If>(())
-    //     ) {
-    //         let res = reading(args.clone());
-    //         if res.is_err() {
-    //             println!("{res:?}");
-    //         }
-    //         prop_assert!(res.is_ok());
-    //     }
-    // }
+    proptest! {
+        #![proptest_config(ProptestConfig {
+            max_shrink_iters: 5000,
+            ..ProptestConfig::with_cases(10)
+        })]
+        #[test]
+        fn test_run_task(
+            args in any_with::<If>(0)
+        ) {
+            let res = reading(args.clone());
+            if res.is_err() {
+                println!("{res:?}");
+            }
+            prop_assert!(res.is_ok());
+        }
+    }
 }

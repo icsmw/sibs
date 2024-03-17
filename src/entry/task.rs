@@ -319,13 +319,13 @@ mod proptest {
     use proptest::prelude::*;
 
     impl Arbitrary for Task {
-        type Parameters = ();
+        type Parameters = usize;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             (
                 prop::collection::vec(VariableDeclaration::arbitrary(), 0..=5),
-                Block::arbitrary(),
+                Block::arbitrary_with(deep),
                 "[a-zA-Z_]*".prop_map(String::from),
             )
                 .prop_map(|(declarations, block, name)| Task {

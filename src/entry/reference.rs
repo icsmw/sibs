@@ -231,36 +231,58 @@ mod reading {
 #[cfg(test)]
 mod proptest {
 
-    use crate::entry::{ElTarget, ElementExd, Reference};
+    use crate::{
+        entry::{ElTarget, ElementExd, Reference},
+        inf::tests::*,
+    };
     use proptest::prelude::*;
 
     impl Arbitrary for Reference {
-        type Parameters = ();
+        type Parameters = usize;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-            (
-                prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 2),
-                prop::collection::vec(
-                    ElementExd::arbitrary_with(vec![ElTarget::VariableName]),
-                    0..5,
-                ),
-            )
-                .prop_map(|(path, inputs)| Reference {
-                    path: path
-                        .iter()
-                        .map(|p| {
-                            if p.is_empty() {
-                                "min".to_owned()
-                            } else {
-                                p.to_owned()
-                            }
-                        })
-                        .collect::<Vec<String>>(),
-                    inputs,
-                    token: 0,
-                })
-                .boxed()
+        fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
+            if deep > MAX_DEEP {
+                prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 2)
+                    .prop_map(|path| Reference {
+                        path: path
+                            .iter()
+                            .map(|p| {
+                                if p.is_empty() {
+                                    "min".to_owned()
+                                } else {
+                                    p.to_owned()
+                                }
+                            })
+                            .collect::<Vec<String>>(),
+                        inputs: vec![],
+                        token: 0,
+                    })
+                    .boxed()
+            } else {
+                (
+                    prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 2),
+                    prop::collection::vec(
+                        ElementExd::arbitrary_with((vec![ElTarget::VariableName], deep)),
+                        0..5,
+                    ),
+                )
+                    .prop_map(|(path, inputs)| Reference {
+                        path: path
+                            .iter()
+                            .map(|p| {
+                                if p.is_empty() {
+                                    "min".to_owned()
+                                } else {
+                                    p.to_owned()
+                                }
+                            })
+                            .collect::<Vec<String>>(),
+                        inputs,
+                        token: 0,
+                    })
+                    .boxed()
+            }
         }
     }
 }

@@ -65,12 +65,22 @@ pub enum E {
     EmptyGroup,
     #[error("Empty block")]
     EmptyBlock,
+    #[error("Subsequence doesn't return value")]
+    NoValueFromSubsequence,
+    #[error("Subsequence's element doesn't return value")]
+    NoValueFromSubsequenceElement,
+    #[error("Fail to parse subsequence's element value")]
+    FailToParseValueOfSubsequenceElement,
+    #[error("Subsequence doesn't return bool value")]
+    NoBoolValueFromSubsequence,
     #[error("Token {0} not found")]
     TokenNotFound(usize),
     #[error("Token {0} has invalid range; string len={1}; range [{2},{3}]")]
     TokenHasInvalidRange(usize, usize, usize, usize),
     #[error("No component name")]
     EmptyComponentName,
+    #[error("Fail to read conditions")]
+    FailToReadConditions,
     #[error("No command value")]
     EmptyCommand,
     #[error("This type of argument cannot be used in references")]
@@ -139,14 +149,20 @@ pub enum E {
     NotClosedConditionGroup,
     #[error("Nested condition group (..(..)..) aren't supported")]
     NestedConditionGroups,
+    #[error("Fail to find condition(s) for IF statement")]
+    NoConditionForIfStatement,
+    #[error("Fail to find actions block for IF statement")]
+    NoBlockForIfStatement,
+    #[error("Main actions block for IF statement is missed")]
+    NoMainBlockForIfStatement,
     #[error("No values related to variable")]
     NoVariableValues,
     #[error("No metadata content")]
     NoMetaContent,
     #[error("Not allowed function")]
     NotAllowedFunction,
-    #[error("Invalid function name")]
-    InvalidFunctionName,
+    #[error("Invalid function name: {0}")]
+    InvalidFunctionName(String),
     #[error("Function isn't registred")]
     FunctionIsNotRegistred,
     #[error("Invalid function return")]

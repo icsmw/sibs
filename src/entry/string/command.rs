@@ -165,60 +165,60 @@ mod reading {
 #[cfg(test)]
 mod proptest {
 
-    use crate::entry::{Command, ElTarget, Element};
+    use crate::{
+        entry::{Command, ElTarget, Element},
+        inf::tests::*,
+    };
     use proptest::prelude::*;
 
     impl Arbitrary for Command {
-        type Parameters = ();
+        type Parameters = usize;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-            (
-                prop::collection::vec(
-                    Element::arbitrary_with(vec![
-                        ElTarget::VariableName,
-                        ElTarget::Function,
-                        ElTarget::If,
-                    ]),
-                    0..=2,
-                ),
-                prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 10),
-            )
-                .prop_map(|(injections, noise)| {
-                    let mut pattern: String = String::new();
-                    for (i, el) in injections.iter().enumerate() {
-                        pattern = format!(
-                            "{}{{{el}}}",
-                            if noise[i].is_empty() {
-                                "min"
-                            } else {
-                                &noise[i]
-                            }
-                        );
-                    }
-                    Command {
-                        injections: injections
-                            .iter()
-                            .map(|el| (el.to_string(), el.clone()))
-                            .collect::<Vec<(String, Element)>>(),
-                        pattern,
+        fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
+            if deep > MAX_DEEP {
+                "[a-z][a-z0-9]*"
+                    .prop_map(String::from)
+                    .prop_map(|pattern| Command {
+                        injections: vec![],
+                        pattern: if pattern.len() < 3 {
+                            "min".to_owned()
+                        } else {
+                            pattern
+                        },
                         token: 0,
-                    }
-                })
-                .boxed()
-        }
-    }
-
-    impl Command {
-        pub fn arbitrary_primitive() -> BoxedStrategy<Self> {
-            "[a-z][a-z0-9]*"
-                .prop_map(String::from)
-                .prop_map(|pattern| Command {
-                    injections: vec![],
-                    pattern,
-                    token: 0,
-                })
-                .boxed()
+                    })
+                    .boxed()
+            } else {
+                (
+                    prop::collection::vec(
+                        Element::arbitrary_with((
+                            vec![ElTarget::VariableName, ElTarget::Function, ElTarget::If],
+                            deep,
+                        )),
+                        0..=2,
+                    ),
+                    prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 10),
+                )
+                    .prop_map(|(injections, noise)| {
+                        let mut pattern: String = String::new();
+                        for (i, el) in injections.iter().enumerate() {
+                            pattern = format!(
+                                "{}{{{el}}}",
+                                if noise[i].len() < 3 { "min" } else { &noise[i] }
+                            );
+                        }
+                        Command {
+                            injections: injections
+                                .iter()
+                                .map(|el| (el.to_string(), el.clone()))
+                                .collect::<Vec<(String, Element)>>(),
+                            pattern,
+                            token: 0,
+                        }
+                    })
+                    .boxed()
+            }
         }
     }
 }

@@ -237,35 +237,69 @@ mod proptest {
     use proptest::prelude::*;
 
     impl Arbitrary for Optional {
-        type Parameters = ();
+        type Parameters = usize;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-            (
-                Element::arbitrary_with(vec![
-                    ElTarget::Function,
-                    ElTarget::VariableName,
-                    ElTarget::Reference,
-                    ElTarget::Block,
-                    ElTarget::Comparing,
-                ]),
-                Element::arbitrary_with(vec![
-                    ElTarget::Function,
-                    ElTarget::Reference,
-                    ElTarget::VariableAssignation,
-                    ElTarget::Each,
-                    ElTarget::Block,
-                    ElTarget::First,
-                    ElTarget::PatternString,
-                    ElTarget::Command,
-                ]),
-            )
-                .prop_map(|(condition, action)| Optional {
-                    condition: Box::new(condition),
-                    action: Box::new(action),
-                    token: 0,
-                })
-                .boxed()
+        fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
+            if deep > MAX_DEEP {
+                (
+                    Element::arbitrary_with((
+                        vec![ElTarget::VariableName, ElTarget::Reference],
+                        deep,
+                    )),
+                    Element::arbitrary_with((
+                        vec![
+                            ElTarget::Function,
+                            ElTarget::Reference,
+                            ElTarget::VariableName,
+                            ElTarget::Integer,
+                            ElTarget::Boolean,
+                        ],
+                        deep,
+                    )),
+                )
+                    .prop_map(|(condition, action)| Optional {
+                        condition: Box::new(condition),
+                        action: Box::new(action),
+                        token: 0,
+                    })
+                    .boxed()
+            } else {
+                (
+                    Element::arbitrary_with((
+                        vec![
+                            ElTarget::Function,
+                            ElTarget::VariableName,
+                            ElTarget::Reference,
+                            ElTarget::Block,
+                            ElTarget::Comparing,
+                        ],
+                        deep,
+                    )),
+                    Element::arbitrary_with((
+                        vec![
+                            ElTarget::Function,
+                            ElTarget::Reference,
+                            ElTarget::VariableAssignation,
+                            ElTarget::VariableName,
+                            ElTarget::Block,
+                            ElTarget::Each,
+                            ElTarget::First,
+                            ElTarget::PatternString,
+                            ElTarget::Command,
+                            ElTarget::Integer,
+                            ElTarget::Boolean,
+                        ],
+                        deep,
+                    )),
+                )
+                    .prop_map(|(condition, action)| Optional {
+                        condition: Box::new(condition),
+                        action: Box::new(action),
+                        token: 0,
+                    })
+                    .boxed()
+            }
         }
     }
 
@@ -280,20 +314,20 @@ mod proptest {
         })
     }
 
-    // proptest! {
-    //     #![proptest_config(ProptestConfig {
-    //         max_shrink_iters: 5000,
-    //         ..ProptestConfig::with_cases(10)
-    //     })]
-    //     #[test]
-    //     fn test_run_task(
-    //         args in any_with::<Optional>(())
-    //     ) {
-    //         let res = reading(args.clone());
-    //         if res.is_err() {
-    //             println!("{res:?}");
-    //         }
-    //         prop_assert!(res.is_ok());
-    //     }
-    // }
+    proptest! {
+        #![proptest_config(ProptestConfig {
+            max_shrink_iters: 5000,
+            ..ProptestConfig::with_cases(10)
+        })]
+        #[test]
+        fn test_run_task(
+            args in any_with::<Optional>(0)
+        ) {
+            let res = reading(args.clone());
+            if res.is_err() {
+                println!("{res:?}");
+            }
+            prop_assert!(res.is_ok());
+        }
+    }
 }

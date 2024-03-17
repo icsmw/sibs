@@ -8,7 +8,7 @@
     ];
 #(b)
     test($a: {string}; $b: a | b; $c: {string}) [
-        IF $a == "a" AND $b == "b" AND $c == "c" [
+        IF $a == "a" && $b == "b" && $c == "c" [
             "true";
         ] ELSE [
             "false";

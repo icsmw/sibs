@@ -43,6 +43,29 @@ impl AnyValue {
         }
     }
 
+    pub fn get_as_bool(&self) -> Option<bool> {
+        let reference = self.value.as_ref().as_any();
+        reference
+            .downcast_ref::<bool>()
+            .map(|v| v.to_owned())
+            .or_else(|| reference.downcast_ref::<usize>().map(|v| *v > 1))
+            .or_else(|| reference.downcast_ref::<isize>().map(|v| *v > 1))
+            .or_else(|| reference.downcast_ref::<u8>().map(|v| *v > 1))
+            .or_else(|| reference.downcast_ref::<u16>().map(|v| *v > 1))
+            .or_else(|| reference.downcast_ref::<u32>().map(|v| *v > 1))
+            .or_else(|| reference.downcast_ref::<u64>().map(|v| *v > 1))
+            .or_else(|| reference.downcast_ref::<i8>().map(|v| *v > 1))
+            .or_else(|| reference.downcast_ref::<i16>().map(|v| *v > 1))
+            .or_else(|| reference.downcast_ref::<i32>().map(|v| *v > 1))
+            .or_else(|| reference.downcast_ref::<i64>().map(|v| *v > 1))
+            .or_else(|| reference.downcast_ref::<String>().map(|v| v == "true"))
+            .or_else(|| {
+                reference
+                    .downcast_ref::<AnyValue>()
+                    .and_then(|v| v.get_as_bool())
+            })
+    }
+
     pub fn get_as_integer(&self) -> Option<isize> {
         let reference = self.value.as_ref().as_any();
         reference

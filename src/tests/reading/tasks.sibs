@@ -12,7 +12,7 @@ build($mode: dev | prod) [
         `zip ./release/unpacked-win {$file_name}`;
         @cd(..);
     ];
-    IF $variable == "one" OR $variable == "two" [
+    IF $variable == "one" || $variable == "two" [
         @cd(./linux);
     ] ELSE [
         @cd(./linux);
@@ -20,7 +20,7 @@ build($mode: dev | prod) [
     IF $variable == "one" [
         @cd(./linux);
     ];
-    IF $variable == "one" OR $variable == "two" [
+    IF $variable == "one" || $variable == "two" [
         @cd(./linux);
     ];
 ];
@@ -35,7 +35,7 @@ custom($input: {string}) [
         `zip ./release/unpacked-win {$file_name}`;
         @cd(..);
     ];
-    IF $variable == "one" OR $variable == "two" [
+    IF $variable == "one" || $variable == "two" [
         @cd(./linux);
     ] ELSE [
         @cd(./linux);
@@ -43,7 +43,7 @@ custom($input: {string}) [
     IF $variable == "one" [
         @cd(./linux);
     ];
-    IF $variable == "one" OR $variable == "two" [
+    IF $variable == "one" || $variable == "two" [
         @cd(./linux);
     ];
 ];
@@ -58,7 +58,7 @@ build_multi($mode: dev | prod; $target: win | linux) [
         `zip ./release/unpacked-win {$file_name}`;
         @cd(..);
     ];
-    IF $variable == "one" OR $variable == "two" [
+    IF $variable == "one" || $variable == "two" [
         @cd(./linux);
     ] ELSE [
         @cd(./linux);
@@ -66,7 +66,7 @@ build_multi($mode: dev | prod; $target: win | linux) [
     IF $variable == "one" [
         @cd(./linux);
     ];
-    IF $variable == "one" OR $variable == "two" [
+    IF $variable == "one" || $variable == "two" [
         @cd(./linux);
     ];
 ];
@@ -81,7 +81,7 @@ build_b($mode: dev | prod; $target: win | linux; $input: {string}) [
         `zip ./release/unpacked-win {$file_name}`;
         @cd(..);
     ];
-    IF $variable == "one" OR $variable == "two" [
+    IF $variable == "one" || $variable == "two" [
         @cd(./linux);
     ] ELSE [
         @cd(./linux);
@@ -89,7 +89,7 @@ build_b($mode: dev | prod; $target: win | linux; $input: {string}) [
     IF $variable == "one" [
         @cd(./linux);
     ];
-    IF $variable == "one" OR $variable == "two" [
+    IF $variable == "one" || $variable == "two" [
         @cd(./linux);
     ];
 ];
@@ -104,7 +104,7 @@ build_c($input_a: {string}; $mode: dev | prod; $target: win | linux; $input_b: {
         `zip ./release/unpacked-win {$file_name}`;
         @cd(..);
     ];
-    IF $variable == "one" OR $variable == "two" [
+    IF $variable == "one" || $variable == "two" [
         @cd(./linux);
     ] ELSE [
         @cd(./linux);
@@ -112,7 +112,7 @@ build_c($input_a: {string}; $mode: dev | prod; $target: win | linux; $input_b: {
     IF $variable == "one" [
         @cd(./linux);
     ];
-    IF $variable == "one" OR $variable == "two" [
+    IF $variable == "one" || $variable == "two" [
         @cd(./linux);
     ];
 ];
@@ -127,7 +127,7 @@ distribution [
         `zip ./release/unpacked-win {$file_name}`;
         @cd(..);
     ];
-    IF $variable == "one" OR $variable == "two" [
+    IF $variable == "one" || $variable == "two" [
         @cd(./linux);
     ] ELSE [
         @cd(./linux);
@@ -135,7 +135,7 @@ distribution [
     IF $variable == "one" [
         @cd(./linux);
     ];
-    IF $variable == "one" OR $variable == "two" [
+    IF $variable == "one" || $variable == "two" [
         @cd(./linux);
     ];
 ];

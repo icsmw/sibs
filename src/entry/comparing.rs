@@ -62,77 +62,57 @@ impl Reading<Comparing> for Comparing {
     fn read(reader: &mut Reader) -> Result<Option<Comparing>, LinkedErr<E>> {
         let restore = reader.pin();
         let close = reader.open_token();
-        if reader
-            .until()
-            .word(&[
-                words::CMP_TRUE,
-                words::CMP_FALSE,
-                words::CMP_LBIG_INC,
-                words::CMP_RBIG_INC,
-                words::CMP_LBIG,
-                words::CMP_RBIG,
-            ])
-            .is_some()
-        {
-            let mut inner = reader.token()?.bound;
-            let left = if let Some(el) = Element::include(
-                &mut inner,
-                &[
-                    ElTarget::VariableName,
-                    ElTarget::Function,
-                    ElTarget::PatternString,
-                    ElTarget::Values,
-                    ElTarget::Integer,
-                    ElTarget::Boolean,
-                ],
-            )? {
-                Box::new(el)
-            } else {
-                restore(reader);
-                return Ok(None);
-            };
-            if !inner.is_empty() {
-                restore(reader);
-                return Ok(None);
-            }
-            let cmp = if let Some(word) = reader.move_to().expression(&[
-                words::CMP_TRUE,
-                words::CMP_FALSE,
-                words::CMP_LBIG_INC,
-                words::CMP_RBIG_INC,
-                words::CMP_LBIG,
-                words::CMP_RBIG,
-            ]) {
-                Cmp::from_str(&word)?
-            } else {
-                restore(reader);
-                return Ok(None);
-            };
-            let right = if let Some(el) = Element::include(
-                reader,
-                &[
-                    ElTarget::VariableName,
-                    ElTarget::Function,
-                    ElTarget::PatternString,
-                    ElTarget::Values,
-                    ElTarget::Integer,
-                    ElTarget::Boolean,
-                ],
-            )? {
-                Box::new(el)
-            } else {
-                restore(reader);
-                return Ok(None);
-            };
-            Ok(Some(Comparing {
-                left,
-                cmp,
-                right,
-                token: close(reader),
-            }))
+        let left = if let Some(el) = Element::include(
+            reader,
+            &[
+                ElTarget::VariableName,
+                ElTarget::Function,
+                ElTarget::PatternString,
+                ElTarget::Integer,
+                ElTarget::Boolean,
+                ElTarget::Values,
+            ],
+        )? {
+            Box::new(el)
         } else {
-            Ok(None)
-        }
+            restore(reader);
+            return Ok(None);
+        };
+        let cmp = if let Some(word) = reader.move_to().expression(&[
+            words::CMP_TRUE,
+            words::CMP_FALSE,
+            words::CMP_LBIG_INC,
+            words::CMP_RBIG_INC,
+            words::CMP_LBIG,
+            words::CMP_RBIG,
+        ]) {
+            Cmp::from_str(&word)?
+        } else {
+            restore(reader);
+            return Ok(None);
+        };
+        let right = if let Some(el) = Element::include(
+            reader,
+            &[
+                ElTarget::VariableName,
+                ElTarget::Function,
+                ElTarget::PatternString,
+                ElTarget::Integer,
+                ElTarget::Boolean,
+                ElTarget::Values,
+            ],
+        )? {
+            Box::new(el)
+        } else {
+            restore(reader);
+            return Ok(None);
+        };
+        Ok(Some(Comparing {
+            left,
+            cmp,
+            right,
+            token: close(reader),
+        }))
     }
 }
 
@@ -218,31 +198,41 @@ mod reading {
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
         let cx: Context = Context::unbound()?;
-        let mut reader = Reader::bound(
-            include_str!("../tests/reading/comparing.sibs").to_string(),
-            &cx,
-        );
+        let content = include_str!("../tests/reading/comparing.sibs")
+            .split('\n')
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>();
         let mut count = 0;
-        while let Some(entity) = tests::report_if_err(&cx, Comparing::read(&mut reader))? {
-            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+        for str in content.iter() {
+            let mut reader = Reader::bound(str.to_string(), &cx);
+            let entity = tests::report_if_err(&cx, Comparing::read(&mut reader))?;
+            assert!(entity.is_some(), "Line: {}", count + 1);
+            let entity = entity.unwrap();
             assert_eq!(
                 tests::trim_carets(reader.recent()),
-                tests::trim_carets(&format!("{entity};"))
+                tests::trim_carets(&format!("{entity}")),
+                "Line: {}",
+                count + 1
             );
+            assert!(reader.rest().trim().is_empty(), "Line: {}", count + 1);
             count += 1;
         }
-        assert_eq!(count, 241);
-        assert!(reader.rest().trim().is_empty());
+        assert_eq!(count, content.len());
         Ok(())
     }
 
     #[test]
     fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut reader =
-            Reader::unbound(include_str!("../tests/reading/comparing.sibs").to_string());
+        let content = include_str!("../tests/reading/comparing.sibs")
+            .split('\n')
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>();
         let mut count = 0;
-        while let Some(entity) = Comparing::read(&mut reader)? {
-            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+        for str in content.iter() {
+            let mut reader = Reader::unbound(str.to_string());
+            let entity = Comparing::read(&mut reader)?;
+            assert!(entity.is_some(), "Line: {}", count + 1);
+            let entity = entity.unwrap();
             assert_eq!(
                 tests::trim_carets(&format!("{entity}")),
                 reader.get_fragment(&entity.token)?.lined
@@ -261,8 +251,7 @@ mod reading {
             );
             count += 1;
         }
-        assert_eq!(count, 241);
-        assert!(reader.rest().trim().is_empty());
+        assert_eq!(count, content.len());
         Ok(())
     }
 
@@ -284,7 +273,10 @@ mod reading {
 
 #[cfg(test)]
 mod proptest {
-    use crate::entry::{Cmp, Comparing, ElTarget, Element};
+    use crate::{
+        entry::{Cmp, Comparing, ElTarget, Element},
+        inf::tests::MAX_DEEP,
+    };
     use proptest::prelude::*;
 
     impl Arbitrary for Cmp {
@@ -305,30 +297,61 @@ mod proptest {
     }
 
     impl Arbitrary for Comparing {
-        type Parameters = ();
+        type Parameters = usize;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-            (
-                Element::arbitrary_with(vec![
-                    ElTarget::VariableName,
-                    ElTarget::Function,
-                    ElTarget::PatternString,
-                ]),
-                Cmp::arbitrary(),
-                Element::arbitrary_with(vec![
-                    ElTarget::VariableName,
-                    ElTarget::Function,
-                    ElTarget::PatternString,
-                ]),
-            )
-                .prop_map(|(left, cmp, right)| Comparing {
-                    cmp,
-                    left: Box::new(left),
-                    right: Box::new(right),
-                    token: 0,
-                })
-                .boxed()
+        fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
+            if deep > MAX_DEEP {
+                (
+                    Element::arbitrary_with((
+                        vec![ElTarget::VariableName, ElTarget::Integer, ElTarget::Boolean],
+                        deep,
+                    )),
+                    Cmp::arbitrary(),
+                    Element::arbitrary_with((
+                        vec![ElTarget::VariableName, ElTarget::Integer, ElTarget::Boolean],
+                        deep,
+                    )),
+                )
+                    .prop_map(|(left, cmp, right)| Comparing {
+                        cmp,
+                        left: Box::new(left),
+                        right: Box::new(right),
+                        token: 0,
+                    })
+                    .boxed()
+            } else {
+                (
+                    Element::arbitrary_with((
+                        vec![
+                            ElTarget::VariableName,
+                            ElTarget::Function,
+                            ElTarget::PatternString,
+                            ElTarget::Integer,
+                            ElTarget::Boolean,
+                        ],
+                        deep,
+                    )),
+                    Cmp::arbitrary(),
+                    Element::arbitrary_with((
+                        vec![
+                            ElTarget::VariableName,
+                            ElTarget::Function,
+                            ElTarget::PatternString,
+                            ElTarget::Integer,
+                            ElTarget::Boolean,
+                        ],
+                        deep,
+                    )),
+                )
+                    .prop_map(|(left, cmp, right)| Comparing {
+                        cmp,
+                        left: Box::new(left),
+                        right: Box::new(right),
+                        token: 0,
+                    })
+                    .boxed()
+            }
         }
     }
 }

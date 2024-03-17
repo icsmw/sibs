@@ -128,7 +128,10 @@ mod reading {
 
 #[cfg(test)]
 mod proptest {
-    use crate::entry::{ElTarget, Element, PatternString};
+    use crate::{
+        entry::{ElTarget, Element, PatternString},
+        inf::tests::MAX_DEEP,
+    };
     use proptest::prelude::*;
 
     impl Default for PatternString {
@@ -141,43 +144,53 @@ mod proptest {
         }
     }
     impl Arbitrary for PatternString {
-        type Parameters = ();
+        type Parameters = usize;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-            (
-                prop::collection::vec(
-                    Element::arbitrary_with(vec![
-                        ElTarget::VariableName,
-                        ElTarget::Function,
-                        ElTarget::If,
-                    ]),
-                    0..=2,
-                ),
-                prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 10),
-            )
-                .prop_map(|(injections, noise)| {
-                    let mut pattern: String = String::new();
-                    for (i, el) in injections.iter().enumerate() {
-                        pattern = format!(
-                            "{}{{{el}}}",
-                            if noise[i].is_empty() {
-                                "min"
-                            } else {
-                                &noise[i]
-                            }
-                        );
-                    }
-                    PatternString {
-                        injections: injections
-                            .iter()
-                            .map(|el| (el.to_string(), el.clone()))
-                            .collect::<Vec<(String, Element)>>(),
-                        pattern,
+        fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
+            if deep > MAX_DEEP {
+                "[a-z][a-z0-9]*"
+                    .prop_map(String::from)
+                    .prop_map(|pattern| PatternString {
+                        injections: vec![],
+                        pattern: if pattern.len() < 3 {
+                            "min".to_owned()
+                        } else {
+                            pattern
+                        },
                         token: 0,
-                    }
-                })
-                .boxed()
+                    })
+                    .boxed()
+            } else {
+                (
+                    prop::collection::vec(
+                        Element::arbitrary_with((
+                            vec![ElTarget::VariableName, ElTarget::Function],
+                            deep,
+                        )),
+                        0..=2,
+                    ),
+                    prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 10),
+                )
+                    .prop_map(|(injections, noise)| {
+                        let mut pattern: String = String::new();
+                        for (i, el) in injections.iter().enumerate() {
+                            pattern = format!(
+                                "{}{{{el}}}",
+                                if noise[i].len() < 3 { "min" } else { &noise[i] }
+                            );
+                        }
+                        PatternString {
+                            injections: injections
+                                .iter()
+                                .map(|el| (el.to_string(), el.clone()))
+                                .collect::<Vec<(String, Element)>>(),
+                            pattern,
+                            token: 0,
+                        }
+                    })
+                    .boxed()
+            }
         }
     }
 }

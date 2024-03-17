@@ -356,13 +356,13 @@ mod proptest {
     use proptest::prelude::*;
 
     impl Arbitrary for Component {
-        type Parameters = ();
+        type Parameters = usize;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             (
                 "[a-zA-Z]*".prop_map(String::from),
-                prop::collection::vec(Task::arbitrary(), 2..6).prop_map(|v| {
+                prop::collection::vec(Task::arbitrary_with(deep), 2..6).prop_map(|v| {
                     v.iter()
                         .map(|v| Element::Task(v.clone()))
                         .collect::<Vec<Element>>()
@@ -372,7 +372,7 @@ mod proptest {
                         .map(|v| Element::Meta(v.clone()))
                         .collect::<Vec<Element>>()
                 }),
-                prop::collection::vec(Function::arbitrary(), 0..3).prop_map(|v| {
+                prop::collection::vec(Function::arbitrary_with(deep), 0..3).prop_map(|v| {
                     v.iter()
                         .map(|v| Element::Function(v.clone()))
                         .collect::<Vec<Element>>()

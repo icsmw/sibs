@@ -6,7 +6,7 @@ test($a: a | b) [
     ];
 ];
 test($a: a | b; $b: a | b) [
-    IF $a == "a" AND $b == "b" [
+    IF $a == "a" && $b == "b" [
         "true";
     ] ELSE [
         "false";
@@ -20,14 +20,14 @@ test($a: {string}) [
     ];
 ];
 test($a: {string}; $b: a | b) [
-    IF $a == "a" AND $b == "b" [
+    IF $a == "a" && $b == "b" [
         "true";
     ] ELSE [
         "false";
     ];
 ];
 test($a: {string}; $b: a | b; $c: {string}) [
-    IF $a == "a" AND $b == "b" AND $c == "c" [
+    IF $a == "a" && $b == "b" && $c == "c" [
         "true";
     ] ELSE [
         "false";

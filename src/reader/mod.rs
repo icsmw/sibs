@@ -445,6 +445,18 @@ impl<'a> Next<'a> {
         }
         self.bound.content[self.bound.pos..].chars().next()
     }
+    pub fn is_word(&self, words: &[&str]) -> bool {
+        if self.bound.done() {
+            return false;
+        }
+        let trimmed = self.bound.content[self.bound.pos..].trim();
+        for word in words.iter() {
+            if trimmed.starts_with(word) {
+                return true;
+            }
+        }
+        false
+    }
 }
 
 #[derive(Debug)]
@@ -479,7 +491,7 @@ pub struct Token {
 
 #[derive(Debug)]
 pub struct Reader {
-    content: String,
+    pub content: String,
     pos: usize,
     chars: &'static [&'static char],
     fixed: Option<usize>,
@@ -551,6 +563,13 @@ impl Reader {
     }
     pub fn rest(&self) -> &str {
         &self.content[self.pos..]
+    }
+    pub fn around(&self, offset: usize) -> &str {
+        &self.content[if self.pos > offset {
+            self.pos - offset
+        } else {
+            0
+        }..]
     }
     pub fn trim(&mut self) {
         let content = &self.content[self.pos..];

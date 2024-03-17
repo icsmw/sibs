@@ -33,6 +33,7 @@ impl Reading<Function> for Function {
                     &chars::SEMICOLON,
                     &chars::WS,
                     &chars::OPEN_BRACKET,
+                    &chars::CLOSE_BRACKET,
                 ])
                 .map(|(str, char)| (str, Some(char)))
                 .unwrap_or_else(|| (reader.move_to().end(), None));
@@ -40,10 +41,13 @@ impl Reading<Function> for Function {
                 &name,
                 &[&chars::UNDERSCORE, &chars::DASH, &chars::COLON],
             ) {
-                Err(E::InvalidFunctionName.by_reader(reader))?;
+                Err(E::InvalidFunctionName(name.to_string()).by_reader(reader))?;
             }
             let args_close = reader.open_token();
-            if matches!(ends_with, Some(chars::SEMICOLON)) {
+            if matches!(
+                ends_with,
+                Some(chars::SEMICOLON) | Some(chars::CLOSE_BRACKET)
+            ) {
                 return Ok(Some(Self::new(
                     close(reader),
                     args_close(reader),
@@ -398,39 +402,59 @@ mod proptest {
     use proptest::prelude::*;
 
     impl Arbitrary for Function {
-        type Parameters = ();
+        type Parameters = usize;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-            (
-                "[a-z][a-z0-9]*".prop_map(String::from),
-                prop::collection::vec(
-                    ElementExd::arbitrary_with(vec![
-                        ElTarget::Values,
-                        ElTarget::Function,
-                        ElTarget::If,
-                        ElTarget::PatternString,
-                        ElTarget::Reference,
-                        ElTarget::Comparing,
-                        ElTarget::VariableName,
-                        ElTarget::Command,
-                    ]),
-                    0..=3,
-                ),
-            )
-                .prop_map(|(name, args)| Function {
-                    args,
-                    tolerance: false,
-                    token: 0,
-                    args_token: 0,
-                    feed: None,
-                    name: if name.is_empty() {
-                        "min".to_owned()
-                    } else {
-                        name
-                    },
-                })
-                .boxed()
+        fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
+            if deep > MAX_DEEP {
+                ("[a-z][a-z0-9]*".prop_map(String::from),)
+                    .prop_map(|(name,)| Function {
+                        args: vec![],
+                        tolerance: false,
+                        token: 0,
+                        args_token: 0,
+                        feed: None,
+                        name: if name.is_empty() {
+                            "min".to_owned()
+                        } else {
+                            name
+                        },
+                    })
+                    .boxed()
+            } else {
+                (
+                    "[a-z][a-z0-9]*".prop_map(String::from),
+                    prop::collection::vec(
+                        ElementExd::arbitrary_with((
+                            vec![
+                                ElTarget::Values,
+                                ElTarget::Function,
+                                ElTarget::If,
+                                ElTarget::PatternString,
+                                ElTarget::Reference,
+                                ElTarget::Comparing,
+                                ElTarget::VariableName,
+                                ElTarget::Command,
+                            ],
+                            deep,
+                        )),
+                        0..=3,
+                    ),
+                )
+                    .prop_map(|(name, args)| Function {
+                        args,
+                        tolerance: false,
+                        token: 0,
+                        args_token: 0,
+                        feed: None,
+                        name: if name.is_empty() {
+                            "min".to_owned()
+                        } else {
+                            name
+                        },
+                    })
+                    .boxed()
+            }
         }
     }
 
@@ -445,20 +469,20 @@ mod proptest {
         })
     }
 
-    // proptest! {
-    //     #![proptest_config(ProptestConfig {
-    //         max_shrink_iters: 5000,
-    //         ..ProptestConfig::with_cases(10)
-    //     })]
-    //     #[test]
-    //     fn test_run_task(
-    //         args in any_with::<Function>(())
-    //     ) {
-    //         let res = reading(args.clone());
-    //         if res.is_err() {
-    //             println!("{res:?}");
-    //         }
-    //         prop_assert!(res.is_ok());
-    //     }
-    // }
+    proptest! {
+        #![proptest_config(ProptestConfig {
+            max_shrink_iters: 5000,
+            ..ProptestConfig::with_cases(10)
+        })]
+        #[test]
+        fn test_run_task(
+            args in any_with::<Function>(0)
+        ) {
+            let res = reading(args.clone());
+            if res.is_err() {
+                println!("{res:?}");
+            }
+            prop_assert!(res.is_ok());
+        }
+    }
 }

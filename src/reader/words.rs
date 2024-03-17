@@ -1,6 +1,6 @@
 pub const IF: &str = "IF";
-pub const OR: &str = "OR";
-pub const AND: &str = "AND";
+pub const OR: &str = "||";
+pub const AND: &str = "&&";
 pub const ELSE: &str = "ELSE";
 pub const FIRST: &str = "FIRST";
 pub const EACH: &str = "EACH";

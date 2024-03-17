@@ -222,29 +222,59 @@ mod proptest {
     use proptest::prelude::*;
 
     impl Arbitrary for VariableAssignation {
-        type Parameters = ();
+        type Parameters = usize;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-            (
-                Element::arbitrary_with(vec![
-                    ElTarget::Block,
-                    ElTarget::First,
-                    ElTarget::Function,
-                    ElTarget::If,
-                    ElTarget::PatternString,
-                    ElTarget::Values,
-                    ElTarget::Comparing,
-                    ElTarget::VariableName,
-                ]),
-                VariableName::arbitrary(),
-            )
-                .prop_map(move |(assignation, variable)| VariableAssignation {
-                    assignation: Box::new(assignation),
-                    variable,
-                    token: 0,
-                })
-                .boxed()
+        fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
+            if deep > MAX_DEEP {
+                (
+                    Element::arbitrary_with((
+                        vec![
+                            ElTarget::Function,
+                            ElTarget::PatternString,
+                            ElTarget::Values,
+                            ElTarget::Command,
+                            ElTarget::VariableName,
+                            ElTarget::Integer,
+                            ElTarget::Boolean,
+                        ],
+                        deep,
+                    )),
+                    VariableName::arbitrary(),
+                )
+                    .prop_map(move |(assignation, variable)| VariableAssignation {
+                        assignation: Box::new(assignation),
+                        variable,
+                        token: 0,
+                    })
+                    .boxed()
+            } else {
+                (
+                    Element::arbitrary_with((
+                        vec![
+                            ElTarget::Block,
+                            ElTarget::First,
+                            ElTarget::Function,
+                            ElTarget::If,
+                            ElTarget::PatternString,
+                            ElTarget::Values,
+                            ElTarget::Comparing,
+                            ElTarget::Command,
+                            ElTarget::VariableName,
+                            ElTarget::Integer,
+                            ElTarget::Boolean,
+                        ],
+                        deep,
+                    )),
+                    VariableName::arbitrary(),
+                )
+                    .prop_map(move |(assignation, variable)| VariableAssignation {
+                        assignation: Box::new(assignation),
+                        variable,
+                        token: 0,
+                    })
+                    .boxed()
+            }
         }
     }
 
@@ -259,20 +289,20 @@ mod proptest {
         })
     }
 
-    // proptest! {
-    //     #![proptest_config(ProptestConfig {
-    //         max_shrink_iters: 5000,
-    //         ..ProptestConfig::with_cases(10)
-    //     })]
-    //     #[test]
-    //     fn test_run_task(
-    //         args in any_with::<VariableAssignation>(())
-    //     ) {
-    //         let res = reading(args.clone());
-    //         if res.is_err() {
-    //             println!("{res:?}");
-    //         }
-    //         prop_assert!(res.is_ok());
-    //     }
-    // }
+    proptest! {
+        #![proptest_config(ProptestConfig {
+            max_shrink_iters: 5000,
+            ..ProptestConfig::with_cases(10)
+        })]
+        #[test]
+        fn test_run_task(
+            args in any_with::<VariableAssignation>(0)
+        ) {
+            let res = reading(args.clone());
+            if res.is_err() {
+                println!("{res:?}");
+            }
+            prop_assert!(res.is_ok());
+        }
+    }
 }
