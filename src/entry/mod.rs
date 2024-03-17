@@ -1,5 +1,4 @@
 mod block;
-mod comparing;
 mod component;
 mod conditions;
 mod element;
@@ -15,7 +14,6 @@ mod values;
 mod variable;
 
 pub use block::*;
-pub use comparing::*;
 pub use component::*;
 pub use conditions::*;
 pub use element::*;

@@ -198,7 +198,7 @@ mod reading {
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
         let cx: Context = Context::unbound()?;
-        let content = include_str!("../tests/reading/comparing.sibs")
+        let content = include_str!("../../tests/reading/comparing.sibs")
             .split('\n')
             .map(|s| s.to_string())
             .collect::<Vec<String>>();
@@ -223,7 +223,7 @@ mod reading {
 
     #[test]
     fn tokens() -> Result<(), LinkedErr<E>> {
-        let content = include_str!("../tests/reading/comparing.sibs")
+        let content = include_str!("../../tests/reading/comparing.sibs")
             .split('\n')
             .map(|s| s.to_string())
             .collect::<Vec<String>>();
@@ -257,7 +257,7 @@ mod reading {
 
     #[test]
     fn error() -> Result<(), E> {
-        let samples = include_str!("../tests/error/comparing.sibs").to_string();
+        let samples = include_str!("../../tests/error/comparing.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
