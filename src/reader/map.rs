@@ -61,7 +61,7 @@ impl Map {
         }
     }
     pub fn set_content(&mut self, content: &str) {
-        self.content = content.to_owned();
+        content.clone_into(&mut self.content);
     }
     pub fn set_cursor(&mut self, token: usize) {
         self.cursor = Some(token);

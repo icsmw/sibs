@@ -70,67 +70,55 @@ impl AnyValue {
         let reference = self.value.as_ref().as_any();
         reference
             .downcast_ref::<String>()
-            .map(|v| v.parse::<isize>().map_or(None, Some))
+            .map(|v| v.parse::<isize>().ok())
             .or_else(|| {
                 reference
                     .downcast_ref::<usize>()
-                    .map(|v| isize::try_from(*v).map_or(None, Some))
+                    .map(|v| isize::try_from(*v).ok())
             })
             .or_else(|| reference.downcast_ref::<isize>().map(|v| Some(*v)))
             .or_else(|| {
                 reference
                     .downcast_ref::<u128>()
-                    .map(|v| isize::try_from(*v).map_or(None, Some))
+                    .map(|v| isize::try_from(*v).ok())
             })
             .or_else(|| {
                 reference
                     .downcast_ref::<u64>()
-                    .map(|v| isize::try_from(*v).map_or(None, Some))
+                    .map(|v| isize::try_from(*v).ok())
             })
             .or_else(|| {
                 reference
                     .downcast_ref::<u32>()
-                    .map(|v| isize::try_from(*v).map_or(None, Some))
+                    .map(|v| isize::try_from(*v).ok())
             })
             .or_else(|| {
                 reference
                     .downcast_ref::<u16>()
-                    .map(|v| isize::try_from(*v).map_or(None, Some))
+                    .map(|v| isize::try_from(*v).ok())
             })
-            .or_else(|| {
-                reference
-                    .downcast_ref::<u8>()
-                    .map(|v| isize::try_from(*v).map_or(None, Some))
-            })
+            .or_else(|| reference.downcast_ref::<u8>().map(|v| Some(*v as isize)))
             .or_else(|| {
                 reference
                     .downcast_ref::<i128>()
-                    .map(|v| isize::try_from(*v).map_or(None, Some))
+                    .map(|v| isize::try_from(*v).ok())
             })
             .or_else(|| {
                 reference
                     .downcast_ref::<i64>()
-                    .map(|v| isize::try_from(*v).map_or(None, Some))
+                    .map(|v| isize::try_from(*v).ok())
             })
             .or_else(|| {
                 reference
                     .downcast_ref::<i32>()
-                    .map(|v| isize::try_from(*v).map_or(None, Some))
+                    .map(|v| isize::try_from(*v).ok())
             })
-            .or_else(|| {
-                reference
-                    .downcast_ref::<i16>()
-                    .map(|v| isize::try_from(*v).map_or(None, Some))
-            })
-            .or_else(|| {
-                reference
-                    .downcast_ref::<i8>()
-                    .map(|v| isize::try_from(*v).map_or(None, Some))
-            })
+            .or_else(|| reference.downcast_ref::<i16>().map(|v| Some(*v as isize)))
+            .or_else(|| reference.downcast_ref::<i8>().map(|v| Some(*v as isize)))
             .or_else(|| {
                 reference
                     .downcast_ref::<AnyValue>()
-                    .and_then(|v| Some(v.get_as_integer()))
+                    .map(|v| v.get_as_integer())
             })
             .unwrap_or(None)
     }

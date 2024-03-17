@@ -112,7 +112,7 @@ mod proptest {
         type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
             Types::arbitrary()
                 .prop_map(|var_type| VariableType { var_type, token: 0 })
                 .boxed()

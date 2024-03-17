@@ -10,11 +10,8 @@ pub use logger::{Logger, Logs};
 use progress::Progress;
 use std::{fmt, path::PathBuf};
 pub use task::Task;
-use tokio::{
-    self,
-    sync::mpsc::{
-        channel, error::SendError, unbounded_channel, Sender, UnboundedReceiver, UnboundedSender,
-    },
+use tokio::sync::mpsc::{
+    channel, error::SendError, unbounded_channel, Sender, UnboundedReceiver, UnboundedSender,
 };
 
 #[derive(Clone, Debug)]

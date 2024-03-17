@@ -12,8 +12,6 @@ pub enum E {
     NoPathToScenarioFile,
     #[error("Invalid request; expecting addition arguments after: {0}")]
     InvalidRequestAfter(String),
-    #[error("Invalid request; expecting addition arguments before: {0}")]
-    InvalidRequestBefore(String),
     #[error("No any options/commands. Try --help to see all options.")]
     NoArguments,
     #[error("Component {0} does't exist")]

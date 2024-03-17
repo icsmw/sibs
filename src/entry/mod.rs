@@ -1,7 +1,7 @@
 mod block;
 mod comparing;
 mod component;
-mod condition;
+mod conditions;
 mod element;
 mod function;
 mod meta;
@@ -17,7 +17,7 @@ mod variable;
 pub use block::*;
 pub use comparing::*;
 pub use component::*;
-pub use condition::*;
+pub use conditions::*;
 pub use element::*;
 pub use function::*;
 pub use meta::*;

@@ -34,18 +34,6 @@ pub trait Argument<T> {
             Ok(None)
         }
     }
-    fn find_prev_to(args: &mut Vec<String>, targets: &[&str]) -> Result<Option<String>, E> {
-        if let Some(position) = args.iter().position(|arg| targets.contains(&arg.as_str())) {
-            if position == 0 {
-                Err(E::InvalidRequestBefore(targets.join(", ")))?;
-            }
-            let arg = args.remove(position - 1);
-            args.remove(position - 1);
-            Ok(Some(arg))
-        } else {
-            Ok(None)
-        }
-    }
     fn find_prev_to_opt(
         args: &mut Vec<String>,
         targets: &[&str],
@@ -121,7 +109,7 @@ impl Arguments {
     }
 
     pub fn has<T: 'static>(&self) -> bool {
-        self.arguments.get(&TypeId::of::<T>()).is_some()
+        self.arguments.contains_key(&TypeId::of::<T>())
     }
 }
 
