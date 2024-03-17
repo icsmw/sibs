@@ -123,13 +123,14 @@ mod test {
         inf::{
             context::Context,
             operator::{Operator, E},
+            tests::*,
         },
-        reader::{Reader, Reading},
+        reader::{chars, Reader, Reading},
     };
 
     const TESTS: &[&str] = &[
-        r#"$tmp_path = @env::temp_dir; $file_name = "test.txt"; $file = @fs::path_join [$tmp_path $file_name]; IF $file == "__temp_file__" ["true";] ELSE ["false";];"#,
-        // r#"$file = @fs::path_join [@env::temp_dir "test.txt"]; IF $file == "__temp_file__" ["true";] ELSE ["false";];"#,
+        r#"$tmp_path = @env::temp_dir; $file_name = "test.txt"; $file = @fs::path_join(($tmp_path; $file_name)); IF $file == "__temp_file__" ["true";] ELSE ["false";];"#,
+        // r#"$file = @fs::path_join(@env::temp_dir; "test.txt"); IF $file == "__temp_file__" ["true";] ELSE ["false";];"#,
     ];
 
     #[tokio::test]
@@ -148,12 +149,11 @@ mod test {
         }
         for test in TESTS.iter() {
             let mut cx = Context::unbound()?;
-            let mut reader = Reader::unbound(apply_hooks(format!("test[{test}]"), hooks));
+            let mut reader = Reader::bound(apply_hooks(format!("test[{test}]"), hooks), &cx);
             while let Some(task) = Task::read(&mut reader)? {
-                let result = task
-                    .execute(None, &[], &[], &mut cx)
-                    .await?
-                    .expect("test returns some value");
+                let result = task.execute(None, &[], &[], &mut cx).await;
+                let result = post_if_err(&cx, result)?.expect("test returns some value");
+                let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                 assert_eq!(
                     result.get_as_string().expect("test returns string value"),
                     "true".to_owned()

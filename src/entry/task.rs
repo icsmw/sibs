@@ -10,7 +10,7 @@ use crate::{
 };
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Task {
     pub name: SimpleString,
     pub declarations: Vec<VariableDeclaration>,
@@ -20,10 +20,11 @@ pub struct Task {
 
 impl Task {
     pub fn has_meta(&self) -> bool {
-        self.block
-            .as_ref()
-            .map(|b| b.meta.is_some())
-            .unwrap_or(false)
+        true
+        // self.block
+        //     .as_ref()
+        //     .map(|b| b.meta.is_some())
+        //     .unwrap_or(false)
     }
     pub fn get_name(&self) -> &str {
         &self.name.value
@@ -68,9 +69,6 @@ impl Reading<Task> for Task {
                 Err(E::NoTaskArguments.linked(&name_token))?
             };
             if let Some(block) = Block::read(reader)? {
-                if reader.move_to().char(&[&chars::SEMICOLON]).is_some() {
-                    reader.move_to().next();
-                }
                 Ok(Some(Task {
                     name: SimpleString {
                         value: name,
@@ -109,7 +107,7 @@ impl fmt::Display for Task {
             },
             self.block
                 .as_ref()
-                .map(|b| format!("{b}"))
+                .map(|b| b.to_string())
                 .unwrap_or_default()
         )
     }
@@ -190,18 +188,21 @@ mod reading {
     use crate::{
         entry::Task,
         error::LinkedErr,
-        inf::tests,
-        reader::{Reader, Reading, E},
+        inf::{context::Context, tests::*},
+        reader::{chars, Reader, Reading, E},
     };
 
-    #[test]
-    fn reading() -> Result<(), LinkedErr<E>> {
-        let mut reader = Reader::unbound(include_str!("../tests/reading/tasks.sibs").to_string());
+    #[tokio::test]
+    async fn reading() -> Result<(), LinkedErr<E>> {
+        let cx: Context = Context::unbound()?;
+        let mut reader =
+            Reader::bound(include_str!("../tests/reading/tasks.sibs").to_string(), &cx);
         let mut count = 0;
-        while let Some(entity) = Task::read(&mut reader)? {
+        while let Some(entity) = report_if_err(&cx, Task::read(&mut reader))? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
-                tests::trim_carets(reader.recent()),
-                tests::trim_carets(&format!("{entity};"))
+                trim_carets(reader.recent()),
+                trim_carets(&format!("{entity};"))
             );
             count += 1;
         }
@@ -215,34 +216,33 @@ mod reading {
         let mut reader = Reader::unbound(include_str!("../tests/reading/tasks.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Task::read(&mut reader)? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
-                tests::trim_carets(&format!("{entity};")),
-                tests::trim_carets(&reader.get_fragment(&entity.token)?.lined)
+                trim_carets(&format!("{entity}")),
+                trim_carets(&reader.get_fragment(&entity.token)?.lined)
             );
             assert_eq!(
-                tests::trim_carets(&entity.name.value),
-                tests::trim_carets(&reader.get_fragment(&entity.name.token)?.lined)
+                trim_carets(&entity.name.value),
+                trim_carets(&reader.get_fragment(&entity.name.token)?.lined)
             );
             if let Some(block) = entity.block.as_ref() {
                 assert_eq!(
-                    tests::trim_carets(&block.to_string()),
-                    tests::trim_carets(&reader.get_fragment(&block.token)?.lined)
+                    trim_carets(&block.to_string()),
+                    trim_carets(&reader.get_fragment(&block.token)?.lined)
                 );
             }
             for declaration in entity.declarations.iter() {
                 assert_eq!(
-                    tests::trim_carets(&declaration.to_string()),
-                    tests::trim_carets(&reader.get_fragment(&declaration.token)?.lined)
+                    trim_carets(&declaration.to_string()),
+                    trim_carets(&reader.get_fragment(&declaration.token)?.lined)
                 );
                 assert_eq!(
-                    tests::trim_carets(&declaration.name.to_string()),
-                    tests::trim_carets(&reader.get_fragment(&declaration.name.token)?.lined)
+                    trim_carets(&declaration.variable.to_string()),
+                    trim_carets(&reader.get_fragment(&declaration.variable.token)?.lined)
                 );
                 assert_eq!(
-                    tests::trim_carets(&declaration.declaration.to_string()),
-                    tests::trim_carets(
-                        &reader.get_fragment(&declaration.declaration.token())?.lined
-                    )
+                    trim_carets(&declaration.declaration.to_string()),
+                    trim_carets(&reader.get_fragment(&declaration.declaration.token())?.lined)
                 );
             }
             count += 1;
@@ -271,12 +271,11 @@ mod reading {
 mod processing {
     use crate::{
         entry::Task,
-        error::LinkedErr,
         inf::{
             context::Context,
             operator::{Operator, E},
         },
-        reader::{Reader, Reading},
+        reader::{chars, Reader, Reading},
     };
 
     const VALUES: &[&[&str]] = &[&["a"], &["a", "b"], &["a"], &["a", "b"], &["a", "b", "c"]];
@@ -284,8 +283,10 @@ mod processing {
     #[tokio::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
-        let mut reader =
-            Reader::unbound(include_str!("../tests/processing/tasks.sibs").to_string());
+        let mut reader = Reader::bound(
+            include_str!("../tests/processing/tasks.sibs").to_string(),
+            &cx,
+        );
         let mut cursor: usize = 0;
         while let Some(task) = Task::read(&mut reader)? {
             let result = task
@@ -300,6 +301,7 @@ mod processing {
                 )
                 .await?
                 .expect("Task returns some value");
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             cursor += 1;
             assert_eq!(
                 result.get_as_string().expect("Task returns string value"),
@@ -312,24 +314,17 @@ mod processing {
 
 #[cfg(test)]
 mod proptest {
-    use crate::{
-        entry::{
-            block::Block, simple_string::SimpleString, task::Task,
-            variable_declaration::VariableDeclaration,
-        },
-        inf::tests::*,
-    };
+    use crate::entry::{Block, SimpleString, Task, VariableDeclaration};
     use proptest::prelude::*;
 
     impl Arbitrary for Task {
-        type Parameters = SharedScope;
+        type Parameters = usize;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            scope.write().unwrap().include(Entity::Task);
-            let boxed = (
-                prop::collection::vec(VariableDeclaration::arbitrary_with(scope.clone()), 0..=5),
-                Block::arbitrary_with(scope.clone()),
+        fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
+            (
+                prop::collection::vec(VariableDeclaration::arbitrary(), 0..=5),
+                Block::arbitrary_with(deep),
                 "[a-zA-Z_]*".prop_map(String::from),
             )
                 .prop_map(|(declarations, block, name)| Task {
@@ -341,9 +336,7 @@ mod proptest {
                         token: 0,
                     },
                 })
-                .boxed();
-            scope.write().unwrap().exclude(Entity::Task);
-            boxed
+                .boxed()
         }
     }
 }

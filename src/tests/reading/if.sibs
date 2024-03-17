@@ -1,54 +1,90 @@
-IF $variable == "one" OR $variable == "two" [
-    @cd ./linux;
-] ELSE [
-    @cd ./linux;
-];
-IF $variable == "one" [
-    @cd ./linux;
-];
-IF $variable == "one" OR $variable == "two" [
-    @cd ./linux;
-];
-IF $variable == "one" OR $variable == "two" [
-    @cd ./linux;
-] ELSE [
-    @cd ./linux;
-];
-IF @os linux [
-    @cd ./linux;
-];
-IF !@os linux [
-    @cd ./linux;
-];
-IF @os linux [
-    "release{$version}-linux.zip";
-] IF @os darwin [
-    "release{$version}-mac.zip";
-] IF @os windows [
-    "release{$version}-win.zip";
-] ELSE [
-    @exit 1 "Unsupported OS: {@os}";
-];
-IF @os linux OR @os darwin [
-    "release{$version}-normal_os.zip";
-] ELSE [
-    "release{$version}-windows.zip";
-];
-IF @os linux [
-    @cd ./linux;
-] IF @os darwin [
-    @cd ./mac;
-] IF @os windows [
-    @cd ./windows;
-] ELSE [
-    @exit 1 "Unsupported OS: {@os}";
-];
-IF $variable == "one" [
-    @cd ./linux;
-] IF $variable == "two" [
-    @cd ./mac;
-] IF $variable == "three" [
-    @cd ./windows;
-] ELSE [
-    @exit 1 "Unsupported OS: {@os}";
-];
+IF (@functionH("arg8") == $var3) && ($var4 != "mismatch" || $var4 == "mismatch") ["Condition met";];
+IF $variable == "one" ["true";];
+IF @one == "one" ["true";];
+IF $variable == "one" || $variable == "two" [@cd(./linux);] ELSE [@cd(./linux);];
+IF $variable == "one" [@cd(./linux);];
+IF $variable == "one" || $variable == "two" [@cd(./linux);];
+IF $variable == "one" || $variable == "two" [@cd(./linux);] ELSE [@cd(./linux);];
+IF @os(linux) [@cd(./linux);];
+IF @os(linux) [@cd(./linux);];
+IF @os(linux) ["release{$version}-linux.zip";] IF @os(darwin) ["release{$version}-mac.zip";] IF @os(windows) ["release{$version}-win.zip";] ELSE [@exit(1; "Unsupported OS: {@os}");];
+IF @os(linux) || @os(darwin) ["release{$version}-normal_os.zip";] ELSE ["release{$version}-windows.zip";];
+IF @os(linux) [@cd(./linux);] IF @os(darwin) [@cd(./mac);] IF @os(windows) [@cd(./windows);] ELSE [@exit(1; "Unsupported OS: {@os}");];
+IF $variable == "one" [@cd(./linux);] IF $variable == "two" [@cd(./mac);] IF $variable == "three" [@cd(./windows);] ELSE [@exit(1; "Unsupported OS: {@os}");];
+IF $var1 == "active" ["Activate feature";];
+IF @is_admin($user_id) ["Grant access";];
+IF $status != "complete" || $progress < 100 ["Continue processing";];
+IF ($temperature > 30) && ($humidity < 50) ["Turn on AC";"Deactivate humidifier";];
+IF @user_exists("username") ["Welcome back!";];
+IF $error_count > 0 ["Log errors";"Notify admin";];
+IF $light == "off" ["Turn on light";] ELSE ["Keep off";];
+IF @time_check("22:00") ["Start night mode";];
+IF $credits > 0 ["Allow access";] ELSE ["Restrict access";];
+IF @network_status == "connected" ["Sync data";];
+IF $battery_level < 20 ["Low battery warning";"Suggest charging";];
+IF ($day == "Saturday") || ($day == "Sunday") ["Set weekend mode";];
+IF $email_verified ["Proceed to dashboard";] ELSE ["Request verification";];
+IF @file_exists("config") ["Load config";] ELSE ["Create default config";];
+IF $mode == "dark" ["Apply dark theme";];
+IF @service_active("database") ["Connect to database";];
+IF $order_processed ["Dispatch order";] ELSE ["Process order";];
+IF $unread_messages > 0 ["Show notification icon";];
+IF @is_holiday_today ["Set office status to closed";];
+IF $user_type == "guest" ["Display limited options";];
+IF ($fuel_level < 25) && (@is_gas_station_nearby) ["Suggest refueling";];
+IF $subscription_active ["Access premium content";] ELSE ["Show subscription options";];
+IF @weather("current") == "rainy" ["Display weather alert";];
+IF $language_preference == "Spanish" ["Set interface to Spanish";];
+IF $disk_space < 10 ["Disk space warning";"Recommend cleanup";];
+IF $pending_updates ["Show update notification";];
+IF $task_due ["Reminder: Task due soon!";];
+IF @cpu_usage > 80 ["High CPU usage detected";"Suggest solutions";];
+IF $is_muted ["Unmute button visible";];
+IF $current_song == "last in playlist" ["Loop playlist option";];
+IF @is_weekend && $is_vacation ["Activate vacation mode";];
+IF $login_attempts > 3 ["Trigger CAPTCHA";];
+IF @in_stock($product_id) ["Enable 'Add to Cart' button";];
+IF $location == "home" ["Connect to home WiFi";];
+IF @is_birth_month($user_id) ["Show birthday banner";];
+IF $is_private_account ["Set profile to private";];
+IF @is_full_moon ["Activate moonlight mode";];
+IF $user_score >= 1000 ["Unlock new level";];
+IF $theme_selected ["Apply selected theme";];
+IF @is_market_open ["Update stock prices";];
+IF $connection_speed < "5Mbps" ["Warn about slow connection";];
+IF $is_airplane_mode ["Disable all communications";];
+IF @is_member_since("1 year") ["Show loyalty badge";];
+IF $external_drive_connected ["Run backup to external drive";];
+IF @battery_status == "charging" ["Show charging indicator";];
+IF $document_unsaved ["Enable auto-save feature";];
+IF @is_daylight_savings ["Adjust clock for DST";];
+IF (@functionH("arg8") == $var3 && $var4 != "mismatch") || (@functionH("arg8") == $var3 && $var4 != "mismatch") ["Condition met";];
+IF (@check_access("user_id") == true && $status != "restricted") || (@get_role("user_id") == "admin" && $status == "active") ["Access granted";];
+IF (@calculate_sum(5; 10) > 10 && $number != 0) || (@calculate_difference(10; 5) < 10 && $number == 5) ["Calculation correct";];
+IF (@is_weekday && $hour >= 9 && $hour < 17) || (@is_holiday && $hour >= 10 && $hour < 15) ["Work hours";];
+IF (@get_temperature("city") > 30 && $is_ac_on == false) || (@get_humidity("city") > 70 && $is_dehumidifier_on == false) ["Adjust climate control";];
+IF (@user_active("user_id") && $last_login < @now) || (@user_subscription("user_id") == "expired" && $email_sent == false) ["User checkup";];
+IF (@item_in_stock("item_id") && $cart_count < 5) || (@promotion_active("promo_code") && $discount_applied == false) ["Shopping conditions";];
+IF (@score("user_id") > 1000 && $badge_awarded == false) || (@achievements_count("user_id") >= 10 && $special_reward == false) ["Reward conditions";];
+IF (@distance_to_destination("location") < 5 && $fuel_level > 10) || (@traffic_condition("route") == "clear" && $departure_time <= @now) ["Travel readiness";];
+IF (@is_password_strong($password) && $password_changed_recently == false) || (@has_two_factor_auth("user_id") == false && $account_security_level < 3) ["Security checks";];
+IF (@file_exists("path/to/document") && $document_open == false) || (@is_network_connected && $sync_pending == true) ["File and network conditions";];
+IF (@funcA($var1) > 10 && $var2 < 5) || (@funcB("arg") == "result") ["Action1";];
+IF $var3 == true && (@funcC(20) || $var4 != "expected") ["Action2";];
+IF (@funcD("input") != $var5) && $var6 == 100 ["Action3";"Action4";];
+IF $var7 <= 50 || (@funcE($var8) && $var9 > @funcF("param")) ["Action5";];
+IF (@funcG($var10) == "yes") && ($var11 || @funcH(30)) ["Action6";];
+IF $var12 && (@funcI($var13) > 40 || $var14 < @funcJ("data")) ["Action7";];
+IF (@funcK($var15; "extra") == $var16) || $var17 != "no" ["Action8";];
+IF $var18 == @funcL("check") && (@funcM($var19) || $var20) ["Action9";];
+IF (@funcN($var21) && $var22) || $var23 < 20 ["Action10";];
+IF $var24 != @funcO($var25) && (@funcP("test") == "pass") ["Action11";];
+IF (@funcQ($var26) > 30) || ($var27 && $var28) ["Action12";];
+IF $var29 == "open" && (@funcR($var30) != "closed") ["Action13";];
+IF (@funcS($var31) || $var32) && $var33 < 10 ["Action14";];
+IF $var34 && (@funcT($var35) > $var36) ["Action15";];
+IF (@funcU("arg1") == "ok") || ($var37 && $var38 != 50) ["Action16";];
+IF $var39 < @funcV($var40) && ($var41 || @funcW("param2")) ["Action17";];
+IF (@funcX($var42) && $var43) || $var44 == "active" ["Action18";];
+IF $var45 > 10 && (@funcY($var46) || $var47 != "inactive") ["Action19";];
+IF (@funcZ("final") == $var48) && $var49 ["Action20";];

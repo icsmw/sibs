@@ -80,17 +80,19 @@ mod reading {
     use crate::{
         entry::VariableName,
         error::LinkedErr,
+        inf::{context::Context, tests::*},
         reader::{Reader, Reading, E},
     };
 
-    #[test]
-    fn reading() -> Result<(), LinkedErr<E>> {
-        let samples = include_str!("../tests/reading/variable_name.sibs").to_string();
+    #[tokio::test]
+    async fn reading() -> Result<(), LinkedErr<E>> {
+        let cx: Context = Context::unbound()?;
+        let samples = include_str!("../../tests/reading/variable_name.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::unbound(sample.to_string());
-            VariableName::read(&mut reader)?.unwrap();
+            let mut reader = Reader::bound(sample.to_string(), &cx);
+            report_if_err(&cx, VariableName::read(&mut reader))?.unwrap();
             count += 1;
         }
         assert_eq!(count, samples.len());
@@ -99,7 +101,7 @@ mod reading {
 
     #[test]
     fn tokens() -> Result<(), LinkedErr<E>> {
-        let samples = include_str!("../tests/reading/variable_name.sibs").to_string();
+        let samples = include_str!("../../tests/reading/variable_name.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
@@ -116,7 +118,7 @@ mod reading {
 
     #[test]
     fn error() -> Result<(), LinkedErr<E>> {
-        let samples = include_str!("../tests/error/variable_name.sibs").to_string();
+        let samples = include_str!("../../tests/error/variable_name.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
@@ -131,21 +133,25 @@ mod reading {
 
 #[cfg(test)]
 mod proptest {
-    use crate::entry::variable_name::VariableName;
+    use crate::entry::variable::VariableName;
     use proptest::prelude::*;
 
     impl Arbitrary for VariableName {
-        type Parameters = Option<BoxedStrategy<String>>;
+        type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(name_strategy: Self::Parameters) -> Self::Strategy {
-            if let Some(name_strategy) = name_strategy {
-                name_strategy
-            } else {
-                "[a-z][a-z0-9]*".prop_map(String::from).boxed()
-            }
-            .prop_map(|name| VariableName { name, token: 0 })
-            .boxed()
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+            "[a-z][a-z0-9]*"
+                .prop_map(String::from)
+                .prop_map(|name| VariableName {
+                    name: if name.is_empty() {
+                        "min".to_owned()
+                    } else {
+                        name
+                    },
+                    token: 0,
+                })
+                .boxed()
         }
     }
 }

@@ -1,14 +1,14 @@
-#[TS]
+#(TS)
     lint [
-        !@exists ./node_modules => yarn install;
-        yarn run build;
-        yarn run lint;
+        @exists(./node_modules) => `yarn install`;
+        `yarn run build`;
+        `yarn run lint`;
     ];
 
-#[RUST]
+#(RUST)
     lint [
-        cargo +nightly clippy --all --all-features -- -D warnings;
+        `cargo +nightly clippy --all --all-features -- -D warnings`;
     ];
     test [
-        cargo test -- --nocapture;
+        `cargo test -- --nocapture`;
     ];

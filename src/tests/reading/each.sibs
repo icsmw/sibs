@@ -1,28 +1,33 @@
-EACH($file) $files [
-    tgz ./release/{$file};
+EACH($file; $files) [
+    @sh(tgz ./release/{$file});
 ];
-EACH($file) $files [
-    IF $file != "." AND $file != ".." [
-        tgz ./release/{$file};
+EACH($file; $files) [
+    IF $file != "." && $file != ".." [
+        @sh(tgz ./release/{$file});
     ];
 ];
-EACH($file) $files [
-    IF $file != "." AND $file != ".." [
-        tgz ./release/{$file};
+EACH($file; $files) [
+    IF $file != "." && $file != ".." [
+        @sh(tgz ./release/{$file});
     ];
 ];
-EACH($file) @ls ../output/files [
-    IF $file != "." AND $file != ".." [
-        tgz ./release/{$file};
+EACH($file; @ls(../output/files)) [
+    IF $file != "." && $file != ".." [
+        @sh(tgz ./release/{$file});
     ];
 ];
-EACH($file) @ls ../output/files [
-    IF $file != "." AND $file != ".." [
-        tgz ./release/{$file};
+EACH($file; @ls(../output/files)) [
+    IF $file != "." && $file != ".." [
+        @sh(tgz ./release/{$file});
     ];
 ];
-EACH($file) @ls ../output/files [
-    IF $file != "." AND $file != ".." [
-        tgz ./release/{$file};
+EACH($file; @ls(../output/files)) [
+    IF $file != "." && $file != ".." [
+        @sh(tgz ./release/{$file});
+    ];
+];
+EACH($file; @ls(../output/files)) [
+    IF $file != "." && $file != ".." [
+        `tgz ./release/{$file}`;
     ];
 ];

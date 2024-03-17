@@ -1,5 +1,5 @@
 use crate::{
-    entry::{Block, Component, Function, VariableName},
+    entry::{Block, Component, ElTarget, Element, VariableName},
     error::LinkedErr,
     inf::{
         any::AnyValue,
@@ -9,54 +9,10 @@ use crate::{
     reader::{chars, words, Reader, Reading, E},
 };
 use std::fmt;
-
-#[derive(Debug, Clone)]
-pub enum Input {
-    VariableName(VariableName),
-    Function(Function),
-}
-
-impl Operator for Input {
-    fn token(&self) -> usize {
-        match self {
-            Self::Function(v) => v.token,
-            Self::VariableName(v) => v.token,
-        }
-    }
-    fn perform<'a>(
-        &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
-        args: &'a [String],
-        cx: &'a mut Context,
-    ) -> OperatorPinnedResult {
-        Box::pin(async move {
-            match self {
-                Self::VariableName(v) => v.execute(owner, components, args, cx),
-                Self::Function(v) => v.execute(owner, components, args, cx),
-            }
-            .await
-        })
-    }
-}
-
-impl fmt::Display for Input {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Self::Function(v) => v.to_string(),
-                Self::VariableName(v) => v.to_string(),
-            }
-        )
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct Each {
     pub variable: VariableName,
-    pub input: Input,
+    pub input: Box<Element>,
     pub block: Block,
     pub token: usize,
 }
@@ -65,46 +21,46 @@ impl Reading<Each> for Each {
     fn read(reader: &mut Reader) -> Result<Option<Each>, LinkedErr<E>> {
         let close = reader.open_token();
         if reader.move_to().word(&[words::EACH]).is_some() {
-            if reader
+            let (variable, input) = if reader
                 .group()
                 .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
                 .is_some()
             {
-                if let Some(variable) = VariableName::read(&mut reader.token()?.bound)? {
-                    if reader.until().char(&[&chars::OPEN_SQ_BRACKET]).is_some() {
-                        let mut inner_token = reader.token()?;
-                        let mut inner_reader = inner_token.bound;
-                        let input =
-                            if let Some(variable_name) = VariableName::read(&mut inner_reader)? {
-                                Input::VariableName(variable_name)
-                            } else if let Some(function) = Function::read(&mut inner_reader)? {
-                                Input::Function(function)
-                            } else {
-                                Err(E::NoLoopInput.linked(&inner_token.id))?
-                            };
-                        if let Some(block) = Block::read(reader)? {
-                            if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
-                                Err(E::MissedSemicolon.linked(&inner_token.id))
-                            } else {
-                                Ok(Some(Each {
-                                    variable,
-                                    input,
-                                    block,
-                                    token: close(reader),
-                                }))
-                            }
-                        } else {
-                            Err(E::NoGroup.linked(&inner_token.id))
-                        }
-                    } else {
-                        Err(E::NoGroup.linked(&variable.token))
+                let mut inner = reader.token()?.bound;
+                let variable = if let Some(Element::VariableName(variable)) =
+                    Element::include(&mut inner, &[ElTarget::VariableName])?
+                {
+                    if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
+                        return Err(E::MissedSemicolon.linked(&inner.token()?.id));
                     }
+                    variable
                 } else {
-                    Err(E::NoLoopVariable.linked(&reader.token()?.id))
-                }
+                    return Err(E::NoLoopVariable.linked(&inner.token()?.id));
+                };
+                let input = if let Some(el) =
+                    Element::include(&mut inner, &[ElTarget::Function, ElTarget::VariableName])?
+                {
+                    Box::new(el)
+                } else {
+                    Err(E::NoLoopInput.by_reader(&inner))?
+                };
+                (variable, input)
             } else {
-                Err(E::NoLoopInitialization.linked(&reader.token()?.id))
-            }
+                return Err(E::NoLoopInitialization.linked(&reader.token()?.id));
+            };
+            let block = if let Some(Element::Block(block)) =
+                Element::include(reader, &[ElTarget::Block])?
+            {
+                block
+            } else {
+                Err(E::NoGroup.by_reader(reader))?
+            };
+            Ok(Some(Each {
+                input,
+                variable,
+                block,
+                token: close(reader),
+            }))
         } else {
             Ok(None)
         }
@@ -113,7 +69,7 @@ impl Reading<Each> for Each {
 
 impl fmt::Display for Each {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "EACH({}) {} {}", self.variable, self.input, self.block)
+        write!(f, "EACH({}; {}) {}", self.variable, self.input, self.block)
     }
 }
 
@@ -158,22 +114,27 @@ mod reading {
     use crate::{
         entry::Each,
         error::LinkedErr,
-        inf::{operator::Operator, tests},
-        reader::{Reader, Reading, E},
+        inf::{context::Context, operator::Operator, tests::*},
+        reader::{chars, Reader, Reading, E},
     };
 
-    #[test]
-    fn reading() -> Result<(), LinkedErr<E>> {
-        let mut reader = Reader::unbound(include_str!("../../tests/reading/each.sibs").to_string());
+    #[tokio::test]
+    async fn reading() -> Result<(), LinkedErr<E>> {
+        let cx: Context = Context::unbound()?;
+        let mut reader = Reader::bound(
+            include_str!("../../tests/reading/each.sibs").to_string(),
+            &cx,
+        );
         let mut count = 0;
-        while let Some(entity) = Each::read(&mut reader)? {
+        while let Some(entity) = report_if_err(&cx, Each::read(&mut reader))? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
-                tests::trim_carets(reader.recent()),
-                tests::trim_carets(&format!("{entity};"))
+                trim_carets(reader.recent()),
+                trim_carets(&format!("{entity};"))
             );
             count += 1;
         }
-        assert_eq!(count, 6);
+        assert_eq!(count, 7);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
@@ -183,25 +144,26 @@ mod reading {
         let mut reader = Reader::unbound(include_str!("../../tests/reading/each.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Each::read(&mut reader)? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
-                tests::trim_carets(&format!("{entity};")),
-                tests::trim_carets(&reader.get_fragment(&entity.token)?.lined),
+                trim_carets(&format!("{entity}")),
+                trim_carets(&reader.get_fragment(&entity.token)?.lined),
             );
             assert_eq!(
-                tests::trim_carets(&entity.block.to_string()),
-                tests::trim_carets(&reader.get_fragment(&entity.block.token)?.lined),
+                trim_carets(&entity.block.to_string()),
+                trim_carets(&reader.get_fragment(&entity.block.token)?.lined),
             );
             assert_eq!(
-                tests::trim_carets(&entity.variable.to_string()),
-                tests::trim_carets(&reader.get_fragment(&entity.variable.token)?.lined),
+                trim_carets(&entity.variable.to_string()),
+                trim_carets(&reader.get_fragment(&entity.variable.token)?.lined),
             );
             assert_eq!(
-                tests::trim_carets(&entity.input.to_string()),
-                tests::trim_carets(&reader.get_fragment(&entity.input.token())?.lined),
+                trim_carets(&entity.input.to_string()),
+                trim_carets(&reader.get_fragment(&entity.input.token())?.lined),
             );
             count += 1;
         }
-        assert_eq!(count, 6);
+        assert_eq!(count, 7);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
@@ -229,16 +191,19 @@ mod processing {
             context::Context,
             operator::{Operator, E},
         },
-        reader::{Reader, Reading},
+        reader::{chars, Reader, Reading},
     };
     const VALUES: &[(&str, &str)] = &[("a", "three"), ("b", "two"), ("c", "one")];
 
     #[tokio::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
-        let mut reader =
-            Reader::unbound(include_str!("../../tests/processing/each.sibs").to_string());
+        let mut reader = Reader::bound(
+            include_str!("../../tests/processing/each.sibs").to_string(),
+            &cx,
+        );
         while let Some(task) = Task::read(&mut reader)? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert!(task.execute(None, &[], &[], &mut cx).await?.is_some());
         }
         for (name, value) in VALUES.iter() {
@@ -255,59 +220,29 @@ mod processing {
 mod proptest {
 
     use crate::{
-        entry::{
-            block::Block,
-            function::Function,
-            statements::each::{Each, Input},
-            task::Task,
-            variable_name::VariableName,
-        },
+        entry::{task::Task, Block, Each, ElTarget, Element, VariableName},
         inf::{operator::E, tests::*},
         reader::{Reader, Reading},
     };
     use proptest::prelude::*;
-    use std::sync::{Arc, RwLock};
-
-    impl Arbitrary for Input {
-        type Parameters = SharedScope;
-        type Strategy = BoxedStrategy<Self>;
-
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            let permissions = scope.read().unwrap().permissions();
-            let mut allowed = vec![VariableName::arbitrary()
-                .prop_map(Input::VariableName)
-                .boxed()];
-            if permissions.func {
-                allowed.push(
-                    Function::arbitrary_with(scope.clone())
-                        .prop_map(Input::Function)
-                        .boxed(),
-                );
-            }
-            prop::strategy::Union::new(allowed).boxed()
-        }
-    }
 
     impl Arbitrary for Each {
-        type Parameters = SharedScope;
+        type Parameters = usize;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            scope.write().unwrap().include(Entity::Each);
-            let boxed = (
-                Block::arbitrary_with(scope.clone()),
+        fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
+            (
+                Block::arbitrary_with(deep),
                 VariableName::arbitrary(),
-                Input::arbitrary_with(scope.clone()),
+                Element::arbitrary_with((vec![ElTarget::VariableName], deep)),
             )
                 .prop_map(|(block, variable, input)| Each {
                     block,
                     variable,
-                    input,
+                    input: Box::new(input),
                     token: 0,
                 })
-                .boxed();
-            scope.write().unwrap().exclude(Entity::Each);
-            boxed
+                .boxed()
         }
     }
 
@@ -323,12 +258,19 @@ mod proptest {
     }
 
     proptest! {
-        #![proptest_config(ProptestConfig::with_cases(10))]
+        #![proptest_config(ProptestConfig {
+            max_shrink_iters: 5000,
+            ..ProptestConfig::with_cases(10)
+        })]
         #[test]
         fn test_run_task(
-            args in any_with::<Each>(Arc::new(RwLock::new(Scope::default())).clone())
+            args in any_with::<Each>(0)
         ) {
-            prop_assert!(reading(args.clone()).is_ok());
+            let res = reading(args.clone());
+            if res.is_err() {
+                println!("{res:?}");
+            }
+            prop_assert!(res.is_ok());
         }
     }
 }

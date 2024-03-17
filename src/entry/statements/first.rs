@@ -1,11 +1,11 @@
 use crate::{
-    entry::{Block, Component},
+    entry::{Block, Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
         context::Context,
         operator::{Operator, OperatorPinnedResult},
     },
-    reader::{chars, words, Reader, Reading, E},
+    reader::{words, Reader, Reading, E},
 };
 use std::fmt;
 
@@ -19,19 +19,18 @@ impl Reading<First> for First {
     fn read(reader: &mut Reader) -> Result<Option<First>, LinkedErr<E>> {
         let close = reader.open_token();
         if reader.move_to().word(&[words::FIRST]).is_some() {
-            if let Some(mut block) = Block::read(reader)? {
-                if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
-                    Err(E::MissedSemicolon.linked(&block.token))
-                } else {
-                    block.use_as_first();
-                    Ok(Some(First {
-                        block,
-                        token: close(reader),
-                    }))
-                }
+            let mut block = if let Some(Element::Block(block)) =
+                Element::include(reader, &[ElTarget::Block])?
+            {
+                block
             } else {
-                Err(E::NoGroup.linked(&reader.token()?.id))
-            }
+                return Err(E::NoFIRSTStatementBody.by_reader(reader));
+            };
+            block.set_owner(ElTarget::First);
+            Ok(Some(First {
+                block,
+                token: close(reader),
+            }))
         } else {
             Ok(None)
         }
@@ -64,19 +63,23 @@ mod reading {
     use crate::{
         entry::First,
         error::LinkedErr,
-        inf::tests,
-        reader::{Reader, Reading, E},
+        inf::{context::Context, tests::*},
+        reader::{chars, Reader, Reading, E},
     };
 
-    #[test]
-    fn reading() -> Result<(), LinkedErr<E>> {
-        let mut reader =
-            Reader::unbound(include_str!("../../tests/reading/first.sibs").to_string());
+    #[tokio::test]
+    async fn reading() -> Result<(), LinkedErr<E>> {
+        let cx: Context = Context::unbound()?;
+        let mut reader = Reader::bound(
+            include_str!("../../tests/reading/first.sibs").to_string(),
+            &cx,
+        );
         let mut count = 0;
-        while let Some(entity) = First::read(&mut reader)? {
+        while let Some(entity) = report_if_err(&cx, First::read(&mut reader))? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
-                tests::trim_carets(reader.recent()),
-                tests::trim_carets(&format!("{entity};"))
+                trim_carets(reader.recent()),
+                trim_carets(&format!("{entity};"))
             );
             count += 1;
         }
@@ -91,13 +94,14 @@ mod reading {
             Reader::unbound(include_str!("../../tests/reading/first.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = First::read(&mut reader)? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
-                tests::trim_carets(&format!("{entity};")),
-                tests::trim_carets(&reader.get_fragment(&entity.token)?.lined),
+                trim_carets(&format!("{entity}")),
+                trim_carets(&reader.get_fragment(&entity.token)?.lined),
             );
             assert_eq!(
-                tests::trim_carets(&entity.block.to_string()),
-                tests::trim_carets(&reader.get_fragment(&entity.block.token)?.lined),
+                trim_carets(&entity.block.to_string()),
+                trim_carets(&reader.get_fragment(&entity.block.token)?.lined),
             );
             count += 1;
         }
@@ -129,19 +133,22 @@ mod processing {
             context::Context,
             operator::{Operator, E},
         },
-        reader::{Reader, Reading},
+        reader::{chars, Reader, Reading},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
-        let mut reader =
-            Reader::unbound(include_str!("../../tests/processing/first.sibs").to_string());
+        let mut reader = Reader::bound(
+            include_str!("../../tests/processing/first.sibs").to_string(),
+            &cx,
+        );
         while let Some(task) = Task::read(&mut reader)? {
             let result = task
                 .execute(None, &[], &[], &mut cx)
                 .await?
                 .expect("Task returns some value");
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 result.get_as_string().expect("Task returns string value"),
                 "true".to_owned()
@@ -155,24 +162,20 @@ mod processing {
 mod proptest {
 
     use crate::{
-        entry::{block::Block, statements::first::First, task::Task},
+        entry::{Block, First, Task},
         inf::{operator::E, tests::*},
         reader::{Reader, Reading},
     };
     use proptest::prelude::*;
-    use std::sync::{Arc, RwLock};
 
     impl Arbitrary for First {
-        type Parameters = SharedScope;
+        type Parameters = usize;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            scope.write().unwrap().include(Entity::First);
-            let boxed = Block::arbitrary_with(scope.clone())
+        fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
+            Block::arbitrary_with(deep)
                 .prop_map(|block| First { block, token: 0 })
-                .boxed();
-            scope.write().unwrap().exclude(Entity::First);
-            boxed
+                .boxed()
         }
     }
 
@@ -188,12 +191,19 @@ mod proptest {
     }
 
     proptest! {
-        #![proptest_config(ProptestConfig::with_cases(10))]
+        #![proptest_config(ProptestConfig {
+            max_shrink_iters: 5000,
+            ..ProptestConfig::with_cases(10)
+        })]
         #[test]
         fn test_run_task(
-            args in any_with::<First>(Arc::new(RwLock::new(Scope::default())).clone())
+            args in any_with::<First>(0)
         ) {
-            prop_assert!(reading(args.clone()).is_ok());
+            let res = reading(args.clone());
+            if res.is_err() {
+                println!("{res:?}");
+            }
+            prop_assert!(res.is_ok());
         }
     }
 }

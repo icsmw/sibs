@@ -10,6 +10,8 @@ use thiserror::Error;
 pub enum E {
     #[error("Operator method isn't supported")]
     NotSupported,
+    #[error("Function's argument doesn't have return value")]
+    NotAllArguamentsHasReturn,
     #[error("Spawned process exist with error")]
     SpawnedProcessExitWithError,
     #[error("No current working folder")]
@@ -38,20 +40,20 @@ pub enum E {
     FailToGetValueAsString,
     #[error("Fail to get string value")]
     FailToGetStringValue,
-    #[error("Function doesn't return bool result")]
-    NoBoolResultFromFunction,
+    #[error("Fail to get integer value")]
+    FailToGetIntegerValue,
+    #[error("Fail to get any value for task's argument")]
+    FailToGetAnyValueAsTaskArg,
     #[error("If=proviso doesn't return bool result")]
     NoBoolResultFromProviso,
-    #[error("If=(proviso AND/OR proviso) doesn't return bool result")]
-    NoBoolResultFromProvisoGroup,
+    #[error("Left side of comparing statement doesn't return result")]
+    NoResultFromLeftOnComparing,
+    #[error("Right side of comparing statement doesn't return result")]
+    NoResultFromRightOnComparing,
     #[error("If=proviso doesn't return any result")]
     NoResultFromProviso,
-    #[error("Combination operator (AND, OR) should follow after proviso")]
-    WrongConditionsOrderInIf,
     #[error("Variable \"{0}\" isn't assigned")]
     VariableIsNotAssigned(String),
-    #[error("Fail to extract value for IF statement")]
-    FailExtractValueForIFStatement,
     #[error("Function \"{0}\" doesn't have registred executor")]
     NoFunctionExecutor(String),
     #[error("Fail assign variable \"{0}\"; no value")]

@@ -65,6 +65,16 @@ pub struct Configuration {
     pub trace: bool,
 }
 
+impl Configuration {
+    pub fn logs() -> Self {
+        Configuration {
+            log_file: None,
+            output: Output::Logs,
+            trace: true,
+        }
+    }
+}
+
 impl Default for Configuration {
     fn default() -> Self {
         Configuration {

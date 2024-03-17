@@ -1,202 +1,74 @@
 use crate::{
-    entry::{
-        Block, Command, Component, Function, PatternString, Reference, VariableAssignation,
-        VariableComparing,
-    },
+    entry::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
         context::Context,
         operator::{self, Operator, OperatorPinnedResult},
     },
-    reader::{chars, words, Reader, Reading, E},
+    reader::{words, Reader, Reading, E},
 };
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub enum Action {
-    VariableAssignation(VariableAssignation),
-    PatternString(PatternString),
-    Function(Function),
-    Command(Command),
-    Block(Block),
-    Reference(Reference),
-}
-
-impl fmt::Display for Action {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Self::VariableAssignation(v) => v.to_string(),
-                Self::Reference(v) => v.to_string(),
-                Self::Function(v) => v.to_string(),
-                Self::PatternString(v) => v.to_string(),
-                Self::Command(v) => v.to_string(),
-                Self::Block(v) => v.to_string(),
-            }
-        )
-    }
-}
-
-impl Operator for Action {
-    fn token(&self) -> usize {
-        match self {
-            Self::VariableAssignation(v) => v.token,
-            Self::Reference(v) => v.token,
-            Self::Function(v) => v.token,
-            Self::PatternString(v) => v.token,
-            Self::Command(v) => v.token,
-            Self::Block(v) => v.token,
-        }
-    }
-    fn perform<'a>(
-        &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
-        args: &'a [String],
-        cx: &'a mut Context,
-    ) -> OperatorPinnedResult {
-        Box::pin(async move {
-            match self {
-                Self::VariableAssignation(v) => v.execute(owner, components, args, cx).await,
-                Self::Reference(v) => v.execute(owner, components, args, cx).await,
-                Self::Function(v) => v.execute(owner, components, args, cx).await,
-                Self::PatternString(v) => v.execute(owner, components, args, cx).await,
-                Self::Command(v) => v.execute(owner, components, args, cx).await,
-                Self::Block(v) => v.execute(owner, components, args, cx).await,
-            }
-        })
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum Condition {
-    Function(Function),
-    VariableComparing(VariableComparing),
-}
-
-impl fmt::Display for Condition {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Self::Function(v) => v.to_string(),
-                Self::VariableComparing(v) => v.to_string(),
-            }
-        )
-    }
-}
-
-impl Operator for Condition {
-    fn token(&self) -> usize {
-        match self {
-            Self::Function(v) => v.token,
-            Self::VariableComparing(v) => v.token,
-        }
-    }
-    fn perform<'a>(
-        &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
-        args: &'a [String],
-        cx: &'a mut Context,
-    ) -> OperatorPinnedResult {
-        Box::pin(async move {
-            match self {
-                Self::Function(v) => v.execute(owner, components, args, cx).await,
-                Self::VariableComparing(v) => v.execute(owner, components, args, cx).await,
-            }
-        })
-    }
-}
-
-#[derive(Debug, Clone)]
 pub struct Optional {
-    pub condition: Condition,
-    pub action: Action,
+    pub condition: Box<Element>,
+    pub action: Box<Element>,
     pub token: usize,
 }
 
 impl Reading<Optional> for Optional {
     fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
-        reader.state().set();
-        let close = reader.open_token();
-        if reader
-            .move_to()
-            .char(&[&chars::AT, &chars::DOLLAR])
-            .is_some()
-        {
-            reader.state().restore()?;
-            if reader
-                .cancel_on(&[&chars::SEMICOLON, &chars::OPEN_SQ_BRACKET])
-                .until()
-                .word(&[words::DO_ON])
-                .is_some()
-            {
-                let mut token = reader.token()?;
-                let condition =
-                    if let Some(variable_comparing) = VariableComparing::read(&mut token.bound)? {
-                        Condition::VariableComparing(variable_comparing)
-                    } else if let Some(function) = Function::read(&mut token.bound)? {
-                        Condition::Function(function)
-                    } else {
-                        Err(E::NoFunctionOnOptionalAction.by_reader(reader))?
-                    };
-                if reader.move_to().word(&[words::DO_ON]).is_some() {
-                    if let Some(block) = Block::read(reader)? {
-                        if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
-                            Err(E::MissedSemicolon.linked(&block.token))?
-                        }
-                        return Ok(Some(Optional {
-                            token: close(reader),
-                            action: Action::Block(block),
-                            condition,
-                        }));
-                    }
-                    if let Some(assignation) = VariableAssignation::read(reader)? {
-                        return Ok(Some(Optional {
-                            token: close(reader),
-                            action: Action::VariableAssignation(assignation),
-                            condition,
-                        }));
-                    }
-                    let close_right_side = reader.open_token();
-                    if reader.until().char(&[&chars::SEMICOLON]).is_some() {
-                        reader.move_to().next_and_extend();
-                        let mut token = reader.token()?;
-                        if token.bound.contains().word(&[words::DO_ON]) {
-                            Err(E::NestedOptionalAction.by_reader(reader))?
-                        }
-                        let action = if let Some(reference) = Reference::read(&mut token.bound)? {
-                            Action::Reference(reference)
-                        } else if let Some(func) = Function::read(&mut token.bound)? {
-                            Action::Function(func)
-                        } else if let Some(value_string) = PatternString::read(&mut token.bound)? {
-                            Action::PatternString(value_string)
-                        } else if !token.content.trim().is_empty() {
-                            Action::Command(Command::new(token.content, close_right_side(reader))?)
-                        } else {
-                            Err(E::NotActionForCondition.by_reader(reader))?
-                        };
-                        Ok(Some(Optional {
-                            token: close(reader),
-                            action,
-                            condition,
-                        }))
-                    } else {
-                        Err(E::MissedSemicolon.by_reader(reader))?
-                    }
-                } else {
-                    Err(E::FailParseOptionalAction.by_reader(reader))?
-                }
-            } else {
-                Ok(None)
-            }
-        } else {
-            Ok(None)
+        if reader.rest().trim().starts_with(words::DO_ON) {
+            return Ok(None);
         }
+        let restore = reader.pin();
+        let close = reader.open_token();
+        let condition = if let Some(el) = Element::include(
+            reader,
+            &[
+                ElTarget::Function,
+                ElTarget::VariableName,
+                ElTarget::Block,
+                ElTarget::Reference,
+                ElTarget::Comparing,
+            ],
+        )? {
+            Box::new(el)
+        } else {
+            return Ok(None);
+        };
+        if !reader.rest().trim().starts_with(words::DO_ON) {
+            restore(reader);
+            return Ok(None);
+        }
+        if reader.move_to().expression(&[words::DO_ON]).is_none() {
+            return Err(E::NoOptionalRedirection.by_reader(reader));
+        }
+        let action = if let Some(el) = Element::include(
+            reader,
+            &[
+                ElTarget::Function,
+                ElTarget::Reference,
+                ElTarget::VariableAssignation,
+                ElTarget::VariableName,
+                ElTarget::Block,
+                ElTarget::Each,
+                ElTarget::First,
+                ElTarget::PatternString,
+                ElTarget::Command,
+                ElTarget::Integer,
+                ElTarget::Boolean,
+            ],
+        )? {
+            Box::new(el)
+        } else {
+            return Err(E::FailFindActionForOptional.by_reader(reader));
+        };
+        Ok(Some(Optional {
+            token: close(reader),
+            action,
+            condition,
+        }))
     }
 }
 
@@ -239,23 +111,29 @@ mod reading {
     use crate::{
         entry::Optional,
         error::LinkedErr,
-        inf::{operator::Operator, tests},
-        reader::{Reader, Reading, E},
+        inf::{context::Context, operator::Operator, tests},
+        reader::{chars, Reader, Reading, E},
     };
 
-    #[test]
-    fn reading() -> Result<(), LinkedErr<E>> {
-        let mut reader =
-            Reader::unbound(include_str!("../tests/reading/optional.sibs").to_string());
+    #[tokio::test]
+    async fn reading() -> Result<(), LinkedErr<E>> {
+        let cx: Context = Context::unbound()?;
+        let mut reader = Reader::bound(
+            include_str!("../tests/reading/optional.sibs").to_string(),
+            &cx,
+        );
         let mut count = 0;
-        while let Some(entity) = Optional::read(&mut reader)? {
+        while let Some(entity) = tests::report_if_err(&cx, Optional::read(&mut reader))? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(reader.recent()),
-                tests::trim_carets(&format!("{entity};"))
+                tests::trim_carets(&format!("{entity};")),
+                "Line: {}",
+                count + 1
             );
             count += 1;
         }
-        assert_eq!(count, 11);
+        assert_eq!(count, 106);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
@@ -266,9 +144,12 @@ mod reading {
             Reader::unbound(include_str!("../tests/reading/optional.sibs").to_string());
         let mut count = 0;
         while let Some(entity) = Optional::read(&mut reader)? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
-                tests::trim_carets(&format!("{entity};")),
-                reader.get_fragment(&entity.token)?.lined
+                tests::trim_carets(&format!("{entity}")),
+                reader.get_fragment(&entity.token)?.lined,
+                "Line: {}",
+                count + 1
             );
             // In some cases like with PatternString, semicolon can be skipped, because
             // belongs to parent entity (Optional).
@@ -277,16 +158,20 @@ mod reading {
                 tests::trim_semicolon(&tests::trim_carets(
                     &reader.get_fragment(&entity.action.token())?.lined
                 )),
+                "Line: {}",
+                count + 1
             );
             assert_eq!(
                 tests::trim_semicolon(&tests::trim_carets(&entity.condition.to_string())),
                 tests::trim_semicolon(&tests::trim_carets(
                     &reader.get_fragment(&entity.condition.token())?.lined
                 )),
+                "Line: {}",
+                count + 1
             );
             count += 1;
         }
-        assert_eq!(count, 11);
+        assert_eq!(count, 106);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
@@ -298,7 +183,9 @@ mod reading {
         let mut count = 0;
         for sample in samples.iter() {
             let mut reader = Reader::unbound(sample.to_string());
-            assert!(Optional::read(&mut reader).is_err());
+            let opt = Optional::read(&mut reader);
+            println!("{opt:?}");
+            assert!(opt.is_err());
             count += 1;
         }
         assert_eq!(count, samples.len());
@@ -314,19 +201,22 @@ mod processing {
             context::Context,
             operator::{Operator, E},
         },
-        reader::{Reader, Reading},
+        reader::{chars, Reader, Reading},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
-        let mut reader =
-            Reader::unbound(include_str!("../tests/processing/optional.sibs").to_string());
+        let mut reader = Reader::bound(
+            include_str!("../tests/processing/optional.sibs").to_string(),
+            &cx,
+        );
         while let Some(task) = Task::read(&mut reader)? {
             let result = task
                 .execute(None, &[], &[], &mut cx)
                 .await?
                 .expect("Task returns some value");
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 result.get_as_string().expect("Task returns string value"),
                 "true".to_owned()
@@ -340,73 +230,76 @@ mod processing {
 mod proptest {
 
     use crate::{
-        entry::{
-            block::Block,
-            command::Command,
-            function::Function,
-            optional::{Action, Condition, Optional},
-            pattern_string::PatternString,
-            reference::Reference,
-            task::Task,
-            variable_assignation::VariableAssignation,
-            variable_comparing::VariableComparing,
-        },
+        entry::{ElTarget, Element, Optional, Task},
         inf::{operator::E, tests::*},
         reader::{Reader, Reading},
     };
     use proptest::prelude::*;
-    use std::sync::{Arc, RwLock};
-
-    impl Arbitrary for Action {
-        type Parameters = SharedScope;
-        type Strategy = BoxedStrategy<Self>;
-
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            prop_oneof![
-                Command::arbitrary_with(scope.clone()).prop_map(Action::Command),
-                Block::arbitrary_with(scope.clone()).prop_map(Action::Block),
-                VariableAssignation::arbitrary_with(scope.clone())
-                    .prop_map(Action::VariableAssignation),
-                PatternString::arbitrary_with(scope.clone()).prop_map(Action::PatternString),
-                Reference::arbitrary_with(scope.clone()).prop_map(Action::Reference),
-                Function::arbitrary_with(scope.clone()).prop_map(Action::Function),
-            ]
-            .boxed()
-        }
-    }
-
-    impl Arbitrary for Condition {
-        type Parameters = SharedScope;
-        type Strategy = BoxedStrategy<Self>;
-
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            prop_oneof![
-                VariableComparing::arbitrary_with(scope.clone())
-                    .prop_map(Condition::VariableComparing),
-                Function::arbitrary_with(scope.clone()).prop_map(Condition::Function),
-            ]
-            .boxed()
-        }
-    }
 
     impl Arbitrary for Optional {
-        type Parameters = SharedScope;
+        type Parameters = usize;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            scope.write().unwrap().include(Entity::Optional);
-            let boxed = (
-                Condition::arbitrary_with(scope.clone()),
-                Action::arbitrary_with(scope.clone()),
-            )
-                .prop_map(|(condition, action)| Optional {
-                    condition,
-                    action,
-                    token: 0,
-                })
-                .boxed();
-            scope.write().unwrap().exclude(Entity::Optional);
-            boxed
+        fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
+            if deep > MAX_DEEP {
+                (
+                    Element::arbitrary_with((
+                        vec![ElTarget::VariableName, ElTarget::Reference],
+                        deep,
+                    )),
+                    Element::arbitrary_with((
+                        vec![
+                            ElTarget::Function,
+                            ElTarget::Reference,
+                            ElTarget::VariableName,
+                            ElTarget::Integer,
+                            ElTarget::Boolean,
+                        ],
+                        deep,
+                    )),
+                )
+                    .prop_map(|(condition, action)| Optional {
+                        condition: Box::new(condition),
+                        action: Box::new(action),
+                        token: 0,
+                    })
+                    .boxed()
+            } else {
+                (
+                    Element::arbitrary_with((
+                        vec![
+                            ElTarget::Function,
+                            ElTarget::VariableName,
+                            ElTarget::Reference,
+                            ElTarget::Block,
+                            ElTarget::Comparing,
+                        ],
+                        deep,
+                    )),
+                    Element::arbitrary_with((
+                        vec![
+                            ElTarget::Function,
+                            ElTarget::Reference,
+                            ElTarget::VariableAssignation,
+                            ElTarget::VariableName,
+                            ElTarget::Block,
+                            ElTarget::Each,
+                            ElTarget::First,
+                            ElTarget::PatternString,
+                            ElTarget::Command,
+                            ElTarget::Integer,
+                            ElTarget::Boolean,
+                        ],
+                        deep,
+                    )),
+                )
+                    .prop_map(|(condition, action)| Optional {
+                        condition: Box::new(condition),
+                        action: Box::new(action),
+                        token: 0,
+                    })
+                    .boxed()
+            }
         }
     }
 
@@ -422,12 +315,19 @@ mod proptest {
     }
 
     proptest! {
-        #![proptest_config(ProptestConfig::with_cases(10))]
+        #![proptest_config(ProptestConfig {
+            max_shrink_iters: 5000,
+            ..ProptestConfig::with_cases(10)
+        })]
         #[test]
         fn test_run_task(
-            args in any_with::<Optional>(Arc::new(RwLock::new(Scope::default())).clone())
+            args in any_with::<Optional>(0)
         ) {
-            prop_assert!(reading(args.clone()).is_ok());
+            let res = reading(args.clone());
+            if res.is_err() {
+                println!("{res:?}");
+            }
+            prop_assert!(res.is_ok());
         }
     }
 }

@@ -1,5 +1,5 @@
 use crate::{
-    entry::{Arguments, Component},
+    entry::{Component, ElTarget, Element, ElementExd, SimpleString},
     error::LinkedErr,
     inf::{
         any::AnyValue,
@@ -14,14 +14,14 @@ use std::fmt;
 pub struct Function {
     pub tolerance: bool,
     pub name: String,
-    pub args: Option<Arguments>,
+    pub args: Vec<ElementExd>,
     pub feed: Option<Box<Function>>,
     pub token: usize,
+    pub args_token: usize,
 }
 
 impl Reading<Function> for Function {
     fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
-        reader.state().set();
         reader.move_to().any();
         let close = reader.open_token();
         if reader.move_to().char(&[&chars::AT]).is_some() {
@@ -32,6 +32,8 @@ impl Reading<Function> for Function {
                     &chars::QUESTION,
                     &chars::SEMICOLON,
                     &chars::WS,
+                    &chars::OPEN_BRACKET,
+                    &chars::CLOSE_BRACKET,
                 ])
                 .map(|(str, char)| (str, Some(char)))
                 .unwrap_or_else(|| (reader.move_to().end(), None));
@@ -39,65 +41,122 @@ impl Reading<Function> for Function {
                 &name,
                 &[&chars::UNDERSCORE, &chars::DASH, &chars::COLON],
             ) {
-                Err(E::InvalidFunctionName.by_reader(reader))?;
+                Err(E::InvalidFunctionName(name.to_string()).by_reader(reader))?;
             }
-            if matches!(ends_with, Some(chars::SEMICOLON)) {
-                reader.move_to().next();
-                return Ok(Some(Self::new(close(reader), None, name, false)?));
+            let args_close = reader.open_token();
+            if matches!(
+                ends_with,
+                Some(chars::SEMICOLON) | Some(chars::CLOSE_BRACKET)
+            ) {
+                return Ok(Some(Self::new(
+                    close(reader),
+                    args_close(reader),
+                    vec![],
+                    name,
+                    false,
+                )?));
             }
             if ends_with.is_none() {
-                return Ok(Some(Self::new(close(reader), Some(reader), name, false)?));
+                return Ok(Some(Self::new(
+                    close(reader),
+                    args_close(reader),
+                    vec![],
+                    name,
+                    false,
+                )?));
             }
             reader.trim();
-            if matches!(ends_with, Some(chars::QUESTION)) {
+            let tolerance = if matches!(ends_with, Some(chars::QUESTION)) {
                 reader.move_to().next();
-                if let Some(next) = reader.next().char() {
-                    if !next.is_whitespace() {
-                        Err(E::InvalidFunctionName.by_reader(reader))?;
+                true
+            } else {
+                false
+            };
+            let mut elements: Vec<ElementExd> = vec![];
+            if reader
+                .group()
+                .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
+                .is_some()
+            {
+                let mut inner = reader.token()?.bound;
+                while !inner.is_empty() {
+                    if let Some(el) = Element::include(
+                        &mut inner,
+                        &[
+                            ElTarget::Values,
+                            ElTarget::Function,
+                            ElTarget::If,
+                            ElTarget::PatternString,
+                            ElTarget::Reference,
+                            ElTarget::Comparing,
+                            ElTarget::VariableName,
+                            ElTarget::Command,
+                            ElTarget::Integer,
+                            ElTarget::Boolean,
+                        ],
+                    )? {
+                        if inner.move_to().char(&[&chars::SEMICOLON]).is_none() && !inner.is_empty()
+                        {
+                            Err(E::MissedSemicolon.by_reader(&inner))?;
+                        }
+                        elements.push(ElementExd::Element(el));
+                    } else if let Some((content, _)) = inner.until().char(&[&chars::SEMICOLON]) {
+                        if content.trim().is_empty() {
+                            Err(E::NoContentBeforeSemicolon.by_reader(&inner))?;
+                        }
+                        elements.push(ElementExd::SimpleString(SimpleString {
+                            value: content.trim().to_string(),
+                            token: inner.token()?.id,
+                        }));
+                        let _ = inner.move_to().char(&[&chars::SEMICOLON]);
+                    } else if !inner.is_empty() {
+                        let value = inner.rest().trim().to_string();
+                        inner.move_to().end();
+                        elements.push(ElementExd::SimpleString(SimpleString {
+                            value,
+                            token: inner.token()?.id,
+                        }));
                     }
                 }
+                if elements.is_empty() {
+                    Err(E::NoFunctionArguments.by_reader(&inner))?;
+                }
             }
-            let stop_on = reader
-                .until()
-                .char(&[&chars::REDIRECT, &chars::SEMICOLON])
-                .map(|(_, stop_on)| Some(stop_on))
-                .unwrap_or_else(|| {
-                    reader.move_to().end();
-                    None
-                });
-            let mut token = reader.token()?;
-            if token.bound.contains().word(&[words::DO_ON]) {
-                let _ = reader.state().restore();
-                return Ok(None);
+            if reader.rest().trim().starts_with(words::DO_ON) {
+                return Ok(Some(Self::new(
+                    close(reader),
+                    args_close(reader),
+                    elements,
+                    name,
+                    tolerance,
+                )?));
             }
-            reader.move_to().next();
-            if matches!(stop_on, Some(chars::REDIRECT)) {
-                if matches!(reader.prev().word(2).as_deref(), Some(words::DO_ON))
-                    && !matches!(reader.prev().nth(3), Some(chars::SERIALIZING))
+            if reader.move_to().expression(&[words::REDIRECT]).is_some() {
+                let feed_func_token_id = close(reader);
+                let feed_func_args_token_id = args_close(reader);
+                return if let Some(Element::Function(mut dest)) =
+                    Element::include(reader, &[ElTarget::Function])?
                 {
-                    Err(E::NestedOptionalAction.by_reader(reader))?
-                }
-                let feed = Self::new(
-                    close(reader),
-                    Some(&mut token.bound),
-                    name,
-                    matches!(ends_with, Some(chars::QUESTION)),
-                )?;
-                if let Some(mut parent_func) = Function::read(reader)? {
-                    parent_func.feeding(feed);
-                    parent_func.set_token(close(reader));
-                    Ok(Some(parent_func))
+                    dest.feeding(Self::new(
+                        feed_func_token_id,
+                        feed_func_args_token_id,
+                        elements,
+                        name,
+                        tolerance,
+                    )?);
+                    dest.set_token(close(reader));
+                    Ok(Some(dest))
                 } else {
-                    Err(E::NoDestFunction.linked(&feed.token))
-                }
-            } else {
-                Ok(Some(Self::new(
-                    close(reader),
-                    Some(&mut token.bound),
-                    name,
-                    matches!(ends_with, Some(chars::QUESTION)),
-                )?))
+                    Err(E::NoDestFunction.linked(&reader.token()?.id))
+                };
             }
+            Ok(Some(Self::new(
+                close(reader),
+                args_close(reader),
+                elements,
+                name,
+                tolerance,
+            )?))
         } else {
             Ok(None)
         }
@@ -107,20 +166,18 @@ impl Reading<Function> for Function {
 impl Function {
     pub fn new(
         token: usize,
-        mut reader: Option<&mut Reader>,
+        args_token: usize,
+        args: Vec<ElementExd>,
         name: String,
         tolerance: bool,
     ) -> Result<Self, LinkedErr<E>> {
         Ok(Self {
             token,
+            args_token,
             name,
             tolerance,
             feed: None,
-            args: if let Some(reader) = reader.take() {
-                Arguments::read(reader)?
-            } else {
-                None
-            },
+            args,
         })
     }
     pub fn feeding(&mut self, func: Function) {
@@ -140,11 +197,15 @@ impl Function {
         inputs: &'a [String],
         cx: &'a mut Context,
     ) -> Result<Vec<AnyValue>, operator::E> {
-        if let Some(args) = self.args.as_ref() {
-            args.get_processed_args(owner, components, inputs, cx).await
-        } else {
-            Ok(vec![])
+        let mut values: Vec<AnyValue> = vec![];
+        for arg in self.args.iter() {
+            values.push(
+                arg.execute(owner, components, inputs, cx)
+                    .await?
+                    .ok_or(operator::E::NotAllArguamentsHasReturn)?,
+            )
         }
+        Ok(values)
     }
 }
 
@@ -152,17 +213,16 @@ impl fmt::Display for Function {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fn to_string(func: &Function) -> String {
             format!(
-                "@{}{}{}",
+                "@{}{}{}{}{}",
                 func.name,
                 if func.tolerance { "?" } else { "" },
+                if func.args.is_empty() { "" } else { "(" },
                 func.args
-                    .as_ref()
-                    .map(|args| if args.is_empty() {
-                        String::new()
-                    } else {
-                        format!(" {args}")
-                    })
-                    .unwrap_or_default()
+                    .iter()
+                    .map(|arg| arg.to_string())
+                    .collect::<Vec<String>>()
+                    .join("; "),
+                if func.args.is_empty() { "" } else { ")" }
             )
         }
         let mut nested: Vec<String> = vec![];
@@ -175,8 +235,8 @@ impl fmt::Display for Function {
         write!(
             f,
             "{}{}{}",
-            nested.join(" > "),
-            if nested.is_empty() { "" } else { " > " },
+            nested.join(" >> "),
+            if nested.is_empty() { "" } else { " >> " },
             to_string(self)
         )
     }
@@ -222,20 +282,24 @@ mod reading {
     use crate::{
         entry::Function,
         error::LinkedErr,
-        inf::{operator::Operator, tests},
-        reader::{Reader, Reading, E},
+        inf::{context::Context, operator::Operator, tests},
+        reader::{chars, Reader, Reading, E},
     };
 
-    #[test]
-    fn reading() -> Result<(), LinkedErr<E>> {
+    #[tokio::test]
+    async fn reading() -> Result<(), LinkedErr<E>> {
+        let cx: Context = Context::unbound()?;
         let content = include_str!("../tests/reading/function.sibs").to_string();
         let len = content.split('\n').count();
-        let mut reader = Reader::unbound(content);
+        let mut reader = Reader::bound(content, &cx);
         let mut count = 0;
-        while let Some(entity) = Function::read(&mut reader)? {
+        while let Some(entity) = tests::report_if_err(&cx, Function::read(&mut reader))? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(reader.recent()),
-                tests::trim_carets(&format!("{entity};"))
+                tests::trim_carets(&format!("{entity};")),
+                "Line: {}",
+                count + 1
             );
             count += 1;
         }
@@ -251,21 +315,16 @@ mod reading {
         let mut reader = Reader::unbound(content);
         let mut count = 0;
         while let Some(entity) = Function::read(&mut reader)? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
-                tests::trim_carets(&format!("{entity};")),
+                tests::trim_carets(&format!("{entity}")),
                 reader.get_fragment(&entity.token)?.content
             );
-            if let Some(args) = entity.args.as_ref() {
+            for arg in entity.args.iter() {
                 assert_eq!(
-                    tests::trim_carets(&args.to_string()),
-                    reader.get_fragment(&args.token)?.lined
+                    tests::trim_carets(&arg.to_string()),
+                    reader.get_fragment(&arg.token())?.lined
                 );
-                for arg in args.args.iter() {
-                    assert_eq!(
-                        tests::trim_carets(&arg.to_string()),
-                        reader.get_fragment(&arg.token())?.lined
-                    );
-                }
             }
             count += 1;
         }
@@ -281,7 +340,18 @@ mod reading {
         let mut count = 0;
         for sample in samples.iter() {
             let mut reader = Reader::unbound(sample.to_string());
-            assert!(Function::read(&mut reader).is_err());
+            let func = Function::read(&mut reader);
+            if func.is_ok() {
+                let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                assert!(
+                    !reader.rest().trim().is_empty(),
+                    "Line {}: func: {:?}",
+                    count + 1,
+                    func
+                );
+            } else {
+                assert!(func.is_err(), "Line {}: func: {:?}", count + 1, func);
+            }
             count += 1;
         }
         assert_eq!(count, samples.len());
@@ -297,19 +367,22 @@ mod processing {
             context::Context,
             operator::{Operator, E},
         },
-        reader::{Reader, Reading},
+        reader::{chars, Reader, Reading},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
-        let mut reader =
-            Reader::unbound(include_str!("../tests/processing/functions.sibs").to_string());
+        let mut reader = Reader::bound(
+            include_str!("../tests/processing/functions.sibs").to_string(),
+            &cx,
+        );
         while let Some(task) = Task::read(&mut reader)? {
             let result = task
                 .execute(None, &[], &[], &mut cx)
                 .await?
                 .expect("Task returns some value");
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 result.get_as_string().expect("Task returns string value"),
                 "true".to_owned()
@@ -322,33 +395,66 @@ mod processing {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        entry::{arguments::Arguments, function::Function, task::Task},
+        entry::{ElTarget, ElementExd, Function, Task},
         inf::{operator::E, tests::*},
         reader::{Reader, Reading},
     };
     use proptest::prelude::*;
-    use std::sync::{Arc, RwLock};
 
     impl Arbitrary for Function {
-        type Parameters = SharedScope;
+        type Parameters = usize;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            scope.write().unwrap().include(Entity::Function);
-            let boxed = (
-                "[a-z][a-z0-9]*".prop_map(String::from),
-                Arguments::arbitrary_with(scope.clone()),
-            )
-                .prop_map(|(name, args)| Function {
-                    args: Some(args),
-                    tolerance: false,
-                    token: 0,
-                    feed: None,
-                    name,
-                })
-                .boxed();
-            scope.write().unwrap().exclude(Entity::Function);
-            boxed
+        fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
+            if deep > MAX_DEEP {
+                ("[a-z][a-z0-9]*".prop_map(String::from),)
+                    .prop_map(|(name,)| Function {
+                        args: vec![],
+                        tolerance: false,
+                        token: 0,
+                        args_token: 0,
+                        feed: None,
+                        name: if name.is_empty() {
+                            "min".to_owned()
+                        } else {
+                            name
+                        },
+                    })
+                    .boxed()
+            } else {
+                (
+                    "[a-z][a-z0-9]*".prop_map(String::from),
+                    prop::collection::vec(
+                        ElementExd::arbitrary_with((
+                            vec![
+                                ElTarget::Values,
+                                ElTarget::Function,
+                                ElTarget::If,
+                                ElTarget::PatternString,
+                                ElTarget::Reference,
+                                ElTarget::Comparing,
+                                ElTarget::VariableName,
+                                ElTarget::Command,
+                            ],
+                            deep,
+                        )),
+                        0..=3,
+                    ),
+                )
+                    .prop_map(|(name, args)| Function {
+                        args,
+                        tolerance: false,
+                        token: 0,
+                        args_token: 0,
+                        feed: None,
+                        name: if name.is_empty() {
+                            "min".to_owned()
+                        } else {
+                            name
+                        },
+                    })
+                    .boxed()
+            }
         }
     }
 
@@ -364,12 +470,19 @@ mod proptest {
     }
 
     proptest! {
-        #![proptest_config(ProptestConfig::with_cases(10))]
+        #![proptest_config(ProptestConfig {
+            max_shrink_iters: 5000,
+            ..ProptestConfig::with_cases(10)
+        })]
         #[test]
         fn test_run_task(
-            args in any_with::<Function>(Arc::new(RwLock::new(Scope::default())).clone())
+            args in any_with::<Function>(0)
         ) {
-            prop_assert!(reading(args.clone()).is_ok());
+            let res = reading(args.clone());
+            if res.is_err() {
+                println!("{res:?}");
+            }
+            prop_assert!(res.is_ok());
         }
     }
 }

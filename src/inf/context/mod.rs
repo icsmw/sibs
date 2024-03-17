@@ -71,7 +71,7 @@ impl Context {
     }
 
     pub fn unbound() -> Result<Self, E> {
-        let tracker = Tracker::new(tracker::Configuration::default());
+        let tracker = Tracker::new(tracker::Configuration::logs());
         let logger = tracker.create_logger(String::from("Context"));
         Self::register_functions(Context {
             cwd: Some(PathBuf::new()),
@@ -102,6 +102,18 @@ impl Context {
             self.map.borrow_mut().gen_report(token, err.e.to_string())?;
         }
         Ok(())
+    }
+    pub fn post_reports(&self) {
+        self.map.borrow().post_reports();
+    }
+    pub fn assign_error<T>(&mut self, err: &T) -> Result<(), E>
+    where
+        T: std::error::Error + fmt::Display + ToString,
+    {
+        self.map
+            .borrow_mut()
+            .assign_error(err)
+            .map_err(|e| e.into())
     }
     pub fn set_map_cursor(&self, token: usize) {
         self.map.borrow_mut().set_cursor(token);

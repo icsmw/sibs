@@ -96,27 +96,24 @@ impl term::Display for VariableType {
 
 #[cfg(test)]
 mod proptest {
-    use crate::{
-        entry::variable_type::{Types, VariableType},
-        inf::tests::*,
-    };
+    use crate::entry::{Types, VariableType};
     use proptest::prelude::*;
 
     impl Arbitrary for Types {
-        type Parameters = SharedScope;
+        type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_scope: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
             prop_oneof![Just(Types::String), Just(Types::Bool), Just(Types::Number),].boxed()
         }
     }
 
     impl Arbitrary for VariableType {
-        type Parameters = SharedScope;
+        type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
-            Types::arbitrary_with(scope)
+            Types::arbitrary()
                 .prop_map(|var_type| VariableType { var_type, token: 0 })
                 .boxed()
         }

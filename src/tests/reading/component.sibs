@@ -1,6 +1,6 @@
-#[app: ./app]
-#[client: ./client/with spaces in name]
-#[shared: ./shared/one/to]
-#[defaults]
-#[NO_CONTEXT_TASK]
-#[app_with_hash: ./app]@hash [./src ./dist :client :shared :wrapper] [build(dev)];
+#(app: ./app)
+#(client: ./client/with spaces in name)
+#(shared: ./shared/one/to)
+#(defaults)
+#(NO_CONTEXT_TASK)
+#(app_with_hash: ./app)@hash(("./src"; "./dist"; :client; :shared; :wrapper); (:build(dev)));

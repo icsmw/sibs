@@ -1,5 +1,5 @@
 use crate::{
-    entry::{Function, Meta, SimpleString, Task},
+    entry::{ElTarget, Element, Meta, SimpleString, Task},
     error::LinkedErr,
     inf::{
         context::Context,
@@ -10,19 +10,51 @@ use crate::{
 };
 use std::{fmt, path::PathBuf};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Component {
     pub cwd: Option<PathBuf>,
     pub name: SimpleString,
-    pub tasks: Vec<Task>,
-    pub functions: Vec<Function>,
-    pub meta: Option<Meta>,
+    pub elements: Vec<Element>,
     pub token: usize,
 }
 
 impl Component {
     pub fn get_task(&self, name: &str) -> Option<&Task> {
-        self.tasks.iter().find(|t| t.get_name() == name)
+        self.elements.iter().find_map(|el| {
+            if let Element::Task(task) = el {
+                if task.get_name() == name {
+                    Some(task)
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        })
+    }
+    pub fn get_tasks(&self) -> Vec<&Task> {
+        self.elements
+            .iter()
+            .filter_map(|el| {
+                if let Element::Task(task) = el {
+                    Some(task)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<&Task>>()
+    }
+    pub fn get_meta(&self) -> Vec<&Meta> {
+        self.elements
+            .iter()
+            .filter_map(|el| {
+                if let Element::Meta(meta) = el {
+                    Some(meta)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<&Meta>>()
     }
     pub fn get_name(&self) -> &str {
         &self.name.value
@@ -32,10 +64,15 @@ impl Component {
 impl Reading<Component> for Component {
     fn read(reader: &mut Reader) -> Result<Option<Component>, LinkedErr<E>> {
         let close = reader.open_token();
-        if reader.move_to().char(&[&chars::POUND_SIGN]).is_some() {
+        let restore = reader.pin();
+        if let Some((before, _)) = reader.until().char(&[&chars::POUND_SIGN]) {
+            if !before.is_empty() {
+                Err(E::UnrecognizedCode(before).by_reader(reader))?;
+            }
+            let _ = reader.move_to().char(&[&chars::POUND_SIGN]);
             if reader
                 .group()
-                .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
+                .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
                 .is_some()
             {
                 let mut inner = reader.token()?.bound;
@@ -66,38 +103,34 @@ impl Reading<Component> for Component {
                 if inner.trim().is_empty() {
                     Err(E::NoComponentBody.linked(&name_token))?
                 }
-                let mut task_reader = reader.token()?.bound;
-                let mut meta: Option<Meta> = None;
-                if let Some(mt) = Meta::read(&mut task_reader)? {
-                    meta = Some(mt);
+                let mut inner = reader.token()?.bound;
+                let mut elements: Vec<Element> = vec![];
+                while let Some(el) = Element::include(
+                    &mut inner,
+                    &[ElTarget::Meta, ElTarget::Task, ElTarget::Function],
+                )? {
+                    let _ = inner.move_to().char(&[&chars::SEMICOLON]);
+                    elements.push(el);
                 }
-                let mut functions: Vec<Function> = vec![];
-                while let Some(func) = Function::read(&mut task_reader)? {
-                    functions.push(func);
-                }
-                let mut tasks: Vec<Task> = vec![];
-                while let Some(task) = Task::read(&mut task_reader)? {
-                    tasks.push(task);
-                }
+
                 Ok(Some(Component {
                     name: SimpleString {
                         value: name,
                         token: name_token,
                     },
-                    functions,
+                    elements,
                     cwd: if path.is_empty() {
                         None
                     } else {
                         Some(PathBuf::from(path))
                     },
-                    tasks,
-                    meta,
                     token: close(reader),
                 }))
             } else {
-                Err(E::NoGroup.by_reader(reader))?
+                Err(E::NoComponentDefinition.by_reader(reader))?
             }
         } else {
+            restore(reader);
             Ok(None)
         }
     }
@@ -107,26 +140,17 @@ impl fmt::Display for Component {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "#[{}{}]{}{}\n{}",
+            "#({}{}){}",
             self.name,
             self.cwd
                 .as_ref()
                 .map(|cwd| format!(": {}", cwd.to_string_lossy()))
                 .unwrap_or_default(),
-            self.meta
-                .as_ref()
-                .map(|meta| meta.to_string())
-                .unwrap_or_default(),
-            self.functions
+            self.elements
                 .iter()
-                .map(|function| format!("{function};"))
+                .map(|el| format!("{el};"))
                 .collect::<Vec<String>>()
                 .join("\n"),
-            self.tasks
-                .iter()
-                .map(|task| format!("{task};"))
-                .collect::<Vec<String>>()
-                .join("\n")
         )
     }
 }
@@ -136,16 +160,16 @@ impl term::Display for Component {
         term.bold("COMPONENT:\n");
         term.step_right();
         term.boldnl(&self.name);
-        if let Some(meta) = self.meta.as_ref() {
-            println!();
-            meta.display(term);
-        }
+        // if let Some(meta) = self.meta.as_ref() {
+        //     println!();
+        //     meta.display(term);
+        // }
         term.step_left();
         term.bold("\nTASKS:\n");
         term.step_right();
-        self.tasks.iter().filter(|t| t.has_meta()).for_each(|task| {
-            task.display(term);
-        });
+        // self.tasks.iter().filter(|t| t.has_meta()).for_each(|task| {
+        //     task.display(term);
+        // });
         term.step_left();
     }
 }
@@ -169,7 +193,7 @@ impl Operator for Component {
                 ));
                 operator::E::NoTaskForComponent(self.name.to_string())
             })?;
-            let task = self.tasks.iter().find(|t| t.get_name() == task).ok_or_else(|| {
+            let task = self.get_task(task).ok_or_else(|| {
                 cx.term.err(format!(
                     "Task \"{task}\" doesn't exist on component \"{}\". Try to use \"sibs {} --help\".\n",
                     self.name, self.name
@@ -188,24 +212,30 @@ mod reading {
     use crate::{
         entry::Component,
         error::LinkedErr,
-        inf::tests,
+        inf::{
+            context::Context,
+            operator::Operator,
+            tests::{self, report_if_err},
+        },
         reader::{Reader, Reading, E},
     };
 
-    #[test]
-    fn reading() -> Result<(), LinkedErr<E>> {
+    #[tokio::test]
+    async fn reading() -> Result<(), LinkedErr<E>> {
+        let cx: Context = Context::unbound()?;
         let components = include_str!("../tests/reading/component.sibs").to_string();
         let components = components.split('\n').collect::<Vec<&str>>();
         let tasks = include_str!("../tests/reading/tasks.sibs");
-        let mut reader = Reader::unbound(
+        let mut reader = Reader::bound(
             components
                 .iter()
                 .map(|c| format!("{c}\n{tasks}"))
                 .collect::<Vec<String>>()
                 .join("\n"),
+            &cx,
         );
         let mut count = 0;
-        while let Some(entity) = Component::read(&mut reader)? {
+        while let Some(entity) = report_if_err(&cx, Component::read(&mut reader))? {
             assert_eq!(
                 tests::trim_carets(reader.recent()),
                 tests::trim_carets(&entity.to_string()),
@@ -239,16 +269,10 @@ mod reading {
                 tests::trim_carets(&entity.name.to_string()),
                 tests::trim_carets(&reader.get_fragment(&entity.name.token)?.lined)
             );
-            for func in entity.functions.iter() {
+            for el in entity.elements.iter() {
                 assert_eq!(
-                    tests::trim_carets(&format!("{func};")),
-                    tests::trim_carets(&reader.get_fragment(&func.token)?.lined)
-                );
-            }
-            for task in entity.tasks.iter() {
-                assert_eq!(
-                    tests::trim_carets(&format!("{task};")),
-                    tests::trim_carets(&reader.get_fragment(&task.token)?.lined)
+                    tests::trim_carets(&format!("{el}",)),
+                    tests::trim_carets(&reader.get_fragment(&el.token())?.lined)
                 );
             }
             count += 1;
@@ -297,8 +321,10 @@ mod processing {
     #[tokio::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
-        let mut reader =
-            Reader::unbound(include_str!("../tests/processing/component.sibs").to_string());
+        let mut reader = Reader::bound(
+            include_str!("../tests/processing/component.sibs").to_string(),
+            &cx,
+        );
         let mut cursor: usize = 0;
         let mut components: Vec<Component> = vec![];
         while let Some(component) = Component::read(&mut reader)? {
@@ -332,31 +358,39 @@ mod processing {
 mod proptest {
     use std::path::PathBuf;
 
-    use crate::{
-        entry::{component::Component, meta::Meta, task::Task, SimpleString},
-        inf::tests::*,
-    };
+    use crate::entry::{Component, Element, Function, Meta, SimpleString, Task};
     use proptest::prelude::*;
 
     impl Arbitrary for Component {
-        type Parameters = SharedScope;
+        type Parameters = usize;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(scope: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             (
                 "[a-zA-Z]*".prop_map(String::from),
-                prop::collection::vec(Task::arbitrary_with(scope.clone()), 2..6),
-                Meta::arbitrary_with(scope.clone()),
+                prop::collection::vec(Task::arbitrary_with(deep), 2..6).prop_map(|v| {
+                    v.iter()
+                        .map(|v| Element::Task(v.clone()))
+                        .collect::<Vec<Element>>()
+                }),
+                prop::collection::vec(Meta::arbitrary(), 0..3).prop_map(|v| {
+                    v.iter()
+                        .map(|v| Element::Meta(v.clone()))
+                        .collect::<Vec<Element>>()
+                }),
+                prop::collection::vec(Function::arbitrary_with(deep), 0..3).prop_map(|v| {
+                    v.iter()
+                        .map(|v| Element::Function(v.clone()))
+                        .collect::<Vec<Element>>()
+                }),
             )
-                .prop_map(|(name, tasks, meta)| Component {
-                    tasks,
-                    meta: Some(meta),
+                .prop_map(|(name, tasks, meta, funcs)| Component {
+                    elements: [meta, funcs, tasks].concat(),
                     name: SimpleString {
                         value: name,
                         token: 0,
                     },
                     cwd: Some(PathBuf::new()),
-                    functions: vec![],
                     token: 0,
                 })
                 .boxed()

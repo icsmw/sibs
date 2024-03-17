@@ -48,18 +48,19 @@ mod test {
         inf::{
             context::Context,
             operator::{Operator, E},
+            tests::*,
         },
-        reader::{Reader, Reading},
+        reader::{chars, Reader, Reading},
     };
 
     const TESTS: &[&str] = &[
-        r#"IF @env::var TEST_VAR == "__test_var__" ["true";] ELSE ["false";];"#,
+        r#"IF @env::var(TEST_VAR) == "__test_var__" ["true";] ELSE ["false";];"#,
         r#"IF @env::family == "__family__" ["true";] ELSE ["false";];"#,
         r#"IF @env::os == "__os__" ["true";] ELSE ["false";];"#,
         r#"IF @env::arch == "__arch__" ["true";] ELSE ["false";];"#,
         r#"IF @env::temp_dir == "__temp_dir__" ["true";] ELSE ["false";];"#,
-        r#"@env::remove_var TEST_VAR; IF @env::var TEST_VAR == "" ["true";] ELSE ["false";];"#,
-        r#"@env::set_var TEST_VAR "VALUE"; IF @env::var TEST_VAR == "VALUE" ["true";] ELSE ["false";];"#,
+        r#"@env::remove_var(TEST_VAR); IF @env::var(TEST_VAR) == "" ["true";] ELSE ["false";];"#,
+        r#"@env::set_var(TEST_VAR; "VALUE"); IF @env::var(TEST_VAR) == "VALUE" ["true";] ELSE ["false";];"#,
     ];
 
     #[tokio::test]
@@ -81,12 +82,11 @@ mod test {
         }
         for test in TESTS.iter() {
             let mut cx = Context::unbound()?;
-            let mut reader = Reader::unbound(apply_hooks(format!("test[{test}]"), hooks));
+            let mut reader = Reader::bound(apply_hooks(format!("test[{test}]"), hooks), &cx);
             while let Some(task) = Task::read(&mut reader)? {
-                let result = task
-                    .execute(None, &[], &[], &mut cx)
-                    .await?
-                    .expect("test returns some value");
+                let result = task.execute(None, &[], &[], &mut cx).await;
+                let result = post_if_err(&cx, result)?.expect("test returns some value");
+                let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                 assert_eq!(
                     result.get_as_string().expect("test returns string value"),
                     "true".to_owned()

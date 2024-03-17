@@ -16,12 +16,6 @@ pub enum Error {
     InvalidTargetType,
     #[error("Fail to extract string value from argument")]
     InvalidCountType(String),
-    #[error("Fail to extract count (usize) from argument")]
-    NoStringValue,
-    #[error("Fail to extract variable name from VariableName entity")]
-    NoVariableName,
-    #[error("Fail to get number of repeating")]
-    FailToGetRepeatingNumber,
 }
 
 impl From<Error> for E {

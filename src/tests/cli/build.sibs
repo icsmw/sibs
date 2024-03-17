@@ -1,8 +1,8 @@
-#[test: ./tmp]
+#(test: ./tmp)
     /// Test SIBS
     try [
         /// Will try to execute terminal command
-        ls -lsa;
+        `ls -lsa`;
         @os windows;
         @os linux;
         @os darwin;
@@ -16,6 +16,6 @@
     ];
     build($input_a: {string}; $mode: dev | prod;) [
         $a_str = "value_a";
-        ls -lsa;
+        `ls -lsa`;
     ];
 

@@ -26,10 +26,10 @@ async fn main() {
             }
             if let Err(err) = result {
                 eprintln!("{err}");
-                if let Err(err) = cx.map.borrow_mut().assign_error(&err) {
+                if let Err(err) = cx.assign_error(&err) {
                     eprintln!("{err}");
                 }
-                cx.map.borrow().post_reports();
+                cx.post_reports();
                 exit(1);
             }
         }

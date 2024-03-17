@@ -10,3 +10,10 @@
 - add web-server for remote access
 - dry-run: run and ignore terminal commands & show a map of executing
 - this is valid "@fs::path_join [$tmp_path $file_name];", this is NOT "@fs::path_join [$tmp_path; $file_name;];" or "@fs::path_join [$tmp_path ,$file_name];". Error should be shown.
+- add named arguments for functions @hash track::(bla, bla) run::(bla)
+- prevent dead-loop related to nested Element parsing
+- add types: bool, number
+NO Errors:
+`create-user --name={$user_name} --role={IF $is_admin == "true" ["admin";]  ["user";]}`
+$is_verified AND $has_permission => @proceed_with_action;
+true != false doesn't work
