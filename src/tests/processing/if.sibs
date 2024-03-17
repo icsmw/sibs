@@ -367,3 +367,127 @@ test [
         false;
     ];
 ];
+test [
+    $a = @get_os;
+    IF @os($a) == true [
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = @get_os;
+    IF @os($a) [
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = @get_os;
+    IF @os($a) && @os($a) [
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = @get_os;
+    IF @os($a) || @os($a) [
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = 1;
+    $b = 2;
+    $d = "hello";
+    IF ($a == 1 || $b == 3) && $d == "hello" [
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = 10; $b = 20; $c = 30;
+    IF $a < $b && $c > $b [ true; ] ELSE [ false; ];
+];
+test [
+    $x = "apple"; $y = "banana";
+    IF $x == "apple" || $y == "orange" [ true; ] ELSE [ false; ];
+];
+test [
+    $i = true; $j = false;
+    IF $i == true && $j == false [ true; ] ELSE [ false; ];
+];
+test [
+    $m = 5; $n = 5; $o = 10;
+    IF ($m == $n) && ($o > $m) [ true; ] ELSE [ false; ];
+];
+test [
+    $u = "sun"; $v = "moon"; $w = "stars";
+    IF $u != $v && $v != $w [ true; ] ELSE [ false; ];
+];
+test [
+    $a = 5; $b = 10; $c = 15;
+    IF ($a < $b && $b < $c) || ($c > 10 && $a < 10) [ true; ] ELSE [ false; ];
+];
+test [
+    $x = "red"; $y = "blue"; $z = "green";
+    IF ($x == "red" && $y == "blue") && ($z == "green" || $x == "yellow") [ true; ] ELSE [ false; ];
+];
+test [
+    $u = "circle"; $v = "square"; $w = "triangle";
+    IF ($u == "circle" || $v == "rectangle") && ($w == "triangle" && $v == "square") [ true; ] ELSE [ false; ];
+];
+test [
+    $m = 100; $n = 200; $o = 300;
+    IF ($m < $n && $n < $o) || ($o >= 300 && $m <= 100) [ true; ] ELSE [ false; ];
+];
+test [$a = 10; $b = 20; IF ($a < $b) && ($b > 15) [true;] ELSE [false;];];
+test [$c = "cat"; $d = "dog"; IF ($c == "cat") || ($d == "dog") [true;] ELSE [false;];];
+test [$e = true; $f = false; IF ($e == true) && ($f == false) [true;] ELSE [false;];];
+test [$g = 5; $h = 5; IF ($g == 5) && ($h == 5) [true;] ELSE [false;];];
+test [$i = "ice"; $j = "fire"; IF ($i == "ice") || ($j == "fire") [true;] ELSE [false;];];
+test [$k = 1; $l = 2; IF ($k == 1) && ($l == 2) [true;] ELSE [false;];];
+test [$m = "moon"; $n = "sun"; IF ($m == "moon") || ($n == "sun") [true;] ELSE [false;];];
+test [$o = true; $p = true; IF ($o == true) && ($p == true) [true;] ELSE [false;];];
+test [$q = 15; $r = 10; IF ($q > 10) && ($r < 15) [true;] ELSE [false;];];
+test [$s = "star"; $t = "planet"; IF ($s == "star") || ($t == "planet") [true;] ELSE [false;];];
+test [$u = 3; $v = 3; IF ($u == 3) && ($v == 3) [true;] ELSE [false;];];
+test [$w = "water"; $x = "earth"; IF ($w == "water") || ($x == "earth") [true;] ELSE [false;];];
+test [$y = true; $z = false; IF ($y == true) && ($z == false) [true;] ELSE [false;];];
+test [$aa = 25; $ab = 30; IF ($aa < 30) && ($ab > 25) [true;] ELSE [false;];];
+test [$ac = "apple"; $ad = "orange"; IF ($ac == "apple") || ($ad == "orange") [true;] ELSE [false;];];
+test [$ae = true; $af = true; IF ($ae == true) && ($af == true) [true;] ELSE [false;];];
+test [$ag = 50; $ah = 60; IF ($ag < 55) && ($ah > 55) [true;] ELSE [false;];];
+test [$ai = "ink"; $aj = "pen"; IF ($ai == "ink") || ($aj == "pen") [true;] ELSE [false;];];
+test [$ak = true; $al = false; IF ($ak == true) && ($al == false) [true;] ELSE [false;];];
+test [$am = 100; $an = 200; IF ($am < 150) && ($an > 150) [true;] ELSE [false;];];
+test [$ao = "oak"; $ap = "pine"; IF ($ao == "oak") || ($ap == "pine") [true;] ELSE [false;];];
+test [$aq = true; $ar = true; IF ($aq == true) && ($ar == true) [true;] ELSE [false;];];
+test [$as = 250; $at = 260; IF ($as < 255) && ($at > 255) [true;] ELSE [false;];];
+test [$au = "umbrella"; $av = "rain"; IF ($au == "umbrella") || ($av == "rain") [true;] ELSE [false;];];
+test [$aw = true; $ax = false; IF ($aw == true) && ($ax == false) [true;] ELSE [false;];];
+test [$ay = 300; $az = 400; IF ($ay < 350) && ($az > 350) [true;] ELSE [false;];];
+test [$ba = "bat"; $bb = "ball"; IF ($ba == "bat") || ($bb == "ball") [true;] ELSE [false;];];
+test [ $a = "apple"; $b = "banana"; IF ($a == "apple" && $b == "banana") [ true; ] ELSE [ false; ]; ];
+test [ $x = 5; $y = 10; IF ($x < $y || $y == 10) [ true; ] ELSE [ false; ]; ];
+test [ $color = "red"; $speed = 100; IF ($color == "red" && ($speed > 90 || $speed < 110)) [ true; ] ELSE [ false; ]; ];
+test [ $day = "Monday"; $temp = 20; IF ($day == "Monday" && $temp == 20) [ true; ] ELSE [ false; ]; ];
+test [ $status = "active"; $level = 2; IF ($status == "active" || ($level >= 1 && $level <= 3)) [ true; ] ELSE [ false; ]; ];
+test [ $user = "admin"; $access = "full"; IF ($user == "admin" && $access == "full") [ true; ] ELSE [ false; ]; ];
+test [ $light = "on"; $door = "open"; IF ($light == "on" && $door == "open") [ true; ] ELSE [ false; ]; ];
+test [ $item = "book"; $qty = 1; IF ($item == "book" || $qty == 2) [ true; ] ELSE [ false; ]; ];
+test [ $mode = "auto"; $power = "on"; IF ($mode == "auto" && ($power == "on" || $power == "off")) [ true; ] ELSE [ false; ]; ];
+test [ $age = 30; $city = "NYC"; IF ($age > 25 && $city == "NYC") [ true; ] ELSE [ false; ]; ];
+test [
+    $m = 100; $n = 200; $o = 300; $z = 1; $y = 4;
+    IF ($m < $n && $n < $o || ($o >= 300 && $m <= 100 && ($z == 1 || $y == 4)))  [ true; ] ELSE [ false; ];
+];
+test [ $a = 5; $b = "hello"; $c = true; IF ($a == 5 && ($b == "hello" || $c)) [ true; ] ELSE [ false; ]; ];
+test [ $x = 10; $y = "world"; $z = false; IF ($x > 5 || ($y != "world" && $z)) [ true; ] ELSE [ false; ]; ];
+test [ $i = 15; $j = "test"; $k = true; IF ($i <= 15 && ($j == "test" || $k)) [ true; ] ELSE [ false; ]; ];
+test [ $i = 15; $j = "test"; $k = true; IF ($i <= 15 && ($k || $j == "test")) [ true; ] ELSE [ false; ]; ];
+test [ $i = true; $j = "test"; $k = true; IF ($i && ($k || $j == "test")) [ true; ] ELSE [ false; ]; ];

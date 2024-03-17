@@ -209,12 +209,16 @@ IF conditions [ … ] IF conditions [ …. ] ELSE [ … ]
 
 As for conditions it supports logical operators AND, OR
 
-IF condition AND condition […]
-IF condition OR condition […]
+IF condition && condition […]
+IF condition || condition […]
 
 Conditions can be grouped with (…)
 
-IF (condition AND condition) OR condition […]
+IF (condition && condition) || condition […]
+
+Nested groups are supported too
+
+IF (condition && condition && (condition || condition)) || condition […]
 
 As action If has Block element.
 
