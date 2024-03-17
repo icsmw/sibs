@@ -1,8 +1,369 @@
 test [
-    $a = @get_os;
-    IF "true" == @os($a) && @os($a) == "true" [
+    $a = "one";
+    IF $a == "one" [
         "true";
     ] ELSE [
         "false";
+    ];
+];
+test [
+    $a = "not one";
+    IF $a != "one" [
+        "true";
+    ] ELSE [
+        "false";
+    ];
+];
+test [
+    $a = "one";
+    IF $a != "one" [
+        "false";
+    ] ELSE [
+        "true";
+    ];
+];
+test [
+    $a = "one";
+    $b = "two";
+    IF $a == "one" || $b == "two" [
+        "true";
+    ] ELSE [
+        "false";
+    ];
+];
+test [
+    $a = "one";
+    $b = "two";
+    IF $a == "one" && $b == "two" [
+        "true";
+    ] ELSE [
+        "false";
+    ];
+];
+test [
+    $a = "one";
+    $b = "two";
+    IF $a != "one" && $b != "two" [
+        "false";
+    ] ELSE [
+        "true";
+    ];
+];
+test [
+    $a = "one";
+    IF $a == "__" [
+        "false";
+    ] IF $a == "one" [
+        "true";
+    ] ELSE [
+        "false";
+    ];
+];
+test [
+    $a = "one";
+    IF $a == "__" [
+        "false";
+    ] IF $a == "__" [
+        "false";
+    ] ELSE [
+        "true";
+    ];
+];
+test [
+    $a = "one";
+    $b = "two";
+    $c = "three";
+    IF $c != "one" && ($a == "one" && $b == "two") [
+        "true";
+    ] ELSE [
+        "false";
+    ];
+];
+test [
+    $a = "one";
+    $b = "two";
+    $c = "three";
+    IF ($c != "one" && $c != "two") && ($a == "one" && $b == "two") [
+        "true";
+    ] ELSE [
+        "false";
+    ];
+];
+test [
+    $a = @get_os;
+    IF @os($a) == "true" [
+        "true";
+    ] ELSE [
+        "false";
+    ];
+];
+test [
+    $a = @get_os;
+    IF "true" == @os($a) [
+        "true";
+    ] ELSE [
+        "false";
+    ];
+];
+test [
+    $a = @get_os;
+    IF "true" == @os($a) && @os($a) == "true"[
+        "true";
+    ] ELSE [
+        "false";
+    ];
+];
+test [
+    $a = @get_os;
+    IF "true" == @os($a) || @os($a) == "true"[
+        "true";
+    ] ELSE [
+        "false";
+    ];
+];
+test [
+    $a = "one";
+    IF $a == "one" [
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = "not one";
+    IF $a != "one" [
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = "one";
+    IF $a != "one" [
+        false;
+    ] ELSE [
+        true;
+    ];
+];
+test [
+    $a = "one";
+    $b = "two";
+    IF $a == "one" || $b == "two" [
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = "one";
+    $b = "two";
+    IF $a == "one" && $b == "two" [
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = "one";
+    $b = "two";
+    IF $a != "one" && $b != "two" [
+        false;
+    ] ELSE [
+        true;
+    ];
+];
+test [
+    $a = "one";
+    IF $a == "__" [
+        false;
+    ] IF $a == "one" [
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = "one";
+    IF $a == "__" [
+        false;
+    ] IF $a == "__" [
+        false;
+    ] ELSE [
+        true;
+    ];
+];
+test [
+    $a = "one";
+    $b = "two";
+    $c = "three";
+    IF $c != "one" && ($a == "one" && $b == "two") [
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = "one";
+    $b = "two";
+    $c = "three";
+    IF ($c != "one" && $c != "two") && ($a == "one" && $b == "two") [
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = @get_os;
+    IF @os($a) == true [
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = @get_os;
+    IF true == @os($a) [
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = @get_os;
+    IF true == @os($a) && @os($a) == true[
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = @get_os;
+    IF true == @os($a) || @os($a) == true[
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = 1;
+    IF $a == 1 [
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = "not one";
+    IF $a != 1 [
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = 1;
+    IF $a != 1 [
+        false;
+    ] ELSE [
+        true;
+    ];
+];
+test [
+    $a = 1;
+    $b = 2;
+    IF $a == 1 || $b == 2 [
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = 1;
+    $b = 2;
+    IF $a == 1 && $b == 2 [
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = 1;
+    $b = 2;
+    IF $a != 1 && $b != 2 [
+        false;
+    ] ELSE [
+        true;
+    ];
+];
+test [
+    $a = 1;
+    IF $a == "__" [
+        false;
+    ] IF $a == 1 [
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = 1;
+    IF $a == "__" [
+        false;
+    ] IF $a == "__" [
+        false;
+    ] ELSE [
+        true;
+    ];
+];
+test [
+    $a = 1;
+    $b = 2;
+    $c = 3;
+    IF $c != 1 && ($a == 1 && $b == 2) [
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = 1;
+    $b = 2;
+    $c = 3;
+    IF ($c != 1 && $c != 2) && ($a == 1 && $b == 2) [
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = @get_os;
+    IF @os($a) == true [
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = @get_os;
+    IF true == @os($a) [
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = @get_os;
+    IF true == @os($a) && @os($a) == true[
+        true;
+    ] ELSE [
+        false;
+    ];
+];
+test [
+    $a = @get_os;
+    IF true == @os($a) || @os($a) == true[
+        true;
+    ] ELSE [
+        false;
     ];
 ];

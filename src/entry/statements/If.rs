@@ -231,6 +231,7 @@ mod processing {
         inf::{
             context::Context,
             operator::{Operator, E},
+            tests::report_if_err,
         },
         reader::{chars, Reader, Reading},
     };
@@ -238,11 +239,15 @@ mod processing {
     #[tokio::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::unbound()?;
+        let tasks = include_str!("../../tests/processing/if.sibs")
+            .match_indices("test [")
+            .count();
         let mut reader = Reader::bound(
             include_str!("../../tests/processing/if.sibs").to_string(),
             &cx,
         );
-        while let Some(task) = Task::read(&mut reader)? {
+        let mut count = 0;
+        while let Some(task) = report_if_err(&cx, Task::read(&mut reader))? {
             let result = task
                 .execute(None, &[], &[], &mut cx)
                 .await?
@@ -250,9 +255,13 @@ mod processing {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 result.get_as_string().expect("IF returns string value"),
-                "true".to_owned()
+                "true".to_owned(),
+                "Line: {}",
+                count + 1
             );
+            count += 1;
         }
+        assert_eq!(tasks, count);
         Ok(())
     }
 }
