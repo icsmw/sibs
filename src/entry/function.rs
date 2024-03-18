@@ -435,6 +435,8 @@ mod proptest {
                                 ElTarget::Comparing,
                                 ElTarget::VariableName,
                                 ElTarget::Command,
+                                ElTarget::Integer,
+                                ElTarget::Boolean,
                             ],
                             deep,
                         )),

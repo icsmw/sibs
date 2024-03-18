@@ -165,7 +165,7 @@ mod proptest {
                 (
                     prop::collection::vec(
                         Element::arbitrary_with((
-                            vec![ElTarget::VariableName, ElTarget::Function],
+                            vec![ElTarget::VariableName, ElTarget::Function, ElTarget::If],
                             deep,
                         )),
                         0..=2,

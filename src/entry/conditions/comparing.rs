@@ -70,7 +70,6 @@ impl Reading<Comparing> for Comparing {
                 ElTarget::PatternString,
                 ElTarget::Integer,
                 ElTarget::Boolean,
-                ElTarget::Values,
             ],
         )? {
             Box::new(el)
@@ -99,7 +98,6 @@ impl Reading<Comparing> for Comparing {
                 ElTarget::PatternString,
                 ElTarget::Integer,
                 ElTarget::Boolean,
-                ElTarget::Values,
             ],
         )? {
             Box::new(el)
