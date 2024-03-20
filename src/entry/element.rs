@@ -42,6 +42,7 @@ pub enum ElTarget {
     VariableDeclaration,
     VariableVariants,
     VariableType,
+    SimpleString,
 }
 
 #[derive(Debug, Clone)]
@@ -70,6 +71,7 @@ pub enum Element {
     VariableDeclaration(VariableDeclaration),
     VariableVariants(VariableVariants),
     VariableType(VariableType),
+    SimpleString(SimpleString),
 }
 
 impl Element {
@@ -183,7 +185,6 @@ impl Element {
                 return Ok(Some(Element::Task(el)));
             }
         }
-
         if includes == targets.contains(&ElTarget::VariableDeclaration) {
             if let Some(el) = VariableDeclaration::read(reader)? {
                 return Ok(Some(Element::VariableDeclaration(el)));
@@ -197,6 +198,11 @@ impl Element {
         if includes == targets.contains(&ElTarget::VariableVariants) {
             if let Some(el) = VariableVariants::read(reader)? {
                 return Ok(Some(Element::VariableVariants(el)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::SimpleString) {
+            if let Some(el) = SimpleString::read(reader)? {
+                return Ok(Some(Element::SimpleString(el)));
             }
         }
         Ok(None)
@@ -247,6 +253,7 @@ impl fmt::Display for Element {
                 Self::VariableDeclaration(v) => v.to_string(),
                 Self::VariableVariants(v) => v.to_string(),
                 Self::VariableType(v) => v.to_string(),
+                Self::SimpleString(v) => v.to_string(),
             }
         )
     }
@@ -285,6 +292,7 @@ impl Operator for Element {
             Self::VariableVariants(v) => v.token,
             Self::Meta(v) => v.token,
             Self::VariableType(v) => v.token,
+            Self::SimpleString(v) => v.token(),
         }
     }
     fn perform<'a>(
@@ -320,6 +328,7 @@ impl Operator for Element {
                 Self::VariableDeclaration(_) => Ok(None),
                 Self::VariableVariants(_) => Ok(None),
                 Self::VariableType(_) => Ok(None),
+                Self::SimpleString(v) => v.execute(owner, components, args, cx).await,
             }
         })
     }
@@ -373,50 +382,10 @@ impl Reading<Element> for Element {
             Some(Element::VariableDeclaration(el))
         } else if let Some(el) = VariableType::read(reader)? {
             Some(Element::VariableType(el))
+        } else if let Some(el) = VariableVariants::read(reader)? {
+            Some(Element::VariableVariants(el))
         } else {
-            VariableVariants::read(reader)?.map(Element::VariableVariants)
-        })
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum ElementExd {
-    Element(Element),
-    SimpleString(SimpleString),
-}
-
-impl fmt::Display for ElementExd {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Self::SimpleString(s) => s.to_string(),
-                Self::Element(v) => v.to_string(),
-            }
-        )
-    }
-}
-
-impl Operator for ElementExd {
-    fn token(&self) -> usize {
-        match self {
-            Self::SimpleString(v) => v.token,
-            Self::Element(v) => v.token(),
-        }
-    }
-    fn perform<'a>(
-        &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
-        args: &'a [String],
-        cx: &'a mut Context,
-    ) -> OperatorPinnedResult {
-        Box::pin(async move {
-            match self {
-                Self::Element(v) => v.execute(owner, components, args, cx).await,
-                Self::SimpleString(v) => Ok(Some(AnyValue::new(v.value.to_owned()))),
-            }
+            SimpleString::read(reader)?.map(Element::SimpleString)
         })
     }
 }
@@ -426,26 +395,15 @@ mod proptest {
     use crate::{
         entry::{
             Block, Boolean, Combination, Command, Comparing, Component, Condition, Each, ElTarget,
-            Element, ElementExd, First, Function, If, Integer, Meta, Optional, PatternString,
-            Reference, SimpleString, Subsequence, Task, Values, VariableAssignation, VariableName,
+            Element, First, Function, If, Integer, Meta, Optional, PatternString, Reference,
+            SimpleString, Subsequence, Task, Values, VariableAssignation, VariableDeclaration,
+            VariableName, VariableType, VariableVariants,
         },
         inf::{operator::E, tests::*},
         reader::{Reader, Reading},
     };
     use proptest::prelude::*;
 
-    impl Arbitrary for ElementExd {
-        type Parameters = (Vec<ElTarget>, usize);
-        type Strategy = BoxedStrategy<Self>;
-
-        fn arbitrary_with((targets, deep): Self::Parameters) -> Self::Strategy {
-            prop_oneof![
-                SimpleString::arbitrary().prop_map(ElementExd::SimpleString),
-                Element::arbitrary_with((targets, deep)).prop_map(ElementExd::Element),
-            ]
-            .boxed()
-        }
-    }
     fn generate(targets: &[ElTarget], deep: usize) -> Vec<BoxedStrategy<Element>> {
         let mut collected = vec![];
         if targets.contains(&ElTarget::Combination) {
@@ -576,6 +534,34 @@ mod proptest {
             collected.push(
                 VariableName::arbitrary()
                     .prop_map(Element::VariableName)
+                    .boxed(),
+            );
+        }
+        if targets.contains(&ElTarget::VariableType) {
+            collected.push(
+                VariableType::arbitrary()
+                    .prop_map(Element::VariableType)
+                    .boxed(),
+            );
+        }
+        if targets.contains(&ElTarget::VariableDeclaration) {
+            collected.push(
+                VariableDeclaration::arbitrary_with(deep)
+                    .prop_map(Element::VariableDeclaration)
+                    .boxed(),
+            );
+        }
+        if targets.contains(&ElTarget::VariableVariants) {
+            collected.push(
+                VariableVariants::arbitrary()
+                    .prop_map(Element::VariableVariants)
+                    .boxed(),
+            );
+        }
+        if targets.contains(&ElTarget::SimpleString) {
+            collected.push(
+                SimpleString::arbitrary()
+                    .prop_map(Element::SimpleString)
                     .boxed(),
             );
         }

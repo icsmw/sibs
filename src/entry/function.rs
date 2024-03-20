@@ -1,5 +1,5 @@
 use crate::{
-    entry::{Component, ElTarget, Element, ElementExd, SimpleString},
+    entry::{Component, ElTarget, Element, SimpleString},
     error::LinkedErr,
     inf::{
         any::AnyValue,
@@ -14,7 +14,7 @@ use std::fmt;
 pub struct Function {
     pub tolerance: bool,
     pub name: String,
-    pub args: Vec<ElementExd>,
+    pub args: Vec<Element>,
     pub feed: Option<Box<Function>>,
     pub token: usize,
     pub args_token: usize,
@@ -72,7 +72,7 @@ impl Reading<Function> for Function {
             } else {
                 false
             };
-            let mut elements: Vec<ElementExd> = vec![];
+            let mut elements: Vec<Element> = vec![];
             if reader
                 .group()
                 .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
@@ -99,23 +99,22 @@ impl Reading<Function> for Function {
                         {
                             Err(E::MissedSemicolon.by_reader(&inner))?;
                         }
-                        elements.push(ElementExd::Element(el));
+                        elements.push(el);
                     } else if let Some((content, _)) = inner.until().char(&[&chars::SEMICOLON]) {
                         if content.trim().is_empty() {
                             Err(E::NoContentBeforeSemicolon.by_reader(&inner))?;
                         }
-                        elements.push(ElementExd::SimpleString(SimpleString {
-                            value: content.trim().to_string(),
-                            token: inner.token()?.id,
-                        }));
+                        elements.push(
+                            Element::include(&mut inner.token()?.bound, &[ElTarget::SimpleString])?
+                                .ok_or(E::NoContentBeforeSemicolon.by_reader(&inner))?,
+                        );
                         let _ = inner.move_to().char(&[&chars::SEMICOLON]);
                     } else if !inner.is_empty() {
-                        let value = inner.rest().trim().to_string();
-                        inner.move_to().end();
-                        elements.push(ElementExd::SimpleString(SimpleString {
-                            value,
-                            token: inner.token()?.id,
-                        }));
+                        elements.push(
+                            Element::include(&mut inner, &[ElTarget::SimpleString])?
+                                .ok_or(E::NoContentBeforeSemicolon.by_reader(&inner))?,
+                        );
+                        // let _ = inner.move_to().char(&[&chars::SEMICOLON]);
                     }
                 }
                 if elements.is_empty() {
@@ -167,7 +166,7 @@ impl Function {
     pub fn new(
         token: usize,
         args_token: usize,
-        args: Vec<ElementExd>,
+        args: Vec<Element>,
         name: String,
         tolerance: bool,
     ) -> Result<Self, LinkedErr<E>> {
@@ -395,7 +394,7 @@ mod processing {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        entry::{ElTarget, ElementExd, Function, Task},
+        entry::{ElTarget, Element, Function, Task},
         inf::{operator::E, tests::*},
         reader::{Reader, Reading},
     };
@@ -425,7 +424,7 @@ mod proptest {
                 (
                     "[a-z][a-z0-9]*".prop_map(String::from),
                     prop::collection::vec(
-                        ElementExd::arbitrary_with((
+                        Element::arbitrary_with((
                             vec![
                                 ElTarget::Values,
                                 ElTarget::Function,
@@ -437,6 +436,7 @@ mod proptest {
                                 ElTarget::Command,
                                 ElTarget::Integer,
                                 ElTarget::Boolean,
+                                ElTarget::SimpleString,
                             ],
                             deep,
                         )),

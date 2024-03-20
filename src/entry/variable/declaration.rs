@@ -53,11 +53,6 @@ impl Reading<VariableDeclaration> for VariableDeclaration {
                 } else {
                     Err(E::NoTypeDeclaration.by_reader(reader))
                 }
-                // reader.trim();
-                // if matches!(reader.next().char(), Some(chars::SEMICOLON)) {
-                //     reader.move_to().next();
-                // }
-                // Ok(declaration)
             } else {
                 Err(E::NoTypeDeclaration.by_reader(reader))
             }

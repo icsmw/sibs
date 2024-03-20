@@ -48,6 +48,7 @@ impl Reading<Block> for Block {
                         ElTarget::VariableDeclaration,
                         ElTarget::VariableVariants,
                         ElTarget::VariableType,
+                        ElTarget::SimpleString,
                     ],
                 )? {
                     if let (true, true) = (

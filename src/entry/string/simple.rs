@@ -1,3 +1,13 @@
+use crate::{
+    entry::Component,
+    error::LinkedErr,
+    inf::{
+        any::AnyValue,
+        context::Context,
+        operator::{self, Operator, OperatorPinnedResult},
+    },
+    reader::{Reader, Reading, E},
+};
 use std::fmt;
 
 #[derive(Debug, Clone)]
@@ -6,9 +16,33 @@ pub struct SimpleString {
     pub token: usize,
 }
 
+impl Reading<SimpleString> for SimpleString {
+    fn read(reader: &mut Reader) -> Result<Option<SimpleString>, LinkedErr<E>> {
+        Ok(Some(SimpleString {
+            value: reader.move_to().end(),
+            token: reader.token()?.id,
+        }))
+    }
+}
+
 impl fmt::Display for SimpleString {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.value,)
+    }
+}
+
+impl Operator for SimpleString {
+    fn token(&self) -> usize {
+        self.token
+    }
+    fn perform<'a>(
+        &'a self,
+        _owner: Option<&'a Component>,
+        _components: &'a [Component],
+        _inputs: &'a [String],
+        _cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async move { Ok(Some(AnyValue::new(self.value.to_string()))) })
     }
 }
 
