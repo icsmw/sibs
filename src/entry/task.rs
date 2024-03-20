@@ -1,5 +1,5 @@
 use crate::{
-    entry::{Block, Component, SimpleString, VariableDeclaration},
+    entry::{Block, Component, ElTarget, Element, SimpleString, VariableDeclaration},
     error::LinkedErr,
     inf::{
         context::Context,
@@ -14,6 +14,7 @@ use std::fmt;
 pub struct Task {
     pub name: SimpleString,
     pub declarations: Vec<VariableDeclaration>,
+    pub dependencies: Vec<Element>,
     pub block: Option<Block>,
     pub token: usize,
 }
@@ -68,6 +69,21 @@ impl Reading<Task> for Task {
             } else {
                 Err(E::NoTaskArguments.linked(&name_token))?
             };
+            let mut dependencies: Vec<Element> = vec![];
+            if reader
+                .group()
+                .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
+                .is_some()
+            {
+                let mut inner = reader.token()?.bound;
+                while let Some(el) = Element::include(&mut inner, &[ElTarget::Reference])? {
+                    let _ = inner.move_to().char(&[&chars::SEMICOLON]);
+                    dependencies.push(el);
+                }
+                if !inner.is_empty() {
+                    Err(E::UnrecognizedCode(inner.rest().to_string()).by_reader(&inner))?;
+                }
+            }
             if let Some(block) = Block::read(reader)? {
                 Ok(Some(Task {
                     name: SimpleString {
@@ -75,6 +91,7 @@ impl Reading<Task> for Task {
                         token: name_token,
                     },
                     declarations,
+                    dependencies,
                     token: close(reader),
                     block: Some(block),
                 }))
@@ -91,7 +108,7 @@ impl fmt::Display for Task {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{}{} {}",
+            "{}{}{} {}",
             self.name.value,
             if self.declarations.is_empty() {
                 String::new()
@@ -103,6 +120,18 @@ impl fmt::Display for Task {
                         .map(|d| d.to_string())
                         .collect::<Vec<String>>()
                         .join("; ")
+                )
+            },
+            if self.dependencies.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "({})",
+                    self.dependencies
+                        .iter()
+                        .map(|d| d.to_string())
+                        .collect::<Vec<String>>()
+                        .join(";")
                 )
             },
             self.block
@@ -188,7 +217,7 @@ mod reading {
     use crate::{
         entry::Task,
         error::LinkedErr,
-        inf::{context::Context, tests::*},
+        inf::{context::Context, operator::Operator, tests::*},
         reader::{chars, Reader, Reading, E},
     };
 
@@ -206,7 +235,7 @@ mod reading {
             );
             count += 1;
         }
-        assert_eq!(count, 6);
+        assert_eq!(count, 11);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
@@ -245,9 +274,15 @@ mod reading {
                     trim_carets(&reader.get_fragment(&declaration.declaration.token())?.lined)
                 );
             }
+            for dependency in entity.dependencies.iter() {
+                assert_eq!(
+                    trim_carets(&dependency.to_string()),
+                    trim_carets(&reader.get_fragment(&dependency.token())?.lined)
+                );
+            }
             count += 1;
         }
-        assert_eq!(count, 6);
+        assert_eq!(count, 11);
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
@@ -331,6 +366,7 @@ mod proptest {
                     declarations,
                     block: Some(block),
                     token: 0,
+                    dependencies: vec![],
                     name: SimpleString {
                         value: name,
                         token: 0,

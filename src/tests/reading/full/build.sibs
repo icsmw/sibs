@@ -4,7 +4,7 @@
     /// Application 
     @hash 
         (("./src"; "./dist"; :client; :shared; :wrapper);
-        (:build(dev)));
+        (:build("dev")));
     build($mode: dev | prod) [
         /// Building electron application 
         /// build dev >> build developing version
@@ -19,8 +19,8 @@
         @copy(../shared; ./node_modules);
         :wrapper:prod;
         @copy(../core/wrapper; ./node_modules);
-        $mode == "dev" => :client:build(dev);
-        $mode == "prod" => :client:build(prod);
+        $mode == "dev" => :client:build("dev");
+        $mode == "prod" => :client:build("prod");
         @copy(../client/dist/client; ./dist);
         `yarn run build`;
         @copy(./package.json; ./dist);
@@ -70,8 +70,11 @@
     /// Client (HTML + JS client files)
     @hash 
         (("./src"; "./dist"; :client; :shared; :wrapper);
-        (:build(dev)));
-    build($mode: dev | prod) [
+        (:build("dev")));
+    build($mode: dev | prod)(
+        :platform:build($mode);
+        :core:build($mode)
+    ) [
         /// Buildind client 
         /// build dev >> build developing (no JS optimization) version
         /// build prod >> build production version

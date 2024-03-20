@@ -12,8 +12,10 @@
 - this is valid "@fs::path_join [$tmp_path $file_name];", this is NOT "@fs::path_join [$tmp_path; $file_name;];" or "@fs::path_join [$tmp_path ,$file_name];". Error should be shown.
 - add named arguments for functions @hash track::(bla, bla) run::(bla)
 - prevent dead-loop related to nested Element parsing
-- add types: bool, number
+- a way to run tasks in parallel: `sibs * --lint` will run lint task for all components, which has it
+
 NO Errors:
 `create-user --name={$user_name} --role={IF $is_admin == "true" ["admin";]  ["user";]}`
 $is_verified AND $has_permission => @proceed_with_action;
 true != false doesn't work
+

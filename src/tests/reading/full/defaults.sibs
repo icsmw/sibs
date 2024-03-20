@@ -19,7 +19,7 @@
             :app:lint;
         ];
         $target == "all" => [
-            :self:lint(rust);
-            :self:lint(ts);
+            :self:lint("rust");
+            :self:lint("ts");
         ];
     ];

@@ -6,7 +6,7 @@
 @os(window) => "release{$version}-win2.zip";
 @os(darwin) => @os(darwin);
 $mode == "dev" => "release{$version}-win.zip";
-$mode == "dev" => :client:build(dev);
+$mode == "dev" => :client:build("dev");
 @os(window) => "release{$version}-win.zip";
 @os(linux) => "release{$version}-linux.zip";
 @os(darwin) => "release{$version}-darwin.zip";

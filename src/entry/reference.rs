@@ -1,5 +1,5 @@
 use crate::{
-    entry::{Component, Element, ElementExd, SimpleString},
+    entry::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
         context::Context,
@@ -14,7 +14,7 @@ const SELF: &str = "self";
 #[derive(Debug, Clone)]
 pub struct Reference {
     pub path: Vec<String>,
-    pub inputs: Vec<ElementExd>,
+    pub inputs: Vec<Element>,
     pub token: usize,
 }
 
@@ -23,7 +23,7 @@ impl Reading<Reference> for Reference {
         let close = reader.open_token();
         if reader.move_to().char(&[&chars::COLON]).is_some() {
             let mut path: Vec<String> = vec![];
-            let mut inputs: Vec<ElementExd> = vec![];
+            let mut inputs: Vec<Element> = vec![];
             reader.trim();
             while let Some((content, stopped)) = reader.until().char(&[
                 &chars::COLON,
@@ -57,39 +57,20 @@ impl Reading<Reference> for Reference {
             {
                 let mut inner = reader.token()?.bound;
                 let inputs_token_id = reader.token()?.id;
-                while let Some(value) = inner
-                    .until()
-                    .char(&[&chars::COMMA])
-                    .map(|(v, _)| {
-                        inner.move_to().next();
-                        v
-                    })
-                    .or_else(|| {
-                        if inner.done() {
-                            None
-                        } else {
-                            Some(inner.move_to().end())
-                        }
-                    })
-                {
-                    let mut inner = inner.token()?.bound;
-                    inputs.push(if let Some(el) = Element::read(&mut inner)? {
-                        match &el {
-                            Element::Block(_)
-                            | Element::Meta(_)
-                            | Element::Reference(_)
-                            | Element::Task(_)
-                            | Element::Component(_) => {
-                                return Err(E::InvalidArgumentForReference.linked(&el.token()))
-                            }
-                            _ => ElementExd::Element(el),
-                        }
-                    } else {
-                        ElementExd::SimpleString(SimpleString {
-                            value: value.trim().to_string(),
-                            token: inner.token()?.id,
-                        })
-                    });
+                while let Some(el) = Element::include(
+                    &mut inner,
+                    &[
+                        ElTarget::VariableName,
+                        ElTarget::Integer,
+                        ElTarget::Boolean,
+                        ElTarget::PatternString,
+                    ],
+                )? {
+                    inputs.push(el);
+                    let _ = inner.move_to().char(&[&chars::SEMICOLON]);
+                }
+                if !inner.is_empty() {
+                    Err(E::UnrecognizedCode(inner.rest().to_string()).by_reader(&inner))?;
                 }
                 if inputs.is_empty() {
                     return Err(E::InvalidArgumentForReference.linked(&inputs_token_id));
@@ -130,7 +111,7 @@ impl fmt::Display for Reference {
                         .iter()
                         .map(|input| input.to_string())
                         .collect::<Vec<String>>()
-                        .join(", ")
+                        .join("; ")
                 )
             }
         )
@@ -192,23 +173,46 @@ mod reading {
     use crate::{
         entry::Reference,
         error::LinkedErr,
-        inf::tests,
+        inf::{context::Context, operator::Operator, tests::*},
         reader::{chars, Reader, Reading, E},
     };
 
-    #[test]
-    fn reading() -> Result<(), LinkedErr<E>> {
-        let mut reader = Reader::unbound(include_str!("../tests/reading/refs.sibs").to_string());
+    #[tokio::test]
+    async fn reading() -> Result<(), LinkedErr<E>> {
+        let cx: Context = Context::unbound()?;
+        let mut reader = Reader::bound(include_str!("../tests/reading/refs.sibs").to_string(), &cx);
         let mut count = 0;
-        while let Some(entity) = Reference::read(&mut reader)? {
+        while let Some(entity) = report_if_err(&cx, Reference::read(&mut reader))? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
-                tests::trim_carets(reader.recent()),
-                tests::trim_carets(&format!("{entity};"))
+                trim_carets(reader.recent()),
+                trim_carets(&format!("{entity};")),
+                "Line: {}",
+                count + 1
             );
             count += 1;
         }
         assert_eq!(count, 6);
+        assert!(reader.rest().trim().is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn tokens() -> Result<(), LinkedErr<E>> {
+        let mut reader = Reader::unbound(include_str!("../tests/reading/refs.sibs").to_string());
+        let mut count = 0;
+        while let Some(entity) = Reference::read(&mut reader)? {
+            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+            for input in entity.inputs.iter() {
+                assert_eq!(
+                    trim_carets(&input.to_string()),
+                    trim_carets(&reader.get_fragment(&input.token())?.lined),
+                    "Line: {}",
+                    count + 1
+                );
+            }
+            count += 1;
+        }
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
@@ -220,7 +224,9 @@ mod reading {
         let mut count = 0;
         for sample in samples.iter() {
             let mut reader = Reader::unbound(sample.to_string());
-            assert!(Reference::read(&mut reader).is_err());
+            let result = Reference::read(&mut reader);
+            println!("{result:?}");
+            assert!(result.is_err(), "Line: {}", count + 1);
             count += 1;
         }
         assert_eq!(count, samples.len());
@@ -232,7 +238,7 @@ mod reading {
 mod proptest {
 
     use crate::{
-        entry::{ElTarget, ElementExd, Reference},
+        entry::{ElTarget, Element, Reference},
         inf::tests::*,
     };
     use proptest::prelude::*;
@@ -263,7 +269,15 @@ mod proptest {
                 (
                     prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 2),
                     prop::collection::vec(
-                        ElementExd::arbitrary_with((vec![ElTarget::VariableName], deep)),
+                        Element::arbitrary_with((
+                            vec![
+                                ElTarget::VariableName,
+                                ElTarget::Integer,
+                                ElTarget::Boolean,
+                                ElTarget::PatternString,
+                            ],
+                            deep,
+                        )),
                         0..5,
                     ),
                 )

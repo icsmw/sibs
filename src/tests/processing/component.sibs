@@ -16,9 +16,9 @@
     ];
 #(c)
     test($a: {string}; $b: a | b; $c: {string}) [
-        :b:test(a, b, c);
+        :b:test("a"; "b"; "c");
     ];
 #(d)
     test($a: {string}; $b: a | b; $c: {string}) [
-        :a:test(a);
+        :a:test("a");
     ];

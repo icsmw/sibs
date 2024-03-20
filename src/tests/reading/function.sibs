@@ -18,8 +18,8 @@
 @import(./tasks.sibs; $variable);
 @import($variable; ./tasks.sibs; $variable);
 @copy("filename-{$platform}.zip"; ./node_modules; $dest);
-@hash(("./src"; "./dist"; :client; :shared; :wrapper); (:build(dev)));
-@hash(("./path"; "./path/to"; "./path with spaces"; :componentA; :componentB; :componentC); (:build(dev)));
+@hash(("./src"; "./dist"; :client; :shared; :wrapper); (:build("dev")));
+@hash(("./path"; "./path/to"; "./path with spaces"; :componentA; :componentB; :componentC); (:build("dev")));
 @cd(something1);
 @calculate_sum("5"; "10");
 @process_data(@fetch_data("url"; "params"); "format");
