@@ -45,6 +45,9 @@ impl Reading<Block> for Block {
                         ElTarget::Condition,
                         ElTarget::Combination,
                         ElTarget::Subsequence,
+                        ElTarget::VariableDeclaration,
+                        ElTarget::VariableVariants,
+                        ElTarget::VariableType,
                     ],
                 )? {
                     if let (true, true) = (

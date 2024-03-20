@@ -1,5 +1,5 @@
 use crate::{
-    entry::{Block, Component, ElTarget, Element, SimpleString, VariableDeclaration},
+    entry::{Block, Component, ElTarget, Element, SimpleString},
     error::LinkedErr,
     inf::{
         context::Context,
@@ -13,7 +13,7 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub struct Task {
     pub name: SimpleString,
-    pub declarations: Vec<VariableDeclaration>,
+    pub declarations: Vec<Element>,
     pub dependencies: Vec<Element>,
     pub block: Option<Block>,
     pub token: usize,
@@ -49,21 +49,19 @@ impl Reading<Task> for Task {
             ) {
                 Err(E::InvalidTaskName(name.clone()).linked(&name_token))?
             }
-            let declarations: Vec<VariableDeclaration> = if stopped_on == chars::OPEN_SQ_BRACKET {
+            let declarations: Vec<Element> = if stopped_on == chars::OPEN_SQ_BRACKET {
                 vec![]
             } else if reader.until().char(&[&chars::CLOSE_BRACKET]).is_some() {
                 reader.move_to().next();
-                let mut declarations: Vec<VariableDeclaration> = vec![];
-                let mut token = reader.token()?;
-                while let Some(variable_declaration) = VariableDeclaration::read(&mut token.bound)?
+                let mut declarations: Vec<Element> = vec![];
+                let mut inner = reader.token()?.bound;
+                while let Some(el) = Element::include(&mut inner, &[ElTarget::VariableDeclaration])?
                 {
-                    declarations.push(variable_declaration);
+                    let _ = inner.move_to().char(&[&chars::SEMICOLON]);
+                    declarations.push(el);
                 }
-                if !token.bound.rest().trim().is_empty() {
-                    Err(
-                        E::InvalidTaskArguments(token.bound.rest().trim().to_string())
-                            .linked(&token.id),
-                    )?
+                if !inner.is_empty() {
+                    Err(E::InvalidTaskArguments(inner.rest().trim().to_string()).by_reader(&inner))?
                 }
                 declarations
             } else {
@@ -204,8 +202,12 @@ impl Operator for Task {
                 )?;
                 Err(operator::E::DismatchTaskArgumentsCount)?;
             }
-            for (i, declaration) in self.declarations.iter().enumerate() {
-                declaration.declare(args[i].to_owned(), cx).await?;
+            for (i, el) in self.declarations.iter().enumerate() {
+                if let Element::VariableDeclaration(declaration) = el {
+                    declaration.declare(args[i].to_owned(), cx).await?;
+                } else {
+                    return Err(operator::E::InvalidVariableDeclaration);
+                }
             }
             job.result(block.execute(owner, components, args, cx).await)
         })
@@ -263,15 +265,7 @@ mod reading {
             for declaration in entity.declarations.iter() {
                 assert_eq!(
                     trim_carets(&declaration.to_string()),
-                    trim_carets(&reader.get_fragment(&declaration.token)?.lined)
-                );
-                assert_eq!(
-                    trim_carets(&declaration.variable.to_string()),
-                    trim_carets(&reader.get_fragment(&declaration.variable.token)?.lined)
-                );
-                assert_eq!(
-                    trim_carets(&declaration.declaration.to_string()),
-                    trim_carets(&reader.get_fragment(&declaration.declaration.token())?.lined)
+                    trim_carets(&reader.get_fragment(&declaration.token())?.lined)
                 );
             }
             for dependency in entity.dependencies.iter() {
@@ -349,7 +343,7 @@ mod processing {
 
 #[cfg(test)]
 mod proptest {
-    use crate::entry::{Block, ElTarget, Element, SimpleString, Task, VariableDeclaration};
+    use crate::entry::{Block, ElTarget, Element, SimpleString, Task};
     use proptest::prelude::*;
 
     impl Arbitrary for Task {
@@ -358,7 +352,10 @@ mod proptest {
 
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             (
-                prop::collection::vec(VariableDeclaration::arbitrary(), 0..=5),
+                prop::collection::vec(
+                    Element::arbitrary_with((vec![ElTarget::VariableDeclaration], deep)),
+                    0..=5,
+                ),
                 prop::collection::vec(
                     Element::arbitrary_with((vec![ElTarget::Reference], deep)),
                     0..=5,

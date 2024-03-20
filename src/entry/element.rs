@@ -2,7 +2,8 @@ use crate::{
     entry::{
         Block, Boolean, Combination, Command, Comparing, Component, Condition, Each, First,
         Function, If, Integer, Meta, Optional, PatternString, Reference, SimpleString, Subsequence,
-        Task, Values, VariableAssignation, VariableName,
+        Task, Values, VariableAssignation, VariableDeclaration, VariableName, VariableType,
+        VariableVariants,
     },
     error::LinkedErr,
     inf::{
@@ -38,6 +39,9 @@ pub enum ElTarget {
     Component,
     Integer,
     Boolean,
+    VariableDeclaration,
+    VariableVariants,
+    VariableType,
 }
 
 #[derive(Debug, Clone)]
@@ -63,6 +67,9 @@ pub enum Element {
     Component(Component),
     Boolean(Boolean),
     Integer(Integer),
+    VariableDeclaration(VariableDeclaration),
+    VariableVariants(VariableVariants),
+    VariableType(VariableType),
 }
 
 impl Element {
@@ -176,6 +183,22 @@ impl Element {
                 return Ok(Some(Element::Task(el)));
             }
         }
+
+        if includes == targets.contains(&ElTarget::VariableDeclaration) {
+            if let Some(el) = VariableDeclaration::read(reader)? {
+                return Ok(Some(Element::VariableDeclaration(el)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::VariableType) {
+            if let Some(el) = VariableType::read(reader)? {
+                return Ok(Some(Element::VariableType(el)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::VariableVariants) {
+            if let Some(el) = VariableVariants::read(reader)? {
+                return Ok(Some(Element::VariableVariants(el)));
+            }
+        }
         Ok(None)
     }
 
@@ -221,6 +244,9 @@ impl fmt::Display for Element {
                 Self::Component(v) => v.to_string(),
                 Self::Boolean(v) => v.to_string(),
                 Self::Integer(v) => v.to_string(),
+                Self::VariableDeclaration(v) => v.to_string(),
+                Self::VariableVariants(v) => v.to_string(),
+                Self::VariableType(v) => v.to_string(),
             }
         )
     }
@@ -250,12 +276,15 @@ impl Operator for Element {
             Self::VariableName(v) => v.token(),
             Self::Values(v) => v.token(),
             Self::Block(v) => v.token(),
-            Self::Meta(v) => v.token,
             Self::Command(v) => v.token(),
             Self::Task(v) => v.token(),
             Self::Component(v) => v.token(),
             Self::Integer(v) => v.token(),
             Self::Boolean(v) => v.token(),
+            Self::VariableDeclaration(v) => v.token,
+            Self::VariableVariants(v) => v.token,
+            Self::Meta(v) => v.token,
+            Self::VariableType(v) => v.token,
         }
     }
     fn perform<'a>(
@@ -288,6 +317,9 @@ impl Operator for Element {
                 Self::Integer(v) => v.execute(owner, components, args, cx).await,
                 Self::Boolean(v) => v.execute(owner, components, args, cx).await,
                 Self::Meta(_) => Ok(None),
+                Self::VariableDeclaration(_) => Ok(None),
+                Self::VariableVariants(_) => Ok(None),
+                Self::VariableType(_) => Ok(None),
             }
         })
     }
@@ -335,8 +367,14 @@ impl Reading<Element> for Element {
             Some(Element::Component(el))
         } else if let Some(el) = Task::read(reader)? {
             Some(Element::Task(el))
+        } else if let Some(el) = Values::read(reader)? {
+            Some(Element::Values(el))
+        } else if let Some(el) = VariableDeclaration::read(reader)? {
+            Some(Element::VariableDeclaration(el))
+        } else if let Some(el) = VariableType::read(reader)? {
+            Some(Element::VariableType(el))
         } else {
-            Values::read(reader)?.map(Element::Values)
+            VariableVariants::read(reader)?.map(Element::VariableVariants)
         })
     }
 }

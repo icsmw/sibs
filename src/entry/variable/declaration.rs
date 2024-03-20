@@ -1,5 +1,5 @@
 use crate::{
-    entry::{VariableName, VariableType, VariableVariants},
+    entry::{ElTarget, Element},
     error::LinkedErr,
     inf::{any::AnyValue, context::Context, operator, term},
     reader::{chars, Reader, Reading, E},
@@ -7,49 +7,27 @@ use crate::{
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub enum Declaration {
-    Typed(VariableType),
-    VariableVariants(VariableVariants),
-}
-
-#[cfg(test)]
-impl Declaration {
-    pub fn token(&self) -> usize {
-        match &self {
-            Declaration::Typed(v) => v.token,
-            Declaration::VariableVariants(v) => v.token,
-        }
-    }
-}
-
-impl fmt::Display for Declaration {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match &self {
-                Declaration::Typed(v) => v.to_string(),
-                Declaration::VariableVariants(v) => v.to_string(),
-            }
-        )
-    }
-}
-
-#[derive(Debug, Clone)]
 pub struct VariableDeclaration {
-    pub variable: VariableName,
-    pub declaration: Declaration,
+    pub variable: Box<Element>,
+    pub declaration: Box<Element>,
     pub token: usize,
 }
 
 impl VariableDeclaration {
     pub async fn declare<'a>(&self, value: String, cx: &'a mut Context) -> Result<(), operator::E> {
         cx.set_var(
-            self.variable.name.to_owned(),
+            if let Element::VariableName(el) = self.variable.as_ref() {
+                el.name.to_owned()
+            } else {
+                Err(operator::E::FailToGetDeclaredVariable)?
+            },
             AnyValue::new(
-                match &self.declaration {
-                    Declaration::Typed(typed) => typed.parse(value),
-                    Declaration::VariableVariants(values) => values.parse(value),
+                if let Element::VariableType(el) = self.declaration.as_ref() {
+                    el.parse(value)
+                } else if let Element::VariableVariants(el) = self.declaration.as_ref() {
+                    el.parse(value)
+                } else {
+                    Err(operator::E::FailToExtractValue)?
                 }
                 .ok_or(operator::E::NoValueToDeclareTaskArgument)?,
             ),
@@ -61,26 +39,27 @@ impl VariableDeclaration {
 impl Reading<VariableDeclaration> for VariableDeclaration {
     fn read(reader: &mut Reader) -> Result<Option<VariableDeclaration>, LinkedErr<E>> {
         let close = reader.open_token();
-        if let Some(variable) = VariableName::read(reader)? {
+        if let Some(variable) = Element::include(reader, &[ElTarget::VariableName])? {
             if reader.move_to().char(&[&chars::COLON]).is_some() {
-                let declaration = if let Some(variable_type) = VariableType::read(reader)? {
-                    Some(VariableDeclaration::typed(
-                        variable,
-                        variable_type,
-                        close(reader),
-                    ))
-                } else if let Some(values) = VariableVariants::read(reader)? {
-                    Some(VariableDeclaration::values(variable, values, close(reader)))
+                if let Some(declaration) = Element::include(
+                    reader,
+                    &[ElTarget::VariableType, ElTarget::VariableVariants],
+                )? {
+                    Ok(Some(VariableDeclaration {
+                        variable: Box::new(variable),
+                        declaration: Box::new(declaration),
+                        token: close(reader),
+                    }))
                 } else {
-                    return Err(E::NoTypeDeclaration.by_reader(reader));
-                };
-                reader.trim();
-                if matches!(reader.next().char(), Some(chars::SEMICOLON)) {
-                    reader.move_to().next();
+                    Err(E::NoTypeDeclaration.by_reader(reader))
                 }
-                Ok(declaration)
+                // reader.trim();
+                // if matches!(reader.next().char(), Some(chars::SEMICOLON)) {
+                //     reader.move_to().next();
+                // }
+                // Ok(declaration)
             } else {
-                Err(E::NoTypeDeclaration.linked(&variable.token))
+                Err(E::NoTypeDeclaration.by_reader(reader))
             }
         } else {
             Ok(None)
@@ -88,77 +67,39 @@ impl Reading<VariableDeclaration> for VariableDeclaration {
     }
 }
 
-impl VariableDeclaration {
-    pub fn typed(variable: VariableName, typed: VariableType, token: usize) -> Self {
-        Self {
-            variable,
-            declaration: Declaration::Typed(typed),
-            token,
-        }
-    }
-    pub fn values(variable: VariableName, values: VariableVariants, token: usize) -> Self {
-        Self {
-            variable,
-            declaration: Declaration::VariableVariants(values),
-            token,
-        }
-    }
-}
-
 impl fmt::Display for VariableDeclaration {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}: {}",
-            self.variable,
-            match &self.declaration {
-                Declaration::Typed(v) => v.to_string(),
-                Declaration::VariableVariants(v) => v.to_string(),
-            }
-        )
+        write!(f, "{}: {}", self.variable, self.declaration)
     }
 }
 
 impl term::Display for VariableDeclaration {
     fn to_string(&self) -> String {
-        match &self.declaration {
-            Declaration::Typed(v) => term::Display::to_string(v),
-            Declaration::VariableVariants(v) => term::Display::to_string(v),
-        }
+        // term::Display::to_string(self.declaration)
+        String::new()
     }
 }
 
 #[cfg(test)]
 mod proptest {
-    use crate::entry::variable::{
-        Declaration, VariableDeclaration, VariableName, VariableType, VariableVariants,
-    };
+    use crate::entry::{ElTarget, Element, VariableDeclaration};
     use proptest::prelude::*;
 
-    impl Arbitrary for Declaration {
-        type Parameters = ();
-        type Strategy = BoxedStrategy<Self>;
-
-        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-            prop_oneof![
-                VariableVariants::arbitrary().prop_map(Declaration::VariableVariants),
-                VariableType::arbitrary().prop_map(Declaration::Typed),
-            ]
-            .boxed()
-        }
-    }
     impl Arbitrary for VariableDeclaration {
-        type Parameters = ();
+        type Parameters = usize;
         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+        fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             (
-                Declaration::arbitrary().prop_map(|v| v),
-                VariableName::arbitrary().prop_map(|v| v),
+                Element::arbitrary_with((
+                    vec![ElTarget::VariableType, ElTarget::VariableVariants],
+                    deep,
+                )),
+                Element::arbitrary_with((vec![ElTarget::VariableName], deep)),
             )
                 .prop_map(move |(declaration, variable)| VariableDeclaration {
-                    declaration,
-                    variable,
+                    declaration: Box::new(declaration),
+                    variable: Box::new(variable),
                     token: 0,
                 })
                 .boxed()

@@ -8,6 +8,8 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum E {
+    #[error("Invalid variable declaration")]
+    InvalidVariableDeclaration,
     #[error("Operator method isn't supported")]
     NotSupported,
     #[error("Function's argument doesn't have return value")]
@@ -34,6 +36,8 @@ pub enum E {
     NoTaskBlock(String),
     #[error("Fail to extract value")]
     FailToExtractValue,
+    #[error("Fail to get declared variable")]
+    FailToGetDeclaredVariable,
     #[error("Fail to extract bool value for condition")]
     FailToExtractConditionValue,
     #[error("Fail to get value as string")]
