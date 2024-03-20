@@ -16,15 +16,15 @@ pub struct VariableDeclaration {
 impl VariableDeclaration {
     pub async fn declare<'a>(&self, value: String, cx: &'a mut Context) -> Result<(), operator::E> {
         cx.set_var(
-            if let Element::VariableName(el) = self.variable.as_ref() {
+            if let Element::VariableName(el, _) = self.variable.as_ref() {
                 el.name.to_owned()
             } else {
                 Err(operator::E::FailToGetDeclaredVariable)?
             },
             AnyValue::new(
-                if let Element::VariableType(el) = self.declaration.as_ref() {
+                if let Element::VariableType(el, _) = self.declaration.as_ref() {
                     el.parse(value)
-                } else if let Element::VariableVariants(el) = self.declaration.as_ref() {
+                } else if let Element::VariableVariants(el, _) = self.declaration.as_ref() {
                     el.parse(value)
                 } else {
                     Err(operator::E::FailToExtractValue)?

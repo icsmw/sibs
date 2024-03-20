@@ -12,6 +12,7 @@ pub const CMP_RBIG_INC: &str = "<=";
 pub const CMP_LBIG_INC: &str = ">=";
 pub const DO_ON: &str = "=>";
 pub const META: &str = "///";
+pub const COMMENT: &str = "//";
 pub const COMP: &str = "#(";
 pub const TRUE: &str = "true";
 pub const FALSE: &str = "false";

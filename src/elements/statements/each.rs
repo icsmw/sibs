@@ -27,7 +27,7 @@ impl Reading<Each> for Each {
                 .is_some()
             {
                 let mut inner = reader.token()?.bound;
-                let variable = if let Some(Element::VariableName(variable)) =
+                let variable = if let Some(Element::VariableName(variable, _)) =
                     Element::include(&mut inner, &[ElTarget::VariableName])?
                 {
                     if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
@@ -48,7 +48,7 @@ impl Reading<Each> for Each {
             } else {
                 return Err(E::NoLoopInitialization.linked(&reader.token()?.id));
             };
-            let block = if let Some(Element::Block(block)) =
+            let block = if let Some(Element::Block(block, _)) =
                 Element::include(reader, &[ElTarget::Block])?
             {
                 block

@@ -52,7 +52,7 @@ impl Reading<Block> for Block {
                     ],
                 )? {
                     if let (true, true) = (
-                        !matches!(el, Element::Meta(_)),
+                        !matches!(el, Element::Meta(..)),
                         inner.move_to().char(&[&chars::SEMICOLON]).is_none(),
                     ) {
                         return Err(E::MissedSemicolon.by_reader(&inner));
@@ -91,7 +91,7 @@ impl fmt::Display for Block {
                 .iter()
                 .map(|el| format!(
                     "{el}{}",
-                    if matches!(el, Element::Meta(_)) {
+                    if matches!(el, Element::Meta(..)) {
                         ""
                     } else {
                         ";"
@@ -108,7 +108,7 @@ impl term::Display for Block {
     fn display(&self, term: &mut Term) {
         self.elements
             .iter()
-            .filter(|el| matches!(el, Element::Meta(_)))
+            .filter(|el| matches!(el, Element::Meta(..)))
             .for_each(|el| el.display(term));
     }
 }

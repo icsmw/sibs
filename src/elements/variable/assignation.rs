@@ -21,7 +21,7 @@ impl Reading<VariableAssignation> for VariableAssignation {
     fn read(reader: &mut Reader) -> Result<Option<VariableAssignation>, LinkedErr<E>> {
         let restore = reader.pin();
         let close = reader.open_token();
-        if let Some(Element::VariableName(variable)) =
+        if let Some(Element::VariableName(variable, _)) =
             Element::include(reader, &[ElTarget::VariableName])?
         {
             let rest = reader.rest().trim();

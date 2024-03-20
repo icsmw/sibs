@@ -1,0 +1,41 @@
+build($mode: dev | prod) [
+    // 1Building electron application
+    // 2Building electron application
+    @os(window) => $file_name = "release{$version}-win.zip";
+    // Building electron application
+    // Building electron application
+    @os(linux) => $file_name = "release{$version}-linux.zip";
+    // Building electron application
+    // Building electron application
+    @os(darwin) => $file_name = "release{$version}-darwin.zip";
+    // Building electron application
+    // Building electron application
+    @os(linux) => `tgz ./release/unpacked-linux {$file_name}`;
+    // Building electron application
+    // Building electron application
+    @os(window) => "release{$version}-win.zip";
+    // Building electron application
+    // Building electron application
+    @os(window) => [
+        @cd(something);
+        `zip ./release/unpacked-win {$file_name}`;
+        @cd(..);
+    ];
+    // Building electron application
+    // Building electron application
+    IF $variable == "one" || $variable == "two" [
+        @cd(./linux);
+    ] ELSE [
+        @cd(./linux);
+    ];
+    // Building electron application
+    // Building electron application
+    IF $variable == "one" [
+        @cd(./linux);
+    ];
+    // Building electron application
+    // Building electron application
+    IF $variable == "one" || $variable == "two" [
+        @cd(./linux);
+    ];
+];

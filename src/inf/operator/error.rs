@@ -32,8 +32,6 @@ pub enum E {
     NoTaskForComponent(String),
     #[error("No task \"{0}\" for component \"{1}\" doesn't exist")]
     TaskNotExists(String, String),
-    #[error("Task \"{0}\" doesn't have block with actions")]
-    NoTaskBlock(String),
     #[error("Fail to extract value")]
     FailToExtractValue,
     #[error("Fail to get declared variable")]

@@ -4,7 +4,7 @@ use crate::{
     inf::{
         any::AnyValue,
         context::Context,
-        operator::{self, Operator, OperatorPinnedResult},
+        operator::{Operator, OperatorPinnedResult},
     },
     reader::{Reader, Reading, E},
 };

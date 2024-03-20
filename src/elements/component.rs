@@ -21,7 +21,7 @@ pub struct Component {
 impl Component {
     pub fn get_task(&self, name: &str) -> Option<&Task> {
         self.elements.iter().find_map(|el| {
-            if let Element::Task(task) = el {
+            if let Element::Task(task, _) = el {
                 if task.get_name() == name {
                     Some(task)
                 } else {
@@ -36,7 +36,7 @@ impl Component {
         self.elements
             .iter()
             .filter_map(|el| {
-                if let Element::Task(task) = el {
+                if let Element::Task(task, _) = el {
                     Some(task)
                 } else {
                     None
@@ -48,7 +48,7 @@ impl Component {
         self.elements
             .iter()
             .filter_map(|el| {
-                if let Element::Meta(meta) = el {
+                if let Element::Meta(meta, _) = el {
                     Some(meta)
                 } else {
                     None
@@ -358,7 +358,7 @@ mod processing {
 mod proptest {
     use std::path::PathBuf;
 
-    use crate::elements::{Component, Element, Function, Meta, SimpleString, Task};
+    use crate::elements::{Component, ElTarget, Element, Function, Meta, SimpleString, Task};
     use proptest::prelude::*;
 
     impl Arbitrary for Component {
@@ -368,21 +368,12 @@ mod proptest {
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             (
                 "[a-zA-Z]*".prop_map(String::from),
-                prop::collection::vec(Task::arbitrary_with(deep), 2..6).prop_map(|v| {
-                    v.iter()
-                        .map(|v| Element::Task(v.clone()))
-                        .collect::<Vec<Element>>()
-                }),
-                prop::collection::vec(Meta::arbitrary(), 0..3).prop_map(|v| {
-                    v.iter()
-                        .map(|v| Element::Meta(v.clone()))
-                        .collect::<Vec<Element>>()
-                }),
-                prop::collection::vec(Function::arbitrary_with(deep), 0..3).prop_map(|v| {
-                    v.iter()
-                        .map(|v| Element::Function(v.clone()))
-                        .collect::<Vec<Element>>()
-                }),
+                prop::collection::vec(Element::arbitrary_with((vec![ElTarget::Task], deep)), 2..6),
+                prop::collection::vec(Element::arbitrary_with((vec![ElTarget::Meta], deep)), 0..3),
+                prop::collection::vec(
+                    Element::arbitrary_with((vec![ElTarget::Function], deep)),
+                    0..3,
+                ),
             )
                 .prop_map(|(name, tasks, meta, funcs)| Component {
                     elements: [meta, funcs, tasks].concat(),

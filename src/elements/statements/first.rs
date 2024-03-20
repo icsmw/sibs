@@ -19,7 +19,7 @@ impl Reading<First> for First {
     fn read(reader: &mut Reader) -> Result<Option<First>, LinkedErr<E>> {
         let close = reader.open_token();
         if reader.move_to().word(&[words::FIRST]).is_some() {
-            let mut block = if let Some(Element::Block(block)) =
+            let mut block = if let Some(Element::Block(block, _)) =
                 Element::include(reader, &[ElTarget::Block])?
             {
                 block

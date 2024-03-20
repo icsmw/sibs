@@ -292,12 +292,6 @@ impl<'a> Next<'a> {
     pub fn new(bound: &'a Reader) -> Self {
         Self { bound }
     }
-    pub fn char(&self) -> Option<char> {
-        if self.bound.done() {
-            return None;
-        }
-        self.bound.content[self.bound.pos..].chars().next()
-    }
     pub fn is_word(&self, words: &[&str]) -> bool {
         if self.bound.done() {
             return false;

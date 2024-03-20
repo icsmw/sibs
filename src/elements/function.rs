@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Component, ElTarget, Element, SimpleString},
+    elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
         any::AnyValue,
@@ -133,7 +133,7 @@ impl Reading<Function> for Function {
             if reader.move_to().expression(&[words::REDIRECT]).is_some() {
                 let feed_func_token_id = close(reader);
                 let feed_func_args_token_id = args_close(reader);
-                return if let Some(Element::Function(mut dest)) =
+                return if let Some(Element::Function(mut dest, _)) =
                     Element::include(reader, &[ElTarget::Function])?
                 {
                     dest.feeding(Self::new(

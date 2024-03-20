@@ -21,7 +21,8 @@ impl Reading<Subsequence> for Subsequence {
         let close = reader.open_token();
         let mut subsequence: Vec<Element> = vec![];
         while !reader.rest().trim().is_empty() {
-            if subsequence.is_empty() || matches!(subsequence.last(), Some(Element::Combination(_)))
+            if subsequence.is_empty()
+                || matches!(subsequence.last(), Some(Element::Combination(..)))
             {
                 if let Some(el) = Element::include(
                     reader,

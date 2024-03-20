@@ -15,7 +15,7 @@ pub struct Task {
     pub name: SimpleString,
     pub declarations: Vec<Element>,
     pub dependencies: Vec<Element>,
-    pub block: Option<Block>,
+    pub block: Block,
     pub token: usize,
 }
 
@@ -91,7 +91,7 @@ impl Reading<Task> for Task {
                     declarations,
                     dependencies,
                     token: close(reader),
-                    block: Some(block),
+                    block,
                 }))
             } else {
                 Err(E::FailFindTaskActions.linked(&name_token))
@@ -133,9 +133,6 @@ impl fmt::Display for Task {
                 )
             },
             self.block
-                .as_ref()
-                .map(|b| b.to_string())
-                .unwrap_or_default()
         )
     }
 }
@@ -161,9 +158,7 @@ impl term::Display for Task {
                 .join(" ")
         ));
         println!();
-        if let Some(block) = self.block.as_ref() {
-            block.display(term);
-        }
+        self.block.display(term);
         term.step_left();
     }
 }
@@ -181,10 +176,6 @@ impl Operator for Task {
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let job = cx.tracker.create_job(self.get_name(), None).await?;
-            let block = self
-                .block
-                .as_ref()
-                .ok_or_else(|| operator::E::NoTaskBlock(self.name.value.to_string()))?;
             if self.declarations.len() != args.len() {
                 cx.gen_report(
                     &self.name.token,
@@ -203,13 +194,13 @@ impl Operator for Task {
                 Err(operator::E::DismatchTaskArgumentsCount)?;
             }
             for (i, el) in self.declarations.iter().enumerate() {
-                if let Element::VariableDeclaration(declaration) = el {
+                if let Element::VariableDeclaration(declaration, _) = el {
                     declaration.declare(args[i].to_owned(), cx).await?;
                 } else {
                     return Err(operator::E::InvalidVariableDeclaration);
                 }
             }
-            job.result(block.execute(owner, components, args, cx).await)
+            job.result(self.block.execute(owner, components, args, cx).await)
         })
     }
 }
@@ -256,12 +247,10 @@ mod reading {
                 trim_carets(&entity.name.value),
                 trim_carets(&reader.get_fragment(&entity.name.token)?.lined)
             );
-            if let Some(block) = entity.block.as_ref() {
-                assert_eq!(
-                    trim_carets(&block.to_string()),
-                    trim_carets(&reader.get_fragment(&block.token)?.lined)
-                );
-            }
+            assert_eq!(
+                trim_carets(&entity.block.to_string()),
+                trim_carets(&reader.get_fragment(&entity.block.token)?.lined)
+            );
             for declaration in entity.declarations.iter() {
                 assert_eq!(
                     trim_carets(&declaration.to_string()),
@@ -365,7 +354,7 @@ mod proptest {
             )
                 .prop_map(|(declarations, dependencies, block, name)| Task {
                     declarations,
-                    block: Some(block),
+                    block,
                     token: 0,
                     dependencies,
                     name: SimpleString {
