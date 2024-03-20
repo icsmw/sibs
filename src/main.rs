@@ -1,6 +1,6 @@
 use std::process::exit;
 mod cli;
-mod entry;
+mod elements;
 mod error;
 mod executors;
 mod inf;

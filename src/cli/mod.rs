@@ -2,7 +2,7 @@ mod args;
 pub mod error;
 
 use crate::{
-    entry::Component,
+    elements::Component,
     inf::{
         context::Context,
         operator::Operator,

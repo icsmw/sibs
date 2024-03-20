@@ -119,7 +119,7 @@ pub fn register(cx: &mut Context) -> Result<(), E> {
 #[cfg(test)]
 mod test {
     use crate::{
-        entry::Task,
+        elements::Task,
         inf::{
             context::Context,
             operator::{Operator, E},

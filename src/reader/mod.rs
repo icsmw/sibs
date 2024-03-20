@@ -6,7 +6,7 @@ pub mod tests;
 pub mod words;
 
 use crate::{
-    entry::{Component, Function},
+    elements::{Component, Function},
     error::LinkedErr,
     executors::import::Import,
     inf::context::Context,

@@ -7,7 +7,7 @@ pub mod version;
 
 use crate::{
     cli::error::E,
-    entry::Component,
+    elements::Component,
     inf::{
         any::DebugAny,
         context::Context,

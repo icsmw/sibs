@@ -6,7 +6,7 @@ use crate::{
         term::Display,
         context::Context,
     }, 
-    entry::Component
+    elements::Component
 };
 
 const ARGS: [&str; 2] = ["--help", "-h"];

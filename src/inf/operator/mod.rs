@@ -1,6 +1,6 @@
 mod error;
 use crate::{
-    entry::Component,
+    elements::Component,
     inf::{any::AnyValue, context::Context},
 };
 pub use error::E;
