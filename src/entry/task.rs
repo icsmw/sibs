@@ -349,7 +349,7 @@ mod processing {
 
 #[cfg(test)]
 mod proptest {
-    use crate::entry::{Block, SimpleString, Task, VariableDeclaration};
+    use crate::entry::{Block, ElTarget, Element, SimpleString, Task, VariableDeclaration};
     use proptest::prelude::*;
 
     impl Arbitrary for Task {
@@ -359,14 +359,18 @@ mod proptest {
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             (
                 prop::collection::vec(VariableDeclaration::arbitrary(), 0..=5),
+                prop::collection::vec(
+                    Element::arbitrary_with((vec![ElTarget::Reference], deep)),
+                    0..=5,
+                ),
                 Block::arbitrary_with(deep),
                 "[a-zA-Z_]*".prop_map(String::from),
             )
-                .prop_map(|(declarations, block, name)| Task {
+                .prop_map(|(declarations, dependencies, block, name)| Task {
                     declarations,
                     block: Some(block),
                     token: 0,
-                    dependencies: vec![],
+                    dependencies,
                     name: SimpleString {
                         value: name,
                         token: 0,
