@@ -304,6 +304,13 @@ impl<'a> Next<'a> {
         }
         false
     }
+    #[cfg(test)]
+    pub fn char(&self) -> Option<char> {
+        if self.bound.done() {
+            return None;
+        }
+        self.bound.content[self.bound.pos..].chars().next()
+    }
 }
 
 #[derive(Debug)]
