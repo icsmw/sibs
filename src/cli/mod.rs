@@ -2,13 +2,13 @@ mod args;
 pub mod error;
 
 use crate::{
-    elements::Component,
+    elements::{Component, Element},
     inf::{
         context::Context,
         operator::Operator,
         scenario::Scenario,
         term::{Display, Term},
-        tracker::{self},
+        tracker,
     },
     reader,
 };
@@ -82,7 +82,16 @@ pub async fn read(cx: &mut Context) -> Result<(), E> {
     };
     cx.set_scenario(scenario);
     let components = match reader::read_file(cx).await {
-        Ok(components) => components,
+        Ok(elements) => elements
+            .into_iter()
+            .filter_map(|el| {
+                if let Element::Component(c, _) = el {
+                    Some(c)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<Component>>(),
         Err(err) => {
             cx.gen_report_from_err(&err)?;
             return Err(E::ReaderError(err.e));

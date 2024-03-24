@@ -326,7 +326,7 @@ mod reading {
         let mut cx = Context::from_filename(&target)?;
         match read_file(&mut cx).await {
             Ok(components) => {
-                assert_eq!(components.len(), 9);
+                assert_eq!(components.len(), 11);
             }
             Err(err) => {
                 cx.gen_report_from_err(&err)?;
@@ -335,7 +335,7 @@ mod reading {
                 return Err(err);
             }
         }
-        assert_eq!(read_file(&mut cx).await?.len(), 9);
+        assert_eq!(read_file(&mut cx).await?.len(), 11);
         Ok(())
     }
 }
