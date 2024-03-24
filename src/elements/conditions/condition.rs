@@ -1,11 +1,7 @@
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{
-        any::AnyValue,
-        context::Context,
-        operator::{Operator, OperatorPinnedResult},
-    },
+    inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -42,6 +38,12 @@ impl Reading<Condition> for Condition {
 impl fmt::Display for Condition {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "({})", self.subsequence)
+    }
+}
+
+impl Formation for Condition {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        format!("{}{}", cursor.offset_as_string_if(&[ElTarget::Block]), self)
     }
 }
 

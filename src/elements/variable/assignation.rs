@@ -2,9 +2,7 @@ use crate::{
     elements::{Component, ElTarget, Element, VariableName},
     error::LinkedErr,
     inf::{
-        any::AnyValue,
-        context::Context,
-        operator::{self, Operator, OperatorPinnedResult},
+        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
     },
     reader::{chars, words, Reader, Reading, E},
 };
@@ -64,6 +62,18 @@ impl Reading<VariableAssignation> for VariableAssignation {
 impl fmt::Display for VariableAssignation {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{} = {}", self.variable, self.assignation)
+    }
+}
+
+impl Formation for VariableAssignation {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        let mut inner = cursor.reown(Some(ElTarget::VariableAssignation));
+        format!(
+            "{}{} = {}",
+            cursor.offset_as_string_if(&[ElTarget::Block]),
+            self.variable.format(&mut inner),
+            self.assignation.format(&mut inner)
+        )
     }
 }
 

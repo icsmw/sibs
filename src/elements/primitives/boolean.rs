@@ -1,11 +1,8 @@
 use crate::{
-    elements::Component,
+    elements::{Component, ElTarget},
     error::LinkedErr,
     inf::{
-        any::AnyValue,
-        context::Context,
-        operator::{Operator, OperatorPinnedResult},
-        term::{self, Term},
+        term, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Term,
     },
     reader::{words, Reader, Reading, E},
 };
@@ -33,6 +30,12 @@ impl Reading<Boolean> for Boolean {
 impl fmt::Display for Boolean {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.value,)
+    }
+}
+
+impl Formation for Boolean {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        format!("{}{}", cursor.offset_as_string_if(&[ElTarget::Block]), self)
     }
 }
 

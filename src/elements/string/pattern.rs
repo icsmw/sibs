@@ -1,10 +1,8 @@
 use crate::{
-    elements::{string, Component, Element},
+    elements::{string, Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        any::AnyValue,
-        context::Context,
-        operator::{self, Operator, OperatorPinnedResult},
+        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
     },
     reader::{chars, Reader, Reading, E},
 };
@@ -34,6 +32,12 @@ impl Reading<PatternString> for PatternString {
 impl fmt::Display for PatternString {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "\"{}\"", self.pattern,)
+    }
+}
+
+impl Formation for PatternString {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        format!("{}{}", cursor.offset_as_string_if(&[ElTarget::Block]), self)
     }
 }
 

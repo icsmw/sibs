@@ -1,12 +1,7 @@
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{
-        any::AnyValue,
-        context::Context,
-        operator::{Operator, OperatorPinnedResult},
-        term,
-    },
+    inf::{term, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -82,6 +77,12 @@ impl fmt::Display for Values {
                 .collect::<Vec<String>>()
                 .join("; ")
         )
+    }
+}
+
+impl Formation for Values {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        format!("{}{}", cursor.offset_as_string_if(&[ElTarget::Block]), self)
     }
 }
 

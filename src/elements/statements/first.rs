@@ -1,10 +1,7 @@
 use crate::{
     elements::{Block, Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{
-        context::Context,
-        operator::{Operator, OperatorPinnedResult},
-    },
+    inf::{Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
     reader::{words, Reader, Reading, E},
 };
 use std::fmt;
@@ -40,6 +37,17 @@ impl Reading<First> for First {
 impl fmt::Display for First {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "FIRST {}", self.block)
+    }
+}
+
+impl Formation for First {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        let mut inner = cursor.reown(Some(ElTarget::First));
+        format!(
+            "{}FIRST {}",
+            cursor.offset_as_string_if(&[ElTarget::Block]),
+            self.block.format(&mut inner)
+        )
     }
 }
 

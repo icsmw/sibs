@@ -2,9 +2,7 @@ use crate::{
     elements::Component,
     error::LinkedErr,
     inf::{
-        any::AnyValue,
-        context::Context,
-        operator::{self, Operator, OperatorPinnedResult},
+        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
     },
     reader::{chars, Reader, Reading, E},
 };
@@ -72,6 +70,12 @@ impl Operator for VariableName {
 impl fmt::Display for VariableName {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "${}", self.name)
+    }
+}
+
+impl Formation for VariableName {
+    fn format(&self, _cursor: &mut FormationCursor) -> String {
+        self.to_string()
     }
 }
 

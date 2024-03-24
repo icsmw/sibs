@@ -2,9 +2,7 @@ use crate::{
     elements::{ElTarget, Element, Meta, SimpleString, Task},
     error::LinkedErr,
     inf::{
-        context::Context,
-        operator::{self, Operator, OperatorPinnedResult},
-        term::{self, Term},
+        operator, term, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Term,
     },
     reader::{chars, words, Reader, Reading, E},
 };
@@ -151,6 +149,25 @@ impl fmt::Display for Component {
                 .map(|el| format!("{el};"))
                 .collect::<Vec<String>>()
                 .join("\n"),
+        )
+    }
+}
+
+impl Formation for Component {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        let mut inner = cursor.shift_right(Some(ElTarget::Component));
+        format!(
+            "#({}{})\n{}",
+            self.name,
+            self.cwd
+                .as_ref()
+                .map(|cwd| format!(": {}", cwd.to_string_lossy()))
+                .unwrap_or_default(),
+            self.elements
+                .iter()
+                .map(|el| format!("{};", el.format(&mut inner)))
+                .collect::<Vec<String>>()
+                .join("\n")
         )
     }
 }

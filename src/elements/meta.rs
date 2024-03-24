@@ -1,6 +1,6 @@
 use crate::{
     error::LinkedErr,
-    inf::term::{self, Term},
+    inf::{term, Formation, FormationCursor, Term},
     reader::{chars, words, Reader, Reading, E},
 };
 use std::fmt;
@@ -52,6 +52,17 @@ impl fmt::Display for Meta {
                 .collect::<Vec<String>>()
                 .join("\n")
         )
+    }
+}
+
+impl Formation for Meta {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        self.inner
+            .iter()
+            .map(|v| format!("{}/// {v}", cursor.offset_as_string()))
+            .collect::<Vec<String>>()
+            .join("\n")
+            .to_string()
     }
 }
 

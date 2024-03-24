@@ -2,9 +2,7 @@ use crate::{
     elements::{Block, Component, ElTarget, Element, SimpleString},
     error::LinkedErr,
     inf::{
-        context::Context,
-        operator::{self, Operator, OperatorPinnedResult},
-        term::{self, Term},
+        operator, term, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Term,
     },
     reader::{chars, Reader, Reading, E},
 };
@@ -137,6 +135,41 @@ impl fmt::Display for Task {
     }
 }
 
+impl Formation for Task {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        let mut inner = cursor.reown(Some(ElTarget::Task));
+        format!(
+            "{}{}{}{} {}",
+            cursor.offset_as_string(),
+            self.name.value,
+            if self.declarations.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "({})",
+                    self.declarations
+                        .iter()
+                        .map(|d| d.format(&mut inner))
+                        .collect::<Vec<String>>()
+                        .join("; ")
+                )
+            },
+            if self.dependencies.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "({})",
+                    self.dependencies
+                        .iter()
+                        .map(|d| d.format(&mut inner))
+                        .collect::<Vec<String>>()
+                        .join(";")
+                )
+            },
+            (&self.block).format(&mut inner)
+        )
+    }
+}
 impl term::Display for Task {
     fn display(&self, term: &mut Term) {
         term.bold(format!("{}[{}]", term.offset(), self.name.value));

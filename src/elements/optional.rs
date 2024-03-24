@@ -1,10 +1,7 @@
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{
-        context::Context,
-        operator::{self, Operator, OperatorPinnedResult},
-    },
+    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
     reader::{words, Reader, Reading, E},
 };
 use std::fmt;
@@ -75,6 +72,19 @@ impl Reading<Optional> for Optional {
 impl fmt::Display for Optional {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{} => {}", self.condition, self.action)
+    }
+}
+
+impl Formation for Optional {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        let mut inner = cursor.reown(Some(ElTarget::Optional));
+        format!(
+            "{}{} => {}",
+            cursor.offset_as_string_if(&[ElTarget::Block]),
+            self.condition.format(&mut inner),
+            self.action.format(&mut inner),
+        )
+        // format!("{}{}", cursor.offset_as_string_if(&[ElTarget::Block]), self)
     }
 }
 

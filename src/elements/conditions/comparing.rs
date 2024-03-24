@@ -2,9 +2,7 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        any::AnyValue,
-        context::Context,
-        operator::{self, Operator, OperatorPinnedResult},
+        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
     },
     reader::{words, Reader, Reading, E},
 };
@@ -117,6 +115,12 @@ impl Reading<Comparing> for Comparing {
 impl fmt::Display for Comparing {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{} {} {}", self.left, self.cmp, self.right)
+    }
+}
+
+impl Formation for Comparing {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        format!("{}{}", cursor.offset_as_string_if(&[ElTarget::Block]), self)
     }
 }
 

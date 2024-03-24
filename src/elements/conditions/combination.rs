@@ -1,11 +1,7 @@
 use crate::{
     elements::Component,
     error::LinkedErr,
-    inf::{
-        any::AnyValue,
-        context::Context,
-        operator::{Operator, OperatorPinnedResult},
-    },
+    inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
     reader::{words, Reader, Reading, E},
 };
 use std::fmt;
@@ -56,6 +52,12 @@ impl Reading<Combination> for Combination {
 impl fmt::Display for Combination {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, " {} ", self.cmb)
+    }
+}
+
+impl Formation for Combination {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        self.to_string()
     }
 }
 

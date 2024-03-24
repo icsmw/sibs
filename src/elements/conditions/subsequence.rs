@@ -1,11 +1,7 @@
 use crate::{
     elements::{Cmb, Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{
-        any::AnyValue,
-        context::Context,
-        operator::{Operator, OperatorPinnedResult},
-    },
+    inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
     reader::{chars, words, Reader, Reading, E},
 };
 use std::fmt;
@@ -77,6 +73,12 @@ impl fmt::Display for Subsequence {
                 .collect::<Vec<String>>()
                 .join("")
         )
+    }
+}
+
+impl Formation for Subsequence {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        format!("{}{}", cursor.offset_as_string_if(&[ElTarget::Block]), self)
     }
 }
 

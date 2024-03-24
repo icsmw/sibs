@@ -1,5 +1,6 @@
 use crate::{
     error::LinkedErr,
+    inf::{Formation, FormationCursor},
     reader::{chars, words, Reader, Reading, E},
 };
 use std::fmt;
@@ -36,7 +37,13 @@ impl Reading<Comment> for Comment {
 
 impl fmt::Display for Comment {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "//{}", self.comment)
+        write!(f, "// {}", self.comment)
+    }
+}
+
+impl Formation for Comment {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        format!("{}{}", cursor.offset_as_string(), self)
     }
 }
 

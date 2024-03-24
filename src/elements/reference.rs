@@ -1,10 +1,7 @@
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{
-        context::Context,
-        operator::{self, Operator, OperatorPinnedResult},
-    },
+    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -115,6 +112,12 @@ impl fmt::Display for Reference {
                 )
             }
         )
+    }
+}
+
+impl Formation for Reference {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        format!("{}{}", cursor.offset_as_string_if(&[ElTarget::Block]), self)
     }
 }
 

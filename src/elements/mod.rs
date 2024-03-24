@@ -30,11 +30,7 @@ pub use variable::*;
 
 use crate::{
     error::LinkedErr,
-    inf::{
-        context::Context,
-        operator::{Operator, OperatorPinnedResult},
-        term::{self, Term},
-    },
+    inf::{term, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Term},
     reader::{Reader, Reading, E},
 };
 use std::fmt;
@@ -72,6 +68,20 @@ pub enum ElTarget {
 #[derive(Debug, Clone, Default)]
 pub struct Metadata {
     pub comments: Vec<Comment>,
+}
+
+impl Formation for Metadata {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        format!(
+            "{}{}",
+            self.comments
+                .iter()
+                .map(|c| format!("{}{c}", cursor.offset_as_string()))
+                .collect::<Vec<String>>()
+                .join("\n"),
+            if self.comments.is_empty() { "" } else { "\n" },
+        )
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -328,6 +338,45 @@ impl fmt::Display for Element {
     }
 }
 
+impl Formation for Element {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        fn format_el<A, B>(el: &A, md: &B, cursor: &mut FormationCursor) -> String
+        where
+            A: Formation,
+            B: Formation,
+        {
+            format!("{}{}", md.format(cursor), el.format(cursor))
+        }
+        match self {
+            Self::Function(v, m) => format_el(v, m, cursor),
+            Self::If(v, m) => format_el(v, m, cursor),
+            Self::Each(v, m) => format_el(v, m, cursor),
+            Self::First(v, m) => format_el(v, m, cursor),
+            Self::VariableAssignation(v, m) => format_el(v, m, cursor),
+            Self::Comparing(v, m) => format_el(v, m, cursor),
+            Self::Combination(v, m) => format_el(v, m, cursor),
+            Self::Condition(v, m) => format_el(v, m, cursor),
+            Self::Subsequence(v, m) => format_el(v, m, cursor),
+            Self::Optional(v, m) => format_el(v, m, cursor),
+            Self::Reference(v, m) => format_el(v, m, cursor),
+            Self::PatternString(v, m) => format_el(v, m, cursor),
+            Self::VariableName(v, m) => format_el(v, m, cursor),
+            Self::Values(v, m) => format_el(v, m, cursor),
+            Self::Meta(v, m) => format_el(v, m, cursor),
+            Self::Block(v, m) => format_el(v, m, cursor),
+            Self::Command(v, m) => format_el(v, m, cursor),
+            Self::Task(v, m) => format_el(v, m, cursor),
+            Self::Component(v, m) => format_el(v, m, cursor),
+            Self::Boolean(v, m) => format_el(v, m, cursor),
+            Self::Integer(v, m) => format_el(v, m, cursor),
+            Self::VariableDeclaration(v, m) => format_el(v, m, cursor),
+            Self::VariableVariants(v, m) => format_el(v, m, cursor),
+            Self::VariableType(v, m) => format_el(v, m, cursor),
+            Self::SimpleString(v, m) => format_el(v, m, cursor),
+            Self::Comment(v) => v.format(cursor),
+        }
+    }
+}
 impl term::Display for Element {
     fn display(&self, _term: &mut Term) {
         // term.print_fmt(&self.as_lines());

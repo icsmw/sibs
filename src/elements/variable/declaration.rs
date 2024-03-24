@@ -1,7 +1,7 @@
 use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
-    inf::{any::AnyValue, context::Context, operator, term},
+    inf::{operator, term, AnyValue, Context, Formation, FormationCursor},
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -65,6 +65,12 @@ impl Reading<VariableDeclaration> for VariableDeclaration {
 impl fmt::Display for VariableDeclaration {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}: {}", self.variable, self.declaration)
+    }
+}
+
+impl Formation for VariableDeclaration {
+    fn format(&self, _cursor: &mut FormationCursor) -> String {
+        self.to_string()
     }
 }
 

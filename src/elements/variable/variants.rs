@@ -1,6 +1,6 @@
 use crate::{
     error::LinkedErr,
-    inf::term,
+    inf::{term, Formation, FormationCursor},
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -56,6 +56,12 @@ impl VariableVariants {
 impl fmt::Display for VariableVariants {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.values.join(" | "))
+    }
+}
+
+impl Formation for VariableVariants {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        self.to_string()
     }
 }
 

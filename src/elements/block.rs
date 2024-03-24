@@ -2,10 +2,7 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        any::AnyValue,
-        context::Context,
-        operator::{Operator, OperatorPinnedResult},
-        term::{self, Term},
+        term, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Term,
     },
     reader::{chars, Reader, Reading, E},
 };
@@ -100,6 +97,30 @@ impl fmt::Display for Block {
                 .collect::<Vec<String>>()
                 .join("\n"),
             if self.elements.is_empty() { "" } else { "\n" }
+        )
+    }
+}
+
+impl Formation for Block {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        let mut inner = cursor.shift_right(Some(ElTarget::Block));
+        format!(
+            "[\n{}{}{}]",
+            self.elements
+                .iter()
+                .map(|el| format!(
+                    "{}{}",
+                    el.format(&mut inner),
+                    if matches!(el, Element::Meta(..)) {
+                        ""
+                    } else {
+                        ";"
+                    }
+                ))
+                .collect::<Vec<String>>()
+                .join("\n"),
+            if self.elements.is_empty() { "" } else { "\n" },
+            cursor.offset_as_string()
         )
     }
 }

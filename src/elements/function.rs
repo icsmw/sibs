@@ -2,9 +2,7 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        any::AnyValue,
-        context::Context,
-        operator::{self, Operator, OperatorPinnedResult},
+        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
     },
     reader::{chars, words, Reader, Reading, E},
 };
@@ -237,6 +235,16 @@ impl fmt::Display for Function {
             nested.join(" >> "),
             if nested.is_empty() { "" } else { " >> " },
             to_string(self)
+        )
+    }
+}
+
+impl Formation for Function {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        format!(
+            "{}{}",
+            cursor.offset_as_string_if(&[ElTarget::Block, ElTarget::Component]),
+            self
         )
     }
 }

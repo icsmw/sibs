@@ -1,10 +1,7 @@
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{
-        context::Context,
-        operator::{self, Operator, OperatorPinnedResult},
-    },
+    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
     reader::{words, Reader, Reading, E},
 };
 use std::fmt;
@@ -63,6 +60,24 @@ impl fmt::Display for Thread {
     }
 }
 
+impl Formation for Thread {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        match self {
+            Self::If(el, block) => format!(
+                "{}IF {} {}",
+                cursor.offset_as_string_if(&[ElTarget::Block]),
+                el.format(cursor),
+                block.format(cursor)
+            ),
+            Self::Else(block) => format!(
+                "{}ELSE {}",
+                cursor.offset_as_string_if(&[ElTarget::Block]),
+                block.format(cursor)
+            ),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct If {
     pub threads: Vec<Thread>,
@@ -111,6 +126,21 @@ impl fmt::Display for If {
             self.threads
                 .iter()
                 .map(|el| el.to_string())
+                .collect::<Vec<String>>()
+                .join(" ")
+        )
+    }
+}
+
+impl Formation for If {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        let mut inner = cursor.reown(Some(ElTarget::If));
+        format!(
+            "{}{}",
+            cursor.offset_as_string_if(&[ElTarget::Block]),
+            self.threads
+                .iter()
+                .map(|el| el.format(&mut inner))
                 .collect::<Vec<String>>()
                 .join(" ")
         )

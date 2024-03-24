@@ -1,13 +1,9 @@
 use crate::{
-    elements::{string, Component, Element},
+    elements::{string, Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        any::AnyValue,
-        context::Context,
-        operator::{self, Operator, OperatorPinnedResult},
-        spawner,
-        term::{self, Term},
-        tracker::Logs,
+        operator, spawner, term, AnyValue, Context, Formation, FormationCursor, Logs, Operator,
+        OperatorPinnedResult, Term,
     },
     reader::{chars, Reader, Reading, E},
 };
@@ -37,6 +33,12 @@ impl Reading<Command> for Command {
 impl fmt::Display for Command {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "`{}`", self.pattern,)
+    }
+}
+
+impl Formation for Command {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        format!("{}{}", cursor.offset_as_string_if(&[ElTarget::Block]), self)
     }
 }
 

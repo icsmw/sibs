@@ -2,9 +2,7 @@ use crate::{
     elements::{Block, Component, ElTarget, Element, VariableName},
     error::LinkedErr,
     inf::{
-        any::AnyValue,
-        context::Context,
-        operator::{self, Operator, OperatorPinnedResult},
+        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
     },
     reader::{chars, words, Reader, Reading, E},
 };
@@ -70,6 +68,18 @@ impl Reading<Each> for Each {
 impl fmt::Display for Each {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "EACH({}; {}) {}", self.variable, self.input, self.block)
+    }
+}
+
+impl Formation for Each {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        format!(
+            "{}EACH({}; {}) {}",
+            cursor.offset_as_string_if(&[ElTarget::Block]),
+            self.variable,
+            self.input,
+            self.block.format(cursor)
+        )
     }
 }
 

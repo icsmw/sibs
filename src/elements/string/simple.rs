@@ -1,11 +1,7 @@
 use crate::{
-    elements::Component,
+    elements::{Component, ElTarget},
     error::LinkedErr,
-    inf::{
-        any::AnyValue,
-        context::Context,
-        operator::{Operator, OperatorPinnedResult},
-    },
+    inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
     reader::{Reader, Reading, E},
 };
 use std::fmt;
@@ -28,6 +24,12 @@ impl Reading<SimpleString> for SimpleString {
 impl fmt::Display for SimpleString {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.value,)
+    }
+}
+
+impl Formation for SimpleString {
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        format!("{}{}", cursor.offset_as_string_if(&[ElTarget::Block]), self)
     }
 }
 
