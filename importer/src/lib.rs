@@ -43,7 +43,7 @@ pub fn import(args: TokenStream, input: TokenStream) -> TokenStream {
                 Ok(AnyValue::new(#fn_name(#(#argsuments)*)?))
             })
         }
-        cx.add_fn(
+        cx.functions().add(
             #reference,
             #func_name,
         )?;

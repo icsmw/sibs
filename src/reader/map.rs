@@ -1,4 +1,4 @@
-use crate::reader::E;
+use crate::reader::{ids::Ids, E};
 use console::Style;
 use regex::Regex;
 use std::{cell::RefCell, collections::HashMap, fmt::Display, rc::Rc};
@@ -33,54 +33,58 @@ const REPORT_LN_AROUND: usize = 8;
 #[derive(Debug, Clone)]
 pub struct Map {
     //              <id,    (from,  len  )>
-    pub map: HashMap<usize, (usize, usize)>,
+    pub fragments: HashMap<usize, (usize, usize)>,
     pub reports: Vec<String>,
     pub content: String,
+    recent: Option<usize>,
     cursor: Option<usize>,
-    index: usize,
+    ids: Rc<RefCell<Ids>>,
 }
 
 impl Map {
-    pub fn new_wrapped(content: &str) -> Rc<RefCell<Map>> {
-        Rc::new(RefCell::new(Map::new(content)))
-    }
-    pub fn new(content: &str) -> Self {
+    pub fn new(ids: Rc<RefCell<Ids>>, content: &str) -> Self {
         Self {
-            map: HashMap::new(),
+            fragments: HashMap::new(),
             reports: vec![],
             content: content.to_owned(),
             cursor: None,
-            index: 0,
+            recent: None,
+            ids,
         }
+    }
+    pub fn contains_token(&self, token: &usize) -> bool {
+        self.fragments.contains_key(token)
     }
     pub fn pin(&self) -> impl Fn(&mut Map) {
-        let last = self.index;
+        let last = self.recent;
         move |map: &mut Map| {
-            map.index = last;
-            map.map.retain(|k, _| k <= &last);
+            if let Some(id) = last {
+                map.recent = Some(id);
+                map.fragments.retain(|k, _| k <= &id);
+            } else {
+                map.recent = None;
+                map.fragments.clear();
+            }
         }
-    }
-    pub fn set_content(&mut self, content: &str) {
-        content.clone_into(&mut self.content);
     }
     pub fn set_cursor(&mut self, token: usize) {
         self.cursor = Some(token);
     }
     pub fn last(&self) -> Option<(usize, (usize, usize))> {
-        if self.index > 0 {
-            let index = self.index - 1;
-            self.map.get(&index).map(|coors| (index, *coors))
+        if let Some(id) = self.recent {
+            self.fragments.get(&id).map(|coors| (id, *coors))
         } else {
             None
         }
     }
     pub fn add(&mut self, from: usize, len: usize) -> usize {
-        self.map.insert(self.index, (from, len));
-        self.index += 1;
-        self.index - 1
+        let id = self.ids.borrow_mut().get();
+        self.recent = Some(id);
+        self.fragments.insert(id, (from, len));
+        id
     }
     pub fn get_fragment(&self, token: &usize) -> Result<Fragment, E> {
-        let (from, len) = self.map.get(token).ok_or(E::TokenNotFound(*token))?;
+        let (from, len) = self.fragments.get(token).ok_or(E::TokenNotFound(*token))?;
         if self.content.len() < from + len {
             Err(E::TokenHasInvalidRange(
                 *token,
@@ -99,7 +103,7 @@ impl Map {
     where
         T: 'a + ToOwned + ToString,
     {
-        let (from, len) = self.map.get(token).ok_or(E::TokenNotFound(*token))?;
+        let (from, len) = self.fragments.get(token).ok_or(E::TokenNotFound(*token))?;
         let num_rate = self.content.split('\n').count().to_string().len() + 1;
         let mut cursor: usize = 0;
         let from_ln = &self.content[0..*from]

@@ -24,16 +24,17 @@ pub trait TryAnyTo<T> {
 }
 
 pub fn register(cx: &mut Context) -> Result<(), E> {
-    cx.add_fn(
+    cx.functions().add(
         import::Import::get_name(),
         <import::Import as Executor>::execute,
     )?;
-    cx.add_fn(os::Os::get_name(), <os::Os as Executor>::execute)?;
-    cx.add_fn(
+    cx.functions()
+        .add(os::Os::get_name(), <os::Os as Executor>::execute)?;
+    cx.functions().add(
         repeat::Repeat::get_name(),
         <repeat::Repeat as Executor>::execute,
     )?;
-    cx.add_fn(
+    cx.functions().add(
         get_os::GetOs::get_name(),
         <get_os::GetOs as Executor>::execute,
     )?;

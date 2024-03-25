@@ -194,19 +194,19 @@ mod reading {
         elements::Comparing,
         error::LinkedErr,
         inf::{context::Context, operator::Operator, tests},
-        reader::{Reader, Reading, E},
+        reader::{Reading, E},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let cx: Context = Context::unbound()?;
+        let mut cx: Context = Context::create().unbound()?;
         let content = include_str!("../../tests/reading/comparing.sibs")
             .split('\n')
             .map(|s| s.to_string())
             .collect::<Vec<String>>();
         let mut count = 0;
         for str in content.iter() {
-            let mut reader = Reader::bound(str.to_string(), &cx);
+            let mut reader = cx.reader().from_str(str);
             let entity = tests::report_if_err(&cx, Comparing::read(&mut reader))?;
             assert!(entity.is_some(), "Line: {}", count + 1);
             let entity = entity.unwrap();
@@ -223,15 +223,16 @@ mod reading {
         Ok(())
     }
 
-    #[test]
-    fn tokens() -> Result<(), LinkedErr<E>> {
+    #[tokio::test]
+    async fn tokens() -> Result<(), LinkedErr<E>> {
+        let mut cx = Context::create().unbound()?;
         let content = include_str!("../../tests/reading/comparing.sibs")
             .split('\n')
             .map(|s| s.to_string())
             .collect::<Vec<String>>();
         let mut count = 0;
         for str in content.iter() {
-            let mut reader = Reader::unbound(str.to_string());
+            let mut reader = cx.reader().from_str(str);
             let entity = Comparing::read(&mut reader)?;
             assert!(entity.is_some(), "Line: {}", count + 1);
             let entity = entity.unwrap();
@@ -257,13 +258,14 @@ mod reading {
         Ok(())
     }
 
-    #[test]
-    fn error() -> Result<(), E> {
-        let samples = include_str!("../../tests/error/comparing.sibs").to_string();
+    #[tokio::test]
+    async fn error() -> Result<(), E> {
+        let mut cx = Context::create().unbound()?;
+        let samples = include_str!("../../tests/error/comparing.sibs");
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::unbound(sample.to_string());
+            let mut reader = cx.reader().from_str(sample);
             let cmp = Comparing::read(&mut reader);
             assert!(cmp.is_err() || matches!(cmp, Ok(None)));
             count += 1;

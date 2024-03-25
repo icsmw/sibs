@@ -60,7 +60,7 @@ pub async fn read(cx: &mut Context) -> Result<(), E> {
     let mut term = Term::new();
     let (mut income, mut defaults) = get_arguments()?;
     if defaults.has::<args::version::Version>() {
-        run::<args::version::Version>(&[], &mut defaults, &mut Context::unbound()?)?;
+        run::<args::version::Version>(&[], &mut defaults, &mut Context::create().unbound()?)?;
         if !income.is_empty() {
             term.err(format!("Ingore next arguments: {}", income.join(", ")));
         }
@@ -80,8 +80,10 @@ pub async fn read(cx: &mut Context) -> Result<(), E> {
             }
         }
     };
+
     cx.set_scenario(scenario);
-    let components = match reader::read_file(cx).await {
+    let scenario = cx.scenario.filename.to_owned();
+    let components = match reader::read_file(cx, scenario).await {
         Ok(elements) => elements
             .into_iter()
             .filter_map(|el| {
@@ -93,7 +95,7 @@ pub async fn read(cx: &mut Context) -> Result<(), E> {
             })
             .collect::<Vec<Component>>(),
         Err(err) => {
-            cx.gen_report_from_err(&err)?;
+            cx.sources.gen_report_from_err(&err)?;
             return Err(E::ReaderError(err.e));
         }
     };

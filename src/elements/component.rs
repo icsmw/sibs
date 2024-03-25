@@ -239,17 +239,16 @@ mod reading {
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let cx: Context = Context::unbound()?;
+        let mut cx: Context = Context::create().unbound()?;
         let components = include_str!("../tests/reading/component.sibs").to_string();
         let components = components.split('\n').collect::<Vec<&str>>();
         let tasks = include_str!("../tests/reading/tasks.sibs");
-        let mut reader = Reader::bound(
-            components
+        let mut reader = cx.reader().from_str(
+            &components
                 .iter()
                 .map(|c| format!("{c}\n{tasks}"))
                 .collect::<Vec<String>>()
                 .join("\n"),
-            &cx,
         );
         let mut count = 0;
         while let Some(entity) = report_if_err(&cx, Component::read(&mut reader))? {
@@ -264,13 +263,14 @@ mod reading {
         Ok(())
     }
 
-    #[test]
-    fn tokens() -> Result<(), LinkedErr<E>> {
+    #[tokio::test]
+    async fn tokens() -> Result<(), LinkedErr<E>> {
+        let mut cx: Context = Context::create().unbound()?;
         let components = include_str!("../tests/reading/component.sibs").to_string();
         let components = components.split('\n').collect::<Vec<&str>>();
         let tasks = include_str!("../tests/reading/tasks.sibs");
-        let mut reader = Reader::unbound(
-            components
+        let mut reader = cx.reader().from_str(
+            &components
                 .iter()
                 .map(|c| format!("{c}\n{tasks}"))
                 .collect::<Vec<String>>()
@@ -299,16 +299,17 @@ mod reading {
         Ok(())
     }
 
-    #[test]
-    fn error() -> Result<(), E> {
-        let samples = include_str!("../tests/error/component.sibs").to_string();
+    #[tokio::test]
+    async fn error() -> Result<(), E> {
+        let mut cx: Context = Context::create().unbound()?;
+        let samples = include_str!("../tests/error/component.sibs");
         let samples = samples
             .split('\n')
             .map(|v| format!("{v} [\n@os;\n];"))
             .collect::<Vec<String>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::unbound(sample.to_string());
+            let mut reader = cx.reader().from_str(sample);
             assert!(Component::read(&mut reader).is_err());
             count += 1;
         }
@@ -322,8 +323,8 @@ mod processing {
     use crate::{
         elements::Component,
         inf::{
-            context::Context,
             operator::{Operator, E},
+            Context,
         },
         reader::{Reader, Reading},
     };
@@ -337,11 +338,10 @@ mod processing {
 
     #[tokio::test]
     async fn reading() -> Result<(), E> {
-        let mut cx = Context::unbound()?;
-        let mut reader = Reader::bound(
-            include_str!("../tests/processing/component.sibs").to_string(),
-            &cx,
-        );
+        let mut cx = Context::create().unbound()?;
+        let mut reader = cx
+            .reader()
+            .from_str(include_str!("../tests/processing/component.sibs"));
         let mut cursor: usize = 0;
         let mut components: Vec<Component> = vec![];
         while let Some(component) = Component::read(&mut reader)? {

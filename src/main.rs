@@ -13,7 +13,7 @@ async fn main() {
     let cfg = cli::get_tracker_configuration();
     match cfg {
         Ok(cfg) => {
-            let mut cx = match Context::with_tracker(Tracker::new(cfg)) {
+            let mut cx = match Context::create().with_tracker(Tracker::new(cfg)) {
                 Ok(cx) => cx,
                 Err(err) => {
                     eprint!("{err}");
@@ -26,10 +26,10 @@ async fn main() {
             }
             if let Err(err) = result {
                 eprintln!("{err}");
-                if let Err(err) = cx.assign_error(&err) {
-                    eprintln!("{err}");
-                }
-                cx.post_reports();
+                // if let Err(err) = cx.sources.assign_error(&err) {
+                //     eprintln!("{err}");
+                // }
+                cx.sources.post_reports();
                 exit(1);
             }
         }

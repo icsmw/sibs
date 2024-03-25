@@ -1,4 +1,8 @@
-use crate::{error::LinkedErr, inf::context::Context, reader::chars};
+use crate::{
+    error::LinkedErr,
+    inf::context::Context,
+    reader::{chars, Reader},
+};
 use tokio::runtime::{Builder, Runtime};
 
 pub const MAX_DEEP: usize = 5;
@@ -22,16 +26,23 @@ pub fn report_if_err<T, E: std::fmt::Display>(
     result: Result<T, LinkedErr<E>>,
 ) -> Result<T, LinkedErr<E>> {
     if let Err(err) = result.as_ref() {
-        cx.gen_report_from_err(err).expect("Generate error report");
-        cx.post_reports();
+        cx.sources
+            .gen_report_from_err(err)
+            .expect("Generate error report");
+        cx.sources.post_reports();
     }
     result
 }
 pub fn post_if_err<T, E>(cx: &Context, result: Result<T, E>) -> Result<T, E> {
     if result.is_err() {
-        cx.post_reports();
+        cx.sources.post_reports();
     }
     result
+}
+
+pub fn get_reader(content: &str) -> Reader {
+    let mut cx = Context::create().unbound().expect("Create context");
+    cx.reader().from_str(content)
 }
 
 pub fn get_rt() -> Runtime {

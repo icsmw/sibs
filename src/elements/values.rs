@@ -135,12 +135,12 @@ mod reading {
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let cx: Context = Context::unbound()?;
+        let mut cx: Context = Context::create().unbound()?;
         let samples = include_str!("../tests/reading/values.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::bound(sample.to_string(), &cx);
+            let mut reader = cx.reader().from_str(sample);
             let entity = tests::report_if_err(&cx, Values::read(&mut reader))?;
             assert!(entity.is_some(), "Line: {}", count + 1);
             let entity = entity.unwrap();
@@ -156,13 +156,14 @@ mod reading {
         Ok(())
     }
 
-    #[test]
-    fn tokens() -> Result<(), LinkedErr<E>> {
+    #[tokio::test]
+    async fn tokens() -> Result<(), LinkedErr<E>> {
+        let mut cx: Context = Context::create().unbound()?;
         let samples = include_str!("../tests/reading/values.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::unbound(sample.to_string());
+            let mut reader = cx.reader().from_str(sample);
             let entity = Values::read(&mut reader)?.unwrap();
             assert_eq!(
                 tests::trim_carets(&entity.to_string()),
@@ -184,13 +185,14 @@ mod reading {
         Ok(())
     }
 
-    #[test]
-    fn error() -> Result<(), LinkedErr<E>> {
+    #[tokio::test]
+    async fn error() -> Result<(), LinkedErr<E>> {
+        let mut cx: Context = Context::create().unbound()?;
         let samples = include_str!("../tests/error/values.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::unbound(sample.to_string());
+            let mut reader = cx.reader().from_str(sample);
             assert!(Values::read(&mut reader).is_err());
             count += 1;
         }
@@ -208,7 +210,7 @@ mod processing {
             context::Context,
             operator::{Operator, E},
         },
-        reader::{chars, Reader, Reading},
+        reader::{chars, Reading},
     };
 
     const VALUES: &[(&str, &str)] = &[
@@ -223,19 +225,17 @@ mod processing {
 
     #[tokio::test]
     async fn reading() -> Result<(), E> {
-        let mut cx = Context::unbound()?;
-        let mut reader = Reader::bound(
-            include_str!("../tests/processing/values_components.sibs").to_string(),
-            &cx,
-        );
+        let mut cx = Context::create().unbound()?;
+        let mut reader = cx
+            .reader()
+            .from_str(include_str!("../tests/processing/values_components.sibs"));
         let mut components: Vec<Component> = vec![];
         while let Some(component) = Component::read(&mut reader)? {
             components.push(component);
         }
-        let mut reader = Reader::bound(
-            include_str!("../tests/processing/values.sibs").to_string(),
-            &cx,
-        );
+        let mut reader = cx
+            .reader()
+            .from_str(include_str!("../tests/processing/values.sibs"));
         while let Some(task) = Task::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert!(task
@@ -245,7 +245,8 @@ mod processing {
         }
         for (name, value) in VALUES.iter() {
             assert_eq!(
-                cx.get_var(name)
+                cx.vars()
+                    .get(name)
                     .unwrap()
                     .get_as_strings()
                     .unwrap()
@@ -254,7 +255,8 @@ mod processing {
             );
         }
         for (name, value) in NESTED_VALUES.iter() {
-            let stored = cx.get_var(name).unwrap();
+            let binding = cx.vars();
+            let stored = binding.get(name).unwrap();
             let values = stored.get_as::<Vec<AnyValue>>().unwrap();
             let mut output: Vec<String> = vec![];
             for value in values.iter() {

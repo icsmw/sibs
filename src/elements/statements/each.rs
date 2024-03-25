@@ -104,7 +104,7 @@ impl Operator for Each {
                 .ok_or(operator::E::FailConvertInputIntoStringsForEach)?;
             let mut output: Option<AnyValue> = None;
             for iteration in inputs.iter() {
-                cx.set_var(
+                cx.vars().set(
                     self.variable.name.to_owned(),
                     AnyValue::new(iteration.to_string()),
                 );
@@ -130,11 +130,10 @@ mod reading {
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let cx: Context = Context::unbound()?;
-        let mut reader = Reader::bound(
-            include_str!("../../tests/reading/each.sibs").to_string(),
-            &cx,
-        );
+        let mut cx: Context = Context::create().unbound()?;
+        let mut reader = cx
+            .reader()
+            .from_str(include_str!("../../tests/reading/each.sibs"));
         let mut count = 0;
         while let Some(entity) = report_if_err(&cx, Each::read(&mut reader))? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
@@ -149,9 +148,12 @@ mod reading {
         Ok(())
     }
 
-    #[test]
-    fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut reader = Reader::unbound(include_str!("../../tests/reading/each.sibs").to_string());
+    #[tokio::test]
+    async fn tokens() -> Result<(), LinkedErr<E>> {
+        let mut cx = Context::create().unbound()?;
+        let mut reader = cx
+            .reader()
+            .from_str(include_str!("../../tests/reading/each.sibs"));
         let mut count = 0;
         while let Some(entity) = Each::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
@@ -178,13 +180,14 @@ mod reading {
         Ok(())
     }
 
-    #[test]
-    fn error() -> Result<(), E> {
+    #[tokio::test]
+    async fn error() -> Result<(), E> {
+        let mut cx = Context::create().unbound()?;
         let samples = include_str!("../../tests/error/each.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::unbound(sample.to_string());
+            let mut reader = cx.reader().from_str(sample);
             assert!(Each::read(&mut reader).is_err());
             count += 1;
         }
@@ -201,24 +204,23 @@ mod processing {
             context::Context,
             operator::{Operator, E},
         },
-        reader::{chars, Reader, Reading},
+        reader::{chars, Reading},
     };
     const VALUES: &[(&str, &str)] = &[("a", "three"), ("b", "two"), ("c", "one")];
 
     #[tokio::test]
     async fn reading() -> Result<(), E> {
-        let mut cx = Context::unbound()?;
-        let mut reader = Reader::bound(
-            include_str!("../../tests/processing/each.sibs").to_string(),
-            &cx,
-        );
+        let mut cx = Context::create().unbound()?;
+        let mut reader = cx
+            .reader()
+            .from_str(include_str!("../../tests/processing/each.sibs"));
         while let Some(task) = Task::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert!(task.execute(None, &[], &[], &mut cx).await?.is_some());
         }
         for (name, value) in VALUES.iter() {
             assert_eq!(
-                cx.get_var(name).unwrap().get_as_string().unwrap(),
+                cx.vars().get(name).unwrap().get_as_string().unwrap(),
                 value.to_string()
             );
         }
@@ -231,8 +233,8 @@ mod proptest {
 
     use crate::{
         elements::{task::Task, Block, Each, ElTarget, Element, VariableName},
-        inf::{operator::E, tests::*},
-        reader::{Reader, Reading},
+        inf::{operator::E, tests::*, Context},
+        reader::Reading,
     };
     use proptest::prelude::*;
 
@@ -258,8 +260,9 @@ mod proptest {
 
     fn reading(each: Each) -> Result<(), E> {
         get_rt().block_on(async {
+            let mut cx = Context::create().unbound()?;
             let origin = format!("test [\n{each};\n];");
-            let mut reader = Reader::unbound(origin.clone());
+            let mut reader = cx.reader().from_str(&origin);
             while let Some(task) = Task::read(&mut reader)? {
                 assert_eq!(format!("{task};"), origin);
             }

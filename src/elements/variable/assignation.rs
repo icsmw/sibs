@@ -94,7 +94,7 @@ impl Operator for VariableAssignation {
                 .execute(owner, components, args, cx)
                 .await?
                 .ok_or(operator::E::NoValueToAssign(self.variable.name.clone()))?;
-            cx.set_var(self.variable.name.clone(), value);
+            cx.vars().set(self.variable.name.clone(), value);
             Ok(Some(AnyValue::new(())))
         })
     }
@@ -106,16 +106,15 @@ mod reading {
         elements::VariableAssignation,
         error::LinkedErr,
         inf::{context::Context, operator::Operator, tests},
-        reader::{chars, Reader, Reading, E},
+        reader::{chars, Reading, E},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let cx: Context = Context::unbound()?;
-        let mut reader = Reader::bound(
-            include_str!("../../tests/reading/variable_assignation.sibs").to_string(),
-            &cx,
-        );
+        let mut cx: Context = Context::create().unbound()?;
+        let mut reader = cx.reader().from_str(include_str!(
+            "../../tests/reading/variable_assignation.sibs"
+        ));
         let mut count = 0;
         while let Some(entity) = tests::report_if_err(&cx, VariableAssignation::read(&mut reader))?
         {
@@ -133,11 +132,12 @@ mod reading {
         Ok(())
     }
 
-    #[test]
-    fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut reader = Reader::unbound(
-            include_str!("../../tests/reading/variable_assignation.sibs").to_string(),
-        );
+    #[tokio::test]
+    async fn tokens() -> Result<(), LinkedErr<E>> {
+        let mut cx: Context = Context::create().unbound()?;
+        let mut reader = cx.reader().from_str(include_str!(
+            "../../tests/reading/variable_assignation.sibs"
+        ));
         let mut count = 0;
         while let Some(entity) = VariableAssignation::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
@@ -167,13 +167,14 @@ mod reading {
         assert!(reader.rest().trim().is_empty());
         Ok(())
     }
-    #[test]
-    fn error() -> Result<(), LinkedErr<E>> {
+    #[tokio::test]
+    async fn error() -> Result<(), LinkedErr<E>> {
+        let mut cx: Context = Context::create().unbound()?;
         let samples = include_str!("../../tests/error/variable_assignation.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::unbound(sample.to_string());
+            let mut reader = cx.reader().from_str(sample);
             assert!(VariableAssignation::read(&mut reader).is_err());
             count += 1;
         }
@@ -190,7 +191,7 @@ mod processing {
             context::Context,
             operator::{Operator, E},
         },
-        reader::{Reader, Reading},
+        reader::Reading,
     };
 
     const VALUES: &[(&str, &str)] = &[
@@ -204,17 +205,16 @@ mod processing {
 
     #[tokio::test]
     async fn reading() -> Result<(), E> {
-        let mut cx = Context::unbound()?;
-        let mut reader = Reader::bound(
-            include_str!("../../tests/processing/variable_assignation.sibs").to_string(),
-            &cx,
-        );
+        let mut cx = Context::create().unbound()?;
+        let mut reader = cx.reader().from_str(include_str!(
+            "../../tests/processing/variable_assignation.sibs"
+        ));
         while let Some(task) = Task::read(&mut reader)? {
             assert!(task.execute(None, &[], &[], &mut cx).await?.is_some());
         }
         for (name, value) in VALUES.iter() {
             assert_eq!(
-                cx.get_var(name).unwrap().get_as_string().unwrap(),
+                cx.vars().get(name).unwrap().get_as_string().unwrap(),
                 value.to_string()
             );
         }
@@ -226,8 +226,8 @@ mod processing {
 mod proptest {
     use crate::{
         elements::{ElTarget, Element, Task, VariableAssignation, VariableName},
-        inf::{operator::E, tests::*},
-        reader::{Reader, Reading},
+        inf::{operator::E, tests::*, Context},
+        reader::Reading,
     };
     use proptest::prelude::*;
 
@@ -290,8 +290,9 @@ mod proptest {
 
     fn reading(assignation: VariableAssignation) -> Result<(), E> {
         get_rt().block_on(async {
+            let mut cx = Context::create().unbound()?;
             let origin = format!("test [\n{assignation};\n];");
-            let mut reader = Reader::unbound(origin.clone());
+            let mut reader = cx.reader().from_str(&origin);
             while let Some(task) = Task::read(&mut reader)? {
                 assert_eq!(format!("{task};"), origin);
             }

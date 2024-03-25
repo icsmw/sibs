@@ -3,6 +3,7 @@ pub mod error;
 mod extentions;
 pub mod ids;
 pub mod map;
+pub mod sources;
 #[cfg(test)]
 pub mod tests;
 pub mod words;
@@ -16,8 +17,7 @@ use crate::{
 pub use error::E;
 use extentions::*;
 use map::{Fragment, Map};
-use std::{cell::RefCell, fs, future::Future, path::PathBuf, pin::Pin, rc::Rc};
-
+use std::{cell::RefCell, future::Future, path::PathBuf, pin::Pin, rc::Rc};
 pub trait Reading<T> {
     fn read(reader: &mut Reader) -> Result<Option<T>, LinkedErr<E>>;
 }
@@ -36,43 +36,34 @@ pub struct Reader {
     pub content: String,
     pos: usize,
     chars: &'static [&'static char],
-    _map: Rc<RefCell<Map>>,
-    _offset: usize,
-    _recent: usize,
+    map: Rc<RefCell<Map>>,
+    offset: usize,
+    #[cfg(test)]
+    recent: usize,
 }
 
 impl Reader {
-    pub fn bound(content: String, cx: &Context) -> Self {
-        cx.map.borrow_mut().set_content(&content);
+    pub fn new(map: Rc<RefCell<Map>>) -> Self {
+        let content = map.borrow().content.clone();
         Self {
             content,
             pos: 0,
             chars: &[],
-            _offset: 0,
-            _map: cx.get_map_ref(),
-            _recent: 0,
+            offset: 0,
+            map,
+            #[cfg(test)]
+            recent: 0,
         }
     }
-    #[cfg(test)]
-    pub fn unbound(content: String) -> Self {
-        let map = Map::new_wrapped(&content);
+    fn inherit(&self, content: String, offset: usize) -> Self {
         Self {
             content,
             pos: 0,
             chars: &[],
-            _offset: 0,
-            _map: map,
-            _recent: 0,
-        }
-    }
-    pub fn inherit(content: String, map: Rc<RefCell<Map>>, offset: usize) -> Self {
-        Self {
-            content,
-            pos: 0,
-            chars: &[],
-            _offset: offset,
-            _map: map,
-            _recent: 0,
+            offset,
+            map: self.map.clone(),
+            #[cfg(test)]
+            recent: 0,
         }
     }
     pub fn move_to(&mut self) -> MoveTo<'_> {
@@ -107,11 +98,11 @@ impl Reader {
         }
     }
     pub(self) fn index(&mut self, from: usize, len: usize) {
-        self._map.borrow_mut().add(from + self._offset, len);
+        self.map.borrow_mut().add(from + self.offset, len);
     }
     pub fn token(&self) -> Result<Token, E> {
-        let content = self._map.borrow().content.to_string();
-        self._map
+        let content = self.map.borrow().content.to_string();
+        self.map
             .borrow_mut()
             .last()
             .map(|(id, (from, len))| {
@@ -125,27 +116,27 @@ impl Reader {
                     id,
                     from,
                     len,
-                    bound: Reader::inherit(value, self._map.clone(), from),
+                    bound: self.inherit(value, from),
                 }
             })
             .ok_or(E::FailGetToken)
     }
     pub fn open_token(&mut self) -> impl Fn(&mut Reader) -> usize {
         self.move_to().any();
-        let from = self.pos + self._offset;
+        let from = self.pos + self.offset;
         move |reader: &mut Reader| {
             reader
-                ._map
+                .map
                 .borrow_mut()
-                .add(from, (reader.pos + reader._offset) - from)
+                .add(from, (reader.pos + reader.offset) - from)
         }
     }
     pub fn pin(&mut self) -> impl Fn(&mut Reader) {
         let from = self.pos;
-        let restore_map = self._map.borrow().pin();
+        let restore_map = self.map.borrow().pin();
         move |reader: &mut Reader| {
             reader.pos = from;
-            restore_map(&mut reader._map.borrow_mut());
+            restore_map(&mut reader.map.borrow_mut());
         }
     }
     pub fn done(&self) -> bool {
@@ -166,15 +157,15 @@ impl Reader {
         true
     }
     pub fn get_fragment(&self, token: &usize) -> Result<Fragment, E> {
-        self._map.borrow().get_fragment(token)
+        self.map.borrow().get_fragment(token)
     }
     #[cfg(test)]
     pub fn recent(&mut self) -> &str {
         if self.pos == 0 {
             ""
         } else {
-            let readed = &self.content[self._recent..self.pos];
-            self._recent = self.pos;
+            let readed = &self.content[self.recent..self.pos];
+            self.recent = self.pos;
             readed
         }
     }
@@ -182,14 +173,12 @@ impl Reader {
 
 pub type ReadFileResult = Result<Vec<Element>, LinkedErr<E>>;
 
-pub fn read_file<'a>(cx: &'a mut Context) -> Pin<Box<dyn Future<Output = ReadFileResult> + 'a>> {
+pub fn read_file<'a>(
+    cx: &'a mut Context,
+    filename: PathBuf,
+) -> Pin<Box<dyn Future<Output = ReadFileResult> + 'a>> {
     Box::pin(async move {
-        if !cx.scenario.filename.exists() {
-            Err(E::FileNotExists(
-                cx.scenario.filename.to_string_lossy().to_string(),
-            ))?
-        }
-        let mut reader = Reader::bound(fs::read_to_string(&cx.scenario.filename)?, cx);
+        let mut reader = cx.reader().from_file(&filename)?;
         let mut imports: Vec<PathBuf> = vec![];
         let mut elements: Vec<Element> = vec![];
         while let Some(Element::Function(func, md)) =
@@ -210,8 +199,7 @@ pub fn read_file<'a>(cx: &'a mut Context) -> Pin<Box<dyn Future<Output = ReadFil
             elements.push(Element::Function(func, md));
         }
         for import_path in imports.iter_mut() {
-            let mut cx = Context::from_filename(import_path)?;
-            elements.append(&mut read_file(&mut cx).await?);
+            elements.append(&mut read_file(cx, import_path.to_owned()).await?);
         }
         while let Some(el) = Element::include(&mut reader, &[ElTarget::Component])? {
             elements.push(el);

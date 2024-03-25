@@ -15,7 +15,7 @@ pub struct VariableDeclaration {
 
 impl VariableDeclaration {
     pub async fn declare<'a>(&self, value: String, cx: &'a mut Context) -> Result<(), operator::E> {
-        cx.set_var(
+        cx.vars().set(
             if let Element::VariableName(el, _) = self.variable.as_ref() {
                 el.name.to_owned()
             } else {

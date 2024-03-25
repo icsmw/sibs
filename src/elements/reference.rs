@@ -177,13 +177,15 @@ mod reading {
         elements::Reference,
         error::LinkedErr,
         inf::{context::Context, operator::Operator, tests::*},
-        reader::{chars, Reader, Reading, E},
+        reader::{chars, Reading, E},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let cx: Context = Context::unbound()?;
-        let mut reader = Reader::bound(include_str!("../tests/reading/refs.sibs").to_string(), &cx);
+        let mut cx: Context = Context::create().unbound()?;
+        let mut reader = cx
+            .reader()
+            .from_str(include_str!("../tests/reading/refs.sibs"));
         let mut count = 0;
         while let Some(entity) = report_if_err(&cx, Reference::read(&mut reader))? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
@@ -200,9 +202,12 @@ mod reading {
         Ok(())
     }
 
-    #[test]
-    fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut reader = Reader::unbound(include_str!("../tests/reading/refs.sibs").to_string());
+    #[tokio::test]
+    async fn tokens() -> Result<(), LinkedErr<E>> {
+        let mut cx: Context = Context::create().unbound()?;
+        let mut reader = cx
+            .reader()
+            .from_str(include_str!("../tests/reading/refs.sibs"));
         let mut count = 0;
         while let Some(entity) = Reference::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
@@ -220,13 +225,14 @@ mod reading {
         Ok(())
     }
 
-    #[test]
-    fn error() -> Result<(), LinkedErr<E>> {
+    #[tokio::test]
+    async fn error() -> Result<(), LinkedErr<E>> {
+        let mut cx: Context = Context::create().unbound()?;
         let samples = include_str!("../tests/error/refs.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::unbound(sample.to_string());
+            let mut reader = cx.reader().from_str(sample);
             let result = Reference::read(&mut reader);
             println!("{result:?}");
             assert!(result.is_err(), "Line: {}", count + 1);

@@ -122,16 +122,15 @@ mod reading {
         elements::Optional,
         error::LinkedErr,
         inf::{context::Context, operator::Operator, tests},
-        reader::{chars, Reader, Reading, E},
+        reader::{chars, Reading, E},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let cx: Context = Context::unbound()?;
-        let mut reader = Reader::bound(
-            include_str!("../tests/reading/optional.sibs").to_string(),
-            &cx,
-        );
+        let mut cx: Context = Context::create().unbound()?;
+        let mut reader = cx
+            .reader()
+            .from_str(include_str!("../tests/reading/optional.sibs"));
         let mut count = 0;
         while let Some(entity) = tests::report_if_err(&cx, Optional::read(&mut reader))? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
@@ -148,10 +147,12 @@ mod reading {
         Ok(())
     }
 
-    #[test]
-    fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut reader =
-            Reader::unbound(include_str!("../tests/reading/optional.sibs").to_string());
+    #[tokio::test]
+    async fn tokens() -> Result<(), LinkedErr<E>> {
+        let mut cx: Context = Context::create().unbound()?;
+        let mut reader = cx
+            .reader()
+            .from_str(include_str!("../tests/reading/optional.sibs"));
         let mut count = 0;
         while let Some(entity) = Optional::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
@@ -186,13 +187,14 @@ mod reading {
         Ok(())
     }
 
-    #[test]
-    fn error() -> Result<(), E> {
+    #[tokio::test]
+    async fn error() -> Result<(), E> {
+        let mut cx: Context = Context::create().unbound()?;
         let samples = include_str!("../tests/error/optional.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::unbound(sample.to_string());
+            let mut reader = cx.reader().from_str(sample);
             let opt = Optional::read(&mut reader);
             println!("{opt:?}");
             assert!(opt.is_err());
@@ -211,16 +213,15 @@ mod processing {
             context::Context,
             operator::{Operator, E},
         },
-        reader::{chars, Reader, Reading},
+        reader::{chars, Reading},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), E> {
-        let mut cx = Context::unbound()?;
-        let mut reader = Reader::bound(
-            include_str!("../tests/processing/optional.sibs").to_string(),
-            &cx,
-        );
+        let mut cx = Context::create().unbound()?;
+        let mut reader = cx
+            .reader()
+            .from_str(include_str!("../tests/processing/optional.sibs"));
         while let Some(task) = Task::read(&mut reader)? {
             let result = task
                 .execute(None, &[], &[], &mut cx)
@@ -241,8 +242,8 @@ mod proptest {
 
     use crate::{
         elements::{ElTarget, Element, Optional, Task},
-        inf::{operator::E, tests::*},
-        reader::{Reader, Reading},
+        inf::{operator::E, tests::*, Context},
+        reader::Reading,
     };
     use proptest::prelude::*;
 
@@ -315,8 +316,9 @@ mod proptest {
 
     fn reading(optional: Optional) -> Result<(), E> {
         get_rt().block_on(async {
+            let mut cx = Context::create().unbound()?;
             let origin = format!("test [\n{optional};\n];");
-            let mut reader = Reader::unbound(origin.clone());
+            let mut reader = cx.reader().from_str(&origin);
             while let Some(task) = Task::read(&mut reader)? {
                 assert_eq!(format!("{task};"), origin);
             }

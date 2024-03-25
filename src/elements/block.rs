@@ -164,24 +164,21 @@ mod reading {
         elements::Block,
         error::LinkedErr,
         inf::{context::Context, tests::*},
-        reader::{Reader, Reading, E},
+        reader::{Reading, E},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let cx: Context = Context::unbound()?;
-        let mut reader = Reader::bound(
-            format!(
-                "[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
-                include_str!("../tests/reading/if.sibs"),
-                include_str!("../tests/reading/variable_assignation.sibs"),
-                include_str!("../tests/reading/function.sibs"),
-                include_str!("../tests/reading/optional.sibs"),
-                include_str!("../tests/reading/each.sibs"),
-                include_str!("../tests/reading/refs.sibs")
-            ),
-            &cx,
-        );
+        let mut cx: Context = Context::create().unbound()?;
+        let mut reader = cx.reader().from_str(&format!(
+            "[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
+            include_str!("../tests/reading/if.sibs"),
+            include_str!("../tests/reading/variable_assignation.sibs"),
+            include_str!("../tests/reading/function.sibs"),
+            include_str!("../tests/reading/optional.sibs"),
+            include_str!("../tests/reading/each.sibs"),
+            include_str!("../tests/reading/refs.sibs")
+        ));
         while let Some(entity) = report_if_err(&cx, Block::read(&mut reader))? {
             assert_eq!(
                 trim_carets(reader.recent()),
@@ -192,9 +189,10 @@ mod reading {
         Ok(())
     }
 
-    #[test]
-    fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut reader = Reader::unbound(format!(
+    #[tokio::test]
+    async fn tokens() -> Result<(), LinkedErr<E>> {
+        let mut cx: Context = Context::create().unbound()?;
+        let mut reader = cx.reader().from_str(&format!(
             "[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
             include_str!("../tests/reading/if.sibs"),
             include_str!("../tests/reading/variable_assignation.sibs"),
@@ -219,8 +217,8 @@ mod proptest {
 
     use crate::{
         elements::{Block, ElTarget, Element, Task},
-        inf::{operator::E, tests::*},
-        reader::{Reader, Reading},
+        inf::{operator::E, tests::*, Context},
+        reader::Reading,
     };
     use proptest::prelude::*;
 
@@ -287,7 +285,8 @@ mod proptest {
     fn reading(block: Block) -> Result<(), E> {
         get_rt().block_on(async {
             let origin = format!("test {block};");
-            let mut reader = Reader::unbound(origin.clone());
+            let mut cx: Context = Context::create().unbound()?;
+            let mut reader = cx.reader().from_str(&origin);
             while let Some(task) = Task::read(&mut reader)? {
                 assert_eq!(format!("{task};"), origin);
             }

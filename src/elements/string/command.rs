@@ -110,11 +110,10 @@ mod reading {
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let cx: Context = Context::unbound()?;
-        let mut reader = Reader::bound(
-            include_str!("../../tests/reading/command.sibs").to_string(),
-            &cx,
-        );
+        let mut cx: Context = Context::create().unbound()?;
+        let mut reader = cx
+            .reader()
+            .from_str(include_str!("../../tests/reading/command.sibs"));
         let origins = include_str!("../../tests/reading/command.sibs")
             .to_string()
             .split('\n')
@@ -142,10 +141,12 @@ mod reading {
         Ok(())
     }
 
-    #[test]
-    fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut reader =
-            Reader::unbound(include_str!("../../tests/reading/command.sibs").to_string());
+    #[tokio::test]
+    async fn tokens() -> Result<(), LinkedErr<E>> {
+        let mut cx = Context::create().unbound()?;
+        let mut reader = cx
+            .reader()
+            .from_str(include_str!("../../tests/reading/command.sibs"));
         let mut count = 0;
         while let Some(entity) = Command::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);

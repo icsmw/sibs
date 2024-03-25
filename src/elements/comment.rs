@@ -53,16 +53,15 @@ mod reading {
         elements::Task,
         error::LinkedErr,
         inf::{context::Context, tests::*},
-        reader::{chars, Reader, Reading, E},
+        reader::{chars, Reading, E},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let cx: Context = Context::unbound()?;
-        let mut reader = Reader::bound(
-            include_str!("../tests/reading/comments.sibs").to_string(),
-            &cx,
-        );
+        let mut cx: Context = Context::create().unbound()?;
+        let mut reader = cx
+            .reader()
+            .from_str(include_str!("../tests/reading/comments.sibs"));
         while let Some(entity) = report_if_err(&cx, Task::read(&mut reader))? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             for el in entity.block.elements.iter() {

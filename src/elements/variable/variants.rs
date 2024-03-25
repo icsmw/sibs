@@ -60,7 +60,7 @@ impl fmt::Display for VariableVariants {
 }
 
 impl Formation for VariableVariants {
-    fn format(&self, cursor: &mut FormationCursor) -> String {
+    fn format(&self, _cursor: &mut FormationCursor) -> String {
         self.to_string()
     }
 }
@@ -77,17 +77,17 @@ mod reading {
         elements::VariableVariants,
         error::LinkedErr,
         inf::{context::Context, tests::*},
-        reader::{Reader, Reading, E},
+        reader::{Reading, E},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let cx: Context = Context::unbound()?;
+        let mut cx: Context = Context::create().unbound()?;
         let samples = include_str!("../../tests/reading/variants.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::bound(sample.to_string(), &cx);
+            let mut reader = cx.reader().from_str(sample);
             assert!(report_if_err(&cx, VariableVariants::read(&mut reader)).is_ok());
             count += 1;
         }
@@ -95,13 +95,14 @@ mod reading {
         Ok(())
     }
 
-    #[test]
-    fn error() -> Result<(), E> {
-        let samples = include_str!("../../tests/error/variants.sibs").to_string();
+    #[tokio::test]
+    async fn error() -> Result<(), E> {
+        let mut cx: Context = Context::create().unbound()?;
+        let samples = include_str!("../../tests/error/variants.sibs");
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::unbound(sample.to_string());
+            let mut reader = cx.reader().from_str(sample);
             assert!(VariableVariants::read(&mut reader).is_err());
             count += 1;
         }

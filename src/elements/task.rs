@@ -166,7 +166,7 @@ impl Formation for Task {
                         .join(";")
                 )
             },
-            (&self.block).format(&mut inner)
+            self.block.format(&mut inner)
         )
     }
 }
@@ -210,7 +210,7 @@ impl Operator for Task {
         Box::pin(async move {
             let job = cx.tracker.create_job(self.get_name(), None).await?;
             if self.declarations.len() != args.len() {
-                cx.gen_report(
+                cx.sources.gen_report(
                     &self.name.token,
                     format!(
                         "Declared {} argument(s) ([{}]); passed {} argument(s) ([{}])",
@@ -244,14 +244,15 @@ mod reading {
         elements::Task,
         error::LinkedErr,
         inf::{context::Context, operator::Operator, tests::*},
-        reader::{chars, Reader, Reading, E},
+        reader::{chars, Reading, E},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let cx: Context = Context::unbound()?;
-        let mut reader =
-            Reader::bound(include_str!("../tests/reading/tasks.sibs").to_string(), &cx);
+        let mut cx: Context = Context::create().unbound()?;
+        let mut reader = cx
+            .reader()
+            .from_str(include_str!("../tests/reading/tasks.sibs"));
         let mut count = 0;
         while let Some(entity) = report_if_err(&cx, Task::read(&mut reader))? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
@@ -266,9 +267,12 @@ mod reading {
         Ok(())
     }
 
-    #[test]
-    fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut reader = Reader::unbound(include_str!("../tests/reading/tasks.sibs").to_string());
+    #[tokio::test]
+    async fn tokens() -> Result<(), LinkedErr<E>> {
+        let mut cx: Context = Context::create().unbound()?;
+        let mut reader = cx
+            .reader()
+            .from_str(include_str!("../tests/reading/tasks.sibs"));
         let mut count = 0;
         while let Some(entity) = Task::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
@@ -303,13 +307,14 @@ mod reading {
         Ok(())
     }
 
-    #[test]
-    fn error() -> Result<(), E> {
+    #[tokio::test]
+    async fn error() -> Result<(), E> {
+        let mut cx: Context = Context::create().unbound()?;
         let samples = include_str!("../tests/error/tasks.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::unbound(sample.to_string());
+            let mut reader = cx.reader().from_str(sample);
             assert!(Task::read(&mut reader).is_err());
             count += 1;
         }
@@ -333,11 +338,10 @@ mod processing {
 
     #[tokio::test]
     async fn reading() -> Result<(), E> {
-        let mut cx = Context::unbound()?;
-        let mut reader = Reader::bound(
-            include_str!("../tests/processing/tasks.sibs").to_string(),
-            &cx,
-        );
+        let mut cx = Context::create().unbound()?;
+        let mut reader = cx
+            .reader()
+            .from_str(include_str!("../tests/processing/tasks.sibs"));
         let mut cursor: usize = 0;
         while let Some(task) = Task::read(&mut reader)? {
             let result = task

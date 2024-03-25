@@ -180,9 +180,9 @@ mod reading {
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let cx: Context = Context::unbound()?;
-        let content = include_str!("../../tests/reading/if.sibs").to_string();
-        let mut reader = Reader::bound(content.clone(), &cx);
+        let mut cx: Context = Context::create().unbound()?;
+        let content = include_str!("../../tests/reading/if.sibs");
+        let mut reader = cx.reader().from_str(content);
         let mut count = 0;
         while let Some(entity) = tests::report_if_err(&cx, If::read(&mut reader))? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
@@ -199,10 +199,11 @@ mod reading {
         Ok(())
     }
 
-    #[test]
-    fn tokens() -> Result<(), LinkedErr<E>> {
-        let content = include_str!("../../tests/reading/if.sibs").to_string();
-        let mut reader = Reader::unbound(content.clone());
+    #[tokio::test]
+    async fn tokens() -> Result<(), LinkedErr<E>> {
+        let mut cx = Context::create().unbound()?;
+        let content = include_str!("../../tests/reading/if.sibs");
+        let mut reader = cx.reader().from_str(content);
         let mut count = 0;
         while let Some(entity) = If::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
@@ -239,13 +240,14 @@ mod reading {
         Ok(())
     }
 
-    #[test]
-    fn error() -> Result<(), E> {
-        let samples = include_str!("../../tests/error/if.sibs").to_string();
+    #[tokio::test]
+    async fn error() -> Result<(), E> {
+        let mut cx = Context::create().unbound()?;
+        let samples = include_str!("../../tests/error/if.sibs");
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = Reader::unbound(sample.to_string());
+            let mut reader = cx.reader().from_str(sample);
             assert!(If::read(&mut reader).is_err());
             count += 1;
         }
@@ -268,14 +270,13 @@ mod processing {
 
     #[tokio::test]
     async fn reading() -> Result<(), E> {
-        let mut cx = Context::unbound()?;
+        let mut cx = Context::create().unbound()?;
         let tasks = include_str!("../../tests/processing/if.sibs")
             .match_indices("test [")
             .count();
-        let mut reader = Reader::bound(
-            include_str!("../../tests/processing/if.sibs").to_string(),
-            &cx,
-        );
+        let mut reader = cx
+            .reader()
+            .from_str(include_str!("../../tests/processing/if.sibs"));
         let mut count = 0;
         while let Some(task) = report_if_err(&cx, Task::read(&mut reader))? {
             let result = task
@@ -301,8 +302,8 @@ mod proptest {
 
     use crate::{
         elements::{task::Task, ElTarget, Element, If, Thread},
-        inf::{operator::E, tests::*},
-        reader::{Reader, Reading},
+        inf::{operator::E, tests::*, Context},
+        reader::Reading,
     };
     use proptest::prelude::*;
 
@@ -348,8 +349,9 @@ mod proptest {
 
     fn reading(if_block: If) -> Result<(), E> {
         get_rt().block_on(async {
+            let mut cx = Context::create().unbound()?;
             let origin = format!("test [\n{if_block};\n];");
-            let mut reader = Reader::unbound(origin.clone());
+            let mut reader = cx.reader().from_str(&origin);
             while let Some(task) = Task::read(&mut reader)? {
                 assert_eq!(format!("{task};"), origin);
             }

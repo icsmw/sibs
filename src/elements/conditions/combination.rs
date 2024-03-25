@@ -56,7 +56,7 @@ impl fmt::Display for Combination {
 }
 
 impl Formation for Combination {
-    fn format(&self, cursor: &mut FormationCursor) -> String {
+    fn format(&self, _cursor: &mut FormationCursor) -> String {
         self.to_string()
     }
 }

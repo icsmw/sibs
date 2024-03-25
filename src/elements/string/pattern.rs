@@ -75,16 +75,15 @@ mod reading {
         elements::string::PatternString,
         error::LinkedErr,
         inf::{context::Context, operator::Operator, tests},
-        reader::{Reader, Reading, E},
+        reader::{Reading, E},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let cx = Context::unbound()?;
-        let mut reader = Reader::bound(
-            include_str!("../../tests/reading/pattern_string.sibs").to_string(),
-            &cx,
-        );
+        let mut cx = Context::create().unbound()?;
+        let mut reader = cx
+            .reader()
+            .from_str(include_str!("../../tests/reading/pattern_string.sibs"));
         let origins = include_str!("../../tests/reading/pattern_string.sibs")
             .to_string()
             .split('\n')
@@ -109,10 +108,12 @@ mod reading {
         Ok(())
     }
 
-    #[test]
-    fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut reader =
-            Reader::unbound(include_str!("../../tests/reading/pattern_string.sibs").to_string());
+    #[tokio::test]
+    async fn tokens() -> Result<(), LinkedErr<E>> {
+        let mut cx = Context::create().unbound()?;
+        let mut reader = cx
+            .reader()
+            .from_str(include_str!("../../tests/reading/pattern_string.sibs"));
         let mut count = 0;
         while let Some(entity) = PatternString::read(&mut reader)? {
             assert_eq!(

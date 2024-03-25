@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use crate::{
     error,
     error::LinkedErr,
@@ -9,6 +11,8 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum E {
+    #[error("Fail to find a token {0}")]
+    FailToFindToken(usize),
     #[error("Unknown variable type: {0}")]
     UnknownVariableType(String),
     #[error("Not closed variable type declaration")]
@@ -49,6 +53,8 @@ pub enum E {
     FailFindTaskActions,
     #[error("Empty block")]
     EmptyBlock,
+    #[error("File {0} already has a map")]
+    FileAlreadyHasMap(PathBuf),
     #[error("Subsequence doesn't return value")]
     NoValueFromSubsequence,
     #[error("Subsequence's element doesn't return value")]
@@ -115,8 +121,6 @@ pub enum E {
     InvalidFunctionName(String),
     #[error("Converting error")]
     Infallible(#[from] std::convert::Infallible),
-    #[error("File {0} does't exist")]
-    FileNotExists(String),
     #[error("IO error")]
     IO(#[from] std::io::Error),
     #[error("{0}: {1}")]

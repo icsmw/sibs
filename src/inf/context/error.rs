@@ -1,10 +1,12 @@
+use std::{io, path::PathBuf};
+
 use crate::{executors, inf::scenario, reader};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum E {
     #[error("No parent folder for: {0}")]
-    NoParentFolderFor(String),
+    NoParentFolderFor(PathBuf),
     #[error("Scenario error: {0}")]
     ScenarionError(scenario::E),
     #[error("Executors error: {0}")]
@@ -13,6 +15,8 @@ pub enum E {
     ReaderError(String),
     #[error("Fail register function \"{0}\" because it's already exists")]
     FunctionAlreadyExists(String),
+    #[error("IO error: {0}")]
+    IOError(#[from] io::Error),
 }
 
 impl From<scenario::E> for E {

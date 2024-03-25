@@ -125,7 +125,7 @@ mod test {
             operator::{Operator, E},
             tests::*,
         },
-        reader::{chars, Reader, Reading},
+        reader::{chars, Reading},
     };
 
     const TESTS: &[&str] = &[
@@ -148,8 +148,10 @@ mod test {
             src
         }
         for test in TESTS.iter() {
-            let mut cx = Context::unbound()?;
-            let mut reader = Reader::bound(apply_hooks(format!("test[{test}]"), hooks), &cx);
+            let mut cx = Context::create().unbound()?;
+            let mut reader = cx
+                .reader()
+                .from_str(&apply_hooks(format!("test[{test}]"), hooks));
             while let Some(task) = Task::read(&mut reader)? {
                 let result = task.execute(None, &[], &[], &mut cx).await;
                 let result = post_if_err(&cx, result)?.expect("test returns some value");
