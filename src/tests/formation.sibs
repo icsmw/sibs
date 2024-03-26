@@ -70,9 +70,13 @@
         @import($variable; ./tasks.sibs; $variable; $variable; ./tasks.sibs; $variable; $variable; ./tasks.sibs; $variable; $variable; ./tasks.sibs; $variable);
         @copy("filename-{$platform}.zip"; ./node_modules; $dest);
         @hash(("./src"; "./dist"; :client; :shared; :wrapper); (:build("dev")));
-        @hash(("./path"; "./path/to"; "./path with spaces"; :componentA; :componentB; :componentC); (:build("dev")));
+        @hash(("./path"; "./path/to"; "./path with spaces"; :componentA; :componentB; "./path"; "./path/to"; "./path"; "./path/to"; "./path with spaces"; :componentA; :componentB; "./path with spaces"; :componentA; :componentB; :componentC); (:build("dev")));
         @cd(something1);
         @calculate_sum("5"; "10");
+        ("./path"; "./path/to"; "./path with spaces"; :componentA; :componentB; "./path"; "./path/to"; "./path"; "./path/to"; "./path with spaces"; :componentA; :componentB; "./path with spaces"; :componentA; :componentB; :componentC);
+        (:componentB; "./path"; "./path/to"; "./path"; "./path/to"; "./path with spaces"; :componentA; :componentB; "./path with spaces"; :componentA; :componentB; :componentC);
+        ("./path/to"; "./path with spaces"; :componentA; :componentB; "./path with spaces"; :componentA; :componentB; :componentC);
+        ("./path/to"; "./path with spaces"; :componentA; :componentB; :componentC);
     ];
     commands [
         `run-script --file="/scripts/{$script_name}.sh" --args="{@concat($arg1; $arg2; $arg3)}"`;

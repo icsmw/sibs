@@ -82,7 +82,24 @@ impl fmt::Display for Values {
 
 impl Formation for Values {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        format!("{}{}", cursor.offset_as_string_if(&[ElTarget::Block]), self)
+        if self.to_string().len() > cursor.max_len() && self.elements.len() > cursor.max_items() {
+            format!(
+                "{}(\n{}\n{})",
+                cursor.offset_as_string_if(&[ElTarget::Block]),
+                self.elements
+                    .iter()
+                    .map(|v| format!(
+                        "{}{}",
+                        cursor.right().offset_as_string(),
+                        v.format(&mut cursor.reown(Some(ElTarget::Values)).right())
+                    ))
+                    .collect::<Vec<String>>()
+                    .join(";\n"),
+                cursor.offset_as_string_if(&[ElTarget::Block])
+            )
+        } else {
+            format!("{}{}", cursor.offset_as_string_if(&[ElTarget::Block]), self)
+        }
     }
 }
 
@@ -130,7 +147,7 @@ mod reading {
         elements::Values,
         error::LinkedErr,
         inf::{context::Context, operator::Operator, tests},
-        reader::{Reader, Reading, E},
+        reader::{Reading, E},
     };
 
     #[tokio::test]

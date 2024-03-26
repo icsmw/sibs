@@ -4,6 +4,8 @@ const TAB: u8 = 4;
 
 const MAX_FORMATED_LINE_LEN: usize = 120;
 const MAX_INLINE_INJECTIONS: usize = 6;
+const MAX_ARGS: usize = 4;
+const MAX_ITEMS: usize = 6;
 
 #[derive(Debug, Default)]
 pub struct FormationCursor {
@@ -23,6 +25,12 @@ impl FormationCursor {
     }
     pub fn max_inline_injections(&self) -> usize {
         MAX_INLINE_INJECTIONS
+    }
+    pub fn max_args(&self) -> usize {
+        MAX_ARGS
+    }
+    pub fn max_items(&self) -> usize {
+        MAX_ITEMS
     }
     pub fn offset_as_string(&self) -> String {
         " ".repeat(TAB as usize).repeat(self.offset)
