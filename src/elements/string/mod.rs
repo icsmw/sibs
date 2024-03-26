@@ -2,17 +2,13 @@ pub mod command;
 pub mod pattern;
 pub mod simple;
 
-pub use command::*;
-pub use pattern::*;
-pub use simple::*;
-
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{ElTarget, Element, Metadata, SimpleString},
     error::LinkedErr,
     reader::{chars, Reader, E},
 };
 
-pub type PatternStringResult = (String, Vec<(String, Element)>, usize);
+pub type PatternStringResult = (String, Vec<Element>, usize);
 
 pub fn read(
     reader: &mut Reader,
@@ -22,10 +18,18 @@ pub fn read(
     reader.trim();
     let close = reader.open_token();
     if reader.move_to().char(&[&wrapper]).is_some() {
-        let mut injections: Vec<(String, Element)> = vec![];
+        let mut elements: Vec<Element> = vec![];
         let mut closed = false;
         while let Some((_, stopped)) = reader.until().char(&[&chars::TYPE_OPEN, &wrapper]) {
+            let inner_token = reader.token()?;
             if stopped == wrapper {
+                elements.push(Element::SimpleString(
+                    SimpleString {
+                        value: inner_token.content,
+                        token: inner_token.id,
+                    },
+                    Metadata { comments: vec![] },
+                ));
                 closed = true;
                 break;
             } else if let Some(hook) = reader
@@ -37,7 +41,16 @@ pub fn read(
                     &mut inner,
                     &[ElTarget::VariableName, ElTarget::Function, ElTarget::If],
                 )? {
-                    injections.push((hook, el));
+                    elements.extend_from_slice(&[
+                        Element::SimpleString(
+                            SimpleString {
+                                value: inner_token.content,
+                                token: inner_token.id,
+                            },
+                            Metadata { comments: vec![] },
+                        ),
+                        el,
+                    ]);
                 } else {
                     Err(E::FailToFindInjection.by_reader(&inner))?
                 }
@@ -57,7 +70,7 @@ pub fn read(
             if content.ends_with(wrapper) {
                 let _ = content.remove(content.len() - 1);
             }
-            Ok(Some((content, injections, token)))
+            Ok(Some((content, elements, token)))
         }
     } else {
         restore(reader);

@@ -23,7 +23,7 @@ pub use optional::*;
 pub use primitives::*;
 pub use reference::*;
 pub use statements::{each::*, first::*, If::*};
-pub use string::*;
+pub use string::{command::*, pattern::*, simple::*};
 pub use task::*;
 pub use values::*;
 pub use variable::*;
@@ -68,6 +68,14 @@ pub enum ElTarget {
 #[derive(Debug, Clone, Default)]
 pub struct Metadata {
     pub comments: Vec<Comment>,
+}
+
+impl Metadata {
+    pub fn empty() -> Self {
+        Metadata {
+            comments: Vec::new(),
+        }
+    }
 }
 
 impl Formation for Metadata {

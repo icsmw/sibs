@@ -11,16 +11,16 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub struct PatternString {
     pub pattern: String,
-    pub injections: Vec<(String, Element)>,
+    pub elements: Vec<Element>,
     pub token: usize,
 }
 
 impl Reading<PatternString> for PatternString {
     fn read(reader: &mut Reader) -> Result<Option<PatternString>, LinkedErr<E>> {
-        if let Some((pattern, injections, token)) = string::read(reader, chars::QUOTES)? {
+        if let Some((pattern, elements, token)) = string::read(reader, chars::QUOTES)? {
             Ok(Some(PatternString {
                 pattern,
-                injections,
+                elements,
                 token,
             }))
         } else {
@@ -53,16 +53,21 @@ impl Operator for PatternString {
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
-            let mut output = self.pattern.clone();
-            for (hook, injection) in self.injections.iter() {
-                let val = injection
-                    .execute(owner, components, args, cx)
-                    .await?
-                    .ok_or(operator::E::FailToExtractValue)?
-                    .get_as_string()
-                    .ok_or(operator::E::FailToGetValueAsString)?;
-                let hook = format!("{{{}}}", hook);
-                output = output.replace(&hook, &val);
+            let mut output = String::new();
+            for element in self.elements.iter() {
+                if let Element::SimpleString(el, _) = element {
+                    output = format!("{output}{el}");
+                } else {
+                    output = format!(
+                        "{output}{}",
+                        element
+                            .execute(owner, components, args, cx)
+                            .await?
+                            .ok_or(operator::E::FailToExtractValue)?
+                            .get_as_string()
+                            .ok_or(operator::E::FailToGetValueAsString)?
+                    );
+                }
             }
             Ok(Some(AnyValue::new(output)))
         })
@@ -72,7 +77,7 @@ impl Operator for PatternString {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::string::PatternString,
+        elements::PatternString,
         error::LinkedErr,
         inf::{context::Context, operator::Operator, tests},
         reader::{Reading, E},
@@ -119,8 +124,11 @@ mod reading {
                 tests::trim_carets(&entity.to_string()),
                 reader.get_fragment(&entity.token)?.content
             );
-            for (hook, el) in entity.injections.iter() {
-                assert_eq!(*hook, reader.get_fragment(&el.token())?.content);
+            for el in entity.elements.iter() {
+                assert_eq!(
+                    el.to_string().replace('\n', ""),
+                    reader.get_fragment(&el.token())?.content
+                );
             }
             count += 1;
         }
@@ -133,7 +141,7 @@ mod reading {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        elements::{ElTarget, Element, PatternString},
+        elements::{ElTarget, Element, Metadata, PatternString, SimpleString},
         inf::tests::MAX_DEEP,
     };
     use proptest::prelude::*;
@@ -141,7 +149,7 @@ mod proptest {
     impl Default for PatternString {
         fn default() -> Self {
             PatternString {
-                injections: vec![],
+                elements: vec![],
                 pattern: String::from("default"),
                 token: 0,
             }
@@ -155,14 +163,23 @@ mod proptest {
             if deep > MAX_DEEP {
                 "[a-z][a-z0-9]*"
                     .prop_map(String::from)
-                    .prop_map(|pattern| PatternString {
-                        injections: vec![],
-                        pattern: if pattern.len() < 3 {
+                    .prop_map(|pattern| {
+                        let pattern = if pattern.len() < 3 {
                             "min".to_owned()
                         } else {
                             pattern
-                        },
-                        token: 0,
+                        };
+                        PatternString {
+                            elements: vec![Element::SimpleString(
+                                SimpleString {
+                                    value: pattern.clone(),
+                                    token: 0,
+                                },
+                                Metadata::empty(),
+                            )],
+                            pattern,
+                            token: 0,
+                        }
                     })
                     .boxed()
             } else {
@@ -174,21 +191,21 @@ mod proptest {
                         )),
                         0..=2,
                     ),
-                    prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 10),
+                    prop::collection::vec(
+                        Element::arbitrary_with((vec![ElTarget::SimpleString], deep)),
+                        3,
+                    ),
                 )
-                    .prop_map(|(injections, noise)| {
+                    .prop_map(|(injections, mut noise)| {
                         let mut pattern: String = String::new();
-                        for (i, el) in injections.iter().enumerate() {
-                            pattern = format!(
-                                "{}{{{el}}}",
-                                if noise[i].len() < 3 { "min" } else { &noise[i] }
-                            );
+                        let mut elements: Vec<Element> = Vec::new();
+                        for (i, injection) in injections.into_iter().enumerate() {
+                            pattern = format!("{}{{{injection}}}", noise[i]);
+                            elements.extend_from_slice(&[noise.remove(0), injection]);
                         }
+                        elements.push(noise.remove(0));
                         PatternString {
-                            injections: injections
-                                .iter()
-                                .map(|el| (el.to_string(), el.clone()))
-                                .collect::<Vec<(String, Element)>>(),
+                            elements,
                             pattern,
                             token: 0,
                         }
