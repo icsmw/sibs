@@ -155,7 +155,7 @@ impl fmt::Display for Component {
 
 impl Formation for Component {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        let mut inner = cursor.shift_right(Some(ElTarget::Component));
+        let mut inner = cursor.reown(Some(ElTarget::Component)).right();
         format!(
             "#({}{})\n{}",
             self.name,

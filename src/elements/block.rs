@@ -103,7 +103,7 @@ impl fmt::Display for Block {
 
 impl Formation for Block {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        let mut inner = cursor.shift_right(Some(ElTarget::Block));
+        let mut inner = cursor.reown(Some(ElTarget::Block)).right();
         format!(
             "[\n{}{}{}]",
             self.elements

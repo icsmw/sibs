@@ -1,5 +1,5 @@
 use crate::{
-    elements::Component,
+    elements::{Component, ElTarget},
     error::LinkedErr,
     inf::{
         operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
@@ -75,8 +75,8 @@ impl fmt::Display for VariableName {
 }
 
 impl Formation for VariableName {
-    fn format(&self, _cursor: &mut FormationCursor) -> String {
-        self.to_string()
+    fn format(&self, cursor: &mut FormationCursor) -> String {
+        format!("{}{self}", cursor.offset_as_string_if(&[ElTarget::Block]))
     }
 }
 

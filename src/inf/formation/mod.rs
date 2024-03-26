@@ -2,6 +2,9 @@ use crate::elements::ElTarget;
 
 const TAB: u8 = 4;
 
+const MAX_FORMATED_LINE_LEN: usize = 120;
+const MAX_INLINE_INJECTIONS: usize = 6;
+
 #[derive(Debug, Default)]
 pub struct FormationCursor {
     pub offset: usize,
@@ -10,6 +13,17 @@ pub struct FormationCursor {
 }
 
 impl FormationCursor {
+    pub fn max_len(&self) -> usize {
+        let offset = self.offset * TAB as usize;
+        if MAX_FORMATED_LINE_LEN < offset {
+            0
+        } else {
+            MAX_FORMATED_LINE_LEN - offset
+        }
+    }
+    pub fn max_inline_injections(&self) -> usize {
+        MAX_INLINE_INJECTIONS
+    }
     pub fn offset_as_string(&self) -> String {
         " ".repeat(TAB as usize).repeat(self.offset)
     }
@@ -21,11 +35,18 @@ impl FormationCursor {
         }
         String::new()
     }
-    pub fn shift_right(&mut self, parent: Option<ElTarget>) -> Self {
+    pub fn right(&mut self) -> Self {
         FormationCursor {
             offset: self.offset + 1,
             pos: 0,
-            parent,
+            parent: self.parent.clone(),
+        }
+    }
+    pub fn left(&mut self) -> Self {
+        FormationCursor {
+            offset: self.offset - 1,
+            pos: 0,
+            parent: self.parent.clone(),
         }
     }
     pub fn reown(&mut self, parent: Option<ElTarget>) -> Self {

@@ -38,7 +38,37 @@ impl fmt::Display for Command {
 
 impl Formation for Command {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        format!("{}{}", cursor.offset_as_string_if(&[ElTarget::Block]), self)
+        let mut inner = cursor.reown(Some(ElTarget::PatternString));
+        if self.to_string().len() > cursor.max_len()
+            || self.elements.len() > cursor.max_inline_injections()
+        {
+            format!(
+                "{}`{}`",
+                cursor.offset_as_string_if(&[ElTarget::Block]),
+                self.elements
+                    .iter()
+                    .map(|el| {
+                        if let Element::SimpleString(el, _) = el {
+                            el.format(&mut inner)
+                        } else {
+                            format!(
+                                "{{\n{}{}\n{}}}",
+                                inner.right().offset_as_string(),
+                                el.format(&mut inner.right()),
+                                inner.offset_as_string()
+                            )
+                        }
+                    })
+                    .collect::<Vec<String>>()
+                    .join("")
+            )
+        } else {
+            format!(
+                "{}`{}`",
+                cursor.offset_as_string_if(&[ElTarget::Block]),
+                self.pattern
+            )
+        }
     }
 }
 
@@ -120,7 +150,6 @@ mod reading {
             .reader()
             .from_str(include_str!("../../tests/reading/command.sibs"));
         let origins = include_str!("../../tests/reading/command.sibs")
-            .to_string()
             .split('\n')
             .map(|s| s.to_string())
             .collect::<Vec<String>>();
