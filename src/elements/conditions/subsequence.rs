@@ -78,7 +78,32 @@ impl fmt::Display for Subsequence {
 
 impl Formation for Subsequence {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        format!("{}{}", cursor.offset_as_string_if(&[ElTarget::Block]), self)
+        let mut inner = cursor.reown(Some(ElTarget::Subsequence));
+        self.subsequence
+            .chunks(2)
+            .enumerate()
+            .map(|(i, pair)| {
+                format!(
+                    "{}{}{}",
+                    if i == 0 {
+                        cursor.offset_as_string_if(&[ElTarget::Block])
+                    } else {
+                        String::new()
+                    },
+                    pair[0].format(&mut inner),
+                    if pair.len() > 1 {
+                        format!(
+                            "\n{}{}",
+                            cursor.offset_as_string(),
+                            pair[1].format(&mut inner)
+                        )
+                    } else {
+                        String::new()
+                    }
+                )
+            })
+            .collect::<Vec<String>>()
+            .join("")
     }
 }
 

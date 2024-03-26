@@ -41,34 +41,34 @@ pub trait Formation {
     fn format(&self, cursor: &mut FormationCursor) -> String;
 }
 
-// #[cfg(test)]
-// mod reading {
-//     use crate::{
-//         error::LinkedErr,
-//         inf::{Context, Formation, FormationCursor},
-//         reader::{error::E, read_file},
-//     };
+#[cfg(test)]
+mod reading {
+    use crate::{
+        error::LinkedErr,
+        inf::{Context, Formation, FormationCursor},
+        reader::{error::E, read_file},
+    };
 
-//     #[tokio::test]
-//     async fn reading() -> Result<(), LinkedErr<E>> {
-//         let target = std::env::current_dir()
-//             .unwrap()
-//             .join("./src/tests/formation.sibs");
-//         let mut cx = Context::from_filename(&target)?;
-//         let mut cursor = FormationCursor::default();
-//         match read_file(&mut cx).await {
-//             Ok(components) => {
-//                 for component in components {
-//                     println!("{}", component.format(&mut cursor));
-//                 }
-//             }
-//             Err(err) => {
-//                 cx.gen_report_from_err(&err)?;
-//                 cx.post_reports();
-//                 let _ = cx.tracker.shutdown().await;
-//                 return Err(err);
-//             }
-//         }
-//         Ok(())
-//     }
-// }
+    #[tokio::test]
+    async fn reading() -> Result<(), LinkedErr<E>> {
+        let target = std::env::current_dir()
+            .unwrap()
+            .join("./src/tests/formation.sibs");
+        let mut cx = Context::create().bound(&target)?;
+        let mut cursor = FormationCursor::default();
+        match read_file(&mut cx, target).await {
+            Ok(components) => {
+                for component in components {
+                    println!("{}", component.format(&mut cursor));
+                }
+            }
+            Err(err) => {
+                cx.sources.gen_report_from_err(&err)?;
+                cx.sources.post_reports();
+                let _ = cx.tracker.shutdown().await;
+                return Err(err);
+            }
+        }
+        Ok(())
+    }
+}

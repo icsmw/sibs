@@ -175,7 +175,7 @@ mod reading {
         elements::{If, Thread},
         error::LinkedErr,
         inf::{context::Context, operator::Operator, tests},
-        reader::{chars, Reader, Reading, E},
+        reader::{chars, Reading, E},
     };
 
     #[tokio::test]
@@ -265,7 +265,7 @@ mod processing {
             operator::{Operator, E},
             tests::report_if_err,
         },
-        reader::{chars, Reader, Reading},
+        reader::{chars, Reading},
     };
 
     #[tokio::test]

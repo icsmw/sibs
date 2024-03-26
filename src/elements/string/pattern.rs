@@ -85,7 +85,6 @@ mod reading {
             .reader()
             .from_str(include_str!("../../tests/reading/pattern_string.sibs"));
         let origins = include_str!("../../tests/reading/pattern_string.sibs")
-            .to_string()
             .split('\n')
             .map(|s| s.to_string())
             .collect::<Vec<String>>();

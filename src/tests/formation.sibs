@@ -39,6 +39,7 @@
         IF @os(linux) || @os(darwin) ["release{$version}-normal_os.zip";] ELSE ["release{$version}-windows.zip";];
         IF @os(linux) [@cd(./linux);] IF @os(darwin) [@cd(./mac);] IF @os(windows) [@cd(./windows);] ELSE [@exit(1; "Unsupported OS: {@os}");];
         IF $variable == "one" [@cd(./linux);] IF $variable == "two" [@cd(./mac);] IF $variable == "three" [@cd(./windows);] ELSE [@exit(1; "Unsupported OS: {@os}");];
+        IF (@user_active("user_id") && $last_login < @now) || (@user_subscription("user_id") == "expired" && $email_sent == false) [@cd(./linux);] IF (@user_active("user_id") && $last_login < @now) || (@user_subscription("user_id") == "expired" && $email_sent == false) [@cd(./mac);] IF (@user_active("user_id") && $last_login < @now) || (@user_subscription("user_id") == "expired" && $email_sent == false) [@cd(./windows);] ELSE [@exit(1; "Unsupported OS: {@os}");];
     ];
     optional [
         @os(darwin) => "release{$version}-darwin.zip";
@@ -111,7 +112,13 @@
         ];
     ];
     pattern_strings [
-        "Meeting reminder: {@get_meeting_title($meeting_id)} with {@get_participant_names($meeting_id)} on {@format_datetime(@get_meeting_time($meeting_id))}.";
+        "Meeting reminder: {
+            @get_meeting_title($meeting_id)
+        } with {
+            @get_participant_names($meeting_id)
+        } on {
+            @format_datetime(@get_meeting_time($meeting_id))
+        }.";
         "Service {@get_service_name($service_id)} is currently {@if(@service_status($service_id); 'operational'; 'experiencing issues')}.";
         "Your current location: {@get_location_name($location_id)}, with weather conditions: {@get_weather($location_id)}.";
         "Upcoming event: {@get_event_name($event_id)} on {@format_date(@get_event_date($event_id))} at {@get_event_location($event_id)}.";
