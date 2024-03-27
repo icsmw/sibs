@@ -113,6 +113,9 @@
             IF (@distance_to_destination("location") < 5 && $fuel_level > 10) || (@traffic_condition("route") == "clear" && $departure_time <= @now) ["Travel readiness";];
             IF (@is_password_strong($password) && $password_changed_recently == false) || (@has_two_factor_auth("user_id") == false && $account_security_level < 3) ["Security checks";];
             IF (@file_exists("path/to/document") && $document_open == false) || (@is_network_connected && $sync_pending == true) ["File and network conditions";];
+
+            IF (@file1_exists("path/to/document") && $document_open == false  && $document_open == false  && $document_open == false  && $document_open == false  && $document_open == false) || (@is_network_connected && $sync_pending == true) ["File and network conditions";];
+            IF (@file2_exists("path/to/document") && $document_open == false) || (@is_network_connected && $sync_pending == true && $document_open == false  && $document_open == false  && $document_open == false  && $document_open == false  && $document_open == false) ["File and network conditions";];
         ];
     ];
     pattern_strings [

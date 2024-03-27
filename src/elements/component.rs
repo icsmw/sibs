@@ -154,6 +154,9 @@ impl fmt::Display for Component {
 }
 
 impl Formation for Component {
+    fn elements_count(&self) -> usize {
+        self.elements.len()
+    }
     fn format(&self, cursor: &mut FormationCursor) -> String {
         let mut inner = cursor.reown(Some(ElTarget::Component)).right();
         format!(

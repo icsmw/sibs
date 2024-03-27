@@ -232,7 +232,7 @@ impl fmt::Display for Function {
                 if func.args.is_empty() { "" } else { ")" }
             )
         }
-        let feeding: Vec<String> = self.get_feeding().iter().map(|f| f.to_string()).collect();
+        let feeding: Vec<String> = self.get_feeding().iter().map(|f| to_string(f)).collect();
         write!(
             f,
             "{}{}{}",
@@ -244,6 +244,9 @@ impl fmt::Display for Function {
 }
 
 impl Formation for Function {
+    fn elements_count(&self) -> usize {
+        self.args.len() + self.get_feeding().len()
+    }
     fn format(&self, cursor: &mut FormationCursor) -> String {
         fn formated(func: &Function, cursor: &mut FormationCursor) -> String {
             format!(
@@ -253,7 +256,11 @@ impl Formation for Function {
                 if func.args.is_empty() { "" } else { "(" },
                 func.args
                     .iter()
-                    .map(|arg| format!("\n{}{arg}", cursor.right().offset_as_string()))
+                    .map(|arg| format!(
+                        "\n{}{}",
+                        cursor.right().offset_as_string(),
+                        arg.format(&mut cursor.reown(Some(ElTarget::Function)).right())
+                    ))
                     .collect::<Vec<String>>()
                     .join("; "),
                 if func.args.is_empty() {

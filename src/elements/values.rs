@@ -81,6 +81,9 @@ impl fmt::Display for Values {
 }
 
 impl Formation for Values {
+    fn elements_count(&self) -> usize {
+        self.elements.len()
+    }
     fn format(&self, cursor: &mut FormationCursor) -> String {
         if self.to_string().len() > cursor.max_len() && self.elements.len() > cursor.max_items() {
             format!(
@@ -95,7 +98,7 @@ impl Formation for Values {
                     ))
                     .collect::<Vec<String>>()
                     .join(";\n"),
-                cursor.offset_as_string_if(&[ElTarget::Block])
+                cursor.offset_as_string_if(&[ElTarget::Block, ElTarget::Function])
             )
         } else {
             format!("{}{}", cursor.offset_as_string_if(&[ElTarget::Block]), self)

@@ -102,6 +102,9 @@ impl fmt::Display for Block {
 }
 
 impl Formation for Block {
+    fn elements_count(&self) -> usize {
+        self.elements.len()
+    }
     fn format(&self, cursor: &mut FormationCursor) -> String {
         let mut inner = cursor.reown(Some(ElTarget::Block)).right();
         format!(

@@ -61,6 +61,12 @@ impl fmt::Display for Thread {
 }
 
 impl Formation for Thread {
+    fn elements_count(&self) -> usize {
+        match self {
+            Self::If(el, _) => el.elements_count(),
+            Self::Else(_) => 0,
+        }
+    }
     fn format(&self, cursor: &mut FormationCursor) -> String {
         match self {
             Self::If(el, block) => format!(
@@ -133,6 +139,9 @@ impl fmt::Display for If {
 }
 
 impl Formation for If {
+    fn elements_count(&self) -> usize {
+        self.threads.iter().map(|th| th.elements_count()).sum()
+    }
     fn format(&self, cursor: &mut FormationCursor) -> String {
         let mut inner = cursor.reown(Some(ElTarget::If));
         format!(

@@ -6,11 +6,11 @@ const MAX_FORMATED_LINE_LEN: usize = 120;
 const MAX_INLINE_INJECTIONS: usize = 6;
 const MAX_ARGS: usize = 4;
 const MAX_ITEMS: usize = 6;
+const MAX_ELEMENTS: usize = 4;
 
 #[derive(Debug, Default)]
 pub struct FormationCursor {
     pub offset: usize,
-    pub pos: usize,
     pub parent: Option<ElTarget>,
 }
 
@@ -32,6 +32,9 @@ impl FormationCursor {
     pub fn max_items(&self) -> usize {
         MAX_ITEMS
     }
+    pub fn max_elements(&self) -> usize {
+        MAX_ELEMENTS
+    }
     pub fn offset_as_string(&self) -> String {
         " ".repeat(TAB as usize).repeat(self.offset)
     }
@@ -46,21 +49,18 @@ impl FormationCursor {
     pub fn right(&mut self) -> Self {
         FormationCursor {
             offset: self.offset + 1,
-            pos: 0,
             parent: self.parent.clone(),
         }
     }
     pub fn left(&mut self) -> Self {
         FormationCursor {
             offset: self.offset - 1,
-            pos: 0,
             parent: self.parent.clone(),
         }
     }
     pub fn reown(&mut self, parent: Option<ElTarget>) -> Self {
         FormationCursor {
             offset: self.offset,
-            pos: 0,
             parent,
         }
     }
@@ -68,6 +68,9 @@ impl FormationCursor {
 
 pub trait Formation {
     fn format(&self, cursor: &mut FormationCursor) -> String;
+    fn elements_count(&self) -> usize {
+        1
+    }
 }
 
 #[cfg(test)]

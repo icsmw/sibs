@@ -37,6 +37,9 @@ impl fmt::Display for Command {
 }
 
 impl Formation for Command {
+    fn elements_count(&self) -> usize {
+        self.elements.len()
+    }
     fn format(&self, cursor: &mut FormationCursor) -> String {
         let mut inner = cursor.reown(Some(ElTarget::PatternString));
         if self.to_string().len() > cursor.max_len()

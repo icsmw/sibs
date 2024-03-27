@@ -347,6 +347,36 @@ impl fmt::Display for Element {
 }
 
 impl Formation for Element {
+    fn elements_count(&self) -> usize {
+        match self {
+            Self::Function(v, _) => v.elements_count(),
+            Self::If(v, _) => v.elements_count(),
+            Self::Each(v, _) => v.elements_count(),
+            Self::First(v, _) => v.elements_count(),
+            Self::VariableAssignation(v, _) => v.elements_count(),
+            Self::Comparing(v, _) => v.elements_count(),
+            Self::Combination(v, _) => v.elements_count(),
+            Self::Condition(v, _) => v.elements_count(),
+            Self::Subsequence(v, _) => v.elements_count(),
+            Self::Optional(v, _) => v.elements_count(),
+            Self::Reference(v, _) => v.elements_count(),
+            Self::PatternString(v, _) => v.elements_count(),
+            Self::VariableName(v, _) => v.elements_count(),
+            Self::Values(v, _) => v.elements_count(),
+            Self::Meta(v, _) => v.elements_count(),
+            Self::Block(v, _) => v.elements_count(),
+            Self::Command(v, _) => v.elements_count(),
+            Self::Task(v, _) => v.elements_count(),
+            Self::Component(v, _) => v.elements_count(),
+            Self::Boolean(v, _) => v.elements_count(),
+            Self::Integer(v, _) => v.elements_count(),
+            Self::VariableDeclaration(v, _) => v.elements_count(),
+            Self::VariableVariants(v, _) => v.elements_count(),
+            Self::VariableType(v, _) => v.elements_count(),
+            Self::SimpleString(v, _) => v.elements_count(),
+            Self::Comment(v) => v.elements_count(),
+        }
+    }
     fn format(&self, cursor: &mut FormationCursor) -> String {
         fn format_el<A, B>(el: &A, md: &B, cursor: &mut FormationCursor) -> String
         where
