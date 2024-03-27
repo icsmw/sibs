@@ -234,7 +234,7 @@ mod reading {
             operator::Operator,
             tests::{self, report_if_err},
         },
-        reader::{Reader, Reading, E},
+        reader::{Reading, E},
     };
 
     #[tokio::test]
@@ -326,7 +326,7 @@ mod processing {
             operator::{Operator, E},
             Context,
         },
-        reader::{Reader, Reading},
+        reader::Reading,
     };
 
     const VALUES: &[&[&str]] = &[
@@ -375,7 +375,7 @@ mod processing {
 mod proptest {
     use std::path::PathBuf;
 
-    use crate::elements::{Component, ElTarget, Element, Function, Meta, SimpleString, Task};
+    use crate::elements::{Component, ElTarget, Element, SimpleString};
     use proptest::prelude::*;
 
     impl Arbitrary for Component {

@@ -472,7 +472,7 @@ mod proptest {
             VariableDeclaration, VariableName, VariableType, VariableVariants,
         },
         inf::{operator::E, tests::*, Context},
-        reader::{Reader, Reading},
+        reader::Reading,
     };
     use proptest::prelude::*;
 

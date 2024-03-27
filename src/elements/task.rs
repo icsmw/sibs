@@ -331,7 +331,7 @@ mod processing {
             context::Context,
             operator::{Operator, E},
         },
-        reader::{chars, Reader, Reading},
+        reader::{chars, Reading},
     };
 
     const VALUES: &[&[&str]] = &[&["a"], &["a", "b"], &["a"], &["a", "b"], &["a", "b", "c"]];

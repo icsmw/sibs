@@ -187,6 +187,16 @@ impl Function {
     pub fn set_token(&mut self, token: usize) {
         self.token = token;
     }
+    pub fn get_feeding(&self) -> Vec<&Box<Function>> {
+        let mut feeding: Vec<&Box<Function>> = vec![];
+        let mut current = self;
+        while let Some(feed) = current.feed.as_ref() {
+            feeding.push(feed);
+            current = feed;
+        }
+        feeding.reverse();
+        feeding
+    }
     pub async fn get_processed_args<'a>(
         &self,
         owner: Option<&'a Component>,
@@ -222,18 +232,12 @@ impl fmt::Display for Function {
                 if func.args.is_empty() { "" } else { ")" }
             )
         }
-        let mut nested: Vec<String> = vec![];
-        let mut current = self;
-        while let Some(feed) = current.feed.as_ref() {
-            nested.push(to_string(feed));
-            current = feed;
-        }
-        nested.reverse();
+        let feeding: Vec<String> = self.get_feeding().iter().map(|f| f.to_string()).collect();
         write!(
             f,
             "{}{}{}",
-            nested.join(" >> "),
-            if nested.is_empty() { "" } else { " >> " },
+            feeding.join(" >> "),
+            if feeding.is_empty() { "" } else { " >> " },
             to_string(self)
         )
     }
@@ -241,11 +245,47 @@ impl fmt::Display for Function {
 
 impl Formation for Function {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        format!(
-            "{}{}",
-            cursor.offset_as_string_if(&[ElTarget::Block, ElTarget::Component]),
-            self
-        )
+        fn formated(func: &Function, cursor: &mut FormationCursor) -> String {
+            format!(
+                "@{}{}{}{}{}",
+                func.name,
+                if func.tolerance { "?" } else { "" },
+                if func.args.is_empty() { "" } else { "(" },
+                func.args
+                    .iter()
+                    .map(|arg| format!("\n{}{arg}", cursor.right().offset_as_string()))
+                    .collect::<Vec<String>>()
+                    .join("; "),
+                if func.args.is_empty() {
+                    String::new()
+                } else {
+                    format!("\n{})", cursor.offset_as_string_if(&[ElTarget::Block]))
+                }
+            )
+        }
+        let feeding = self.get_feeding();
+        if self.to_string().len() > cursor.max_len()
+            || self.args.len() > cursor.max_args()
+            || feeding.len() > cursor.max_args()
+        {
+            format!(
+                "{}{}{}{}",
+                cursor.offset_as_string_if(&[ElTarget::Block]),
+                feeding
+                    .iter()
+                    .map(|f| formated(f, cursor))
+                    .collect::<Vec<String>>()
+                    .join(" >> "),
+                if feeding.is_empty() { "" } else { " >> " },
+                formated(self, cursor)
+            )
+        } else {
+            format!(
+                "{}{}",
+                cursor.offset_as_string_if(&[ElTarget::Block, ElTarget::Component]),
+                self
+            )
+        }
     }
 }
 
@@ -293,7 +333,7 @@ mod reading {
         elements::Function,
         error::LinkedErr,
         inf::{context::Context, operator::Operator, tests},
-        reader::{chars, Reader, Reading, E},
+        reader::{chars, Reading, E},
     };
 
     #[tokio::test]
@@ -379,7 +419,7 @@ mod processing {
             context::Context,
             operator::{Operator, E},
         },
-        reader::{chars, Reader, Reading},
+        reader::{chars, Reading},
     };
 
     #[tokio::test]
@@ -408,7 +448,7 @@ mod proptest {
     use crate::{
         elements::{ElTarget, Element, Function, Task},
         inf::{operator::E, tests::*, Context},
-        reader::{Reader, Reading},
+        reader::Reading,
     };
     use proptest::prelude::*;
 
