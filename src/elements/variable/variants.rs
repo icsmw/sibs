@@ -1,6 +1,10 @@
 use crate::{
+    elements::Component,
     error::LinkedErr,
-    inf::{operator, term, Formation, FormationCursor},
+    inf::{
+        operator, term, AnyValue, Context, Formation, FormationCursor, Operator,
+        OperatorPinnedResult,
+    },
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -21,8 +25,6 @@ impl Reading<VariableVariants> for VariableVariants {
         Ok(Some(VariableVariants::new(content, reader.token()?.id)?))
     }
 }
-
-//TODO: also should be done via Operator!
 
 impl VariableVariants {
     pub fn new(input: String, token: usize) -> Result<Self, LinkedErr<E>> {
@@ -55,6 +57,35 @@ impl VariableVariants {
                 self.values.join(" | "),
             ))
         }
+    }
+}
+
+impl Operator for VariableVariants {
+    fn token(&self) -> usize {
+        self.token
+    }
+    fn perform<'a>(
+        &'a self,
+        _owner: Option<&'a Component>,
+        _components: &'a [Component],
+        args: &'a [String],
+        _cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async move {
+            let value = if args.len() != 1 {
+                Err(operator::E::InvalidNumberOfArgumentsForDeclaration)?
+            } else {
+                args[0].to_owned()
+            };
+            if self.values.contains(&value) {
+                Ok(Some(AnyValue::new(value)))
+            } else {
+                Err(operator::E::NotDeclaredValueAsArgument(
+                    value,
+                    self.values.join(" | "),
+                ))
+            }
+        })
     }
 }
 

@@ -1,3 +1,5 @@
+use std::string::ParseError;
+
 use crate::{
     error::LinkedErr,
     executors,
@@ -80,6 +82,8 @@ pub enum E {
     NotFoundComponent(String),
     #[error("Task \"{0}\" for component \"{1}\" not found")]
     TaskNotFound(String, String),
+    #[error("Fail to parse string to {{{0}}}: {1}")]
+    ParseStringError(String, String),
 }
 
 impl From<tracker::E> for E {

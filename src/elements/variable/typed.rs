@@ -1,6 +1,10 @@
 use crate::{
+    elements::Component,
     error::LinkedErr,
-    inf::{term, Formation, FormationCursor},
+    inf::{
+        operator, term, AnyValue, Context, Formation, FormationCursor, Operator,
+        OperatorPinnedResult,
+    },
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -30,16 +34,6 @@ impl fmt::Display for Types {
 pub struct VariableType {
     pub var_type: Types,
     pub token: usize,
-}
-
-impl VariableType {
-    pub fn parse(&self, value: String) -> Option<String> {
-        match &self.var_type {
-            Types::String => Some(value),
-            Types::Number => value.parse::<isize>().ok().map(|_| value),
-            Types::Bool => value.parse::<bool>().ok().map(|_| value),
-        }
-    }
 }
 
 impl Reading<VariableType> for VariableType {
@@ -79,6 +73,36 @@ impl VariableType {
             });
         }
         Err(E::UnknownVariableType(var_type).linked(&token))
+    }
+}
+
+impl Operator for VariableType {
+    fn token(&self) -> usize {
+        self.token
+    }
+    fn perform<'a>(
+        &'a self,
+        _owner: Option<&'a Component>,
+        _components: &'a [Component],
+        args: &'a [String],
+        _cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async move {
+            let value = if args.len() != 1 {
+                Err(operator::E::InvalidNumberOfArgumentsForDeclaration)?
+            } else {
+                args[0].to_owned()
+            };
+            Ok(Some(match &self.var_type {
+                Types::String => AnyValue::new(value),
+                Types::Number => AnyValue::new(value.parse::<isize>().map_err(|e| {
+                    operator::E::ParseStringError(Types::Number.to_string(), e.to_string())
+                })?),
+                Types::Bool => AnyValue::new(value.parse::<bool>().map_err(|e| {
+                    operator::E::ParseStringError(Types::Bool.to_string(), e.to_string())
+                })?),
+            }))
+        })
     }
 }
 

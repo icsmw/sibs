@@ -48,32 +48,36 @@ impl Operator for VariableDeclaration {
     }
     fn perform<'a>(
         &'a self,
-        _owner: Option<&'a Component>,
-        _components: &'a [Component],
+        owner: Option<&'a Component>,
+        components: &'a [Component],
         args: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
-            if args.len() != 1 {
+            let input = if args.len() != 1 {
                 Err(operator::E::InvalidNumberOfArgumentsForDeclaration)?
-            }
-            let value = args[0].to_owned();
+            } else {
+                args[0].to_owned()
+            };
+            let mut output = if let Element::VariableType(el, _) = self.declaration.as_ref() {
+                Some(el.execute(owner, components, &[input.clone()], cx).await?)
+            } else {
+                None
+            };
+            output = if let Element::VariableVariants(el, _) = self.declaration.as_ref() {
+                Some(el.execute(owner, components, &[input], cx).await?)
+            } else {
+                output
+            };
             cx.vars().set(
                 if let Element::VariableName(el, _) = self.variable.as_ref() {
                     el.name.to_owned()
                 } else {
                     Err(operator::E::FailToGetDeclaredVariable)?
                 },
-                AnyValue::new(
-                    if let Element::VariableType(el, _) = self.declaration.as_ref() {
-                        el.parse(value)
-                    } else if let Element::VariableVariants(el, _) = self.declaration.as_ref() {
-                        el.parse(value)?
-                    } else {
-                        Err(operator::E::FailToExtractValue)?
-                    }
+                output
+                    .ok_or(operator::E::FailToExtractValue)?
                     .ok_or(operator::E::NoValueToDeclareTaskArgument)?,
-                ),
             );
             Ok(None)
         })
