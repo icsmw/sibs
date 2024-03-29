@@ -36,6 +36,8 @@ pub enum E {
     FailToExtractValue,
     #[error("Fail to get declared variable")]
     FailToGetDeclaredVariable,
+    #[error("Cannot declare input because invalid number of income arguments")]
+    InvalidNumberOfArgumentsForDeclaration,
     #[error("Fail to extract bool value for condition")]
     FailToExtractConditionValue,
     #[error("Fail to get value as string")]
@@ -68,6 +70,8 @@ pub enum E {
     DismatchTaskArgumentsCount,
     #[error("Fail to get value for declaration task's argument")]
     NoValueToDeclareTaskArgument,
+    #[error("Value \"{0}\" doesn't match to allowed: {1}")]
+    NotDeclaredValueAsArgument(String, String),
     #[error("Reference has invalid number of parts")]
     InvalidPartsInReference,
     #[error("Owner component isn't defined")]

@@ -1,6 +1,6 @@
 use crate::{
     error::LinkedErr,
-    inf::{term, Formation, FormationCursor},
+    inf::{operator, term, Formation, FormationCursor},
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -21,6 +21,8 @@ impl Reading<VariableVariants> for VariableVariants {
         Ok(Some(VariableVariants::new(content, reader.token()?.id)?))
     }
 }
+
+//TODO: also should be done via Operator!
 
 impl VariableVariants {
     pub fn new(input: String, token: usize) -> Result<Self, LinkedErr<E>> {
@@ -44,11 +46,14 @@ impl VariableVariants {
         Ok(VariableVariants { values, token })
     }
 
-    pub fn parse(&self, value: String) -> Option<String> {
+    pub fn parse(&self, value: String) -> Result<Option<String>, operator::E> {
         if self.values.contains(&value) {
-            Some(value)
+            Ok(Some(value))
         } else {
-            None
+            Err(operator::E::NotDeclaredValueAsArgument(
+                value,
+                self.values.join(" | "),
+            ))
         }
     }
 }

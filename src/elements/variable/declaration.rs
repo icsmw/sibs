@@ -1,7 +1,10 @@
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{operator, term, AnyValue, Context, Formation, FormationCursor},
+    inf::{
+        operator, term, AnyValue, Context, Formation, FormationCursor, Operator,
+        OperatorPinnedResult,
+    },
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -11,29 +14,6 @@ pub struct VariableDeclaration {
     pub variable: Box<Element>,
     pub declaration: Box<Element>,
     pub token: usize,
-}
-
-impl VariableDeclaration {
-    pub async fn declare<'a>(&self, value: String, cx: &'a mut Context) -> Result<(), operator::E> {
-        cx.vars().set(
-            if let Element::VariableName(el, _) = self.variable.as_ref() {
-                el.name.to_owned()
-            } else {
-                Err(operator::E::FailToGetDeclaredVariable)?
-            },
-            AnyValue::new(
-                if let Element::VariableType(el, _) = self.declaration.as_ref() {
-                    el.parse(value)
-                } else if let Element::VariableVariants(el, _) = self.declaration.as_ref() {
-                    el.parse(value)
-                } else {
-                    Err(operator::E::FailToExtractValue)?
-                }
-                .ok_or(operator::E::NoValueToDeclareTaskArgument)?,
-            ),
-        );
-        Ok(())
-    }
 }
 
 impl Reading<VariableDeclaration> for VariableDeclaration {
@@ -59,6 +39,44 @@ impl Reading<VariableDeclaration> for VariableDeclaration {
         } else {
             Ok(None)
         }
+    }
+}
+
+impl Operator for VariableDeclaration {
+    fn token(&self) -> usize {
+        self.token
+    }
+    fn perform<'a>(
+        &'a self,
+        _owner: Option<&'a Component>,
+        _components: &'a [Component],
+        args: &'a [String],
+        cx: &'a mut Context,
+    ) -> OperatorPinnedResult {
+        Box::pin(async move {
+            if args.len() != 1 {
+                Err(operator::E::InvalidNumberOfArgumentsForDeclaration)?
+            }
+            let value = args[0].to_owned();
+            cx.vars().set(
+                if let Element::VariableName(el, _) = self.variable.as_ref() {
+                    el.name.to_owned()
+                } else {
+                    Err(operator::E::FailToGetDeclaredVariable)?
+                },
+                AnyValue::new(
+                    if let Element::VariableType(el, _) = self.declaration.as_ref() {
+                        el.parse(value)
+                    } else if let Element::VariableVariants(el, _) = self.declaration.as_ref() {
+                        el.parse(value)?
+                    } else {
+                        Err(operator::E::FailToExtractValue)?
+                    }
+                    .ok_or(operator::E::NoValueToDeclareTaskArgument)?,
+                ),
+            );
+            Ok(None)
+        })
     }
 }
 

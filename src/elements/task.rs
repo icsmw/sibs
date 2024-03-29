@@ -228,7 +228,9 @@ impl Operator for Task {
             }
             for (i, el) in self.declarations.iter().enumerate() {
                 if let Element::VariableDeclaration(declaration, _) = el {
-                    declaration.declare(args[i].to_owned(), cx).await?;
+                    declaration
+                        .execute(owner, components, &[args[i].to_owned()], cx)
+                        .await?;
                 } else {
                     return Err(operator::E::InvalidVariableDeclaration);
                 }

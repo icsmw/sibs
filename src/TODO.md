@@ -16,3 +16,21 @@ NO Errors:
 $is_verified AND $has_permission => @proceed_with_action;
 true != false doesn't work
 
+- show trace like:
+```
+1 │         $c_str = "value_c_{$a_str}-{$b_str}";
+12 │         $d_bool = @os(linux);
+13 │         IF @os(linux) [
+14 │             :self:build("smth"; "prod1");
+                                      ^^^^^
+                                      Calling of task
+15 │         ];
+16 │     ];
+17 │     build($input_a: {string}; $mode: dev | prod;) [
+                                   ^^^^^^^^^^^^^^^^^
+                                   ERROR: Value "prod1" doesn't match to allowed: dev | prod
+
+18 │         $a_str = "value_a";
+19 │         `ls -lsa`;
+20 │     ];
+```
