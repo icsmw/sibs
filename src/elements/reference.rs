@@ -67,7 +67,7 @@ impl Reading<Reference> for Reference {
                     let _ = inner.move_to().char(&[&chars::SEMICOLON]);
                 }
                 if !inner.is_empty() {
-                    Err(E::UnrecognizedCode(inner.rest().to_string()).by_reader(&inner))?;
+                    Err(E::UnrecognizedCode(inner.move_to().end()).by_reader(&inner))?;
                 }
                 if inputs.is_empty() {
                     return Err(E::InvalidArgumentForReference.linked(&inputs_token_id));

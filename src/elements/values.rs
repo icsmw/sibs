@@ -49,11 +49,10 @@ impl Reading<Values> for Values {
                 elements.push(el);
             }
             if !inner.rest().trim().is_empty() {
-                if inner.until().char(&[&chars::SEMICOLON]).is_some() {
-                    Err(E::UnrecognizedCode(inner.token()?.content.to_owned())
-                        .linked(&inner.token()?.id))?;
+                if let Some((content, _)) = inner.until().char(&[&chars::SEMICOLON]) {
+                    Err(E::UnrecognizedCode(content).by_reader(&inner))?;
                 } else {
-                    Err(E::UnrecognizedCode(inner.rest().to_owned()).by_reader(&inner))?;
+                    Err(E::UnrecognizedCode(inner.move_to().end()).by_reader(&inner))?;
                 }
             }
             Ok(Some(Values {

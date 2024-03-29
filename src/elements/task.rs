@@ -77,7 +77,7 @@ impl Reading<Task> for Task {
                     dependencies.push(el);
                 }
                 if !inner.is_empty() {
-                    Err(E::UnrecognizedCode(inner.rest().to_string()).by_reader(&inner))?;
+                    Err(E::UnrecognizedCode(inner.move_to().end()).by_reader(&inner))?;
                 }
             }
             if let Some(block) = Block::read(reader)? {
