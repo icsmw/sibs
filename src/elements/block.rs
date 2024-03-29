@@ -52,7 +52,12 @@ impl Reading<Block> for Block {
                         !matches!(el, Element::Meta(..)),
                         inner.move_to().char(&[&chars::SEMICOLON]).is_none(),
                     ) {
-                        return Err(E::MissedSemicolon.by_reader(&inner));
+                        return if let Some((content, _)) = inner.until().char(&[&chars::SEMICOLON])
+                        {
+                            Err(E::UnrecognizedCode(content).by_reader(&inner))
+                        } else {
+                            Err(E::MissedSemicolon.by_reader(&inner))
+                        };
                     }
                     elements.push(el);
                     continue;

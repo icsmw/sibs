@@ -32,9 +32,10 @@ pub fn read(
                 ));
                 closed = true;
                 break;
-            } else if let Some(hook) = reader
+            } else if reader
                 .group()
                 .between(&chars::TYPE_OPEN, &chars::TYPE_CLOSE)
+                .is_some()
             {
                 let mut inner = reader.token()?.bound;
                 if let Some(el) = Element::include(
@@ -51,6 +52,9 @@ pub fn read(
                         ),
                         el,
                     ]);
+                    if !inner.is_empty() {
+                        Err(E::UnrecognizedCode(inner.move_to().end()).by_reader(&inner))?
+                    }
                 } else {
                     Err(E::FailToFindInjection.by_reader(&inner))?
                 }
