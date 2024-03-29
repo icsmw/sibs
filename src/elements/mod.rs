@@ -84,7 +84,7 @@ impl Formation for Metadata {
             "{}{}",
             self.comments
                 .iter()
-                .map(|c| format!("{}{c}", cursor.offset_as_string()))
+                .map(|c| c.format(cursor))
                 .collect::<Vec<String>>()
                 .join("\n"),
             if self.comments.is_empty() { "" } else { "\n" },

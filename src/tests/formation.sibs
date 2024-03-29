@@ -22,7 +22,7 @@
         $mode == "dev" => :client:build("dev");
         $mode == "prod" => :client:build("prod");
         // Comment
-        // Comment long comment  long comment  long comment  long comment  long comment  long comment long comment  long comment  long comment  long comment 
+        // Comment 1long comment  2long comment  3long comment  4long comment  5long comment  6long comment 7long comment  8long comment  9long comment  10long comment 11long comment  12long comment  13long comment  14long comment  15long comment  16long comment 17long comment  18long comment  19long comment  20long comment
         @copy(../client/dist/client; ./dist);
         `yarn run build`;
         @copy(./package.json; ./dist);
