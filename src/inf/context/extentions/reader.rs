@@ -12,6 +12,7 @@ impl<'a> ReaderGetter<'a> {
     pub fn new(bound: &'a mut Context) -> Self {
         Self { bound }
     }
+    #[allow(clippy::wrong_self_convention)]
     pub fn from_file(&mut self, filename: &PathBuf) -> Result<Reader, E> {
         Ok(Reader::new(
             self.bound
@@ -20,6 +21,7 @@ impl<'a> ReaderGetter<'a> {
         ))
     }
     #[cfg(test)]
+    #[allow(clippy::wrong_self_convention)]
     pub fn from_str(&mut self, content: &str) -> Reader {
         Reader::new(self.bound.sources.add_from_str(content))
     }

@@ -187,11 +187,11 @@ impl Function {
     pub fn set_token(&mut self, token: usize) {
         self.token = token;
     }
-    pub fn get_feeding(&self) -> Vec<&Box<Function>> {
-        let mut feeding: Vec<&Box<Function>> = vec![];
+    pub fn get_feeding(&self) -> Vec<&Function> {
+        let mut feeding: Vec<&Function> = vec![];
         let mut current = self;
         while let Some(feed) = current.feed.as_ref() {
-            feeding.push(feed);
+            feeding.push(feed.as_ref());
             current = feed;
         }
         feeding.reverse();
