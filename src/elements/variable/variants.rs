@@ -47,17 +47,6 @@ impl VariableVariants {
         }
         Ok(VariableVariants { values, token })
     }
-
-    pub fn parse(&self, value: String) -> Result<Option<String>, operator::E> {
-        if self.values.contains(&value) {
-            Ok(Some(value))
-        } else {
-            Err(operator::E::NotDeclaredValueAsArgument(
-                value,
-                self.values.join(" | "),
-            ))
-        }
-    }
 }
 
 impl Operator for VariableVariants {
@@ -73,17 +62,17 @@ impl Operator for VariableVariants {
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let value = if args.len() != 1 {
-                Err(operator::E::InvalidNumberOfArgumentsForDeclaration)?
+                Err(operator::E::InvalidNumberOfArgumentsForDeclaration.by(self))?
             } else {
                 args[0].to_owned()
             };
             if self.values.contains(&value) {
                 Ok(Some(AnyValue::new(value)))
             } else {
-                Err(operator::E::NotDeclaredValueAsArgument(
-                    value,
-                    self.values.join(" | "),
-                ))
+                Err(
+                    operator::E::NotDeclaredValueAsArgument(value, self.values.join(" | "))
+                        .by(self),
+                )
             }
         })
     }
@@ -126,8 +115,8 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample);
-            assert!(report_if_err(&cx, VariableVariants::read(&mut reader)).is_ok());
+            let mut reader = cx.reader().from_str(sample)?;
+            assert!(report_if_err(&mut cx, VariableVariants::read(&mut reader)).is_ok());
             count += 1;
         }
         assert_eq!(count, samples.len());
@@ -141,7 +130,7 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample);
+            let mut reader = cx.reader().from_str(sample)?;
             assert!(VariableVariants::read(&mut reader).is_err());
             count += 1;
         }

@@ -96,8 +96,8 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample);
-            report_if_err(&cx, VariableName::read(&mut reader))?.unwrap();
+            let mut reader = cx.reader().from_str(sample)?;
+            report_if_err(&mut cx, VariableName::read(&mut reader))?.unwrap();
             count += 1;
         }
         assert_eq!(count, samples.len());
@@ -111,7 +111,7 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample);
+            let mut reader = cx.reader().from_str(sample)?;
             let variable_name = VariableName::read(&mut reader)?.unwrap();
             let fragment = reader.get_fragment(&reader.token()?.id)?.content;
             assert_eq!(format!("${}", variable_name.name), fragment);
@@ -129,7 +129,7 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample);
+            let mut reader = cx.reader().from_str(sample)?;
             assert!(VariableName::read(&mut reader).is_err());
             count += 1;
         }

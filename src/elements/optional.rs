@@ -130,9 +130,9 @@ mod reading {
         let mut cx: Context = Context::create().unbound()?;
         let mut reader = cx
             .reader()
-            .from_str(include_str!("../tests/reading/optional.sibs"));
+            .from_str(include_str!("../tests/reading/optional.sibs"))?;
         let mut count = 0;
-        while let Some(entity) = tests::report_if_err(&cx, Optional::read(&mut reader))? {
+        while let Some(entity) = tests::report_if_err(&mut cx, Optional::read(&mut reader))? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(reader.recent()),
@@ -152,7 +152,7 @@ mod reading {
         let mut cx: Context = Context::create().unbound()?;
         let mut reader = cx
             .reader()
-            .from_str(include_str!("../tests/reading/optional.sibs"));
+            .from_str(include_str!("../tests/reading/optional.sibs"))?;
         let mut count = 0;
         while let Some(entity) = Optional::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
@@ -194,7 +194,7 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample);
+            let mut reader = cx.reader().from_str(sample)?;
             let opt = Optional::read(&mut reader);
             println!("{opt:?}");
             assert!(opt.is_err());
@@ -221,7 +221,7 @@ mod processing {
         let mut cx = Context::create().unbound()?;
         let mut reader = cx
             .reader()
-            .from_str(include_str!("../tests/processing/optional.sibs"));
+            .from_str(include_str!("../tests/processing/optional.sibs"))?;
         while let Some(task) = Task::read(&mut reader)? {
             let result = task
                 .execute(None, &[], &[], &mut cx)
@@ -318,7 +318,7 @@ mod proptest {
         get_rt().block_on(async {
             let mut cx = Context::create().unbound()?;
             let origin = format!("test [\n{optional};\n];");
-            let mut reader = cx.reader().from_str(&origin);
+            let mut reader = cx.reader().from_str(&origin)?;
             while let Some(task) = Task::read(&mut reader)? {
                 assert_eq!(format!("{task};"), origin);
             }

@@ -186,8 +186,8 @@ mod reading {
             include_str!("../tests/reading/optional.sibs"),
             include_str!("../tests/reading/each.sibs"),
             include_str!("../tests/reading/refs.sibs")
-        ));
-        while let Some(entity) = report_if_err(&cx, Block::read(&mut reader))? {
+        ))?;
+        while let Some(entity) = report_if_err(&mut cx, Block::read(&mut reader))? {
             assert_eq!(
                 trim_carets(reader.recent()),
                 trim_carets(&entity.to_string())
@@ -208,7 +208,7 @@ mod reading {
             include_str!("../tests/reading/optional.sibs"),
             include_str!("../tests/reading/each.sibs"),
             include_str!("../tests/reading/refs.sibs")
-        ));
+        ))?;
         while let Some(entity) = Block::read(&mut reader)? {
             assert_eq!(
                 trim_carets(&entity.to_string()),
@@ -294,7 +294,7 @@ mod proptest {
         get_rt().block_on(async {
             let origin = format!("test {block};");
             let mut cx: Context = Context::create().unbound()?;
-            let mut reader = cx.reader().from_str(&origin);
+            let mut reader = cx.reader().from_str(&origin)?;
             while let Some(task) = Task::read(&mut reader)? {
                 assert_eq!(format!("{task};"), origin);
             }

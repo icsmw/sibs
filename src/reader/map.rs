@@ -101,7 +101,23 @@ impl Map {
             *len,
         ))
     }
-    pub fn gen_report<'a, T>(
+    pub fn err_report<'a, T>(&mut self, token: &usize, msg: T) -> Result<String, E>
+    where
+        T: 'a + ToOwned + ToString,
+    {
+        let report = self.gen_report(
+            token,
+            format!(
+                "{} {}",
+                Style::new().red().bold().apply_to("ERROR:"),
+                Style::new().white().apply_to(msg.to_string())
+            ),
+            Some(Style::new().red().bold()),
+        )?;
+        println!("{report}",);
+        Ok(report)
+    }
+    fn gen_report<'a, T>(
         &mut self,
         token: &usize,
         msg: T,
@@ -177,38 +193,14 @@ impl Map {
                 .join("\n"),
         )
     }
-    pub fn get_err_report<'a, T>(&mut self, token: &usize, msg: T) -> Result<String, E>
-    where
-        T: 'a + ToOwned + ToString,
-    {
-        Ok(self.gen_report(
-            token,
-            format!(
-                "{} {}",
-                Style::new().red().bold().apply_to("ERROR:"),
-                Style::new().white().apply_to(msg.to_string())
-            ),
-            Some(Style::new().red().bold()),
-        )?)
-    }
-    pub fn get_report<'a, T>(&mut self, token: &usize, msg: T) -> Result<String, E>
-    where
-        T: 'a + ToOwned + ToString,
-    {
-        self.gen_report(
-            token,
-            format!("{}", Style::new().blue().apply_to(msg.to_string())),
-            Some(Style::new().blue().bold()),
-        )
-    }
-    pub fn post_reports(&self) {
-        println!(
-            "{}: {}",
-            Style::new().white().bold().apply_to("File"),
-            self.filename.to_string_lossy(),
-        );
-        self.reports.iter().for_each(|report| {
-            println!("\n{report}");
-        });
-    }
+    // pub fn post_reports(&self) {
+    //     println!(
+    //         "{}: {}",
+    //         Style::new().white().bold().apply_to("File"),
+    //         self.filename.to_string_lossy(),
+    //     );
+    //     self.reports.iter().for_each(|report| {
+    //         println!("\n{report}");
+    //     });
+    // }
 }

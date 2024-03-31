@@ -1,10 +1,24 @@
 use crate::{cli, reader};
 use std::fmt;
-
+use uuid::Uuid;
 #[derive(Debug)]
 pub struct LinkedErr<T: fmt::Display> {
     pub token: Option<usize>,
+    pub uuid: Uuid,
     pub e: T,
+}
+
+impl<T: fmt::Display> LinkedErr<T> {
+    pub fn new(e: T, token: Option<usize>) -> Self {
+        Self {
+            token,
+            uuid: Uuid::new_v4(),
+            e,
+        }
+    }
+    pub fn unlinked(e: T) -> Self {
+        Self::new(e, None)
+    }
 }
 
 impl<T: fmt::Display> fmt::Display for LinkedErr<T> {

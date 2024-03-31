@@ -133,7 +133,7 @@ impl Operator for Reference {
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
-            let target = owner.ok_or(operator::E::NoOwnerComponent)?;
+            let target = owner.ok_or(operator::E::NoOwnerComponent.by(self))?;
             let (parent, task) = if self.path.len() == 1 {
                 (target, &self.path[0])
             } else if self.path.len() == 2 {
@@ -144,26 +144,27 @@ impl Operator for Reference {
                         components
                             .iter()
                             .find(|c| c.name.to_string() == self.path[0])
-                            .ok_or(operator::E::NotFoundComponent(self.path[0].to_owned()))?
+                            .ok_or(
+                                operator::E::NotFoundComponent(self.path[0].to_owned()).by(self),
+                            )?
                     },
                     &self.path[1],
                 )
             } else {
-                return Err(operator::E::InvalidPartsInReference);
+                return Err(operator::E::InvalidPartsInReference.by(self));
             };
-            let task = parent.get_task(task).ok_or(operator::E::TaskNotFound(
-                task.to_owned(),
-                parent.name.to_string(),
-            ))?;
+            let task = parent.get_task(task).ok_or(
+                operator::E::TaskNotFound(task.to_owned(), parent.name.to_string()).by(self),
+            )?;
             let mut args: Vec<String> = vec![];
             for input in self.inputs.iter() {
                 args.push(
                     input
                         .execute(owner, components, inputs, cx)
                         .await?
-                        .ok_or(operator::E::FailToGetAnyValueAsTaskArg)?
+                        .ok_or(operator::E::FailToGetAnyValueAsTaskArg.by(self))?
                         .get_as_string()
-                        .ok_or(operator::E::FailToGetStringValue)?,
+                        .ok_or(operator::E::FailToGetStringValue.by(self))?,
                 );
             }
             task.execute(owner, components, &args, cx).await
@@ -185,9 +186,9 @@ mod reading {
         let mut cx: Context = Context::create().unbound()?;
         let mut reader = cx
             .reader()
-            .from_str(include_str!("../tests/reading/refs.sibs"));
+            .from_str(include_str!("../tests/reading/refs.sibs"))?;
         let mut count = 0;
-        while let Some(entity) = report_if_err(&cx, Reference::read(&mut reader))? {
+        while let Some(entity) = report_if_err(&mut cx, Reference::read(&mut reader))? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 trim_carets(reader.recent()),
@@ -207,7 +208,7 @@ mod reading {
         let mut cx: Context = Context::create().unbound()?;
         let mut reader = cx
             .reader()
-            .from_str(include_str!("../tests/reading/refs.sibs"));
+            .from_str(include_str!("../tests/reading/refs.sibs"))?;
         let mut count = 0;
         while let Some(entity) = Reference::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
@@ -232,7 +233,7 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample);
+            let mut reader = cx.reader().from_str(sample)?;
             let result = Reference::read(&mut reader);
             println!("{result:?}");
             assert!(result.is_err(), "Line: {}", count + 1);

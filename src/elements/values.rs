@@ -159,8 +159,8 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample);
-            let entity = tests::report_if_err(&cx, Values::read(&mut reader))?;
+            let mut reader = cx.reader().from_str(sample)?;
+            let entity = tests::report_if_err(&mut cx, Values::read(&mut reader))?;
             assert!(entity.is_some(), "Line: {}", count + 1);
             let entity = entity.unwrap();
             assert_eq!(
@@ -182,7 +182,7 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample);
+            let mut reader = cx.reader().from_str(sample)?;
             let entity = Values::read(&mut reader)?.unwrap();
             assert_eq!(
                 tests::trim_carets(&entity.to_string()),
@@ -211,7 +211,7 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample);
+            let mut reader = cx.reader().from_str(sample)?;
             assert!(Values::read(&mut reader).is_err());
             count += 1;
         }
@@ -247,14 +247,14 @@ mod processing {
         let mut cx = Context::create().unbound()?;
         let mut reader = cx
             .reader()
-            .from_str(include_str!("../tests/processing/values_components.sibs"));
+            .from_str(include_str!("../tests/processing/values_components.sibs"))?;
         let mut components: Vec<Component> = vec![];
         while let Some(component) = Component::read(&mut reader)? {
             components.push(component);
         }
         let mut reader = cx
             .reader()
-            .from_str(include_str!("../tests/processing/values.sibs"));
+            .from_str(include_str!("../tests/processing/values.sibs"))?;
         while let Some(task) = Task::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert!(task

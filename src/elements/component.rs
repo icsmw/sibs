@@ -252,9 +252,9 @@ mod reading {
                 .map(|c| format!("{c}\n{tasks}"))
                 .collect::<Vec<String>>()
                 .join("\n"),
-        );
+        )?;
         let mut count = 0;
-        while let Some(entity) = report_if_err(&cx, Component::read(&mut reader))? {
+        while let Some(entity) = report_if_err(&mut cx, Component::read(&mut reader))? {
             assert_eq!(
                 tests::trim_carets(reader.recent()),
                 tests::trim_carets(&entity.to_string()),
@@ -278,7 +278,7 @@ mod reading {
                 .map(|c| format!("{c}\n{tasks}"))
                 .collect::<Vec<String>>()
                 .join("\n"),
-        );
+        )?;
         let mut count = 0;
         while let Some(entity) = Component::read(&mut reader)? {
             assert_eq!(
@@ -312,7 +312,7 @@ mod reading {
             .collect::<Vec<String>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample);
+            let mut reader = cx.reader().from_str(sample)?;
             assert!(Component::read(&mut reader).is_err());
             count += 1;
         }
@@ -344,7 +344,7 @@ mod processing {
         let mut cx = Context::create().unbound()?;
         let mut reader = cx
             .reader()
-            .from_str(include_str!("../tests/processing/component.sibs"));
+            .from_str(include_str!("../tests/processing/component.sibs"))?;
         let mut cursor: usize = 0;
         let mut components: Vec<Component> = vec![];
         while let Some(component) = Component::read(&mut reader)? {

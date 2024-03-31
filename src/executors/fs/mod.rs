@@ -151,10 +151,10 @@ mod test {
             let mut cx = Context::create().unbound()?;
             let mut reader = cx
                 .reader()
-                .from_str(&apply_hooks(format!("test[{test}]"), hooks));
+                .from_str(&apply_hooks(format!("test[{test}]"), hooks))?;
             while let Some(task) = Task::read(&mut reader)? {
                 let result = task.execute(None, &[], &[], &mut cx).await;
-                let result = post_if_err(&cx, result)?.expect("test returns some value");
+                let result = report_if_err(&mut cx, result)?.expect("test returns some value");
                 let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                 assert_eq!(
                     result.get_as_string().expect("test returns string value"),

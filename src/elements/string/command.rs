@@ -103,13 +103,16 @@ impl Operator for Command {
                         element
                             .execute(owner, components, inputs, cx)
                             .await?
-                            .ok_or(operator::E::FailToExtractValue)?
+                            .ok_or(operator::E::FailToExtractValue.by(self))?
                             .get_as_string()
-                            .ok_or(operator::E::FailToGetValueAsString)?
+                            .ok_or(operator::E::FailToGetValueAsString.by(self))?
                     );
                 }
             }
-            let cwd = cx.cwd.as_ref().ok_or(operator::E::NoCurrentWorkingFolder)?;
+            let cwd = cx
+                .cwd
+                .as_ref()
+                .ok_or(operator::E::NoCurrentWorkingFolder.by(self))?;
             let job = cx
                 .tracker
                 .create_job(
@@ -124,7 +127,7 @@ impl Operator for Command {
                         Ok(Some(AnyValue::new(())))
                     } else {
                         job.fail();
-                        Err(operator::E::SpawnedProcessExitWithError)
+                        Err(operator::E::SpawnedProcessExitWithError.by(self))
                     }
                 }
                 Err(e) => {
@@ -151,13 +154,13 @@ mod reading {
         let mut cx: Context = Context::create().unbound()?;
         let mut reader = cx
             .reader()
-            .from_str(include_str!("../../tests/reading/command.sibs"));
+            .from_str(include_str!("../../tests/reading/command.sibs"))?;
         let origins = include_str!("../../tests/reading/command.sibs")
             .split('\n')
             .map(|s| s.to_string())
             .collect::<Vec<String>>();
         let mut count = 0;
-        while let Some(entity) = tests::report_if_err(&cx, Command::read(&mut reader))? {
+        while let Some(entity) = tests::report_if_err(&mut cx, Command::read(&mut reader))? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(reader.recent()),
@@ -183,7 +186,7 @@ mod reading {
         let mut cx = Context::create().unbound()?;
         let mut reader = cx
             .reader()
-            .from_str(include_str!("../../tests/reading/command.sibs"));
+            .from_str(include_str!("../../tests/reading/command.sibs"))?;
         let mut count = 0;
         while let Some(entity) = Command::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);

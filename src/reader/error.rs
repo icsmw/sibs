@@ -135,10 +135,7 @@ pub enum E {
 
 impl E {
     pub fn linked(self, token: &usize) -> LinkedErr<E> {
-        LinkedErr {
-            token: Some(*token),
-            e: self,
-        }
+        LinkedErr::new(self, Some(*token))
     }
     pub fn by_reader(self, reader: &Reader) -> LinkedErr<E> {
         match reader.token() {
@@ -147,10 +144,7 @@ impl E {
         }
     }
     pub fn unlinked(self) -> LinkedErr<E> {
-        LinkedErr {
-            token: None,
-            e: self,
-        }
+        LinkedErr::new(self, None)
     }
 }
 

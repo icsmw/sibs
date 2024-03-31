@@ -191,9 +191,9 @@ mod reading {
     async fn reading() -> Result<(), LinkedErr<E>> {
         let mut cx: Context = Context::create().unbound()?;
         let content = include_str!("../../tests/reading/if.sibs");
-        let mut reader = cx.reader().from_str(content);
+        let mut reader = cx.reader().from_str(content)?;
         let mut count = 0;
-        while let Some(entity) = tests::report_if_err(&cx, If::read(&mut reader))? {
+        while let Some(entity) = tests::report_if_err(&mut cx, If::read(&mut reader))? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(reader.recent()),
@@ -212,7 +212,7 @@ mod reading {
     async fn tokens() -> Result<(), LinkedErr<E>> {
         let mut cx = Context::create().unbound()?;
         let content = include_str!("../../tests/reading/if.sibs");
-        let mut reader = cx.reader().from_str(content);
+        let mut reader = cx.reader().from_str(content)?;
         let mut count = 0;
         while let Some(entity) = If::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
@@ -256,7 +256,7 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample);
+            let mut reader = cx.reader().from_str(sample)?;
             assert!(If::read(&mut reader).is_err());
             count += 1;
         }
@@ -285,9 +285,9 @@ mod processing {
             .count();
         let mut reader = cx
             .reader()
-            .from_str(include_str!("../../tests/processing/if.sibs"));
+            .from_str(include_str!("../../tests/processing/if.sibs"))?;
         let mut count = 0;
-        while let Some(task) = report_if_err(&cx, Task::read(&mut reader))? {
+        while let Some(task) = report_if_err(&mut cx, Task::read(&mut reader))? {
             let result = task
                 .execute(None, &[], &[], &mut cx)
                 .await?
@@ -360,7 +360,7 @@ mod proptest {
         get_rt().block_on(async {
             let mut cx = Context::create().unbound()?;
             let origin = format!("test [\n{if_block};\n];");
-            let mut reader = cx.reader().from_str(&origin);
+            let mut reader = cx.reader().from_str(&origin)?;
             while let Some(task) = Task::read(&mut reader)? {
                 assert_eq!(format!("{task};"), origin);
             }

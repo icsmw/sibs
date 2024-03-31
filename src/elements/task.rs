@@ -219,7 +219,8 @@ impl Operator for Task {
                         .join(", "),
                     args.len(),
                     args.join(", "),
-                ))?;
+                )
+                .by(self))?;
             }
             for (i, el) in self.declarations.iter().enumerate() {
                 if let Element::VariableDeclaration(declaration, _) = el {
@@ -227,7 +228,7 @@ impl Operator for Task {
                         .execute(owner, components, &[args[i].to_owned()], cx)
                         .await?;
                 } else {
-                    return Err(operator::E::InvalidVariableDeclaration);
+                    return Err(operator::E::InvalidVariableDeclaration.by(self));
                 }
             }
             job.result(self.block.execute(owner, components, args, cx).await)
@@ -249,9 +250,9 @@ mod reading {
         let mut cx: Context = Context::create().unbound()?;
         let mut reader = cx
             .reader()
-            .from_str(include_str!("../tests/reading/tasks.sibs"));
+            .from_str(include_str!("../tests/reading/tasks.sibs"))?;
         let mut count = 0;
-        while let Some(entity) = report_if_err(&cx, Task::read(&mut reader))? {
+        while let Some(entity) = report_if_err(&mut cx, Task::read(&mut reader))? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 trim_carets(reader.recent()),
@@ -269,7 +270,7 @@ mod reading {
         let mut cx: Context = Context::create().unbound()?;
         let mut reader = cx
             .reader()
-            .from_str(include_str!("../tests/reading/tasks.sibs"));
+            .from_str(include_str!("../tests/reading/tasks.sibs"))?;
         let mut count = 0;
         while let Some(entity) = Task::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
@@ -311,7 +312,7 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample);
+            let mut reader = cx.reader().from_str(sample)?;
             assert!(Task::read(&mut reader).is_err());
             count += 1;
         }
@@ -338,7 +339,7 @@ mod processing {
         let mut cx = Context::create().unbound()?;
         let mut reader = cx
             .reader()
-            .from_str(include_str!("../tests/processing/tasks.sibs"));
+            .from_str(include_str!("../tests/processing/tasks.sibs"))?;
         let mut cursor: usize = 0;
         while let Some(task) = Task::read(&mut reader)? {
             let result = task

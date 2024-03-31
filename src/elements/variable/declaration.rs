@@ -1,10 +1,7 @@
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{
-        operator, term, AnyValue, Context, Formation, FormationCursor, Operator,
-        OperatorPinnedResult,
-    },
+    inf::{operator, term, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;

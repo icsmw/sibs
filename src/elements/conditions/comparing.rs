@@ -206,8 +206,8 @@ mod reading {
             .collect::<Vec<String>>();
         let mut count = 0;
         for str in content.iter() {
-            let mut reader = cx.reader().from_str(str);
-            let entity = tests::report_if_err(&cx, Comparing::read(&mut reader))?;
+            let mut reader = cx.reader().from_str(str)?;
+            let entity = tests::report_if_err(&mut cx, Comparing::read(&mut reader))?;
             assert!(entity.is_some(), "Line: {}", count + 1);
             let entity = entity.unwrap();
             assert_eq!(
@@ -232,7 +232,7 @@ mod reading {
             .collect::<Vec<String>>();
         let mut count = 0;
         for str in content.iter() {
-            let mut reader = cx.reader().from_str(str);
+            let mut reader = cx.reader().from_str(str)?;
             let entity = Comparing::read(&mut reader)?;
             assert!(entity.is_some(), "Line: {}", count + 1);
             let entity = entity.unwrap();
@@ -265,7 +265,7 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample);
+            let mut reader = cx.reader().from_str(sample)?;
             let cmp = Comparing::read(&mut reader);
             assert!(cmp.is_err() || matches!(cmp, Ok(None)));
             count += 1;

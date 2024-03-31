@@ -702,7 +702,7 @@ mod proptest {
         get_rt().block_on(async {
             let mut cx: Context = Context::create().unbound()?;
             let origin = format!("{el};");
-            let mut reader = cx.reader().from_str(&origin);
+            let mut reader = cx.reader().from_str(&origin)?;
             while let Some(block) = Block::read(&mut reader)? {
                 assert_eq!(format!("{block};"), origin);
             }

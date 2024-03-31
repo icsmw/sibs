@@ -52,12 +52,6 @@ impl FormationCursor {
             parent: self.parent.clone(),
         }
     }
-    pub fn left(&mut self) -> Self {
-        FormationCursor {
-            offset: self.offset - 1,
-            parent: self.parent.clone(),
-        }
-    }
     pub fn reown(&mut self, parent: Option<ElTarget>) -> Self {
         FormationCursor {
             offset: self.offset,
@@ -95,8 +89,7 @@ mod reading {
                 }
             }
             Err(err) => {
-                cx.sources.gen_report_from_err(&err)?;
-                cx.sources.post_reports();
+                cx.sources.report_error(&err)?;
                 let _ = cx.tracker.shutdown().await;
                 return Err(err);
             }

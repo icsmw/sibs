@@ -316,7 +316,7 @@ impl Operator for Function {
                     0,
                     cx.functions()
                         .get(&func.name)
-                        .ok_or(operator::E::NoFunctionExecutor(self.name.clone()))?(
+                        .ok_or(operator::E::NoFunctionExecutor(self.name.clone()).by(self))?(
                         func.get_processed_args(owner, components, inputs, cx)
                             .await?,
                         cx,
@@ -325,10 +325,9 @@ impl Operator for Function {
                 );
             };
             let binding = cx.functions();
-
             let executor = binding
                 .get(&self.name)
-                .ok_or(operator::E::NoFunctionExecutor(self.name.clone()))?;
+                .ok_or(operator::E::NoFunctionExecutor(self.name.clone()).by(self))?;
             Ok(Some(executor(args, cx).await?))
         })
     }
@@ -348,9 +347,9 @@ mod reading {
         let mut cx: Context = Context::create().unbound()?;
         let content = include_str!("../tests/reading/function.sibs");
         let len = content.split('\n').count();
-        let mut reader = cx.reader().from_str(content);
+        let mut reader = cx.reader().from_str(content)?;
         let mut count = 0;
-        while let Some(entity) = tests::report_if_err(&cx, Function::read(&mut reader))? {
+        while let Some(entity) = tests::report_if_err(&mut cx, Function::read(&mut reader))? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 tests::trim_carets(reader.recent()),
@@ -370,7 +369,7 @@ mod reading {
         let mut cx: Context = Context::create().unbound()?;
         let content = include_str!("../tests/reading/function.sibs");
         let len = content.split('\n').count();
-        let mut reader = cx.reader().from_str(content);
+        let mut reader = cx.reader().from_str(content)?;
         let mut count = 0;
         while let Some(entity) = Function::read(&mut reader)? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
@@ -398,7 +397,7 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample);
+            let mut reader = cx.reader().from_str(sample)?;
             let func = Function::read(&mut reader);
             if func.is_ok() {
                 let _ = reader.move_to().char(&[&chars::SEMICOLON]);
@@ -434,7 +433,7 @@ mod processing {
         let mut cx: Context = Context::create().unbound()?;
         let mut reader = cx
             .reader()
-            .from_str(include_str!("../tests/processing/functions.sibs"));
+            .from_str(include_str!("../tests/processing/functions.sibs"))?;
         while let Some(task) = Task::read(&mut reader)? {
             let result = task
                 .execute(None, &[], &[], &mut cx)
@@ -523,7 +522,7 @@ mod proptest {
         get_rt().block_on(async {
             let mut cx: Context = Context::create().unbound()?;
             let origin = format!("test [\n{func};\n];");
-            let mut reader = cx.reader().from_str(&origin);
+            let mut reader = cx.reader().from_str(&origin)?;
             while let Some(task) = Task::read(&mut reader)? {
                 assert_eq!(format!("{task};"), origin);
             }

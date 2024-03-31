@@ -95,7 +95,7 @@ pub async fn read(cx: &mut Context) -> Result<(), E> {
             })
             .collect::<Vec<Component>>(),
         Err(err) => {
-            cx.sources.gen_report_from_err(&err)?;
+            cx.sources.report_error(&err)?;
             return Err(E::ReaderError(err.e));
         }
     };
@@ -117,8 +117,8 @@ pub async fn read(cx: &mut Context) -> Result<(), E> {
                 .execute(Some(component), &components, &income, cx)
                 .await
                 .map_err(|e| {
-                    cx.sources.report_error(&0, &e);
-                    e
+                    // cx.sources.report_error(&0, &e);
+                    e.e
                 })?;
             Ok(())
         } else {

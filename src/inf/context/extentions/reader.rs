@@ -22,7 +22,7 @@ impl<'a> ReaderGetter<'a> {
     }
     #[cfg(test)]
     #[allow(clippy::wrong_self_convention)]
-    pub fn from_str(&mut self, content: &str) -> Reader {
-        Reader::new(self.bound.sources.add_from_str(content))
+    pub fn from_str(&mut self, content: &str) -> Result<Reader, E> {
+        Ok(Reader::new(self.bound.sources.add_from_str(content)?))
     }
 }

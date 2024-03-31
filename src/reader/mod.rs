@@ -3,6 +3,7 @@ pub mod error;
 mod extentions;
 pub mod ids;
 pub mod map;
+pub mod maps;
 pub mod sources;
 #[cfg(test)]
 pub mod tests;

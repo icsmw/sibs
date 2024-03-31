@@ -8,7 +8,7 @@ pub use error::E;
 use std::{future::Future, pin::Pin};
 
 pub type OperatorPinnedResult<'a> = Pin<Box<dyn Future<Output = OperatorResult> + 'a>>;
-pub type OperatorResult = Result<Option<AnyValue>, E>;
+pub type OperatorResult = Result<Option<AnyValue>, LinkedErr<E>>;
 
 pub trait Operator {
     fn token(&self) -> usize;
@@ -27,7 +27,7 @@ pub trait Operator {
                     cx.sources.set_trace_value(&self.token(), value);
                 }
                 Err(err) => {
-                    cx.sources.report_error(&self.token(), err)?;
+                    cx.sources.report_error(err)?;
                 }
             }
             result
@@ -40,6 +40,6 @@ pub trait Operator {
         _args: &'a [String],
         _cx: &'a mut Context,
     ) -> OperatorPinnedResult {
-        Box::pin(async { Err(E::NotSupported) })
+        Box::pin(async { Err(E::NotSupported.unlinked()) })
     }
 }

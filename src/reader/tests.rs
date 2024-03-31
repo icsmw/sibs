@@ -329,8 +329,7 @@ mod reading {
                 assert_eq!(components.len(), 11);
             }
             Err(err) => {
-                cx.sources.gen_report_from_err(&err)?;
-                cx.sources.post_reports();
+                cx.sources.report_error(&err)?;
                 let _ = cx.tracker.shutdown().await;
                 return Err(err);
             }

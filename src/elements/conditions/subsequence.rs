@@ -176,8 +176,8 @@ mod reading {
             .collect::<Vec<String>>();
         let mut count = 0;
         for str in content.iter() {
-            let mut reader = cx.reader().from_str(str);
-            let entity = tests::report_if_err(&cx, Subsequence::read(&mut reader))?;
+            let mut reader = cx.reader().from_str(str)?;
+            let entity = tests::report_if_err(&mut cx, Subsequence::read(&mut reader))?;
             assert!(entity.is_some(), "Line: {}", count + 1);
             let entity = entity.unwrap();
             assert_eq!(
@@ -200,7 +200,7 @@ mod reading {
             .map(|s| s.to_string())
             .collect::<Vec<String>>();
         for (count, str) in content.iter().enumerate() {
-            let mut reader = cx.reader().from_str(str);
+            let mut reader = cx.reader().from_str(str)?;
             let entity = Subsequence::read(&mut reader)?;
             assert!(entity.is_some(), "Line: {}", count + 1);
             let entity = entity.unwrap();

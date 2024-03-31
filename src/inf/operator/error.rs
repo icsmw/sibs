@@ -1,7 +1,7 @@
 use crate::{
     error::LinkedErr,
     executors,
-    inf::{context, spawner, tracker},
+    inf::{context, spawner, tracker, Operator},
     reader,
 };
 use thiserror::Error;
@@ -84,6 +84,15 @@ pub enum E {
     ParseStringError(String, String),
 }
 
+impl E {
+    pub fn by(self, operator: &dyn Operator) -> LinkedErr<E> {
+        LinkedErr::new(self, Some(operator.token()))
+    }
+    pub fn unlinked(self) -> LinkedErr<E> {
+        LinkedErr::new(self, None)
+    }
+}
+
 impl From<tracker::E> for E {
     fn from(e: tracker::E) -> Self {
         Self::TrackerError(e)
@@ -117,5 +126,47 @@ impl From<reader::error::E> for E {
 impl From<LinkedErr<reader::error::E>> for E {
     fn from(e: LinkedErr<reader::error::E>) -> Self {
         Self::ReaderError(e.e)
+    }
+}
+
+impl From<reader::error::E> for LinkedErr<E> {
+    fn from(e: reader::error::E) -> Self {
+        LinkedErr::unlinked(E::ReaderError(e))
+    }
+}
+
+impl From<context::E> for LinkedErr<E> {
+    fn from(e: context::E) -> Self {
+        LinkedErr::unlinked(E::ContextError(e))
+    }
+}
+
+impl From<tracker::E> for LinkedErr<E> {
+    fn from(e: tracker::E) -> Self {
+        LinkedErr::unlinked(E::TrackerError(e))
+    }
+}
+
+impl From<E> for LinkedErr<E> {
+    fn from(e: E) -> Self {
+        LinkedErr::unlinked(e)
+    }
+}
+
+impl From<LinkedErr<E>> for E {
+    fn from(e: LinkedErr<E>) -> Self {
+        e.e
+    }
+}
+
+impl From<spawner::E> for LinkedErr<E> {
+    fn from(e: spawner::E) -> Self {
+        LinkedErr::unlinked(E::SpawningError(e))
+    }
+}
+
+impl From<executors::E> for LinkedErr<E> {
+    fn from(e: executors::E) -> Self {
+        LinkedErr::unlinked(E::ExecutorError(e))
     }
 }

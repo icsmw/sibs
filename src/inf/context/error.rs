@@ -1,10 +1,13 @@
-use std::{io, path::PathBuf};
+use std::io;
+#[cfg(test)]
+use std::path::PathBuf;
 
 use crate::{executors, inf::scenario, reader};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum E {
+    #[cfg(test)]
     #[error("No parent folder for: {0}")]
     NoParentFolderFor(PathBuf),
     #[error("Scenario error: {0}")]

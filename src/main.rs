@@ -29,7 +29,7 @@ async fn main() {
                 // if let Err(err) = cx.sources.assign_error(&err) {
                 //     eprintln!("{err}");
                 // }
-                cx.sources.post_reports();
+                // cx.sources.post_reports();
                 exit(1);
             }
         }

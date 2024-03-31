@@ -121,13 +121,13 @@ mod reading {
         let mut cx = Context::create().unbound()?;
         let mut reader = cx
             .reader()
-            .from_str(include_str!("../../tests/reading/pattern_string.sibs"));
+            .from_str(include_str!("../../tests/reading/pattern_string.sibs"))?;
         let origins = include_str!("../../tests/reading/pattern_string.sibs")
             .split('\n')
             .map(|s| s.to_string())
             .collect::<Vec<String>>();
         let mut count = 0;
-        while let Some(entity) = tests::report_if_err(&cx, PatternString::read(&mut reader))? {
+        while let Some(entity) = tests::report_if_err(&mut cx, PatternString::read(&mut reader))? {
             assert_eq!(
                 tests::trim_carets(reader.recent()),
                 tests::trim_carets(&entity.to_string()),
@@ -150,7 +150,7 @@ mod reading {
         let mut cx = Context::create().unbound()?;
         let mut reader = cx
             .reader()
-            .from_str(include_str!("../../tests/reading/pattern_string.sibs"));
+            .from_str(include_str!("../../tests/reading/pattern_string.sibs"))?;
         let mut count = 0;
         while let Some(entity) = PatternString::read(&mut reader)? {
             assert_eq!(
