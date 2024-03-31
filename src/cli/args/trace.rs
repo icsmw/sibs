@@ -9,7 +9,7 @@ use crate::{
 
 const ARGS: [&str; 1] = ["--trace"];
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Trace {
     pub state: bool,
 }

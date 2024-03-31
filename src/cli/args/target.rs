@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 const ARGS: [&str; 2] = ["--scenario", "-s"];
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Target {
     scenario: PathBuf,
 }

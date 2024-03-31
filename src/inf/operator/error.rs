@@ -1,5 +1,3 @@
-use std::string::ParseError;
-
 use crate::{
     error::LinkedErr,
     executors,
@@ -68,8 +66,8 @@ pub enum E {
     NoInputForEach,
     #[error("Fail to convert input for EACH statements into vector of strings")]
     FailConvertInputIntoStringsForEach,
-    #[error("Number of arguments and declarations in task aren't match")]
-    DismatchTaskArgumentsCount,
+    #[error("Declared {0} argument(s) ([{1}]); passed {2} argument(s) ([{3}])")]
+    DismatchTaskArgumentsCount(usize, String, usize, String),
     #[error("Fail to get value for declaration task's argument")]
     NoValueToDeclareTaskArgument,
     #[error("Value \"{0}\" doesn't match to allowed: {1}")]

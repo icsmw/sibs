@@ -9,7 +9,7 @@ use crate::{
 
 const ARGS: [&str; 2] = ["--output", "-o"];
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Output {
     pub output: tracker::Output,
 }

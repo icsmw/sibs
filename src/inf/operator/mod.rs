@@ -1,6 +1,7 @@
 mod error;
 use crate::{
     elements::Component,
+    error::LinkedErr,
     inf::{any::AnyValue, context::Context},
 };
 pub use error::E;
@@ -21,8 +22,13 @@ pub trait Operator {
         Box::pin(async move {
             cx.sources.set_map_cursor(&self.token())?;
             let result = self.perform(owner, components, args, cx).await;
-            if let Err(err) = result.as_ref() {
-                cx.sources.assign_error(&self.token(), err)?;
+            match result.as_ref() {
+                Ok(value) => {
+                    cx.sources.set_trace_value(&self.token(), value);
+                }
+                Err(err) => {
+                    cx.sources.report_error(&self.token(), err)?;
+                }
             }
             result
         })

@@ -11,7 +11,7 @@ const ARGS: [&str; 2] = ["--version", "-v"];
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Version {}
 
 impl Argument<Version> for Version {

@@ -3,12 +3,7 @@ mod extentions;
 
 use crate::{
     executors::ExecutorFn,
-    inf::{
-        any::AnyValue,
-        scenario::Scenario,
-        term::Term,
-        tracker::{Logger, Logs, Tracker},
-    },
+    inf::{AnyValue, Logger, Logs, Scenario, Term, Tracker},
     reader::sources::Sources,
 };
 pub use error::E;

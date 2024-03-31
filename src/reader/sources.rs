@@ -1,5 +1,6 @@
 use crate::{
     error::LinkedErr,
+    inf::{AnyValue, Trace},
     reader::{ids::Ids, map::Map, E},
 };
 use std::{
@@ -17,6 +18,7 @@ pub type IdsRef = Rc<RefCell<Ids>>;
 pub struct Sources {
     maps: HashMap<PathBuf, MapRef>,
     ids: IdsRef,
+    trace: Trace,
     #[cfg(test)]
     dummy: usize,
 }
@@ -34,6 +36,7 @@ impl Sources {
         Self {
             maps: HashMap::new(),
             ids: Ids::new(),
+            trace: Trace::new(None),
             #[cfg(test)]
             dummy: 0,
         }
@@ -42,24 +45,21 @@ impl Sources {
         if self.maps.contains_key(filename) {
             Err(E::FileAlreadyHasMap(filename.to_owned()))?;
         }
-        let map = Rc::new(RefCell::new(Map::new(self.ids.clone(), content)));
+        let map = Rc::new(RefCell::new(Map::new(self.ids.clone(), filename, content)));
         self.maps.insert(filename.to_owned(), map.clone());
         Ok(map)
     }
     #[cfg(test)]
     pub fn add_from_str(&mut self, content: &str) -> MapRef {
-        let map = Rc::new(RefCell::new(Map::new(self.ids.clone(), content)));
+        let map = Rc::new(RefCell::new(Map::new(
+            self.ids.clone(),
+            &PathBuf::new(),
+            content,
+        )));
         self.maps
             .insert(PathBuf::from(self.dummy.to_string()), map.clone());
         self.dummy += 1;
         map
-    }
-    pub fn gen_report<'a, T>(&self, token: &usize, msg: T) -> Result<(), E>
-    where
-        T: 'a + ToOwned + ToString,
-    {
-        self.get_map_by_token(token)?.gen_report(token, msg)?;
-        Ok(())
     }
     pub fn gen_report_from_err<T>(&self, err: &LinkedErr<T>) -> Result<(), E>
     where
@@ -67,7 +67,7 @@ impl Sources {
     {
         if let Some(token) = err.token.as_ref() {
             self.get_map_by_token(token)?
-                .gen_report(token, err.e.to_string())?;
+                .get_err_report(token, err.e.to_string())?;
         }
         Ok(())
     }
@@ -76,14 +76,28 @@ impl Sources {
             .iter()
             .for_each(|(_, map)| map.borrow().post_reports());
     }
-    pub fn assign_error<T>(&mut self, token: &usize, err: &T) -> Result<(), E>
+    pub fn report_error<T>(&mut self, token: &usize, err: &T) -> Result<(), E>
     where
         T: std::error::Error + fmt::Display + ToString,
     {
-        self.get_map_by_token(token)?.assign_error(err)
+        println!(">>>>>>>>>>>>>>>>>>>> REPORT ERROR ON: {token}");
+        for (token, value) in self.trace.iter() {
+            println!(
+                "{}",
+                self.get_map_by_token(token)?.get_report(token, value,)?
+            );
+        }
+        println!(
+            "{}",
+            self.get_map_by_token(token)?.get_err_report(token, err)?
+        );
+        Ok(())
     }
     pub fn set_map_cursor(&self, token: &usize) -> Result<(), E> {
         self.get_map_by_token(token)?.set_cursor(*token);
         Ok(())
+    }
+    pub fn set_trace_value(&mut self, token: &usize, value: &Option<AnyValue>) {
+        self.trace.add(token, value);
     }
 }

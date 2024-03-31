@@ -11,7 +11,7 @@ use crate::{
 
 const ARGS: [&str; 2] = ["--help", "-h"];
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Help {
     component: Option<String>,
 }

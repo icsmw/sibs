@@ -11,7 +11,7 @@
         $c_str = "value_c_{$a_str}-{$b_str}";
         $d_bool = @os(linux);
         IF @os(linux) [
-            :self:build("smth"; "prod");
+            :self:build("smth"; "prod1");
         ];
     ];
     build($input_a: {string}; $mode: dev | prod;) [

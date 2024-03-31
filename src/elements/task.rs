@@ -210,21 +210,16 @@ impl Operator for Task {
         Box::pin(async move {
             let job = cx.tracker.create_job(self.get_name(), None).await?;
             if self.declarations.len() != args.len() {
-                cx.sources.gen_report(
-                    &self.name.token,
-                    format!(
-                        "Declared {} argument(s) ([{}]); passed {} argument(s) ([{}])",
-                        self.declarations.len(),
-                        self.declarations
-                            .iter()
-                            .map(|d| d.to_string())
-                            .collect::<Vec<String>>()
-                            .join(", "),
-                        args.len(),
-                        args.join(", ")
-                    ),
-                )?;
-                Err(operator::E::DismatchTaskArgumentsCount)?;
+                Err(operator::E::DismatchTaskArgumentsCount(
+                    self.declarations.len(),
+                    self.declarations
+                        .iter()
+                        .map(|d| d.to_string())
+                        .collect::<Vec<String>>()
+                        .join(", "),
+                    args.len(),
+                    args.join(", "),
+                ))?;
             }
             for (i, el) in self.declarations.iter().enumerate() {
                 if let Element::VariableDeclaration(declaration, _) = el {

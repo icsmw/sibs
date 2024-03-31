@@ -1,7 +1,7 @@
 use crate::reader::{ids::Ids, E};
 use console::Style;
 use regex::Regex;
-use std::{cell::RefCell, collections::HashMap, fmt::Display, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, fmt::Display, path::PathBuf, rc::Rc};
 
 #[derive(Debug)]
 pub struct Fragment {
@@ -36,17 +36,19 @@ pub struct Map {
     pub fragments: HashMap<usize, (usize, usize)>,
     pub reports: Vec<String>,
     pub content: String,
+    filename: PathBuf,
     recent: Option<usize>,
     cursor: Option<usize>,
     ids: Rc<RefCell<Ids>>,
 }
 
 impl Map {
-    pub fn new(ids: Rc<RefCell<Ids>>, content: &str) -> Self {
+    pub fn new(ids: Rc<RefCell<Ids>>, filename: &PathBuf, content: &str) -> Self {
         Self {
             fragments: HashMap::new(),
             reports: vec![],
             content: content.to_owned(),
+            filename: filename.to_owned(),
             cursor: None,
             recent: None,
             ids,
@@ -99,9 +101,14 @@ impl Map {
             *len,
         ))
     }
-    pub fn gen_report<'a, T>(&mut self, token: &usize, msg: T) -> Result<(), E>
+    pub fn gen_report<'a, T>(
+        &mut self,
+        token: &usize,
+        msg: T,
+        style: Option<Style>,
+    ) -> Result<String, E>
     where
-        T: 'a + ToOwned + ToString,
+        T: 'a + Display,
     {
         let (from, len) = self.fragments.get(token).ok_or(E::TokenNotFound(*token))?;
         let num_rate = self.content.split('\n').count().to_string().len() + 1;
@@ -131,16 +138,12 @@ impl Map {
             })
             .collect::<Vec<usize>>();
         if error_lns.is_empty() {
-            self.reports.push(format!(
-                "{} {}\n",
-                Style::new().red().bold().apply_to("ERROR:"),
-                Style::new().white().apply_to(msg.to_string())
-            ));
-            return Ok(());
+            return Ok(format!("{msg}\n",));
         }
         cursor = 0;
         let error_first_ln = *error_lns.first().unwrap_or(&0);
         let error_last_ln = *error_lns.last().unwrap_or(&0);
+        let style = style.unwrap_or(Style::new().red().bold());
         let report = self
             .content
             .split('\n')
@@ -154,52 +157,56 @@ impl Map {
                             *from_ln + filler.len() + (i + 1).to_string().len() + "| ".len(),
                         );
                         format!(
-                            "{}{filler}│ {ln}\n{offset}{}\n{offset}{} {}\n",
+                            "{}{filler}│ {ln}\n{offset}{}\n{offset}{msg}\n",
                             i + 1,
-                            Style::new().red().bold().apply_to("^".repeat(*len)),
-                            Style::new().red().bold().apply_to("ERROR:"),
-                            Style::new().white().apply_to(msg.to_string())
+                            style.apply_to("^".repeat(*len)),
                         )
                     } else if error_last_ln != i {
-                        format!(
-                            "{}{filler}{} {ln}",
-                            i + 1,
-                            Style::new().red().bold().apply_to(">")
-                        )
+                        format!("{}{filler}{} {ln}", i + 1, style.apply_to(">"))
                     } else {
-                        format!(
-                            "{}{filler}{} {ln}\n{} {}\n",
-                            i + 1,
-                            Style::new().red().bold().apply_to(">"),
-                            Style::new().red().bold().apply_to("ERROR:"),
-                            Style::new().white().apply_to(msg.to_string())
-                        )
+                        format!("{}{filler}{} {ln}\n{msg}\n", i + 1, style.apply_to(">"),)
                     }
                 } else {
                     format!("{}{filler}│ {ln}", i + 1)
                 }
             })
             .collect::<Vec<String>>();
-        self.reports.push(
+        Ok(
             report[(error_first_ln - error_first_ln.min(REPORT_LN_AROUND))
                 ..report.len().min(error_last_ln + REPORT_LN_AROUND)]
                 .join("\n"),
-        );
-        Ok(())
+        )
     }
-    pub fn assign_error<T>(&mut self, err: &T) -> Result<(), E>
+    pub fn get_err_report<'a, T>(&mut self, token: &usize, msg: T) -> Result<String, E>
     where
-        T: std::error::Error + Display + ToString,
+        T: 'a + ToOwned + ToString,
     {
-        if !self.reports.is_empty() {
-            Ok(())
-        } else if let (true, Some(token)) = (self.reports.is_empty(), self.cursor) {
-            self.gen_report(&token, err.to_string())
-        } else {
-            Ok(())
-        }
+        Ok(self.gen_report(
+            token,
+            format!(
+                "{} {}",
+                Style::new().red().bold().apply_to("ERROR:"),
+                Style::new().white().apply_to(msg.to_string())
+            ),
+            Some(Style::new().red().bold()),
+        )?)
+    }
+    pub fn get_report<'a, T>(&mut self, token: &usize, msg: T) -> Result<String, E>
+    where
+        T: 'a + ToOwned + ToString,
+    {
+        self.gen_report(
+            token,
+            format!("{}", Style::new().blue().apply_to(msg.to_string())),
+            Some(Style::new().blue().bold()),
+        )
     }
     pub fn post_reports(&self) {
+        println!(
+            "{}: {}",
+            Style::new().white().bold().apply_to("File"),
+            self.filename.to_string_lossy(),
+        );
         self.reports.iter().for_each(|report| {
             println!("\n{report}");
         });

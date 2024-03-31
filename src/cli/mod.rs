@@ -115,7 +115,11 @@ pub async fn read(cx: &mut Context) -> Result<(), E> {
         {
             component
                 .execute(Some(component), &components, &income, cx)
-                .await?;
+                .await
+                .map_err(|e| {
+                    cx.sources.report_error(&0, &e);
+                    e
+                })?;
             Ok(())
         } else {
             Err(E::ComponentNotExists(component.to_string()))

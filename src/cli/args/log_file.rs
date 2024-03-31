@@ -9,7 +9,7 @@ use crate::{
 
 const ARGS: [&str; 2] = ["--logs", "-l"];
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LogFile {
     pub file: String,
 }
