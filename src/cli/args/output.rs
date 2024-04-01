@@ -41,7 +41,7 @@ impl Argument<Output> for Output {
             ],
         }
     }
-    fn action(&mut self, _components: &[Component], _context: &mut Context) -> Result<(), E> {
+    async fn action(&mut self, _components: &[Component], _context: &mut Context) -> Result<(), E> {
         Ok(())
     }
 }

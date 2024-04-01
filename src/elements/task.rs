@@ -174,7 +174,7 @@ impl term::Display for Task {
     fn display(&self, term: &mut Term) {
         term.bold(format!("{}[{}]", term.offset(), self.name.value));
         println!();
-        term.step_right();
+        term.right();
         term.print(format!(
             "{}USAGE: {}{}{}",
             term.offset(),
@@ -192,7 +192,7 @@ impl term::Display for Task {
         ));
         println!();
         self.block.display(term);
-        term.step_left();
+        term.left();
     }
 }
 

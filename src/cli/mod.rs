@@ -48,25 +48,28 @@ pub fn get_tracker_configuration() -> Result<tracker::Configuration, E> {
 }
 
 pub async fn read(cx: &mut Context) -> Result<(), E> {
-    fn run<T: Argument<T> + 'static>(
+    async fn run<T: Argument<T> + 'static>(
         components: &[Component],
         arguments: &mut Arguments,
         cx: &mut Context,
     ) -> Result<(), E> {
-        arguments
-            .get_mut::<T>()
-            .map_or(Ok(()), |arg| arg.action(components, cx))
+        if let Some(args) = arguments.get_mut::<T>() {
+            args.action(components, cx).await
+        } else {
+            Ok(())
+        }
     }
     let mut term = Term::new();
     let (mut income, mut defaults) = get_arguments()?;
     if defaults.has::<args::version::Version>() {
-        run::<args::version::Version>(&[], &mut defaults, &mut Context::create().unbound()?)?;
+        run::<args::version::Version>(&[], &mut defaults, &mut Context::create().unbound()?)
+            .await?;
         if !income.is_empty() {
             term.err(format!("Ingore next arguments: {}", income.join(", ")));
         }
         return Ok(());
     }
-    let scenario = if let Some(target) = defaults.get::<args::target::Target>() {
+    let scenario = if let Some(target) = defaults.get::<args::scenario::Scenario>() {
         Scenario::from(&current_dir()?.join(target.get()).canonicalize()?)?
     } else {
         match Scenario::new() {
@@ -74,16 +77,15 @@ pub async fn read(cx: &mut Context) -> Result<(), E> {
             Err(_) => {
                 term.print("Scenario file hasn't been found.\n\n");
                 term.bold("OPTIONS\n");
-                term.step_right();
+                term.right();
                 defaults.display(&mut term);
                 return Ok(());
             }
         }
     };
-
     cx.set_scenario(scenario);
     let scenario = cx.scenario.filename.to_owned();
-    let components = match reader::read_file(cx, scenario).await {
+    let components = match reader::read_file(cx, scenario, true).await {
         Ok(elements) => elements
             .into_iter()
             .filter_map(|el| {
@@ -100,7 +102,7 @@ pub async fn read(cx: &mut Context) -> Result<(), E> {
         }
     };
     let no_actions = defaults.has::<args::help::Help>() || income.is_empty();
-    run::<args::help::Help>(&components, &mut defaults, cx)?;
+    run::<args::help::Help>(&components, &mut defaults, cx).await?;
     if no_actions {
         return Ok(());
     }

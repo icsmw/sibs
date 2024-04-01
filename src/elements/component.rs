@@ -42,6 +42,12 @@ impl Component {
             })
             .collect::<Vec<&Task>>()
     }
+    pub fn get_tasks_names(&self) -> Vec<String> {
+        self.get_tasks()
+            .iter()
+            .map(|el| el.get_name().to_owned())
+            .collect::<Vec<String>>()
+    }
     pub fn get_meta(&self) -> Vec<&Meta> {
         self.elements
             .iter()
@@ -178,19 +184,22 @@ impl Formation for Component {
 impl term::Display for Component {
     fn display(&self, term: &mut Term) {
         term.bold("COMPONENT:\n");
-        term.step_right();
+        term.right();
         term.boldnl(&self.name);
-        // if let Some(meta) = self.meta.as_ref() {
-        //     println!();
-        //     meta.display(term);
-        // }
-        term.step_left();
+        self.elements.iter().for_each(|el| {
+            if let Element::Meta(el, _) = el {
+                el.display(term);
+            }
+        });
+        term.left();
         term.bold("\nTASKS:\n");
-        term.step_right();
-        // self.tasks.iter().filter(|t| t.has_meta()).for_each(|task| {
-        //     task.display(term);
-        // });
-        term.step_left();
+        term.right();
+        self.elements.iter().for_each(|el| {
+            if let Element::Task(el, _) = el {
+                el.display(term);
+            }
+        });
+        term.left();
     }
 }
 
@@ -207,18 +216,14 @@ impl Operator for Component {
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let task = args.first().ok_or_else(|| {
-                cx.term.err(format!(
-                    "No task provided for component \"{}\". Try to use \"sibs {} --help\".\n",
-                    self.name, self.name
-                ));
-                operator::E::NoTaskForComponent(self.name.to_string())
+                operator::E::NoTaskForComponent(self.name.to_string(), self.get_tasks_names())
             })?;
             let task = self.get_task(task).ok_or_else(|| {
-                cx.term.err(format!(
-                    "Task \"{task}\" doesn't exist on component \"{}\". Try to use \"sibs {} --help\".\n",
-                    self.name, self.name
-                ));
-                operator::E::TaskNotExists( task.to_owned(),self.name.to_string())
+                operator::E::TaskNotExists(
+                    self.name.to_string(),
+                    task.to_owned(),
+                    self.get_tasks_names(),
+                )
             })?;
             let job = cx.tracker.create_job(self.get_name(), None).await?;
             cx.set_cwd(self.cwd.clone())?;

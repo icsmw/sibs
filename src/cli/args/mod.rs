@@ -1,7 +1,8 @@
+pub mod format;
 pub mod help;
 pub mod log_file;
 pub mod output;
-pub mod target;
+pub mod scenario;
 pub mod trace;
 pub mod version;
 
@@ -64,8 +65,11 @@ pub trait Argument<T> {
     fn desc() -> Description
     where
         Self: Sized;
-    fn action(&mut self, _components: &[Component], _context: &mut Context) -> Result<(), E> {
+    async fn action(&mut self, _components: &[Component], _context: &mut Context) -> Result<(), E> {
         Ok(())
+    }
+    fn no_context(&self) -> bool {
+        false
     }
 }
 
@@ -81,7 +85,8 @@ impl Arguments {
         }
         let mut all = vec![
             into(version::Version::read(args)?),
-            into(target::Target::read(args)?),
+            into(scenario::Scenario::read(args)?),
+            into(format::Format::read(args)?),
             into(help::Help::read(args)?),
             into(output::Output::read(args)?),
             into(log_file::LogFile::read(args)?),
@@ -117,11 +122,12 @@ impl term::Display for Arguments {
     fn display(&self, term: &mut Term) {
         term.print_fmt(
             &[
-                target::Target::desc(),
+                scenario::Scenario::desc(),
                 help::Help::desc(),
                 trace::Trace::desc(),
                 output::Output::desc(),
                 log_file::LogFile::desc(),
+                format::Format::desc(),
                 version::Version::desc(),
             ]
             .iter()

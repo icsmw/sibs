@@ -28,10 +28,10 @@ pub enum E {
     ExecutorError(executors::E),
     #[error("Reader error: {0}")]
     ReaderError(reader::E),
-    #[error("No task for component: {0}")]
-    NoTaskForComponent(String),
-    #[error("No task \"{0}\" for component \"{1}\" doesn't exist")]
-    TaskNotExists(String, String),
+    #[error("No task for component: {0}. Available tasks: {1:?}")]
+    NoTaskForComponent(String, Vec<String>),
+    #[error("Task \"{1}\" doesn't exist on component \"{0}\". Available tasks: {2:?}")]
+    TaskNotExists(String, String, Vec<String>),
     #[error("Fail to extract value")]
     FailToExtractValue,
     #[error("Fail to get declared variable")]

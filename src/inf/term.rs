@@ -72,13 +72,13 @@ impl Term {
     {
         print(msg, self._offset, Some(Style::new().white().bold()), true)
     }
-    pub fn step_left(&mut self) {
+    pub fn left(&mut self) {
         if self._offset > 0 {
             self._offset -= 4;
         }
     }
 
-    pub fn step_right(&mut self) {
+    pub fn right(&mut self) {
         self._offset += 4;
     }
 
@@ -98,9 +98,9 @@ impl Term {
         T: 'a + ToOwned + ToString,
     {
         self.bold(format!("{}:\n", title.to_string()));
-        self.step_right();
+        self.right();
         self.printnl(msg);
-        self.step_left();
+        self.left();
         println!()
     }
 }

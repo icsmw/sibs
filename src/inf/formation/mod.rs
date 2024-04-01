@@ -1,4 +1,11 @@
-use crate::elements::ElTarget;
+use std::{fs, io::Write, path::PathBuf};
+
+use crate::{
+    elements::ElTarget,
+    error::LinkedErr,
+    inf::Context,
+    reader::{read_file, E},
+};
 
 const TAB: u8 = 4;
 
@@ -67,6 +74,18 @@ pub trait Formation {
     }
 }
 
+pub async fn format_file(filename: &PathBuf) -> Result<(), LinkedErr<E>> {
+    let mut cx = Context::create().bound(filename)?;
+    let mut cursor = FormationCursor::default();
+    let elements = read_file(&mut cx, filename.clone(), false).await?;
+    let mut file = fs::OpenOptions::new().write(true).open(filename)?;
+    for el in elements {
+        file.write_all(format!("{}\n", el.format(&mut cursor)).as_bytes())?;
+    }
+    file.flush()?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod reading {
     use crate::{
@@ -82,7 +101,7 @@ mod reading {
             .join("./src/tests/formation.sibs");
         let mut cx = Context::create().bound(&target)?;
         let mut cursor = FormationCursor::default();
-        match read_file(&mut cx, target).await {
+        match read_file(&mut cx, target, false).await {
             Ok(components) => {
                 for component in components {
                     println!("{}", component.format(&mut cursor));

@@ -8,7 +8,6 @@
 - dry-run: run and ignore terminal commands & show a map of executing
 - this is valid "@fs::path_join [$tmp_path $file_name];", this is NOT "@fs::path_join [$tmp_path; $file_name;];" or "@fs::path_join [$tmp_path ,$file_name];". Error should be shown.
 - add named arguments for functions @hash track::(bla, bla) run::(bla)
-- prevent dead-loop related to nested Element parsing
 - a way to run tasks in parallel: `sibs * --lint` will run lint task for all components, which has it
 
 NO Errors:

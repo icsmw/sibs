@@ -8,8 +8,8 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum E {
-    #[error("--scenario requires a path to *.sibs file")]
-    NoPathToScenarioFile,
+    #[error("Missed path to target file. Usage: {0} path_to_file")]
+    NoPathToTargetFile(String),
     #[error("Invalid request; expecting addition arguments after: {0}")]
     InvalidRequestAfter(String),
     #[error("No any options/commands. Try --help to see all options.")]
@@ -26,7 +26,7 @@ pub enum E {
     ContextError(context::E),
     #[error("Scenario error: {0}")]
     ScenarioError(scenario::E),
-    #[error("Operator error: {0}")]
+    #[error("Fail to execute.\n{0}")]
     OperatorError(operator::E),
     #[error("Error: {0}")]
     Other(String),

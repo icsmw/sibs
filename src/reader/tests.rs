@@ -324,7 +324,7 @@ mod reading {
             .join("./src/tests/reading/full/build.sibs");
         let mut cx = Context::create().bound(&target)?;
         let filename = cx.scenario.filename.to_owned();
-        match read_file(&mut cx, filename).await {
+        match read_file(&mut cx, filename, true).await {
             Ok(components) => {
                 assert_eq!(components.len(), 11);
             }

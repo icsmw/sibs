@@ -12,7 +12,6 @@ impl Create {
         executors::register(&mut cx)?;
         Ok(cx)
     }
-    #[cfg(test)]
     pub fn bound(&self, scenario: &PathBuf) -> Result<Context, E> {
         let tracker = Tracker::new(tracker::Configuration::default());
         let logger = tracker.create_logger(String::from("Context"));

@@ -177,32 +177,30 @@ pub type ReadFileResult = Result<Vec<Element>, LinkedErr<E>>;
 pub fn read_file<'a>(
     cx: &'a mut Context,
     filename: PathBuf,
+    import: bool,
 ) -> Pin<Box<dyn Future<Output = ReadFileResult> + 'a>> {
     Box::pin(async move {
         let mut reader = cx.reader().from_file(&filename)?;
-        let mut imports: Vec<PathBuf> = vec![];
         let mut elements: Vec<Element> = vec![];
-        while let Some(Element::Function(func, md)) =
-            Element::include(&mut reader, &[ElTarget::Function])?
+        while let Some(el) =
+            Element::include(&mut reader, &[ElTarget::Function, ElTarget::Component])?
         {
-            if Import::get_name() != func.name {
-                Err(E::OnlyImportFunctionAllowedOnRoot.by_reader(&reader))?;
+            if let Element::Function(func, _) = &el {
+                if Import::get_name() != func.name {
+                    Err(E::OnlyImportFunctionAllowedOnRoot.by_reader(&reader))?;
+                }
+                let path = if func.args.len() == 1 {
+                    Import::get(PathBuf::from(func.args[0].to_string()), cx)?
+                } else {
+                    return Err(E::ImportFunctionInvalidArgs.by_reader(&reader))?;
+                };
+                if import {
+                    elements.append(&mut read_file(cx, path.to_owned(), true).await?);
+                }
+                if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
+                    Err(E::MissedSemicolon.by_reader(&reader))?;
+                }
             }
-            let path_to_import = if func.args.len() == 1 {
-                Import::get(PathBuf::from(func.args[0].to_string()), cx)?
-            } else {
-                return Err(E::ImportFunctionInvalidArgs.by_reader(&reader))?;
-            };
-            imports.push(path_to_import);
-            if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
-                Err(E::MissedSemicolon.by_reader(&reader))?;
-            }
-            elements.push(Element::Function(func, md));
-        }
-        for import_path in imports.iter_mut() {
-            elements.append(&mut read_file(cx, import_path.to_owned()).await?);
-        }
-        while let Some(el) = Element::include(&mut reader, &[ElTarget::Component])? {
             elements.push(el);
         }
         Ok(elements)

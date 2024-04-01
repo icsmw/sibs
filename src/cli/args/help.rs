@@ -29,7 +29,7 @@ impl Argument<Help> for Help {
 
         }
     }
-    fn action(&mut self, components: &[Component], cx: &mut Context) -> Result<(), E> {
+    async fn action(&mut self, components: &[Component], cx: &mut Context) -> Result<(), E> {
         fn list_components(components: &[Component], cx: &mut Context) {
             let with_context = components
             .iter()
@@ -45,16 +45,16 @@ impl Argument<Help> for Help {
             .collect::<Vec<(String, String)>>();
             if !with_context.is_empty() {
                 cx.term.bold("COMPONENTS:\n");
-                cx.term.step_right();
+                cx.term.right();
                 cx.term.pairs(with_context);
-                cx.term.step_left();
+                cx.term.left();
             }
         }
         fn list_commands(components: &[Component], cx: &mut Context) {
             if components.iter().any(|comp| comp.cwd.is_none()) {
                 cx.term.bold("\nCOMMANDS:\n");
             }
-            cx.term.step_right();
+            cx.term.right();
             components
                 .iter()
                 .filter(|comp| comp.cwd.is_none())
@@ -63,16 +63,16 @@ impl Argument<Help> for Help {
                         task.display(&mut cx.term);
                     });
                 });
-                cx.term.step_left();
+                cx.term.left();
         }
         cx.term.bold("SCENARIO:\n");
-        cx.term.step_right();
+        cx.term.right();
         cx.term.print(format!(
             "{}{}\n\n",
             cx.term.offset(),
             cx.scenario.filename.to_str().unwrap()
         ));
-        cx.term.step_left();
+        cx.term.left();
         if let Some(component) = self.component.as_ref() {
             if let Some(component) = components.iter().find(|c| &c.name.to_string() == component) {
                 component.display(&mut cx.term);

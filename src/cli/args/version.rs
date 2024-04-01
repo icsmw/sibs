@@ -34,7 +34,10 @@ impl Argument<Version> for Version {
             pairs: vec![],
         }
     }
-    fn action(&mut self, _components: &[Component], _context: &mut Context) -> Result<(), E> {
+    fn no_context(&self) -> bool {
+        true
+    }
+    async fn action(&mut self, _components: &[Component], _context: &mut Context) -> Result<(), E> {
         println!("{VERSION}");
         Ok(())
     }
