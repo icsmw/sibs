@@ -34,14 +34,14 @@ pub fn get_tracker_configuration() -> Result<tracker::Configuration, E> {
     let (_, arguments) = get_arguments()?;
     Ok(tracker::Configuration {
         output: arguments
-            .get::<args::output::Output>()
+            .get::<args::exertion::Output>()
             .map(|arg| arg.output.clone())
             .unwrap_or(tracker::Output::Progress),
         log_file: arguments
-            .get::<args::log_file::LogFile>()
+            .get::<args::exertion::LogFile>()
             .map(|arg| PathBuf::from(arg.file.to_owned())),
         trace: arguments
-            .get::<args::trace::Trace>()
+            .get::<args::exertion::Trace>()
             .map(|arg| arg.state)
             .unwrap_or(false),
     })
@@ -61,15 +61,15 @@ pub async fn read(cx: &mut Context) -> Result<(), E> {
     }
     let mut term = Term::new();
     let (mut income, mut defaults) = get_arguments()?;
-    if defaults.has::<args::version::Version>() {
-        run::<args::version::Version>(&[], &mut defaults, &mut Context::create().unbound()?)
+    if defaults.has::<args::exertion::Version>() {
+        run::<args::exertion::Version>(&[], &mut defaults, &mut Context::create().unbound()?)
             .await?;
         if !income.is_empty() {
             term.err(format!("Ingore next arguments: {}", income.join(", ")));
         }
         return Ok(());
     }
-    let scenario = if let Some(target) = defaults.get::<args::scenario::Scenario>() {
+    let scenario = if let Some(target) = defaults.get::<args::exertion::Scenario>() {
         Scenario::from(&current_dir()?.join(target.get()).canonicalize()?)?
     } else {
         match Scenario::new() {
@@ -101,8 +101,8 @@ pub async fn read(cx: &mut Context) -> Result<(), E> {
             return Err(E::ReaderError(err.e));
         }
     };
-    let no_actions = defaults.has::<args::help::Help>() || income.is_empty();
-    run::<args::help::Help>(&components, &mut defaults, cx).await?;
+    let no_actions = defaults.has::<args::exertion::Help>() || income.is_empty();
+    run::<args::exertion::Help>(&components, &mut defaults, cx).await?;
     if no_actions {
         return Ok(());
     }

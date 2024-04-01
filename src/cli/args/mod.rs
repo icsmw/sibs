@@ -1,10 +1,4 @@
-pub mod format;
-pub mod help;
-pub mod log_file;
-pub mod output;
-pub mod scenario;
-pub mod trace;
-pub mod version;
+pub mod exertion;
 
 use crate::{
     cli::error::E,
@@ -84,13 +78,13 @@ impl Arguments {
             entity.map(|v| (TypeId::of::<T>(), Box::new(v) as Box<dyn DebugAny>))
         }
         let mut all = vec![
-            into(version::Version::read(args)?),
-            into(scenario::Scenario::read(args)?),
-            into(format::Format::read(args)?),
-            into(help::Help::read(args)?),
-            into(output::Output::read(args)?),
-            into(log_file::LogFile::read(args)?),
-            into(trace::Trace::read(args)?),
+            into(exertion::Version::read(args)?),
+            into(exertion::Scenario::read(args)?),
+            into(exertion::Format::read(args)?),
+            into(exertion::Help::read(args)?),
+            into(exertion::Output::read(args)?),
+            into(exertion::LogFile::read(args)?),
+            into(exertion::Trace::read(args)?),
         ];
         let mut arguments: HashMap<TypeId, Box<dyn DebugAny>> = HashMap::new();
         while let Some(mut res) = all.pop() {
@@ -100,19 +94,16 @@ impl Arguments {
         }
         Ok(Self { arguments })
     }
-
     pub fn get<T: 'static>(&self) -> Option<&T> {
         self.arguments
             .get(&TypeId::of::<T>())
             .and_then(|entity| entity.as_ref().as_any().downcast_ref())
     }
-
     pub fn get_mut<T: 'static>(&mut self) -> Option<&mut T> {
         self.arguments
             .get_mut(&TypeId::of::<T>())
             .and_then(|entity| entity.as_mut().as_any_mut().downcast_mut())
     }
-
     pub fn has<T: 'static>(&self) -> bool {
         self.arguments.contains_key(&TypeId::of::<T>())
     }
@@ -122,13 +113,13 @@ impl term::Display for Arguments {
     fn display(&self, term: &mut Term) {
         term.print_fmt(
             &[
-                scenario::Scenario::desc(),
-                help::Help::desc(),
-                trace::Trace::desc(),
-                output::Output::desc(),
-                log_file::LogFile::desc(),
-                format::Format::desc(),
-                version::Version::desc(),
+                exertion::Scenario::desc(),
+                exertion::Help::desc(),
+                exertion::Trace::desc(),
+                exertion::Output::desc(),
+                exertion::LogFile::desc(),
+                exertion::Format::desc(),
+                exertion::Version::desc(),
             ]
             .iter()
             .flat_map(|desc| {
