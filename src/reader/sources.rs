@@ -13,7 +13,6 @@ pub struct Sources {
     maps: Maps,
     ids: IdsRef,
     trace: Trace,
-    #[cfg(test)]
     dummy: usize,
 }
 
@@ -23,7 +22,6 @@ impl Sources {
             maps: Maps::new(),
             ids: Ids::new(),
             trace: Trace::new(None),
-            #[cfg(test)]
             dummy: 0,
         }
     }
@@ -31,7 +29,6 @@ impl Sources {
         let map = Rc::new(RefCell::new(Map::new(self.ids.clone(), filename, content)));
         self.maps.insert(filename, map.clone())
     }
-    #[cfg(test)]
     pub fn add_from_str(&mut self, content: &str) -> Result<MapRef, E> {
         let map = Rc::new(RefCell::new(Map::new(
             self.ids.clone(),

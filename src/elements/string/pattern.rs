@@ -31,7 +31,21 @@ impl Reading<PatternString> for PatternString {
 
 impl fmt::Display for PatternString {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "\"{}\"", self.pattern,)
+        write!(
+            f,
+            "\"{}\"",
+            self.elements
+                .iter()
+                .map(|el| {
+                    if let Element::SimpleString(el, _) = el {
+                        el.to_string()
+                    } else {
+                        format!("{{{el}}}",)
+                    }
+                })
+                .collect::<Vec<String>>()
+                .join("")
+        )
     }
 }
 
@@ -65,11 +79,7 @@ impl Formation for PatternString {
                     .join("")
             )
         } else {
-            format!(
-                "{}\"{}\"",
-                cursor.offset_as_string_if(&[ElTarget::Block]),
-                self.pattern
-            )
+            format!("{}{self}", cursor.offset_as_string_if(&[ElTarget::Block]),)
         }
     }
 }

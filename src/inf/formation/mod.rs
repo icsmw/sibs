@@ -4,7 +4,7 @@ use crate::{
     elements::ElTarget,
     error::LinkedErr,
     inf::Context,
-    reader::{read_file, E},
+    reader::{read_file, read_string, E},
 };
 
 const TAB: u8 = 4;
@@ -86,33 +86,63 @@ pub async fn format_file(filename: &PathBuf) -> Result<(), LinkedErr<E>> {
     Ok(())
 }
 
+pub async fn format_string(content: &str) -> Result<String, LinkedErr<E>> {
+    let mut cx = Context::create().unbound()?;
+    let mut cursor = FormationCursor::default();
+    let elements = read_string(&mut cx, content).await?;
+    let mut output = String::new();
+    for el in elements {
+        output = format!("{output}\n{}", el.format(&mut cursor));
+    }
+    Ok(output)
+}
+
 #[cfg(test)]
 mod reading {
     use crate::{
+        elements::Element,
         error::LinkedErr,
-        inf::{Context, Formation, FormationCursor},
-        reader::{error::E, read_file},
+        inf::{format_string, Context},
+        reader::{error::E, read_string},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let target = std::env::current_dir()
-            .unwrap()
-            .join("./src/tests/formation.sibs");
-        let mut cx = Context::create().bound(&target)?;
-        let mut cursor = FormationCursor::default();
-        match read_file(&mut cx, target, false).await {
-            Ok(components) => {
-                for component in components {
-                    println!("{}", component.format(&mut cursor));
+        let origin = read_string(
+            &mut Context::create().unbound()?,
+            include_str!("../../tests/formation.sibs"),
+        )
+        .await?;
+        let formated = read_string(
+            &mut Context::create().unbound()?,
+            &format_string(include_str!("../../tests/formation.sibs")).await?,
+        )
+        .await?;
+        assert_eq!(origin.len(), formated.len());
+        let mut count: usize = 0;
+        for (i, el) in origin.iter().enumerate() {
+            assert_eq!(el.el_target(), formated[i].el_target());
+            if let (Element::Component(origin, _), Element::Component(formated, _)) =
+                (el, &formated[i])
+            {
+                assert_eq!(origin.elements.len(), formated.elements.len());
+                for (i, el) in origin.elements.iter().enumerate() {
+                    assert_eq!(el.el_target(), formated.elements[i].el_target());
+                    if let (Element::Task(origin, _), Element::Task(formated, _)) =
+                        (el, &formated.elements[i])
+                    {
+                        assert_eq!(origin.block.elements.len(), formated.block.elements.len());
+                        let origin = &origin.block.elements;
+                        let formated = &formated.block.elements;
+                        for (i, el) in origin.iter().enumerate() {
+                            assert_eq!(el.to_string(), formated[i].to_string());
+                            count += 1;
+                        }
+                    }
                 }
             }
-            Err(err) => {
-                cx.sources.report_error(&err)?;
-                let _ = cx.tracker.shutdown().await;
-                return Err(err);
-            }
         }
+        assert!(count > 50);
         Ok(())
     }
 }

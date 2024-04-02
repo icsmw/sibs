@@ -275,6 +275,7 @@ impl Element {
         Self::parse(reader, targets, true)
     }
 
+    #[cfg(test)]
     pub fn get_metadata(&self) -> &Metadata {
         match self {
             Self::Function(_, md) => md,
@@ -305,6 +306,38 @@ impl Element {
             Self::Comment(_) => {
                 panic!("Comment doesn't have metadata");
             }
+        }
+    }
+
+    #[cfg(test)]
+    pub fn el_target(&self) -> ElTarget {
+        match self {
+            Self::Function(..) => ElTarget::Function,
+            Self::If(..) => ElTarget::If,
+            Self::Each(..) => ElTarget::Each,
+            Self::First(..) => ElTarget::First,
+            Self::VariableAssignation(..) => ElTarget::VariableAssignation,
+            Self::Comparing(..) => ElTarget::Comparing,
+            Self::Combination(..) => ElTarget::Combination,
+            Self::Condition(..) => ElTarget::Condition,
+            Self::Subsequence(..) => ElTarget::Subsequence,
+            Self::Optional(..) => ElTarget::Optional,
+            Self::Reference(..) => ElTarget::Reference,
+            Self::PatternString(..) => ElTarget::PatternString,
+            Self::VariableName(..) => ElTarget::VariableName,
+            Self::Values(..) => ElTarget::Values,
+            Self::Meta(..) => ElTarget::Meta,
+            Self::Block(..) => ElTarget::Block,
+            Self::Command(..) => ElTarget::Command,
+            Self::Task(..) => ElTarget::Task,
+            Self::Component(..) => ElTarget::Component,
+            Self::Boolean(..) => ElTarget::Boolean,
+            Self::Integer(..) => ElTarget::Integer,
+            Self::VariableDeclaration(..) => ElTarget::VariableDeclaration,
+            Self::VariableVariants(..) => ElTarget::VariableVariants,
+            Self::VariableType(..) => ElTarget::VariableType,
+            Self::SimpleString(..) => ElTarget::SimpleString,
+            Self::Comment(..) => ElTarget::Comment,
         }
     }
 }

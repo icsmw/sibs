@@ -206,3 +206,30 @@ pub fn read_file<'a>(
         Ok(elements)
     })
 }
+
+pub fn read_string<'a>(
+    cx: &'a mut Context,
+    content: &'a str,
+) -> Pin<Box<dyn Future<Output = ReadFileResult> + 'a>> {
+    Box::pin(async move {
+        let mut reader = cx.reader().from_str(content)?;
+        let mut elements: Vec<Element> = vec![];
+        while let Some(el) =
+            Element::include(&mut reader, &[ElTarget::Function, ElTarget::Component])?
+        {
+            if let Element::Function(func, _) = &el {
+                if Import::get_name() != func.name {
+                    Err(E::OnlyImportFunctionAllowedOnRoot.by_reader(&reader))?;
+                }
+                if func.args.len() != 1 {
+                    return Err(E::ImportFunctionInvalidArgs.by_reader(&reader))?;
+                };
+                if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
+                    Err(E::MissedSemicolon.by_reader(&reader))?;
+                }
+            }
+            elements.push(el);
+        }
+        Ok(elements)
+    })
+}

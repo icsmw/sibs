@@ -271,7 +271,7 @@ impl Formation for Function {
             )
         }
         let feeding = self.get_feeding();
-        if self.to_string().len() > cursor.max_len()
+        let output = if self.to_string().len() > cursor.max_len()
             || self.args.len() > cursor.max_args()
             || feeding.len() > cursor.max_args()
         {
@@ -292,7 +292,11 @@ impl Formation for Function {
                 cursor.offset_as_string_if(&[ElTarget::Block, ElTarget::Component]),
                 self
             )
-        }
+        };
+        format!(
+            "{output}{}",
+            if cursor.parent.is_none() { ";\n" } else { "" }
+        )
     }
 }
 
