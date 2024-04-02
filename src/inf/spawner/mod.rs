@@ -44,11 +44,17 @@ fn spawn(command: &str, cwd: &PathBuf) -> Result<Child, E> {
 }
 
 fn parse_command(command: &str) -> (&str, Vec<&str>) {
-    let mut parts = command.split(' ').collect::<Vec<&str>>();
+    let mut parts = command.split_ascii_whitespace().collect::<Vec<&str>>();
     (parts.remove(0), parts)
 }
 
-pub async fn run(command: &str, cwd: &PathBuf, task: &Task) -> Result<ExitStatus, E> {
+pub struct RunResult {
+    pub stdout: String,
+    pub stdin: String,
+    pub status: ExitStatus,
+}
+
+pub async fn run(command: &str, cwd: &PathBuf, task: &Task) -> Result<RunResult, E> {
     let mut child = spawn(command, cwd)?;
     let mut stdout = codec::FramedRead::new(
         child
@@ -64,31 +70,41 @@ pub async fn run(command: &str, cwd: &PathBuf, task: &Task) -> Result<ExitStatus
             .ok_or_else(|| E::Setup(String::from("Fail to get stderr handle")))?,
         LinesCodec::default(),
     );
-    fn post_logs(line: Result<String, LinesCodecError>, task: &Task) {
+    fn post_logs(line: Result<String, LinesCodecError>, task: &Task) -> String {
         match line {
             Ok(line) => {
                 task.msg(line.trim_end());
                 task.progress(None);
+                line
             }
             Err(err) => {
                 task.err(format!("Error during decoding command output: {err}",));
+                String::new()
             }
         }
     }
-    join!(
+    let (stdout, stdin) = join!(
         async {
+            let mut lines = String::new();
             while let Some(line) = stdout.next().await {
-                post_logs(line, task);
+                lines = format!("{lines}\n{}", post_logs(line, task));
             }
+            lines
         },
         async {
+            let mut lines = String::new();
             while let Some(line) = stderr.next().await {
-                post_logs(line, task);
+                lines = format!("{lines}\n{}", post_logs(line, task));
             }
+            lines
         }
     );
-    child
-        .wait()
-        .await
-        .map_err(|e| E::Executing(command.to_string(), e.to_string()))
+    Ok(RunResult {
+        stdin,
+        stdout,
+        status: child
+            .wait()
+            .await
+            .map_err(|e| E::Executing(command.to_string(), e.to_string()))?,
+    })
 }

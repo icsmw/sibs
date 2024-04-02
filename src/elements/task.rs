@@ -18,15 +18,15 @@ pub struct Task {
 }
 
 impl Task {
+    pub fn get_name(&self) -> &str {
+        &self.name.value
+    }
     pub fn has_meta(&self) -> bool {
         true
         // self.block
         //     .as_ref()
         //     .map(|b| b.meta.is_some())
         //     .unwrap_or(false)
-    }
-    pub fn get_name(&self) -> &str {
-        &self.name.value
     }
 }
 
@@ -106,7 +106,7 @@ impl fmt::Display for Task {
             f,
             "{}{}{} {}",
             self.name.value,
-            if self.declarations.is_empty() {
+            if self.declarations.is_empty() && self.dependencies.is_empty() {
                 String::new()
             } else {
                 format!(
@@ -142,7 +142,7 @@ impl Formation for Task {
             "{}{}{}{} {}",
             cursor.offset_as_string(),
             self.name.value,
-            if self.declarations.is_empty() {
+            if self.declarations.is_empty() && self.dependencies.is_empty() {
                 String::new()
             } else {
                 format!(
@@ -367,7 +367,11 @@ mod processing {
 
 #[cfg(test)]
 mod proptest {
-    use crate::elements::{Block, ElTarget, Element, SimpleString, Task};
+    use crate::{
+        elements::{Block, ElTarget, Element, SimpleString, Task},
+        inf::{operator::E, tests::*, Context},
+        reader::Reading,
+    };
     use proptest::prelude::*;
 
     impl Arbitrary for Task {
@@ -398,6 +402,35 @@ mod proptest {
                     },
                 })
                 .boxed()
+        }
+    }
+
+    fn reading(task: Task) -> Result<(), E> {
+        get_rt().block_on(async {
+            let mut cx = Context::create().unbound()?;
+            let origin = format!("{task};");
+            let mut reader = cx.reader().from_str(&origin)?;
+            while let Some(task) = Task::read(&mut reader)? {
+                assert_eq!(format!("{task};"), origin);
+            }
+            Ok(())
+        })
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig {
+            max_shrink_iters: 5000,
+            ..ProptestConfig::with_cases(10)
+        })]
+        #[test]
+        fn test_run_task(
+            args in any_with::<Task>(0)
+        ) {
+            let res = reading(args.clone());
+            if res.is_err() {
+                println!("{res:?}");
+            }
+            prop_assert!(res.is_ok());
         }
     }
 }

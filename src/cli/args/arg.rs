@@ -45,10 +45,6 @@ pub trait Argument {
         }
     }
     fn key() -> String;
-    fn read(args: &mut Vec<String>) -> Result<Option<Box<dyn Action>>, E>
-    where
-        Self: Sized;
-    fn desc() -> Description
-    where
-        Self: Sized;
+    fn read(args: &mut Vec<String>) -> Result<Option<Box<dyn Action>>, E>;
+    fn desc() -> Description;
 }

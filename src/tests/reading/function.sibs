@@ -1,6 +1,6 @@
 @import(./common.sibs);
 @import(./tasks.sibs);
-@remove?(./some_path/to_something);
+@remove(./some_path/to_something);
 @noArgFn;
 @copy(../from; ./to);
 @copy(../path\ with\ spaces; ./node_modules);
@@ -12,9 +12,9 @@
 @read_as_string(./package.json) >> @find(/\"version\":\ \"([\d\.])\"/gi) >> @filter(123);
 @import($variable);
 @import($a; $b);
-@import?($a; $b);
+@import($a; $b);
 @import;
-@import?;
+@import;
 @import(./tasks.sibs; $variable);
 @import($variable; ./tasks.sibs; $variable);
 @copy("filename-{$platform}.zip"; ./node_modules; $dest);

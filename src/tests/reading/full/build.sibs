@@ -12,9 +12,9 @@
         $dev = @envvar(DEV_MODE);
         @cd(./some_folder);
         @cd(..);
-        @remove?(./node_modules/shared);
-        @remove?(./node_modules/wrapper);
-        @remove?(./dist/client);
+        @remove(./node_modules/shared);
+        @remove(./node_modules/wrapper);
+        @remove(./dist/client);
         :shared:prod;
         @copy(../shared; ./node_modules);
         :wrapper:prod;
@@ -79,7 +79,7 @@
         /// build dev >> build developing (no JS optimization) version
         /// build prod >> build production version
         @exists(./node_modules) => `yarn install`;
-        @remove?(./dist);
+        @remove(./dist);
         $mode == "dev" => `yarn run build`;
         $mode == "prod" => `yarn run prod`;
     ];
@@ -101,7 +101,7 @@
     prod [
         /// Compile & cleanup node_modules for production
         :self:build;
-        @remove?(./node_modules);
+        @remove(./node_modules);
         `yarn install --production`;
     ];
     lint [
@@ -148,7 +148,7 @@
     prod [
         /// Compile & cleanup node_modules for production
         :self:build;
-        @remove?(./node_modules);
+        @remove(./node_modules);
         `yarn install --production`;
     ];
     lint [

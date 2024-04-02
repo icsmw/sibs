@@ -131,8 +131,8 @@ impl Operator for Command {
                 )
                 .await?;
             match spawner::run(&output, cwd, &job).await {
-                Ok(status) => {
-                    if status.success() {
+                Ok(result) => {
+                    if result.status.success() {
                         job.success();
                         Ok(Some(AnyValue::new(())))
                     } else {

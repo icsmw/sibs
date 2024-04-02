@@ -10,7 +10,6 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct Function {
-    pub tolerance: bool,
     pub name: String,
     pub args: Vec<Element>,
     pub feed: Option<Box<Function>>,
@@ -27,11 +26,11 @@ impl Reading<Function> for Function {
                 .until()
                 .char(&[
                     &chars::CARET,
-                    &chars::QUESTION,
                     &chars::SEMICOLON,
                     &chars::WS,
                     &chars::OPEN_BRACKET,
                     &chars::CLOSE_BRACKET,
+                    &chars::QUESTION,
                 ])
                 .map(|(str, char)| (str, Some(char)))
                 .unwrap_or_else(|| (reader.move_to().end(), None));
@@ -44,14 +43,13 @@ impl Reading<Function> for Function {
             let args_close = reader.open_token();
             if matches!(
                 ends_with,
-                Some(chars::SEMICOLON) | Some(chars::CLOSE_BRACKET)
+                Some(chars::SEMICOLON) | Some(chars::CLOSE_BRACKET) | Some(chars::QUESTION)
             ) {
                 return Ok(Some(Self::new(
                     close(reader),
                     args_close(reader),
                     vec![],
                     name,
-                    false,
                 )?));
             }
             if ends_with.is_none() {
@@ -60,16 +58,9 @@ impl Reading<Function> for Function {
                     args_close(reader),
                     vec![],
                     name,
-                    false,
                 )?));
             }
             reader.trim();
-            let tolerance = if matches!(ends_with, Some(chars::QUESTION)) {
-                reader.move_to().next();
-                true
-            } else {
-                false
-            };
             let mut elements: Vec<Element> = vec![];
             if reader
                 .group()
@@ -112,7 +103,6 @@ impl Reading<Function> for Function {
                             Element::include(&mut inner, &[ElTarget::SimpleString])?
                                 .ok_or(E::NoContentBeforeSemicolon.by_reader(&inner))?,
                         );
-                        // let _ = inner.move_to().char(&[&chars::SEMICOLON]);
                     }
                 }
                 if elements.is_empty() {
@@ -125,7 +115,6 @@ impl Reading<Function> for Function {
                     args_close(reader),
                     elements,
                     name,
-                    tolerance,
                 )?));
             }
             if reader.move_to().expression(&[words::REDIRECT]).is_some() {
@@ -139,7 +128,6 @@ impl Reading<Function> for Function {
                         feed_func_args_token_id,
                         elements,
                         name,
-                        tolerance,
                     )?);
                     dest.set_token(close(reader));
                     Ok(Some(dest))
@@ -152,7 +140,6 @@ impl Reading<Function> for Function {
                 args_close(reader),
                 elements,
                 name,
-                tolerance,
             )?))
         } else {
             Ok(None)
@@ -166,13 +153,11 @@ impl Function {
         args_token: usize,
         args: Vec<Element>,
         name: String,
-        tolerance: bool,
     ) -> Result<Self, LinkedErr<E>> {
         Ok(Self {
             token,
             args_token,
             name,
-            tolerance,
             feed: None,
             args,
         })
@@ -220,9 +205,8 @@ impl fmt::Display for Function {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fn to_string(func: &Function) -> String {
             format!(
-                "@{}{}{}{}{}",
+                "@{}{}{}{}",
                 func.name,
-                if func.tolerance { "?" } else { "" },
                 if func.args.is_empty() { "" } else { "(" },
                 func.args
                     .iter()
@@ -250,9 +234,8 @@ impl Formation for Function {
     fn format(&self, cursor: &mut FormationCursor) -> String {
         fn formated(func: &Function, cursor: &mut FormationCursor) -> String {
             format!(
-                "@{}{}{}{}{}",
+                "@{}{}{}{}",
                 func.name,
-                if func.tolerance { "?" } else { "" },
                 if func.args.is_empty() { "" } else { "(" },
                 func.args
                     .iter()
@@ -471,7 +454,6 @@ mod proptest {
                 ("[a-z][a-z0-9]*".prop_map(String::from),)
                     .prop_map(|(name,)| Function {
                         args: vec![],
-                        tolerance: false,
                         token: 0,
                         args_token: 0,
                         feed: None,
@@ -507,7 +489,6 @@ mod proptest {
                 )
                     .prop_map(|(name, args)| Function {
                         args,
-                        tolerance: false,
                         token: 0,
                         args_token: 0,
                         feed: None,

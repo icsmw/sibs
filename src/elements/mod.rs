@@ -31,9 +31,9 @@ pub use variable::*;
 use crate::{
     error::LinkedErr,
     inf::{term, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Term},
-    reader::{Reader, Reading, E},
+    reader::{chars, Reader, Reading, E},
 };
-use std::fmt;
+use std::fmt::{self, Display};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ElTarget {
@@ -68,12 +68,14 @@ pub enum ElTarget {
 #[derive(Debug, Clone, Default)]
 pub struct Metadata {
     pub comments: Vec<Comment>,
+    pub tolerance: bool,
 }
 
 impl Metadata {
     pub fn empty() -> Self {
         Metadata {
             comments: Vec::new(),
+            tolerance: false,
         }
     }
 }
@@ -128,11 +130,18 @@ impl Element {
         targets: &[ElTarget],
         includes: bool,
     ) -> Result<Option<Element>, LinkedErr<E>> {
+        fn tolerance(reader: &mut Reader, mut md: Metadata) -> Metadata {
+            md.tolerance = reader.move_to().char(&[&chars::QUESTION]).is_some();
+            md
+        }
         let mut comments: Vec<Comment> = vec![];
         while let Some(comment) = Comment::read(reader)? {
             comments.push(comment);
         }
-        let md = Metadata { comments };
+        let md = Metadata {
+            comments,
+            tolerance: false,
+        };
         if includes == targets.contains(&ElTarget::Combination) {
             if let Some(el) = Combination::read(reader)? {
                 return Ok(Some(Element::Combination(el, md)));
@@ -155,7 +164,7 @@ impl Element {
         }
         if includes == targets.contains(&ElTarget::Command) {
             if let Some(el) = Command::read(reader)? {
-                return Ok(Some(Element::Command(el, md)));
+                return Ok(Some(Element::Command(el, tolerance(reader, md))));
             }
         }
         if includes == targets.contains(&ElTarget::If) {
@@ -185,7 +194,7 @@ impl Element {
         }
         if includes == targets.contains(&ElTarget::Function) {
             if let Some(el) = Function::read(reader)? {
-                return Ok(Some(Element::Function(el, md)));
+                return Ok(Some(Element::Function(el, tolerance(reader, md))));
             }
         }
         if includes == targets.contains(&ElTarget::VariableAssignation) {
@@ -344,35 +353,48 @@ impl Element {
 
 impl fmt::Display for Element {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fn as_string<A>(el: &A, md: &Metadata) -> String
+        where
+            A: Display,
+        {
+            format!(
+                "{el}{}",
+                if md.tolerance {
+                    chars::QUESTION.to_string()
+                } else {
+                    String::new()
+                }
+            )
+        }
         write!(
             f,
             "{}",
             match self {
-                Self::Function(v, _) => v.to_string(),
-                Self::If(v, _) => v.to_string(),
-                Self::Each(v, _) => v.to_string(),
-                Self::First(v, _) => v.to_string(),
-                Self::VariableAssignation(v, _) => v.to_string(),
-                Self::Comparing(v, _) => v.to_string(),
-                Self::Combination(v, _) => v.to_string(),
-                Self::Condition(v, _) => v.to_string(),
-                Self::Subsequence(v, _) => v.to_string(),
-                Self::Optional(v, _) => v.to_string(),
-                Self::Reference(v, _) => v.to_string(),
-                Self::PatternString(v, _) => v.to_string(),
-                Self::VariableName(v, _) => v.to_string(),
-                Self::Values(v, _) => v.to_string(),
-                Self::Meta(v, _) => v.to_string(),
-                Self::Block(v, _) => v.to_string(),
-                Self::Command(v, _) => v.to_string(),
-                Self::Task(v, _) => v.to_string(),
-                Self::Component(v, _) => v.to_string(),
-                Self::Boolean(v, _) => v.to_string(),
-                Self::Integer(v, _) => v.to_string(),
-                Self::VariableDeclaration(v, _) => v.to_string(),
-                Self::VariableVariants(v, _) => v.to_string(),
-                Self::VariableType(v, _) => v.to_string(),
-                Self::SimpleString(v, _) => v.to_string(),
+                Self::Function(v, md) => as_string(v, md),
+                Self::If(v, md) => as_string(v, md),
+                Self::Each(v, md) => as_string(v, md),
+                Self::First(v, md) => as_string(v, md),
+                Self::VariableAssignation(v, md) => as_string(v, md),
+                Self::Comparing(v, md) => as_string(v, md),
+                Self::Combination(v, md) => as_string(v, md),
+                Self::Condition(v, md) => as_string(v, md),
+                Self::Subsequence(v, md) => as_string(v, md),
+                Self::Optional(v, md) => as_string(v, md),
+                Self::Reference(v, md) => as_string(v, md),
+                Self::PatternString(v, md) => as_string(v, md),
+                Self::VariableName(v, md) => as_string(v, md),
+                Self::Values(v, md) => as_string(v, md),
+                Self::Meta(v, md) => as_string(v, md),
+                Self::Block(v, md) => as_string(v, md),
+                Self::Command(v, md) => as_string(v, md),
+                Self::Task(v, md) => as_string(v, md),
+                Self::Component(v, md) => as_string(v, md),
+                Self::Boolean(v, md) => as_string(v, md),
+                Self::Integer(v, md) => as_string(v, md),
+                Self::VariableDeclaration(v, md) => as_string(v, md),
+                Self::VariableVariants(v, md) => as_string(v, md),
+                Self::VariableType(v, md) => as_string(v, md),
+                Self::SimpleString(v, md) => as_string(v, md),
                 Self::Comment(v) => v.to_string(),
             }
         )
@@ -411,12 +433,20 @@ impl Formation for Element {
         }
     }
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        fn format_el<A, B>(el: &A, md: &B, cursor: &mut FormationCursor) -> String
+        fn format_el<A>(el: &A, md: &Metadata, cursor: &mut FormationCursor) -> String
         where
             A: Formation,
-            B: Formation,
         {
-            format!("{}{}", md.format(cursor), el.format(cursor))
+            format!(
+                "{}{}{}",
+                md.format(cursor),
+                el.format(cursor),
+                if md.tolerance {
+                    chars::QUESTION.to_string()
+                } else {
+                    String::new()
+                }
+            )
         }
         match self {
             Self::Function(v, m) => format_el(v, m, cursor),
@@ -448,6 +478,7 @@ impl Formation for Element {
         }
     }
 }
+
 impl term::Display for Element {
     fn display(&self, _term: &mut Term) {
         // term.print_fmt(&self.as_lines());
@@ -539,6 +570,20 @@ mod proptest {
     };
     use proptest::prelude::*;
 
+    impl Arbitrary for Metadata {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with((): Self::Parameters) -> Self::Strategy {
+            prop_oneof![Just(true), Just(false),]
+                .prop_map(|tolerance| Metadata {
+                    comments: Vec::new(),
+                    tolerance,
+                })
+                .boxed()
+        }
+    }
+
     fn generate(targets: &[ElTarget], deep: usize) -> Vec<BoxedStrategy<Element>> {
         let mut collected = vec![];
         if targets.contains(&ElTarget::Combination) {
@@ -585,8 +630,11 @@ mod proptest {
         }
         if targets.contains(&ElTarget::Command) {
             collected.push(
-                Command::arbitrary_with(deep + 1)
-                    .prop_map(|el| Element::Command(el, Metadata::default()))
+                (
+                    Command::arbitrary_with(deep + 1),
+                    Metadata::arbitrary_with(()),
+                )
+                    .prop_map(|(el, md)| Element::Command(el, md))
                     .boxed(),
             );
         }
@@ -620,8 +668,11 @@ mod proptest {
         }
         if targets.contains(&ElTarget::Function) {
             collected.push(
-                Function::arbitrary_with(deep + 1)
-                    .prop_map(|el| Element::Function(el, Metadata::default()))
+                (
+                    Function::arbitrary_with(deep + 1),
+                    Metadata::arbitrary_with(()),
+                )
+                    .prop_map(|(el, md)| Element::Function(el, md))
                     .boxed(),
             );
         }

@@ -14,9 +14,9 @@
         // Comment
         // Comment long comment  long comment  long comment  long comment  long comment  long comment long comment  long comment  long comment  long comment 
         @cd(..);
-        @remove?(./node_modules/shared);
-        @remove?(./node_modules/wrapper);
-        @remove?(./dist/client);
+        @remove(./node_modules/shared);
+        @remove(./node_modules/wrapper);
+        @remove(./dist/client);
         :shared:prod;
         @copy(../shared; ./node_modules);
         :wrapper:prod;
@@ -65,9 +65,9 @@
         @read_as_string(./package.json) >> @find(/\"version\":\ \"([\d\.])\"/gi) >> @filter(123);
         @import($variable);
         @import($a; $b);
-        @import?($a; $b);
+        @import($a; $b);
         @import;
-        @import?;
+        @import;
         @import(./tasks.sibs; $variable);
         @import($variable; ./tasks.sibs; $variable; $variable; ./tasks.sibs; $variable; $variable; ./tasks.sibs; $variable; $variable; ./tasks.sibs; $variable);
         @copy("filename-{$platform}.zip"; ./node_modules; $dest);

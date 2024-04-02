@@ -28,7 +28,7 @@ pub fn read(
                         value: inner_token.content,
                         token: inner_token.id,
                     },
-                    Metadata { comments: vec![] },
+                    Metadata::default(),
                 ));
                 closed = true;
                 break;
@@ -48,7 +48,7 @@ pub fn read(
                                 value: inner_token.content,
                                 token: inner_token.id,
                             },
-                            Metadata { comments: vec![] },
+                            Metadata::default(),
                         ),
                         el,
                     ]);
