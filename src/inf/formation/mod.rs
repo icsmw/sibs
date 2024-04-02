@@ -86,6 +86,7 @@ pub async fn format_file(filename: &PathBuf) -> Result<(), LinkedErr<E>> {
     Ok(())
 }
 
+#[cfg(test)]
 pub async fn format_string(content: &str) -> Result<String, LinkedErr<E>> {
     let mut cx = Context::create().unbound()?;
     let mut cursor = FormationCursor::default();
