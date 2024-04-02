@@ -32,15 +32,17 @@ impl Scenario {
     }
     pub fn from(filename: &Path) -> Result<Self, E> {
         let filename_str = filename.to_string_lossy().to_string();
-        if !filename.is_absolute() {
-            Err(E::IsNotAbsolutePath(filename_str.clone()))?;
-        }
-        if !filename.exists() {
+        let abs = if !filename.is_absolute() {
+            current_dir()?.join(filename)
+        } else {
+            filename.to_owned()
+        };
+        if !abs.exists() {
             Err(E::PathDoesNotExist(filename_str.clone()))?;
         }
         Ok(Self {
-            filename: filename.to_path_buf(),
-            path: filename
+            filename: abs.to_path_buf(),
+            path: abs
                 .parent()
                 .ok_or(E::NoParentFolderFor(filename_str))?
                 .to_path_buf(),
