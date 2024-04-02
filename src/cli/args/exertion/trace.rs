@@ -1,10 +1,9 @@
 use crate::{
     cli::{
-        args::{Argument, Description},
+        args::{Action, ActionPinnedResult, Argument, Description},
         error::E,
     },
-    elements::Component,
-    inf::context::Context,
+    inf::{tracker, AnyValue},
 };
 
 const ARGS: [&str; 1] = ["--trace"];
@@ -14,9 +13,14 @@ pub struct Trace {
     pub state: bool,
 }
 
-impl Argument<Trace> for Trace {
-    fn read(args: &mut Vec<String>) -> Result<Option<Trace>, E> {
-        Self::has(args, &ARGS).map(|state| Some(Self { state }))
+impl Argument for Trace {
+    fn key() -> String {
+        ARGS[0].to_owned()
+    }
+    fn read(args: &mut Vec<String>) -> Result<Option<Box<dyn Action>>, E> {
+        Ok(Some(Box::new(Self {
+            state: Self::has(args, &ARGS).map(|state| state)?,
+        })))
     }
     fn desc() -> Description {
         Description {
@@ -25,7 +29,17 @@ impl Argument<Trace> for Trace {
             pairs: vec![],
         }
     }
-    async fn action(&mut self, _components: &[Component], _context: &mut Context) -> Result<(), E> {
-        Ok(())
+}
+
+impl Action for Trace {
+    fn action<'a>(
+        &'a self,
+        _components: &'a [crate::elements::Component],
+        _context: &'a mut crate::inf::Context,
+    ) -> ActionPinnedResult {
+        Box::pin(async move { Ok(AnyValue::new(self.state)) })
+    }
+    fn key(&self) -> String {
+        ARGS[0].to_owned()
     }
 }

@@ -1,111 +1,107 @@
+pub mod action;
+pub mod arg;
 pub mod exertion;
 
 use crate::{
     cli::error::E,
     elements::Component,
     inf::{
-        any::DebugAny,
-        context::Context,
         term::{self, Term},
+        AnyValue, Context,
     },
 };
-use std::{any::TypeId, collections::HashMap, fmt::Debug};
-
-pub struct Description {
-    pub key: Vec<String>,
-    pub desc: String,
-    pub pairs: Vec<(String, String)>,
-}
-
-pub trait Argument<T> {
-    fn find_next_to(args: &mut Vec<String>, targets: &[&str]) -> Result<Option<String>, E> {
-        if let Some(position) = args.iter().position(|arg| targets.contains(&arg.as_str())) {
-            if position == args.len() - 1 {
-                Err(E::InvalidRequestAfter(targets.join(", ")))?;
-            }
-            let _ = args.remove(position);
-            Ok(Some(args.remove(position)))
-        } else {
-            Ok(None)
-        }
-    }
-    fn find_prev_to_opt(
-        args: &mut Vec<String>,
-        targets: &[&str],
-    ) -> Result<Option<Option<String>>, E> {
-        if let Some(position) = args.iter().position(|arg| targets.contains(&arg.as_str())) {
-            if position == 0 {
-                Ok(Some(None))
-            } else {
-                let arg = args.remove(position - 1);
-                args.remove(position - 1);
-                Ok(Some(Some(arg)))
-            }
-        } else {
-            Ok(None)
-        }
-    }
-    fn has(args: &mut Vec<String>, targets: &[&str]) -> Result<bool, E> {
-        if let Some(position) = args.iter().position(|arg| targets.contains(&arg.as_str())) {
-            let _ = args.remove(position);
-            Ok(true)
-        } else {
-            Ok(false)
-        }
-    }
-    fn read(args: &mut Vec<String>) -> Result<Option<T>, E>
-    where
-        Self: Sized;
-    fn desc() -> Description
-    where
-        Self: Sized;
-    async fn action(&mut self, _components: &[Component], _context: &mut Context) -> Result<(), E> {
-        Ok(())
-    }
-    fn no_context(&self) -> bool {
-        false
-    }
-}
+pub use action::*;
+pub use arg::*;
+use std::{collections::HashMap, fmt::Debug};
 
 #[derive(Debug)]
 pub struct Arguments {
-    pub arguments: HashMap<TypeId, Box<dyn DebugAny>>,
+    pub actions: HashMap<String, Box<dyn Action>>,
 }
 
 impl Arguments {
     pub fn new(args: &mut Vec<String>) -> Result<Self, E> {
-        fn into<T: DebugAny + 'static>(entity: Option<T>) -> Option<(TypeId, Box<dyn DebugAny>)> {
-            entity.map(|v| (TypeId::of::<T>(), Box::new(v) as Box<dyn DebugAny>))
-        }
-        let mut all = vec![
-            into(exertion::Version::read(args)?),
-            into(exertion::Scenario::read(args)?),
-            into(exertion::Format::read(args)?),
-            into(exertion::Help::read(args)?),
-            into(exertion::Output::read(args)?),
-            into(exertion::LogFile::read(args)?),
-            into(exertion::Trace::read(args)?),
-        ];
-        let mut arguments: HashMap<TypeId, Box<dyn DebugAny>> = HashMap::new();
-        while let Some(mut res) = all.pop() {
-            if let Some((type_id, argument)) = res.take() {
-                arguments.insert(type_id, argument);
+        let mut actions: HashMap<String, Box<dyn Action>> = HashMap::new();
+        for action in vec![
+            exertion::Version::read(args)?,
+            exertion::Scenario::read(args)?,
+            exertion::Format::read(args)?,
+            exertion::Help::read(args)?,
+            exertion::Output::read(args)?,
+            exertion::LogFile::read(args)?,
+            exertion::Trace::read(args)?,
+        ]
+        .into_iter()
+        .flatten()
+        {
+            let key = action.key();
+            if actions.insert(action.key(), action).is_some() {
+                Err(E::DuplicateOfKey(key))?;
             }
         }
-        Ok(Self { arguments })
+        Ok(Self { actions })
     }
-    pub fn get<T: 'static>(&self) -> Option<&T> {
-        self.arguments
-            .get(&TypeId::of::<T>())
-            .and_then(|entity| entity.as_ref().as_any().downcast_ref())
+    pub async fn run<T: Argument + 'static>(
+        &self,
+        components: &[Component],
+        cx: &mut Context,
+    ) -> Result<Option<AnyValue>, E> {
+        if let Some(action) = self.actions.get(&T::key()) {
+            Ok(Some(action.action(components, cx).await?))
+        } else {
+            Ok(None)
+        }
     }
-    pub fn get_mut<T: 'static>(&mut self) -> Option<&mut T> {
-        self.arguments
-            .get_mut(&TypeId::of::<T>())
-            .and_then(|entity| entity.as_mut().as_any_mut().downcast_mut())
+    pub async fn run_no_cx<T: Argument + 'static>(&self) -> Result<Option<AnyValue>, E> {
+        if let Some(action) = self.actions.get(&T::key()) {
+            Ok(Some(
+                action
+                    .action(&[], &mut Context::create().unbound()?)
+                    .await?,
+            ))
+        } else {
+            Ok(None)
+        }
     }
-    pub fn has<T: 'static>(&self) -> bool {
-        self.arguments.contains_key(&TypeId::of::<T>())
+    pub async fn get_value_no_cx<T: Argument + 'static, O: Clone + 'static>(
+        &self,
+    ) -> Result<Option<O>, E> {
+        if let Some(action) = self.actions.get(&T::key()) {
+            Ok(action
+                .action(&[], &mut Context::create().unbound()?)
+                .await?
+                .get_as::<O>()
+                .cloned())
+        } else {
+            Ok(None)
+        }
+    }
+    pub async fn all_without_context(&self) -> Result<bool, E> {
+        let actions = self
+            .actions
+            .iter()
+            .filter(|(_, a)| a.no_context())
+            .map(|(_, a)| a)
+            .collect::<Vec<&Box<dyn Action>>>();
+        if actions.is_empty() {
+            Ok(false)
+        } else if actions.len() != 1 {
+            Err(E::NotSupportedMultipleArguments(
+                actions
+                    .iter()
+                    .map(|a| a.key())
+                    .collect::<Vec<String>>()
+                    .join(", "),
+            ))
+        } else {
+            let _ = actions[0]
+                .action(&[], &mut Context::create().unbound()?)
+                .await?;
+            Ok(true)
+        }
+    }
+    pub fn has<T: Argument + 'static>(&self) -> bool {
+        self.actions.contains_key(&T::key())
     }
 }
 

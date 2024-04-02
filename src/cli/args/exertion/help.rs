@@ -1,12 +1,10 @@
 use crate::{
     cli::{
-        args::{Argument, Description}, error::E 
-    },
-    inf::{
-        term::Display,
-        context::Context,
-    }, 
-    elements::Component
+        args::{Action, ActionPinnedResult, Argument, Description},
+        error::E,
+    }, elements::Component, inf::{
+        context::Context, term::Display, AnyValue
+    }
 };
 
 const ARGS: [&str; 2] = ["--help", "-h"];
@@ -16,11 +14,18 @@ pub struct Help {
     component: Option<String>,
 }
 
-impl Argument<Help> for Help {
-    fn read(args: &mut Vec<String>) -> Result<Option<Help>, E> {
-        Self::find_prev_to_opt(args, &ARGS).map(|component| component.map(|component| Self {
-            component,
-        }))
+impl Argument for Help {
+    fn key() -> String {
+        ARGS[0].to_owned()
+    }
+    fn read(args: &mut Vec<String>) -> Result<Option<Box<dyn Action>>, E> {
+        if let Some(component) = Self::find_prev_to_opt(args, &ARGS).map(|component| component.map(|component| component))? {
+            Ok(Some(Box::new(Self {
+                component,
+            })))
+        } else {
+            Ok(None)
+        }
     }
     fn desc() -> Description {
         Description { 
@@ -29,62 +34,72 @@ impl Argument<Help> for Help {
 
         }
     }
-    async fn action(&mut self, components: &[Component], cx: &mut Context) -> Result<(), E> {
-        fn list_components(components: &[Component], cx: &mut Context) {
-            let with_context = components
-            .iter()
-            .filter(|comp| comp.cwd.is_some())
-            .map(|comp| {
-                (
-                    comp.name.to_string(),
-                    comp.get_meta().iter()
-                        .map(|meta| meta.as_string())
-                        .collect::<Vec<String>>().join("\n"),
-                )
-            })
-            .collect::<Vec<(String, String)>>();
-            if !with_context.is_empty() {
-                cx.term.bold("COMPONENTS:\n");
-                cx.term.right();
-                cx.term.pairs(with_context);
-                cx.term.left();
-            }
-        }
-        fn list_commands(components: &[Component], cx: &mut Context) {
-            if components.iter().any(|comp| comp.cwd.is_none()) {
-                cx.term.bold("\nCOMMANDS:\n");
-            }
-            cx.term.right();
-            components
-                .iter()
-                .filter(|comp| comp.cwd.is_none())
-                .for_each(|comp| {
-                    comp.get_tasks().iter().filter(|t| t.has_meta()).for_each(|task| {
-                        task.display(&mut cx.term);
-                    });
-                });
-                cx.term.left();
-        }
-        cx.term.bold("SCENARIO:\n");
+
+}
+
+fn list_components(components: &[Component], cx: &mut Context) {
+    let with_context = components
+    .iter()
+    .filter(|comp| comp.cwd.is_some())
+    .map(|comp| {
+        (
+            comp.name.to_string(),
+            comp.get_meta().iter()
+                .map(|meta| meta.as_string())
+                .collect::<Vec<String>>().join("\n"),
+        )
+    })
+    .collect::<Vec<(String, String)>>();
+    if !with_context.is_empty() {
+        cx.term.bold("COMPONENTS:\n");
         cx.term.right();
-        cx.term.print(format!(
-            "{}{}\n\n",
-            cx.term.offset(),
-            cx.scenario.filename.to_str().unwrap()
-        ));
+        cx.term.pairs(with_context);
         cx.term.left();
-        if let Some(component) = self.component.as_ref() {
-            if let Some(component) = components.iter().find(|c| &c.name.to_string() == component) {
-                component.display(&mut cx.term);
+    }
+}
+fn list_commands(components: &[Component], cx: &mut Context) {
+    if components.iter().any(|comp| comp.cwd.is_none()) {
+        cx.term.bold("\nCOMMANDS:\n");
+    }
+    cx.term.right();
+    components
+        .iter()
+        .filter(|comp| comp.cwd.is_none())
+        .for_each(|comp| {
+            comp.get_tasks().iter().filter(|t| t.has_meta()).for_each(|task| {
+                task.display(&mut cx.term);
+            });
+        });
+        cx.term.left();
+}
+
+impl Action for Help {
+    fn key(&self) -> String {
+        ARGS[0].to_owned()
+    }
+    fn action<'a>(&'a self, components: &'a[Component], cx: &'a mut Context) -> ActionPinnedResult {
+        Box::pin(async move {
+            cx.term.bold("SCENARIO:\n");
+            cx.term.right();
+            cx.term.print(format!(
+                "{}{}\n\n",
+                cx.term.offset(),
+                cx.scenario.filename.to_str().unwrap()
+            ));
+            cx.term.left();
+            if let Some(component) = self.component.as_ref() {
+                if let Some(component) = components.iter().find(|c| &c.name.to_string() == component) {
+                    component.display(&mut cx.term);
+                } else {
+                    cx.term.err(format!("Component \"{component}\" isn't found.\n\n"));
+                    list_components(components, cx);
+                    return Err(E::ComponentNotExists(component.to_string()));
+                }
             } else {
-                cx.term.err(format!("Component \"{component}\" isn't found.\n\n"));
                 list_components(components, cx);
-                return Err(E::ComponentNotExists(component.to_string()));
+                list_commands(components, cx);
             }
-        } else {
-            list_components(components, cx);
-            list_commands(components, cx);
-        }
-        Ok(())
+            Ok(AnyValue::new(()))
+        })
     }
 }

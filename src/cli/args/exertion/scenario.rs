@@ -1,6 +1,9 @@
-use crate::cli::{
-    args::{Argument, Description},
-    error::E,
+use crate::{
+    cli::{
+        args::{Action, ActionPinnedResult, Argument, Description},
+        error::E,
+    },
+    inf::AnyValue,
 };
 use std::path::PathBuf;
 
@@ -11,21 +14,18 @@ pub struct Scenario {
     scenario: PathBuf,
 }
 
-impl Scenario {
-    pub fn get(&self) -> PathBuf {
-        self.scenario.clone()
+impl Argument for Scenario {
+    fn key() -> String {
+        ARGS[0].to_owned()
     }
-}
-
-impl Argument<Scenario> for Scenario {
-    fn read(args: &mut Vec<String>) -> Result<Option<Scenario>, E> {
+    fn read(args: &mut Vec<String>) -> Result<Option<Box<dyn Action>>, E> {
         if let Some(first) = args.first() {
             if ARGS.contains(&first.as_str()) {
                 if let Some(path) = args.get(1) {
                     let scenario = PathBuf::from(path);
                     if scenario.exists() {
                         let _ = args.drain(0..=1);
-                        Ok(Some(Scenario { scenario }))
+                        Ok(Some(Box::new(Scenario { scenario })))
                     } else {
                         Err(E::FileNotExists(path.to_owned()))
                     }
@@ -45,5 +45,18 @@ impl Argument<Scenario> for Scenario {
             desc: String::from("path to file - uses to define specific scenario file (*.sibs)"),
             pairs: vec![],
         }
+    }
+}
+
+impl Action for Scenario {
+    fn action<'a>(
+        &'a self,
+        _components: &'a [crate::elements::Component],
+        _context: &'a mut crate::inf::Context,
+    ) -> ActionPinnedResult {
+        Box::pin(async move { Ok(AnyValue::new(self.scenario.clone())) })
+    }
+    fn key(&self) -> String {
+        ARGS[0].to_owned()
     }
 }

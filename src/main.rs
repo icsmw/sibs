@@ -10,7 +10,7 @@ use inf::{context::Context, tracker::Tracker};
 
 #[tokio::main]
 async fn main() {
-    let cfg = cli::get_tracker_configuration();
+    let cfg = cli::get_tracker_configuration().await;
     match cfg {
         Ok(cfg) => {
             let mut cx = match Context::create().with_tracker(Tracker::new(cfg)) {

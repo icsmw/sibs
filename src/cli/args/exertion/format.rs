@@ -1,10 +1,10 @@
 use crate::{
     cli::{
-        args::{Argument, Description},
+        args::{Action, ActionPinnedResult, Argument, Description},
         error::E,
     },
     elements::Component,
-    inf::{context::Context, format_file},
+    inf::{context::Context, format_file, AnyValue},
 };
 use std::path::PathBuf;
 
@@ -15,15 +15,18 @@ pub struct Format {
     target: PathBuf,
 }
 
-impl Argument<Format> for Format {
-    fn read(args: &mut Vec<String>) -> Result<Option<Format>, E> {
+impl Argument for Format {
+    fn key() -> String {
+        ARGS[0].to_owned()
+    }
+    fn read(args: &mut Vec<String>) -> Result<Option<Box<dyn Action>>, E> {
         if let Some(first) = args.first() {
             if ARGS.contains(&first.as_str()) {
                 if let Some(path) = args.get(1) {
                     let target = PathBuf::from(path);
                     if target.exists() {
                         let _ = args.drain(0..=1);
-                        Ok(Some(Format { target }))
+                        Ok(Some(Box::new(Format { target })))
                     } else {
                         Err(E::FileNotExists(path.to_owned()))
                     }
@@ -44,11 +47,23 @@ impl Argument<Format> for Format {
             pairs: vec![],
         }
     }
+}
+
+impl Action for Format {
+    fn key(&self) -> String {
+        ARGS[0].to_owned()
+    }
     fn no_context(&self) -> bool {
         true
     }
-    async fn action(&mut self, _components: &[Component], _context: &mut Context) -> Result<(), E> {
-        format_file(&self.target).await?;
-        Ok(())
+    fn action<'a>(
+        &'a self,
+        _components: &'a [Component],
+        _cx: &'a mut Context,
+    ) -> ActionPinnedResult {
+        Box::pin(async move {
+            format_file(&self.target).await?;
+            Ok(AnyValue::new(()))
+        })
     }
 }

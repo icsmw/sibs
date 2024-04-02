@@ -19,7 +19,7 @@ use std::{
     path::PathBuf,
 };
 
-use self::args::Argument;
+use self::args::{exertion::scenario, Argument};
 
 fn get_arguments() -> Result<(Vec<String>, Arguments), E> {
     let mut income = env::args().collect::<Vec<String>>();
@@ -30,47 +30,37 @@ fn get_arguments() -> Result<(Vec<String>, Arguments), E> {
     Ok((income, args))
 }
 
-pub fn get_tracker_configuration() -> Result<tracker::Configuration, E> {
+pub async fn get_tracker_configuration() -> Result<tracker::Configuration, E> {
     let (_, arguments) = get_arguments()?;
     Ok(tracker::Configuration {
         output: arguments
-            .get::<args::exertion::Output>()
-            .map(|arg| arg.output.clone())
+            .get_value_no_cx::<args::exertion::Output, tracker::Output>()
+            .await?
             .unwrap_or(tracker::Output::Progress),
         log_file: arguments
-            .get::<args::exertion::LogFile>()
-            .map(|arg| PathBuf::from(arg.file.to_owned())),
+            .get_value_no_cx::<args::exertion::LogFile, PathBuf>()
+            .await?,
         trace: arguments
-            .get::<args::exertion::Trace>()
-            .map(|arg| arg.state)
+            .get_value_no_cx::<args::exertion::Trace, bool>()
+            .await?
             .unwrap_or(false),
     })
 }
 
 pub async fn read(cx: &mut Context) -> Result<(), E> {
-    async fn run<T: Argument<T> + 'static>(
-        components: &[Component],
-        arguments: &mut Arguments,
-        cx: &mut Context,
-    ) -> Result<(), E> {
-        if let Some(args) = arguments.get_mut::<T>() {
-            args.action(components, cx).await
-        } else {
-            Ok(())
-        }
-    }
     let mut term = Term::new();
-    let (mut income, mut defaults) = get_arguments()?;
-    if defaults.has::<args::exertion::Version>() {
-        run::<args::exertion::Version>(&[], &mut defaults, &mut Context::create().unbound()?)
-            .await?;
+    let (mut income, arguments) = get_arguments()?;
+    if arguments.all_without_context().await? {
         if !income.is_empty() {
             term.err(format!("Ingore next arguments: {}", income.join(", ")));
         }
         return Ok(());
     }
-    let scenario = if let Some(target) = defaults.get::<args::exertion::Scenario>() {
-        Scenario::from(&current_dir()?.join(target.get()).canonicalize()?)?
+    let scenario = if let Some(target) = arguments
+        .get_value_no_cx::<args::exertion::Scenario, PathBuf>()
+        .await?
+    {
+        Scenario::from(&current_dir()?.join(target).canonicalize()?)?
     } else {
         match Scenario::new() {
             Ok(scenario) => scenario,
@@ -78,7 +68,7 @@ pub async fn read(cx: &mut Context) -> Result<(), E> {
                 term.print("Scenario file hasn't been found.\n\n");
                 term.bold("OPTIONS\n");
                 term.right();
-                defaults.display(&mut term);
+                arguments.display(&mut term);
                 return Ok(());
             }
         }
@@ -101,8 +91,10 @@ pub async fn read(cx: &mut Context) -> Result<(), E> {
             return Err(E::ReaderError(err.e));
         }
     };
-    let no_actions = defaults.has::<args::exertion::Help>() || income.is_empty();
-    run::<args::exertion::Help>(&components, &mut defaults, cx).await?;
+    let no_actions = arguments.has::<args::exertion::Help>() || income.is_empty();
+    arguments
+        .run::<args::exertion::Help>(&components, cx)
+        .await?;
     if no_actions {
         return Ok(());
     }

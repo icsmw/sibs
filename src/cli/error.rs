@@ -14,6 +14,12 @@ pub enum E {
     InvalidRequestAfter(String),
     #[error("No any options/commands. Try --help to see all options.")]
     NoArguments,
+    #[error("Next arguments cannot be used together: {0}")]
+    NotSupportedMultipleArguments(String),
+    #[error("Fail extract path")]
+    FailExtractPath,
+    #[error("Key {0} is defined multiple times")]
+    DuplicateOfKey(String),
     #[error("Component {0} does't exist")]
     ComponentNotExists(String),
     #[error("File {0} does't exist")]

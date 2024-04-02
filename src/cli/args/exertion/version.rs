@@ -1,25 +1,27 @@
 use crate::{
     cli::{
-        args::{Argument, Description},
+        args::{Action, ActionPinnedResult, Argument, Description},
         error::E,
     },
     elements::Component,
-    inf::context::Context,
+    inf::{context::Context, AnyValue},
 };
 
 const ARGS: [&str; 2] = ["--version", "-v"];
-
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Debug, Clone)]
 pub struct Version {}
 
-impl Argument<Version> for Version {
-    fn read(args: &mut Vec<String>) -> Result<Option<Version>, E> {
+impl Argument for Version {
+    fn key() -> String {
+        ARGS[0].to_owned()
+    }
+    fn read(args: &mut Vec<String>) -> Result<Option<Box<dyn Action>>, E> {
         if let Some(first) = args.first() {
             if ARGS.contains(&first.as_str()) {
                 let _ = args.remove(0);
-                Ok(Some(Version {}))
+                Ok(Some(Box::new(Version {})))
             } else {
                 Ok(None)
             }
@@ -34,11 +36,23 @@ impl Argument<Version> for Version {
             pairs: vec![],
         }
     }
+}
+
+impl Action for Version {
+    fn key(&self) -> String {
+        ARGS[0].to_owned()
+    }
     fn no_context(&self) -> bool {
         true
     }
-    async fn action(&mut self, _components: &[Component], _context: &mut Context) -> Result<(), E> {
-        println!("{VERSION}");
-        Ok(())
+    fn action<'a>(
+        &'a self,
+        _components: &'a [Component],
+        _cx: &'a mut Context,
+    ) -> ActionPinnedResult {
+        Box::pin(async move {
+            println!("{VERSION}");
+            Ok(AnyValue::new(()))
+        })
     }
 }
