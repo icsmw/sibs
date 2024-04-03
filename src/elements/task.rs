@@ -239,7 +239,7 @@ impl Operator for Task {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::Task,
+        elements::{ElTarget, Element, Task},
         error::LinkedErr,
         inf::{context::Context, operator::Operator, tests::*},
         reader::{chars, Reading, E},
@@ -252,12 +252,12 @@ mod reading {
             .reader()
             .from_str(include_str!("../tests/reading/tasks.sibs"))?;
         let mut count = 0;
-        while let Some(entity) = report_if_err(&mut cx, Task::read(&mut reader))? {
+        while let Some(el) =
+            report_if_err(&mut cx, Element::include(&mut reader, &[ElTarget::Task]))?
+        {
+            assert!(matches!(el, Element::Task(..)));
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-            assert_eq!(
-                trim_carets(reader.recent()),
-                trim_carets(&format!("{entity};"))
-            );
+            assert_eq!(trim_carets(reader.recent()), trim_carets(&format!("{el};")));
             count += 1;
         }
         assert_eq!(count, 11);
@@ -272,31 +272,34 @@ mod reading {
             .reader()
             .from_str(include_str!("../tests/reading/tasks.sibs"))?;
         let mut count = 0;
-        while let Some(entity) = Task::read(&mut reader)? {
+        while let Some(el) = Element::include(&mut reader, &[ElTarget::Task])? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-            assert_eq!(
-                trim_carets(&format!("{entity}")),
-                trim_carets(&reader.get_fragment(&entity.token)?.lined)
-            );
-            assert_eq!(
-                trim_carets(&entity.name.value),
-                trim_carets(&reader.get_fragment(&entity.name.token)?.lined)
-            );
-            assert_eq!(
-                trim_carets(&entity.block.to_string()),
-                trim_carets(&reader.get_fragment(&entity.block.token)?.lined)
-            );
-            for declaration in entity.declarations.iter() {
+            assert!(matches!(el, Element::Task(..)));
+            if let Element::Task(el, _) = el {
                 assert_eq!(
-                    trim_carets(&declaration.to_string()),
-                    trim_carets(&reader.get_fragment(&declaration.token())?.lined)
+                    trim_carets(&format!("{el}")),
+                    trim_carets(&reader.get_fragment(&el.token)?.lined)
                 );
-            }
-            for dependency in entity.dependencies.iter() {
                 assert_eq!(
-                    trim_carets(&dependency.to_string()),
-                    trim_carets(&reader.get_fragment(&dependency.token())?.lined)
+                    trim_carets(&el.name.value),
+                    trim_carets(&reader.get_fragment(&el.name.token)?.lined)
                 );
+                assert_eq!(
+                    trim_carets(&el.block.to_string()),
+                    trim_carets(&reader.get_fragment(&el.block.token)?.lined)
+                );
+                for declaration in el.declarations.iter() {
+                    assert_eq!(
+                        trim_carets(&declaration.to_string()),
+                        trim_carets(&reader.get_fragment(&declaration.token())?.lined)
+                    );
+                }
+                for dependency in el.dependencies.iter() {
+                    assert_eq!(
+                        trim_carets(&dependency.to_string()),
+                        trim_carets(&reader.get_fragment(&dependency.token())?.lined)
+                    );
+                }
             }
             count += 1;
         }

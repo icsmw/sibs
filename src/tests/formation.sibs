@@ -1,18 +1,18 @@
 @import(./common.sibs);
 @import(./defaults.sibs);
+/// Application 
 #(app: ./app)
-    /// Application 
     @hash 
         (("./src"; "./dist"; :client; :shared; :wrapper);
         (:build("dev")));
+    /// Building electron application 
+    /// build dev >> build developing version
+    /// build prod >> build production version
     build($mode: dev | prod) [
-        /// Building electron application 
-        /// build dev >> build developing version
-        /// build prod >> build production version
         $dev = @envvar(DEV_MODE);
         @cd(./some_folder);
         // Comment
-        // Comment long comment  long comment  long comment  long comment  long comment  long comment long comment  long comment  long comment  long comment 
+        // Comment long comment long comment long comment long comment long comment long comment long comment long comment long comment long comment
         @cd(..);
         @remove(./node_modules/shared);
         @remove(./node_modules/wrapper);
@@ -29,10 +29,10 @@
         `yarn run build`;
         @copy(./package.json; ./dist);
     ];
+    /// Build release artifacts
+    /// release dev >> build developing version
+    /// release prod >> build production version
     release($mode: dev | prod) [
-        /// Build release artifacts
-        /// release dev >> build developing version
-        /// release prod >> build production version
         :self:build($mode);
         @os(window) => `yarn run build-win`;
         @os(linux) => `yarn run build-linux`;

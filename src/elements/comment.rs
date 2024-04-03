@@ -81,7 +81,7 @@ mod reading {
         while let Some(entity) = report_if_err(&mut cx, Task::read(&mut reader))? {
             let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             for el in entity.block.elements.iter() {
-                assert_eq!(el.get_metadata().comments.len(), 2);
+                assert_eq!(el.get_metadata().comments().len(), 2);
             }
         }
         assert!(reader.rest().trim().is_empty());

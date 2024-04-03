@@ -29,6 +29,7 @@ pub use values::*;
 pub use variable::*;
 
 use crate::{
+    elements,
     error::LinkedErr,
     inf::{term, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Term},
     reader::{chars, Reader, Reading, E},
@@ -67,16 +68,44 @@ pub enum ElTarget {
 
 #[derive(Debug, Clone, Default)]
 pub struct Metadata {
-    pub comments: Vec<Comment>,
+    // Element: Comment | Meta
+    pub elements: Vec<Element>,
     pub tolerance: bool,
 }
 
 impl Metadata {
     pub fn empty() -> Self {
         Metadata {
-            comments: Vec::new(),
+            elements: Vec::new(),
             tolerance: false,
         }
+    }
+    pub fn comments(&self) -> Vec<&Comment> {
+        self.elements
+            .iter()
+            .filter_map(|el| {
+                if let Element::Comment(el) = el {
+                    Some(el)
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+}
+
+impl fmt::Display for Metadata {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}{}",
+            self.elements
+                .iter()
+                .map(|c| c.to_string())
+                .collect::<Vec<String>>()
+                .join("\n"),
+            if self.elements.is_empty() { "" } else { "\n" },
+        )
     }
 }
 
@@ -84,12 +113,12 @@ impl Formation for Metadata {
     fn format(&self, cursor: &mut FormationCursor) -> String {
         format!(
             "{}{}",
-            self.comments
+            self.elements
                 .iter()
                 .map(|c| c.format(cursor))
                 .collect::<Vec<String>>()
                 .join("\n"),
-            if self.comments.is_empty() { "" } else { "\n" },
+            if self.elements.is_empty() { "" } else { "\n" },
         )
     }
 }
@@ -111,7 +140,6 @@ pub enum Element {
     Condition(Condition, Metadata),
     Values(Values, Metadata),
     Block(Block, Metadata),
-    Meta(Meta, Metadata),
     Command(Command, Metadata),
     Task(Task, Metadata),
     Component(Component, Metadata),
@@ -121,6 +149,7 @@ pub enum Element {
     VariableVariants(VariableVariants, Metadata),
     VariableType(VariableType, Metadata),
     SimpleString(SimpleString, Metadata),
+    Meta(Meta),
     Comment(Comment),
 }
 
@@ -134,12 +163,21 @@ impl Element {
             md.tolerance = reader.move_to().char(&[&chars::QUESTION]).is_some();
             md
         }
-        let mut comments: Vec<Comment> = vec![];
-        while let Some(comment) = Comment::read(reader)? {
-            comments.push(comment);
+        let mut elements: Vec<Element> = vec![];
+        loop {
+            let before = elements.len();
+            if let Some(el) = Comment::read(reader)? {
+                elements.push(Element::Comment(el));
+            }
+            if let Some(el) = Meta::read(reader)? {
+                elements.push(Element::Meta(el));
+            }
+            if before == elements.len() {
+                break;
+            }
         }
         let md = Metadata {
-            comments,
+            elements,
             tolerance: false,
         };
         if includes == targets.contains(&ElTarget::Combination) {
@@ -159,7 +197,7 @@ impl Element {
         }
         if includes == targets.contains(&ElTarget::Meta) {
             if let Some(el) = Meta::read(reader)? {
-                return Ok(Some(Element::Meta(el, md)));
+                return Ok(Some(Element::Meta(el)));
             }
         }
         if includes == targets.contains(&ElTarget::Command) {
@@ -301,7 +339,6 @@ impl Element {
             Self::PatternString(_, md) => md,
             Self::VariableName(_, md) => md,
             Self::Values(_, md) => md,
-            Self::Meta(_, md) => md,
             Self::Block(_, md) => md,
             Self::Command(_, md) => md,
             Self::Task(_, md) => md,
@@ -312,7 +349,7 @@ impl Element {
             Self::VariableVariants(_, md) => md,
             Self::VariableType(_, md) => md,
             Self::SimpleString(_, md) => md,
-            Self::Comment(_) => {
+            Self::Comment(_) | Self::Meta(_) => {
                 panic!("Comment doesn't have metadata");
             }
         }
@@ -349,6 +386,38 @@ impl Element {
             Self::Comment(..) => ElTarget::Comment,
         }
     }
+
+    #[cfg(test)]
+    pub fn inner_to_string(&self) -> String {
+        match self {
+            Self::Function(v, _) => v.to_string(),
+            Self::If(v, _) => v.to_string(),
+            Self::Each(v, _) => v.to_string(),
+            Self::First(v, _) => v.to_string(),
+            Self::VariableAssignation(v, _) => v.to_string(),
+            Self::Comparing(v, _) => v.to_string(),
+            Self::Combination(v, _) => v.to_string(),
+            Self::Condition(v, _) => v.to_string(),
+            Self::Subsequence(v, _) => v.to_string(),
+            Self::Optional(v, _) => v.to_string(),
+            Self::Reference(v, _) => v.to_string(),
+            Self::PatternString(v, _) => v.to_string(),
+            Self::VariableName(v, _) => v.to_string(),
+            Self::Values(v, _) => v.to_string(),
+            Self::Block(v, _) => v.to_string(),
+            Self::Command(v, _) => v.to_string(),
+            Self::Task(v, _) => v.to_string(),
+            Self::Component(v, _) => v.to_string(),
+            Self::Boolean(v, _) => v.to_string(),
+            Self::Integer(v, _) => v.to_string(),
+            Self::VariableDeclaration(v, _) => v.to_string(),
+            Self::VariableVariants(v, _) => v.to_string(),
+            Self::VariableType(v, _) => v.to_string(),
+            Self::SimpleString(v, _) => v.to_string(),
+            Self::Comment(v) => v.to_string(),
+            Self::Meta(v) => v.to_string(),
+        }
+    }
 }
 
 impl fmt::Display for Element {
@@ -358,7 +427,7 @@ impl fmt::Display for Element {
             A: Display,
         {
             format!(
-                "{el}{}",
+                "{md}{el}{}",
                 if md.tolerance {
                     chars::QUESTION.to_string()
                 } else {
@@ -384,7 +453,6 @@ impl fmt::Display for Element {
                 Self::PatternString(v, md) => as_string(v, md),
                 Self::VariableName(v, md) => as_string(v, md),
                 Self::Values(v, md) => as_string(v, md),
-                Self::Meta(v, md) => as_string(v, md),
                 Self::Block(v, md) => as_string(v, md),
                 Self::Command(v, md) => as_string(v, md),
                 Self::Task(v, md) => as_string(v, md),
@@ -396,6 +464,7 @@ impl fmt::Display for Element {
                 Self::VariableType(v, md) => as_string(v, md),
                 Self::SimpleString(v, md) => as_string(v, md),
                 Self::Comment(v) => v.to_string(),
+                Self::Meta(v) => v.to_string(),
             }
         )
     }
@@ -418,7 +487,6 @@ impl Formation for Element {
             Self::PatternString(v, _) => v.elements_count(),
             Self::VariableName(v, _) => v.elements_count(),
             Self::Values(v, _) => v.elements_count(),
-            Self::Meta(v, _) => v.elements_count(),
             Self::Block(v, _) => v.elements_count(),
             Self::Command(v, _) => v.elements_count(),
             Self::Task(v, _) => v.elements_count(),
@@ -429,6 +497,7 @@ impl Formation for Element {
             Self::VariableVariants(v, _) => v.elements_count(),
             Self::VariableType(v, _) => v.elements_count(),
             Self::SimpleString(v, _) => v.elements_count(),
+            Self::Meta(v) => v.elements_count(),
             Self::Comment(v) => v.elements_count(),
         }
     }
@@ -463,7 +532,6 @@ impl Formation for Element {
             Self::PatternString(v, m) => format_el(v, m, cursor),
             Self::VariableName(v, m) => format_el(v, m, cursor),
             Self::Values(v, m) => format_el(v, m, cursor),
-            Self::Meta(v, m) => format_el(v, m, cursor),
             Self::Block(v, m) => format_el(v, m, cursor),
             Self::Command(v, m) => format_el(v, m, cursor),
             Self::Task(v, m) => format_el(v, m, cursor),
@@ -474,6 +542,7 @@ impl Formation for Element {
             Self::VariableVariants(v, m) => format_el(v, m, cursor),
             Self::VariableType(v, m) => format_el(v, m, cursor),
             Self::SimpleString(v, m) => format_el(v, m, cursor),
+            Self::Meta(v) => v.format(cursor),
             Self::Comment(v) => v.format(cursor),
         }
     }
@@ -510,9 +579,9 @@ impl Operator for Element {
             Self::Boolean(v, _) => v.token(),
             Self::VariableDeclaration(v, _) => v.token,
             Self::VariableVariants(v, _) => v.token,
-            Self::Meta(v, _) => v.token,
             Self::VariableType(v, _) => v.token,
             Self::SimpleString(v, _) => v.token(),
+            Self::Meta(v) => v.token,
             Self::Comment(v) => v.token,
         }
     }
@@ -577,7 +646,7 @@ mod proptest {
         fn arbitrary_with((): Self::Parameters) -> Self::Strategy {
             prop_oneof![Just(true), Just(false),]
                 .prop_map(|tolerance| Metadata {
-                    comments: Vec::new(),
+                    elements: Vec::new(),
                     tolerance,
                 })
                 .boxed()
@@ -684,11 +753,7 @@ mod proptest {
             );
         }
         if targets.contains(&ElTarget::Meta) {
-            collected.push(
-                Meta::arbitrary()
-                    .prop_map(|el| Element::Meta(el, Metadata::default()))
-                    .boxed(),
-            );
+            collected.push(Meta::arbitrary().prop_map(|el| Element::Meta(el)).boxed());
         }
         if targets.contains(&ElTarget::Optional) {
             collected.push(

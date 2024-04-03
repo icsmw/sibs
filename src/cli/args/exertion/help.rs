@@ -44,9 +44,10 @@ fn list_components(components: &[Component], cx: &mut Context) {
     .map(|comp| {
         (
             comp.name.to_string(),
-            comp.get_meta().iter()
-                .map(|meta| meta.as_string())
-                .collect::<Vec<String>>().join("\n"),
+            String::new()
+            // comp.get_meta().iter()
+            //     .map(|meta| meta.as_string())
+            //     .collect::<Vec<String>>().join("\n"),
         )
     })
     .collect::<Vec<(String, String)>>();

@@ -48,10 +48,7 @@ impl Reading<Block> for Block {
                         ElTarget::SimpleString,
                     ],
                 )? {
-                    if let (true, true) = (
-                        !matches!(el, Element::Meta(..)),
-                        inner.move_to().char(&[&chars::SEMICOLON]).is_none(),
-                    ) {
+                    if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
                         return if let Some((content, _)) = inner.until().char(&[&chars::SEMICOLON])
                         {
                             Err(E::UnrecognizedCode(content).by_reader(&inner))
@@ -91,14 +88,7 @@ impl fmt::Display for Block {
             "[\n{}{}]",
             self.elements
                 .iter()
-                .map(|el| format!(
-                    "{el}{}",
-                    if matches!(el, Element::Meta(..)) {
-                        ""
-                    } else {
-                        ";"
-                    }
-                ))
+                .map(|el| format!("{el};",))
                 .collect::<Vec<String>>()
                 .join("\n"),
             if self.elements.is_empty() { "" } else { "\n" }
@@ -116,15 +106,7 @@ impl Formation for Block {
             "[\n{}{}{}]",
             self.elements
                 .iter()
-                .map(|el| format!(
-                    "{}{}",
-                    el.format(&mut inner),
-                    if matches!(el, Element::Meta(..)) {
-                        ""
-                    } else {
-                        ";"
-                    }
-                ))
+                .map(|el| format!("{};", el.format(&mut inner),))
                 .collect::<Vec<String>>()
                 .join("\n"),
             if self.elements.is_empty() { "" } else { "\n" },
@@ -135,10 +117,7 @@ impl Formation for Block {
 
 impl term::Display for Block {
     fn display(&self, term: &mut Term) {
-        self.elements
-            .iter()
-            .filter(|el| matches!(el, Element::Meta(..)))
-            .for_each(|el| el.display(term));
+        self.elements.iter().for_each(|el| el.display(term));
     }
 }
 
@@ -239,7 +218,6 @@ mod proptest {
                 prop::collection::vec(
                     Element::arbitrary_with((
                         vec![
-                            ElTarget::Meta,
                             ElTarget::Function,
                             ElTarget::VariableAssignation,
                             ElTarget::Optional,
@@ -263,7 +241,6 @@ mod proptest {
                 prop::collection::vec(
                     Element::arbitrary_with((
                         vec![
-                            ElTarget::Meta,
                             ElTarget::Function,
                             ElTarget::VariableAssignation,
                             ElTarget::If,

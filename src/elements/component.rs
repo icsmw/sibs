@@ -1,5 +1,5 @@
 use crate::{
-    elements::{ElTarget, Element, Meta, SimpleString, Task},
+    elements::{ElTarget, Element, SimpleString, Task},
     error::LinkedErr,
     inf::{
         operator, term, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Term,
@@ -47,18 +47,6 @@ impl Component {
             .iter()
             .map(|el| el.get_name().to_owned())
             .collect::<Vec<String>>()
-    }
-    pub fn get_meta(&self) -> Vec<&Meta> {
-        self.elements
-            .iter()
-            .filter_map(|el| {
-                if let Element::Meta(meta, _) = el {
-                    Some(meta)
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<&Meta>>()
     }
     pub fn get_name(&self) -> &str {
         &self.name.value
@@ -109,10 +97,9 @@ impl Reading<Component> for Component {
                 }
                 let mut inner = reader.token()?.bound;
                 let mut elements: Vec<Element> = vec![];
-                while let Some(el) = Element::include(
-                    &mut inner,
-                    &[ElTarget::Meta, ElTarget::Task, ElTarget::Function],
-                )? {
+                while let Some(el) =
+                    Element::include(&mut inner, &[ElTarget::Task, ElTarget::Function])?
+                {
                     let _ = inner.move_to().char(&[&chars::SEMICOLON]);
                     elements.push(el);
                 }
@@ -186,11 +173,6 @@ impl term::Display for Component {
         term.bold("COMPONENT:\n");
         term.right();
         term.boldnl(&self.name);
-        self.elements.iter().for_each(|el| {
-            if let Element::Meta(el, _) = el {
-                el.display(term);
-            }
-        });
         term.left();
         term.bold("\nTASKS:\n");
         term.right();
@@ -235,7 +217,7 @@ impl Operator for Component {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::Component,
+        elements::{Component, ElTarget, Element},
         error::LinkedErr,
         inf::{
             context::Context,
@@ -285,20 +267,30 @@ mod reading {
                 .join("\n"),
         )?;
         let mut count = 0;
-        while let Some(entity) = Component::read(&mut reader)? {
+        while let Some(el) = Element::include(&mut reader, &[ElTarget::Component])? {
+            assert!(matches!(el, Element::Component(..)));
             assert_eq!(
-                tests::trim_carets(&entity.to_string()),
-                tests::trim_carets(&reader.get_fragment(&entity.token)?.lined)
+                tests::trim_carets(&el.to_string()),
+                tests::trim_carets(&reader.get_fragment(&el.token())?.lined)
             );
-            assert_eq!(
-                tests::trim_carets(&entity.name.to_string()),
-                tests::trim_carets(&reader.get_fragment(&entity.name.token)?.lined)
-            );
-            for el in entity.elements.iter() {
+            if let Element::Component(el, _) = el {
                 assert_eq!(
-                    tests::trim_carets(&format!("{el}",)),
-                    tests::trim_carets(&reader.get_fragment(&el.token())?.lined)
+                    tests::trim_carets(&el.name.to_string()),
+                    tests::trim_carets(&reader.get_fragment(&el.name.token)?.lined)
                 );
+                for el in el.elements.iter() {
+                    if let Element::Task(el, _) = el {
+                        assert_eq!(
+                            tests::trim_carets(&format!("{el}",)),
+                            tests::trim_carets(&reader.get_fragment(&el.token())?.lined)
+                        );
+                    } else {
+                        assert_eq!(
+                            tests::trim_carets(&format!("{el}",)),
+                            tests::trim_carets(&reader.get_fragment(&el.token())?.lined)
+                        );
+                    }
+                }
             }
             count += 1;
         }

@@ -136,7 +136,7 @@ mod reading {
                         let origin = &origin.block.elements;
                         let formated = &formated.block.elements;
                         for (i, el) in origin.iter().enumerate() {
-                            assert_eq!(el.to_string(), formated[i].to_string());
+                            assert_eq!(el.inner_to_string(), formated[i].inner_to_string());
                             count += 1;
                         }
                     }
