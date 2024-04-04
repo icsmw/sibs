@@ -52,17 +52,17 @@ fn list_components(components: &[Component], cx: &mut Context) {
     })
     .collect::<Vec<(String, String)>>();
     if !with_context.is_empty() {
-        cx.term.bold("COMPONENTS:\n");
-        cx.term.right();
-        cx.term.pairs(with_context);
-        cx.term.left();
+        // cx.term.bold("COMPONENTS:\n");
+        // cx.term.right();
+        // cx.term.pairs(with_context);
+        // cx.term.left();
     }
 }
 fn list_commands(components: &[Component], cx: &mut Context) {
     if components.iter().any(|comp| comp.cwd.is_none()) {
-        cx.term.bold("\nCOMMANDS:\n");
+        // cx.term.bold("\nCOMMANDS:\n");
     }
-    cx.term.right();
+    // cx.term.right();
     components
         .iter()
         .filter(|comp| comp.cwd.is_none())
@@ -71,7 +71,7 @@ fn list_commands(components: &[Component], cx: &mut Context) {
                 // task.display(&mut cx.term);
             });
         });
-        cx.term.left();
+        // cx.term.left();
 }
 
 impl Action for Help {
@@ -80,19 +80,19 @@ impl Action for Help {
     }
     fn action<'a>(&'a self, components: &'a[Component], cx: &'a mut Context) -> ActionPinnedResult {
         Box::pin(async move {
-            cx.term.bold("SCENARIO:\n");
-            cx.term.right();
-            cx.term.print(format!(
-                "{}{}\n\n",
-                cx.term.offset(),
-                cx.scenario.filename.to_str().unwrap()
-            ));
-            cx.term.left();
+            // cx.term.bold("SCENARIO:\n");
+            // cx.term.right();
+            // cx.term.print(format!(
+            //     "{}{}\n\n",
+            //     cx.term.offset(),
+            //     cx.scenario.filename.to_str().unwrap()
+            // ));
+            // cx.term.left();
             if let Some(component) = self.component.as_ref() {
                 if let Some(component) = components.iter().find(|c| &c.name.to_string() == component) {
                     // component.display(&mut cx.term);
                 } else {
-                    cx.term.err(format!("Component \"{component}\" isn't found.\n\n"));
+                    // cx.term.err(format!("Component \"{component}\" isn't found.\n\n"));
                     list_components(components, cx);
                     return Err(E::ComponentNotExists(component.to_string()));
                 }

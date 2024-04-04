@@ -3,7 +3,7 @@ pub mod error;
 
 use crate::{
     elements::{Component, Element},
-    inf::{context::Context, operator::Operator, scenario::Scenario, term::Term, tracker},
+    inf::{context::Context, operator::Operator, scenario::Scenario, term, tracker},
     reader,
 };
 use args::Arguments;
@@ -42,11 +42,13 @@ pub async fn get_tracker_configuration() -> Result<tracker::Configuration, E> {
 }
 
 pub async fn read(cx: &mut Context) -> Result<(), E> {
-    let mut term = Term::new();
     let (mut income, arguments) = get_arguments()?;
     if arguments.all_without_context().await? {
         if !income.is_empty() {
-            term.err(format!("Ingore next arguments: {}", income.join(", ")));
+            term::print(&format!(
+                r#"[b]WARNING:[\b] Ingore next arguments: {}"#,
+                income.join(", ")
+            ));
         }
         return Ok(());
     }
@@ -59,10 +61,8 @@ pub async fn read(cx: &mut Context) -> Result<(), E> {
         match Scenario::new() {
             Ok(scenario) => scenario,
             Err(_) => {
-                term.print("Scenario file hasn't been found.\n\n");
-                term.bold("OPTIONS\n");
-                term.right();
-                // arguments.display(&mut term);
+                term::print("[b]ERROR:[/b] Scenario file hasn't been found.");
+                Arguments::print();
                 return Ok(());
             }
         }

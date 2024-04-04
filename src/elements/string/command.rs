@@ -3,7 +3,7 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, spawner, term, AnyValue, Context, Formation, FormationCursor, Logs, Operator,
-        OperatorPinnedResult, Term,
+        OperatorPinnedResult,
     },
     reader::{chars, Reader, Reading, E},
 };

@@ -1,6 +1,6 @@
 use crate::{
     executors,
-    inf::{context::E, tracker, Context, Scenario, Term, Tracker},
+    inf::{context::E, tracker, Context, Scenario, Tracker},
     reader::sources::Sources,
 };
 use std::{collections::HashMap, path::PathBuf};
@@ -24,7 +24,6 @@ impl Create {
             ),
             scenario: Scenario::from(scenario)?,
             tracker,
-            term: Term::new(),
             sources: Sources::new(),
             variables: HashMap::new(),
             executors: HashMap::new(),
@@ -39,7 +38,6 @@ impl Create {
             scenario: Scenario::dummy(),
             tracker,
             sources: Sources::new(),
-            term: Term::new(),
             variables: HashMap::new(),
             executors: HashMap::new(),
             logger,
@@ -52,7 +50,6 @@ impl Create {
             scenario: Scenario::dummy(),
             tracker,
             sources: Sources::new(),
-            term: Term::new(),
             variables: HashMap::new(),
             executors: HashMap::new(),
             logger,

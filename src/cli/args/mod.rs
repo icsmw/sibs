@@ -5,10 +5,7 @@ pub mod exertion;
 use crate::{
     cli::error::E,
     elements::Component,
-    inf::{
-        term::{self, Term},
-        AnyValue, Context,
-    },
+    inf::{term, AnyValue, Context},
 };
 pub use action::*;
 pub use arg::*;
@@ -40,6 +37,23 @@ impl Arguments {
             }
         }
         Ok(Self { actions })
+    }
+    pub fn print() {
+        term::print(
+            &[
+                exertion::Scenario::desc(),
+                exertion::Help::desc(),
+                exertion::Trace::desc(),
+                exertion::Output::desc(),
+                exertion::LogFile::desc(),
+                exertion::Format::desc(),
+                exertion::Version::desc(),
+            ]
+            .iter()
+            .map(|desc| format!("    [b]{}[/b] [>>]{}\n", desc.key.join(", "), desc.desc))
+            .collect::<Vec<String>>()
+            .join("\n"),
+        );
     }
     pub async fn run<T: Argument + 'static>(
         &self,

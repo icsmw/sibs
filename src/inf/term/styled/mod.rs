@@ -12,11 +12,11 @@ pub trait Styled {
 
 pub fn apply<'a, T>(width: usize, str: &T) -> String
 where
-    T: 'a + ToOwned + ToString + Display,
+    T: 'a + ToOwned + ToString + Display + ?Sized,
 {
     let mut elements: Vec<Box<dyn Styled>> = vec![
-        Box::new(ordered::Ordered::new(width)),
         Box::new(bold::Bold::new(width)),
+        Box::new(ordered::Ordered::new(width)),
     ];
     let lines = str
         .to_string()

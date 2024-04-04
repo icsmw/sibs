@@ -3,7 +3,7 @@ mod extentions;
 
 use crate::{
     executors::ExecutorFn,
-    inf::{AnyValue, Logger, Logs, Scenario, Term, Tracker},
+    inf::{AnyValue, Logger, Logs, Scenario, Tracker},
     reader::sources::Sources,
 };
 pub use error::E;
@@ -13,7 +13,6 @@ use std::{collections::HashMap, path::PathBuf};
 #[derive(Debug)]
 pub struct Context {
     pub cwd: Option<PathBuf>,
-    pub term: Term,
     pub tracker: Tracker,
     pub scenario: Scenario,
     pub sources: Sources,

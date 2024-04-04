@@ -31,7 +31,7 @@ pub use variable::*;
 use crate::{
     elements,
     error::LinkedErr,
-    inf::{term, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Term},
+    inf::{term, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt::{self, Display};

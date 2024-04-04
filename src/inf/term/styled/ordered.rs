@@ -1,11 +1,14 @@
 use crate::inf::term::styled::Styled;
-use console::Style;
+use console::{strip_ansi_codes, Style};
 use regex::{Captures, Regex};
 use std::collections::HashMap;
 use uuid::Uuid;
 
 const SPLITTER: &str = "[>>]";
 
+fn striped_len(str: &str) -> usize {
+    strip_ansi_codes(str).len()
+}
 pub struct Ordered {
     lens: HashMap<Uuid, usize>,
     current: Option<Uuid>,
@@ -30,13 +33,15 @@ impl Styled for Ordered {
             self.lens
                 .entry(uuid)
                 .and_modify(|len| {
-                    *len = *len.max(&mut before.len());
+                    *len = *len.max(&mut striped_len(before));
                 })
-                .or_insert(before.len());
+                .or_insert(striped_len(before));
             self.current = Some(uuid);
             str.replace(SPLITTER, &format!("[{uuid}]"))
-        } else {
+        } else if !str.is_empty() {
             self.current = None;
+            str.to_owned()
+        } else {
             str.to_owned()
         }
     }
@@ -47,22 +52,22 @@ impl Styled for Ordered {
                 let before = parts.remove(0);
                 let mut output = format!(
                     "{before}{}",
-                    " ".repeat(if *len > before.len() {
-                        len - before.len()
+                    " ".repeat(if *len > striped_len(before) {
+                        len - striped_len(before)
                     } else {
                         0
                     }),
                 );
-                let offset = output.len();
+                let offset = striped_len(&output);
                 let right = parts.join("").to_string();
                 let mut cursor = offset;
                 right.split_ascii_whitespace().for_each(|w| {
-                    if cursor + w.len() > self.width {
-                        output = format!("{output}\n{}", " ".repeat(offset));
+                    if cursor + striped_len(w) > self.width {
+                        output = format!("{output}\n{}{w} ", " ".repeat(offset));
                         cursor = offset;
                     } else {
                         output = format!("{output}{w} ");
-                        cursor += w.len() + 1;
+                        cursor += striped_len(w) + 1;
                     }
                 });
                 return output;

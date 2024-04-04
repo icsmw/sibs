@@ -1,7 +1,7 @@
 use crate::{
     elements::Metadata,
     error::LinkedErr,
-    inf::{term, Formation, FormationCursor, Term},
+    inf::{term, Formation, FormationCursor},
     reader::{chars, words, Reader, Reading, E},
 };
 use std::fmt;

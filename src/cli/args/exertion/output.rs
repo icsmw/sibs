@@ -30,11 +30,10 @@ impl Argument for Output {
         Description {
             key: ARGS.iter().map(|s| s.to_string()).collect::<Vec<String>>(),
             desc: r#"Define a way of output:
-        *--output progress* >> minimum output with progress (default);
-        *--output logs*     >> post logs into terminal;
-        *--output none*     >> no output;
-            "#
-            .to_string(),
+        [b]--output progress[/b]  minimum output with progress (default);
+        [b]--output logs[/b]      post logs into terminal;
+        [b]--output none[/b]      no output;"#
+                .to_string(),
         }
     }
 }

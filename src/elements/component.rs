@@ -1,9 +1,7 @@
 use crate::{
     elements::{ElTarget, Element, Metadata, SimpleString, Task},
     error::LinkedErr,
-    inf::{
-        operator, term, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Term,
-    },
+    inf::{operator, term, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
     reader::{chars, words, Reader, Reading, E},
 };
 use std::{fmt, path::PathBuf};
