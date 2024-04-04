@@ -104,31 +104,3 @@ impl Arguments {
         self.actions.contains_key(&T::key())
     }
 }
-
-impl term::Display for Arguments {
-    fn display(&self, term: &mut Term) {
-        term.print_fmt(
-            &[
-                exertion::Scenario::desc(),
-                exertion::Help::desc(),
-                exertion::Trace::desc(),
-                exertion::Output::desc(),
-                exertion::LogFile::desc(),
-                exertion::Format::desc(),
-                exertion::Version::desc(),
-            ]
-            .iter()
-            .flat_map(|desc| {
-                [
-                    vec![format!("{}>>{}", desc.key.join(", "), desc.desc)],
-                    desc.pairs
-                        .iter()
-                        .map(|(key, value)| format!("{}>>{}", key, value))
-                        .collect::<Vec<String>>(),
-                ]
-                .concat()
-            })
-            .collect::<Vec<String>>(),
-        );
-    }
-}

@@ -5,7 +5,6 @@ use crate::cli::{args::Action, error::E};
 pub struct Description {
     pub key: Vec<String>,
     pub desc: String,
-    pub pairs: Vec<(String, String)>,
 }
 
 pub trait Argument {

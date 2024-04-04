@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Block, Component, ElTarget, Element, SimpleString},
+    elements::{Block, Component, ElTarget, Element, Metadata, SimpleString},
     error::LinkedErr,
     inf::{
         operator, term, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Term,
@@ -168,31 +168,6 @@ impl Formation for Task {
             },
             self.block.format(&mut inner)
         )
-    }
-}
-impl term::Display for Task {
-    fn display(&self, term: &mut Term) {
-        term.bold(format!("{}[{}]", term.offset(), self.name.value));
-        println!();
-        term.right();
-        term.print(format!(
-            "{}USAGE: {}{}{}",
-            term.offset(),
-            self.name.value,
-            if self.declarations.is_empty() {
-                ""
-            } else {
-                " "
-            },
-            self.declarations
-                .iter()
-                .map(term::Display::to_string)
-                .collect::<Vec<String>>()
-                .join(" ")
-        ));
-        println!();
-        self.block.display(term);
-        term.left();
     }
 }
 

@@ -1,5 +1,5 @@
 use crate::{
-    elements::{string, Component, ElTarget, Element},
+    elements::{string, Component, ElTarget, Element, Metadata},
     error::LinkedErr,
     inf::{
         operator, spawner, term, AnyValue, Context, Formation, FormationCursor, Logs, Operator,
@@ -82,12 +82,6 @@ impl Formation for Command {
         } else {
             format!("{}{self}", cursor.offset_as_string_if(&[ElTarget::Block]),)
         }
-    }
-}
-
-impl term::Display for Command {
-    fn display(&self, term: &mut Term) {
-        term.printnl(&self.pattern);
     }
 }
 

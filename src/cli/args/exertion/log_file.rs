@@ -30,7 +30,6 @@ impl Argument for LogFile {
         Description {
             key: ARGS.iter().map(|s| s.to_string()).collect::<Vec<String>>(),
             desc: String::from("saves logs into given file"),
-            pairs: vec![],
         }
     }
 }

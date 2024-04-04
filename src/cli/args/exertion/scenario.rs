@@ -43,7 +43,6 @@ impl Argument for Scenario {
         Description {
             key: ARGS.iter().map(|s| s.to_string()).collect::<Vec<String>>(),
             desc: String::from("path to file - uses to define specific scenario file (*.sibs)"),
-            pairs: vec![],
         }
     }
 }

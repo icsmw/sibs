@@ -1,4 +1,5 @@
 use crate::{
+    elements::Metadata,
     error::LinkedErr,
     inf::{term, Formation, FormationCursor, Term},
     reader::{chars, words, Reader, Reading, E},
@@ -63,12 +64,6 @@ impl Formation for Meta {
             .collect::<Vec<String>>()
             .join("\n")
             .to_string()
-    }
-}
-
-impl term::Display for Meta {
-    fn display(&self, term: &mut Term) {
-        term.print_fmt(&self.as_lines());
     }
 }
 

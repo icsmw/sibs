@@ -29,18 +29,12 @@ impl Argument for Output {
     fn desc() -> Description {
         Description {
             key: ARGS.iter().map(|s| s.to_string()).collect::<Vec<String>>(),
-            desc: String::from("output modes"),
-            pairs: vec![
-                (
-                    String::from("--output progress"),
-                    String::from("minimum output with progress (default);"),
-                ),
-                (
-                    String::from("--output logs"),
-                    String::from("post logs into terminal;"),
-                ),
-                (String::from("--output none"), String::from("no output;")),
-            ],
+            desc: r#"Define a way of output:
+        *--output progress* >> minimum output with progress (default);
+        *--output logs*     >> post logs into terminal;
+        *--output none*     >> no output;
+            "#
+            .to_string(),
         }
     }
 }

@@ -33,7 +33,6 @@ impl Argument for Version {
         Description {
             key: ARGS.iter().map(|s| s.to_string()).collect::<Vec<String>>(),
             desc: String::from("show version of sibs"),
-            pairs: vec![],
         }
     }
 }

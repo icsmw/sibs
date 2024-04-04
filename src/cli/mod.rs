@@ -3,13 +3,7 @@ pub mod error;
 
 use crate::{
     elements::{Component, Element},
-    inf::{
-        context::Context,
-        operator::Operator,
-        scenario::Scenario,
-        term::{Display, Term},
-        tracker,
-    },
+    inf::{context::Context, operator::Operator, scenario::Scenario, term::Term, tracker},
     reader,
 };
 use args::Arguments;
@@ -19,7 +13,7 @@ use std::{
     path::PathBuf,
 };
 
-use self::args::{exertion::scenario, Argument};
+use self::args::Argument;
 
 fn get_arguments() -> Result<(Vec<String>, Arguments), E> {
     let mut income = env::args().collect::<Vec<String>>();
@@ -68,7 +62,7 @@ pub async fn read(cx: &mut Context) -> Result<(), E> {
                 term.print("Scenario file hasn't been found.\n\n");
                 term.bold("OPTIONS\n");
                 term.right();
-                arguments.display(&mut term);
+                // arguments.display(&mut term);
                 return Ok(());
             }
         }

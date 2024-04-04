@@ -93,13 +93,6 @@ impl Formation for VariableDeclaration {
     }
 }
 
-impl term::Display for VariableDeclaration {
-    fn to_string(&self) -> String {
-        // term::Display::to_string(self.declaration)
-        String::new()
-    }
-}
-
 #[cfg(test)]
 mod proptest {
     use crate::elements::{ElTarget, Element, VariableDeclaration};

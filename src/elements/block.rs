@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Component, ElTarget, Element},
+    elements::{Component, ElTarget, Element, Metadata},
     error::LinkedErr,
     inf::{
         term, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Term,
@@ -112,12 +112,6 @@ impl Formation for Block {
             if self.elements.is_empty() { "" } else { "\n" },
             cursor.offset_as_string()
         )
-    }
-}
-
-impl term::Display for Block {
-    fn display(&self, term: &mut Term) {
-        self.elements.iter().for_each(|el| el.display(term));
     }
 }
 

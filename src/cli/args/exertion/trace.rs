@@ -26,7 +26,6 @@ impl Argument for Trace {
         Description {
             key: ARGS.iter().map(|s| s.to_string()).collect::<Vec<String>>(),
             desc: String::from("Include into logs trace messages"),
-            pairs: vec![],
         }
     }
 }

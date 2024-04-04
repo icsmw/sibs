@@ -39,12 +39,6 @@ impl Formation for Boolean {
     }
 }
 
-impl term::Display for Boolean {
-    fn display(&self, term: &mut Term) {
-        term.printnl(self.value);
-    }
-}
-
 impl Operator for Boolean {
     fn token(&self) -> usize {
         self.token

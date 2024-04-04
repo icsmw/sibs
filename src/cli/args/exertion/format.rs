@@ -44,7 +44,6 @@ impl Argument for Format {
         Description {
             key: ARGS.iter().map(|s| s.to_string()).collect::<Vec<String>>(),
             desc: String::from("path to file - format given *.sibs file"),
-            pairs: vec![],
         }
     }
 }

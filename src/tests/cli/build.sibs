@@ -1,7 +1,8 @@
+/// Test SIBS
 #(test: ./tmp)
-    /// Test SIBS
+    /// Building electron application
     try [
-        /// Will try to execute terminal command
+        // Will try to execute terminal command
         `ls -lsa`;
         @os(windows);
         @os(linux);
@@ -14,6 +15,10 @@
             :self:build("smth"; "prod1");
         ];
     ];
+    /// Building electron application
+    /// [b]$input_a[/b] {string} [>>] build developing version
+    /// [b]$mode[/b]:dev         [>>] build developing version
+    /// [b]$mode[/b]:prod        [>>] build production version
     build($input_a: {string}; $mode: dev | prod;) [
         $a_str = "value_a";
         `ls -lsa`;

@@ -1,5 +1,5 @@
 use crate::{
-    elements::{ElTarget, Element, SimpleString, Task},
+    elements::{ElTarget, Element, Metadata, SimpleString, Task},
     error::LinkedErr,
     inf::{
         operator, term, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Term,
@@ -165,23 +165,6 @@ impl Formation for Component {
                 .collect::<Vec<String>>()
                 .join("\n")
         )
-    }
-}
-
-impl term::Display for Component {
-    fn display(&self, term: &mut Term) {
-        term.bold("COMPONENT:\n");
-        term.right();
-        term.boldnl(&self.name);
-        term.left();
-        term.bold("\nTASKS:\n");
-        term.right();
-        self.elements.iter().for_each(|el| {
-            if let Element::Task(el, _) = el {
-                el.display(term);
-            }
-        });
-        term.left();
     }
 }
 

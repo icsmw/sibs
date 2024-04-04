@@ -1,9 +1,10 @@
 use crate::{
     cli::{
-        args::{Action, ActionPinnedResult, Argument, Description},
+        args::{ Action, ActionPinnedResult, Argument, Description },
         error::E,
-    }, elements::Component, inf::{
-        context::Context, term::Display, AnyValue
+    },
+    elements::Component, inf::{
+        context::Context, AnyValue, term
     }
 };
 
@@ -30,8 +31,7 @@ impl Argument for Help {
     fn desc() -> Description {
         Description { 
             key: ARGS.iter().map(|s|s.to_string()).collect::<Vec<String>>(),
-            desc: String::from("shows help. Global cx - shows available options and components. To get help for component use: component --help."),            pairs: vec![],
-
+            desc: String::from("shows help. Global cx - shows available options and components. To get help for component use: component --help."), 
         }
     }
 
@@ -68,7 +68,7 @@ fn list_commands(components: &[Component], cx: &mut Context) {
         .filter(|comp| comp.cwd.is_none())
         .for_each(|comp| {
             comp.get_tasks().iter().filter(|t| t.has_meta()).for_each(|task| {
-                task.display(&mut cx.term);
+                // task.display(&mut cx.term);
             });
         });
         cx.term.left();
@@ -90,7 +90,7 @@ impl Action for Help {
             cx.term.left();
             if let Some(component) = self.component.as_ref() {
                 if let Some(component) = components.iter().find(|c| &c.name.to_string() == component) {
-                    component.display(&mut cx.term);
+                    // component.display(&mut cx.term);
                 } else {
                     cx.term.err(format!("Component \"{component}\" isn't found.\n\n"));
                     list_components(components, cx);

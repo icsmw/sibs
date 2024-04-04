@@ -105,19 +105,6 @@ impl Formation for Values {
     }
 }
 
-impl term::Display for Values {
-    fn to_string(&self) -> String {
-        format!(
-            "({})",
-            self.elements
-                .iter()
-                .map(term::Display::to_string)
-                .collect::<Vec<String>>()
-                .join("; ")
-        )
-    }
-}
-
 impl Operator for Values {
     fn token(&self) -> usize {
         self.token

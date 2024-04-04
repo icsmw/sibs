@@ -93,12 +93,6 @@ impl Formation for VariableVariants {
     }
 }
 
-impl term::Display for VariableVariants {
-    fn to_string(&self) -> String {
-        format!("[{}]", self.values.join(" | "))
-    }
-}
-
 #[cfg(test)]
 mod reading {
     use crate::{

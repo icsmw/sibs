@@ -548,12 +548,6 @@ impl Formation for Element {
     }
 }
 
-impl term::Display for Element {
-    fn display(&self, _term: &mut Term) {
-        // term.print_fmt(&self.as_lines());
-    }
-}
-
 impl Operator for Element {
     fn token(&self) -> usize {
         match self {

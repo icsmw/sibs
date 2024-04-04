@@ -41,12 +41,6 @@ impl Formation for Integer {
     }
 }
 
-impl term::Display for Integer {
-    fn display(&self, term: &mut Term) {
-        term.printnl(self.value);
-    }
-}
-
 impl Operator for Integer {
     fn token(&self) -> usize {
         self.token
