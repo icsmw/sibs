@@ -29,9 +29,8 @@ pub use values::*;
 pub use variable::*;
 
 use crate::{
-    elements,
     error::LinkedErr,
-    inf::{term, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
+    inf::{Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt::{self, Display};
@@ -90,6 +89,31 @@ impl Metadata {
                     None
                 }
             })
+            .collect()
+    }
+    pub fn meta(&self) -> Vec<&Meta> {
+        self.elements
+            .iter()
+            .filter_map(|el| {
+                if let Element::Meta(el) = el {
+                    Some(el)
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+    pub fn meta_as_lines(&self) -> Vec<&str> {
+        self.elements
+            .iter()
+            .filter_map(|el| {
+                if let Element::Meta(el) = el {
+                    Some(el)
+                } else {
+                    None
+                }
+            })
+            .flat_map(|el| el.as_lines())
             .collect()
     }
 }

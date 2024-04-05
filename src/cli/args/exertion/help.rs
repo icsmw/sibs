@@ -1,11 +1,10 @@
 use crate::{
     cli::{
-        args::{ Action, ActionPinnedResult, Argument, Description },
+        args::{Action, ActionPinnedResult, Argument, Description},
         error::E,
     },
-    elements::Component, inf::{
-        context::Context, AnyValue, term
-    }
+    elements::{Component, Element},
+    inf::{context::Context, term, AnyValue},
 };
 
 const ARGS: [&str; 2] = ["--help", "-h"];
@@ -20,85 +19,84 @@ impl Argument for Help {
         ARGS[0].to_owned()
     }
     fn read(args: &mut Vec<String>) -> Result<Option<Box<dyn Action>>, E> {
-        if let Some(component) = Self::find_prev_to_opt(args, &ARGS).map(|component| component.map(|component| component))? {
-            Ok(Some(Box::new(Self {
-                component,
-            })))
+        if let (true, component) = Self::with_prev(args, &ARGS)? {
+            Ok(Some(Box::new(Self { component })))
         } else {
             Ok(None)
         }
     }
     fn desc() -> Description {
-        Description { 
-            key: ARGS.iter().map(|s|s.to_string()).collect::<Vec<String>>(),
-            desc: String::from("shows help. Global cx - shows available options and components. To get help for component use: component --help."), 
+        Description {
+            key: ARGS.iter().map(|s| s.to_string()).collect::<Vec<String>>(),
+            desc: "Shows help or available options and components. To get help for component use."
+                .to_string(),
         }
     }
-
-}
-
-fn list_components(components: &[Component], cx: &mut Context) {
-    let with_context = components
-    .iter()
-    .filter(|comp| comp.cwd.is_some())
-    .map(|comp| {
-        (
-            comp.name.to_string(),
-            String::new()
-            // comp.get_meta().iter()
-            //     .map(|meta| meta.as_string())
-            //     .collect::<Vec<String>>().join("\n"),
-        )
-    })
-    .collect::<Vec<(String, String)>>();
-    if !with_context.is_empty() {
-        // cx.term.bold("COMPONENTS:\n");
-        // cx.term.right();
-        // cx.term.pairs(with_context);
-        // cx.term.left();
-    }
-}
-fn list_commands(components: &[Component], cx: &mut Context) {
-    if components.iter().any(|comp| comp.cwd.is_none()) {
-        // cx.term.bold("\nCOMMANDS:\n");
-    }
-    // cx.term.right();
-    components
-        .iter()
-        .filter(|comp| comp.cwd.is_none())
-        .for_each(|comp| {
-            comp.get_tasks().iter().filter(|t| t.has_meta()).for_each(|task| {
-                // task.display(&mut cx.term);
-            });
-        });
-        // cx.term.left();
 }
 
 impl Action for Help {
     fn key(&self) -> String {
         ARGS[0].to_owned()
     }
-    fn action<'a>(&'a self, components: &'a[Component], cx: &'a mut Context) -> ActionPinnedResult {
+    fn action<'a>(&'a self, components: &'a [Element], cx: &'a mut Context) -> ActionPinnedResult {
         Box::pin(async move {
-            // cx.term.bold("SCENARIO:\n");
-            // cx.term.right();
-            // cx.term.print(format!(
-            //     "{}{}\n\n",
-            //     cx.term.offset(),
-            //     cx.scenario.filename.to_str().unwrap()
-            // ));
-            // cx.term.left();
             if let Some(component) = self.component.as_ref() {
-                if let Some(component) = components.iter().find(|c| &c.name.to_string() == component) {
-                    // component.display(&mut cx.term);
+                if let Some((el, md)) = components.iter().find_map(|el| {
+                    if let Element::Component(el, md) = el {
+                        if &el.name.value == component {
+                            Some((el, md))
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                }) {
+                    let mut output = format!(
+                        "COMPONENT: [b]{}[/b]\n{}\n\nTASKS:\n",
+                        el.name,
+                        md.meta()
+                            .iter()
+                            .map(|m| m.as_string())
+                            .collect::<Vec<String>>()
+                            .join(" ")
+                    );
+                    el.elements.iter().for_each(|el| {
+                        if let Element::Task(el, md) = el {
+                            let mut meta = md.meta_as_lines();
+                            let first = if meta.is_empty() { "" } else { meta.remove(0) };
+                            output.push_str(&format!(
+                                "    [b]{}[/b] [>>]{first}\n{}\n{}",
+                                el.name,
+                                meta.iter()
+                                    .map(|m| format!("[>>]{m}",))
+                                    .collect::<Vec<String>>()
+                                    .join("\n"),
+                                if meta.is_empty() { "" } else { "\n" }
+                            ));
+                        }
+                    });
+                    term::print(&output);
                 } else {
-                    // cx.term.err(format!("Component \"{component}\" isn't found.\n\n"));
-                    list_components(components, cx);
+                    term::print(&format!("Component [b]\"{component}\"[/b] isn't found."));
                     return Err(E::ComponentNotExists(component.to_string()));
                 }
             } else {
-                list_components(components, cx);
-                list_commands(components, cx);
+                let mut output = String::from("COMPONENTS:\n");
+                components.iter().for_each(|el| {
+                    if let Element::Component(el, md) = el {
+                        output.push_str(&format!(
+                            "    [b]{}[/b] [>>]{}\n\n",
+                            el.name,
+                            md.meta()
+                                .iter()
+                                .map(|m| m.as_string())
+                                .collect::<Vec<String>>()
+                                .join(" ")
+                        ));
+                    }
+                });
+                term::print(&output);
             }
             Ok(AnyValue::new(()))
         })

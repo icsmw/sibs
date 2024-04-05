@@ -3,6 +3,7 @@ use crate::{
         args::{Action, ActionPinnedResult, Argument, Description},
         error::E,
     },
+    elements::Element,
     inf::{tracker, AnyValue},
 };
 
@@ -19,7 +20,7 @@ impl Argument for Trace {
     }
     fn read(args: &mut Vec<String>) -> Result<Option<Box<dyn Action>>, E> {
         Ok(Some(Box::new(Self {
-            state: Self::has(args, &ARGS).map(|state| state)?,
+            state: Self::find(args, &ARGS)?,
         })))
     }
     fn desc() -> Description {
@@ -33,7 +34,7 @@ impl Argument for Trace {
 impl Action for Trace {
     fn action<'a>(
         &'a self,
-        _components: &'a [crate::elements::Component],
+        _components: &'a [Element],
         _context: &'a mut crate::inf::Context,
     ) -> ActionPinnedResult {
         Box::pin(async move { Ok(AnyValue::new(self.state)) })

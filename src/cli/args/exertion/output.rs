@@ -3,6 +3,7 @@ use crate::{
         args::{Action, ActionPinnedResult, Argument, Description},
         error::E,
     },
+    elements::Element,
     inf::{tracker, AnyValue},
 };
 
@@ -18,7 +19,8 @@ impl Argument for Output {
         ARGS[0].to_owned()
     }
     fn read(args: &mut Vec<String>) -> Result<Option<Box<dyn Action>>, E> {
-        if let Some(output) = Self::find_next_to(args, &ARGS)? {
+        if let (true, output) = Self::with_next(args, &ARGS)? {
+            let output = output.ok_or(E::NeedsArgumentAfter(ARGS[0].to_owned()))?;
             Ok(Some(Box::new(Output {
                 output: tracker::Output::try_from(output)?,
             })))
@@ -41,7 +43,7 @@ impl Argument for Output {
 impl Action for Output {
     fn action<'a>(
         &'a self,
-        _components: &'a [crate::elements::Component],
+        _components: &'a [Element],
         _context: &'a mut crate::inf::Context,
     ) -> ActionPinnedResult {
         Box::pin(async move { Ok(AnyValue::new(self.output.clone())) })

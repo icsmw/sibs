@@ -22,6 +22,8 @@ pub enum E {
     DuplicateOfKey(String),
     #[error("Component {0} does't exist")]
     ComponentNotExists(String),
+    #[error("After \"{0}\" argument is required")]
+    NeedsArgumentAfter(String),
     #[error("File {0} does't exist")]
     FileNotExists(String),
     #[error("IO error: {0}")]

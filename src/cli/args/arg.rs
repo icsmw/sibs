@@ -8,39 +8,49 @@ pub struct Description {
 }
 
 pub trait Argument {
-    fn find_next_to(args: &mut Vec<String>, targets: &[&str]) -> Result<Option<String>, E> {
-        if let Some(position) = args.iter().position(|arg| targets.contains(&arg.as_str())) {
-            if position == args.len() - 1 {
-                Err(E::InvalidRequestAfter(targets.join(", ")))?;
-            }
-            let _ = args.remove(position);
-            Ok(Some(args.remove(position)))
+    fn multiple_defs(args: &[String], targets: &[&str]) -> Result<(), E> {
+        if args
+            .iter()
+            .filter(|arg| targets.contains(&arg.as_str()))
+            .count()
+            > 1
+        {
+            Err(E::DuplicateOfKey(targets.join(", ").to_owned()))
         } else {
-            Ok(None)
+            Ok(())
         }
     }
-    fn find_prev_to_opt(
-        args: &mut Vec<String>,
-        targets: &[&str],
-    ) -> Result<Option<Option<String>>, E> {
+    fn find(args: &mut Vec<String>, targets: &[&str]) -> Result<bool, E> {
+        Self::multiple_defs(args, targets)?;
+        let prev = args.len();
+        args.retain(|arg| !targets.contains(&arg.as_str()));
+        Ok(prev != args.len())
+    }
+    fn with_next(args: &mut Vec<String>, targets: &[&str]) -> Result<(bool, Option<String>), E> {
+        Self::multiple_defs(args, targets)?;
         if let Some(position) = args.iter().position(|arg| targets.contains(&arg.as_str())) {
-            if position == 0 {
-                Ok(Some(None))
+            Ok(if position == args.len() - 1 {
+                (true, None)
             } else {
-                let arg = args.remove(position - 1);
-                args.remove(position - 1);
-                Ok(Some(Some(arg)))
-            }
+                let _ = args.remove(position);
+                let r = args.remove(position);
+                (true, Some(r))
+            })
         } else {
-            Ok(None)
+            Ok((false, None))
         }
     }
-    fn has(args: &mut Vec<String>, targets: &[&str]) -> Result<bool, E> {
+    fn with_prev(args: &mut Vec<String>, targets: &[&str]) -> Result<(bool, Option<String>), E> {
+        Self::multiple_defs(args, targets)?;
         if let Some(position) = args.iter().position(|arg| targets.contains(&arg.as_str())) {
-            let _ = args.remove(position);
-            Ok(true)
+            Ok(if position == 0 {
+                (true, None)
+            } else {
+                let _ = args.remove(position);
+                (true, Some(args.remove(position - 1)))
+            })
         } else {
-            Ok(false)
+            Ok((false, None))
         }
     }
     fn key() -> String;

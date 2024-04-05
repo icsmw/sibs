@@ -5,6 +5,7 @@ use crate::{
         args::{Action, ActionPinnedResult, Argument, Description},
         error::E,
     },
+    elements::Element,
     inf::{tracker, AnyValue},
 };
 
@@ -12,7 +13,7 @@ const ARGS: [&str; 2] = ["--logs", "-l"];
 
 #[derive(Debug, Clone)]
 pub struct LogFile {
-    pub file: String,
+    pub filename: String,
 }
 
 impl Argument for LogFile {
@@ -20,8 +21,9 @@ impl Argument for LogFile {
         ARGS[0].to_owned()
     }
     fn read(args: &mut Vec<String>) -> Result<Option<Box<dyn Action>>, E> {
-        if let Some(file) = Self::find_next_to(args, &ARGS).map(|file| file.map(|file| file))? {
-            Ok(Some(Box::new(Self { file })))
+        if let (true, filename) = Self::with_next(args, &ARGS)? {
+            let filename = filename.ok_or(E::NeedsArgumentAfter(ARGS[0].to_owned()))?;
+            Ok(Some(Box::new(Self { filename })))
         } else {
             Ok(None)
         }
@@ -37,10 +39,10 @@ impl Argument for LogFile {
 impl Action for LogFile {
     fn action<'a>(
         &'a self,
-        _components: &'a [crate::elements::Component],
+        _components: &'a [Element],
         _context: &'a mut crate::inf::Context,
     ) -> ActionPinnedResult {
-        Box::pin(async move { Ok(AnyValue::new(PathBuf::from(&self.file))) })
+        Box::pin(async move { Ok(AnyValue::new(PathBuf::from(&self.filename))) })
     }
     fn key(&self) -> String {
         ARGS[0].to_owned()

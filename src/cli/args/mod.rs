@@ -4,7 +4,7 @@ pub mod exertion;
 
 use crate::{
     cli::error::E,
-    elements::Component,
+    elements::Element,
     inf::{term, AnyValue, Context},
 };
 pub use action::*;
@@ -23,10 +23,10 @@ impl Arguments {
             exertion::Version::read(args)?,
             exertion::Scenario::read(args)?,
             exertion::Format::read(args)?,
-            exertion::Help::read(args)?,
             exertion::Output::read(args)?,
             exertion::LogFile::read(args)?,
             exertion::Trace::read(args)?,
+            exertion::Help::read(args)?,
         ]
         .into_iter()
         .flatten()
@@ -57,22 +57,11 @@ impl Arguments {
     }
     pub async fn run<T: Argument + 'static>(
         &self,
-        components: &[Component],
+        components: &[Element],
         cx: &mut Context,
     ) -> Result<Option<AnyValue>, E> {
         if let Some(action) = self.actions.get(&T::key()) {
             Ok(Some(action.action(components, cx).await?))
-        } else {
-            Ok(None)
-        }
-    }
-    pub async fn run_no_cx<T: Argument + 'static>(&self) -> Result<Option<AnyValue>, E> {
-        if let Some(action) = self.actions.get(&T::key()) {
-            Ok(Some(
-                action
-                    .action(&[], &mut Context::create().unbound()?)
-                    .await?,
-            ))
         } else {
             Ok(None)
         }

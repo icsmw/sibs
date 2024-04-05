@@ -69,29 +69,28 @@ pub async fn read(cx: &mut Context) -> Result<(), E> {
     };
     cx.set_scenario(scenario);
     let scenario = cx.scenario.filename.to_owned();
-    let components = match reader::read_file(cx, scenario, true).await {
-        Ok(elements) => elements
-            .into_iter()
-            .filter_map(|el| {
-                if let Element::Component(c, _) = el {
-                    Some(c)
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<Component>>(),
+    let elements = match reader::read_file(cx, scenario, true).await {
+        Ok(elements) => elements,
         Err(err) => {
             cx.sources.report_error(&err)?;
             return Err(E::ReaderError(err.e));
         }
     };
     let no_actions = arguments.has::<args::exertion::Help>() || income.is_empty();
-    arguments
-        .run::<args::exertion::Help>(&components, cx)
-        .await?;
+    arguments.run::<args::exertion::Help>(&elements, cx).await?;
     if no_actions {
         return Ok(());
     }
+    let components = elements
+        .into_iter()
+        .filter_map(|el| {
+            if let Element::Component(c, _) = el {
+                Some(c)
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<Component>>();
     if let Some(component) = if components.is_empty() {
         None
     } else {

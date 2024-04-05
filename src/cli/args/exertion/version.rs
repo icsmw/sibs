@@ -3,7 +3,7 @@ use crate::{
         args::{Action, ActionPinnedResult, Argument, Description},
         error::E,
     },
-    elements::Component,
+    elements::Element,
     inf::{context::Context, AnyValue},
 };
 
@@ -18,13 +18,8 @@ impl Argument for Version {
         ARGS[0].to_owned()
     }
     fn read(args: &mut Vec<String>) -> Result<Option<Box<dyn Action>>, E> {
-        if let Some(first) = args.first() {
-            if ARGS.contains(&first.as_str()) {
-                let _ = args.remove(0);
-                Ok(Some(Box::new(Version {})))
-            } else {
-                Ok(None)
-            }
+        if Self::find(args, &ARGS)? {
+            Ok(Some(Box::new(Version {})))
         } else {
             Ok(None)
         }
@@ -46,7 +41,7 @@ impl Action for Version {
     }
     fn action<'a>(
         &'a self,
-        _components: &'a [Component],
+        _components: &'a [Element],
         _cx: &'a mut Context,
     ) -> ActionPinnedResult {
         Box::pin(async move {
