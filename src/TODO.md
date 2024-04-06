@@ -11,7 +11,7 @@
 - Task:has_meta - not implemented... it's dummy method
 - a way to run tasks in parallel: `sibs * --lint` will run lint task for all components, which has it
 - also for references like (:client:lint, :platform:lint) or @tasks::parallel(:client:lint; :shared:lint; :wrapper:lint;);???
-
+- #![windows_subsystem = "windows"] - solution for windows (console popup)
 - missed commands:
 -- break
 -- loop

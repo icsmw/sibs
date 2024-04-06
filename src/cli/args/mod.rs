@@ -38,6 +38,9 @@ impl Arguments {
         }
         Ok(Self { actions })
     }
+    pub fn len(&self) -> usize {
+        self.actions.len()
+    }
     pub fn print() {
         term::print(
             &[

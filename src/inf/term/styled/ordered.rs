@@ -1,4 +1,4 @@
-use crate::inf::term::styled::Styled;
+use crate::inf::term::styled::{striped_len, Styled};
 use console::{strip_ansi_codes, Style};
 use regex::{Captures, Regex};
 use std::collections::HashMap;
@@ -6,11 +6,8 @@ use uuid::Uuid;
 
 const SPLITTER: &str = "[>>]";
 
-fn striped_len(str: &str) -> usize {
-    strip_ansi_codes(str).len()
-}
 pub struct Ordered {
-    lens: HashMap<Uuid, usize>,
+    lens: HashMap<Uuid, HashMap<usize, usize>>,
     current: Option<Uuid>,
     width: usize,
 }
@@ -29,13 +26,19 @@ impl Styled for Ordered {
     fn apply(&mut self, str: &str) -> String {
         let uuid = self.current.unwrap_or(Uuid::new_v4());
         let parts = str.split(SPLITTER).collect::<Vec<&str>>();
-        if let (Some(before), true) = (parts.first(), parts.len() > 1) {
-            self.lens
-                .entry(uuid)
-                .and_modify(|len| {
-                    *len = *len.max(&mut striped_len(before));
-                })
-                .or_insert(striped_len(before));
+        if parts.len() > 1 {
+            let mut lens = self.lens.remove(&uuid).unwrap_or_default();
+            parts.iter().enumerate().for_each(|(i, part)| {
+                if i == parts.len() - 1 {
+                    return;
+                }
+                lens.entry(i)
+                    .and_modify(|len| {
+                        *len = *len.max(&mut striped_len(part));
+                    })
+                    .or_insert(striped_len(part));
+            });
+            self.lens.insert(uuid, lens);
             self.current = Some(uuid);
             str.replace(SPLITTER, &format!("[{uuid}]"))
         } else if !str.is_empty() {
@@ -46,28 +49,33 @@ impl Styled for Ordered {
         }
     }
     fn finalize(&mut self, str: &str) -> String {
-        for (uuid, len) in self.lens.iter() {
-            let mut parts = str.split(&format!("[{uuid}]")).collect::<Vec<&str>>();
+        for (uuid, lens) in self.lens.iter() {
+            let parts = str.split(&format!("[{uuid}]")).collect::<Vec<&str>>();
             if parts.len() > 1 {
-                let before = parts.remove(0);
-                let mut output = format!(
-                    "{before}{}",
-                    " ".repeat(if *len > striped_len(before) {
-                        len - striped_len(before)
+                let mut output = String::new();
+                parts.iter().enumerate().for_each(|(i, part)| {
+                    if i < parts.len() - 1 {
+                        let len = lens.get(&i).unwrap_or(&0);
+                        output.push_str(&format!(
+                            "{part}{}",
+                            " ".repeat(if *len > striped_len(part) {
+                                len - striped_len(part)
+                            } else {
+                                0
+                            })
+                        ));
                     } else {
-                        0
-                    }),
-                );
-                let offset = striped_len(&output);
-                let right = parts.join("").to_string();
-                let mut cursor = offset;
-                right.split_ascii_whitespace().for_each(|w| {
-                    if cursor + striped_len(w) > self.width {
-                        output = format!("{output}\n{}{w} ", " ".repeat(offset));
-                        cursor = offset;
-                    } else {
-                        output = format!("{output}{w} ");
-                        cursor += striped_len(w) + 1;
+                        let offset = striped_len(&output);
+                        let mut cursor = offset;
+                        part.split_ascii_whitespace().for_each(|w| {
+                            if cursor + striped_len(w) + 1 >= self.width {
+                                output.push_str(&format!("\n{}{w} ", " ".repeat(offset)));
+                                cursor = offset + striped_len(w) + 1;
+                            } else {
+                                output.push_str(&format!("{w} "));
+                                cursor += striped_len(w) + 1;
+                            }
+                        });
                     }
                 });
                 return output;

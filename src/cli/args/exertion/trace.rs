@@ -19,9 +19,11 @@ impl Argument for Trace {
         ARGS[0].to_owned()
     }
     fn read(args: &mut Vec<String>) -> Result<Option<Box<dyn Action>>, E> {
-        Ok(Some(Box::new(Self {
-            state: Self::find(args, &ARGS)?,
-        })))
+        if Self::find(args, &ARGS)? {
+            Ok(Some(Box::new(Self { state: true })))
+        } else {
+            Ok(None)
+        }
     }
     fn desc() -> Description {
         Description {

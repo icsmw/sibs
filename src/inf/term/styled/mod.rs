@@ -1,3 +1,4 @@
+use console::strip_ansi_codes;
 use std::fmt::Display;
 
 mod bold;
@@ -8,6 +9,10 @@ pub trait Styled {
     fn finalize(&mut self, str: &str) -> String {
         str.to_string()
     }
+}
+
+pub fn striped_len(str: &str) -> usize {
+    strip_ansi_codes(str).len()
 }
 
 pub fn apply<'a, T>(width: usize, str: &T) -> String

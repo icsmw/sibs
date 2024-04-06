@@ -52,6 +52,10 @@ pub async fn read(cx: &mut Context) -> Result<(), E> {
         }
         return Ok(());
     }
+    if arguments.len() == 1 && arguments.has::<args::exertion::Help>() {
+        Arguments::print();
+        return Ok(());
+    }
     let scenario = if let Some(target) = arguments
         .get_value_no_cx::<args::exertion::Scenario, PathBuf>()
         .await?
