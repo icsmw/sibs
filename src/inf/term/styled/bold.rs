@@ -8,7 +8,7 @@ pub struct Bold {
 impl Bold {
     pub fn new(_width: usize) -> Self {
         Self {
-            reg: Regex::new(r"\[b\](.*)\[/b\]").expect("Regex for Styled::Bold"),
+            reg: Regex::new(r"\[b\](.*?)\[/b\]").expect("Regex for Styled::Bold"),
         }
     }
 }
@@ -47,4 +47,8 @@ fn test() {
     );
     assert_eq!(bold.apply("[b]_[/b]"), String::from("\u{1b}[1m_\u{1b}[0m"));
     assert_eq!(bold.apply("[b][/b]"), String::from("\u{1b}[1m\u{1b}[0m"));
+    assert_eq!(
+        bold.apply("[b]_[/b][b]_[/b]"),
+        String::from("\u{1b}[1m_\u{1b}[0m\u{1b}[1m_\u{1b}[0m")
+    );
 }

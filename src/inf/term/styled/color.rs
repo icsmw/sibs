@@ -8,7 +8,7 @@ pub struct Color {
 impl Color {
     pub fn new(_width: usize) -> Self {
         Self {
-            reg: Regex::new(r"\[color:(?<color>[\w]*)\](?<inner>.*)\[/color\]")
+            reg: Regex::new(r"\[color:(?<color>[\w]*)\](?<inner>.*?)\[/color\]")
                 .expect("Regex for Styled::Color"),
         }
     }
@@ -41,19 +41,33 @@ impl Styled for Color {
 
 #[test]
 fn test() {
-    let mut bold = Color::new(40);
+    let mut color = Color::new(40);
     assert_eq!(
-        bold.apply("_[b]_[/b]_"),
-        String::from("_\u{1b}[1m_\u{1b}[0m_")
+        color.apply("_[color:black]_[/color]_"),
+        String::from("_\u{1b}[30m_\u{1b}[0m_")
     );
     assert_eq!(
-        bold.apply("[b]_[/b]_"),
-        String::from("\u{1b}[1m_\u{1b}[0m_")
+        color.apply("_[color:red]_[/color]_"),
+        String::from("_\u{1b}[31m_\u{1b}[0m_")
     );
     assert_eq!(
-        bold.apply("_[b]_[/b]"),
-        String::from("_\u{1b}[1m_\u{1b}[0m")
+        color.apply("_[color:green]_[/color]_"),
+        String::from("_\u{1b}[32m_\u{1b}[0m_")
     );
-    assert_eq!(bold.apply("[b]_[/b]"), String::from("\u{1b}[1m_\u{1b}[0m"));
-    assert_eq!(bold.apply("[b][/b]"), String::from("\u{1b}[1m\u{1b}[0m"));
+    assert_eq!(
+        color.apply("_[color:yellow]_[/color]_"),
+        String::from("_\u{1b}[33m_\u{1b}[0m_")
+    );
+    assert_eq!(
+        color.apply("_[color:magenta]_[/color]_"),
+        String::from("_\u{1b}[35m_\u{1b}[0m_")
+    );
+    assert_eq!(
+        color.apply("_[color:cyan]_[/color]_"),
+        String::from("_\u{1b}[36m_\u{1b}[0m_")
+    );
+    assert_eq!(
+        color.apply("_[color:white]_[/color]_"),
+        String::from("_\u{1b}[37m_\u{1b}[0m_")
+    );
 }

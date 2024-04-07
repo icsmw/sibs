@@ -86,6 +86,18 @@ impl Action for Help {
                                 })
                                 .collect::<Vec<String>>()
                                 .join(" ");
+                            let dependencies = el
+                                .dependencies
+                                .iter()
+                                .filter_map(|el| {
+                                    if let Element::Reference(el, _) = el {
+                                        Some(format!("        {el}"))
+                                    } else {
+                                        None
+                                    }
+                                })
+                                .collect::<Vec<String>>()
+                                .join("\n");
                             output.push_str(&format!(
                                 "    [b]{}{}[/b] [>>]{first}{}\n{}",
                                 el.name,
@@ -104,6 +116,9 @@ impl Action for Help {
                                     "\n"
                                 }
                             ));
+                            if !dependencies.is_empty() {
+                                output.push_str(&format!("    Depend on:\n{dependencies}"));
+                            }
                         }
                     });
                     term::print(&output);
