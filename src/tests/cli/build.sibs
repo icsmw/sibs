@@ -16,10 +16,14 @@
         ];
     ];
     /// Building electron application
-    /// [b]$input_a[/b] {string} [>>]build developing version build developing version build developing version build developing version build developing version build developing version build developing version
-    /// [b]$mode[/b]:dev         [>>]build developing version
-    /// [b]$mode[/b]:prod        [>>]build production version
+    /// [b][color:blue]$input_a[/color][/b] {string}    [>>]build developing version build developing version build developing version build developing version build developing version build developing version build developing version
+    /// [b][color:blue]$mode[/color][/b]:dev            [>>]build developing version
+    /// [b][color:blue]$mode[/color][/b]:prod           [>>]build production version
     build($input_a: {string}; $mode: dev | prod;) [
+        $a_str = "value_a";
+        `ls -lsa`;
+    ];
+    build2($input_a: {string}; $mode: dev | prod;) [
         $a_str = "value_a";
         `ls -lsa`;
     ];

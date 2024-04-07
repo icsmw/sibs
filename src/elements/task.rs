@@ -1,7 +1,7 @@
 use crate::{
-    elements::{Block, Component, ElTarget, Element, Metadata, SimpleString},
+    elements::{Block, Component, ElTarget, Element, SimpleString},
     error::LinkedErr,
-    inf::{operator, term, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
+    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -18,13 +18,6 @@ pub struct Task {
 impl Task {
     pub fn get_name(&self) -> &str {
         &self.name.value
-    }
-    pub fn has_meta(&self) -> bool {
-        true
-        // self.block
-        //     .as_ref()
-        //     .map(|b| b.meta.is_some())
-        //     .unwrap_or(false)
     }
 }
 

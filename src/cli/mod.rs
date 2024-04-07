@@ -13,8 +13,6 @@ use std::{
     path::PathBuf,
 };
 
-use self::args::Argument;
-
 fn get_arguments() -> Result<(Vec<String>, Arguments), E> {
     let mut income = env::args().collect::<Vec<String>>();
     if !income.is_empty() {

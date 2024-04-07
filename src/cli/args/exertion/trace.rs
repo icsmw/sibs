@@ -4,7 +4,7 @@ use crate::{
         error::E,
     },
     elements::Element,
-    inf::{tracker, AnyValue},
+    inf::AnyValue,
 };
 
 const ARGS: [&str; 1] = ["--trace"];

@@ -2,6 +2,7 @@ use console::strip_ansi_codes;
 use std::fmt::Display;
 
 mod bold;
+mod color;
 mod ordered;
 
 pub trait Styled {
@@ -21,6 +22,7 @@ where
 {
     let mut elements: Vec<Box<dyn Styled>> = vec![
         Box::new(bold::Bold::new(width)),
+        Box::new(color::Color::new(width)),
         Box::new(ordered::Ordered::new(width)),
     ];
     let lines = str

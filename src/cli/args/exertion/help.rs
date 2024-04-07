@@ -3,7 +3,7 @@ use crate::{
         args::{Action, ActionPinnedResult, Argument, Description},
         error::E,
     },
-    elements::{Component, Element},
+    elements::Element,
     inf::{context::Context, term, AnyValue},
 };
 
@@ -38,7 +38,7 @@ impl Action for Help {
     fn key(&self) -> String {
         ARGS[0].to_owned()
     }
-    fn action<'a>(&'a self, components: &'a [Element], cx: &'a mut Context) -> ActionPinnedResult {
+    fn action<'a>(&'a self, components: &'a [Element], _cx: &'a mut Context) -> ActionPinnedResult {
         Box::pin(async move {
             if let Some(component) = self.component.as_ref() {
                 if let Some((el, md)) = components.iter().find_map(|el| {
@@ -64,15 +64,45 @@ impl Action for Help {
                     el.elements.iter().for_each(|el| {
                         if let Element::Task(el, md) = el {
                             let mut meta = md.meta_as_lines();
-                            let first = if meta.is_empty() { "" } else { meta.remove(0) };
+                            let first = if meta.is_empty() {
+                                String::new()
+                            } else {
+                                format!("{}\n", meta.remove(0))
+                            };
+                            let mut details = String::new();
+                            let declarations = el
+                                .declarations
+                                .iter()
+                                .filter_map(|el| {
+                                    if let Element::VariableDeclaration(el, _) = el {
+                                        details.push_str(&format!(
+                                            "[>>][b][color:blue]{}[/color][/b]:[>>] {}\n",
+                                            el.variable, el.declaration
+                                        ));
+                                        Some(el.variable.to_string())
+                                    } else {
+                                        None
+                                    }
+                                })
+                                .collect::<Vec<String>>()
+                                .join(" ");
                             output.push_str(&format!(
-                                "    [b]{}[/b] [>>]{first}\n{}\n{}",
+                                "    [b]{}{}[/b] [>>]{first}{}\n{}",
                                 el.name,
+                                if declarations.is_empty() {
+                                    String::new()
+                                } else {
+                                    format!(" [color:blue]{declarations}[/color]")
+                                },
                                 meta.iter()
                                     .map(|m| format!("[>>]{m}",))
                                     .collect::<Vec<String>>()
                                     .join("\n"),
-                                if meta.is_empty() { "" } else { "\n" }
+                                if meta.is_empty() {
+                                    details.as_str()
+                                } else {
+                                    "\n"
+                                }
                             ));
                         }
                     });
