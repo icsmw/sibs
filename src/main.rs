@@ -1,3 +1,4 @@
+#![windows_subsystem = "windows"]
 use std::process::exit;
 mod cli;
 mod elements;
