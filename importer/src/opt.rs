@@ -17,23 +17,19 @@ impl Opt {
 
 impl Parse for Opt {
     fn parse(input: ParseStream) -> parse::Result<Self> {
-        for expr in Punctuated::<Expr, Token![,]>::parse_terminated(input)?.into_iter() {
-            match expr {
-                Expr::Path(p) => {
-                    if let Some(ident) = p.path.get_ident() {
-                        return Ok(Opt::new(ident.to_string()));
-                    } else {
-                        return Err(syn::Error::new_spanned(p, "Cannot extract identification"));
-                    }
-                }
-                _ => {
-                    return Err(syn::Error::new_spanned(
-                        expr,
-                        "Expecting expr like [key = \"value as String\"] or [key]",
-                    ));
-                }
-            }
-        }
-        Ok(Opt::new(String::new()))
+        let input = Punctuated::<Expr, Token![,]>::parse_terminated(input)?;
+        let Some(expr) = input.first() else {
+            return Ok(Opt::new(String::new()));
+        };
+        let Expr::Path(p) = expr else {
+            return Err(syn::Error::new_spanned(
+                expr,
+                "Expecting expr like [key = \"value as String\"] or [key]",
+            ));
+        };
+        let Some(ident) = p.path.get_ident() else {
+            return Err(syn::Error::new_spanned(p, "Cannot extract identification"));
+        };
+        Ok(Opt::new(ident.to_string()))
     }
 }

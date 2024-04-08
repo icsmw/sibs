@@ -1,0 +1,29 @@
+[package]
+name = "sibs"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+console = "0.15.8"
+futures-lite = "2.2.0"
+indicatif = "0.17.7"
+regex = "1.10.3"
+terminal_size = "0.3.0"
+thiserror = "1.0.50"
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "process", "sync", "macros"] }
+tokio-stream = "0.1.14"
+tokio-util = { version = "0.7", features = ["codec"] }
+importer = { path = "../importer" }
+
+[dependencies.uuid]
+version = "1.8.0"
+features = [
+    "v4",                # Lets you generate random UUIDs
+    "fast-rng",          # Use a faster (but still sufficiently random) RNG
+    "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
+]
+
+[dev-dependencies]
+proptest = "1.4.0"
