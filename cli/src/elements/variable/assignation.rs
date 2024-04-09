@@ -237,9 +237,9 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
-            if deep > MAX_DEEP {
-                (
-                    Element::arbitrary_with((
+            (
+                Element::arbitrary_with((
+                    if deep > MAX_DEEP {
                         vec![
                             ElTarget::Function,
                             ElTarget::PatternString,
@@ -248,20 +248,8 @@ mod proptest {
                             ElTarget::VariableName,
                             ElTarget::Integer,
                             ElTarget::Boolean,
-                        ],
-                        deep,
-                    )),
-                    VariableName::arbitrary(),
-                )
-                    .prop_map(move |(assignation, variable)| VariableAssignation {
-                        assignation: Box::new(assignation),
-                        variable,
-                        token: 0,
-                    })
-                    .boxed()
-            } else {
-                (
-                    Element::arbitrary_with((
+                        ]
+                    } else {
                         vec![
                             ElTarget::Block,
                             ElTarget::First,
@@ -274,18 +262,18 @@ mod proptest {
                             ElTarget::VariableName,
                             ElTarget::Integer,
                             ElTarget::Boolean,
-                        ],
-                        deep,
-                    )),
-                    VariableName::arbitrary(),
-                )
-                    .prop_map(move |(assignation, variable)| VariableAssignation {
-                        assignation: Box::new(assignation),
-                        variable,
-                        token: 0,
-                    })
-                    .boxed()
-            }
+                        ]
+                    },
+                    deep,
+                )),
+                VariableName::arbitrary(),
+            )
+                .prop_map(move |(assignation, variable)| VariableAssignation {
+                    assignation: Box::new(assignation),
+                    variable,
+                    token: 0,
+                })
+                .boxed()
         }
     }
 

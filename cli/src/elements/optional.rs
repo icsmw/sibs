@@ -252,42 +252,31 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
-            if deep > MAX_DEEP {
-                (
-                    Element::arbitrary_with((
-                        vec![ElTarget::VariableName, ElTarget::Reference],
-                        deep,
-                    )),
-                    Element::arbitrary_with((
-                        vec![
-                            ElTarget::Function,
-                            ElTarget::Reference,
-                            ElTarget::VariableName,
-                            ElTarget::Integer,
-                            ElTarget::Boolean,
-                        ],
-                        deep,
-                    )),
-                )
-                    .prop_map(|(condition, action)| Optional {
-                        condition: Box::new(condition),
-                        action: Box::new(action),
-                        token: 0,
-                    })
-                    .boxed()
-            } else {
-                (
-                    Element::arbitrary_with((
+            (
+                Element::arbitrary_with((
+                    if deep > MAX_DEEP {
+                        vec![ElTarget::VariableName, ElTarget::Reference]
+                    } else {
                         vec![
                             ElTarget::Function,
                             ElTarget::VariableName,
                             ElTarget::Reference,
                             ElTarget::Block,
                             ElTarget::Comparing,
-                        ],
-                        deep,
-                    )),
-                    Element::arbitrary_with((
+                        ]
+                    },
+                    deep,
+                )),
+                Element::arbitrary_with((
+                    if deep > MAX_DEEP {
+                        vec![
+                            ElTarget::Function,
+                            ElTarget::Reference,
+                            ElTarget::VariableName,
+                            ElTarget::Integer,
+                            ElTarget::Boolean,
+                        ]
+                    } else {
                         vec![
                             ElTarget::Function,
                             ElTarget::Reference,
@@ -300,17 +289,17 @@ mod proptest {
                             ElTarget::Command,
                             ElTarget::Integer,
                             ElTarget::Boolean,
-                        ],
-                        deep,
-                    )),
-                )
-                    .prop_map(|(condition, action)| Optional {
-                        condition: Box::new(condition),
-                        action: Box::new(action),
-                        token: 0,
-                    })
-                    .boxed()
-            }
+                        ]
+                    },
+                    deep,
+                )),
+            )
+                .prop_map(|(condition, action)| Optional {
+                    condition: Box::new(condition),
+                    action: Box::new(action),
+                    token: 0,
+                })
+                .boxed()
         }
     }
 

@@ -305,57 +305,44 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
-            if deep > MAX_DEEP {
-                (
-                    Element::arbitrary_with((
-                        vec![ElTarget::VariableName, ElTarget::Integer, ElTarget::Boolean],
-                        deep,
-                    )),
-                    Cmp::arbitrary(),
-                    Element::arbitrary_with((
-                        vec![ElTarget::VariableName, ElTarget::Integer, ElTarget::Boolean],
-                        deep,
-                    )),
-                )
-                    .prop_map(|(left, cmp, right)| Comparing {
-                        cmp,
-                        left: Box::new(left),
-                        right: Box::new(right),
-                        token: 0,
-                    })
-                    .boxed()
-            } else {
-                (
-                    Element::arbitrary_with((
+            (
+                Element::arbitrary_with((
+                    if deep > MAX_DEEP {
+                        vec![ElTarget::VariableName, ElTarget::Integer, ElTarget::Boolean]
+                    } else {
                         vec![
                             ElTarget::VariableName,
                             ElTarget::Function,
                             ElTarget::PatternString,
                             ElTarget::Integer,
                             ElTarget::Boolean,
-                        ],
-                        deep,
-                    )),
-                    Cmp::arbitrary(),
-                    Element::arbitrary_with((
+                        ]
+                    },
+                    deep,
+                )),
+                Cmp::arbitrary(),
+                Element::arbitrary_with((
+                    if deep > MAX_DEEP {
+                        vec![ElTarget::VariableName, ElTarget::Integer, ElTarget::Boolean]
+                    } else {
                         vec![
                             ElTarget::VariableName,
                             ElTarget::Function,
                             ElTarget::PatternString,
                             ElTarget::Integer,
                             ElTarget::Boolean,
-                        ],
-                        deep,
-                    )),
-                )
-                    .prop_map(|(left, cmp, right)| Comparing {
-                        cmp,
-                        left: Box::new(left),
-                        right: Box::new(right),
-                        token: 0,
-                    })
-                    .boxed()
-            }
+                        ]
+                    },
+                    deep,
+                )),
+            )
+                .prop_map(|(left, cmp, right)| Comparing {
+                    cmp,
+                    left: Box::new(left),
+                    right: Box::new(right),
+                    token: 0,
+                })
+                .boxed()
         }
     }
 }

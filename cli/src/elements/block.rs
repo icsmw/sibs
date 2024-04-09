@@ -206,9 +206,9 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
-            if deep > MAX_DEEP {
-                prop::collection::vec(
-                    Element::arbitrary_with((
+            prop::collection::vec(
+                Element::arbitrary_with((
+                    if deep > MAX_DEEP {
                         vec![
                             ElTarget::Function,
                             ElTarget::VariableAssignation,
@@ -218,20 +218,8 @@ mod proptest {
                             ElTarget::Reference,
                             ElTarget::Boolean,
                             ElTarget::Integer,
-                        ],
-                        deep,
-                    )),
-                    1..=10,
-                )
-                .prop_map(|elements| Block {
-                    elements,
-                    owner: None,
-                    token: 0,
-                })
-                .boxed()
-            } else {
-                prop::collection::vec(
-                    Element::arbitrary_with((
+                        ]
+                    } else {
                         vec![
                             ElTarget::Function,
                             ElTarget::VariableAssignation,
@@ -245,18 +233,18 @@ mod proptest {
                             ElTarget::Reference,
                             ElTarget::Boolean,
                             ElTarget::Integer,
-                        ],
-                        deep,
-                    )),
-                    1..=10,
-                )
-                .prop_map(|elements| Block {
-                    elements,
-                    owner: None,
-                    token: 0,
-                })
-                .boxed()
-            }
+                        ]
+                    },
+                    deep,
+                )),
+                1..=10,
+            )
+            .prop_map(|elements| Block {
+                elements,
+                owner: None,
+                token: 0,
+            })
+            .boxed()
         }
     }
 

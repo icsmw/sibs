@@ -287,21 +287,12 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
-            if deep > MAX_DEEP {
-                let max = 5;
-                prop::collection::vec(
-                    Element::arbitrary_with((
-                        vec![ElTarget::VariableName, ElTarget::Integer, ElTarget::Boolean],
-                        deep,
-                    )),
-                    1..max,
-                )
-                .prop_map(|elements| Values { elements, token: 0 })
-                .boxed()
-            } else {
-                let max = 5;
-                prop::collection::vec(
-                    Element::arbitrary_with((
+            let max = 5;
+            prop::collection::vec(
+                Element::arbitrary_with((
+                    if deep > MAX_DEEP {
+                        vec![ElTarget::VariableName, ElTarget::Integer, ElTarget::Boolean]
+                    } else {
                         vec![
                             ElTarget::Command,
                             ElTarget::Function,
@@ -313,14 +304,14 @@ mod proptest {
                             ElTarget::VariableName,
                             ElTarget::Integer,
                             ElTarget::Boolean,
-                        ],
-                        deep,
-                    )),
-                    1..max,
-                )
-                .prop_map(|elements| Values { elements, token: 0 })
-                .boxed()
-            }
+                        ]
+                    },
+                    deep,
+                )),
+                1..max,
+            )
+            .prop_map(|elements| Values { elements, token: 0 })
+            .boxed()
         }
     }
 }

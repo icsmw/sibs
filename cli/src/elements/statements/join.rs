@@ -24,7 +24,10 @@ impl Reading<Join> for Join {
                 Err(E::NoJOINStatementBody.by_reader(reader))?;
             }
             for el in refs.elements.iter() {
-                if !matches!(el, Element::Reference(..)) {
+                if !matches!(
+                    el,
+                    Element::Reference(..) | Element::Function(..) | Element::Command(..)
+                ) {
                     Err(E::NotReferenceInJOIN.linked(&el.token()))?;
                 }
             }
@@ -155,7 +158,14 @@ mod proptest {
 
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             prop::collection::vec(
-                Element::arbitrary_with((vec![ElTarget::Reference], deep)),
+                Element::arbitrary_with((
+                    if deep > MAX_DEEP {
+                        vec![ElTarget::Reference]
+                    } else {
+                        vec![ElTarget::Reference, ElTarget::Function, ElTarget::Command]
+                    },
+                    deep,
+                )),
                 1..=10,
             )
             .prop_map(|elements| Values { elements, token: 0 })

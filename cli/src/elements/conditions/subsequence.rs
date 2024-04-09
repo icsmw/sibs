@@ -236,43 +236,18 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
-            if deep > MAX_DEEP {
-                (
-                    prop::collection::vec(
-                        Element::arbitrary_with((
+            (
+                prop::collection::vec(
+                    Element::arbitrary_with((
+                        if deep > MAX_DEEP {
                             vec![
                                 ElTarget::Boolean,
                                 ElTarget::Comparing,
                                 ElTarget::Function,
                                 ElTarget::VariableName,
                                 ElTarget::Reference,
-                            ],
-                            deep,
-                        )),
-                        1..=5,
-                    ),
-                    prop::collection::vec(
-                        Element::arbitrary_with((vec![ElTarget::Combination], deep)),
-                        5..=5,
-                    ),
-                )
-                    .prop_map(|(mut subsequences, mut combinations)| {
-                        let mut result: Vec<Element> = vec![];
-                        while let Some(subsequence) = subsequences.pop() {
-                            result.push(subsequence);
-                            result.push(combinations.pop().unwrap());
-                        }
-                        let _ = result.pop();
-                        Subsequence {
-                            subsequence: result,
-                            token: 0,
-                        }
-                    })
-                    .boxed()
-            } else {
-                (
-                    prop::collection::vec(
-                        Element::arbitrary_with((
+                            ]
+                        } else {
                             vec![
                                 ElTarget::Boolean,
                                 ElTarget::Command,
@@ -281,30 +256,30 @@ mod proptest {
                                 ElTarget::VariableName,
                                 ElTarget::Reference,
                                 ElTarget::Condition,
-                            ],
-                            deep,
-                        )),
-                        1..=5,
-                    ),
-                    prop::collection::vec(
-                        Element::arbitrary_with((vec![ElTarget::Combination], deep)),
-                        5..=5,
-                    ),
-                )
-                    .prop_map(|(mut subsequences, mut combinations)| {
-                        let mut result: Vec<Element> = vec![];
-                        while let Some(subsequence) = subsequences.pop() {
-                            result.push(subsequence);
-                            result.push(combinations.pop().unwrap());
-                        }
-                        let _ = result.pop();
-                        Subsequence {
-                            subsequence: result,
-                            token: 0,
-                        }
-                    })
-                    .boxed()
-            }
+                            ]
+                        },
+                        deep,
+                    )),
+                    1..=5,
+                ),
+                prop::collection::vec(
+                    Element::arbitrary_with((vec![ElTarget::Combination], deep)),
+                    5..=5,
+                ),
+            )
+                .prop_map(|(mut subsequences, mut combinations)| {
+                    let mut result: Vec<Element> = vec![];
+                    while let Some(subsequence) = subsequences.pop() {
+                        result.push(subsequence);
+                        result.push(combinations.pop().unwrap());
+                    }
+                    let _ = result.pop();
+                    Subsequence {
+                        subsequence: result,
+                        token: 0,
+                    }
+                })
+                .boxed()
         }
     }
 }
