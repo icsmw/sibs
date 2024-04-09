@@ -97,46 +97,36 @@ impl Operator for Command {
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
-            let mut output = String::new();
+            let mut command = String::new();
             for element in self.elements.iter() {
                 if let Element::SimpleString(el, _) = element {
-                    output = format!("{output}{el}");
+                    command.push_str(&el.to_string());
                 } else {
-                    output = format!(
-                        "{output}{}",
-                        element
+                    command.push_str(
+                        &element
                             .execute(owner, components, inputs, cx)
                             .await?
                             .ok_or(operator::E::FailToExtractValue.by(self))?
                             .get_as_string()
-                            .ok_or(operator::E::FailToGetValueAsString.by(self))?
+                            .ok_or(operator::E::FailToGetValueAsString.by(self))?,
                     );
                 }
             }
             let cwd = cx
                 .cwd
                 .as_ref()
-                .ok_or(operator::E::NoCurrentWorkingFolder.by(self))?;
-            let job = cx
-                .tracker
-                .create_job(
-                    &format!("{}: {}", cx.scenario.to_relative_path(cwd), output),
-                    None,
-                )
-                .await?;
-            match spawner::run(&output, cwd, &job).await {
+                .ok_or(operator::E::NoCurrentWorkingFolder.by(self))?
+                .clone();
+            match spawner::run(&command, &cwd, cx).await {
                 Ok(result) => {
                     if result.status.success() {
-                        job.success();
                         Ok(Some(AnyValue::new(())))
                     } else {
-                        job.fail();
                         Err(operator::E::SpawnedProcessExitWithError.by(self))
                     }
                 }
                 Err(e) => {
-                    job.err(e.to_string());
-                    job.fail();
+                    // job.err(e.to_string());
                     Err(e)?
                 }
             }

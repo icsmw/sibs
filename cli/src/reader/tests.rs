@@ -334,7 +334,6 @@ mod reading {
                 return Err(err);
             }
         }
-        // assert_eq!(read_file(&mut cx, filename).await?.len(), 11);
         Ok(())
     }
 }

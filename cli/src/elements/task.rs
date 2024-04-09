@@ -174,7 +174,6 @@ impl Operator for Task {
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
-            let job = cx.tracker.create_job(self.get_name(), None).await?;
             if self.declarations.len() != args.len() {
                 Err(operator::E::DismatchTaskArgumentsCount(
                     self.declarations.len(),
@@ -197,7 +196,7 @@ impl Operator for Task {
                     return Err(operator::E::InvalidVariableDeclaration.by(self));
                 }
             }
-            job.result(self.block.execute(owner, components, args, cx).await)
+            self.block.execute(owner, components, args, cx).await
         })
     }
 }

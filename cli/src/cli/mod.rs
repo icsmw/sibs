@@ -1,5 +1,7 @@
 mod args;
 pub mod error;
+#[cfg(test)]
+mod tests;
 
 use crate::{
     elements::{Component, Element},

@@ -1,7 +1,9 @@
 mod error;
 
-use crate::inf::tracker::{Logs, Task};
-
+use crate::inf::{
+    tracker::{Logs, Task},
+    Context,
+};
 use std::{
     path::PathBuf,
     process::{ExitStatus, Stdio},
@@ -54,7 +56,14 @@ pub struct RunResult {
     pub status: ExitStatus,
 }
 
-pub async fn run(command: &str, cwd: &PathBuf, task: &Task) -> Result<RunResult, E> {
+pub async fn run(command: &str, cwd: &PathBuf, cx: &mut Context) -> Result<RunResult, E> {
+    let job = cx
+        .tracker
+        .create_job(
+            &format!("{}: {}", cx.scenario.to_relative_path(cwd), command),
+            None,
+        )
+        .await?;
     let mut child = spawn(command, cwd)?;
     let mut stdout = codec::FramedRead::new(
         child
@@ -87,14 +96,14 @@ pub async fn run(command: &str, cwd: &PathBuf, task: &Task) -> Result<RunResult,
         async {
             let mut lines = String::new();
             while let Some(line) = stdout.next().await {
-                lines = format!("{lines}\n{}", post_logs(line, task));
+                lines = format!("{lines}\n{}", post_logs(line, &job));
             }
             lines
         },
         async {
             let mut lines = String::new();
             while let Some(line) = stderr.next().await {
-                lines = format!("{lines}\n{}", post_logs(line, task));
+                lines = format!("{lines}\n{}", post_logs(line, &job));
             }
             lines
         }
@@ -105,6 +114,13 @@ pub async fn run(command: &str, cwd: &PathBuf, task: &Task) -> Result<RunResult,
         status: child
             .wait()
             .await
-            .map_err(|e| E::Executing(command.to_string(), e.to_string()))?,
+            .map(|res| {
+                job.success();
+                res
+            })
+            .map_err(|e| {
+                job.fail();
+                E::Executing(command.to_string(), e.to_string())
+            })?,
     })
 }

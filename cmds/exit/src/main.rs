@@ -6,6 +6,12 @@ const DEFAULT_TIMEOUT_MS: u64 = 10;
 const DEFAULT_STR_LEN: usize = 100;
 const DEFAULT_ITERATION_MS: u64 = 10;
 
+/// Program for testing spawning in the scope of SIBS
+/// exit <exit_code {number}> <sleep_time {number}> <iteration_time {number}> <len {number}>
+///     exit_code       - code to be used for exit
+///     sleep_time      - duration of program work
+///     iteration_time  - interval to post random content into stdout
+///     len             - length of each string posted into stdout
 fn main() {
     let args = get_arguments();
     let exit_code: i32 = args

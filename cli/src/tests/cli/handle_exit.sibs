@@ -1,0 +1,17 @@
+/// Testing exit codes
+#(exit: ../../../../target/debug)
+    /// Success exit
+    success [
+        @os(windows) => `exit.exe 0 5000 10 100`;
+        @os(linux) => `./exit 0 5000 10 100`;
+    ];
+    /// Fail exit
+    fail [
+        @os(windows) => `exit.exe 1 5000 10 100`;
+        @os(linux) => `exit 1 5000 10 100`;
+    ];
+    /// Custom run
+    custom($code: {number})[
+        @os(windows) => `exit.exe {$code} 5000 10 100`;
+        @os(linux) => `exit {$code} 5000 10 100`;
+    ];

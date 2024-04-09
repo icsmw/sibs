@@ -188,9 +188,8 @@ impl Operator for Component {
                     self.get_tasks_names(),
                 )
             })?;
-            let job = cx.tracker.create_job(self.get_name(), None).await?;
             cx.set_cwd(self.cwd.clone())?;
-            job.result(task.execute(owner, components, &args[1..], cx).await)
+            task.execute(owner, components, &args[1..], cx).await
         })
     }
 }
