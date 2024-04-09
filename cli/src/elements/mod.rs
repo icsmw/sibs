@@ -22,7 +22,7 @@ pub use meta::*;
 pub use optional::*;
 pub use primitives::*;
 pub use reference::*;
-pub use statements::{each::*, first::*, If::*};
+pub use statements::{each::*, first::*, join::Join, If::*};
 pub use string::{command::*, pattern::*, simple::*};
 pub use task::*;
 pub use values::*;
@@ -41,6 +41,7 @@ pub enum ElTarget {
     If,
     Each,
     First,
+    Join,
     VariableAssignation,
     Optional,
     Reference,
@@ -153,6 +154,7 @@ pub enum Element {
     If(If, Metadata),
     Each(Each, Metadata),
     First(First, Metadata),
+    Join(Join, Metadata),
     VariableAssignation(VariableAssignation, Metadata),
     Optional(Optional, Metadata),
     Reference(Reference, Metadata),
@@ -279,6 +281,11 @@ impl Element {
                 return Ok(Some(Element::First(el, md)));
             }
         }
+        if includes == targets.contains(&ElTarget::Join) {
+            if let Some(el) = Join::read(reader)? {
+                return Ok(Some(Element::Join(el, md)));
+            }
+        }
         if includes == targets.contains(&ElTarget::Reference) {
             if let Some(el) = Reference::read(reader)? {
                 return Ok(Some(Element::Reference(el, md)));
@@ -353,6 +360,7 @@ impl Element {
             Self::If(_, md) => md,
             Self::Each(_, md) => md,
             Self::First(_, md) => md,
+            Self::Join(_, md) => md,
             Self::VariableAssignation(_, md) => md,
             Self::Comparing(_, md) => md,
             Self::Combination(_, md) => md,
@@ -386,6 +394,7 @@ impl Element {
             Self::If(..) => ElTarget::If,
             Self::Each(..) => ElTarget::Each,
             Self::First(..) => ElTarget::First,
+            Self::Join(..) => ElTarget::Join,
             Self::VariableAssignation(..) => ElTarget::VariableAssignation,
             Self::Comparing(..) => ElTarget::Comparing,
             Self::Combination(..) => ElTarget::Combination,
@@ -418,6 +427,7 @@ impl Element {
             Self::If(v, _) => v.to_string(),
             Self::Each(v, _) => v.to_string(),
             Self::First(v, _) => v.to_string(),
+            Self::Join(v, _) => v.to_string(),
             Self::VariableAssignation(v, _) => v.to_string(),
             Self::Comparing(v, _) => v.to_string(),
             Self::Combination(v, _) => v.to_string(),
@@ -467,6 +477,7 @@ impl fmt::Display for Element {
                 Self::If(v, md) => as_string(v, md),
                 Self::Each(v, md) => as_string(v, md),
                 Self::First(v, md) => as_string(v, md),
+                Self::Join(v, md) => as_string(v, md),
                 Self::VariableAssignation(v, md) => as_string(v, md),
                 Self::Comparing(v, md) => as_string(v, md),
                 Self::Combination(v, md) => as_string(v, md),
@@ -501,6 +512,7 @@ impl Formation for Element {
             Self::If(v, _) => v.elements_count(),
             Self::Each(v, _) => v.elements_count(),
             Self::First(v, _) => v.elements_count(),
+            Self::Join(v, _) => v.elements_count(),
             Self::VariableAssignation(v, _) => v.elements_count(),
             Self::Comparing(v, _) => v.elements_count(),
             Self::Combination(v, _) => v.elements_count(),
@@ -546,6 +558,7 @@ impl Formation for Element {
             Self::If(v, m) => format_el(v, m, cursor),
             Self::Each(v, m) => format_el(v, m, cursor),
             Self::First(v, m) => format_el(v, m, cursor),
+            Self::Join(v, m) => format_el(v, m, cursor),
             Self::VariableAssignation(v, m) => format_el(v, m, cursor),
             Self::Comparing(v, m) => format_el(v, m, cursor),
             Self::Combination(v, m) => format_el(v, m, cursor),
@@ -579,6 +592,7 @@ impl Operator for Element {
             Self::If(v, _) => v.token(),
             Self::Each(v, _) => v.token(),
             Self::First(v, _) => v.token(),
+            Self::Join(v, _) => v.token(),
             Self::VariableAssignation(v, _) => v.token(),
             Self::Comparing(v, _) => v.token(),
             Self::Combination(v, _) => v.token(),
@@ -616,6 +630,7 @@ impl Operator for Element {
                 Self::If(v, _) => v.execute(owner, components, args, cx).await,
                 Self::Each(v, _) => v.execute(owner, components, args, cx).await,
                 Self::First(v, _) => v.execute(owner, components, args, cx).await,
+                Self::Join(v, _) => v.execute(owner, components, args, cx).await,
                 Self::VariableAssignation(v, _) => v.execute(owner, components, args, cx).await,
                 Self::Comparing(v, _) => v.execute(owner, components, args, cx).await,
                 Self::Combination(v, _) => v.execute(owner, components, args, cx).await,

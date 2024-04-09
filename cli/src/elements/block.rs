@@ -239,6 +239,7 @@ mod proptest {
                             ElTarget::Optional,
                             ElTarget::First,
                             ElTarget::Each,
+                            ElTarget::Join,
                             ElTarget::Command,
                             ElTarget::PatternString,
                             ElTarget::Reference,

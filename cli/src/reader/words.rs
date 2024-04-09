@@ -3,6 +3,7 @@ pub const OR: &str = "||";
 pub const AND: &str = "&&";
 pub const ELSE: &str = "ELSE";
 pub const FIRST: &str = "FIRST";
+pub const JOIN: &str = "JOIN";
 pub const EACH: &str = "EACH";
 pub const CMP_TRUE: &str = "==";
 pub const CMP_FALSE: &str = "!=";

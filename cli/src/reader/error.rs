@@ -97,6 +97,10 @@ pub enum E {
     NoComponentBody,
     #[error("No FIRST statement body")]
     NoFIRSTStatementBody,
+    #[error("No JOIN statement body; JOIN(<ref; ref; ...>)")]
+    NoJOINStatementBody,
+    #[error("JOIN statement can include only references to tasks; JOIN(<ref; ref; ...>)")]
+    NotReferenceInJOIN,
     #[error("Group [...] is expecting")]
     NoGroup,
     #[error("No component definition #(...)")]

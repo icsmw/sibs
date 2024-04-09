@@ -1,0 +1,2 @@
+JOIN (:wrapper:prod; :self:prod; :self:build($mode); :self:build("dev"); "string cannot be here"; :self:build("dev"; "prod"); :self:build("dev"; $prod););
+JOIN ();
