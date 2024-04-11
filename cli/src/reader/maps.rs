@@ -1,7 +1,7 @@
 use crate::reader::{map::Map, E};
 use std::{
     cell::{RefCell, RefMut},
-    collections::{hash_map, HashMap},
+    collections::HashMap,
     path::PathBuf,
     rc::Rc,
 };

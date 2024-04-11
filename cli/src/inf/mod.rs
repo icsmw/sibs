@@ -1,6 +1,8 @@
 pub mod any;
+pub mod atlas;
 pub mod context;
 pub mod formation;
+pub mod map;
 pub mod operator;
 pub mod scenario;
 pub mod spawner;

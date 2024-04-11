@@ -12,6 +12,8 @@ pub enum E {
     InvalidVariableDeclaration,
     #[error("Operator method isn't supported")]
     NotSupported,
+    #[error("Fail to extract operations to join")]
+    NoOperationsToJoin,
     #[error("Function's argument doesn't have return value")]
     NotAllArguamentsHasReturn,
     #[error("Spawned process exist with error")]

@@ -1,14 +1,15 @@
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
+    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
     reader::{words, Reader, Reading, E},
 };
 use std::fmt;
+use tokio::join;
 
 #[derive(Debug, Clone)]
 pub struct Join {
-    pub refs: Box<Element>,
+    pub elements: Box<Element>,
     pub token: usize,
 }
 
@@ -16,14 +17,15 @@ impl Reading<Join> for Join {
     fn read(reader: &mut Reader) -> Result<Option<Join>, LinkedErr<E>> {
         let close = reader.open_token();
         if reader.move_to().word(&[words::JOIN]).is_some() {
-            let Some(Element::Values(refs, md)) = Element::include(reader, &[ElTarget::Values])?
+            let Some(Element::Values(elements, md)) =
+                Element::include(reader, &[ElTarget::Values])?
             else {
                 return Err(E::NoJOINStatementBody.by_reader(reader));
             };
-            if refs.elements.is_empty() {
+            if elements.elements.is_empty() {
                 Err(E::NoJOINStatementBody.by_reader(reader))?;
             }
-            for el in refs.elements.iter() {
+            for el in elements.elements.iter() {
                 if !matches!(
                     el,
                     Element::Reference(..) | Element::Function(..) | Element::Command(..)
@@ -32,7 +34,7 @@ impl Reading<Join> for Join {
                 }
             }
             Ok(Some(Join {
-                refs: Box::new(Element::Values(refs, md)),
+                elements: Box::new(Element::Values(elements, md)),
                 token: close(reader),
             }))
         } else {
@@ -43,7 +45,7 @@ impl Reading<Join> for Join {
 
 impl fmt::Display for Join {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "JOIN {}", self.refs)
+        write!(f, "JOIN {}", self.elements)
     }
 }
 
@@ -53,7 +55,7 @@ impl Formation for Join {
         format!(
             "{}JOIN {}",
             cursor.offset_as_string_if(&[ElTarget::Block]),
-            self.refs.format(&mut inner)
+            self.elements.format(&mut inner)
         )
     }
 }
@@ -69,7 +71,21 @@ impl Operator for Join {
         args: &'a [String],
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
-        Box::pin(async move { Ok(None) })
+        Box::pin(async move {
+            // let Element::Values(values, _) = self.elements.as_ref() else {
+            //     return Err(operator::E::NoOperationsToJoin.by(self));
+            // };
+            // let mut operations: Vec<OperatorPinnedResult> = vec![];
+            // for el in values.elements.iter() {
+            //     operations.push(el.execute(owner, components, args, cx));
+            // }
+            // let operations = values
+            //     .elements
+            //     .iter()
+            //     .map(|o| o.execute(owner, components, args, cx))
+            //     .collect::<Vec<OperatorPinnedResult>>();
+            Ok(None)
+        })
     }
 }
 
@@ -116,8 +132,8 @@ mod reading {
                 trim_carets(&reader.get_fragment(&entity.token)?.lined),
             );
             assert_eq!(
-                trim_carets(&entity.refs.to_string()),
-                trim_carets(&reader.get_fragment(&entity.refs.token())?.lined),
+                trim_carets(&entity.elements.to_string()),
+                trim_carets(&reader.get_fragment(&entity.elements.token())?.lined),
             );
             count += 1;
         }
@@ -169,8 +185,8 @@ mod proptest {
                 1..=10,
             )
             .prop_map(|elements| Values { elements, token: 0 })
-            .prop_map(|refs| Join {
-                refs: Box::new(Element::Values(refs, Metadata::empty())),
+            .prop_map(|elements| Join {
+                elements: Box::new(Element::Values(elements, Metadata::empty())),
                 token: 0,
             })
             .boxed()

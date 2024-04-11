@@ -1,5 +1,6 @@
 mod error;
 mod extentions;
+mod task;
 
 use crate::{
     executors::ExecutorFn,
@@ -9,6 +10,7 @@ use crate::{
 pub use error::E;
 use extentions::*;
 use std::{collections::HashMap, path::PathBuf};
+pub use task::*;
 
 #[derive(Debug)]
 pub struct Context {

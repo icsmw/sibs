@@ -1,11 +1,29 @@
 use crate::{cli, reader};
 use std::fmt;
 use uuid::Uuid;
+
 #[derive(Debug)]
 pub struct LinkedErr<T: fmt::Display> {
     pub token: Option<usize>,
     pub uuid: Uuid,
     pub e: T,
+}
+
+#[derive(Debug)]
+pub struct LinkedErrSerialized {
+    pub e: String,
+    pub uuid: Uuid,
+    pub token: Option<usize>,
+}
+
+impl<T: fmt::Display> LinkedErr<T> {
+    pub fn serialize(&self) -> LinkedErrSerialized {
+        LinkedErrSerialized {
+            e: self.e.to_string(),
+            uuid: self.uuid,
+            token: self.token.clone(),
+        }
+    }
 }
 
 impl<T: fmt::Display> LinkedErr<T> {
