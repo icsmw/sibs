@@ -3,8 +3,11 @@ use uuid::Uuid;
 
 use crate::{
     error::LinkedErr,
-    inf::AnyValue,
-    reader::{map::Fragment, maps::Maps, E},
+    inf::{
+        map::{Fragment, Map},
+        AnyValue,
+    },
+    reader::{Maps, E},
 };
 
 pub const TRACE_DEFAILT_DEEP: usize = 5;
@@ -66,7 +69,7 @@ impl Trace {
             err.uuid,
             (
                 records,
-                maps.get(token)?.err_report(token, err.e.to_string())?,
+                maps.get(token)?.report_err(token, err.e.to_string())?,
             ),
         );
         Ok(())

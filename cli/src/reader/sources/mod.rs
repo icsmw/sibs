@@ -1,9 +1,17 @@
+mod ids;
+mod map;
+mod maps;
+
 use crate::{
     error::LinkedErr,
     inf::{AnyValue, Trace},
-    reader::{ids::Ids, map::Map, maps::Maps, E},
+    reader::E,
 };
+pub use ids::*;
+pub use map::*;
+pub use maps::*;
 use std::{cell::RefCell, fmt, path::PathBuf, rc::Rc};
+use uuid::Uuid;
 
 pub type MapRef = Rc<RefCell<Map>>;
 pub type IdsRef = Rc<RefCell<Ids>>;
@@ -13,7 +21,6 @@ pub struct Sources {
     maps: Maps,
     ids: IdsRef,
     trace: Trace,
-    dummy: usize,
 }
 
 impl Sources {
@@ -22,7 +29,6 @@ impl Sources {
             maps: Maps::new(),
             ids: Ids::new(),
             trace: Trace::new(None),
-            dummy: 0,
         }
     }
     pub fn add(&mut self, filename: &PathBuf, content: &str) -> Result<MapRef, E> {
@@ -36,19 +42,16 @@ impl Sources {
             content,
         )));
         self.maps
-            .insert(&PathBuf::from(self.dummy.to_string()), map.clone())?;
-        self.dummy += 1;
+            .insert(&PathBuf::from(Uuid::new_v4().to_string()), map.clone())?;
         Ok(map)
     }
     pub fn report_error<T>(&mut self, err: &LinkedErr<T>) -> Result<(), E>
     where
         T: std::error::Error + fmt::Display + ToString,
     {
-        if let Some(token) = err.token.as_ref() {
-            self.trace.add_report(&self.maps, token, err)
-        } else {
-            Ok(())
-        }
+        Ok(if let Some(token) = err.token.as_ref() {
+            self.trace.add_report(&self.maps, token, err)?
+        })
     }
     pub fn set_map_cursor(&self, token: &usize) -> Result<(), E> {
         self.maps.get(token)?.set_cursor(*token);

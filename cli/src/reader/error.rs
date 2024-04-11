@@ -4,8 +4,8 @@ use crate::{
     error,
     error::LinkedErr,
     executors,
-    inf::{context, operator},
-    reader::Reader,
+    inf::{context, map, operator},
+    reader::{sources, Reader},
 };
 use thiserror::Error;
 
@@ -135,6 +135,8 @@ pub enum E {
     ExecutorError(executors::E),
     #[error("Operator error: {0}")]
     OperatorError(String),
+    #[error("Map error: {0}")]
+    MapError(map::E),
 }
 
 impl E {
@@ -157,6 +159,12 @@ impl From<E> for LinkedErr<E> {
         e.unlinked()
     }
 }
+impl From<map::E> for E {
+    fn from(value: map::E) -> Self {
+        E::MapError(value)
+    }
+}
+
 impl From<operator::E> for LinkedErr<E> {
     fn from(e: operator::E) -> Self {
         E::OperatorError(e.to_string()).unlinked()

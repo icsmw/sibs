@@ -1,4 +1,4 @@
-use crate::reader::{map::Map, E};
+use crate::reader::{sources::E, Map};
 use std::{
     cell::{RefCell, RefMut},
     collections::HashMap,

@@ -1,10 +1,8 @@
 pub mod chars;
 pub mod error;
 mod extentions;
-pub mod ids;
-pub mod map;
-pub mod maps;
 pub mod sources;
+
 #[cfg(test)]
 pub mod tests;
 pub mod words;
@@ -13,12 +11,16 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     executors::{import::Import, Executor},
-    inf::context::Context,
+    inf::{
+        context::Context,
+        map::{Fragment, Map as MapTrait},
+    },
 };
 pub use error::E;
 use extentions::*;
-use map::{Fragment, Map};
+pub use sources::*;
 use std::{cell::RefCell, future::Future, path::PathBuf, pin::Pin, rc::Rc};
+
 pub trait Reading<T> {
     fn read(reader: &mut Reader) -> Result<Option<T>, LinkedErr<E>>;
 }
@@ -158,7 +160,7 @@ impl Reader {
         true
     }
     pub fn get_fragment(&self, token: &usize) -> Result<Fragment, E> {
-        self.map.borrow().get_fragment(token)
+        Ok(self.map.borrow().get_fragment(token)?)
     }
     #[cfg(test)]
     pub fn recent(&mut self) -> &str {
