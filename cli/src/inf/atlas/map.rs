@@ -1,4 +1,4 @@
-use crate::inf::{atlas::E, map};
+use crate::inf::map::Mapping;
 use std::{collections::HashMap, path::PathBuf};
 
 #[derive(Debug, Clone)]
@@ -26,7 +26,7 @@ impl Map {
     }
 }
 
-impl map::Map for Map {
+impl Mapping for Map {
     fn get_fragments(&self) -> &HashMap<usize, (usize, usize)> {
         &self.fragments
     }

@@ -11,6 +11,8 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum E {
+    #[error("Fail to detect parent folder for: {0}")]
+    NoCurrentWorkingFolder(PathBuf),
     #[error("Fail to find a token {0}")]
     FailToFindToken(usize),
     #[error("Unknown variable type: {0}")]
@@ -81,6 +83,8 @@ pub enum E {
     InvalidComponentName(String),
     #[error("Fail get last token")]
     FailGetToken,
+    #[error("Attempt to create error report by LinkedErr without linked token")]
+    LinkedErrorWithoutToken,
     #[error("Invalid variable name")]
     InvalidVariableName,
     #[error("Empty path to reference")]

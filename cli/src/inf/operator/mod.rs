@@ -20,17 +20,18 @@ pub trait Operator {
         cx: &'a mut Context,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
-            cx.sources.set_map_cursor(&self.token())?;
-            let result = self.perform(owner, components, args, cx).await;
-            match result.as_ref() {
-                Ok(value) => {
-                    cx.sources.set_trace_value(&self.token(), value);
-                }
-                Err(err) => {
-                    cx.sources.report_error(err)?;
-                }
-            }
-            result
+            // cx.sources.set_map_cursor(&self.token())?;
+            // let result = self.perform(owner, components, args, cx).await;
+            // match result.as_ref() {
+            //     Ok(value) => {
+            //         cx.sources.set_trace_value(&self.token(), value);
+            //     }
+            //     Err(err) => {
+            //         cx.sources.report_error(err)?;
+            //     }
+            // }
+            // result
+            Ok(None)
         })
     }
     fn perform<'a>(

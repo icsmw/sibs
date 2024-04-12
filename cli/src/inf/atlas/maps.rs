@@ -1,4 +1,4 @@
-use crate::inf::{atlas, atlas::E, map::Map};
+use crate::inf::{atlas, atlas::E, map::Mapping};
 use std::{collections::HashMap, path::PathBuf};
 
 #[derive(Debug)]

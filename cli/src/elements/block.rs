@@ -142,52 +142,58 @@ mod reading {
     use crate::{
         elements::Block,
         error::LinkedErr,
-        inf::{context::Context, tests::*},
+        inf::tests::*,
         reader::{Reading, E},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let mut cx: Context = Context::create().unbound()?;
-        let mut reader = cx.reader().from_str(&format!(
-            "[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
-            include_str!("../tests/reading/if.sibs"),
-            include_str!("../tests/reading/variable_assignation.sibs"),
-            include_str!("../tests/reading/function.sibs"),
-            include_str!("../tests/reading/optional.sibs"),
-            include_str!("../tests/reading/each.sibs"),
-            include_str!("../tests/reading/refs.sibs")
-        ))?;
-        while let Some(entity) = report_if_err(&mut cx, Block::read(&mut reader))? {
-            assert_eq!(
-                trim_carets(reader.recent()),
-                trim_carets(&entity.to_string())
-            );
-        }
-        assert!(reader.rest().trim().is_empty());
-        Ok(())
+        runner(
+            &format!(
+                "[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
+                include_str!("../tests/reading/if.sibs"),
+                include_str!("../tests/reading/variable_assignation.sibs"),
+                include_str!("../tests/reading/function.sibs"),
+                include_str!("../tests/reading/optional.sibs"),
+                include_str!("../tests/reading/each.sibs"),
+                include_str!("../tests/reading/refs.sibs")
+            ),
+            |mut src, mut reader| {
+                while let Some(entity) = src.report_err_if(Block::read(&mut reader))? {
+                    assert_eq!(
+                        trim_carets(reader.recent()),
+                        trim_carets(&entity.to_string())
+                    );
+                }
+                assert!(reader.rest().trim().is_empty());
+                Ok(())
+            },
+        )
     }
 
     #[tokio::test]
     async fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut cx: Context = Context::create().unbound()?;
-        let mut reader = cx.reader().from_str(&format!(
-            "[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
-            include_str!("../tests/reading/if.sibs"),
-            include_str!("../tests/reading/variable_assignation.sibs"),
-            include_str!("../tests/reading/function.sibs"),
-            include_str!("../tests/reading/optional.sibs"),
-            include_str!("../tests/reading/each.sibs"),
-            include_str!("../tests/reading/refs.sibs")
-        ))?;
-        while let Some(entity) = Block::read(&mut reader)? {
-            assert_eq!(
-                trim_carets(&entity.to_string()),
-                reader.get_fragment(&entity.token)?.lined
-            );
-        }
-        assert!(reader.rest().trim().is_empty());
-        Ok(())
+        runner(
+            &format!(
+                "[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
+                include_str!("../tests/reading/if.sibs"),
+                include_str!("../tests/reading/variable_assignation.sibs"),
+                include_str!("../tests/reading/function.sibs"),
+                include_str!("../tests/reading/optional.sibs"),
+                include_str!("../tests/reading/each.sibs"),
+                include_str!("../tests/reading/refs.sibs")
+            ),
+            |_, mut reader| {
+                while let Some(entity) = Block::read(&mut reader)? {
+                    assert_eq!(
+                        trim_carets(&entity.to_string()),
+                        reader.get_fragment(&entity.token)?.lined
+                    );
+                }
+                assert!(reader.rest().trim().is_empty());
+                Ok(())
+            },
+        )
     }
 }
 
@@ -196,7 +202,8 @@ mod proptest {
 
     use crate::{
         elements::{Block, ElTarget, Element, Task},
-        inf::{operator::E, tests::*, Context},
+        error::LinkedErr,
+        inf::{operator::E, tests::*},
         reader::Reading,
     };
     use proptest::prelude::*;
@@ -248,14 +255,15 @@ mod proptest {
         }
     }
 
-    fn reading(block: Block) -> Result<(), E> {
+    fn reading(block: Block) -> Result<(), LinkedErr<E>> {
         get_rt().block_on(async {
             let origin = format!("test {block};");
-            let mut cx: Context = Context::create().unbound()?;
-            let mut reader = cx.reader().from_str(&origin)?;
-            while let Some(task) = Task::read(&mut reader)? {
-                assert_eq!(format!("{task};"), origin);
-            }
+            runner(&origin, |_, mut reader| {
+                while let Some(task) = Task::read(&mut reader)? {
+                    assert_eq!(format!("{task};"), origin);
+                }
+                Ok::<(), LinkedErr<E>>(())
+            })?;
             Ok(())
         })
     }

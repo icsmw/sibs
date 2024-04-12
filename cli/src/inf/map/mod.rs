@@ -8,7 +8,7 @@ use std::{collections::HashMap, fmt::Display};
 
 const REPORT_LN_AROUND: usize = 8;
 
-pub trait Map {
+pub trait Mapping {
     fn get_fragments(&self) -> &HashMap<usize, (usize, usize)>;
     fn get_content(&self) -> &str;
     fn contains(&self, token: &usize) -> bool {

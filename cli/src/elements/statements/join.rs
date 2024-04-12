@@ -94,64 +94,66 @@ mod reading {
     use crate::{
         elements::Join,
         error::LinkedErr,
-        inf::{context::Context, tests::*, Operator},
+        inf::{tests::*, Operator},
         reader::{chars, Reading, E},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let mut cx: Context = Context::create().unbound()?;
-        let mut reader = cx
-            .reader()
-            .from_str(include_str!("../../tests/reading/join.sibs"))?;
-        let mut count = 0;
-        while let Some(entity) = report_if_err(&mut cx, Join::read(&mut reader))? {
-            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-            assert_eq!(
-                trim_carets(reader.recent()),
-                trim_carets(&format!("{entity};"))
-            );
-            count += 1;
-        }
-        assert_eq!(count, 2);
-        assert!(reader.rest().trim().is_empty());
-        Ok(())
+        runner(
+            &include_str!("../../tests/reading/join.sibs"),
+            |mut src, mut reader| {
+                let mut count = 0;
+                while let Some(entity) = src.report_err_if(Join::read(&mut reader))? {
+                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                    assert_eq!(
+                        trim_carets(reader.recent()),
+                        trim_carets(&format!("{entity};"))
+                    );
+                    count += 1;
+                }
+                assert_eq!(count, 2);
+                assert!(reader.rest().trim().is_empty());
+                Ok(())
+            },
+        )
     }
 
     #[tokio::test]
     async fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut cx = Context::create().unbound()?;
-        let mut reader = cx
-            .reader()
-            .from_str(include_str!("../../tests/reading/join.sibs"))?;
-        let mut count = 0;
-        while let Some(entity) = Join::read(&mut reader)? {
-            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-            assert_eq!(
-                trim_carets(&format!("{entity}")),
-                trim_carets(&reader.get_fragment(&entity.token)?.lined),
-            );
-            assert_eq!(
-                trim_carets(&entity.elements.to_string()),
-                trim_carets(&reader.get_fragment(&entity.elements.token())?.lined),
-            );
-            count += 1;
-        }
-        assert_eq!(count, 2);
-        assert!(reader.rest().trim().is_empty());
-        Ok(())
+        runner(
+            &include_str!("../../tests/reading/join.sibs"),
+            |_, mut reader| {
+                let mut count = 0;
+                while let Some(entity) = Join::read(&mut reader)? {
+                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                    assert_eq!(
+                        trim_carets(&format!("{entity}")),
+                        trim_carets(&reader.get_fragment(&entity.token)?.lined),
+                    );
+                    assert_eq!(
+                        trim_carets(&entity.elements.to_string()),
+                        trim_carets(&reader.get_fragment(&entity.elements.token())?.lined),
+                    );
+                    count += 1;
+                }
+                assert_eq!(count, 2);
+                assert!(reader.rest().trim().is_empty());
+                Ok(())
+            },
+        )
     }
 
     #[tokio::test]
-    async fn error() -> Result<(), E> {
-        let mut cx = Context::create().unbound()?;
+    async fn error() -> Result<(), LinkedErr<E>> {
         let samples = include_str!("../../tests/error/join.sibs");
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample)?;
-            assert!(Join::read(&mut reader).is_err());
-            count += 1;
+            count += runner(sample, |_, mut reader| {
+                assert!(Join::read(&mut reader).is_err());
+                Ok(1)
+            })?;
         }
         assert_eq!(count, samples.len());
         Ok(())
@@ -163,7 +165,8 @@ mod proptest {
 
     use crate::{
         elements::{ElTarget, Element, Join, Metadata, Task, Values},
-        inf::{operator::E, tests::*, Context},
+        error::LinkedErr,
+        inf::{operator::E, tests::*},
         reader::Reading,
     };
     use proptest::prelude::*;
@@ -193,14 +196,15 @@ mod proptest {
         }
     }
 
-    fn reading(join: Join) -> Result<(), E> {
+    fn reading(join: Join) -> Result<(), LinkedErr<E>> {
         get_rt().block_on(async {
-            let mut cx = Context::create().unbound()?;
             let origin = format!("test [\n{join};\n];");
-            let mut reader = cx.reader().from_str(&origin)?;
-            while let Some(task) = Task::read(&mut reader)? {
-                assert_eq!(format!("{task};"), origin);
-            }
+            runner(&origin, |_, mut reader| {
+                while let Some(task) = Task::read(&mut reader)? {
+                    assert_eq!(format!("{task};"), origin);
+                }
+                Ok::<(), LinkedErr<E>>(())
+            })?;
             Ok(())
         })
     }

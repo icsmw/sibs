@@ -45,12 +45,13 @@ pub fn register(cx: &mut Context) -> Result<(), E> {
 mod test {
     use crate::{
         elements::Task,
+        error::LinkedErr,
         inf::{
             context::Context,
             operator::{Operator, E},
             tests::*,
         },
-        reader::{chars, Reading},
+        reader::{chars, Reading, Sources},
     };
 
     const TESTS: &[&str] = &[
@@ -82,13 +83,20 @@ mod test {
         }
         for test in TESTS.iter() {
             let mut cx = Context::create().unbound()?;
-            let mut reader = cx
-                .reader()
-                .from_str(&apply_hooks(format!("test[{test}]"), hooks))?;
-            while let Some(task) = Task::read(&mut reader)? {
+            let (tasks, mut src): (Vec<Task>, Sources) = runner(
+                &apply_hooks(format!("test[{test}]"), hooks),
+                |src, mut reader| {
+                    let mut tasks: Vec<Task> = vec![];
+                    while let Some(task) = Task::read(&mut reader)? {
+                        let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                        tasks.push(task);
+                    }
+                    Ok::<(Vec<Task>, Sources), LinkedErr<E>>((tasks, src))
+                },
+            )?;
+            for task in tasks.iter() {
                 let result = task.execute(None, &[], &[], &mut cx).await;
-                let result = report_if_err(&mut cx, result)?.expect("test returns some value");
-                let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                let result = src.report_err_if(result)?.expect("test returns some value");
                 assert_eq!(
                     result.get_as_string().expect("test returns string value"),
                     "true".to_owned()

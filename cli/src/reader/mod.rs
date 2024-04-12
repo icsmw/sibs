@@ -11,10 +11,7 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     executors::{import::Import, Executor},
-    inf::{
-        context::Context,
-        map::{Fragment, Map as MapTrait},
-    },
+    inf::map::{Fragment, Mapping},
 };
 pub use error::E;
 use extentions::*;
@@ -46,9 +43,64 @@ pub struct Reader {
 }
 
 impl Reader {
-    pub fn new(map: Rc<RefCell<Map>>) -> Self {
+    pub fn read_file<'a>(
+        filename: &'a PathBuf,
+        import: bool,
+        src: Option<&'a mut Sources>,
+    ) -> Pin<Box<dyn Future<Output = ReadFileResult> + 'a>> {
+        Box::pin(async move {
+            let mut inner = Sources::new();
+            read_file(
+                &filename
+                    .parent()
+                    .ok_or(E::NoCurrentWorkingFolder(filename.to_owned()))?
+                    .to_owned(),
+                if let Some(src) = src { src } else { &mut inner },
+                filename,
+                import,
+            )
+            .await
+        })
+    }
+    pub fn read_string<'a>(content: &'a str) -> Pin<Box<dyn Future<Output = ReadFileResult> + 'a>> {
+        Box::pin(async move {
+            let mut reader = Sources::new().reader().unbound(content)?;
+            let mut elements: Vec<Element> = vec![];
+            while let Some(el) =
+                Element::include(&mut reader, &[ElTarget::Function, ElTarget::Component])?
+            {
+                if let Element::Function(func, _) = &el {
+                    if Import::get_name() != func.name {
+                        Err(E::OnlyImportFunctionAllowedOnRoot.by_reader(&reader))?;
+                    }
+                    if func.args.len() != 1 {
+                        return Err(E::ImportFunctionInvalidArgs.by_reader(&reader))?;
+                    };
+                    if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
+                        Err(E::MissedSemicolon.by_reader(&reader))?;
+                    }
+                }
+                elements.push(el);
+            }
+            Ok(elements)
+        })
+    }
+    pub fn unbound(content: &str) -> Result<Self, E> {
+        let map = Map::unbound(content);
+        Ok(Self {
+            content: content.to_owned(),
+            pos: 0,
+            chars: &[],
+            offset: 0,
+            map: Rc::new(RefCell::new(map)),
+            #[cfg(test)]
+            recent: 0,
+        })
+    }
+    fn bound(src: &mut Sources, filename: &PathBuf) -> Result<Self, E> {
+        let map = src.add_from_file(filename)?;
         let content = map.borrow().content.clone();
-        Self {
+        Ok(Self {
             content,
             pos: 0,
             chars: &[],
@@ -56,7 +108,7 @@ impl Reader {
             map,
             #[cfg(test)]
             recent: 0,
-        }
+        })
     }
     fn inherit(&self, content: String, offset: usize) -> Self {
         Self {
@@ -84,13 +136,6 @@ impl Reader {
     pub fn rest(&self) -> &str {
         &self.content[self.pos..]
     }
-    // pub fn around(&self, offset: usize) -> &str {
-    //     &self.content[if self.pos > offset {
-    //         self.pos - offset
-    //     } else {
-    //         0
-    //     }..]
-    // }
     pub fn trim(&mut self) {
         let content = &self.content[self.pos..];
         for (pos, char) in content.chars().enumerate() {
@@ -176,13 +221,14 @@ impl Reader {
 
 pub type ReadFileResult = Result<Vec<Element>, LinkedErr<E>>;
 
-pub fn read_file<'a>(
-    cx: &'a mut Context,
-    filename: PathBuf,
+fn read_file<'a>(
+    cwd: &'a PathBuf,
+    src: &'a mut Sources,
+    filename: &'a PathBuf,
     import: bool,
 ) -> Pin<Box<dyn Future<Output = ReadFileResult> + 'a>> {
     Box::pin(async move {
-        let mut reader = cx.reader().from_file(&filename)?;
+        let mut reader = Reader::bound(src, &filename)?;
         let mut elements: Vec<Element> = vec![];
         while let Some(el) =
             Element::include(&mut reader, &[ElTarget::Function, ElTarget::Component])?
@@ -192,40 +238,13 @@ pub fn read_file<'a>(
                     Err(E::OnlyImportFunctionAllowedOnRoot.by_reader(&reader))?;
                 }
                 let path = if func.args.len() == 1 {
-                    Import::get(PathBuf::from(func.args[0].to_string()), cx)?
+                    Import::get(PathBuf::from(func.args[0].to_string()), cwd)?
                 } else {
                     return Err(E::ImportFunctionInvalidArgs.by_reader(&reader))?;
                 };
                 if import {
-                    elements.append(&mut read_file(cx, path.to_owned(), true).await?);
+                    elements.append(&mut read_file(cwd, src, &path, true).await?);
                 }
-                if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
-                    Err(E::MissedSemicolon.by_reader(&reader))?;
-                }
-            }
-            elements.push(el);
-        }
-        Ok(elements)
-    })
-}
-
-pub fn read_string<'a>(
-    cx: &'a mut Context,
-    content: &'a str,
-) -> Pin<Box<dyn Future<Output = ReadFileResult> + 'a>> {
-    Box::pin(async move {
-        let mut reader = cx.reader().from_str(content)?;
-        let mut elements: Vec<Element> = vec![];
-        while let Some(el) =
-            Element::include(&mut reader, &[ElTarget::Function, ElTarget::Component])?
-        {
-            if let Element::Function(func, _) = &el {
-                if Import::get_name() != func.name {
-                    Err(E::OnlyImportFunctionAllowedOnRoot.by_reader(&reader))?;
-                }
-                if func.args.len() != 1 {
-                    return Err(E::ImportFunctionInvalidArgs.by_reader(&reader))?;
-                };
                 if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
                     Err(E::MissedSemicolon.by_reader(&reader))?;
                 }

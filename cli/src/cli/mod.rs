@@ -6,7 +6,7 @@ mod tests;
 use crate::{
     elements::{Component, Element},
     inf::{context::Context, operator::Operator, scenario::Scenario, term, tracker},
-    reader,
+    reader::{Reader, Sources},
 };
 use args::Arguments;
 use error::E;
@@ -73,10 +73,11 @@ pub async fn read(cx: &mut Context) -> Result<(), E> {
     };
     cx.set_scenario(scenario);
     let scenario = cx.scenario.filename.to_owned();
-    let elements = match reader::read_file(cx, scenario, true).await {
+    let mut src = Sources::new();
+    let elements = match Reader::read_file(&scenario, true, Some(&mut src)).await {
         Ok(elements) => elements,
         Err(err) => {
-            cx.sources.report_error(&err)?;
+            src.report_err(&err)?;
             return Err(E::ReaderError(err.e));
         }
     };

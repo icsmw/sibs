@@ -85,20 +85,21 @@ mod reading {
     use crate::{
         elements::VariableName,
         error::LinkedErr,
-        inf::{context::Context, tests::*},
+        inf::tests::*,
         reader::{Reading, E},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let mut cx: Context = Context::create().unbound()?;
         let samples = include_str!("../../tests/reading/variable_name.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample)?;
-            report_if_err(&mut cx, VariableName::read(&mut reader))?.unwrap();
-            count += 1;
+            count += runner(sample, |mut src, mut reader| {
+                src.report_err_if(VariableName::read(&mut reader))?.unwrap();
+
+                Ok(1)
+            })?;
         }
         assert_eq!(count, samples.len());
         Ok(())
@@ -106,17 +107,17 @@ mod reading {
 
     #[tokio::test]
     async fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut cx = Context::create().unbound()?;
         let samples = include_str!("../../tests/reading/variable_name.sibs");
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample)?;
-            let variable_name = VariableName::read(&mut reader)?.unwrap();
-            let fragment = reader.get_fragment(&reader.token()?.id)?.content;
-            assert_eq!(format!("${}", variable_name.name), fragment);
-            assert_eq!(fragment, variable_name.to_string());
-            count += 1;
+            count += runner(sample, |_, mut reader| {
+                let variable_name = VariableName::read(&mut reader)?.unwrap();
+                let fragment = reader.get_fragment(&reader.token()?.id)?.content;
+                assert_eq!(format!("${}", variable_name.name), fragment);
+                assert_eq!(fragment, variable_name.to_string());
+                Ok(1)
+            })?;
         }
         assert_eq!(count, samples.len());
         Ok(())
@@ -124,14 +125,14 @@ mod reading {
 
     #[tokio::test]
     async fn error() -> Result<(), LinkedErr<E>> {
-        let mut cx = Context::create().unbound()?;
         let samples = include_str!("../../tests/error/variable_name.sibs");
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample)?;
-            assert!(VariableName::read(&mut reader).is_err());
-            count += 1;
+            count += runner(sample, |_, mut reader| {
+                assert!(VariableName::read(&mut reader).is_err());
+                Ok(1)
+            })?;
         }
         assert_eq!(count, samples.len());
         Ok(())

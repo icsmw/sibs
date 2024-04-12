@@ -135,28 +135,30 @@ mod reading {
     use crate::{
         elements::Values,
         error::LinkedErr,
-        inf::{context::Context, operator::Operator, tests},
+        inf::{operator::Operator, tests::*},
         reader::{Reading, E},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let mut cx: Context = Context::create().unbound()?;
         let samples = include_str!("../tests/reading/values.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample)?;
-            let entity = tests::report_if_err(&mut cx, Values::read(&mut reader))?;
-            assert!(entity.is_some(), "Line: {}", count + 1);
-            let entity = entity.unwrap();
-            assert_eq!(
-                tests::trim_carets(reader.recent()),
-                tests::trim_carets(&format!("{entity}")),
-                "Line: {}",
-                count + 1
-            );
-            count += 1;
+            count += runner(sample, |mut src, mut reader| {
+                let mut count = 0;
+                let entity = src.report_err_if(Values::read(&mut reader))?;
+                assert!(entity.is_some(), "Line: {}", count + 1);
+                let entity = entity.unwrap();
+                assert_eq!(
+                    trim_carets(reader.recent()),
+                    trim_carets(&format!("{entity}")),
+                    "Line: {}",
+                    count + 1
+                );
+                count += 1;
+                Ok(count)
+            })?;
         }
         assert_eq!(count, samples.len());
         Ok(())
@@ -164,28 +166,30 @@ mod reading {
 
     #[tokio::test]
     async fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut cx: Context = Context::create().unbound()?;
         let samples = include_str!("../tests/reading/values.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample)?;
-            let entity = Values::read(&mut reader)?.unwrap();
-            assert_eq!(
-                tests::trim_carets(&entity.to_string()),
-                reader.get_fragment(&entity.token)?.lined,
-                "Line: {}",
-                count + 1
-            );
-            for el in entity.elements.iter() {
+            count += runner(sample, |_, mut reader| {
+                let mut count = 0;
+                let entity = Values::read(&mut reader)?.unwrap();
                 assert_eq!(
-                    tests::trim_carets(&el.to_string()),
-                    tests::trim_carets(&reader.get_fragment(&el.token())?.content),
+                    trim_carets(&entity.to_string()),
+                    reader.get_fragment(&entity.token)?.lined,
                     "Line: {}",
                     count + 1
                 );
-            }
-            count += 1;
+                for el in entity.elements.iter() {
+                    assert_eq!(
+                        trim_carets(&el.to_string()),
+                        trim_carets(&reader.get_fragment(&el.token())?.content),
+                        "Line: {}",
+                        count + 1
+                    );
+                }
+                count += 1;
+                Ok(count)
+            })?;
         }
         assert_eq!(count, samples.len());
         Ok(())
@@ -193,12 +197,11 @@ mod reading {
 
     #[tokio::test]
     async fn error() -> Result<(), LinkedErr<E>> {
-        let mut cx: Context = Context::create().unbound()?;
         let samples = include_str!("../tests/error/values.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample)?;
+            let (_, mut reader) = get_reader_for_str(sample);
             assert!(Values::read(&mut reader).is_err());
             count += 1;
         }
@@ -211,10 +214,12 @@ mod reading {
 mod processing {
     use crate::{
         elements::{Component, Task},
+        error::LinkedErr,
         inf::{
             any::AnyValue,
             context::Context,
             operator::{Operator, E},
+            tests::*,
         },
         reader::{chars, Reading},
     };
@@ -230,20 +235,30 @@ mod processing {
     const NESTED_VALUES: &[(&str, &str)] = &[("a6", "c:a;d:b;d:c")];
 
     #[tokio::test]
-    async fn reading() -> Result<(), E> {
+    async fn reading() -> Result<(), LinkedErr<E>> {
         let mut cx = Context::create().unbound()?;
-        let mut reader = cx
-            .reader()
-            .from_str(include_str!("../tests/processing/values_components.sibs"))?;
-        let mut components: Vec<Component> = vec![];
-        while let Some(component) = Component::read(&mut reader)? {
-            components.push(component);
-        }
-        let mut reader = cx
-            .reader()
-            .from_str(include_str!("../tests/processing/values.sibs"))?;
-        while let Some(task) = Task::read(&mut reader)? {
-            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+        let components: Vec<Component> = runner(
+            &include_str!("../tests/processing/values_components.sibs"),
+            |_, mut reader| {
+                let mut components: Vec<Component> = vec![];
+                while let Some(component) = Component::read(&mut reader)? {
+                    components.push(component);
+                }
+                Ok::<Vec<Component>, LinkedErr<E>>(components)
+            },
+        )?;
+        let tasks: Vec<Task> = runner(
+            &include_str!("../tests/processing/values.sibs"),
+            |_, mut reader| {
+                let mut tasks: Vec<Task> = vec![];
+                while let Some(task) = Task::read(&mut reader)? {
+                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                    tasks.push(task);
+                }
+                Ok::<Vec<Task>, LinkedErr<E>>(tasks)
+            },
+        )?;
+        for task in tasks.iter() {
             assert!(task
                 .execute(components.first(), &components, &[], &mut cx)
                 .await?

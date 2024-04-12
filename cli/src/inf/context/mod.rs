@@ -27,9 +27,6 @@ impl Context {
     pub fn create() -> Create {
         Create
     }
-    pub fn reader(&mut self) -> ReaderGetter {
-        ReaderGetter::new(self)
-    }
     pub fn vars(&mut self) -> Vars {
         Vars::new(self)
     }

@@ -667,7 +667,8 @@ mod proptest {
             PatternString, Reference, SimpleString, Subsequence, Task, Values, VariableAssignation,
             VariableDeclaration, VariableName, VariableType, VariableVariants,
         },
-        inf::{operator::E, tests::*, Context},
+        error::LinkedErr,
+        inf::{operator::E, tests::*},
         reader::Reading,
     };
     use proptest::prelude::*;
@@ -880,14 +881,15 @@ mod proptest {
         }
     }
 
-    fn reading(el: Element) -> Result<(), E> {
+    fn reading(el: Element) -> Result<(), LinkedErr<E>> {
         get_rt().block_on(async {
-            let mut cx: Context = Context::create().unbound()?;
             let origin = format!("{el};");
-            let mut reader = cx.reader().from_str(&origin)?;
-            while let Some(block) = Block::read(&mut reader)? {
-                assert_eq!(format!("{block};"), origin);
-            }
+            runner(&origin, |_, mut reader| {
+                while let Some(block) = Block::read(&mut reader)? {
+                    assert_eq!(format!("{block};"), origin);
+                }
+                Ok::<(), LinkedErr<E>>(())
+            })?;
             Ok(())
         })
     }

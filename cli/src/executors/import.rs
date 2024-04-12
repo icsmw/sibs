@@ -28,8 +28,7 @@ impl From<Error> for E {
 pub struct Import {}
 
 impl Import {
-    pub fn get(mut path: PathBuf, cx: &mut Context) -> Result<PathBuf, E> {
-        let cwd = cx.cwd.as_ref().ok_or(Error::NoCurrentWorkingFolder)?;
+    pub fn get(mut path: PathBuf, cwd: &PathBuf) -> Result<PathBuf, E> {
         if path.is_relative() {
             path = cwd.join(path);
         }

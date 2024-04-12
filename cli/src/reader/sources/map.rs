@@ -1,4 +1,6 @@
-use crate::{inf::map, reader::Ids};
+use uuid::Uuid;
+
+use crate::{inf::map::Mapping, reader::Ids};
 use std::{cell::RefCell, collections::HashMap, path::PathBuf, rc::Rc};
 
 #[derive(Debug, Clone)]
@@ -23,6 +25,17 @@ impl Map {
             cursor: None,
             recent: None,
             ids,
+        }
+    }
+    pub fn unbound(content: &str) -> Self {
+        Self {
+            fragments: HashMap::new(),
+            reports: vec![],
+            content: content.to_owned(),
+            filename: PathBuf::from(Uuid::new_v4().to_string()),
+            cursor: None,
+            recent: None,
+            ids: Ids::new(),
         }
     }
     pub fn contains_token(&self, token: &usize) -> bool {
@@ -58,7 +71,7 @@ impl Map {
     }
 }
 
-impl map::Map for Map {
+impl Mapping for Map {
     fn get_content(&self) -> &str {
         &self.content
     }

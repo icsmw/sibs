@@ -121,84 +121,86 @@ mod reading {
     use crate::{
         elements::Optional,
         error::LinkedErr,
-        inf::{context::Context, operator::Operator, tests},
+        inf::{operator::Operator, tests::*},
         reader::{chars, Reading, E},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let mut cx: Context = Context::create().unbound()?;
-        let mut reader = cx
-            .reader()
-            .from_str(include_str!("../tests/reading/optional.sibs"))?;
-        let mut count = 0;
-        while let Some(entity) = tests::report_if_err(&mut cx, Optional::read(&mut reader))? {
-            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-            assert_eq!(
-                tests::trim_carets(reader.recent()),
-                tests::trim_carets(&format!("{entity};")),
-                "Line: {}",
-                count + 1
-            );
-            count += 1;
-        }
-        assert_eq!(count, 106);
-        assert!(reader.rest().trim().is_empty());
-        Ok(())
+        runner(
+            &include_str!("../tests/reading/optional.sibs"),
+            |mut src, mut reader| {
+                let mut count = 0;
+                while let Some(entity) = src.report_err_if(Optional::read(&mut reader))? {
+                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                    assert_eq!(
+                        trim_carets(reader.recent()),
+                        trim_carets(&format!("{entity};")),
+                        "Line: {}",
+                        count + 1
+                    );
+                    count += 1;
+                }
+                assert_eq!(count, 106);
+                assert!(reader.rest().trim().is_empty());
+                Ok(())
+            },
+        )
     }
 
     #[tokio::test]
     async fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut cx: Context = Context::create().unbound()?;
-        let mut reader = cx
-            .reader()
-            .from_str(include_str!("../tests/reading/optional.sibs"))?;
-        let mut count = 0;
-        while let Some(entity) = Optional::read(&mut reader)? {
-            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-            assert_eq!(
-                tests::trim_carets(&format!("{entity}")),
-                reader.get_fragment(&entity.token)?.lined,
-                "Line: {}",
-                count + 1
-            );
-            // In some cases like with PatternString, semicolon can be skipped, because
-            // belongs to parent entity (Optional).
-            assert_eq!(
-                tests::trim_semicolon(&tests::trim_carets(&entity.action.to_string())),
-                tests::trim_semicolon(&tests::trim_carets(
-                    &reader.get_fragment(&entity.action.token())?.lined
-                )),
-                "Line: {}",
-                count + 1
-            );
-            assert_eq!(
-                tests::trim_semicolon(&tests::trim_carets(&entity.condition.to_string())),
-                tests::trim_semicolon(&tests::trim_carets(
-                    &reader.get_fragment(&entity.condition.token())?.lined
-                )),
-                "Line: {}",
-                count + 1
-            );
-            count += 1;
-        }
-        assert_eq!(count, 106);
-        assert!(reader.rest().trim().is_empty());
-        Ok(())
+        runner(
+            &include_str!("../tests/reading/optional.sibs"),
+            |_, mut reader| {
+                let mut count = 0;
+                while let Some(entity) = Optional::read(&mut reader)? {
+                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                    assert_eq!(
+                        trim_carets(&format!("{entity}")),
+                        reader.get_fragment(&entity.token)?.lined,
+                        "Line: {}",
+                        count + 1
+                    );
+                    // In some cases like with PatternString, semicolon can be skipped, because
+                    // belongs to parent entity (Optional).
+                    assert_eq!(
+                        trim_semicolon(&trim_carets(&entity.action.to_string())),
+                        trim_semicolon(&trim_carets(
+                            &reader.get_fragment(&entity.action.token())?.lined
+                        )),
+                        "Line: {}",
+                        count + 1
+                    );
+                    assert_eq!(
+                        trim_semicolon(&trim_carets(&entity.condition.to_string())),
+                        trim_semicolon(&trim_carets(
+                            &reader.get_fragment(&entity.condition.token())?.lined
+                        )),
+                        "Line: {}",
+                        count + 1
+                    );
+                    count += 1;
+                }
+                assert_eq!(count, 106);
+                assert!(reader.rest().trim().is_empty());
+                Ok(())
+            },
+        )
     }
 
     #[tokio::test]
-    async fn error() -> Result<(), E> {
-        let mut cx: Context = Context::create().unbound()?;
+    async fn error() -> Result<(), LinkedErr<E>> {
         let samples = include_str!("../tests/error/optional.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample)?;
-            let opt = Optional::read(&mut reader);
-            println!("{opt:?}");
-            assert!(opt.is_err());
-            count += 1;
+            count += runner(sample, |_, mut reader| {
+                let opt = Optional::read(&mut reader);
+                println!("{opt:?}");
+                assert!(opt.is_err());
+                Ok(1)
+            })?;
         }
         assert_eq!(count, samples.len());
         Ok(())
@@ -209,25 +211,34 @@ mod reading {
 mod processing {
     use crate::{
         elements::Task,
+        error::LinkedErr,
         inf::{
             context::Context,
             operator::{Operator, E},
+            tests::*,
         },
         reader::{chars, Reading},
     };
 
     #[tokio::test]
-    async fn reading() -> Result<(), E> {
+    async fn reading() -> Result<(), LinkedErr<E>> {
         let mut cx = Context::create().unbound()?;
-        let mut reader = cx
-            .reader()
-            .from_str(include_str!("../tests/processing/optional.sibs"))?;
-        while let Some(task) = Task::read(&mut reader)? {
+        let tasks: Vec<Task> = runner(
+            &include_str!("../tests/processing/optional.sibs"),
+            |_, mut reader| {
+                let mut tasks: Vec<Task> = vec![];
+                while let Some(task) = Task::read(&mut reader)? {
+                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                    tasks.push(task);
+                }
+                Ok::<Vec<Task>, LinkedErr<E>>(tasks)
+            },
+        )?;
+        for task in tasks.iter() {
             let result = task
                 .execute(None, &[], &[], &mut cx)
                 .await?
                 .expect("Task returns some value");
-            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 result.get_as_string().expect("Task returns string value"),
                 "true".to_owned()
@@ -242,7 +253,8 @@ mod proptest {
 
     use crate::{
         elements::{ElTarget, Element, Optional, Task},
-        inf::{operator::E, tests::*, Context},
+        error::LinkedErr,
+        inf::{operator::E, tests::*},
         reader::Reading,
     };
     use proptest::prelude::*;
@@ -303,14 +315,15 @@ mod proptest {
         }
     }
 
-    fn reading(optional: Optional) -> Result<(), E> {
+    fn reading(optional: Optional) -> Result<(), LinkedErr<E>> {
         get_rt().block_on(async {
-            let mut cx = Context::create().unbound()?;
             let origin = format!("test [\n{optional};\n];");
-            let mut reader = cx.reader().from_str(&origin)?;
-            while let Some(task) = Task::read(&mut reader)? {
-                assert_eq!(format!("{task};"), origin);
-            }
+            runner(&origin, |_, mut reader| {
+                while let Some(task) = Task::read(&mut reader)? {
+                    assert_eq!(format!("{task};"), origin);
+                }
+                Ok::<(), LinkedErr<E>>(())
+            })?;
             Ok(())
         })
     }

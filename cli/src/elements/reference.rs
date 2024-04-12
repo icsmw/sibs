@@ -177,67 +177,69 @@ mod reading {
     use crate::{
         elements::Reference,
         error::LinkedErr,
-        inf::{context::Context, operator::Operator, tests::*},
+        inf::{operator::Operator, tests::*},
         reader::{chars, Reading, E},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let mut cx: Context = Context::create().unbound()?;
-        let mut reader = cx
-            .reader()
-            .from_str(include_str!("../tests/reading/refs.sibs"))?;
-        let mut count = 0;
-        while let Some(entity) = report_if_err(&mut cx, Reference::read(&mut reader))? {
-            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-            assert_eq!(
-                trim_carets(reader.recent()),
-                trim_carets(&format!("{entity};")),
-                "Line: {}",
-                count + 1
-            );
-            count += 1;
-        }
-        assert_eq!(count, 6);
-        assert!(reader.rest().trim().is_empty());
-        Ok(())
+        runner(
+            &include_str!("../tests/reading/refs.sibs"),
+            |mut src, mut reader| {
+                let mut count = 0;
+                while let Some(entity) = src.report_err_if(Reference::read(&mut reader))? {
+                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                    assert_eq!(
+                        trim_carets(reader.recent()),
+                        trim_carets(&format!("{entity};")),
+                        "Line: {}",
+                        count + 1
+                    );
+                    count += 1;
+                }
+                assert_eq!(count, 6);
+                assert!(reader.rest().trim().is_empty());
+                Ok(())
+            },
+        )
     }
 
     #[tokio::test]
     async fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut cx: Context = Context::create().unbound()?;
-        let mut reader = cx
-            .reader()
-            .from_str(include_str!("../tests/reading/refs.sibs"))?;
-        let mut count = 0;
-        while let Some(entity) = Reference::read(&mut reader)? {
-            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-            for input in entity.inputs.iter() {
-                assert_eq!(
-                    trim_carets(&input.to_string()),
-                    trim_carets(&reader.get_fragment(&input.token())?.lined),
-                    "Line: {}",
-                    count + 1
-                );
-            }
-            count += 1;
-        }
-        assert!(reader.rest().trim().is_empty());
-        Ok(())
+        runner(
+            &include_str!("../tests/reading/refs.sibs"),
+            |_, mut reader| {
+                let mut count = 0;
+                while let Some(entity) = Reference::read(&mut reader)? {
+                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                    for input in entity.inputs.iter() {
+                        assert_eq!(
+                            trim_carets(&input.to_string()),
+                            trim_carets(&reader.get_fragment(&input.token())?.lined),
+                            "Line: {}",
+                            count + 1
+                        );
+                    }
+                    count += 1;
+                }
+                assert!(reader.rest().trim().is_empty());
+                Ok(())
+            },
+        )
     }
 
     #[tokio::test]
     async fn error() -> Result<(), LinkedErr<E>> {
-        let mut cx: Context = Context::create().unbound()?;
         let samples = include_str!("../tests/error/refs.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample)?;
-            let result = Reference::read(&mut reader);
-            println!("{result:?}");
-            assert!(result.is_err(), "Line: {}", count + 1);
-            count += 1;
+            count += runner(sample, |_, mut reader| {
+                let result = Reference::read(&mut reader);
+                println!("{result:?}");
+                assert!(result.is_err(), "Line: {}", count + 1);
+                Ok(1)
+            })?;
         }
         assert_eq!(count, samples.len());
         Ok(())

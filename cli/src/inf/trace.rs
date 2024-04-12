@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::{
     error::LinkedErr,
     inf::{
-        map::{Fragment, Map},
+        map::{Fragment, Mapping},
         AnyValue,
     },
     reader::{Maps, E},

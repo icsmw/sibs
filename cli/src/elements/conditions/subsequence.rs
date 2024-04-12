@@ -163,30 +163,30 @@ mod reading {
     use crate::{
         elements::Subsequence,
         error::LinkedErr,
-        inf::{context::Context, operator::Operator, tests},
+        inf::{operator::Operator, tests::*},
         reader::{Reading, E},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let mut cx: Context = Context::create().unbound()?;
         let content = include_str!("../../tests/reading/subsequence.sibs")
             .split('\n')
             .map(|s| s.to_string())
             .collect::<Vec<String>>();
         let mut count = 0;
         for str in content.iter() {
-            let mut reader = cx.reader().from_str(str)?;
-            let entity = tests::report_if_err(&mut cx, Subsequence::read(&mut reader))?;
-            assert!(entity.is_some(), "Line: {}", count + 1);
-            let entity = entity.unwrap();
-            assert_eq!(
-                tests::trim_carets(str),
-                tests::trim_carets(&format!("{entity}")),
-                "Line: {}",
-                count + 1
-            );
-            count += 1;
+            count += runner(str, |mut src, mut reader| {
+                let entity = src.report_err_if(Subsequence::read(&mut reader))?;
+                assert!(entity.is_some(), "Line: {}", count + 1);
+                let entity = entity.unwrap();
+                assert_eq!(
+                    trim_carets(str),
+                    trim_carets(&format!("{entity}")),
+                    "Line: {}",
+                    count + 1
+                );
+                Ok(1)
+            })?;
         }
         assert_eq!(count, content.len());
         Ok(())
@@ -194,30 +194,31 @@ mod reading {
 
     #[tokio::test]
     async fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut cx = Context::create().unbound()?;
         let content = include_str!("../../tests/reading/subsequence.sibs")
             .split('\n')
             .map(|s| s.to_string())
             .collect::<Vec<String>>();
         for (count, str) in content.iter().enumerate() {
-            let mut reader = cx.reader().from_str(str)?;
-            let entity = Subsequence::read(&mut reader)?;
-            assert!(entity.is_some(), "Line: {}", count + 1);
-            let entity = entity.unwrap();
-            assert_eq!(
-                tests::trim_carets(&format!("{entity}")),
-                tests::trim_carets(&reader.get_fragment(&entity.token)?.lined),
-                "Line: {}",
-                count + 1
-            );
-            for el in entity.subsequence.iter() {
+            runner(str, |_, mut reader| {
+                let entity = Subsequence::read(&mut reader)?;
+                assert!(entity.is_some(), "Line: {}", count + 1);
+                let entity = entity.unwrap();
                 assert_eq!(
-                    tests::trim_carets(&format!("{el}")),
-                    tests::trim_carets(&reader.get_fragment(&el.token())?.lined),
+                    trim_carets(&format!("{entity}")),
+                    trim_carets(&reader.get_fragment(&entity.token)?.lined),
                     "Line: {}",
                     count + 1
                 );
-            }
+                for el in entity.subsequence.iter() {
+                    assert_eq!(
+                        trim_carets(&format!("{el}")),
+                        trim_carets(&reader.get_fragment(&el.token())?.lined),
+                        "Line: {}",
+                        count + 1
+                    );
+                }
+                Ok(())
+            })?;
         }
         Ok(())
     }

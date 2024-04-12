@@ -5,7 +5,7 @@ use crate::{
     error::LinkedErrSerialized,
     inf::{
         atlas::{Maps, E},
-        map::{Fragment, Map},
+        map::{Fragment, Mapping},
     },
 };
 

@@ -183,82 +183,82 @@ mod reading {
     use crate::{
         elements::{If, Thread},
         error::LinkedErr,
-        inf::{context::Context, operator::Operator, tests},
+        inf::{operator::Operator, tests::*},
         reader::{chars, Reading, E},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let mut cx: Context = Context::create().unbound()?;
         let content = include_str!("../../tests/reading/if.sibs");
-        let mut reader = cx.reader().from_str(content)?;
-        let mut count = 0;
-        while let Some(entity) = tests::report_if_err(&mut cx, If::read(&mut reader))? {
-            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-            assert_eq!(
-                tests::trim_carets(reader.recent()),
-                tests::trim_carets(&format!("{entity};")),
-                "Line: {}",
-                count + 1
-            );
-            count += 1;
-        }
-        assert_eq!(count, content.split('\n').count());
-        assert!(reader.rest().trim().is_empty());
-        Ok(())
+        runner(&content, |mut src, mut reader| {
+            let mut count = 0;
+            while let Some(entity) = src.report_err_if(If::read(&mut reader))? {
+                let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                assert_eq!(
+                    trim_carets(reader.recent()),
+                    trim_carets(&format!("{entity};")),
+                    "Line: {}",
+                    count + 1
+                );
+                count += 1;
+            }
+            assert_eq!(count, content.split('\n').count());
+            assert!(reader.rest().trim().is_empty());
+            Ok(())
+        })
     }
 
     #[tokio::test]
     async fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut cx = Context::create().unbound()?;
         let content = include_str!("../../tests/reading/if.sibs");
-        let mut reader = cx.reader().from_str(content)?;
-        let mut count = 0;
-        while let Some(entity) = If::read(&mut reader)? {
-            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-            assert_eq!(
-                tests::trim_carets(&format!("{entity}")),
-                tests::trim_carets(&reader.get_fragment(&entity.token)?.lined),
-                "Line: {}",
-                count + 1
-            );
-            for thr in entity.threads.iter() {
-                match thr {
-                    Thread::If(el, block) => {
-                        assert_eq!(
-                            tests::trim_carets(&el.to_string()),
-                            tests::trim_carets(&reader.get_fragment(&el.token())?.lined)
-                        );
-                        assert_eq!(
-                            tests::trim_carets(&block.to_string()),
-                            tests::trim_carets(&reader.get_fragment(&block.token())?.lined)
-                        );
-                    }
-                    Thread::Else(block) => {
-                        assert_eq!(
-                            tests::trim_carets(&block.to_string()),
-                            tests::trim_carets(&reader.get_fragment(&block.token())?.lined)
-                        );
-                    }
-                };
+        runner(&content, |_, mut reader| {
+            let mut count = 0;
+            while let Some(entity) = If::read(&mut reader)? {
+                let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                assert_eq!(
+                    trim_carets(&format!("{entity}")),
+                    trim_carets(&reader.get_fragment(&entity.token)?.lined),
+                    "Line: {}",
+                    count + 1
+                );
+                for thr in entity.threads.iter() {
+                    match thr {
+                        Thread::If(el, block) => {
+                            assert_eq!(
+                                trim_carets(&el.to_string()),
+                                trim_carets(&reader.get_fragment(&el.token())?.lined)
+                            );
+                            assert_eq!(
+                                trim_carets(&block.to_string()),
+                                trim_carets(&reader.get_fragment(&block.token())?.lined)
+                            );
+                        }
+                        Thread::Else(block) => {
+                            assert_eq!(
+                                trim_carets(&block.to_string()),
+                                trim_carets(&reader.get_fragment(&block.token())?.lined)
+                            );
+                        }
+                    };
+                }
+                count += 1;
             }
-            count += 1;
-        }
-        assert_eq!(count, content.split('\n').count());
-        assert!(reader.rest().trim().is_empty());
-        Ok(())
+            assert_eq!(count, content.split('\n').count());
+            assert!(reader.rest().trim().is_empty());
+            Ok(())
+        })
     }
 
     #[tokio::test]
-    async fn error() -> Result<(), E> {
-        let mut cx = Context::create().unbound()?;
+    async fn error() -> Result<(), LinkedErr<E>> {
         let samples = include_str!("../../tests/error/if.sibs");
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample)?;
-            assert!(If::read(&mut reader).is_err());
-            count += 1;
+            count += runner(sample, |_, mut reader| {
+                assert!(If::read(&mut reader).is_err());
+                Ok(1)
+            })?;
         }
         assert_eq!(count, samples.len());
         Ok(())
@@ -269,39 +269,45 @@ mod reading {
 mod processing {
     use crate::{
         elements::Task,
+        error::LinkedErr,
         inf::{
             context::Context,
             operator::{Operator, E},
-            tests::report_if_err,
+            tests::*,
         },
         reader::{chars, Reading},
     };
 
     #[tokio::test]
-    async fn reading() -> Result<(), E> {
+    async fn reading() -> Result<(), LinkedErr<E>> {
         let mut cx = Context::create().unbound()?;
-        let tasks = include_str!("../../tests/processing/if.sibs")
+        let tasks_count = include_str!("../../tests/processing/if.sibs")
             .match_indices("test [")
             .count();
-        let mut reader = cx
-            .reader()
-            .from_str(include_str!("../../tests/processing/if.sibs"))?;
-        let mut count = 0;
-        while let Some(task) = report_if_err(&mut cx, Task::read(&mut reader))? {
+        let tasks: Vec<Task> = runner(
+            &include_str!("../../tests/processing/if.sibs"),
+            |_, mut reader| {
+                let mut tasks: Vec<Task> = vec![];
+                while let Some(task) = Task::read(&mut reader)? {
+                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                    tasks.push(task);
+                }
+                Ok::<Vec<Task>, LinkedErr<E>>(tasks)
+            },
+        )?;
+        for (i, task) in tasks.iter().enumerate() {
             let result = task
                 .execute(None, &[], &[], &mut cx)
                 .await?
                 .expect("IF returns some value");
-            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
             assert_eq!(
                 result.get_as_string().expect("IF returns string value"),
                 "true".to_owned(),
                 "Line: {}",
-                count + 1
+                i + 1
             );
-            count += 1;
         }
-        assert_eq!(tasks, count);
+        assert_eq!(tasks_count, tasks.len());
         Ok(())
     }
 }
@@ -311,7 +317,8 @@ mod proptest {
 
     use crate::{
         elements::{task::Task, ElTarget, Element, If, Thread},
-        inf::{operator::E, tests::*, Context},
+        error::LinkedErr,
+        inf::{operator::E, tests::*},
         reader::Reading,
     };
     use proptest::prelude::*;
@@ -356,14 +363,15 @@ mod proptest {
         }
     }
 
-    fn reading(if_block: If) -> Result<(), E> {
+    fn reading(if_block: If) -> Result<(), LinkedErr<E>> {
         get_rt().block_on(async {
-            let mut cx = Context::create().unbound()?;
             let origin = format!("test [\n{if_block};\n];");
-            let mut reader = cx.reader().from_str(&origin)?;
-            while let Some(task) = Task::read(&mut reader)? {
-                assert_eq!(format!("{task};"), origin);
-            }
+            runner(&origin, |_, mut reader| {
+                while let Some(task) = Task::read(&mut reader)? {
+                    assert_eq!(format!("{task};"), origin);
+                }
+                Ok::<(), LinkedErr<E>>(())
+            })?;
             Ok(())
         })
     }

@@ -2,8 +2,7 @@ use crate::{
     elements::Component,
     error::LinkedErr,
     inf::{
-        operator, term, AnyValue, Context, Formation, FormationCursor, Operator,
-        OperatorPinnedResult,
+        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
     },
     reader::{chars, Reader, Reading, E},
 };
@@ -98,35 +97,37 @@ mod reading {
     use crate::{
         elements::VariableVariants,
         error::LinkedErr,
-        inf::{context::Context, tests::*},
+        inf::tests::*,
         reader::{Reading, E},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let mut cx: Context = Context::create().unbound()?;
         let samples = include_str!("../../tests/reading/variants.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample)?;
-            assert!(report_if_err(&mut cx, VariableVariants::read(&mut reader)).is_ok());
-            count += 1;
+            count += runner(sample, |mut src, mut reader| {
+                assert!(src
+                    .report_err_if(VariableVariants::read(&mut reader))
+                    .is_ok());
+                Ok(1)
+            })?;
         }
         assert_eq!(count, samples.len());
         Ok(())
     }
 
     #[tokio::test]
-    async fn error() -> Result<(), E> {
-        let mut cx: Context = Context::create().unbound()?;
+    async fn error() -> Result<(), LinkedErr<E>> {
         let samples = include_str!("../../tests/error/variants.sibs");
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample)?;
-            assert!(VariableVariants::read(&mut reader).is_err());
-            count += 1;
+            count += runner(sample, |_, mut reader| {
+                assert!(VariableVariants::read(&mut reader).is_err());
+                Ok(1)
+            })?;
         }
         assert_eq!(count, samples.len());
         Ok(())

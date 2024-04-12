@@ -105,79 +105,81 @@ mod reading {
     use crate::{
         elements::VariableAssignation,
         error::LinkedErr,
-        inf::{context::Context, operator::Operator, tests},
+        inf::{operator::Operator, tests::*},
         reader::{chars, Reading, E},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let mut cx: Context = Context::create().unbound()?;
-        let mut reader = cx.reader().from_str(include_str!(
-            "../../tests/reading/variable_assignation.sibs"
-        ))?;
-        let mut count = 0;
-        while let Some(entity) =
-            tests::report_if_err(&mut cx, VariableAssignation::read(&mut reader))?
-        {
-            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-            assert_eq!(
-                tests::trim_carets(reader.recent()),
-                tests::trim_carets(&format!("{entity};")),
-                "Line: {}",
-                count + 1
-            );
-            count += 1;
-        }
-        assert_eq!(count, 113);
-        assert!(reader.rest().trim().is_empty());
-        Ok(())
+        runner(
+            &include_str!("../../tests/reading/variable_assignation.sibs"),
+            |mut src, mut reader| {
+                let mut count = 0;
+                while let Some(entity) =
+                    src.report_err_if(VariableAssignation::read(&mut reader))?
+                {
+                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                    assert_eq!(
+                        trim_carets(reader.recent()),
+                        trim_carets(&format!("{entity};")),
+                        "Line: {}",
+                        count + 1
+                    );
+                    count += 1;
+                }
+                assert_eq!(count, 113);
+                assert!(reader.rest().trim().is_empty());
+                Ok(())
+            },
+        )
     }
 
     #[tokio::test]
     async fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut cx: Context = Context::create().unbound()?;
-        let mut reader = cx.reader().from_str(include_str!(
-            "../../tests/reading/variable_assignation.sibs"
-        ))?;
-        let mut count = 0;
-        while let Some(entity) = VariableAssignation::read(&mut reader)? {
-            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-            assert_eq!(
-                tests::trim_carets(&format!("{entity}")),
-                reader.get_fragment(&entity.token)?.lined,
-                "Line: {}",
-                count + 1
-            );
-            assert_eq!(
-                tests::trim_carets(&entity.variable.to_string()),
-                tests::trim_carets(&reader.get_fragment(&entity.variable.token)?.content),
-                "Line: {}",
-                count + 1
-            );
-            assert_eq!(
-                tests::trim_semicolon(&tests::trim_carets(&entity.assignation.to_string())),
-                tests::trim_semicolon(&tests::trim_carets(
-                    &reader.get_fragment(&entity.assignation.token())?.content
-                )),
-                "Line: {}",
-                count + 1
-            );
-            count += 1;
-        }
-        assert_eq!(count, 113);
-        assert!(reader.rest().trim().is_empty());
-        Ok(())
+        runner(
+            &include_str!("../../tests/reading/variable_assignation.sibs"),
+            |_, mut reader| {
+                let mut count = 0;
+                while let Some(entity) = VariableAssignation::read(&mut reader)? {
+                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                    assert_eq!(
+                        trim_carets(&format!("{entity}")),
+                        reader.get_fragment(&entity.token)?.lined,
+                        "Line: {}",
+                        count + 1
+                    );
+                    assert_eq!(
+                        trim_carets(&entity.variable.to_string()),
+                        trim_carets(&reader.get_fragment(&entity.variable.token)?.content),
+                        "Line: {}",
+                        count + 1
+                    );
+                    assert_eq!(
+                        trim_semicolon(&trim_carets(&entity.assignation.to_string())),
+                        trim_semicolon(&trim_carets(
+                            &reader.get_fragment(&entity.assignation.token())?.content
+                        )),
+                        "Line: {}",
+                        count + 1
+                    );
+                    count += 1;
+                }
+                assert_eq!(count, 113);
+                assert!(reader.rest().trim().is_empty());
+                Ok(())
+            },
+        )
     }
     #[tokio::test]
     async fn error() -> Result<(), LinkedErr<E>> {
-        let mut cx: Context = Context::create().unbound()?;
         let samples = include_str!("../../tests/error/variable_assignation.sibs").to_string();
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample)?;
-            assert!(VariableAssignation::read(&mut reader).is_err());
-            count += 1;
+            count += runner(sample, |_, mut reader| {
+                assert!(VariableAssignation::read(&mut reader).is_err());
+                Ok(1)
+            })?;
         }
         assert_eq!(count, samples.len());
         Ok(())
@@ -188,11 +190,13 @@ mod reading {
 mod processing {
     use crate::{
         elements::Task,
+        error::LinkedErr,
         inf::{
             context::Context,
             operator::{Operator, E},
+            tests::*,
         },
-        reader::Reading,
+        reader::{chars, Reading},
     };
 
     const VALUES: &[(&str, &str)] = &[
@@ -207,10 +211,18 @@ mod processing {
     #[tokio::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::create().unbound()?;
-        let mut reader = cx.reader().from_str(include_str!(
-            "../../tests/processing/variable_assignation.sibs"
-        ))?;
-        while let Some(task) = Task::read(&mut reader)? {
+        let tasks: Vec<Task> = runner(
+            &include_str!("../../tests/processing/variable_assignation.sibs"),
+            |_, mut reader| {
+                let mut tasks: Vec<Task> = vec![];
+                while let Some(task) = Task::read(&mut reader)? {
+                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                    tasks.push(task);
+                }
+                Ok::<Vec<Task>, LinkedErr<E>>(tasks)
+            },
+        )?;
+        for task in tasks.iter() {
             assert!(task.execute(None, &[], &[], &mut cx).await?.is_some());
         }
         for (name, value) in VALUES.iter() {
@@ -227,7 +239,8 @@ mod processing {
 mod proptest {
     use crate::{
         elements::{ElTarget, Element, Task, VariableAssignation, VariableName},
-        inf::{operator::E, tests::*, Context},
+        error::LinkedErr,
+        inf::{operator::E, tests::*},
         reader::Reading,
     };
     use proptest::prelude::*;
@@ -277,14 +290,15 @@ mod proptest {
         }
     }
 
-    fn reading(assignation: VariableAssignation) -> Result<(), E> {
+    fn reading(assignation: VariableAssignation) -> Result<(), LinkedErr<E>> {
         get_rt().block_on(async {
-            let mut cx = Context::create().unbound()?;
             let origin = format!("test [\n{assignation};\n];");
-            let mut reader = cx.reader().from_str(&origin)?;
-            while let Some(task) = Task::read(&mut reader)? {
-                assert_eq!(format!("{task};"), origin);
-            }
+            runner(&origin, |_, mut reader| {
+                while let Some(task) = Task::read(&mut reader)? {
+                    assert_eq!(format!("{task};"), origin);
+                }
+                Ok::<(), LinkedErr<E>>(())
+            })?;
             Ok(())
         })
     }

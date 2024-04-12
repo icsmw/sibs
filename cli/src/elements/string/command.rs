@@ -139,66 +139,68 @@ mod reading {
     use crate::{
         elements::Command,
         error::LinkedErr,
-        inf::{context::Context, operator::Operator, tests},
+        inf::{operator::Operator, tests::*},
         reader::{chars, Reading, E},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let mut cx: Context = Context::create().unbound()?;
-        let mut reader = cx
-            .reader()
-            .from_str(include_str!("../../tests/reading/command.sibs"))?;
-        let origins = include_str!("../../tests/reading/command.sibs")
-            .split('\n')
-            .map(|s| s.to_string())
-            .collect::<Vec<String>>();
-        let mut count = 0;
-        while let Some(entity) = tests::report_if_err(&mut cx, Command::read(&mut reader))? {
-            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-            assert_eq!(
-                tests::trim_carets(reader.recent()),
-                tests::trim_carets(&format!("{entity};")),
-                "line {}",
-                count + 1
-            );
-            assert_eq!(
-                origins[count],
-                tests::trim_carets(&format!("{entity};")),
-                "line {}",
-                count + 1
-            );
-            count += 1;
-        }
-        assert_eq!(count, 130);
-        assert!(reader.rest().trim().is_empty());
-        Ok(())
+        runner(
+            &include_str!("../../tests/reading/command.sibs"),
+            |mut src, mut reader| {
+                let origins = include_str!("../../tests/reading/command.sibs")
+                    .split('\n')
+                    .map(|s| s.to_string())
+                    .collect::<Vec<String>>();
+                let mut count = 0;
+                while let Some(entity) = src.report_err_if(Command::read(&mut reader))? {
+                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                    assert_eq!(
+                        trim_carets(reader.recent()),
+                        trim_carets(&format!("{entity};")),
+                        "line {}",
+                        count + 1
+                    );
+                    assert_eq!(
+                        origins[count],
+                        trim_carets(&format!("{entity};")),
+                        "line {}",
+                        count + 1
+                    );
+                    count += 1;
+                }
+                assert_eq!(count, 130);
+                assert!(reader.rest().trim().is_empty());
+                Ok(())
+            },
+        )
     }
 
     #[tokio::test]
     async fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut cx = Context::create().unbound()?;
-        let mut reader = cx
-            .reader()
-            .from_str(include_str!("../../tests/reading/command.sibs"))?;
-        let mut count = 0;
-        while let Some(entity) = Command::read(&mut reader)? {
-            let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-            assert_eq!(
-                tests::trim_carets(&entity.to_string()),
-                reader.get_fragment(&entity.token)?.content
-            );
-            for el in entity.elements.iter() {
-                assert_eq!(
-                    el.to_string().replace('\n', ""),
-                    reader.get_fragment(&el.token())?.content
-                );
-            }
-            count += 1;
-        }
-        assert_eq!(count, 130);
-        assert!(reader.rest().trim().is_empty());
-        Ok(())
+        runner(
+            &include_str!("../../tests/reading/command.sibs"),
+            |_, mut reader| {
+                let mut count = 0;
+                while let Some(entity) = Command::read(&mut reader)? {
+                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                    assert_eq!(
+                        trim_carets(&entity.to_string()),
+                        reader.get_fragment(&entity.token)?.content
+                    );
+                    for el in entity.elements.iter() {
+                        assert_eq!(
+                            el.to_string().replace('\n', ""),
+                            reader.get_fragment(&el.token())?.content
+                        );
+                    }
+                    count += 1;
+                }
+                assert_eq!(count, 130);
+                assert!(reader.rest().trim().is_empty());
+                Ok(())
+            },
+        )
     }
 }
 

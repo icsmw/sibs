@@ -1,7 +1,7 @@
 use crate::{
     error::LinkedErr,
     inf::context::Context,
-    reader::{chars, Reader},
+    reader::{chars, Reader, Sources},
 };
 use tokio::runtime::{Builder, Runtime};
 
@@ -21,19 +21,38 @@ pub fn trim_semicolon(src: &str) -> String {
     }
 }
 
-pub fn report_if_err<T, E: std::error::Error + std::fmt::Display + ToString>(
-    cx: &mut Context,
+pub fn report_reading_err<T, E: std::error::Error + std::fmt::Display + ToString>(
+    src: &mut Sources,
     result: Result<T, LinkedErr<E>>,
 ) -> Result<T, LinkedErr<E>> {
     if let Err(err) = result.as_ref() {
-        cx.sources.report_error(err).expect("Generate error report");
+        src.report_err(err).expect("Generate error report");
     }
     result
 }
 
-pub fn get_reader(content: &str) -> Reader {
-    let mut cx = Context::create().unbound().expect("Create context");
-    cx.reader().from_str(content).expect("Reader created")
+pub fn runner<T, E: std::error::Error + std::fmt::Display + ToString, F>(
+    content: &str,
+    cb: F,
+) -> Result<T, LinkedErr<E>>
+where
+    F: FnOnce(Sources, Reader) -> Result<T, LinkedErr<E>>,
+{
+    let mut src = Sources::new();
+    let reader = src
+        .reader()
+        .unbound(content)
+        .expect("Unbound reader is created");
+    cb(src, reader)
+}
+
+pub fn get_reader_for_str(content: &str) -> (Sources, Reader) {
+    let mut src = Sources::new();
+    let reader = src
+        .reader()
+        .unbound(content)
+        .expect("Unbound reader is created");
+    (src, reader)
 }
 
 pub fn get_rt() -> Runtime {

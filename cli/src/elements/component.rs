@@ -199,89 +199,86 @@ mod reading {
     use crate::{
         elements::{Component, ElTarget, Element},
         error::LinkedErr,
-        inf::{
-            context::Context,
-            operator::Operator,
-            tests::{self, report_if_err},
-        },
+        inf::{operator::Operator, tests::*},
         reader::{Reading, E},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let mut cx: Context = Context::create().unbound()?;
         let components = include_str!("../tests/reading/component.sibs").to_string();
         let components = components.split('\n').collect::<Vec<&str>>();
         let tasks = include_str!("../tests/reading/tasks.sibs");
-        let mut reader = cx.reader().from_str(
+        runner(
             &components
                 .iter()
                 .map(|c| format!("{c}\n{tasks}"))
                 .collect::<Vec<String>>()
                 .join("\n"),
-        )?;
-        let mut count = 0;
-        while let Some(entity) = report_if_err(&mut cx, Component::read(&mut reader))? {
-            assert_eq!(
-                tests::trim_carets(reader.recent()),
-                tests::trim_carets(&entity.to_string()),
-            );
-            count += 1;
-        }
-        assert_eq!(count, components.len());
-        assert!(reader.rest().trim().is_empty());
-        Ok(())
+            |mut src, mut reader| {
+                let mut count = 0;
+                while let Some(entity) = src.report_err_if(Component::read(&mut reader))? {
+                    assert_eq!(
+                        trim_carets(reader.recent()),
+                        trim_carets(&entity.to_string()),
+                    );
+                    count += 1;
+                }
+                assert_eq!(count, components.len());
+                assert!(reader.rest().trim().is_empty());
+                Ok(())
+            },
+        )
     }
 
     #[tokio::test]
     async fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut cx: Context = Context::create().unbound()?;
         let components = include_str!("../tests/reading/component.sibs").to_string();
         let components = components.split('\n').collect::<Vec<&str>>();
         let tasks = include_str!("../tests/reading/tasks.sibs");
-        let mut reader = cx.reader().from_str(
+        runner(
             &components
                 .iter()
                 .map(|c| format!("{c}\n{tasks}"))
                 .collect::<Vec<String>>()
                 .join("\n"),
-        )?;
-        let mut count = 0;
-        while let Some(el) = Element::include(&mut reader, &[ElTarget::Component])? {
-            assert!(matches!(el, Element::Component(..)));
-            assert_eq!(
-                tests::trim_carets(&el.to_string()),
-                tests::trim_carets(&reader.get_fragment(&el.token())?.lined)
-            );
-            if let Element::Component(el, _) = el {
-                assert_eq!(
-                    tests::trim_carets(&el.name.to_string()),
-                    tests::trim_carets(&reader.get_fragment(&el.name.token)?.lined)
-                );
-                for el in el.elements.iter() {
-                    if let Element::Task(el, _) = el {
+            |_, mut reader| {
+                let mut count = 0;
+                while let Some(el) = Element::include(&mut reader, &[ElTarget::Component])? {
+                    assert!(matches!(el, Element::Component(..)));
+                    assert_eq!(
+                        trim_carets(&el.to_string()),
+                        trim_carets(&reader.get_fragment(&el.token())?.lined)
+                    );
+                    if let Element::Component(el, _) = el {
                         assert_eq!(
-                            tests::trim_carets(&format!("{el}",)),
-                            tests::trim_carets(&reader.get_fragment(&el.token())?.lined)
+                            trim_carets(&el.name.to_string()),
+                            trim_carets(&reader.get_fragment(&el.name.token)?.lined)
                         );
-                    } else {
-                        assert_eq!(
-                            tests::trim_carets(&format!("{el}",)),
-                            tests::trim_carets(&reader.get_fragment(&el.token())?.lined)
-                        );
+                        for el in el.elements.iter() {
+                            if let Element::Task(el, _) = el {
+                                assert_eq!(
+                                    trim_carets(&format!("{el}",)),
+                                    trim_carets(&reader.get_fragment(&el.token())?.lined)
+                                );
+                            } else {
+                                assert_eq!(
+                                    trim_carets(&format!("{el}",)),
+                                    trim_carets(&reader.get_fragment(&el.token())?.lined)
+                                );
+                            }
+                        }
                     }
+                    count += 1;
                 }
-            }
-            count += 1;
-        }
-        assert_eq!(count, components.len());
-        assert!(reader.rest().trim().is_empty());
-        Ok(())
+                assert_eq!(count, components.len());
+                assert!(reader.rest().trim().is_empty());
+                Ok(())
+            },
+        )
     }
 
     #[tokio::test]
-    async fn error() -> Result<(), E> {
-        let mut cx: Context = Context::create().unbound()?;
+    async fn error() -> Result<(), LinkedErr<E>> {
         let samples = include_str!("../tests/error/component.sibs");
         let samples = samples
             .split('\n')
@@ -289,9 +286,10 @@ mod reading {
             .collect::<Vec<String>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample)?;
-            assert!(Component::read(&mut reader).is_err());
-            count += 1;
+            count += runner(sample, |_, mut reader| {
+                assert!(Component::read(&mut reader).is_err());
+                Ok(1)
+            })?;
         }
         assert_eq!(count, samples.len());
         Ok(())
@@ -302,8 +300,10 @@ mod reading {
 mod processing {
     use crate::{
         elements::Component,
+        error::LinkedErr,
         inf::{
             operator::{Operator, E},
+            tests::*,
             Context,
         },
         reader::Reading,
@@ -319,20 +319,22 @@ mod processing {
     #[tokio::test]
     async fn reading() -> Result<(), E> {
         let mut cx = Context::create().unbound()?;
-        let mut reader = cx
-            .reader()
-            .from_str(include_str!("../tests/processing/component.sibs"))?;
-        let mut cursor: usize = 0;
-        let mut components: Vec<Component> = vec![];
-        while let Some(component) = Component::read(&mut reader)? {
-            components.push(component);
-        }
-        for component in components.iter() {
+        let components: Vec<Component> = runner(
+            &include_str!("../tests/processing/component.sibs"),
+            |_, mut reader| {
+                let mut components: Vec<Component> = vec![];
+                while let Some(task) = Component::read(&mut reader)? {
+                    components.push(task);
+                }
+                Ok::<Vec<Component>, LinkedErr<E>>(components)
+            },
+        )?;
+        for (i, component) in components.iter().enumerate() {
             let result = component
                 .execute(
                     Some(component),
                     &components,
-                    &VALUES[cursor]
+                    &VALUES[i]
                         .iter()
                         .map(|s| s.to_string())
                         .collect::<Vec<String>>(),
@@ -340,13 +342,11 @@ mod processing {
                 )
                 .await?
                 .expect("component returns some value");
-            cursor += 1;
             assert_eq!(
                 result.get_as_string().expect("Task returns string value"),
                 "true".to_owned()
             );
         }
-
         Ok(())
     }
 }

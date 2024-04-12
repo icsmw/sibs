@@ -131,6 +131,12 @@ impl From<LinkedErr<reader::error::E>> for E {
     }
 }
 
+impl From<LinkedErr<reader::error::E>> for LinkedErr<E> {
+    fn from(e: LinkedErr<reader::error::E>) -> Self {
+        LinkedErr::new(E::ReaderError(e.e), e.token)
+    }
+}
+
 impl From<reader::error::E> for LinkedErr<E> {
     fn from(e: reader::error::E) -> Self {
         LinkedErr::unlinked(E::ReaderError(e))

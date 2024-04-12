@@ -193,31 +193,31 @@ mod reading {
     use crate::{
         elements::Comparing,
         error::LinkedErr,
-        inf::{context::Context, operator::Operator, tests},
+        inf::{operator::Operator, tests::*},
         reader::{Reading, E},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let mut cx: Context = Context::create().unbound()?;
         let content = include_str!("../../tests/reading/comparing.sibs")
             .split('\n')
             .map(|s| s.to_string())
             .collect::<Vec<String>>();
         let mut count = 0;
         for str in content.iter() {
-            let mut reader = cx.reader().from_str(str)?;
-            let entity = tests::report_if_err(&mut cx, Comparing::read(&mut reader))?;
-            assert!(entity.is_some(), "Line: {}", count + 1);
-            let entity = entity.unwrap();
-            assert_eq!(
-                tests::trim_carets(reader.recent()),
-                tests::trim_carets(&format!("{entity}")),
-                "Line: {}",
-                count + 1
-            );
-            assert!(reader.rest().trim().is_empty(), "Line: {}", count + 1);
-            count += 1;
+            count += runner(str, |mut src, mut reader| {
+                let entity = src.report_err_if(Comparing::read(&mut reader))?;
+                assert!(entity.is_some(), "Line: {}", count + 1);
+                let entity = entity.unwrap();
+                assert_eq!(
+                    trim_carets(reader.recent()),
+                    trim_carets(&format!("{entity}")),
+                    "Line: {}",
+                    count + 1
+                );
+                assert!(reader.rest().trim().is_empty(), "Line: {}", count + 1);
+                Ok(1)
+            })?;
         }
         assert_eq!(count, content.len());
         Ok(())
@@ -225,50 +225,50 @@ mod reading {
 
     #[tokio::test]
     async fn tokens() -> Result<(), LinkedErr<E>> {
-        let mut cx = Context::create().unbound()?;
         let content = include_str!("../../tests/reading/comparing.sibs")
             .split('\n')
             .map(|s| s.to_string())
             .collect::<Vec<String>>();
         let mut count = 0;
         for str in content.iter() {
-            let mut reader = cx.reader().from_str(str)?;
-            let entity = Comparing::read(&mut reader)?;
-            assert!(entity.is_some(), "Line: {}", count + 1);
-            let entity = entity.unwrap();
-            assert_eq!(
-                tests::trim_carets(&format!("{entity}")),
-                reader.get_fragment(&entity.token)?.lined
-            );
-            assert_eq!(
-                tests::trim_semicolon(&tests::trim_carets(&entity.left.to_string())),
-                tests::trim_semicolon(&tests::trim_carets(
-                    &reader.get_fragment(&entity.left.token())?.lined
-                )),
-            );
-            assert_eq!(
-                tests::trim_semicolon(&tests::trim_carets(&entity.right.to_string())),
-                tests::trim_semicolon(&tests::trim_carets(
-                    &reader.get_fragment(&entity.right.token())?.lined
-                )),
-            );
-            count += 1;
+            count += runner(str, |_, mut reader| {
+                let entity = Comparing::read(&mut reader)?;
+                assert!(entity.is_some(), "Line: {}", count + 1);
+                let entity = entity.unwrap();
+                assert_eq!(
+                    trim_carets(&format!("{entity}")),
+                    reader.get_fragment(&entity.token)?.lined
+                );
+                assert_eq!(
+                    trim_semicolon(&trim_carets(&entity.left.to_string())),
+                    trim_semicolon(&trim_carets(
+                        &reader.get_fragment(&entity.left.token())?.lined
+                    )),
+                );
+                assert_eq!(
+                    trim_semicolon(&trim_carets(&entity.right.to_string())),
+                    trim_semicolon(&trim_carets(
+                        &reader.get_fragment(&entity.right.token())?.lined
+                    )),
+                );
+                Ok(1)
+            })?;
         }
         assert_eq!(count, content.len());
         Ok(())
     }
 
     #[tokio::test]
-    async fn error() -> Result<(), E> {
-        let mut cx = Context::create().unbound()?;
+    async fn error() -> Result<(), LinkedErr<E>> {
         let samples = include_str!("../../tests/error/comparing.sibs");
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let mut reader = cx.reader().from_str(sample)?;
-            let cmp = Comparing::read(&mut reader);
-            assert!(cmp.is_err() || matches!(cmp, Ok(None)));
-            count += 1;
+            count += runner(sample, |_, mut reader| {
+                let cmp = Comparing::read(&mut reader);
+                assert!(cmp.is_err() || matches!(cmp, Ok(None)));
+                Ok(1)
+            })?;
         }
         assert_eq!(count, samples.len());
         Ok(())
