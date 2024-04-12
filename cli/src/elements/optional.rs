@@ -128,7 +128,7 @@ mod reading {
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
         runner(
-            &include_str!("../tests/reading/optional.sibs"),
+            include_str!("../tests/reading/optional.sibs"),
             |mut src, mut reader| {
                 let mut count = 0;
                 while let Some(entity) = src.report_err_if(Optional::read(&mut reader))? {
@@ -151,7 +151,7 @@ mod reading {
     #[tokio::test]
     async fn tokens() -> Result<(), LinkedErr<E>> {
         runner(
-            &include_str!("../tests/reading/optional.sibs"),
+            include_str!("../tests/reading/optional.sibs"),
             |_, mut reader| {
                 let mut count = 0;
                 while let Some(entity) = Optional::read(&mut reader)? {
@@ -224,7 +224,7 @@ mod processing {
     async fn reading() -> Result<(), LinkedErr<E>> {
         let mut cx = Context::create().unbound()?;
         let tasks: Vec<Task> = runner(
-            &include_str!("../tests/processing/optional.sibs"),
+            include_str!("../tests/processing/optional.sibs"),
             |_, mut reader| {
                 let mut tasks: Vec<Task> = vec![];
                 while let Some(task) = Task::read(&mut reader)? {

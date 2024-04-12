@@ -75,7 +75,7 @@ mod reading {
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
         runner(
-            &include_str!("../tests/reading/comments.sibs"),
+            include_str!("../tests/reading/comments.sibs"),
             |mut src, mut reader| {
                 while let Some(entity) = src.report_err_if(Task::read(&mut reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);

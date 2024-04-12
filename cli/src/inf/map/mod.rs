@@ -4,11 +4,12 @@ mod fragment;
 use console::Style;
 pub use error::E;
 pub use fragment::*;
-use std::{collections::HashMap, fmt::Display};
+use std::{collections::HashMap, fmt::Display, path::PathBuf};
 
 const REPORT_LN_AROUND: usize = 8;
 
 pub trait Mapping {
+    fn get_filename(&self) -> &PathBuf;
     fn get_fragments(&self) -> &HashMap<usize, (usize, usize)>;
     fn get_content(&self) -> &str;
     fn contains(&self, token: &usize) -> bool {
@@ -122,10 +123,12 @@ pub trait Mapping {
                 }
             })
             .collect::<Vec<String>>();
-        Ok(
+        Ok(format!(
+            "file: {}\n{}",
+            self.get_filename().to_string_lossy(),
             report[(error_first_ln - error_first_ln.min(REPORT_LN_AROUND))
                 ..report.len().min(error_last_ln + REPORT_LN_AROUND)]
-                .join("\n"),
-        )
+                .join("\n")
+        ))
     }
 }

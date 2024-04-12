@@ -285,7 +285,7 @@ mod processing {
             .match_indices("test [")
             .count();
         let tasks: Vec<Task> = runner(
-            &include_str!("../../tests/processing/if.sibs"),
+            include_str!("../../tests/processing/if.sibs"),
             |_, mut reader| {
                 let mut tasks: Vec<Task> = vec![];
                 while let Some(task) = Task::read(&mut reader)? {

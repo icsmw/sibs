@@ -213,7 +213,7 @@ mod reading {
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
         runner(
-            &include_str!("../tests/reading/tasks.sibs"),
+            include_str!("../tests/reading/tasks.sibs"),
             |mut src, mut reader| {
                 let mut count = 0;
                 while let Some(el) =
@@ -234,7 +234,7 @@ mod reading {
     #[tokio::test]
     async fn tokens() -> Result<(), LinkedErr<E>> {
         runner(
-            &include_str!("../tests/reading/tasks.sibs"),
+            include_str!("../tests/reading/tasks.sibs"),
             |_, mut reader| {
                 let mut count = 0;
                 while let Some(el) = Element::include(&mut reader, &[ElTarget::Task])? {
@@ -310,7 +310,7 @@ mod processing {
     async fn reading() -> Result<(), LinkedErr<E>> {
         let mut cx = Context::create().unbound()?;
         let tasks: Vec<Task> = runner(
-            &include_str!("../tests/processing/tasks.sibs"),
+            include_str!("../tests/processing/tasks.sibs"),
             |_, mut reader| {
                 let mut tasks: Vec<Task> = vec![];
                 while let Some(task) = Task::read(&mut reader)? {

@@ -112,7 +112,7 @@ mod reading {
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
         runner(
-            &include_str!("../../tests/reading/variable_assignation.sibs"),
+            include_str!("../../tests/reading/variable_assignation.sibs"),
             |mut src, mut reader| {
                 let mut count = 0;
                 while let Some(entity) =
@@ -137,7 +137,7 @@ mod reading {
     #[tokio::test]
     async fn tokens() -> Result<(), LinkedErr<E>> {
         runner(
-            &include_str!("../../tests/reading/variable_assignation.sibs"),
+            include_str!("../../tests/reading/variable_assignation.sibs"),
             |_, mut reader| {
                 let mut count = 0;
                 while let Some(entity) = VariableAssignation::read(&mut reader)? {
@@ -212,7 +212,7 @@ mod processing {
     async fn reading() -> Result<(), E> {
         let mut cx = Context::create().unbound()?;
         let tasks: Vec<Task> = runner(
-            &include_str!("../../tests/processing/variable_assignation.sibs"),
+            include_str!("../../tests/processing/variable_assignation.sibs"),
             |_, mut reader| {
                 let mut tasks: Vec<Task> = vec![];
                 while let Some(task) = Task::read(&mut reader)? {

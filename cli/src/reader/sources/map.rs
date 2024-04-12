@@ -7,11 +7,9 @@ use std::{cell::RefCell, collections::HashMap, path::PathBuf, rc::Rc};
 pub struct Map {
     //              <id,    (from,  len  )>
     pub fragments: HashMap<usize, (usize, usize)>,
-    pub reports: Vec<String>,
     pub content: String,
     filename: PathBuf,
     recent: Option<usize>,
-    cursor: Option<usize>,
     ids: Rc<RefCell<Ids>>,
 }
 
@@ -19,10 +17,8 @@ impl Map {
     pub fn new(ids: Rc<RefCell<Ids>>, filename: &PathBuf, content: &str) -> Self {
         Self {
             fragments: HashMap::new(),
-            reports: vec![],
             content: content.to_owned(),
             filename: filename.to_owned(),
-            cursor: None,
             recent: None,
             ids,
         }
@@ -30,10 +26,8 @@ impl Map {
     pub fn unbound(content: &str) -> Self {
         Self {
             fragments: HashMap::new(),
-            reports: vec![],
             content: content.to_owned(),
             filename: PathBuf::from(Uuid::new_v4().to_string()),
-            cursor: None,
             recent: None,
             ids: Ids::new(),
         }
@@ -53,9 +47,6 @@ impl Map {
             }
         }
     }
-    pub fn set_cursor(&mut self, token: usize) {
-        self.cursor = Some(token);
-    }
     pub fn last(&self) -> Option<(usize, (usize, usize))> {
         if let Some(id) = self.recent {
             self.fragments.get(&id).map(|coors| (id, *coors))
@@ -72,6 +63,9 @@ impl Map {
 }
 
 impl Mapping for Map {
+    fn get_filename(&self) -> &PathBuf {
+        &self.filename
+    }
     fn get_content(&self) -> &str {
         &self.content
     }

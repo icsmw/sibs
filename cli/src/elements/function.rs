@@ -421,7 +421,7 @@ mod processing {
     async fn reading() -> Result<(), LinkedErr<E>> {
         let mut cx: Context = Context::create().unbound()?;
         let tasks: Vec<Task> = runner(
-            &include_str!("../tests/processing/functions.sibs"),
+            include_str!("../tests/processing/functions.sibs"),
             |_, mut reader| {
                 let mut tasks: Vec<Task> = vec![];
                 while let Some(task) = Task::read(&mut reader)? {

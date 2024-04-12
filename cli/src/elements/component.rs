@@ -320,7 +320,7 @@ mod processing {
     async fn reading() -> Result<(), E> {
         let mut cx = Context::create().unbound()?;
         let components: Vec<Component> = runner(
-            &include_str!("../tests/processing/component.sibs"),
+            include_str!("../tests/processing/component.sibs"),
             |_, mut reader| {
                 let mut components: Vec<Component> = vec![];
                 while let Some(task) = Component::read(&mut reader)? {

@@ -101,7 +101,7 @@ mod reading {
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
         runner(
-            &include_str!("../../tests/reading/join.sibs"),
+            include_str!("../../tests/reading/join.sibs"),
             |mut src, mut reader| {
                 let mut count = 0;
                 while let Some(entity) = src.report_err_if(Join::read(&mut reader))? {
@@ -122,7 +122,7 @@ mod reading {
     #[tokio::test]
     async fn tokens() -> Result<(), LinkedErr<E>> {
         runner(
-            &include_str!("../../tests/reading/join.sibs"),
+            include_str!("../../tests/reading/join.sibs"),
             |_, mut reader| {
                 let mut count = 0;
                 while let Some(entity) = Join::read(&mut reader)? {

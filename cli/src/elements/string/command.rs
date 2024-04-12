@@ -146,7 +146,7 @@ mod reading {
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
         runner(
-            &include_str!("../../tests/reading/command.sibs"),
+            include_str!("../../tests/reading/command.sibs"),
             |mut src, mut reader| {
                 let origins = include_str!("../../tests/reading/command.sibs")
                     .split('\n')
@@ -179,7 +179,7 @@ mod reading {
     #[tokio::test]
     async fn tokens() -> Result<(), LinkedErr<E>> {
         runner(
-            &include_str!("../../tests/reading/command.sibs"),
+            include_str!("../../tests/reading/command.sibs"),
             |_, mut reader| {
                 let mut count = 0;
                 while let Some(entity) = Command::read(&mut reader)? {

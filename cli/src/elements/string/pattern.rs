@@ -129,7 +129,7 @@ mod reading {
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
         runner(
-            &include_str!("../../tests/reading/pattern_string.sibs"),
+            include_str!("../../tests/reading/pattern_string.sibs"),
             |mut src, mut reader| {
                 let origins = include_str!("../../tests/reading/pattern_string.sibs")
                     .split('\n')
@@ -159,7 +159,7 @@ mod reading {
     #[tokio::test]
     async fn tokens() -> Result<(), LinkedErr<E>> {
         runner(
-            &include_str!("../../tests/reading/pattern_string.sibs"),
+            include_str!("../../tests/reading/pattern_string.sibs"),
             |_, mut reader| {
                 let mut count = 0;
                 while let Some(entity) = PatternString::read(&mut reader)? {

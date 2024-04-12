@@ -238,7 +238,7 @@ mod processing {
     async fn reading() -> Result<(), LinkedErr<E>> {
         let mut cx = Context::create().unbound()?;
         let components: Vec<Component> = runner(
-            &include_str!("../tests/processing/values_components.sibs"),
+            include_str!("../tests/processing/values_components.sibs"),
             |_, mut reader| {
                 let mut components: Vec<Component> = vec![];
                 while let Some(component) = Component::read(&mut reader)? {
@@ -248,7 +248,7 @@ mod processing {
             },
         )?;
         let tasks: Vec<Task> = runner(
-            &include_str!("../tests/processing/values.sibs"),
+            include_str!("../tests/processing/values.sibs"),
             |_, mut reader| {
                 let mut tasks: Vec<Task> = vec![];
                 while let Some(task) = Task::read(&mut reader)? {
