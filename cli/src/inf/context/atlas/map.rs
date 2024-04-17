@@ -1,4 +1,4 @@
-use crate::inf::map::Mapping;
+use crate::{inf::map::Mapping, reader::Map as ReaderMap};
 use std::{collections::HashMap, path::PathBuf};
 
 #[derive(Debug, Clone)]
@@ -33,5 +33,16 @@ impl Mapping for Map {
     }
     fn get_content(&self) -> &str {
         &self.content
+    }
+}
+
+impl From<ReaderMap> for Map {
+    fn from(map: ReaderMap) -> Self {
+        Self {
+            content: map.content,
+            fragments: map.fragments,
+            filename: map.filename,
+            cursor: None,
+        }
     }
 }

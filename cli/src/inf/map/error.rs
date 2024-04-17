@@ -1,9 +1,6 @@
-use std::path::PathBuf;
-
-use crate::{executors, inf::scenario, reader};
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum E {
     #[error("Token {0} not found")]
     TokenNotFound(usize),

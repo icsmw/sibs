@@ -3,6 +3,7 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
+        Scope,
     },
     reader::{chars, Reader, Reading, E},
 };
@@ -27,7 +28,7 @@ impl Reading<VariableVariants> for VariableVariants {
 
 impl VariableVariants {
     pub fn new(input: String, token: usize) -> Result<Self, LinkedErr<E>> {
-        let mut values: Vec<String> = vec![];
+        let mut values: Vec<String> = Vec::new();
         for value in input.split('|') {
             let value = value.trim();
             if !value.is_ascii() {
@@ -57,7 +58,8 @@ impl Operator for VariableVariants {
         _owner: Option<&'a Component>,
         _components: &'a [Component],
         args: &'a [String],
-        _cx: &'a mut Context,
+        _cx: Context,
+        _sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let value = if args.len() != 1 {
@@ -112,7 +114,8 @@ mod reading {
                     .report_err_if(VariableVariants::read(&mut reader))
                     .is_ok());
                 Ok(1)
-            })?;
+            })
+            .await?;
         }
         assert_eq!(count, samples.len());
         Ok(())
@@ -127,7 +130,8 @@ mod reading {
             count += runner(sample, |_, mut reader| {
                 assert!(VariableVariants::read(&mut reader).is_err());
                 Ok(1)
-            })?;
+            })
+            .await?;
         }
         assert_eq!(count, samples.len());
         Ok(())

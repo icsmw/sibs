@@ -2,7 +2,7 @@ mod error;
 use crate::{
     elements::Component,
     error::LinkedErr,
-    inf::{any::AnyValue, context::Context},
+    inf::{AnyValue, Context, Scope},
 };
 pub use error::E;
 use std::{future::Future, pin::Pin};
@@ -17,21 +17,21 @@ pub trait Operator {
         owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
-        cx: &'a mut Context,
+        cx: Context,
+        sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
-            // cx.sources.set_map_cursor(&self.token())?;
-            // let result = self.perform(owner, components, args, cx).await;
-            // match result.as_ref() {
-            //     Ok(value) => {
-            //         cx.sources.set_trace_value(&self.token(), value);
-            //     }
-            //     Err(err) => {
-            //         cx.sources.report_error(err)?;
-            //     }
-            // }
-            // result
-            Ok(None)
+            cx.atlas.set_map_position(self.token()).await?;
+            let result = self.perform(owner, components, args, cx.clone(), sc).await;
+            match result.as_ref() {
+                Ok(value) => {
+                    cx.atlas.add_footprint(self.token(), value).await?;
+                }
+                Err(err) => {
+                    cx.atlas.report_err(&err.link_if(&self.token())).await?;
+                }
+            }
+            result
         })
     }
     fn perform<'a>(
@@ -39,7 +39,8 @@ pub trait Operator {
         _owner: Option<&'a Component>,
         _components: &'a [Component],
         _args: &'a [String],
-        _cx: &'a mut Context,
+        _cx: Context,
+        _sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async { Err(E::NotSupported.unlinked()) })
     }

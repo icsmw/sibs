@@ -1,7 +1,7 @@
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
+    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
     reader::{words, Reader, Reading, E},
 };
 use std::fmt;
@@ -97,12 +97,13 @@ impl Operator for Optional {
         owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
-        cx: &'a mut Context,
+        cx: Context,
+        sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let condition = *self
                 .condition
-                .execute(owner, components, args, cx)
+                .execute(owner, components, args, cx.clone(), sc.clone())
                 .await?
                 .ok_or(operator::E::FailToExtractConditionValue)?
                 .get_as::<bool>()
@@ -110,7 +111,7 @@ impl Operator for Optional {
             if !condition {
                 Ok(None)
             } else {
-                self.action.execute(owner, components, args, cx).await
+                self.action.execute(owner, components, args, cx, sc).await
             }
         })
     }
@@ -146,6 +147,7 @@ mod reading {
                 Ok(())
             },
         )
+        .await
     }
 
     #[tokio::test]
@@ -187,6 +189,7 @@ mod reading {
                 Ok(())
             },
         )
+        .await
     }
 
     #[tokio::test]
@@ -200,7 +203,8 @@ mod reading {
                 println!("{opt:?}");
                 assert!(opt.is_err());
                 Ok(1)
-            })?;
+            })
+            .await?;
         }
         assert_eq!(count, samples.len());
         Ok(())
@@ -213,32 +217,32 @@ mod processing {
         elements::Task,
         error::LinkedErr,
         inf::{
-            context::Context,
             operator::{Operator, E},
             tests::*,
         },
-        reader::{chars, Reading},
+        reader::{chars, Reading, Sources},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let mut cx = Context::create().unbound()?;
-        let tasks: Vec<Task> = runner(
+        let (tasks, src): (Vec<Task>, Sources) = runner(
             include_str!("../tests/processing/optional.sibs"),
-            |_, mut reader| {
-                let mut tasks: Vec<Task> = vec![];
+            |src, mut reader| {
+                let mut tasks: Vec<Task> = Vec::new();
                 while let Some(task) = Task::read(&mut reader)? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
                 }
-                Ok::<Vec<Task>, LinkedErr<E>>(tasks)
+                Ok::<(Vec<Task>, Sources), LinkedErr<E>>((tasks, src))
             },
-        )?;
+        )
+        .await?;
         for task in tasks.iter() {
-            let result = task
-                .execute(None, &[], &[], &mut cx)
-                .await?
-                .expect("Task returns some value");
+            let result = execution(&src, |cx, sc| {
+                Box::pin(async move { task.execute(None, &[], &[], cx, sc).await })
+            })
+            .await?
+            .expect("Task returns some value");
             assert_eq!(
                 result.get_as_string().expect("Task returns string value"),
                 "true".to_owned()
@@ -323,7 +327,8 @@ mod proptest {
                     assert_eq!(format!("{task};"), origin);
                 }
                 Ok::<(), LinkedErr<E>>(())
-            })?;
+            })
+            .await?;
             Ok(())
         })
     }

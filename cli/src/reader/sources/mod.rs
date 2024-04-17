@@ -10,10 +10,13 @@ pub use maps::*;
 
 use crate::{
     error::LinkedErr,
-    inf::map::{Fragment, Mapping},
+    inf::{
+        map::{Fragment, Mapping},
+        Journal,
+    },
     reader::E,
 };
-use std::{cell::RefCell, collections::HashMap, fmt, fs, path::PathBuf, rc::Rc};
+use std::{cell::RefCell, collections::HashSet, fmt, fs, path::PathBuf, rc::Rc};
 use uuid::Uuid;
 
 pub type MapRef = Rc<RefCell<Map>>;
@@ -23,18 +26,24 @@ type ErrRecord = (usize, Fragment, String);
 #[derive(Debug)]
 pub struct Sources {
     maps: Maps,
+    journal: Journal,
     ids: IdsRef,
-    errs: HashMap<Uuid, ErrRecord>,
+    reported: HashSet<Uuid>,
 }
 
 impl Sources {
-    pub fn new() -> Self {
+    pub fn new(journal: &Journal) -> Self {
         Self {
             maps: Maps::new(),
+            journal: journal.clone(),
             ids: Ids::new(),
-            errs: HashMap::new(),
+            reported: HashSet::new(),
         }
     }
+    pub fn iter(&self) -> std::collections::hash_map::Iter<'_, PathBuf, MapRef> {
+        self.maps.iter()
+    }
+    #[cfg(test)]
     pub fn reader(&mut self) -> ReaderGetter<'_> {
         ReaderGetter::new(self)
     }
@@ -46,37 +55,25 @@ impl Sources {
         )));
         self.maps.insert(filename, map.clone())
     }
-    pub fn add_from_str(&mut self, content: &str) -> Result<MapRef, E> {
-        let map = Rc::new(RefCell::new(Map::new(
-            self.ids.clone(),
-            &PathBuf::new(),
-            content,
-        )));
-        self.maps
-            .insert(&PathBuf::from(Uuid::new_v4().to_string()), map.clone())?;
-        Ok(map)
-    }
-    pub fn report_err<T>(&mut self, err: &LinkedErr<T>) -> Result<(), E>
+    pub fn report_err<T: Clone>(&mut self, err: &LinkedErr<T>) -> Result<(), E>
     where
         T: std::error::Error + fmt::Display + ToString,
     {
-        let token = err.token.as_ref().ok_or(E::LinkedErrorWithoutToken)?;
-        if self.errs.contains_key(&err.uuid) {
+        let Some(token) = err.token.as_ref() else {
+            self.journal.report(err.into());
+            return Ok(());
+        };
+        if self.reported.contains(&err.uuid) {
             return Ok(());
         }
         let mut map = self.maps.get(token)?;
-        self.errs.insert(
-            err.uuid,
-            (
-                *token,
-                map.get_fragment(token)?,
-                map.report_err(token, err.e.to_string())?,
-            ),
-        );
+        self.journal
+            .report((map.report_err(token, err.e.to_string())?, err).into());
+        self.reported.insert(err.uuid);
         Ok(())
     }
     #[cfg(test)]
-    pub fn report_err_if<T, E>(
+    pub fn report_err_if<T, E: Clone>(
         &mut self,
         result: Result<T, LinkedErr<E>>,
     ) -> Result<T, LinkedErr<E>>

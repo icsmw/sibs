@@ -3,6 +3,7 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
+        Scope,
     },
     reader::{chars, words, Reader, Reading, E},
 };
@@ -48,7 +49,7 @@ impl Reading<Function> for Function {
                 return Ok(Some(Self::new(
                     close(reader),
                     args_close(reader),
-                    vec![],
+                    Vec::new(),
                     name,
                 )?));
             }
@@ -56,12 +57,12 @@ impl Reading<Function> for Function {
                 return Ok(Some(Self::new(
                     close(reader),
                     args_close(reader),
-                    vec![],
+                    Vec::new(),
                     name,
                 )?));
             }
             reader.trim();
-            let mut elements: Vec<Element> = vec![];
+            let mut elements: Vec<Element> = Vec::new();
             if reader
                 .group()
                 .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
@@ -173,7 +174,7 @@ impl Function {
         self.token = token;
     }
     pub fn get_feeding(&self) -> Vec<&Function> {
-        let mut feeding: Vec<&Function> = vec![];
+        let mut feeding: Vec<&Function> = Vec::new();
         let mut current = self;
         while let Some(feed) = current.feed.as_ref() {
             feeding.push(feed.as_ref());
@@ -187,12 +188,13 @@ impl Function {
         owner: Option<&'a Component>,
         components: &'a [Component],
         inputs: &'a [String],
-        cx: &'a mut Context,
+        cx: Context,
+        sc: Scope,
     ) -> Result<Vec<AnyValue>, operator::E> {
-        let mut values: Vec<AnyValue> = vec![];
+        let mut values: Vec<AnyValue> = Vec::new();
         for arg in self.args.iter() {
             values.push(
-                arg.execute(owner, components, inputs, cx)
+                arg.execute(owner, components, inputs, cx.clone(), sc.clone())
                     .await?
                     .ok_or(operator::E::NotAllArguamentsHasReturn)?,
             )
@@ -292,30 +294,25 @@ impl Operator for Function {
         owner: Option<&'a Component>,
         components: &'a [Component],
         inputs: &'a [String],
-        cx: &'a mut Context,
+        cx: Context,
+        sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let mut args: Vec<AnyValue> = self
-                .get_processed_args(owner, components, inputs, cx)
+                .get_processed_args(owner, components, inputs, cx.clone(), sc.clone())
                 .await?;
             if let Some(func) = self.feed.as_ref() {
                 args.insert(
                     0,
-                    cx.functions()
-                        .get(&func.name)
-                        .ok_or(operator::E::NoFunctionExecutor(self.name.clone()).by(self))?(
-                        func.get_processed_args(owner, components, inputs, cx)
+                    cx.execute(
+                        &func.name,
+                        func.get_processed_args(owner, components, inputs, cx.clone(), sc.clone())
                             .await?,
-                        cx,
                     )
                     .await?,
                 );
             };
-            let binding = cx.functions();
-            let executor = binding
-                .get(&self.name)
-                .ok_or(operator::E::NoFunctionExecutor(self.name.clone()).by(self))?;
-            Ok(Some(executor(args, cx).await?))
+            Ok(Some(cx.execute(&self.name, args).await?))
         })
     }
 }
@@ -349,6 +346,7 @@ mod reading {
             assert!(reader.rest().trim().is_empty());
             Ok(())
         })
+        .await
     }
 
     #[tokio::test]
@@ -375,6 +373,7 @@ mod reading {
             assert!(reader.rest().trim().is_empty());
             Ok(())
         })
+        .await
     }
 
     #[tokio::test]
@@ -397,7 +396,8 @@ mod reading {
                     assert!(func.is_err(), "Line {}: func: {:?}", count + 1, func);
                 }
                 Ok(1)
-            })?;
+            })
+            .await?;
         }
         assert_eq!(count, samples.len());
         Ok(())
@@ -410,38 +410,37 @@ mod processing {
         elements::Task,
         error::LinkedErr,
         inf::{
-            context::Context,
             operator::{Operator, E},
             tests::*,
         },
-        reader::{chars, Reading},
+        reader::{chars, Reading, Sources},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let mut cx: Context = Context::create().unbound()?;
-        let tasks: Vec<Task> = runner(
+        let (tasks, src): (Vec<Task>, Sources) = runner(
             include_str!("../tests/processing/functions.sibs"),
-            |_, mut reader| {
-                let mut tasks: Vec<Task> = vec![];
+            |src, mut reader| {
+                let mut tasks: Vec<Task> = Vec::new();
                 while let Some(task) = Task::read(&mut reader)? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
                 }
-                Ok::<Vec<Task>, LinkedErr<E>>(tasks)
+                Ok::<(Vec<Task>, Sources), LinkedErr<E>>((tasks, src))
             },
-        )?;
+        )
+        .await?;
         for task in tasks.iter() {
-            let result = task
-                .execute(None, &[], &[], &mut cx)
-                .await?
-                .expect("Task returns some value");
+            let result = execution(&src, |cx, sc| {
+                Box::pin(async move { task.execute(None, &[], &[], cx, sc).await })
+            })
+            .await?
+            .expect("Task returns some value");
             assert_eq!(
                 result.get_as_string().expect("Task returns string value"),
                 "true".to_owned()
             );
         }
-
         Ok(())
     }
 }
@@ -464,7 +463,7 @@ mod proptest {
             if deep > MAX_DEEP {
                 ("[a-z][a-z0-9]*".prop_map(String::from),)
                     .prop_map(|(name,)| Function {
-                        args: vec![],
+                        args: Vec::new(),
                         token: 0,
                         args_token: 0,
                         feed: None,
@@ -522,7 +521,8 @@ mod proptest {
                     assert_eq!(format!("{task};"), origin);
                 }
                 Ok::<(), LinkedErr<E>>(())
-            })?;
+            })
+            .await?;
             Ok(())
         })
     }

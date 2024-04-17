@@ -1,7 +1,7 @@
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
+    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
     reader::{words, Reader, Reading, E},
 };
 use std::fmt;
@@ -66,16 +66,17 @@ impl Operator for Join {
     }
     fn perform<'a>(
         &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
-        args: &'a [String],
-        cx: &'a mut Context,
+        _owner: Option<&'a Component>,
+        _components: &'a [Component],
+        _args: &'a [String],
+        _cx: Context,
+        _sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             // let Element::Values(values, _) = self.elements.as_ref() else {
             //     return Err(operator::E::NoOperationsToJoin.by(self));
             // };
-            // let mut operations: Vec<OperatorPinnedResult> = vec![];
+            // let mut operations: Vec<OperatorPinnedResult> = Vec::new();
             // for el in values.elements.iter() {
             //     operations.push(el.execute(owner, components, args, cx));
             // }
@@ -117,6 +118,7 @@ mod reading {
                 Ok(())
             },
         )
+        .await
     }
 
     #[tokio::test]
@@ -142,6 +144,7 @@ mod reading {
                 Ok(())
             },
         )
+        .await
     }
 
     #[tokio::test]
@@ -153,7 +156,8 @@ mod reading {
             count += runner(sample, |_, mut reader| {
                 assert!(Join::read(&mut reader).is_err());
                 Ok(1)
-            })?;
+            })
+            .await?;
         }
         assert_eq!(count, samples.len());
         Ok(())
@@ -204,7 +208,8 @@ mod proptest {
                     assert_eq!(format!("{task};"), origin);
                 }
                 Ok::<(), LinkedErr<E>>(())
-            })?;
+            })
+            .await?;
             Ok(())
         })
     }

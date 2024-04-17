@@ -10,14 +10,10 @@ use thiserror::Error;
 pub enum E {
     #[error("Missed path to target file. Usage: {0} path_to_file")]
     NoPathToTargetFile(String),
-    #[error("Invalid request; expecting addition arguments after: {0}")]
-    InvalidRequestAfter(String),
     #[error("No any options/commands. Try --help to see all options.")]
     NoArguments,
     #[error("Next arguments cannot be used together: {0}")]
     NotSupportedMultipleArguments(String),
-    #[error("Fail extract path")]
-    FailExtractPath,
     #[error("Key {0} is defined multiple times")]
     DuplicateOfKey(String),
     #[error("Component {0} does't exist")]

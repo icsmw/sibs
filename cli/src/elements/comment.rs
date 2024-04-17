@@ -87,6 +87,7 @@ mod reading {
                 Ok(())
             },
         )
+        .await
     }
 }
 

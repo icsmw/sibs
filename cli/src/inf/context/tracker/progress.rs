@@ -1,4 +1,7 @@
-use crate::inf::tracker::{Configuration, OperationResult, Output, E};
+use crate::inf::{
+    journal::{Configuration, Output},
+    tracker::{OperationResult, E},
+};
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use std::{collections::HashMap, time::Instant};
 
@@ -86,7 +89,7 @@ impl Progress {
             self.reprint();
         }
     }
-    pub fn shutdown(&mut self) {
+    pub fn destroy(&mut self) {
         self.bars
             .iter_mut()
             .for_each(|(_, (bar, instant, alias, _))| {

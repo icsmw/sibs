@@ -1,48 +1,65 @@
+mod api;
+
 use crate::inf::{context::E, AnyValue};
-use std::{path::PathBuf, sync::Arc};
-use tokio::sync::{mpsc::UnboundedSender, oneshot};
+use api::*;
+use std::{
+    sync::Arc,
+    {collections::HashMap, path::PathBuf},
+};
+use tokio::{
+    spawn,
+    sync::{
+        mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
+        oneshot,
+    },
+};
+use tokio_util::sync::CancellationToken;
 
-/// Represents API of tast's context. Because each task has own context and
-/// multiple tasks could be runned concurrency, communication goes via channels.
-pub enum Demand {
-    /// Setting variable value
-    ///
-    /// # Parameters
-    ///
-    /// * `String` - Key/Name of variable
-    /// * `AnyValue` - Variable value
-    /// * `oneshot::Sender<bool>` - Response channel. True - if value replaced; false - if not
-    SetVariable(String, AnyValue, oneshot::Sender<bool>),
-    /// Getting variable value
-    ///
-    /// # Parameters
-    ///
-    /// * `String` - Key/Name of variable
-    /// * `AnyValue` - Variable value
-    /// * `oneshot::Sender<Option<Arc<AnyValue>>>` - Response channel to return variable value if it's available
-    GetVariable(String, oneshot::Sender<Option<Arc<AnyValue>>>),
-    /// Getting current working folder for task
-    ///
-    /// # Parameters
-    ///
-    /// * `oneshot::Sender<Option<PathBuf>>` - Response channel
-    GetCwd(oneshot::Sender<Option<PathBuf>>),
-    /// Setting current working folder for task
-    ///
-    /// # Parameters
-    ///
-    /// * `Option<PathBuf>` - Current working folder of task
-    /// * `oneshot::Sender<()>` - Response channel
-    SetCwd(Option<PathBuf>, oneshot::Sender<()>),
+pub struct Functions {
+    tx: UnboundedSender<api::Demand>,
+    state: CancellationToken,
 }
 
-/// Represents API of tast's context.
-#[derive(Clone, Debug)]
-pub struct Coupling {
-    tx: UnboundedSender<Demand>,
-}
-
-impl Coupling {
+impl Functions {
+    pub fn init(mut cwd: Option<PathBuf>) -> Self {
+        let (tx, mut rx): (UnboundedSender<api::Demand>, UnboundedReceiver<api::Demand>) =
+            unbounded_channel();
+        let state = CancellationToken::new();
+        let instance = Self {
+            tx,
+            state: state.clone(),
+        };
+        spawn(async move {
+            let mut vars: HashMap<String, Arc<AnyValue>> = HashMap::new();
+            while let Some(demand) = rx.recv().await {
+                match demand {
+                    api::Demand::SetVariable(k, v, tx) => {
+                        let _ = tx.send(vars.insert(k, Arc::new(v)).is_some());
+                    }
+                    api::Demand::GetVariable(k, tx) => {
+                        let _ = tx.send(vars.get(&k).cloned());
+                    }
+                    api::Demand::SetCwd(path, tx) => {
+                        cwd = path;
+                        let _ = tx.send(());
+                    }
+                    api::Demand::GetCwd(tx) => {
+                        let _ = tx.send(cwd.clone());
+                    }
+                    Demand::Destroy => {
+                        break;
+                    }
+                }
+            }
+            state.cancel();
+        });
+        instance
+    }
+    pub async fn destroy(&self) -> Result<(), E> {
+        self.tx.send(Demand::Destroy)?;
+        self.state.cancelled().await;
+        Ok(())
+    }
     /// Setting variable value
     ///
     /// # Arguments

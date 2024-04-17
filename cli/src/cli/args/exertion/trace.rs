@@ -34,11 +34,7 @@ impl Argument for Trace {
 }
 
 impl Action for Trace {
-    fn action<'a>(
-        &'a self,
-        _components: &'a [Element],
-        _context: &'a mut crate::inf::Context,
-    ) -> ActionPinnedResult {
+    fn action<'a>(&'a self, _components: &'a [Element]) -> ActionPinnedResult {
         Box::pin(async move { Ok(AnyValue::new(self.state)) })
     }
     fn key(&self) -> String {

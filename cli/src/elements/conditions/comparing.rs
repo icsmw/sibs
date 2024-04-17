@@ -3,6 +3,7 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
+        Scope,
     },
     reader::{words, Reader, Reading, E},
 };
@@ -133,17 +134,18 @@ impl Operator for Comparing {
         owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
-        cx: &'a mut Context,
+        cx: Context,
+        sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let left = self
                 .left
-                .execute(owner, components, args, cx)
+                .execute(owner, components, args, cx.clone(), sc.clone())
                 .await?
                 .ok_or(operator::E::NoResultFromLeftOnComparing)?;
             let right = self
                 .right
-                .execute(owner, components, args, cx)
+                .execute(owner, components, args, cx, sc)
                 .await?
                 .ok_or(operator::E::NoResultFromRightOnComparing)?;
             Ok(Some(match self.cmp {
@@ -217,7 +219,8 @@ mod reading {
                 );
                 assert!(reader.rest().trim().is_empty(), "Line: {}", count + 1);
                 Ok(1)
-            })?;
+            })
+            .await?;
         }
         assert_eq!(count, content.len());
         Ok(())
@@ -252,7 +255,8 @@ mod reading {
                     )),
                 );
                 Ok(1)
-            })?;
+            })
+            .await?;
         }
         assert_eq!(count, content.len());
         Ok(())
@@ -268,7 +272,8 @@ mod reading {
                 let cmp = Comparing::read(&mut reader);
                 assert!(cmp.is_err() || matches!(cmp, Ok(None)));
                 Ok(1)
-            })?;
+            })
+            .await?;
         }
         assert_eq!(count, samples.len());
         Ok(())

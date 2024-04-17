@@ -1,7 +1,7 @@
 use crate::{
-    elements::{Component, ElTarget, Element, Metadata},
+    elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{term, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
+    inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -29,7 +29,7 @@ impl Reading<Block> for Block {
         {
             let mut inner = reader.token()?.bound;
             let block_token_id = reader.token()?.id;
-            let mut elements: Vec<Element> = vec![];
+            let mut elements: Vec<Element> = Vec::new();
             loop {
                 if let Some(el) = Element::exclude(
                     &mut inner,
@@ -122,12 +122,15 @@ impl Operator for Block {
         owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
-        cx: &'a mut Context,
+        cx: Context,
+        sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let mut output: Option<AnyValue> = None;
             for element in self.elements.iter() {
-                output = element.execute(owner, components, args, cx).await?;
+                output = element
+                    .execute(owner, components, args, cx.clone(), sc.clone())
+                    .await?;
                 if let (Some(ElTarget::First), true) = (self.owner.as_ref(), output.is_some()) {
                     return Ok(output);
                 }
@@ -169,6 +172,7 @@ mod reading {
                 Ok(())
             },
         )
+        .await
     }
 
     #[tokio::test]
@@ -194,6 +198,7 @@ mod reading {
                 Ok(())
             },
         )
+        .await
     }
 }
 
@@ -263,7 +268,8 @@ mod proptest {
                     assert_eq!(format!("{task};"), origin);
                 }
                 Ok::<(), LinkedErr<E>>(())
-            })?;
+            })
+            .await?;
             Ok(())
         })
     }

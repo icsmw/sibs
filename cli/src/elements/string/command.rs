@@ -1,9 +1,9 @@
 use crate::{
-    elements::{string, Component, ElTarget, Element, Metadata},
+    elements::{string, Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, spawner, term, AnyValue, Context, Formation, FormationCursor, Logs, Operator,
-        OperatorPinnedResult,
+        operator, spawner, AnyValue, Context, Formation, FormationCursor, Operator,
+        OperatorPinnedResult, Scope,
     },
     reader::{chars, Reader, Reading, E},
 };
@@ -94,7 +94,8 @@ impl Operator for Command {
         owner: Option<&'a Component>,
         components: &'a [Component],
         inputs: &'a [String],
-        cx: &'a mut Context,
+        cx: Context,
+        sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let mut command = String::new();
@@ -104,7 +105,7 @@ impl Operator for Command {
                 } else {
                     command.push_str(
                         &element
-                            .execute(owner, components, inputs, cx)
+                            .execute(owner, components, inputs, cx.clone(), sc.clone())
                             .await?
                             .ok_or(operator::E::FailToExtractValue.by(self))?
                             .get_as_string()
@@ -112,9 +113,9 @@ impl Operator for Command {
                     );
                 }
             }
-            let cwd = cx
-                .cwd
-                .as_ref()
+            let cwd = sc
+                .get_cwd()
+                .await?
                 .ok_or(operator::E::NoCurrentWorkingFolder.by(self))?
                 .clone();
             match spawner::run(&command, &cwd, cx).await {
@@ -174,6 +175,7 @@ mod reading {
                 Ok(())
             },
         )
+        .await
     }
 
     #[tokio::test]
@@ -201,6 +203,7 @@ mod reading {
                 Ok(())
             },
         )
+        .await
     }
 }
 

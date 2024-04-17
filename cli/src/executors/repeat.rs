@@ -1,6 +1,6 @@
 use crate::{
     executors::{Executor, ExecutorPinnedResult, E},
-    inf::{any::AnyValue, context::Context, tracker::Logs},
+    inf::{any::AnyValue, context::Context},
 };
 use thiserror::Error;
 
@@ -28,7 +28,7 @@ impl From<Error> for E {
 pub struct Repeat {}
 
 impl Executor for Repeat {
-    fn execute(args: Vec<AnyValue>, cx: &mut Context) -> ExecutorPinnedResult {
+    fn execute(args: Vec<AnyValue>, cx: Context) -> ExecutorPinnedResult {
         Box::pin(async move {
             if args.is_empty() {
                 Err(Error::NoArguments)?;
@@ -36,14 +36,14 @@ impl Executor for Repeat {
             if args.len() != 2 {
                 Err(Error::InvalidNumberOfArguments)?;
             }
-            let logger = cx.tracker.create_logger(format!("@{NAME}"));
+            let logger = cx.journal.owned(format!("@{NAME}"));
             let target = args[0].get_as_string().ok_or(Error::InvalidTargetType)?;
             let count = args[1]
                 .get_as_string()
                 .ok_or(Error::InvalidCountType(format!("{:?}", args[1])))?
                 .parse::<usize>()
                 .map_err(|_| Error::InvalidCountType(format!("{:?}", args[1])))?;
-            logger.log(format!("repeating \"{target}\" {count} times;",));
+            logger.debug(format!("repeating \"{target}\" {count} times;",));
             Ok(AnyValue::new(target.repeat(count)))
         })
     }

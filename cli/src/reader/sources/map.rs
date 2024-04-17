@@ -8,7 +8,7 @@ pub struct Map {
     //              <id,    (from,  len  )>
     pub fragments: HashMap<usize, (usize, usize)>,
     pub content: String,
-    filename: PathBuf,
+    pub filename: PathBuf,
     recent: Option<usize>,
     ids: Rc<RefCell<Ids>>,
 }
@@ -23,6 +23,7 @@ impl Map {
             ids,
         }
     }
+    #[cfg(test)]
     pub fn unbound(content: &str) -> Self {
         Self {
             fragments: HashMap::new(),

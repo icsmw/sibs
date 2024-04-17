@@ -1,19 +1,17 @@
 use crate::{
     error::LinkedErr,
     executors,
-    inf::{context, spawner, tracker, Operator},
+    inf::{context, context::atlas, scenario, spawner, tracker, Operator},
     reader,
 };
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum E {
     #[error("Invalid variable declaration")]
     InvalidVariableDeclaration,
     #[error("Operator method isn't supported")]
     NotSupported,
-    #[error("Fail to extract operations to join")]
-    NoOperationsToJoin,
     #[error("Function's argument doesn't have return value")]
     NotAllArguamentsHasReturn,
     #[error("Spawned process exist with error")]
@@ -84,6 +82,10 @@ pub enum E {
     TaskNotFound(String, String),
     #[error("Fail to parse string to {{{0}}}: {1}")]
     ParseStringError(String, String),
+    #[error("Atlas error: {0}")]
+    AtlasError(atlas::E),
+    #[error("Scenario error: {0}")]
+    ScenarioError(scenario::E),
 }
 
 impl E {
@@ -98,6 +100,18 @@ impl E {
 impl From<tracker::E> for E {
     fn from(e: tracker::E) -> Self {
         Self::TrackerError(e)
+    }
+}
+
+impl From<atlas::E> for E {
+    fn from(e: atlas::E) -> Self {
+        Self::AtlasError(e)
+    }
+}
+
+impl From<atlas::E> for LinkedErr<E> {
+    fn from(e: atlas::E) -> Self {
+        LinkedErr::unlinked(E::AtlasError(e))
     }
 }
 
@@ -140,6 +154,12 @@ impl From<LinkedErr<reader::error::E>> for LinkedErr<E> {
 impl From<reader::error::E> for LinkedErr<E> {
     fn from(e: reader::error::E) -> Self {
         LinkedErr::unlinked(E::ReaderError(e))
+    }
+}
+
+impl From<scenario::E> for LinkedErr<E> {
+    fn from(e: scenario::E) -> Self {
+        LinkedErr::unlinked(E::ScenarioError(e))
     }
 }
 

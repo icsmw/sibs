@@ -1,5 +1,3 @@
-use uuid::Uuid;
-
 use crate::cli::{args::Action, error::E};
 
 pub struct Description {

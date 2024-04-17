@@ -3,6 +3,7 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
+        Scope,
     },
     reader::{chars, words, Reader, Reading, E},
 };
@@ -86,15 +87,16 @@ impl Operator for VariableAssignation {
         owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
-        cx: &'a mut Context,
+        cx: Context,
+        sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let assignation = &self.assignation;
             let value = assignation
-                .execute(owner, components, args, cx)
+                .execute(owner, components, args, cx, sc.clone())
                 .await?
                 .ok_or(operator::E::NoValueToAssign(self.variable.name.clone()))?;
-            cx.vars().set(self.variable.name.clone(), value);
+            sc.set_var(&self.variable.name, value).await?;
             Ok(Some(AnyValue::new(())))
         })
     }
@@ -132,6 +134,7 @@ mod reading {
                 Ok(())
             },
         )
+        .await
     }
 
     #[tokio::test]
@@ -169,6 +172,7 @@ mod reading {
                 Ok(())
             },
         )
+        .await
     }
     #[tokio::test]
     async fn error() -> Result<(), LinkedErr<E>> {
@@ -179,7 +183,8 @@ mod reading {
             count += runner(sample, |_, mut reader| {
                 assert!(VariableAssignation::read(&mut reader).is_err());
                 Ok(1)
-            })?;
+            })
+            .await?;
         }
         assert_eq!(count, samples.len());
         Ok(())
@@ -192,11 +197,10 @@ mod processing {
         elements::Task,
         error::LinkedErr,
         inf::{
-            context::Context,
             operator::{Operator, E},
             tests::*,
         },
-        reader::{chars, Reading},
+        reader::{chars, Reading, Sources},
     };
 
     const VALUES: &[(&str, &str)] = &[
@@ -210,27 +214,36 @@ mod processing {
 
     #[tokio::test]
     async fn reading() -> Result<(), E> {
-        let mut cx = Context::create().unbound()?;
-        let tasks: Vec<Task> = runner(
+        let (tasks, src): (Vec<Task>, Sources) = runner(
             include_str!("../../tests/processing/variable_assignation.sibs"),
-            |_, mut reader| {
-                let mut tasks: Vec<Task> = vec![];
+            |src, mut reader| {
+                let mut tasks: Vec<Task> = Vec::new();
                 while let Some(task) = Task::read(&mut reader)? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
                 }
-                Ok::<Vec<Task>, LinkedErr<E>>(tasks)
+                Ok::<(Vec<Task>, Sources), LinkedErr<E>>((tasks, src))
             },
-        )?;
-        for task in tasks.iter() {
-            assert!(task.execute(None, &[], &[], &mut cx).await?.is_some());
-        }
-        for (name, value) in VALUES.iter() {
-            assert_eq!(
-                cx.vars().get(name).unwrap().get_as_string().unwrap(),
-                value.to_string()
-            );
-        }
+        )
+        .await?;
+        execution(&src, |cx, sc| {
+            Box::pin(async move {
+                for task in tasks.iter() {
+                    assert!(task
+                        .execute(None, &[], &[], cx.clone(), sc.clone())
+                        .await?
+                        .is_some());
+                }
+                for (name, value) in VALUES.iter() {
+                    assert_eq!(
+                        sc.get_var(name).await?.unwrap().get_as_string().unwrap(),
+                        value.to_string()
+                    );
+                }
+                Ok(())
+            })
+        })
+        .await;
         Ok(())
     }
 }
@@ -298,7 +311,8 @@ mod proptest {
                     assert_eq!(format!("{task};"), origin);
                 }
                 Ok::<(), LinkedErr<E>>(())
-            })?;
+            })
+            .await?;
             Ok(())
         })
     }

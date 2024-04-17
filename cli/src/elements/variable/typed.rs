@@ -2,8 +2,8 @@ use crate::{
     elements::Component,
     error::LinkedErr,
     inf::{
-        operator, term, AnyValue, Context, Formation, FormationCursor, Operator,
-        OperatorPinnedResult,
+        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
+        Scope,
     },
     reader::{chars, Reader, Reading, E},
 };
@@ -85,7 +85,8 @@ impl Operator for VariableType {
         _owner: Option<&'a Component>,
         _components: &'a [Component],
         args: &'a [String],
-        _cx: &'a mut Context,
+        _cx: Context,
+        _sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let value = if args.len() != 1 {

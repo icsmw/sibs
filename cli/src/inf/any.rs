@@ -223,7 +223,7 @@ impl AnyValue {
             .or_else(|| {
                 let try_collect = |values: Option<&Vec<AnyValue>>| -> Result<Vec<String>, ()> {
                     let values = values.ok_or(())?;
-                    let mut strings: Vec<String> = vec![];
+                    let mut strings: Vec<String> = Vec::new();
                     for v in values.iter() {
                         strings.push(v.get_as_string().ok_or(())?);
                     }

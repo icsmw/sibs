@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod walker {
-    use crate::inf::tests::*;
+    use crate::inf::{journal, tests::*};
 
     #[tokio::test]
     async fn until_char() {
@@ -8,7 +8,7 @@ mod walker {
         let targets = ['@', '$', '_'];
         let mut count = 0;
         targets.iter().for_each(|target| {
-            let (_, mut bound) = get_reader_for_str(&words.join(&target.to_string()));
+            let (_, mut bound, journal) = get_reader_for_str(&words.join(&target.to_string()));
             let mut cursor: usize = 0;
             words.iter().for_each(|word| {
                 let (read, char) = if let Some((read, char)) = bound.until().char(&[target]) {
@@ -44,7 +44,7 @@ mod walker {
         ];
         targets.iter().for_each(|target| {
             words.iter().for_each(|word| {
-                let (_, mut reader) = get_reader_for_str(&format!("{}{word}", target.0));
+                let (_, mut reader, journal) = get_reader_for_str(&format!("{}{word}", target.0));
                 if let Some(value) = reader.move_to().none_numeric() {
                     let token = reader.token().unwrap();
                     assert_eq!(target.0, token.content);
@@ -57,7 +57,7 @@ mod walker {
                 } else {
                     panic!("Fail to read numeric value");
                 }
-                let (_, mut reader) = get_reader_for_str(&target.0.to_string());
+                let (_, mut reader, journal) = get_reader_for_str(&target.0.to_string());
                 if let Some(value) = reader.move_to().none_numeric() {
                     let token = reader.token().unwrap();
                     assert_eq!(target.0, token.content);
@@ -75,7 +75,7 @@ mod walker {
         let targets = [">", "==", "!=", "=>"];
         let mut count = 0;
         targets.iter().for_each(|target| {
-            let (_, mut bound) = get_reader_for_str(&words.join(target.as_ref()));
+            let (_, mut bound, journal) = get_reader_for_str(&words.join(target.as_ref()));
             let mut cursor: usize = 0;
             words.iter().for_each(|word| {
                 let (read, stopped) = if let Some((read, stopped)) = bound.until().word(&[*target])
@@ -109,7 +109,7 @@ mod walker {
                 for _ in 0..times {
                     content = format!("{content}{word}{target}");
                 }
-                let (_, mut bound) = get_reader_for_str(&content);
+                let (_, mut bound, journal) = get_reader_for_str(&content);
                 for n in 0..times {
                     let stopped = bound.move_to().char(&[target]).unwrap();
                     let token = bound.token().unwrap();
@@ -136,7 +136,7 @@ mod walker {
                 for _ in 0..times {
                     content = format!("{content}{word}{target}");
                 }
-                let (_, mut bound) = get_reader_for_str(&content);
+                let (_, mut bound, journal) = get_reader_for_str(&content);
                 for n in 0..times {
                     let stopped = bound.move_to().expression(&[target]).unwrap();
                     let token = bound.token().unwrap();
@@ -163,7 +163,7 @@ mod walker {
                 for _ in 0..times {
                     content = format!("{content}{word}{target}");
                 }
-                let (_, mut bound) = get_reader_for_str(&content);
+                let (_, mut bound, journal) = get_reader_for_str(&content);
                 for n in 0..times {
                     let stopped = bound.move_to().word(&[target]).unwrap();
                     let token = bound.token().unwrap();
@@ -180,7 +180,7 @@ mod walker {
         count = 0;
         targets.iter().for_each(|target| {
             let content = format!("{target}{target}");
-            let (_, mut bound) = get_reader_for_str(&content);
+            let (_, mut bound, journal) = get_reader_for_str(&content);
             assert!(bound.move_to().word(&[target]).is_none());
             count += 1;
         });
@@ -195,13 +195,13 @@ mod walker {
             {
                 // Nested groups
                 let content = format!("{left}{noise}{right}{noise}\\{left}{noise}\\{right}{noise}");
-                let (_, mut bound) =
+                let (_, mut bound, journal) =
                     get_reader_for_str(&format!(" \t\n {left}{content}{right}{noise}"));
                 let between = bound.group().between(left, right).unwrap();
                 assert_eq!(between, content);
                 let token = bound.token().unwrap();
                 assert_eq!(token.content, between);
-                let (_, mut bound) = get_reader_for_str(&between);
+                let (_, mut bound, journal) = get_reader_for_str(&between);
                 let between = bound.group().between(left, right).unwrap();
                 let token = bound.token().unwrap();
                 assert_eq!(token.content, between);
@@ -210,12 +210,13 @@ mod walker {
             {
                 // Nested shifted groups
                 let content = format!("{noise}\\{left}{left}{noise}{right}\\{right}{noise}");
-                let (_, mut bound) = get_reader_for_str(&format!("{left}{content}{right}{noise}"));
+                let (_, mut bound, journal) =
+                    get_reader_for_str(&format!("{left}{content}{right}{noise}"));
                 let between = bound.group().between(left, right).unwrap();
                 assert_eq!(between, content);
                 let token = bound.token().unwrap();
                 assert_eq!(token.content, between);
-                let (_, mut bound) = get_reader_for_str(&between);
+                let (_, mut bound, journal) = get_reader_for_str(&between);
                 bound.until().char(&[left]);
                 let between = bound.group().between(left, right).unwrap();
                 let token = bound.token().unwrap();
@@ -225,7 +226,7 @@ mod walker {
             {
                 // Following groups with spaces between
                 let content = format!("{noise}\\{left}{noise}\\{right}{noise}");
-                let (_, mut bound) = get_reader_for_str(&format!(
+                let (_, mut bound, journal) = get_reader_for_str(&format!(
                     "{left}{content}{right} \t \n{left}{content}{right}"
                 ));
                 let between = bound.group().between(left, right).unwrap();
@@ -240,7 +241,7 @@ mod walker {
             {
                 // Following groups without spaces
                 let content = format!("{noise}\\{left}{noise}\\{right}{noise}");
-                let (_, mut bound) =
+                let (_, mut bound, journal) =
                     get_reader_for_str(&format!("{left}{content}{right}{left}{content}{right}"));
                 let between = bound.group().between(left, right).unwrap();
                 assert_eq!(between, content);
@@ -253,7 +254,7 @@ mod walker {
             }
             {
                 // Empty groups
-                let (_, mut bound) = get_reader_for_str(&format!("{left}{right}"));
+                let (_, mut bound, journal) = get_reader_for_str(&format!("{left}{right}"));
                 let between: String = bound.group().between(left, right).unwrap();
                 assert_eq!(between, "");
                 let token = bound.token().unwrap();
@@ -261,9 +262,10 @@ mod walker {
             }
             {
                 // Group without ending
-                let (_, mut bound) = get_reader_for_str(&format!("{left}----------"));
+                let (_, mut bound, journal) = get_reader_for_str(&format!("{left}----------"));
                 assert!(bound.group().between(left, right).is_none());
-                let (_, mut bound) = get_reader_for_str(&format!("{left}----------\\{left}"));
+                let (_, mut bound, journal) =
+                    get_reader_for_str(&format!("{left}----------\\{left}"));
                 assert!(bound.group().between(left, right).is_none());
             }
             count += 1;
@@ -274,7 +276,7 @@ mod walker {
     async fn mapping() {
         let noise = "=================";
         let inner = format!("<{noise}>{noise}");
-        let (_, mut bound) = get_reader_for_str(&format!("[{inner}]"));
+        let (_, mut bound, journal) = get_reader_for_str(&format!("[{inner}]"));
         let between = bound.group().between(&'[', &']').unwrap();
         assert_eq!(between, inner);
         let mut token = bound.token().unwrap();
@@ -291,14 +293,14 @@ mod walker {
     #[tokio::test]
     async fn to_end() {
         let noise = "=================";
-        let (_, mut bound) = get_reader_for_str(&noise.to_string());
+        let (_, mut bound, journal) = get_reader_for_str(&noise.to_string());
         let full = bound.move_to().end();
         assert_eq!(full, noise);
         let token = bound.token().unwrap();
         assert_eq!(token.content, noise);
         assert_eq!(token.from, 0);
         assert_eq!(token.len, noise.len());
-        let (_, mut bound) = get_reader_for_str(&format!("{noise}@{noise}"));
+        let (_, mut bound, journal) = get_reader_for_str(&format!("{noise}@{noise}"));
         bound.until().char(&[&'@']).unwrap();
         bound.move_to().next();
         let rest = bound.move_to().end();
@@ -314,29 +316,34 @@ mod walker {
 mod reading {
     use crate::{
         error::LinkedErr,
+        inf::{Configuration, Journal},
         reader::{error::E, Reader, Sources},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let mut src = Sources::new();
-        match Reader::read_file(
+        let journal = Journal::init(Configuration::logs());
+        let mut src = Sources::new(&journal);
+        let result = match Reader::read_file(
             &std::env::current_dir()
                 .unwrap()
                 .join("./src/tests/reading/full/build.sibs"),
             true,
             Some(&mut src),
+            &journal,
         )
         .await
         {
             Ok(components) => {
                 assert_eq!(components.len(), 11);
+                Ok(())
             }
             Err(err) => {
                 src.report_err(&err)?;
-                return Err(err);
+                Err(err)
             }
-        }
-        Ok(())
+        };
+        journal.destroy().await;
+        result
     }
 }

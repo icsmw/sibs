@@ -61,10 +61,9 @@ impl Arguments {
     pub async fn run<T: Argument + 'static>(
         &self,
         components: &[Element],
-        cx: &mut Context,
     ) -> Result<Option<AnyValue>, E> {
         if let Some(action) = self.actions.get(&T::key()) {
-            Ok(Some(action.action(components, cx).await?))
+            Ok(Some(action.action(components).await?))
         } else {
             Ok(None)
         }
@@ -73,11 +72,7 @@ impl Arguments {
         &self,
     ) -> Result<Option<O>, E> {
         if let Some(action) = self.actions.get(&T::key()) {
-            Ok(action
-                .action(&[], &mut Context::create().unbound()?)
-                .await?
-                .get_as::<O>()
-                .cloned())
+            Ok(action.action(&[]).await?.get_as::<O>().cloned())
         } else {
             Ok(None)
         }
@@ -100,9 +95,7 @@ impl Arguments {
                     .join(", "),
             ))
         } else {
-            let _ = actions[0]
-                .action(&[], &mut Context::create().unbound()?)
-                .await?;
+            let _ = actions[0].action(&[]).await?;
             Ok(true)
         }
     }

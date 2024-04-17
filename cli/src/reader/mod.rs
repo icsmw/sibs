@@ -11,7 +11,10 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     executors::{import::Import, Executor},
-    inf::map::{Fragment, Mapping},
+    inf::{
+        map::{Fragment, Mapping},
+        Journal,
+    },
 };
 pub use error::E;
 use extentions::*;
@@ -47,9 +50,11 @@ impl Reader {
         filename: &'a PathBuf,
         import: bool,
         src: Option<&'a mut Sources>,
+        journal: &Journal,
     ) -> Pin<Box<dyn Future<Output = ReadFileResult> + 'a>> {
+        let journal = journal.clone();
         Box::pin(async move {
-            let mut inner = Sources::new();
+            let mut inner = Sources::new(&journal);
             read_file(
                 &filename
                     .parent()
@@ -62,10 +67,15 @@ impl Reader {
             .await
         })
     }
-    pub fn read_string<'a>(content: &'a str) -> Pin<Box<dyn Future<Output = ReadFileResult> + 'a>> {
+    #[cfg(test)]
+    pub fn read_string<'a>(
+        content: &'a str,
+        journal: &Journal,
+    ) -> Pin<Box<dyn Future<Output = ReadFileResult> + 'a>> {
+        let journal = journal.clone();
         Box::pin(async move {
-            let mut reader = Sources::new().reader().unbound(content)?;
-            let mut elements: Vec<Element> = vec![];
+            let mut reader = Sources::new(&journal).reader().unbound(content)?;
+            let mut elements: Vec<Element> = Vec::new();
             while let Some(el) =
                 Element::include(&mut reader, &[ElTarget::Function, ElTarget::Component])?
             {
@@ -85,6 +95,7 @@ impl Reader {
             Ok(elements)
         })
     }
+    #[cfg(test)]
     pub fn unbound(content: &str) -> Result<Self, E> {
         let map = Map::unbound(content);
         Ok(Self {
@@ -229,7 +240,7 @@ fn read_file<'a>(
 ) -> Pin<Box<dyn Future<Output = ReadFileResult> + 'a>> {
     Box::pin(async move {
         let mut reader = Reader::bound(src, &filename)?;
-        let mut elements: Vec<Element> = vec![];
+        let mut elements: Vec<Element> = Vec::new();
         while let Some(el) =
             Element::include(&mut reader, &[ElTarget::Function, ElTarget::Component])?
         {

@@ -18,6 +18,9 @@ impl Maps {
             maps: HashMap::new(),
         }
     }
+    pub fn iter(&self) -> std::collections::hash_map::Iter<'_, PathBuf, MapRef> {
+        self.maps.iter()
+    }
     pub fn insert(&mut self, filename: &PathBuf, map: MapRef) -> Result<MapRef, E> {
         if self.maps.contains_key(filename) {
             Err(E::FileAlreadyHasMap(filename.to_owned()))?;

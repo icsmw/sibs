@@ -3,6 +3,7 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
+        Scope,
     },
     reader::{chars, Reader, Reading, E},
 };
@@ -93,7 +94,8 @@ impl Operator for PatternString {
         owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
-        cx: &'a mut Context,
+        cx: Context,
+        sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let mut output = String::new();
@@ -104,7 +106,7 @@ impl Operator for PatternString {
                     output = format!(
                         "{output}{}",
                         element
-                            .execute(owner, components, args, cx)
+                            .execute(owner, components, args, cx.clone(), sc.clone())
                             .await?
                             .ok_or(operator::E::FailToExtractValue)?
                             .get_as_string()
@@ -154,6 +156,7 @@ mod reading {
                 Ok(())
             },
         )
+        .await
     }
 
     #[tokio::test]
@@ -180,6 +183,7 @@ mod reading {
                 Ok(())
             },
         )
+        .await
     }
 }
 
@@ -194,7 +198,7 @@ mod proptest {
     impl Default for PatternString {
         fn default() -> Self {
             PatternString {
-                elements: vec![],
+                elements: Vec::new(),
                 pattern: String::from("default"),
                 token: 0,
             }

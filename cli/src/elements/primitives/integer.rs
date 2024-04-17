@@ -1,7 +1,7 @@
 use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
-    inf::{term, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
+    inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
     reader::{Reader, Reading, E},
 };
 use std::fmt;
@@ -48,7 +48,8 @@ impl Operator for Integer {
         _owner: Option<&'a Component>,
         _components: &'a [Component],
         _inputs: &'a [String],
-        _cx: &'a mut Context,
+        _cx: Context,
+        _sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move { Ok(Some(AnyValue::new(self.value))) })
     }

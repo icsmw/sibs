@@ -4,14 +4,14 @@ use crate::{
         error::E,
     },
     elements::Element,
-    inf::{tracker, AnyValue},
+    inf::{journal, AnyValue},
 };
 
 const ARGS: [&str; 2] = ["--output", "-o"];
 
 #[derive(Debug, Clone)]
 pub struct Output {
-    pub output: tracker::Output,
+    pub output: journal::Output,
 }
 
 impl Argument for Output {
@@ -22,7 +22,7 @@ impl Argument for Output {
         if let (true, output) = Self::with_next(args, &ARGS)? {
             let output = output.ok_or(E::NeedsArgumentAfter(ARGS[0].to_owned()))?;
             Ok(Some(Box::new(Output {
-                output: tracker::Output::try_from(output)?,
+                output: journal::Output::try_from(output)?,
             })))
         } else {
             Ok(None)
@@ -41,11 +41,7 @@ impl Argument for Output {
 }
 
 impl Action for Output {
-    fn action<'a>(
-        &'a self,
-        _components: &'a [Element],
-        _context: &'a mut crate::inf::Context,
-    ) -> ActionPinnedResult {
+    fn action<'a>(&'a self, _components: &'a [Element]) -> ActionPinnedResult {
         Box::pin(async move { Ok(AnyValue::new(self.output.clone())) })
     }
     fn key(&self) -> String {

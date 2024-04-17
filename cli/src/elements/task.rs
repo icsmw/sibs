@@ -1,7 +1,7 @@
 use crate::{
     elements::{Block, Component, ElTarget, Element, SimpleString},
     error::LinkedErr,
-    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
+    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -39,10 +39,10 @@ impl Reading<Task> for Task {
                 Err(E::InvalidTaskName(name.clone()).linked(&name_token))?
             }
             let declarations: Vec<Element> = if stopped_on == chars::OPEN_SQ_BRACKET {
-                vec![]
+                Vec::new()
             } else if reader.until().char(&[&chars::CLOSE_BRACKET]).is_some() {
                 reader.move_to().next();
-                let mut declarations: Vec<Element> = vec![];
+                let mut declarations: Vec<Element> = Vec::new();
                 let mut inner = reader.token()?.bound;
                 while let Some(el) = Element::include(&mut inner, &[ElTarget::VariableDeclaration])?
                 {
@@ -56,7 +56,7 @@ impl Reading<Task> for Task {
             } else {
                 Err(E::NoTaskArguments.linked(&name_token))?
             };
-            let mut dependencies: Vec<Element> = vec![];
+            let mut dependencies: Vec<Element> = Vec::new();
             if reader
                 .group()
                 .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
@@ -171,7 +171,8 @@ impl Operator for Task {
         owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
-        cx: &'a mut Context,
+        cx: Context,
+        sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             if self.declarations.len() != args.len() {
@@ -190,13 +191,19 @@ impl Operator for Task {
             for (i, el) in self.declarations.iter().enumerate() {
                 if let Element::VariableDeclaration(declaration, _) = el {
                     declaration
-                        .execute(owner, components, &[args[i].to_owned()], cx)
+                        .execute(
+                            owner,
+                            components,
+                            &[args[i].to_owned()],
+                            cx.clone(),
+                            sc.clone(),
+                        )
                         .await?;
                 } else {
                     return Err(operator::E::InvalidVariableDeclaration.by(self));
                 }
             }
-            self.block.execute(owner, components, args, cx).await
+            self.block.execute(owner, components, args, cx, sc).await
         })
     }
 }
@@ -229,6 +236,7 @@ mod reading {
                 Ok(())
             },
         )
+        .await
     }
 
     #[tokio::test]
@@ -273,6 +281,7 @@ mod reading {
                 Ok(())
             },
         )
+        .await
     }
 
     #[tokio::test]
@@ -284,7 +293,8 @@ mod reading {
             count += runner(sample, |_, mut reader| {
                 assert!(Task::read(&mut reader).is_err());
                 Ok(1)
-            })?;
+            })
+            .await?;
         }
         assert_eq!(count, samples.len());
         Ok(())
@@ -297,42 +307,46 @@ mod processing {
         elements::Task,
         error::LinkedErr,
         inf::{
-            context::Context,
             operator::{Operator, E},
             tests::*,
         },
-        reader::{chars, Reading},
+        reader::{chars, Reading, Sources},
     };
 
     const VALUES: &[&[&str]] = &[&["a"], &["a", "b"], &["a"], &["a", "b"], &["a", "b", "c"]];
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let mut cx = Context::create().unbound()?;
-        let tasks: Vec<Task> = runner(
+        let (tasks, mut src): (Vec<Task>, Sources) = runner(
             include_str!("../tests/processing/tasks.sibs"),
-            |_, mut reader| {
-                let mut tasks: Vec<Task> = vec![];
+            |src, mut reader| {
+                let mut tasks: Vec<Task> = Vec::new();
                 while let Some(task) = Task::read(&mut reader)? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
                 }
-                Ok::<Vec<Task>, LinkedErr<E>>(tasks)
+                Ok::<(Vec<Task>, Sources), LinkedErr<E>>((tasks, src))
             },
-        )?;
+        )
+        .await?;
         for (i, task) in tasks.iter().enumerate() {
-            let result = task
-                .execute(
-                    None,
-                    &[],
-                    &VALUES[i]
-                        .iter()
-                        .map(|s| s.to_string())
-                        .collect::<Vec<String>>(),
-                    &mut cx,
-                )
-                .await?
-                .expect("Task returns some value");
+            let result = execution(&src, |cx, sc| {
+                Box::pin(async move {
+                    task.execute(
+                        None,
+                        &[],
+                        &VALUES[i]
+                            .iter()
+                            .map(|s| s.to_string())
+                            .collect::<Vec<String>>(),
+                        cx,
+                        sc,
+                    )
+                    .await
+                })
+            })
+            .await?
+            .expect("Task returns some value");
             assert_eq!(
                 result.get_as_string().expect("Task returns string value"),
                 "true".to_owned()
@@ -392,7 +406,8 @@ mod proptest {
                     assert_eq!(format!("{task};"), origin);
                 }
                 Ok::<(), LinkedErr<E>>(())
-            })?;
+            })
+            .await?;
             Ok(())
         })
     }

@@ -6,6 +6,8 @@ use crate::{
     reader::{Reader, E},
 };
 
+use super::{Configuration, Journal};
+
 const TAB: u8 = 4;
 
 const MAX_FORMATED_LINE_LEN: usize = 120;
@@ -75,7 +77,8 @@ pub trait Formation {
 
 pub async fn format_file(filename: &PathBuf) -> Result<(), LinkedErr<E>> {
     let mut cursor = FormationCursor::default();
-    let elements = Reader::read_file(filename, false, None).await?;
+    let journal = Journal::init(Configuration::logs());
+    let elements = Reader::read_file(filename, false, None, &journal).await?;
     let mut file = fs::OpenOptions::new().write(true).open(filename)?;
     for el in elements {
         file.write_all(format!("{}\n", el.format(&mut cursor)).as_bytes())?;
@@ -87,7 +90,8 @@ pub async fn format_file(filename: &PathBuf) -> Result<(), LinkedErr<E>> {
 #[cfg(test)]
 pub async fn format_string(content: &str) -> Result<String, LinkedErr<E>> {
     let mut cursor = FormationCursor::default();
-    let elements = Reader::read_string(content).await?;
+    let journal = Journal::init(Configuration::logs());
+    let elements = Reader::read_string(content, &journal).await?;
     let mut output = String::new();
     for el in elements {
         output = format!("{output}\n{}", el.format(&mut cursor));
@@ -100,16 +104,20 @@ mod reading {
     use crate::{
         elements::Element,
         error::LinkedErr,
-        inf::format_string,
+        inf::{format_string, Configuration, Journal},
         reader::{error::E, Reader},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let origin = Reader::read_string(include_str!("../../tests/formation.sibs")).await?;
-        let formated =
-            Reader::read_string(&format_string(include_str!("../../tests/formation.sibs")).await?)
-                .await?;
+        let journal = Journal::init(Configuration::logs());
+        let origin =
+            Reader::read_string(include_str!("../../tests/formation.sibs"), &journal).await?;
+        let formated = Reader::read_string(
+            &format_string(include_str!("../../tests/formation.sibs")).await?,
+            &journal,
+        )
+        .await?;
         assert_eq!(origin.len(), formated.len());
         let mut count: usize = 0;
         for (i, el) in origin.iter().enumerate() {

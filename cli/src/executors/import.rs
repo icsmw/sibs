@@ -14,8 +14,6 @@ pub enum Error {
     NoFile(String),
     #[error("Import function is used only during reading of file")]
     IsNotUsedInRuntime,
-    #[error("Import action required CWD")]
-    NoCurrentWorkingFolder,
 }
 
 impl From<Error> for E {
@@ -39,7 +37,7 @@ impl Import {
     }
 }
 impl Executor for Import {
-    fn execute(_: Vec<AnyValue>, _cx: &mut Context) -> ExecutorPinnedResult {
+    fn execute(_: Vec<AnyValue>, _cx: Context) -> ExecutorPinnedResult {
         Box::pin(async { Err(Error::IsNotUsedInRuntime.into()) })
     }
 

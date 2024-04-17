@@ -1,7 +1,6 @@
 use crate::{
-    elements::Metadata,
     error::LinkedErr,
-    inf::{term, Formation, FormationCursor},
+    inf::{Formation, FormationCursor},
     reader::{chars, words, Reader, Reading, E},
 };
 use std::fmt;
@@ -23,7 +22,7 @@ impl Meta {
 
 impl Reading<Meta> for Meta {
     fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
-        let mut inner: Vec<String> = vec![];
+        let mut inner: Vec<String> = Vec::new();
         while reader.move_to().expression(&[words::META]).is_some() {
             if let Some((line, _)) = reader.until().char(&[&chars::CARET]) {
                 inner.push(line.trim().to_string());

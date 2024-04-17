@@ -5,11 +5,11 @@ use crate::{
     error::LinkedErr,
     executors,
     inf::{context, map, operator},
-    reader::{sources, Reader},
+    reader::Reader,
 };
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum E {
     #[error("Fail to detect parent folder for: {0}")]
     NoCurrentWorkingFolder(PathBuf),
@@ -130,7 +130,7 @@ pub enum E {
     #[error("Converting error")]
     Infallible(#[from] std::convert::Infallible),
     #[error("IO error")]
-    IO(#[from] std::io::Error),
+    IO(String),
     #[error("{0}: {1}")]
     OwnedError(String, String),
     #[error("Context error: {0}")]
@@ -189,7 +189,13 @@ impl From<executors::E> for LinkedErr<E> {
 
 impl From<std::io::Error> for LinkedErr<E> {
     fn from(e: std::io::Error) -> Self {
-        E::IO(e).unlinked()
+        E::IO(e.to_string()).unlinked()
+    }
+}
+
+impl From<std::io::Error> for E {
+    fn from(err: std::io::Error) -> Self {
+        E::IO(err.to_string())
     }
 }
 

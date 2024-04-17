@@ -1,6 +1,4 @@
 use crate::inf::term::styled::{striped_len, Styled};
-use console::{strip_ansi_codes, Style};
-use regex::{Captures, Regex};
 use std::collections::HashMap;
 use uuid::Uuid;
 

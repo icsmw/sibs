@@ -1,7 +1,7 @@
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
+    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
     reader::{words, Reader, Reading, E},
 };
 use std::fmt;
@@ -24,24 +24,25 @@ impl Operator for Thread {
         owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
-        cx: &'a mut Context,
+        cx: Context,
+        sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             match self {
                 Self::If(subsequence, block) => {
                     if *subsequence
-                        .execute(owner, components, args, cx)
+                        .execute(owner, components, args, cx.clone(), sc.clone())
                         .await?
                         .ok_or(operator::E::NoResultFromProviso)?
                         .get_as::<bool>()
                         .ok_or(operator::E::NoBoolResultFromProviso)?
                     {
-                        block.execute(owner, components, args, cx).await
+                        block.execute(owner, components, args, cx, sc).await
                     } else {
                         Ok(None)
                     }
                 }
-                Self::Else(block) => block.execute(owner, components, args, cx).await,
+                Self::Else(block) => block.execute(owner, components, args, cx, sc).await,
             }
         })
     }
@@ -92,7 +93,7 @@ pub struct If {
 
 impl Reading<If> for If {
     fn read(reader: &mut Reader) -> Result<Option<If>, LinkedErr<E>> {
-        let mut threads: Vec<Thread> = vec![];
+        let mut threads: Vec<Thread> = Vec::new();
         let close = reader.open_token();
         while !reader.rest().trim().is_empty() {
             if reader.move_to().word(&[words::IF]).is_some() {
@@ -165,11 +166,15 @@ impl Operator for If {
         owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
-        cx: &'a mut Context,
+        cx: Context,
+        sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             for thread in self.threads.iter() {
-                if let Some(output) = thread.execute(owner, components, args, cx).await? {
+                if let Some(output) = thread
+                    .execute(owner, components, args, cx.clone(), sc.clone())
+                    .await?
+                {
                     return Ok(Some(output));
                 }
             }
@@ -206,6 +211,7 @@ mod reading {
             assert!(reader.rest().trim().is_empty());
             Ok(())
         })
+        .await
     }
 
     #[tokio::test]
@@ -247,6 +253,7 @@ mod reading {
             assert!(reader.rest().trim().is_empty());
             Ok(())
         })
+        .await
     }
 
     #[tokio::test]
@@ -258,7 +265,8 @@ mod reading {
             count += runner(sample, |_, mut reader| {
                 assert!(If::read(&mut reader).is_err());
                 Ok(1)
-            })?;
+            })
+            .await?;
         }
         assert_eq!(count, samples.len());
         Ok(())
@@ -271,35 +279,35 @@ mod processing {
         elements::Task,
         error::LinkedErr,
         inf::{
-            context::Context,
             operator::{Operator, E},
             tests::*,
         },
-        reader::{chars, Reading},
+        reader::{chars, Reading, Sources},
     };
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let mut cx = Context::create().unbound()?;
         let tasks_count = include_str!("../../tests/processing/if.sibs")
             .match_indices("test [")
             .count();
-        let tasks: Vec<Task> = runner(
+        let (tasks, src): (Vec<Task>, Sources) = runner(
             include_str!("../../tests/processing/if.sibs"),
-            |_, mut reader| {
-                let mut tasks: Vec<Task> = vec![];
+            |src, mut reader| {
+                let mut tasks: Vec<Task> = Vec::new();
                 while let Some(task) = Task::read(&mut reader)? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
                 }
-                Ok::<Vec<Task>, LinkedErr<E>>(tasks)
+                Ok::<(Vec<Task>, Sources), LinkedErr<E>>((tasks, src))
             },
-        )?;
+        )
+        .await?;
         for (i, task) in tasks.iter().enumerate() {
-            let result = task
-                .execute(None, &[], &[], &mut cx)
-                .await?
-                .expect("IF returns some value");
+            let result = execution(&src, |cx, sc| {
+                Box::pin(async move { task.execute(None, &[], &[], cx, sc).await })
+            })
+            .await?
+            .expect("IF returns some value");
             assert_eq!(
                 result.get_as_string().expect("IF returns string value"),
                 "true".to_owned(),
@@ -371,7 +379,8 @@ mod proptest {
                     assert_eq!(format!("{task};"), origin);
                 }
                 Ok::<(), LinkedErr<E>>(())
-            })?;
+            })
+            .await?;
             Ok(())
         })
     }

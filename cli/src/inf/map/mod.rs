@@ -39,7 +39,7 @@ pub trait Mapping {
     where
         T: 'a + ToOwned + ToString,
     {
-        let report = self.report_gen(
+        self.report_gen(
             token,
             format!(
                 "{} {}",
@@ -47,9 +47,7 @@ pub trait Mapping {
                 Style::new().white().apply_to(msg.to_string())
             ),
             Some(Style::new().red().bold()),
-        )?;
-        println!("{report}",);
-        Ok(report)
+        )
     }
     fn report_gen<'a, T>(
         &mut self,

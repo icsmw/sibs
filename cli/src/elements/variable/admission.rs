@@ -3,6 +3,7 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
+        Scope,
     },
     reader::{chars, Reader, Reading, E},
 };
@@ -53,12 +54,13 @@ impl Operator for VariableName {
         _: Option<&'a Component>,
         _: &'a [Component],
         _: &'a [String],
-        cx: &'a mut Context,
+        cx: Context,
+        sc: Scope,
     ) -> OperatorPinnedResult {
-        Box::pin(async {
-            let binding = cx.vars();
-            let value = binding
-                .get(&self.name)
+        Box::pin(async move {
+            let value = sc
+                .get_var(&self.name)
+                .await?
                 .ok_or(operator::E::VariableIsNotAssigned(self.name.to_owned()))?;
             Ok(value
                 .get_as_string()
@@ -99,7 +101,8 @@ mod reading {
                 src.report_err_if(VariableName::read(&mut reader))?.unwrap();
 
                 Ok(1)
-            })?;
+            })
+            .await?;
         }
         assert_eq!(count, samples.len());
         Ok(())
@@ -117,7 +120,8 @@ mod reading {
                 assert_eq!(format!("${}", variable_name.name), fragment);
                 assert_eq!(fragment, variable_name.to_string());
                 Ok(1)
-            })?;
+            })
+            .await?;
         }
         assert_eq!(count, samples.len());
         Ok(())
@@ -132,7 +136,8 @@ mod reading {
             count += runner(sample, |_, mut reader| {
                 assert!(VariableName::read(&mut reader).is_err());
                 Ok(1)
-            })?;
+            })
+            .await?;
         }
         assert_eq!(count, samples.len());
         Ok(())

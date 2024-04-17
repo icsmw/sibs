@@ -1,9 +1,6 @@
 mod error;
 
-use crate::inf::{
-    tracker::{Logs, Task},
-    Context,
-};
+use crate::inf::{tracker::Job, Context};
 use std::{
     path::PathBuf,
     process::{ExitStatus, Stdio},
@@ -28,6 +25,7 @@ fn spawn(command: &str, cwd: &PathBuf) -> Result<Child, E> {
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .stdin(Stdio::piped())
+        .kill_on_drop(true)
         .spawn()
         .map_err(|e| E::Setup(e.to_string()))
 }
@@ -35,12 +33,14 @@ fn spawn(command: &str, cwd: &PathBuf) -> Result<Child, E> {
 #[cfg(not(windows))]
 fn spawn(command: &str, cwd: &PathBuf) -> Result<Child, E> {
     let (cmd, args) = parse_command(command);
+    println!("{cwd:?}");
     Command::new(cmd)
         .args(args)
         .current_dir(cwd)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .stdin(Stdio::piped())
+        .kill_on_drop(true)
         .spawn()
         .map_err(|e| E::Setup(e.to_string()))
 }
@@ -56,7 +56,7 @@ pub struct RunResult {
     pub status: ExitStatus,
 }
 
-pub async fn run(command: &str, cwd: &PathBuf, cx: &mut Context) -> Result<RunResult, E> {
+pub async fn run(command: &str, cwd: &PathBuf, cx: Context) -> Result<RunResult, E> {
     let job = cx
         .tracker
         .create_job(
@@ -79,15 +79,15 @@ pub async fn run(command: &str, cwd: &PathBuf, cx: &mut Context) -> Result<RunRe
             .ok_or_else(|| E::Setup(String::from("Fail to get stderr handle")))?,
         LinesCodec::default(),
     );
-    fn post_logs(line: Result<String, LinesCodecError>, task: &Task) -> String {
+    fn post_logs(line: Result<String, LinesCodecError>, job: &Job) -> String {
         match line {
             Ok(line) => {
-                task.msg(line.trim_end());
-                task.progress(None);
+                job.output(line.trim_end());
+                job.progress(None);
                 line
             }
             Err(err) => {
-                task.err(format!("Error during decoding command output: {err}",));
+                job.err(format!("Error during decoding command output: {err}",));
                 String::new()
             }
         }

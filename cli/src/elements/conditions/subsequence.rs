@@ -1,7 +1,7 @@
 use crate::{
     elements::{Cmb, Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
+    inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
     reader::{chars, words, Reader, Reading, E},
 };
 use std::fmt;
@@ -15,7 +15,7 @@ pub struct Subsequence {
 impl Reading<Subsequence> for Subsequence {
     fn read(reader: &mut Reader) -> Result<Option<Subsequence>, LinkedErr<E>> {
         let close = reader.open_token();
-        let mut subsequence: Vec<Element> = vec![];
+        let mut subsequence: Vec<Element> = Vec::new();
         while !reader.rest().trim().is_empty() {
             if subsequence.is_empty()
                 || matches!(subsequence.last(), Some(Element::Combination(..)))
@@ -125,13 +125,14 @@ impl Operator for Subsequence {
         owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
-        cx: &'a mut Context,
+        cx: Context,
+        sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let mut last_value = true;
             for el in self.subsequence.iter() {
                 let value = el
-                    .execute(owner, components, args, cx)
+                    .execute(owner, components, args, cx.clone(), sc.clone())
                     .await?
                     .ok_or(E::NoValueFromSubsequenceElement)?;
                 if let Some(cmb) = value.get_as::<Cmb>() {
@@ -186,7 +187,8 @@ mod reading {
                     count + 1
                 );
                 Ok(1)
-            })?;
+            })
+            .await?;
         }
         assert_eq!(count, content.len());
         Ok(())
@@ -218,7 +220,8 @@ mod reading {
                     );
                 }
                 Ok(())
-            })?;
+            })
+            .await?;
         }
         Ok(())
     }
@@ -269,7 +272,7 @@ mod proptest {
                 ),
             )
                 .prop_map(|(mut subsequences, mut combinations)| {
-                    let mut result: Vec<Element> = vec![];
+                    let mut result: Vec<Element> = Vec::new();
                     while let Some(subsequence) = subsequences.pop() {
                         result.push(subsequence);
                         result.push(combinations.pop().unwrap());

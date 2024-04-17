@@ -1,7 +1,8 @@
 use crate::inf::{context, operator};
 use thiserror::Error;
+use tokio::sync::{mpsc, oneshot};
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum E {
     #[error("Scenario error: {0}")]
     Context(String),
@@ -19,6 +20,14 @@ pub enum E {
     SystemTimeError(String),
     #[error("VarError error: {0}")]
     VarError(String),
+    #[error("Function \"{0}\" already has been registred")]
+    FunctionExists(String),
+    #[error("Function \"{0}\" not exists")]
+    FunctionNotExists(String),
+    #[error("Fail to receive channel message: {0}")]
+    RecvError(String),
+    #[error("Fail to send channel message: {0}")]
+    SendError(String),
 }
 
 impl From<context::E> for E {
@@ -48,5 +57,16 @@ impl From<std::time::SystemTimeError> for E {
 impl From<std::env::VarError> for E {
     fn from(e: std::env::VarError) -> Self {
         E::VarError(e.to_string())
+    }
+}
+
+impl From<oneshot::error::RecvError> for E {
+    fn from(value: oneshot::error::RecvError) -> Self {
+        E::RecvError(value.to_string())
+    }
+}
+impl<T> From<mpsc::error::SendError<T>> for E {
+    fn from(value: mpsc::error::SendError<T>) -> Self {
+        E::SendError(value.to_string())
     }
 }

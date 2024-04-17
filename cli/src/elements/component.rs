@@ -1,7 +1,7 @@
 use crate::{
-    elements::{ElTarget, Element, Metadata, SimpleString, Task},
+    elements::{ElTarget, Element, SimpleString, Task},
     error::LinkedErr,
-    inf::{operator, term, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
+    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
     reader::{chars, words, Reader, Reading, E},
 };
 use std::{fmt, path::PathBuf};
@@ -94,7 +94,7 @@ impl Reading<Component> for Component {
                     Err(E::NoComponentBody.linked(&name_token))?
                 }
                 let mut inner = reader.token()?.bound;
-                let mut elements: Vec<Element> = vec![];
+                let mut elements: Vec<Element> = Vec::new();
                 while let Some(el) =
                     Element::include(&mut inner, &[ElTarget::Task, ElTarget::Function])?
                 {
@@ -175,7 +175,8 @@ impl Operator for Component {
         owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
-        cx: &'a mut Context,
+        cx: Context,
+        _sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let task = args.first().ok_or_else(|| {
@@ -188,8 +189,16 @@ impl Operator for Component {
                     self.get_tasks_names(),
                 )
             })?;
-            cx.set_cwd(self.cwd.clone())?;
-            task.execute(owner, components, &args[1..], cx).await
+            let sc = Scope::init(if let Some(path) = self.cwd.as_ref() {
+                Some(cx.scenario.to_abs_path(path)?)
+            } else {
+                None
+            });
+            let result = task
+                .execute(owner, components, &args[1..], cx, sc.clone())
+                .await;
+            sc.destroy().await?;
+            result
         })
     }
 }
@@ -228,6 +237,7 @@ mod reading {
                 Ok(())
             },
         )
+        .await
     }
 
     #[tokio::test]
@@ -275,6 +285,7 @@ mod reading {
                 Ok(())
             },
         )
+        .await
     }
 
     #[tokio::test]
@@ -289,7 +300,8 @@ mod reading {
             count += runner(sample, |_, mut reader| {
                 assert!(Component::read(&mut reader).is_err());
                 Ok(1)
-            })?;
+            })
+            .await?;
         }
         assert_eq!(count, samples.len());
         Ok(())
@@ -304,9 +316,8 @@ mod processing {
         inf::{
             operator::{Operator, E},
             tests::*,
-            Context,
         },
-        reader::Reading,
+        reader::{Reading, Sources},
     };
 
     const VALUES: &[&[&str]] = &[
@@ -318,35 +329,42 @@ mod processing {
 
     #[tokio::test]
     async fn reading() -> Result<(), E> {
-        let mut cx = Context::create().unbound()?;
-        let components: Vec<Component> = runner(
+        let (components, src): (Vec<Component>, Sources) = runner(
             include_str!("../tests/processing/component.sibs"),
-            |_, mut reader| {
-                let mut components: Vec<Component> = vec![];
+            |src, mut reader| {
+                let mut components: Vec<Component> = Vec::new();
                 while let Some(task) = Component::read(&mut reader)? {
                     components.push(task);
                 }
-                Ok::<Vec<Component>, LinkedErr<E>>(components)
+                Ok::<(Vec<Component>, Sources), LinkedErr<E>>((components, src))
             },
-        )?;
-        for (i, component) in components.iter().enumerate() {
-            let result = component
-                .execute(
-                    Some(component),
-                    &components,
-                    &VALUES[i]
-                        .iter()
-                        .map(|s| s.to_string())
-                        .collect::<Vec<String>>(),
-                    &mut cx,
-                )
-                .await?
-                .expect("component returns some value");
-            assert_eq!(
-                result.get_as_string().expect("Task returns string value"),
-                "true".to_owned()
-            );
-        }
+        )
+        .await?;
+        execution(&src, |cx, sc| {
+            Box::pin(async move {
+                for (i, component) in components.iter().enumerate() {
+                    let result = component
+                        .execute(
+                            Some(component),
+                            &components,
+                            &VALUES[i]
+                                .iter()
+                                .map(|s| s.to_string())
+                                .collect::<Vec<String>>(),
+                            cx.clone(),
+                            sc.clone(),
+                        )
+                        .await?
+                        .expect("component returns some value");
+                    assert_eq!(
+                        result.get_as_string().expect("Task returns string value"),
+                        "true".to_owned()
+                    );
+                }
+                Ok(())
+            })
+        })
+        .await;
         Ok(())
     }
 }

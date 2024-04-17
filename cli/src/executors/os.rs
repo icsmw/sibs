@@ -1,6 +1,6 @@
 use crate::{
     executors::{Executor, ExecutorPinnedResult, E},
-    inf::{any::AnyValue, context::Context, tracker::Logs},
+    inf::{any::AnyValue, context::Context},
 };
 use thiserror::Error;
 
@@ -26,9 +26,9 @@ impl From<Error> for E {
 pub struct Os {}
 
 impl Executor for Os {
-    fn execute(args: Vec<AnyValue>, cx: &mut Context) -> ExecutorPinnedResult {
+    fn execute(args: Vec<AnyValue>, cx: Context) -> ExecutorPinnedResult {
         Box::pin(async move {
-            let logger = cx.tracker.create_logger(format!("@{NAME}"));
+            let logger = cx.journal.owned(format!("@{NAME}"));
             if args.is_empty() {
                 Err(Error::NoArguments)?;
             }
@@ -38,7 +38,7 @@ impl Executor for Os {
             let probe = args[0]
                 .get_as::<String>()
                 .ok_or(Error::InvalidArgumentType)?;
-            logger.log(format!(
+            logger.debug(format!(
                 "checking for \"{}\"; result: {}",
                 probe.to_lowercase(),
                 probe.to_lowercase() == std::env::consts::OS

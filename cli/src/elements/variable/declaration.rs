@@ -1,7 +1,7 @@
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{operator, term, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
+    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -48,7 +48,8 @@ impl Operator for VariableDeclaration {
         owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
-        cx: &'a mut Context,
+        cx: Context,
+        sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let input = if args.len() != 1 {
@@ -57,25 +58,32 @@ impl Operator for VariableDeclaration {
                 args[0].to_owned()
             };
             let mut output = if let Element::VariableType(el, _) = self.declaration.as_ref() {
-                Some(el.execute(owner, components, &[input.clone()], cx).await?)
+                Some(
+                    el.execute(owner, components, &[input.clone()], cx.clone(), sc.clone())
+                        .await?,
+                )
             } else {
                 None
             };
             output = if let Element::VariableVariants(el, _) = self.declaration.as_ref() {
-                Some(el.execute(owner, components, &[input], cx).await?)
+                Some(
+                    el.execute(owner, components, &[input], cx, sc.clone())
+                        .await?,
+                )
             } else {
                 output
             };
-            cx.vars().set(
+            sc.set_var(
                 if let Element::VariableName(el, _) = self.variable.as_ref() {
-                    el.name.to_owned()
+                    &el.name
                 } else {
                     Err(operator::E::FailToGetDeclaredVariable)?
                 },
                 output
                     .ok_or(operator::E::FailToExtractValue)?
                     .ok_or(operator::E::NoValueToDeclareTaskArgument)?,
-            );
+            )
+            .await?;
             Ok(None)
         })
     }

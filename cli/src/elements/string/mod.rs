@@ -18,7 +18,7 @@ pub fn read(
     reader.trim();
     let close = reader.open_token();
     if reader.move_to().char(&[&wrapper]).is_some() {
-        let mut elements: Vec<Element> = vec![];
+        let mut elements: Vec<Element> = Vec::new();
         let mut closed = false;
         while let Some((_, stopped)) = reader.until().char(&[&chars::TYPE_OPEN, &wrapper]) {
             let inner_token = reader.token()?;

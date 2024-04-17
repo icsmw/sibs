@@ -1,7 +1,7 @@
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{term, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
+    inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -22,7 +22,7 @@ impl Reading<Values> for Values {
         {
             let token = reader.token()?;
             let mut inner = token.bound;
-            let mut elements: Vec<Element> = vec![];
+            let mut elements: Vec<Element> = Vec::new();
             if inner.rest().trim().is_empty() {
                 Err(E::EmptyValue.linked(&token.id))?;
             }
@@ -114,13 +114,14 @@ impl Operator for Values {
         owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
-        cx: &'a mut Context,
+        cx: Context,
+        sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
-            let mut values: Vec<AnyValue> = vec![];
+            let mut values: Vec<AnyValue> = Vec::new();
             for el in self.elements.iter() {
                 values.push(
-                    el.execute(owner, components, args, cx)
+                    el.execute(owner, components, args, cx.clone(), sc.clone())
                         .await?
                         .unwrap_or(AnyValue::new(())),
                 );
@@ -158,7 +159,8 @@ mod reading {
                 );
                 count += 1;
                 Ok(count)
-            })?;
+            })
+            .await?;
         }
         assert_eq!(count, samples.len());
         Ok(())
@@ -189,7 +191,8 @@ mod reading {
                 }
                 count += 1;
                 Ok(count)
-            })?;
+            })
+            .await?;
         }
         assert_eq!(count, samples.len());
         Ok(())
@@ -201,7 +204,8 @@ mod reading {
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            let (_, mut reader) = get_reader_for_str(sample);
+            let (_, mut reader, journal) = get_reader_for_str(sample);
+            journal.destroy().await;
             assert!(Values::read(&mut reader).is_err());
             count += 1;
         }
@@ -217,11 +221,10 @@ mod processing {
         error::LinkedErr,
         inf::{
             any::AnyValue,
-            context::Context,
             operator::{Operator, E},
             tests::*,
         },
-        reader::{chars, Reading},
+        reader::{chars, Reading, Sources},
     };
 
     const VALUES: &[(&str, &str)] = &[
@@ -236,55 +239,61 @@ mod processing {
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let mut cx = Context::create().unbound()?;
         let components: Vec<Component> = runner(
             include_str!("../tests/processing/values_components.sibs"),
             |_, mut reader| {
-                let mut components: Vec<Component> = vec![];
+                let mut components: Vec<Component> = Vec::new();
                 while let Some(component) = Component::read(&mut reader)? {
                     components.push(component);
                 }
                 Ok::<Vec<Component>, LinkedErr<E>>(components)
             },
-        )?;
-        let tasks: Vec<Task> = runner(
+        )
+        .await?;
+        let (tasks, src): (Vec<Task>, Sources) = runner(
             include_str!("../tests/processing/values.sibs"),
-            |_, mut reader| {
-                let mut tasks: Vec<Task> = vec![];
+            |src, mut reader| {
+                let mut tasks: Vec<Task> = Vec::new();
                 while let Some(task) = Task::read(&mut reader)? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
                 }
-                Ok::<Vec<Task>, LinkedErr<E>>(tasks)
+                Ok::<(Vec<Task>, Sources), LinkedErr<E>>((tasks, src))
             },
-        )?;
-        for task in tasks.iter() {
-            assert!(task
-                .execute(components.first(), &components, &[], &mut cx)
-                .await?
-                .is_some());
-        }
-        for (name, value) in VALUES.iter() {
-            assert_eq!(
-                cx.vars()
-                    .get(name)
-                    .unwrap()
-                    .get_as_strings()
-                    .unwrap()
-                    .join(";"),
-                value.to_string()
-            );
-        }
-        for (name, value) in NESTED_VALUES.iter() {
-            let binding = cx.vars();
-            let stored = binding.get(name).unwrap();
-            let values = stored.get_as::<Vec<AnyValue>>().unwrap();
-            let mut output: Vec<String> = vec![];
-            for value in values.iter() {
-                output = [output, value.get_as_strings().unwrap()].concat();
-            }
-            assert_eq!(output.join(";"), value.to_string());
-        }
+        )
+        .await?;
+        execution(&src, |cx, sc| {
+            Box::pin(async move {
+                for task in tasks.iter() {
+                    assert!(task
+                        .execute(components.first(), &components, &[], cx.clone(), sc.clone())
+                        .await?
+                        .is_some());
+                }
+                for (name, value) in VALUES.iter() {
+                    assert_eq!(
+                        sc.get_var(name)
+                            .await?
+                            .unwrap()
+                            .get_as_strings()
+                            .unwrap()
+                            .join(";"),
+                        value.to_string()
+                    );
+                }
+                for (name, value) in NESTED_VALUES.iter() {
+                    let stored = sc.get_var(name).await?.unwrap();
+                    let values = stored.get_as::<Vec<AnyValue>>().unwrap();
+                    let mut output: Vec<String> = Vec::new();
+                    for value in values.iter() {
+                        output = [output, value.get_as_strings().unwrap()].concat();
+                    }
+                    assert_eq!(output.join(";"), value.to_string());
+                }
+                Ok(())
+            })
+        })
+        .await;
         Ok(())
     }
 }

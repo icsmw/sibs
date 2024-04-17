@@ -1,7 +1,7 @@
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
+    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -19,8 +19,8 @@ impl Reading<Reference> for Reference {
     fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
         let close = reader.open_token();
         if reader.move_to().char(&[&chars::COLON]).is_some() {
-            let mut path: Vec<String> = vec![];
-            let mut inputs: Vec<Element> = vec![];
+            let mut path: Vec<String> = Vec::new();
+            let mut inputs: Vec<Element> = Vec::new();
             reader.trim();
             while let Some((content, stopped)) = reader.until().char(&[
                 &chars::COLON,
@@ -130,7 +130,8 @@ impl Operator for Reference {
         owner: Option<&'a Component>,
         components: &'a [Component],
         inputs: &'a [String],
-        cx: &'a mut Context,
+        cx: Context,
+        sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let target = owner.ok_or(operator::E::NoOwnerComponent.by(self))?;
@@ -156,18 +157,18 @@ impl Operator for Reference {
             let task = parent.get_task(task).ok_or(
                 operator::E::TaskNotFound(task.to_owned(), parent.name.to_string()).by(self),
             )?;
-            let mut args: Vec<String> = vec![];
+            let mut args: Vec<String> = Vec::new();
             for input in self.inputs.iter() {
                 args.push(
                     input
-                        .execute(owner, components, inputs, cx)
+                        .execute(owner, components, inputs, cx.clone(), sc.clone())
                         .await?
                         .ok_or(operator::E::FailToGetAnyValueAsTaskArg.by(self))?
                         .get_as_string()
                         .ok_or(operator::E::FailToGetStringValue.by(self))?,
                 );
             }
-            task.execute(owner, components, &args, cx).await
+            task.execute(owner, components, &args, cx, sc).await
         })
     }
 }
@@ -202,6 +203,7 @@ mod reading {
                 Ok(())
             },
         )
+        .await
     }
 
     #[tokio::test]
@@ -226,6 +228,7 @@ mod reading {
                 Ok(())
             },
         )
+        .await
     }
 
     #[tokio::test]
@@ -239,7 +242,8 @@ mod reading {
                 println!("{result:?}");
                 assert!(result.is_err(), "Line: {}", count + 1);
                 Ok(1)
-            })?;
+            })
+            .await?;
         }
         assert_eq!(count, samples.len());
         Ok(())
@@ -273,7 +277,7 @@ mod proptest {
                                 }
                             })
                             .collect::<Vec<String>>(),
-                        inputs: vec![],
+                        inputs: Vec::new(),
                         token: 0,
                     })
                     .boxed()

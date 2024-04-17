@@ -2,21 +2,21 @@ use crate::{cli, reader};
 use std::fmt;
 use uuid::Uuid;
 
-#[derive(Debug)]
-pub struct LinkedErr<T: fmt::Display> {
+#[derive(Clone, Debug)]
+pub struct LinkedErr<T: Clone + fmt::Display> {
     pub token: Option<usize>,
     pub uuid: Uuid,
     pub e: T,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LinkedErrSerialized {
     pub e: String,
     pub uuid: Uuid,
     pub token: Option<usize>,
 }
 
-impl<T: fmt::Display> LinkedErr<T> {
+impl<T: Clone + fmt::Display> LinkedErr<T> {
     pub fn serialize(&self) -> LinkedErrSerialized {
         LinkedErrSerialized {
             e: self.e.to_string(),
@@ -24,9 +24,16 @@ impl<T: fmt::Display> LinkedErr<T> {
             token: self.token.clone(),
         }
     }
+    pub fn link_if(&self, token: &usize) -> Self {
+        Self {
+            e: self.e.clone(),
+            uuid: self.uuid,
+            token: Some(self.token.unwrap_or(*token)),
+        }
+    }
 }
 
-impl<T: fmt::Display> LinkedErr<T> {
+impl<T: Clone + fmt::Display> LinkedErr<T> {
     pub fn new(e: T, token: Option<usize>) -> Self {
         Self {
             token,
@@ -39,7 +46,7 @@ impl<T: fmt::Display> LinkedErr<T> {
     }
 }
 
-impl<T: fmt::Display> fmt::Display for LinkedErr<T> {
+impl<T: Clone + fmt::Display> fmt::Display for LinkedErr<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.e)
     }

@@ -1,27 +1,27 @@
-use std::{io, path::PathBuf};
-
-use crate::{executors, inf::scenario, reader};
+use crate::{executors, inf::context::scenario, reader};
 use thiserror::Error;
 use tokio::sync::{mpsc, oneshot};
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum E {
-    #[error("No parent folder for: {0}")]
-    NoParentFolderFor(PathBuf),
     #[error("Scenario error: {0}")]
     ScenarionError(scenario::E),
     #[error("Executors error: {0}")]
     ExecutorsError(executors::E),
     #[error("Reader error: {0}")]
     ReaderError(String),
-    #[error("Fail register function \"{0}\" because it's already exists")]
-    FunctionAlreadyExists(String),
     #[error("IO error: {0}")]
-    IOError(#[from] io::Error),
+    IO(String),
     #[error("Fail to receive channel message: {0}")]
     RecvError(String),
     #[error("Fail to send channel message: {0}")]
     SendError(String),
+}
+
+impl From<std::io::Error> for E {
+    fn from(err: std::io::Error) -> Self {
+        E::IO(err.to_string())
+    }
 }
 
 impl From<scenario::E> for E {

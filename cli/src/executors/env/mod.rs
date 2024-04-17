@@ -1,10 +1,11 @@
 use crate::{
+    executors::Store,
     executors::{ExecutorPinnedResult, TryAnyTo, E},
     inf::{any::AnyValue, context::Context},
 };
 use importer::import;
 
-pub fn register(cx: &mut Context) -> Result<(), E> {
+pub fn register(store: &mut Store) -> Result<(), E> {
     #[import(env)]
     fn var(key: String) -> Result<String, E> {
         Ok(match std::env::var(key) {
@@ -47,7 +48,6 @@ mod test {
         elements::Task,
         error::LinkedErr,
         inf::{
-            context::Context,
             operator::{Operator, E},
             tests::*,
         },
@@ -82,23 +82,26 @@ mod test {
             src
         }
         for test in TESTS.iter() {
-            let mut cx = Context::create().unbound()?;
             let (tasks, mut src): (Vec<Task>, Sources) = runner(
                 &apply_hooks(format!("test[{test}]"), hooks),
                 |src, mut reader| {
-                    let mut tasks: Vec<Task> = vec![];
+                    let mut tasks: Vec<Task> = Vec::new();
                     while let Some(task) = Task::read(&mut reader)? {
                         let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                         tasks.push(task);
                     }
                     Ok::<(Vec<Task>, Sources), LinkedErr<E>>((tasks, src))
                 },
-            )?;
+            )
+            .await?;
             for task in tasks.iter() {
-                let result = task.execute(None, &[], &[], &mut cx).await;
-                let result = src.report_err_if(result)?.expect("test returns some value");
+                let result = execution(&src, |cx, sc| {
+                    Box::pin(async move { task.execute(None, &[], &[], cx, sc).await })
+                })
+                .await;
+                let value = src.report_err_if(result)?.expect("test returns some value");
                 assert_eq!(
-                    result.get_as_string().expect("test returns string value"),
+                    value.get_as_string().expect("test returns string value"),
                     "true".to_owned()
                 );
             }

@@ -4,7 +4,7 @@ use crate::{
         error::E,
     },
     elements::Element,
-    inf::{context::Context, format_file, AnyValue},
+    inf::{format_file, AnyValue},
 };
 use std::path::PathBuf;
 
@@ -47,11 +47,7 @@ impl Action for Format {
     fn no_context(&self) -> bool {
         true
     }
-    fn action<'a>(
-        &'a self,
-        _components: &'a [Element],
-        _cx: &'a mut Context,
-    ) -> ActionPinnedResult {
+    fn action<'a>(&'a self, _components: &'a [Element]) -> ActionPinnedResult {
         Box::pin(async move {
             format_file(&self.filename).await?;
             Ok(AnyValue::new(()))

@@ -4,7 +4,7 @@ use crate::{
         error::E,
     },
     elements::Element,
-    inf::{context::Context, term, AnyValue},
+    inf::{term, AnyValue},
 };
 
 const ARGS: [&str; 2] = ["--help", "-h"];
@@ -38,7 +38,7 @@ impl Action for Help {
     fn key(&self) -> String {
         ARGS[0].to_owned()
     }
-    fn action<'a>(&'a self, components: &'a [Element], _cx: &'a mut Context) -> ActionPinnedResult {
+    fn action<'a>(&'a self, components: &'a [Element]) -> ActionPinnedResult {
         Box::pin(async move {
             if let Some(component) = self.component.as_ref() {
                 if let Some((el, md)) = components.iter().find_map(|el| {

@@ -1,6 +1,6 @@
 use crate::{
     executors::{Executor, ExecutorPinnedResult, E},
-    inf::{any::AnyValue, context::Context, tracker::Logs},
+    inf::{any::AnyValue, context::Context},
 };
 use thiserror::Error;
 
@@ -22,13 +22,13 @@ impl From<Error> for E {
 pub struct GetOs {}
 
 impl Executor for GetOs {
-    fn execute(args: Vec<AnyValue>, cx: &mut Context) -> ExecutorPinnedResult {
+    fn execute(args: Vec<AnyValue>, cx: Context) -> ExecutorPinnedResult {
         Box::pin(async move {
-            let logger = cx.tracker.create_logger(format!("@{NAME}"));
+            let logger = cx.journal.owned(format!("@{NAME}"));
             if !args.is_empty() {
                 Err(Error::InvalidNumberOfArguments)?;
             }
-            logger.log(format!("result \"{}\"", std::env::consts::OS));
+            logger.debug(format!("result \"{}\"", std::env::consts::OS));
             Ok(AnyValue::new(std::env::consts::OS.to_string()))
         })
     }

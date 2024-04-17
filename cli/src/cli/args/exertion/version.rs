@@ -4,7 +4,7 @@ use crate::{
         error::E,
     },
     elements::Element,
-    inf::{context::Context, AnyValue},
+    inf::AnyValue,
 };
 
 const ARGS: [&str; 2] = ["--version", "-v"];
@@ -39,11 +39,7 @@ impl Action for Version {
     fn no_context(&self) -> bool {
         true
     }
-    fn action<'a>(
-        &'a self,
-        _components: &'a [Element],
-        _cx: &'a mut Context,
-    ) -> ActionPinnedResult {
+    fn action<'a>(&'a self, _components: &'a [Element]) -> ActionPinnedResult {
         Box::pin(async move {
             println!("{VERSION}");
             Ok(AnyValue::new(()))

@@ -5,7 +5,13 @@ mod tests;
 
 use crate::{
     elements::{Component, Element},
-    inf::{context::Context, operator::Operator, scenario::Scenario, term, tracker},
+    inf::{
+        context::Context,
+        journal::{self, Journal},
+        operator::Operator,
+        scenario::Scenario,
+        term, Scope,
+    },
     reader::{Reader, Sources},
 };
 use args::Arguments;
@@ -24,13 +30,13 @@ fn get_arguments() -> Result<(Vec<String>, Arguments), E> {
     Ok((income, args))
 }
 
-pub async fn get_tracker_configuration() -> Result<tracker::Configuration, E> {
+pub async fn get_journal_configuration() -> Result<journal::Configuration, E> {
     let (_, arguments) = get_arguments()?;
-    Ok(tracker::Configuration {
+    Ok(journal::Configuration {
         output: arguments
-            .get_value_no_cx::<args::exertion::Output, tracker::Output>()
+            .get_value_no_cx::<args::exertion::Output, journal::Output>()
             .await?
-            .unwrap_or(tracker::Output::Progress),
+            .unwrap_or(journal::Output::Progress),
         log_file: arguments
             .get_value_no_cx::<args::exertion::LogFile, PathBuf>()
             .await?,
@@ -41,7 +47,7 @@ pub async fn get_tracker_configuration() -> Result<tracker::Configuration, E> {
     })
 }
 
-pub async fn read(cx: &mut Context) -> Result<(), E> {
+pub async fn process(journal: Journal) -> Result<(), E> {
     let (mut income, arguments) = get_arguments()?;
     if arguments.all_without_context().await? {
         if !income.is_empty() {
@@ -71,18 +77,18 @@ pub async fn read(cx: &mut Context) -> Result<(), E> {
             }
         }
     };
-    cx.set_scenario(scenario);
-    let scenario = cx.scenario.filename.to_owned();
-    let mut src = Sources::new();
-    let elements = match Reader::read_file(&scenario, true, Some(&mut src)).await {
+    let mut src = Sources::new(&journal);
+    let elements = match Reader::read_file(&scenario.filename, true, Some(&mut src), &journal).await
+    {
         Ok(elements) => elements,
         Err(err) => {
             src.report_err(&err)?;
             return Err(E::ReaderError(err.e));
         }
     };
+    let cx = Context::init(scenario, &src, &journal)?;
     let no_actions = arguments.has::<args::exertion::Help>() || income.is_empty();
-    arguments.run::<args::exertion::Help>(&elements, cx).await?;
+    arguments.run::<args::exertion::Help>(&elements).await?;
     if no_actions {
         return Ok(());
     }
@@ -105,12 +111,19 @@ pub async fn read(cx: &mut Context) -> Result<(), E> {
             .iter()
             .find(|comp| comp.name.to_string() == component)
         {
+            let sc = Scope::init(Some(cx.scenario.filename.clone()));
             component
-                .execute(Some(component), &components, &income, cx)
+                .execute(
+                    Some(component),
+                    &components,
+                    &income,
+                    cx.clone(),
+                    sc.clone(),
+                )
                 .await
-                .map_err(|e| {
-                    // cx.sources.report_error(&0, &e);
-                    e.e
+                .map_err(|err| {
+                    let _ = cx.atlas.report_err(&err);
+                    err.e
                 })?;
             Ok(())
         } else {

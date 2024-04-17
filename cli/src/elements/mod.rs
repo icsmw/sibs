@@ -30,7 +30,7 @@ pub use variable::*;
 
 use crate::{
     error::LinkedErr,
-    inf::{Context, Formation, FormationCursor, Operator, OperatorPinnedResult},
+    inf::{Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt::{self, Display};
@@ -189,7 +189,7 @@ impl Element {
             md.tolerance = reader.move_to().char(&[&chars::QUESTION]).is_some();
             md
         }
-        let mut elements: Vec<Element> = vec![];
+        let mut elements: Vec<Element> = Vec::new();
         loop {
             let before = elements.len();
             if let Some(el) = Comment::read(reader)? {
@@ -622,36 +622,37 @@ impl Operator for Element {
         owner: Option<&'a Component>,
         components: &'a [Component],
         args: &'a [String],
-        cx: &'a mut Context,
+        cx: Context,
+        sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             match self {
-                Self::Function(v, _) => v.execute(owner, components, args, cx).await,
-                Self::If(v, _) => v.execute(owner, components, args, cx).await,
-                Self::Each(v, _) => v.execute(owner, components, args, cx).await,
-                Self::First(v, _) => v.execute(owner, components, args, cx).await,
-                Self::Join(v, _) => v.execute(owner, components, args, cx).await,
-                Self::VariableAssignation(v, _) => v.execute(owner, components, args, cx).await,
-                Self::Comparing(v, _) => v.execute(owner, components, args, cx).await,
-                Self::Combination(v, _) => v.execute(owner, components, args, cx).await,
-                Self::Condition(v, _) => v.execute(owner, components, args, cx).await,
-                Self::Subsequence(v, _) => v.execute(owner, components, args, cx).await,
-                Self::Optional(v, _) => v.execute(owner, components, args, cx).await,
-                Self::Reference(v, _) => v.execute(owner, components, args, cx).await,
-                Self::PatternString(v, _) => v.execute(owner, components, args, cx).await,
-                Self::VariableName(v, _) => v.execute(owner, components, args, cx).await,
-                Self::Values(v, _) => v.execute(owner, components, args, cx).await,
-                Self::Block(v, _) => v.execute(owner, components, args, cx).await,
-                Self::Command(v, _) => v.execute(owner, components, args, cx).await,
-                Self::Task(v, _) => v.execute(owner, components, args, cx).await,
-                Self::Component(v, _) => v.execute(owner, components, args, cx).await,
-                Self::Integer(v, _) => v.execute(owner, components, args, cx).await,
-                Self::Boolean(v, _) => v.execute(owner, components, args, cx).await,
+                Self::Function(v, _) => v.execute(owner, components, args, cx, sc).await,
+                Self::If(v, _) => v.execute(owner, components, args, cx, sc).await,
+                Self::Each(v, _) => v.execute(owner, components, args, cx, sc).await,
+                Self::First(v, _) => v.execute(owner, components, args, cx, sc).await,
+                Self::Join(v, _) => v.execute(owner, components, args, cx, sc).await,
+                Self::VariableAssignation(v, _) => v.execute(owner, components, args, cx, sc).await,
+                Self::Comparing(v, _) => v.execute(owner, components, args, cx, sc).await,
+                Self::Combination(v, _) => v.execute(owner, components, args, cx, sc).await,
+                Self::Condition(v, _) => v.execute(owner, components, args, cx, sc).await,
+                Self::Subsequence(v, _) => v.execute(owner, components, args, cx, sc).await,
+                Self::Optional(v, _) => v.execute(owner, components, args, cx, sc).await,
+                Self::Reference(v, _) => v.execute(owner, components, args, cx, sc).await,
+                Self::PatternString(v, _) => v.execute(owner, components, args, cx, sc).await,
+                Self::VariableName(v, _) => v.execute(owner, components, args, cx, sc).await,
+                Self::Values(v, _) => v.execute(owner, components, args, cx, sc).await,
+                Self::Block(v, _) => v.execute(owner, components, args, cx, sc).await,
+                Self::Command(v, _) => v.execute(owner, components, args, cx, sc).await,
+                Self::Task(v, _) => v.execute(owner, components, args, cx, sc).await,
+                Self::Component(v, _) => v.execute(owner, components, args, cx, sc).await,
+                Self::Integer(v, _) => v.execute(owner, components, args, cx, sc).await,
+                Self::Boolean(v, _) => v.execute(owner, components, args, cx, sc).await,
                 Self::Meta(..) => Ok(None),
                 Self::VariableDeclaration(..) => Ok(None),
                 Self::VariableVariants(..) => Ok(None),
                 Self::VariableType(..) => Ok(None),
-                Self::SimpleString(v, _) => v.execute(owner, components, args, cx).await,
+                Self::SimpleString(v, _) => v.execute(owner, components, args, cx, sc).await,
                 Self::Comment(_) => Ok(None),
             }
         })
@@ -688,7 +689,7 @@ mod proptest {
     }
 
     fn generate(targets: &[ElTarget], deep: usize) -> Vec<BoxedStrategy<Element>> {
-        let mut collected = vec![];
+        let mut collected = Vec::new();
         if targets.contains(&ElTarget::Combination) {
             collected.push(
                 Combination::arbitrary()
@@ -889,7 +890,8 @@ mod proptest {
                     assert_eq!(format!("{block};"), origin);
                 }
                 Ok::<(), LinkedErr<E>>(())
-            })?;
+            })
+            .await?;
             Ok(())
         })
     }
