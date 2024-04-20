@@ -23,7 +23,6 @@ impl Map {
             ids,
         }
     }
-    #[cfg(test)]
     pub fn unbound(content: &str) -> Self {
         Self {
             fragments: HashMap::new(),

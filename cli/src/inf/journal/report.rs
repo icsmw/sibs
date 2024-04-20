@@ -47,6 +47,11 @@ pub enum Report {
         report: Option<String>,
         err: LinkedErrSerialized,
     },
+    /// Report, which includes only string message of error. As usual is used
+    /// during initialization.
+    ///
+    /// - The `String` is error message.
+    String(String),
 }
 
 impl Report {
@@ -63,7 +68,26 @@ impl Report {
             Self::Trace { .. } => {
                 panic!("Footprint: Not implemented!")
             }
+            Self::String(err) => {
+                eprintln!(
+                    "{} {}",
+                    Style::new().red().bold().apply_to("ERROR:"),
+                    Style::new().white().apply_to(&err)
+                );
+            }
         }
+    }
+}
+
+impl From<&str> for Report {
+    fn from(val: &str) -> Self {
+        Self::String(val.to_owned())
+    }
+}
+
+impl From<&String> for Report {
+    fn from(val: &String) -> Self {
+        Self::String(val.to_owned())
     }
 }
 

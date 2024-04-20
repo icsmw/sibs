@@ -6,6 +6,7 @@ mod error;
 mod executors;
 mod inf;
 mod reader;
+mod runners;
 
 use inf::journal::Journal;
 

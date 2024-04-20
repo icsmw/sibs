@@ -95,7 +95,6 @@ impl Reader {
             Ok(elements)
         })
     }
-    #[cfg(test)]
     pub fn unbound(content: &str) -> Result<Self, E> {
         let map = Map::unbound(content);
         Ok(Self {

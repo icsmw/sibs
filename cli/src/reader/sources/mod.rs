@@ -43,7 +43,6 @@ impl Sources {
     pub fn iter(&self) -> std::collections::hash_map::Iter<'_, PathBuf, MapRef> {
         self.maps.iter()
     }
-    #[cfg(test)]
     pub fn reader(&mut self) -> ReaderGetter<'_> {
         ReaderGetter::new(self)
     }
