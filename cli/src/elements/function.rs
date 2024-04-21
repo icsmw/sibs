@@ -323,7 +323,7 @@ mod reading {
     use crate::{
         elements::Function,
         error::LinkedErr,
-        inf::{operator::Operator, tests::*, Configuration, Journal},
+        inf::{operator::Operator, tests::*, Configuration},
         read_string,
         reader::{chars, Reader, Reading, Sources, E},
     };

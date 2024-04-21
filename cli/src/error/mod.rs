@@ -21,7 +21,7 @@ impl<T: Clone + fmt::Display> LinkedErr<T> {
         LinkedErrSerialized {
             e: self.e.to_string(),
             uuid: self.uuid,
-            token: self.token.clone(),
+            token: self.token,
         }
     }
     pub fn link_if(&self, token: &usize) -> Self {

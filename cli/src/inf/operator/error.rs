@@ -58,8 +58,6 @@ pub enum E {
     NoResultFromProviso,
     #[error("Variable \"{0}\" isn't assigned")]
     VariableIsNotAssigned(String),
-    #[error("Function \"{0}\" doesn't have registred executor")]
-    NoFunctionExecutor(String),
     #[error("Fail assign variable \"{0}\"; no value")]
     NoValueToAssign(String),
     #[error("Fail to get input for EACH statements")]

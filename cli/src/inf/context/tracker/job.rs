@@ -37,17 +37,6 @@ impl Job {
         self.tracker.fail(self.id);
     }
 
-    pub fn err_if(&self, result: OperatorResult) -> OperatorResult {
-        match result.as_ref() {
-            Ok(_) => self.success(),
-            Err(err) => {
-                self.err(err.to_string());
-                self.fail();
-            }
-        };
-        result
-    }
-
     pub fn info<'a, T>(&self, msg: T)
     where
         T: 'a + ToOwned + ToString + Display,

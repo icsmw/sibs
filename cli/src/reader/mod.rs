@@ -238,7 +238,7 @@ fn read_file<'a>(
     import: bool,
 ) -> Pin<Box<dyn Future<Output = ReadFileResult> + 'a>> {
     Box::pin(async move {
-        let mut reader = Reader::bound(src, &filename)?;
+        let mut reader = Reader::bound(src, filename)?;
         let mut elements: Vec<Element> = Vec::new();
         while let Some(el) =
             Element::include(&mut reader, &[ElTarget::Function, ElTarget::Component])?

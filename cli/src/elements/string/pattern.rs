@@ -167,7 +167,7 @@ mod reading {
             &include_str!("../../tests/reading/pattern_string.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = PatternString::read(reader)? {
+                while let Some(entity) = src.report_err_if(PatternString::read(reader))? {
                     assert_eq!(
                         trim_carets(&entity.to_string()),
                         reader.get_fragment(&entity.token)?.content

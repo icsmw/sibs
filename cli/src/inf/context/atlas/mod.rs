@@ -131,17 +131,4 @@ impl Atlas {
         let _ = rx.await?;
         Ok(())
     }
-    #[cfg(test)]
-    pub async fn report_err_if<T, E>(
-        &mut self,
-        result: Result<T, LinkedErr<E>>,
-    ) -> Result<T, LinkedErr<E>>
-    where
-        E: Clone + std::error::Error + fmt::Display + ToString,
-    {
-        if let Err(err) = result.as_ref() {
-            self.report_err(err).await.expect("Error report created");
-        }
-        result
-    }
 }

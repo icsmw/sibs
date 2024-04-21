@@ -99,7 +99,7 @@ mod reading {
     use crate::{
         elements::VariableVariants,
         error::LinkedErr,
-        inf::{tests::*, Configuration},
+        inf::Configuration,
         read_string,
         reader::{Reader, Reading, Sources, E},
     };

@@ -1,4 +1,3 @@
-use console::Style;
 use std::collections::HashSet;
 use uuid::Uuid;
 
@@ -6,7 +5,7 @@ use crate::{
     error::LinkedErrSerialized,
     inf::{
         context::atlas::{Maps, E},
-        map::{Fragment, Mapping},
+        map::Mapping,
         Footprint, Journal, Status,
     },
 };

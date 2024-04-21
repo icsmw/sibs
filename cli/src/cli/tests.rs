@@ -3,7 +3,6 @@ use crate::{
     error::LinkedErr,
     inf::{
         journal::{Configuration, Journal},
-        tests::*,
         Context, Operator, Scope,
     },
     process_file,

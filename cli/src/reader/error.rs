@@ -65,10 +65,6 @@ pub enum E {
     FailToParseValueOfSubsequenceElement,
     #[error("Subsequence doesn't return bool value")]
     NoBoolValueFromSubsequence,
-    #[error("Token {0} not found")]
-    TokenNotFound(usize),
-    #[error("Token {0} has invalid range; string len={1}; range [{2},{3}]")]
-    TokenHasInvalidRange(usize, usize, usize, usize),
     #[error("No component name")]
     EmptyComponentName,
     #[error("Fail to read conditions")]

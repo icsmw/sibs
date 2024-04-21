@@ -54,7 +54,7 @@ impl Operator for VariableName {
         _: Option<&'a Component>,
         _: &'a [Component],
         _: &'a [String],
-        cx: Context,
+        _: Context,
         sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
@@ -87,7 +87,7 @@ mod reading {
     use crate::{
         elements::VariableName,
         error::LinkedErr,
-        inf::{Configuration},
+        inf::Configuration,
         read_string,
         reader::{Reader, Reading, Sources, E},
     };
@@ -140,7 +140,7 @@ mod reading {
             count += read_string!(
                 &Configuration::logs(),
                 sample,
-                |reader: &mut Reader, src: &mut Sources| {
+                |reader: &mut Reader, _: &mut Sources| {
                     assert!(VariableName::read(reader).is_err());
                     Ok::<usize, LinkedErr<E>>(1)
                 }

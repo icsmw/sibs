@@ -46,9 +46,6 @@ impl Component {
             .map(|el| el.get_name().to_owned())
             .collect::<Vec<String>>()
     }
-    pub fn get_name(&self) -> &str {
-        &self.name.value
-    }
 }
 
 impl Reading<Component> for Component {
