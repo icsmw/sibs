@@ -1,5 +1,4 @@
 use crate::reader::{Reader, Sources, E};
-use std::path::PathBuf;
 
 #[derive(Debug)]
 pub struct ReaderGetter<'a> {

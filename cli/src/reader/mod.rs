@@ -10,7 +10,7 @@ pub mod words;
 use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
-    executors::{import::Import, Executor},
+    executors::{load::Import, Executor},
     inf::{
         map::{Fragment, Mapping},
         Journal,

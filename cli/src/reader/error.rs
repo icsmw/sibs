@@ -79,8 +79,6 @@ pub enum E {
     InvalidComponentName(String),
     #[error("Fail get last token")]
     FailGetToken,
-    #[error("Attempt to create error report by LinkedErr without linked token")]
-    LinkedErrorWithoutToken,
     #[error("Invalid variable name")]
     InvalidVariableName,
     #[error("Empty path to reference")]

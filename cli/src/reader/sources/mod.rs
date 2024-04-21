@@ -10,10 +10,7 @@ pub use maps::*;
 
 use crate::{
     error::LinkedErr,
-    inf::{
-        map::{Fragment, Mapping},
-        Journal,
-    },
+    inf::{map::Mapping, Journal},
     reader::E,
 };
 use std::{cell::RefCell, collections::HashSet, fmt, fs, path::PathBuf, rc::Rc};
@@ -21,7 +18,6 @@ use uuid::Uuid;
 
 pub type MapRef = Rc<RefCell<Map>>;
 pub type IdsRef = Rc<RefCell<Ids>>;
-type ErrRecord = (usize, Fragment, String);
 
 #[derive(Debug)]
 pub struct Sources {

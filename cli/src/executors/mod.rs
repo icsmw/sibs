@@ -2,7 +2,7 @@ mod api;
 pub mod env;
 mod error;
 pub mod fs;
-pub mod import;
+pub mod load;
 pub mod store;
 pub mod str;
 
@@ -34,10 +34,6 @@ pub trait TryAnyTo<T> {
 }
 
 pub fn register(store: &mut Store) -> Result<(), E> {
-    store.insert(
-        import::Import::get_name(),
-        <import::Import as Executor>::execute,
-    )?;
     str::register(store)?;
     fs::register(store)?;
     env::register(store)?;
