@@ -16,35 +16,35 @@ impl OwnedJournal {
     where
         T: 'a + ToOwned + ToString + Display,
     {
-        self.journal.info(&self.owner, &msg.to_string());
+        self.journal.info(&self.owner, msg);
     }
 
     pub fn debug<'a, T>(&self, msg: T)
     where
         T: 'a + ToOwned + ToString + Display,
     {
-        self.journal.debug(&self.owner, &msg.to_string());
+        self.journal.debug(&self.owner, msg);
     }
 
     pub fn verb<'a, T>(&self, msg: T)
     where
         T: 'a + ToOwned + ToString + Display,
     {
-        self.journal.verb(&self.owner, &msg.to_string());
+        self.journal.verb(&self.owner, msg);
     }
 
     pub fn err<'a, T>(&self, msg: T)
     where
         T: 'a + ToOwned + ToString + Display,
     {
-        self.journal.err(&self.owner, &msg.to_string());
+        self.journal.err(&self.owner, msg);
     }
 
     pub fn warn<'a, T>(&self, msg: T)
     where
         T: 'a + ToOwned + ToString + Display,
     {
-        self.journal.warn(&self.owner, &msg.to_string());
+        self.journal.warn(&self.owner, msg);
     }
 
     pub fn err_if<T, E>(&self, res: Result<T, E>) -> Result<T, E>

@@ -87,44 +87,50 @@ impl Journal {
         OwnedJournal::new(owner, self.clone())
     }
 
-    pub fn info<'a, T>(&self, owner: T, msg: T)
+    pub fn info<'a, O, M>(&self, owner: O, msg: M)
     where
-        T: 'a + ToOwned + ToString + Display,
+        O: 'a + ToOwned + ToString + Display,
+        M: 'a + ToOwned + ToString + Display,
     {
         self.insert(owner, msg, Level::Info);
     }
 
-    pub fn debug<'a, T>(&self, owner: T, msg: T)
+    pub fn debug<'a, O, M>(&self, owner: O, msg: M)
     where
-        T: 'a + ToOwned + ToString + Display,
+        O: 'a + ToOwned + ToString + Display,
+        M: 'a + ToOwned + ToString + Display,
     {
         self.insert(owner, msg, Level::Debug);
     }
 
-    pub fn verb<'a, T>(&self, owner: T, msg: T)
+    pub fn verb<'a, O, M>(&self, owner: O, msg: M)
     where
-        T: 'a + ToOwned + ToString + Display,
+        O: 'a + ToOwned + ToString + Display,
+        M: 'a + ToOwned + ToString + Display,
     {
         self.insert(owner, msg, Level::Verb);
     }
 
-    pub fn err<'a, T>(&self, owner: T, msg: T)
+    pub fn err<'a, O, M>(&self, owner: O, msg: M)
     where
-        T: 'a + ToOwned + ToString + Display,
+        O: 'a + ToOwned + ToString + Display,
+        M: 'a + ToOwned + ToString + Display,
     {
         self.insert(owner, msg, Level::Err);
     }
 
-    pub fn warn<'a, T>(&self, owner: T, msg: T)
+    pub fn warn<'a, O, M>(&self, owner: O, msg: M)
     where
-        T: 'a + ToOwned + ToString + Display,
+        O: 'a + ToOwned + ToString + Display,
+        M: 'a + ToOwned + ToString + Display,
     {
         self.insert(owner, msg, Level::Warn);
     }
 
-    fn insert<'a, T>(&self, owner: T, msg: T, level: Level)
+    fn insert<'a, O, M>(&self, owner: O, msg: M, level: Level)
     where
-        T: 'a + ToOwned + ToString + Display,
+        O: 'a + ToOwned + ToString + Display,
+        M: 'a + ToOwned + ToString + Display,
     {
         if let Err(_err) = self.tx.send(Demand::Log(
             owner.to_string(),
