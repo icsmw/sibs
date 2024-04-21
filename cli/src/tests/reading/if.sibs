@@ -5,12 +5,12 @@ IF $variable == "one" || $variable == "two" [@cd(./linux);] ELSE [@cd(./linux);]
 IF $variable == "one" [@cd(./linux);];
 IF $variable == "one" || $variable == "two" [@cd(./linux);];
 IF $variable == "one" || $variable == "two" [@cd(./linux);] ELSE [@cd(./linux);];
-IF @os(linux) [@cd(./linux);];
-IF @os(linux) [@cd(./linux);];
-IF @os(linux) ["release{$version}-linux.zip";] IF @os(darwin) ["release{$version}-mac.zip";] IF @os(windows) ["release{$version}-win.zip";] ELSE [@exit(1; "Unsupported OS: {@os}");];
-IF @os(linux) || @os(darwin) ["release{$version}-normal_os.zip";] ELSE ["release{$version}-windows.zip";];
-IF @os(linux) [@cd(./linux);] IF @os(darwin) [@cd(./mac);] IF @os(windows) [@cd(./windows);] ELSE [@exit(1; "Unsupported OS: {@os}");];
-IF $variable == "one" [@cd(./linux);] IF $variable == "two" [@cd(./mac);] IF $variable == "three" [@cd(./windows);] ELSE [@exit(1; "Unsupported OS: {@os}");];
+IF @env::is_os(linux) [@cd(./linux);];
+IF @env::is_os(linux) [@cd(./linux);];
+IF @env::is_os(linux) ["release{$version}-linux.zip";] IF @env::is_os(darwin) ["release{$version}-mac.zip";] IF @env::is_os(windows) ["release{$version}-win.zip";] ELSE [@exit(1; "Unsupported OS: {@env::is_os}");];
+IF @env::is_os(linux) || @env::is_os(darwin) ["release{$version}-normal_os.zip";] ELSE ["release{$version}-windows.zip";];
+IF @env::is_os(linux) [@cd(./linux);] IF @env::is_os(darwin) [@cd(./mac);] IF @env::is_os(windows) [@cd(./windows);] ELSE [@exit(1; "Unsupported OS: {@env::is_os}");];
+IF $variable == "one" [@cd(./linux);] IF $variable == "two" [@cd(./mac);] IF $variable == "three" [@cd(./windows);] ELSE [@exit(1; "Unsupported OS: {@env::is_os}");];
 IF $var1 == "active" ["Activate feature";];
 IF @is_admin($user_id) ["Grant access";];
 IF $status != "complete" || $progress < 100 ["Continue processing";];

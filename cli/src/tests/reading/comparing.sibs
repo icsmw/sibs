@@ -1,11 +1,11 @@
 $mode == "dev"
 $mode != "dev"
-@os(window) == "true"
-@os(window) != "true"
+@env::is_os(window) == "true"
+@env::is_os(window) != "true"
 "dev" == $mode
 "dev" != $mode
-"true" == @os(window)
-"true" != @os(window)
+"true" == @env::is_os(window)
+"true" != @env::is_os(window)
 $version == "1.0"
 $status != "success"
 @env(PROD) == "false"

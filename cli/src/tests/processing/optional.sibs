@@ -10,11 +10,11 @@ test [
 ];
 test [
     $a = "one";
-    $a == "one" => $b = @repeat("true"; 1);
+    $a == "one" => $b = @str::repeat("true"; 1);
     $b;
 ];
 test [
     $a = "one";
-    $a == "one" => $b = @repeat(true; 1);
+    $a == "one" => $b = @str::repeat(true; 1);
     $b;
 ];

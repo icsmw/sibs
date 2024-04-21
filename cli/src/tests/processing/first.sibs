@@ -25,9 +25,9 @@ test [
 test [
     $a = "one";
     $b = FIRST [
-        $a == "two" => @repeat(bla; 2);
-        $a == "three" => @repeat(bla; 2);
-        $a == "one" => @repeat(bla; 3);
+        $a == "two" => @str::repeat(bla; 2);
+        $a == "three" => @str::repeat(bla; 2);
+        $a == "one" => @str::repeat(bla; 3);
     ];
     $b == "blablabla" => "true";
 ];

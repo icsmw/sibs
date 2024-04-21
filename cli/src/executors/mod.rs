@@ -2,11 +2,9 @@ mod api;
 pub mod env;
 mod error;
 pub mod fs;
-pub mod get_os;
 pub mod import;
-pub mod os;
-pub mod repeat;
 pub mod store;
+pub mod str;
 
 use crate::{inf::any::AnyValue, inf::context::Context};
 use api::*;
@@ -40,15 +38,7 @@ pub fn register(store: &mut Store) -> Result<(), E> {
         import::Import::get_name(),
         <import::Import as Executor>::execute,
     )?;
-    store.insert(os::Os::get_name(), <os::Os as Executor>::execute)?;
-    store.insert(
-        repeat::Repeat::get_name(),
-        <repeat::Repeat as Executor>::execute,
-    )?;
-    store.insert(
-        get_os::GetOs::get_name(),
-        <get_os::GetOs as Executor>::execute,
-    )?;
+    str::register(store)?;
     fs::register(store)?;
     env::register(store)?;
     Ok(())

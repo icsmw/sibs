@@ -30,24 +30,24 @@
         /// release dev >> build developing version
         /// release prod >> build production version
         :self:build($mode);
-        @os(window) => `yarn run build-win`;
-        @os(linux) => `yarn run build-linux`;
-        @os(darwin) => `yarn run build-darwin`;
+        @env::is_os(window) => `yarn run build-win`;
+        @env::is_os(linux) => `yarn run build-linux`;
+        @env::is_os(darwin) => `yarn run build-darwin`;
     ];
     distribution [
         /// Name and compress release artifacts
         $version = @read_as_string(./package.json) >> @find(/"version": "([\d\.])"/gi);
-        IF @os(linux) || @os(darwin) [ "release{$version}-win.zip"; ] ELSE [ "bla"; ];
-        @os(window) => $file_name = "release{$version}-win.zip";
-        @os(linux) => $file_name = "release{$version}-linux.zip";
-        @os(darwin) => $file_name = "release{$version}-darwin.zip";
-        @os(window) => [
+        IF @env::is_os(linux) || @env::is_os(darwin) [ "release{$version}-win.zip"; ] ELSE [ "bla"; ];
+        @env::is_os(window) => $file_name = "release{$version}-win.zip";
+        @env::is_os(linux) => $file_name = "release{$version}-linux.zip";
+        @env::is_os(darwin) => $file_name = "release{$version}-darwin.zip";
+        @env::is_os(window) => [
             @cd(something);
             `zip ./release/unpacked-win {$file_name}`;
             @cd(..);
         ];
-        @os(linux) => `tgz ./release/unpacked-linux {$file_name}`;
-        @os(darwin) => `tgz ./release/unpacked-mac {$file_name}`;
+        @env::is_os(linux) => `tgz ./release/unpacked-linux {$file_name}`;
+        @env::is_os(darwin) => `tgz ./release/unpacked-mac {$file_name}`;
     ];
     collect [
         $files = @read_as_lines(./some_file);

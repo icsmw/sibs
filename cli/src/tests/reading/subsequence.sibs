@@ -2,7 +2,7 @@ $variable == "one"
 @one == "one"
 $variable == "one" || $variable == "two"
 $variable == "one"
-@os(linux) || @os(darwin)
+@env::is_os(linux) || @env::is_os(darwin)
 $variable == "one"
 $var1 == "active"
 @is_admin($user_id)

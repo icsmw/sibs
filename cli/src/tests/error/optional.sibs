@@ -1,7 +1,7 @@
-@os (window) =>;
-@os (linux) => [];
-@os (darwin) => $file_name1 = release{$version}-darwin.zip"
-@os (darwin) => $file_name2 = "release{$version}-darwin.zip;
-@os (@darwin => $file_name3) = release{$version}-darwin.zip";
-@os (@darwin =>) #(app) ;
-@os (darwin) => ;
+@env::is_os (window) =>;
+@env::is_os (linux) => [];
+@env::is_os (darwin) => $file_name1 = release{$version}-darwin.zip"
+@env::is_os (darwin) => $file_name2 = "release{$version}-darwin.zip;
+@env::is_os (@darwin => $file_name3) = release{$version}-darwin.zip";
+@env::is_os (@darwin =>) #(app) ;
+@env::is_os (darwin) => ;

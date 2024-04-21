@@ -57,8 +57,8 @@ as value can be:
 # Function
 Name of function starts from @ and include alphabetic and numeric symbols, also “-” and “_”. Examples of function names: 
 @get
-@get_os
-@os-get
+@env::os
+@env::is_os-get
 
 function can have arguments in “(…)” and divided with “;”. For example:
 @find(“something”)
@@ -125,7 +125,7 @@ This is optional action. If condition returns true, action will be fired. Condit
 
 For example:
 
-@os linux => `ls -lsa`;
+@env::is_os linux => `ls -lsa`;
 
 As condition can be used:
 - Function,
@@ -233,10 +233,10 @@ Statements starts with key-word FIRST and has after Block with actions.
 Example:
 
 FIRST [
-    @os(window) => "release{$version}-win.zip";
-    @os(linux) => "release{$version}-linux.zip";
-    @os(darwin) => "release{$version}-darwin.zip";
-    @exit(1; "Unsupported OS: {@os}");
+    @env::is_os(window) => "release{$version}-win.zip";
+    @env::is_os(linux) => "release{$version}-linux.zip";
+    @env::is_os(darwin) => "release{$version}-darwin.zip";
+    @exit(1; "Unsupported OS: {@env::is_os}");
 ];
 
 First runs actions one by one and returns the first value from some actions (not all actions return values)

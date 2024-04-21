@@ -33,8 +33,8 @@ true != false doesn't work
 - show trace like:
 ```
 1 │         $c_str = "value_c_{$a_str}-{$b_str}";
-12 │         $d_bool = @os(linux);
-13 │         IF @os(linux) [
+12 │         $d_bool = @env::is_os(linux);
+13 │         IF @env::is_os(linux) [
 14 │             :self:build("smth"; "prod1");
                                       ^^^^^
                                       Calling of task

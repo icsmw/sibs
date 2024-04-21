@@ -6,7 +6,7 @@
 @copy(../path\ with\ spaces; ./node_modules);
 @toLowerCase(SoMe\;TeXt\;);
 @toLowerCase(SoMe\;TeXt\;);
-@exit(1; "Unsupported OS: {@os}");
+@exit(1; "Unsupported OS: {@env::is_os}");
 @copy(./path/file; ./dest/; "some_new_filename{$prefix}.zip");
 @read_as_string(./package.json) >> @find(/\"version\":\ \"([\d\.])\"/gi);
 @read_as_string(./package.json) >> @find(/\"version\":\ \"([\d\.])\"/gi) >> @filter(123);
@@ -52,7 +52,7 @@
 @mute(@toggle_mute("current_state"));
 @unmute(@toggle_mute("current_state"));
 @shuffle(@toggle_shuffle("playlist_id"));
-@repeat(@set_repeat_mode("track"; "all"));
+@str::repeat(@set_repeat_mode("track"; "all"));
 @no_repeat(@set_repeat_mode("off"));
 @next_track(@get_next("playlist"; "current_track"));
 @previous_track(@get_previous("playlist"; "current_track"));

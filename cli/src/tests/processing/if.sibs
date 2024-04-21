@@ -90,32 +90,32 @@ test [
     ];
 ];
 test [
-    $a = @get_os;
-    IF @os($a) == "true" [
+    $a = @env::os;
+    IF @env::is_os($a) == "true" [
         "true";
     ] ELSE [
         "false";
     ];
 ];
 test [
-    $a = @get_os;
-    IF "true" == @os($a) [
+    $a = @env::os;
+    IF "true" == @env::is_os($a) [
         "true";
     ] ELSE [
         "false";
     ];
 ];
 test [
-    $a = @get_os;
-    IF "true" == @os($a) && @os($a) == "true"[
+    $a = @env::os;
+    IF "true" == @env::is_os($a) && @env::is_os($a) == "true"[
         "true";
     ] ELSE [
         "false";
     ];
 ];
 test [
-    $a = @get_os;
-    IF "true" == @os($a) || @os($a) == "true"[
+    $a = @env::os;
+    IF "true" == @env::is_os($a) || @env::is_os($a) == "true"[
         "true";
     ] ELSE [
         "false";
@@ -213,32 +213,32 @@ test [
     ];
 ];
 test [
-    $a = @get_os;
-    IF @os($a) == true [
+    $a = @env::os;
+    IF @env::is_os($a) == true [
         true;
     ] ELSE [
         false;
     ];
 ];
 test [
-    $a = @get_os;
-    IF true == @os($a) [
+    $a = @env::os;
+    IF true == @env::is_os($a) [
         true;
     ] ELSE [
         false;
     ];
 ];
 test [
-    $a = @get_os;
-    IF true == @os($a) && @os($a) == true[
+    $a = @env::os;
+    IF true == @env::is_os($a) && @env::is_os($a) == true[
         true;
     ] ELSE [
         false;
     ];
 ];
 test [
-    $a = @get_os;
-    IF true == @os($a) || @os($a) == true[
+    $a = @env::os;
+    IF true == @env::is_os($a) || @env::is_os($a) == true[
         true;
     ] ELSE [
         false;
@@ -336,64 +336,64 @@ test [
     ];
 ];
 test [
-    $a = @get_os;
-    IF @os($a) == true [
+    $a = @env::os;
+    IF @env::is_os($a) == true [
         true;
     ] ELSE [
         false;
     ];
 ];
 test [
-    $a = @get_os;
-    IF true == @os($a) [
+    $a = @env::os;
+    IF true == @env::is_os($a) [
         true;
     ] ELSE [
         false;
     ];
 ];
 test [
-    $a = @get_os;
-    IF true == @os($a) && @os($a) == true[
+    $a = @env::os;
+    IF true == @env::is_os($a) && @env::is_os($a) == true[
         true;
     ] ELSE [
         false;
     ];
 ];
 test [
-    $a = @get_os;
-    IF true == @os($a) || @os($a) == true[
+    $a = @env::os;
+    IF true == @env::is_os($a) || @env::is_os($a) == true[
         true;
     ] ELSE [
         false;
     ];
 ];
 test [
-    $a = @get_os;
-    IF @os($a) == true [
+    $a = @env::os;
+    IF @env::is_os($a) == true [
         true;
     ] ELSE [
         false;
     ];
 ];
 test [
-    $a = @get_os;
-    IF @os($a) [
+    $a = @env::os;
+    IF @env::is_os($a) [
         true;
     ] ELSE [
         false;
     ];
 ];
 test [
-    $a = @get_os;
-    IF @os($a) && @os($a) [
+    $a = @env::os;
+    IF @env::is_os($a) && @env::is_os($a) [
         true;
     ] ELSE [
         false;
     ];
 ];
 test [
-    $a = @get_os;
-    IF @os($a) || @os($a) [
+    $a = @env::os;
+    IF @env::is_os($a) || @env::is_os($a) [
         true;
     ] ELSE [
         false;

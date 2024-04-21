@@ -267,8 +267,18 @@ impl TryAnyTo<Vec<std::path::PathBuf>> for AnyValue {
 impl TryAnyTo<String> for AnyValue {
     fn try_to(&self) -> Result<String, E> {
         Ok(self
-            .get_as::<String>()
+            .get_as_string()
             .ok_or(E::Converting(String::from("String")))?
             .to_owned())
+    }
+}
+
+impl TryAnyTo<usize> for AnyValue {
+    fn try_to(&self) -> Result<usize, E> {
+        usize::try_from(
+            self.get_as_integer()
+                .ok_or(E::Converting(String::from("usize")))?,
+        )
+        .map_err(|_| E::Converting(String::from("isize to usize")))
     }
 }

@@ -34,20 +34,20 @@
     /// release prod >> build production version
     release($mode: dev | prod) [
         :self:build($mode);
-        @os(window) => `yarn run build-win`;
-        @os(linux) => `yarn run build-linux`;
-        @os(darwin) => `yarn run build-darwin`;
-        IF @os(linux) ["release{$version}-linux.zip";] IF @os(darwin) ["release{$version}-mac.zip";] IF @os(windows) ["release{$version}-win.zip";] ELSE [@exit(1; "Unsupported OS: {@os}");];
-        IF @os(linux) || @os(darwin) ["release{$version}-normal_os.zip";] ELSE ["release{$version}-windows.zip";];
-        IF @os(linux) [@cd(./linux);] IF @os(darwin) [@cd(./mac);] IF @os(windows) [@cd(./windows);] ELSE [@exit(1; "Unsupported OS: {@os}");];
-        IF $variable == "one" [@cd(./linux);] IF $variable == "two" [@cd(./mac);] IF $variable == "three" [@cd(./windows);] ELSE [@exit(1; "Unsupported OS: {@os}");];
-        IF (@user_active("user_id") && $last_login < @now) || (@user_subscription("user_id") == "expired" && $email_sent == false) [@cd(./linux);] IF (@user_active("user_id") && $last_login < @now) || (@user_subscription("user_id") == "expired" && $email_sent == false) [@cd(./mac);] IF (@user_active("user_id") && $last_login < @now) || (@user_subscription("user_id") == "expired" && $email_sent == false) [@cd(./windows);] ELSE [@exit(1; "Unsupported OS: {@os}");];
+        @env::is_os(window) => `yarn run build-win`;
+        @env::is_os(linux) => `yarn run build-linux`;
+        @env::is_os(darwin) => `yarn run build-darwin`;
+        IF @env::is_os(linux) ["release{$version}-linux.zip";] IF @env::is_os(darwin) ["release{$version}-mac.zip";] IF @env::is_os(windows) ["release{$version}-win.zip";] ELSE [@exit(1; "Unsupported OS: {@env::is_os}");];
+        IF @env::is_os(linux) || @env::is_os(darwin) ["release{$version}-normal_os.zip";] ELSE ["release{$version}-windows.zip";];
+        IF @env::is_os(linux) [@cd(./linux);] IF @env::is_os(darwin) [@cd(./mac);] IF @env::is_os(windows) [@cd(./windows);] ELSE [@exit(1; "Unsupported OS: {@env::is_os}");];
+        IF $variable == "one" [@cd(./linux);] IF $variable == "two" [@cd(./mac);] IF $variable == "three" [@cd(./windows);] ELSE [@exit(1; "Unsupported OS: {@env::is_os}");];
+        IF (@user_active("user_id") && $last_login < @now) || (@user_subscription("user_id") == "expired" && $email_sent == false) [@cd(./linux);] IF (@user_active("user_id") && $last_login < @now) || (@user_subscription("user_id") == "expired" && $email_sent == false) [@cd(./mac);] IF (@user_active("user_id") && $last_login < @now) || (@user_subscription("user_id") == "expired" && $email_sent == false) [@cd(./windows);] ELSE [@exit(1; "Unsupported OS: {@env::is_os}");];
     ];
     optional [
-        @os(darwin) => "release{$version}-darwin.zip";
-        @os(window) => [@cd(something1);@sh("zip ./release/unpacked-win {$file_name}");@cd(..);];
+        @env::is_os(darwin) => "release{$version}-darwin.zip";
+        @env::is_os(window) => [@cd(something1);@sh("zip ./release/unpacked-win {$file_name}");@cd(..);];
         $mode != "dev" => [@cd(something2);@sh("zip ./release/unpacked-win {$file_name}");@cd(..);];
-        @os(something) => $file_name = FIRST [@os(window) => "release{$version}-win.zip";@os(linux) => "release{$version}-linux.zip";@os(darwin) => "release{$version}-darwin.zip";@exit(1; "Unsupported OS: {@os}");];
+        @env::is_os(something) => $file_name = FIRST [@env::is_os(window) => "release{$version}-win.zip";@env::is_os(linux) => "release{$version}-linux.zip";@env::is_os(darwin) => "release{$version}-darwin.zip";@exit(1; "Unsupported OS: {@env::is_os}");];
         @check_env("production") => $deploy = true;
         $is_logged_in => @logout_user;
         $system == "windows" => `shutdown /s`;

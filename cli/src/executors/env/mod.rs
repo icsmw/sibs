@@ -36,6 +36,10 @@ pub fn register(store: &mut Store) -> Result<(), E> {
         Ok(std::env::consts::OS.to_string())
     }
     #[import(env)]
+    fn is_os(os: String) -> Result<bool, E> {
+        Ok(std::env::consts::OS.to_lowercase() == os.to_lowercase())
+    }
+    #[import(env)]
     fn family() -> Result<String, E> {
         Ok(std::env::consts::FAMILY.to_string())
     }
@@ -48,9 +52,7 @@ mod test {
         elements::Task,
         error::LinkedErr,
         inf::{
-            journal,
             operator::{Operator, E},
-            tests::*,
             Configuration, Context, Journal, Scope,
         },
         process_string,

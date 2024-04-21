@@ -2,20 +2,20 @@
 #(exit: ../../../../target/debug)
     /// Success exit
     success [
-        @os(windows) => `exit.exe 0 5000 10 100`;
-        @os(linux) => `./exit 0 5000 10 100`;
+        @env::is_os(windows) => `exit.exe 0 5000 10 100`;
+        @env::is_os(linux) => `./exit 0 5000 10 100`;
     ];
     /// Fail exit
     fail [
         `ls -lsa`;
         `pwd`;
-        @os(windows) => `exit.exe 1 5000 10 100`;
-        @os(linux) => `exit 1 5000 10 100`;
+        @env::is_os(windows) => `exit.exe 1 5000 10 100`;
+        @env::is_os(linux) => `exit 1 5000 10 100`;
     ];
     /// Custom run
     custom($code: {number})[
         `ls -lsa`;
         `pwd`;
-        @os(windows) => `exit.exe {$code} 5000 10 100`;
-        @os(linux) => `exit {$code} 5000 10 100`;
+        @env::is_os(windows) => `exit.exe {$code} 5000 10 100`;
+        @env::is_os(linux) => `exit {$code} 5000 10 100`;
     ];

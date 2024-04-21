@@ -1,10 +1,10 @@
 test [
-    $a = @get_os;
-    @os($a);
+    $a = @env::os;
+    @env::is_os($a);
 ];
 test [
-    $a = @get_os;
-    $b = @os($a) >> @repeat(3);
+    $a = @env::os;
+    $b = @env::is_os($a) >> @str::repeat(3);
     IF $b == "truetruetrue" [
         "true";
     ];
