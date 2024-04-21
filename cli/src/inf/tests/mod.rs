@@ -25,16 +25,6 @@ pub fn trim_semicolon(src: &str) -> String {
     }
 }
 
-pub fn get_reader_for_str(content: &str) -> (Sources, Reader, Journal) {
-    let journal = Journal::init(Configuration::logs());
-    let mut src = Sources::new(&journal);
-    let reader = src
-        .reader()
-        .unbound(content)
-        .expect("Unbound reader is created");
-    (src, reader, journal)
-}
-
 pub fn get_rt() -> Runtime {
     Builder::new_multi_thread()
         .worker_threads(4)

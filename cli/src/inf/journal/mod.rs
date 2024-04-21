@@ -58,6 +58,15 @@ impl Journal {
         instance
     }
 
+    #[cfg(test)]
+    pub fn dummy() -> Self {
+        let (tx, _rx): (UnboundedSender<Demand>, UnboundedReceiver<Demand>) = unbounded_channel();
+        Self {
+            tx,
+            cfg: Arc::new(Configuration::logs()),
+            state: CancellationToken::new(),
+        }
+    }
     pub async fn destroy(&self) -> Result<(), E> {
         self.tx.send(Demand::Destroy).map_err(|_e| E {
             sig: String::from("Journal"),

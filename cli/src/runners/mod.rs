@@ -46,6 +46,7 @@ macro_rules! read_string {
             .reader()
             .unbound(&content)
             .expect("Unbound reader is created");
+        #[allow(clippy::redundant_closure_call)]
         let result = panic::catch_unwind(AssertUnwindSafe(|| $reading(&mut reader, &mut src)));
         let output = match result {
             Err(e) => {
@@ -92,6 +93,7 @@ macro_rules! process_string {
             .reader()
             .unbound(&content)
             .expect("Unbound reader is created");
+        #[allow(clippy::redundant_closure_call)]
         let result = panic::catch_unwind(AssertUnwindSafe(|| $reading(&mut reader, &mut src)));
         let output = match result {
             Err(e) => {
@@ -104,6 +106,7 @@ macro_rules! process_string {
         };
         let cx = Context::init(Scenario::dummy(), &src, &journal).expect("Context is created");
         let sc = Scope::init(Some(cx.scenario.filename.clone()));
+        #[allow(clippy::redundant_closure_call)]
         let result = AssertUnwindSafe($executing(output, cx.clone(), sc, journal.clone()))
             .catch_unwind()
             .await;
@@ -156,6 +159,7 @@ macro_rules! process_file {
             };
         let cx = Context::init(scenario, &src, &journal).expect("Context is created");
         let sc = Scope::init(Some(cx.scenario.filename.clone()));
+        #[allow(clippy::redundant_closure_call)]
         let result = AssertUnwindSafe($executing(elements, cx.clone(), sc, journal.clone()))
             .catch_unwind()
             .await;
@@ -197,6 +201,7 @@ macro_rules! read_file {
                 }
             };
         let cx = Context::init(scenario.clone(), &src, &journal).expect("Context is created");
+        #[allow(clippy::redundant_closure_call)]
         let result = AssertUnwindSafe($executing(elements, cx.clone(), journal.clone()))
             .catch_unwind()
             .await;
