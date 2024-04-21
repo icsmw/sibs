@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod walker {
     use crate::{
-        inf::{Configuration, Journal},
+        inf::Journal,
         reader::{Reader, Sources},
     };
 
@@ -326,35 +326,24 @@ mod walker {
 #[cfg(test)]
 mod reading {
     use crate::{
+        elements::Element,
         error::LinkedErr,
         inf::{Configuration, Journal},
+        read_file,
         reader::{error::E, Reader, Sources},
     };
 
     #[tokio::test]
-    async fn reading() -> Result<(), LinkedErr<E>> {
-        let journal = Journal::init(Configuration::logs());
-        let mut src = Sources::new(&journal);
-        let result = match Reader::read_file(
+    async fn reading() {
+        read_file!(
+            &Configuration::logs(),
             &std::env::current_dir()
                 .unwrap()
                 .join("./src/tests/reading/full/build.sibs"),
-            true,
-            Some(&mut src),
-            &journal,
-        )
-        .await
-        {
-            Ok(components) => {
-                assert_eq!(components.len(), 11);
-                Ok(())
+            |elements: Vec<Element>, _: Context, _: Journal| async move {
+                assert_eq!(elements.len(), 11);
+                Ok::<(), LinkedErr<E>>(())
             }
-            Err(err) => {
-                src.report_err(&err)?;
-                Err(err)
-            }
-        };
-        journal.destroy().await;
-        result
+        );
     }
 }

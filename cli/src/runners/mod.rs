@@ -181,17 +181,30 @@ macro_rules! process_file {
 
 #[macro_export]
 macro_rules! read_file {
-    ($cfg:expr, $scenario:expr, $executing:expr) => {{
+    ($cfg:expr, $filename:expr, $executing:expr) => {{
+        use futures_lite::FutureExt;
+        use std::{any::Any, panic::AssertUnwindSafe, path::PathBuf};
+        use $crate::{
+            inf::{Context, Scenario},
+            runners::exit,
+        };
+
         let journal = Journal::init(Configuration::logs());
         let cfg = $cfg as &dyn Any;
         let Some(cfg) = cfg.downcast_ref::<Configuration>().cloned() else {
             return exit(journal, "Expecting &Configuration as the first argument").await;
         };
-        let scenario = $scenario as &dyn Any;
-        let Some(scenario) = scenario.downcast_ref::<Scenario>().cloned() else {
-            return exit(journal, "Expecting &Scenario as the second argument").await;
+        let filename = $filename as &dyn Any;
+        let Some(filename) = filename.downcast_ref::<PathBuf>().cloned() else {
+            return exit(journal, "Expecting &PathBuf as the second argument").await;
         };
         let journal = Journal::init(cfg);
+        let scenario = match Scenario::from(&filename) {
+            Ok(scenario) => scenario,
+            Err(err) => {
+                return exit(journal, &err.to_string()).await;
+            }
+        };
         let mut src = Sources::new(&journal);
         let elements =
             match Reader::read_file(&scenario.filename, true, Some(&mut src), &journal).await {
@@ -231,7 +244,7 @@ async fn test() {
     );
     read_file!(
         &Configuration::logs(),
-        &Scenario::dummy(),
+        &PathBuf::from(""),
         |elements: Vec<Element>, cx: Context, journal: Journal| async move {
             let _ = cx.atlas.clone();
             journal.destroy().await.map_err(|_| String::new())?;
