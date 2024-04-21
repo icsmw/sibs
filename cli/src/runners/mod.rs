@@ -92,7 +92,6 @@ macro_rules! process_string {
             .reader()
             .unbound(&content)
             .expect("Unbound reader is created");
-
         let result = panic::catch_unwind(AssertUnwindSafe(|| $reading(&mut reader, &mut src)));
         let output = match result {
             Err(e) => {
@@ -106,6 +105,58 @@ macro_rules! process_string {
         let cx = Context::init(Scenario::dummy(), &src, &journal).expect("Context is created");
         let sc = Scope::init(Some(cx.scenario.filename.clone()));
         let result = AssertUnwindSafe($executing(output, cx.clone(), sc, journal.clone()))
+            .catch_unwind()
+            .await;
+        let _ = cx.destroy().await;
+        match result {
+            Err(e) => {
+                return exit(journal, &format!("{e:?}")).await;
+            }
+            Ok(Err(e)) => {
+                return exit(journal, &e.to_string()).await;
+            }
+            _ => {}
+        };
+        if journal.destroy().await.is_err() {
+            eprintln!("Fail destroy journal");
+        }
+    }};
+}
+
+#[macro_export]
+macro_rules! process_file {
+    ($cfg:expr, $filename:expr, $executing:expr) => {{
+        use futures_lite::FutureExt;
+        use std::{any::Any, panic::AssertUnwindSafe, path::PathBuf};
+        use $crate::{inf::Scenario, runners::exit};
+
+        let journal = Journal::init(Configuration::logs());
+        let cfg = $cfg as &dyn Any;
+        let Some(cfg) = cfg.downcast_ref::<Configuration>().cloned() else {
+            return exit(journal, "Expecting &Configuration as the first argument").await;
+        };
+        let filename = $filename as &dyn Any;
+        let Some(filename) = filename.downcast_ref::<PathBuf>().cloned() else {
+            return exit(journal, "Expecting &PathBuf as the second argument").await;
+        };
+        let journal = Journal::init(cfg);
+        let scenario = match Scenario::from(&filename) {
+            Ok(scenario) => scenario,
+            Err(err) => {
+                return exit(journal, &err.to_string()).await;
+            }
+        };
+        let mut src = Sources::new(&journal);
+        let elements =
+            match Reader::read_file(&scenario.filename, true, Some(&mut src), &journal).await {
+                Ok(elements) => elements,
+                Err(err) => {
+                    return exit(journal, &err).await;
+                }
+            };
+        let cx = Context::init(scenario, &src, &journal).expect("Context is created");
+        let sc = Scope::init(Some(cx.scenario.filename.clone()));
+        let result = AssertUnwindSafe($executing(elements, cx.clone(), sc, journal.clone()))
             .catch_unwind()
             .await;
         let _ = cx.destroy().await;
@@ -164,6 +215,15 @@ macro_rules! read_file {
 }
 
 async fn test() {
+    process_file!(
+        &Configuration::logs(),
+        &PathBuf::from(""),
+        |elements: Vec<Element>, cx: Context, sc: Scope, journal: Journal| async move {
+            let _ = cx.atlas.clone();
+            journal.destroy().await.map_err(|_| String::new())?;
+            Ok::<(), String>(())
+        }
+    );
     read_file!(
         &Configuration::logs(),
         &Scenario::dummy(),

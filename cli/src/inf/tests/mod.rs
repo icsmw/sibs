@@ -25,44 +25,6 @@ pub fn trim_semicolon(src: &str) -> String {
     }
 }
 
-pub type ExecutionResult<'a, R> = Pin<Box<dyn Future<Output = R> + 'a>>;
-
-pub async fn execution_from_file<
-    'a,
-    T,
-    E: Clone + std::error::Error + std::fmt::Display + ToString,
-    F,
->(
-    filename: &PathBuf,
-    src: &Sources,
-    cb: F,
-) -> Result<T, LinkedErr<E>>
-where
-    F: FnOnce(Context, Scope) -> ExecutionResult<'a, Result<T, LinkedErr<E>>>,
-{
-    let journal = Journal::init(Configuration::logs());
-    let cx = match Context::init(
-        Scenario::from(filename).expect("correct scenario path"),
-        src,
-        &journal,
-    ) {
-        Ok(cx) => cx,
-        Err(err) => panic!("Fail to create executing context: {err}"),
-    };
-    let sc = Scope::init(Some(cx.scenario.filename.clone()));
-    let result = cb(cx.clone(), sc.clone()).await;
-    if let Err(err) = sc.destroy().await {
-        eprint!("Fail to destroy executing scope: {err}");
-    }
-    if let Err(err) = cx.destroy().await {
-        eprint!("Fail to destroy executing context: {err}");
-    }
-    if let Err(err) = journal.destroy().await {
-        eprint!("Fail to destroy journal: {err}");
-    }
-    result
-}
-
 pub fn get_reader_for_str(content: &str) -> (Sources, Reader, Journal) {
     let journal = Journal::init(Configuration::logs());
     let mut src = Sources::new(&journal);
