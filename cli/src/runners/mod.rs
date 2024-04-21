@@ -1,10 +1,5 @@
-use crate::{
-    elements::Element,
-    inf::{journal::Report, Configuration, Context, Journal, Scenario, Scope},
-    reader::{Reader, Sources},
-};
-use futures_lite::FutureExt;
-use std::{any::Any, panic::AssertUnwindSafe, process};
+use crate::inf::{journal::Report, Journal};
+use std::process;
 
 pub(crate) async fn exit<T>(journal: Journal, err: T)
 where
@@ -230,38 +225,4 @@ macro_rules! read_file {
         };
         let _ = journal.destroy().await;
     }};
-}
-
-async fn test() {
-    process_file!(
-        &Configuration::logs(),
-        &PathBuf::from(""),
-        |elements: Vec<Element>, cx: Context, sc: Scope, journal: Journal| async move {
-            let _ = cx.atlas.clone();
-            journal.destroy().await.map_err(|_| String::new())?;
-            Ok::<(), String>(())
-        }
-    );
-    read_file!(
-        &Configuration::logs(),
-        &PathBuf::from(""),
-        |elements: Vec<Element>, cx: Context, journal: Journal| async move {
-            let _ = cx.atlas.clone();
-            journal.destroy().await.map_err(|_| String::new())?;
-            Ok::<(), String>(())
-        }
-    );
-    read_string!(
-        &Configuration::logs(),
-        &String::from("test"),
-        |reader: &mut Reader, src: &mut Sources| { Ok::<Vec<String>, String>(Vec::new()) }
-    );
-    process_string!(
-        &Configuration::logs(),
-        &String::from("test"),
-        |reader: &mut Reader, src: &mut Sources| { Ok::<Vec<String>, String>(Vec::new()) },
-        |output: Vec<String>, cx: Context, sc: Scope, journal: Journal| async move {
-            Ok::<(), String>(())
-        }
-    )
 }
