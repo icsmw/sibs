@@ -140,21 +140,23 @@ mod reading {
     use crate::{
         elements::Command,
         error::LinkedErr,
-        inf::{operator::Operator, tests::*},
-        reader::{chars, Reading, E},
+        inf::{operator::Operator, tests::*, Configuration},
+        read_string,
+        reader::{chars, Reader, Reading, Sources, E},
     };
 
     #[tokio::test]
-    async fn reading() -> Result<(), LinkedErr<E>> {
-        runner(
-            include_str!("../../tests/reading/command.sibs"),
-            |mut src, mut reader| {
+    async fn reading() {
+        read_string!(
+            &Configuration::logs(),
+            &include_str!("../../tests/reading/command.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
                 let origins = include_str!("../../tests/reading/command.sibs")
                     .split('\n')
                     .map(|s| s.to_string())
                     .collect::<Vec<String>>();
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(Command::read(&mut reader))? {
+                while let Some(entity) = src.report_err_if(Command::read(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(reader.recent()),
@@ -172,19 +174,19 @@ mod reading {
                 }
                 assert_eq!(count, 130);
                 assert!(reader.rest().trim().is_empty());
-                Ok(())
-            },
-        )
-        .await
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
     }
 
     #[tokio::test]
-    async fn tokens() -> Result<(), LinkedErr<E>> {
-        runner(
-            include_str!("../../tests/reading/command.sibs"),
-            |_, mut reader| {
+    async fn tokens() {
+        read_string!(
+            &Configuration::logs(),
+            &include_str!("../../tests/reading/command.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = Command::read(&mut reader)? {
+                while let Some(entity) = src.report_err_if(Command::read(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(&entity.to_string()),
@@ -200,10 +202,9 @@ mod reading {
                 }
                 assert_eq!(count, 130);
                 assert!(reader.rest().trim().is_empty());
-                Ok(())
-            },
-        )
-        .await
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
     }
 }
 

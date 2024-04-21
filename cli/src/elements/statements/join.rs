@@ -95,17 +95,19 @@ mod reading {
     use crate::{
         elements::Join,
         error::LinkedErr,
-        inf::{tests::*, Operator},
-        reader::{chars, Reading, E},
+        inf::{tests::*, Configuration, Operator},
+        read_string,
+        reader::{chars, Reader, Reading, Sources, E},
     };
 
     #[tokio::test]
-    async fn reading() -> Result<(), LinkedErr<E>> {
-        runner(
-            include_str!("../../tests/reading/join.sibs"),
-            |mut src, mut reader| {
+    async fn reading() {
+        read_string!(
+            &Configuration::logs(),
+            &include_str!("../../tests/reading/join.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(Join::read(&mut reader))? {
+                while let Some(entity) = src.report_err_if(Join::read(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(reader.recent()),
@@ -115,19 +117,19 @@ mod reading {
                 }
                 assert_eq!(count, 2);
                 assert!(reader.rest().trim().is_empty());
-                Ok(())
-            },
-        )
-        .await
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
     }
 
     #[tokio::test]
-    async fn tokens() -> Result<(), LinkedErr<E>> {
-        runner(
-            include_str!("../../tests/reading/join.sibs"),
-            |_, mut reader| {
+    async fn tokens() {
+        read_string!(
+            &Configuration::logs(),
+            &include_str!("../../tests/reading/join.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = Join::read(&mut reader)? {
+                while let Some(entity) = src.report_err_if(Join::read(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(&format!("{entity}")),
@@ -141,26 +143,27 @@ mod reading {
                 }
                 assert_eq!(count, 2);
                 assert!(reader.rest().trim().is_empty());
-                Ok(())
-            },
-        )
-        .await
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
     }
 
     #[tokio::test]
-    async fn error() -> Result<(), LinkedErr<E>> {
+    async fn error() {
         let samples = include_str!("../../tests/error/join.sibs");
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            count += runner(sample, |_, mut reader| {
-                assert!(Join::read(&mut reader).is_err());
-                Ok(1)
-            })
-            .await?;
+            count += read_string!(
+                &Configuration::logs(),
+                sample,
+                |reader: &mut Reader, _: &mut Sources| {
+                    assert!(Join::read(reader).is_err());
+                    Ok::<usize, LinkedErr<E>>(1)
+                }
+            );
         }
         assert_eq!(count, samples.len());
-        Ok(())
     }
 }
 

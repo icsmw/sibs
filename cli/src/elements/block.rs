@@ -145,13 +145,15 @@ mod reading {
     use crate::{
         elements::Block,
         error::LinkedErr,
-        inf::tests::*,
-        reader::{Reading, E},
+        inf::{tests::*, Configuration},
+        read_string,
+        reader::{Reader, Reading, Sources, E},
     };
 
     #[tokio::test]
-    async fn reading() -> Result<(), LinkedErr<E>> {
-        runner(
+    async fn reading() {
+        read_string!(
+            &Configuration::logs(),
             &format!(
                 "[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
                 include_str!("../tests/reading/if.sibs"),
@@ -161,23 +163,23 @@ mod reading {
                 include_str!("../tests/reading/each.sibs"),
                 include_str!("../tests/reading/refs.sibs")
             ),
-            |mut src, mut reader| {
-                while let Some(entity) = src.report_err_if(Block::read(&mut reader))? {
+            |reader: &mut Reader, src: &mut Sources| {
+                while let Some(entity) = src.report_err_if(Block::read(reader))? {
                     assert_eq!(
                         trim_carets(reader.recent()),
                         trim_carets(&entity.to_string())
                     );
                 }
                 assert!(reader.rest().trim().is_empty());
-                Ok(())
-            },
-        )
-        .await
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
     }
 
     #[tokio::test]
-    async fn tokens() -> Result<(), LinkedErr<E>> {
-        runner(
+    async fn tokens() {
+        read_string!(
+            &Configuration::logs(),
             &format!(
                 "[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
                 include_str!("../tests/reading/if.sibs"),
@@ -187,18 +189,17 @@ mod reading {
                 include_str!("../tests/reading/each.sibs"),
                 include_str!("../tests/reading/refs.sibs")
             ),
-            |_, mut reader| {
-                while let Some(entity) = Block::read(&mut reader)? {
+            |reader: &mut Reader, src: &mut Sources| {
+                while let Some(entity) = src.report_err_if(Block::read(reader))? {
                     assert_eq!(
                         trim_carets(&entity.to_string()),
                         reader.get_fragment(&entity.token)?.lined
                     );
                 }
                 assert!(reader.rest().trim().is_empty());
-                Ok(())
-            },
-        )
-        .await
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
     }
 }
 

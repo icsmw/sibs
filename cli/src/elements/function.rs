@@ -319,71 +319,80 @@ impl Operator for Function {
 
 #[cfg(test)]
 mod reading {
+
     use crate::{
         elements::Function,
         error::LinkedErr,
-        inf::{operator::Operator, tests::*},
-        reader::{chars, Reading, E},
+        inf::{operator::Operator, tests::*, Configuration, Journal},
+        read_string,
+        reader::{chars, Reader, Reading, Sources, E},
     };
 
     #[tokio::test]
-    async fn reading() -> Result<(), LinkedErr<E>> {
+    async fn reading() {
         let content = include_str!("../tests/reading/function.sibs");
         let len = content.split('\n').count();
-        runner(&content, |mut src, mut reader| {
-            let mut count = 0;
-            while let Some(entity) = src.report_err_if(Function::read(&mut reader))? {
-                let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-                assert_eq!(
-                    trim_carets(reader.recent()),
-                    trim_carets(&format!("{entity};")),
-                    "Line: {}",
-                    count + 1
-                );
-                count += 1;
-            }
-            assert_eq!(count, len);
-            assert!(reader.rest().trim().is_empty());
-            Ok(())
-        })
-        .await
-    }
-
-    #[tokio::test]
-    async fn tokens() -> Result<(), LinkedErr<E>> {
-        let content = include_str!("../tests/reading/function.sibs");
-        let len = content.split('\n').count();
-        runner(&content, |_, mut reader| {
-            let mut count = 0;
-            while let Some(entity) = Function::read(&mut reader)? {
-                let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-                assert_eq!(
-                    trim_carets(&format!("{entity}")),
-                    reader.get_fragment(&entity.token)?.content
-                );
-                for arg in entity.args.iter() {
+        read_string!(
+            &Configuration::logs(),
+            &include_str!("../tests/reading/function.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
+                let mut count = 0;
+                while let Some(entity) = src.report_err_if(Function::read(reader))? {
+                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
-                        trim_carets(&arg.to_string()),
-                        reader.get_fragment(&arg.token())?.lined
+                        trim_carets(reader.recent()),
+                        trim_carets(&format!("{entity};")),
+                        "Line: {}",
+                        count + 1
                     );
+                    count += 1;
                 }
-                count += 1;
+                assert_eq!(count, len);
+                assert!(reader.rest().trim().is_empty());
+                Ok::<(), LinkedErr<E>>(())
             }
-            assert_eq!(count, len);
-            assert!(reader.rest().trim().is_empty());
-            Ok(())
-        })
-        .await
+        );
     }
 
     #[tokio::test]
-    async fn error() -> Result<(), LinkedErr<E>> {
+    async fn tokens() {
+        let content = include_str!("../tests/reading/function.sibs");
+        let len = content.split('\n').count();
+        read_string!(
+            &Configuration::logs(),
+            &include_str!("../tests/reading/function.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
+                let mut count = 0;
+                while let Some(entity) = src.report_err_if(Function::read(reader))? {
+                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                    assert_eq!(
+                        trim_carets(&format!("{entity}")),
+                        reader.get_fragment(&entity.token)?.content
+                    );
+                    for arg in entity.args.iter() {
+                        assert_eq!(
+                            trim_carets(&arg.to_string()),
+                            reader.get_fragment(&arg.token())?.lined
+                        );
+                    }
+                    count += 1;
+                }
+                assert_eq!(count, len);
+                assert!(reader.rest().trim().is_empty());
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn error() {
         let samples = include_str!("../tests/error/function.sibs");
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
+        let cfg = Configuration::logs();
         for sample in samples.iter() {
-            count += runner(sample, |_, mut reader| {
-                let func = Function::read(&mut reader);
+            count += read_string!(&cfg, sample, |reader: &mut Reader, _: &mut Sources| {
+                let func = Function::read(reader);
                 if func.is_ok() {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert!(
@@ -395,12 +404,10 @@ mod reading {
                 } else {
                     assert!(func.is_err(), "Line {}: func: {:?}", count + 1, func);
                 }
-                Ok(1)
-            })
-            .await?;
+                Ok::<usize, LinkedErr<E>>(1)
+            });
         }
         assert_eq!(count, samples.len());
-        Ok(())
     }
 }
 
@@ -411,37 +418,39 @@ mod processing {
         error::LinkedErr,
         inf::{
             operator::{Operator, E},
-            tests::*,
+            Configuration, Context, Journal, Scope,
         },
-        reader::{chars, Reading, Sources},
+        process_string,
+        reader::{chars, Reader, Reading, Sources},
     };
 
     #[tokio::test]
-    async fn reading() -> Result<(), LinkedErr<E>> {
-        let (tasks, src): (Vec<Task>, Sources) = runner(
-            include_str!("../tests/processing/functions.sibs"),
-            |src, mut reader| {
+    async fn reading() {
+        process_string!(
+            &Configuration::logs(),
+            &include_str!("../tests/processing/functions.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Task> = Vec::new();
-                while let Some(task) = Task::read(&mut reader)? {
+                while let Some(task) = src.report_err_if(Task::read(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
                 }
-                Ok::<(Vec<Task>, Sources), LinkedErr<E>>((tasks, src))
+                Ok::<Vec<Task>, LinkedErr<E>>(tasks)
             },
-        )
-        .await?;
-        for task in tasks.iter() {
-            let result = execution(&src, |cx, sc| {
-                Box::pin(async move { task.execute(None, &[], &[], cx, sc).await })
-            })
-            .await?
-            .expect("Task returns some value");
-            assert_eq!(
-                result.get_as_string().expect("Task returns string value"),
-                "true".to_owned()
-            );
-        }
-        Ok(())
+            |tasks: Vec<Task>, cx: Context, sc: Scope, _: Journal| async move {
+                for task in tasks.iter() {
+                    let result = task
+                        .execute(None, &[], &[], cx.clone(), sc.clone())
+                        .await?
+                        .expect("Task returns some value");
+                    assert_eq!(
+                        result.get_as_string().expect("Task returns string value"),
+                        "true".to_owned()
+                    );
+                }
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
     }
 }
 

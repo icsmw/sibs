@@ -208,24 +208,27 @@ mod reading {
     use crate::{
         elements::{Component, ElTarget, Element},
         error::LinkedErr,
-        inf::{operator::Operator, tests::*},
-        reader::{Reading, E},
+        inf::{operator::Operator, tests::*, Configuration},
+        read_string,
+        reader::{Reader, Reading, Sources, E},
     };
 
     #[tokio::test]
-    async fn reading() -> Result<(), LinkedErr<E>> {
-        let components = include_str!("../tests/reading/component.sibs").to_string();
-        let components = components.split('\n').collect::<Vec<&str>>();
+    async fn reading() {
+        let components = include_str!("../tests/reading/component.sibs")
+            .split('\n')
+            .collect::<Vec<&str>>();
         let tasks = include_str!("../tests/reading/tasks.sibs");
-        runner(
+        read_string!(
+            &Configuration::logs(),
             &components
                 .iter()
                 .map(|c| format!("{c}\n{tasks}"))
                 .collect::<Vec<String>>()
                 .join("\n"),
-            |mut src, mut reader| {
+            |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(Component::read(&mut reader))? {
+                while let Some(entity) = src.report_err_if(Component::read(reader))? {
                     assert_eq!(
                         trim_carets(reader.recent()),
                         trim_carets(&entity.to_string()),
@@ -234,26 +237,29 @@ mod reading {
                 }
                 assert_eq!(count, components.len());
                 assert!(reader.rest().trim().is_empty());
-                Ok(())
-            },
-        )
-        .await
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
     }
 
     #[tokio::test]
-    async fn tokens() -> Result<(), LinkedErr<E>> {
-        let components = include_str!("../tests/reading/component.sibs").to_string();
-        let components = components.split('\n').collect::<Vec<&str>>();
+    async fn tokens() {
+        let components = include_str!("../tests/reading/component.sibs")
+            .split('\n')
+            .collect::<Vec<&str>>();
         let tasks = include_str!("../tests/reading/tasks.sibs");
-        runner(
+        read_string!(
+            &Configuration::logs(),
             &components
                 .iter()
                 .map(|c| format!("{c}\n{tasks}"))
                 .collect::<Vec<String>>()
                 .join("\n"),
-            |_, mut reader| {
+            |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(el) = Element::include(&mut reader, &[ElTarget::Component])? {
+                while let Some(el) =
+                    src.report_err_if(Element::include(reader, &[ElTarget::Component]))?
+                {
                     assert!(matches!(el, Element::Component(..)));
                     assert_eq!(
                         trim_carets(&el.to_string()),
@@ -282,14 +288,13 @@ mod reading {
                 }
                 assert_eq!(count, components.len());
                 assert!(reader.rest().trim().is_empty());
-                Ok(())
-            },
-        )
-        .await
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
     }
 
     #[tokio::test]
-    async fn error() -> Result<(), LinkedErr<E>> {
+    async fn error() {
         let samples = include_str!("../tests/error/component.sibs");
         let samples = samples
             .split('\n')
@@ -297,14 +302,16 @@ mod reading {
             .collect::<Vec<String>>();
         let mut count = 0;
         for sample in samples.iter() {
-            count += runner(sample, |_, mut reader| {
-                assert!(Component::read(&mut reader).is_err());
-                Ok(1)
-            })
-            .await?;
+            count += read_string!(
+                &Configuration::logs(),
+                sample,
+                |reader: &mut Reader, _: &mut Sources| {
+                    assert!(Component::read(reader).is_err());
+                    Ok::<usize, LinkedErr<E>>(1)
+                }
+            );
         }
         assert_eq!(count, samples.len());
-        Ok(())
     }
 }
 
@@ -315,9 +322,10 @@ mod processing {
         error::LinkedErr,
         inf::{
             operator::{Operator, E},
-            tests::*,
+            Configuration, Context, Journal, Scope,
         },
-        reader::{Reading, Sources},
+        process_string,
+        reader::{Reader, Reading, Sources},
     };
 
     const VALUES: &[&[&str]] = &[
@@ -328,20 +336,18 @@ mod processing {
     ];
 
     #[tokio::test]
-    async fn reading() -> Result<(), E> {
-        let (components, src): (Vec<Component>, Sources) = runner(
-            include_str!("../tests/processing/component.sibs"),
-            |src, mut reader| {
+    async fn reading() {
+        process_string!(
+            &Configuration::logs(),
+            &include_str!("../tests/processing/component.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
                 let mut components: Vec<Component> = Vec::new();
-                while let Some(task) = Component::read(&mut reader)? {
+                while let Some(task) = src.report_err_if(Component::read(reader))? {
                     components.push(task);
                 }
-                Ok::<(Vec<Component>, Sources), LinkedErr<E>>((components, src))
+                Ok::<Vec<Component>, LinkedErr<E>>(components)
             },
-        )
-        .await?;
-        execution(&src, |cx, sc| {
-            Box::pin(async move {
+            |components: Vec<Component>, cx: Context, sc: Scope, _: Journal| async move {
                 for (i, component) in components.iter().enumerate() {
                     let result = component
                         .execute(
@@ -361,11 +367,9 @@ mod processing {
                         "true".to_owned()
                     );
                 }
-                Ok(())
-            })
-        })
-        .await;
-        Ok(())
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
     }
 }
 

@@ -178,17 +178,19 @@ mod reading {
     use crate::{
         elements::Reference,
         error::LinkedErr,
-        inf::{operator::Operator, tests::*},
-        reader::{chars, Reading, E},
+        inf::{operator::Operator, tests::*, Configuration},
+        read_string,
+        reader::{chars, Reader, Reading, Sources, E},
     };
 
     #[tokio::test]
-    async fn reading() -> Result<(), LinkedErr<E>> {
-        runner(
-            include_str!("../tests/reading/refs.sibs"),
-            |mut src, mut reader| {
+    async fn reading() {
+        read_string!(
+            &Configuration::logs(),
+            &include_str!("../tests/reading/refs.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(Reference::read(&mut reader))? {
+                while let Some(entity) = src.report_err_if(Reference::read(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(reader.recent()),
@@ -200,19 +202,19 @@ mod reading {
                 }
                 assert_eq!(count, 6);
                 assert!(reader.rest().trim().is_empty());
-                Ok(())
-            },
-        )
-        .await
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
     }
 
     #[tokio::test]
-    async fn tokens() -> Result<(), LinkedErr<E>> {
-        runner(
-            include_str!("../tests/reading/refs.sibs"),
-            |_, mut reader| {
+    async fn tokens() {
+        read_string!(
+            &Configuration::logs(),
+            &include_str!("../tests/reading/refs.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = Reference::read(&mut reader)? {
+                while let Some(entity) = src.report_err_if(Reference::read(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     for input in entity.inputs.iter() {
                         assert_eq!(
@@ -225,28 +227,28 @@ mod reading {
                     count += 1;
                 }
                 assert!(reader.rest().trim().is_empty());
-                Ok(())
-            },
-        )
-        .await
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
     }
 
     #[tokio::test]
-    async fn error() -> Result<(), LinkedErr<E>> {
-        let samples = include_str!("../tests/error/refs.sibs").to_string();
+    async fn error() {
+        let samples = include_str!("../tests/error/refs.sibs");
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            count += runner(sample, |_, mut reader| {
-                let result = Reference::read(&mut reader);
-                println!("{result:?}");
-                assert!(result.is_err(), "Line: {}", count + 1);
-                Ok(1)
-            })
-            .await?;
+            count += read_string!(
+                &Configuration::logs(),
+                sample,
+                |reader: &mut Reader, _: &mut Sources| {
+                    let result = Reference::read(reader);
+                    assert!(result.is_err(), "Line: {}", count + 1);
+                    Ok::<usize, LinkedErr<E>>(1)
+                }
+            );
         }
         assert_eq!(count, samples.len());
-        Ok(())
     }
 }
 

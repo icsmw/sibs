@@ -136,19 +136,21 @@ mod reading {
     use crate::{
         elements::Values,
         error::LinkedErr,
-        inf::{operator::Operator, tests::*},
-        reader::{Reading, E},
+        inf::{operator::Operator, tests::*, Configuration},
+        read_string,
+        reader::{Reader, Reading, Sources, E},
     };
 
     #[tokio::test]
-    async fn reading() -> Result<(), LinkedErr<E>> {
-        let samples = include_str!("../tests/reading/values.sibs").to_string();
+    async fn reading() {
+        let samples = include_str!("../tests/reading/values.sibs");
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
+        let cfg = Configuration::logs();
         for sample in samples.iter() {
-            count += runner(sample, |mut src, mut reader| {
+            count += read_string!(&cfg, sample, |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                let entity = src.report_err_if(Values::read(&mut reader))?;
+                let entity = src.report_err_if(Values::read(reader))?;
                 assert!(entity.is_some(), "Line: {}", count + 1);
                 let entity = entity.unwrap();
                 assert_eq!(
@@ -158,23 +160,22 @@ mod reading {
                     count + 1
                 );
                 count += 1;
-                Ok(count)
-            })
-            .await?;
+                Ok::<usize, LinkedErr<E>>(count)
+            });
         }
         assert_eq!(count, samples.len());
-        Ok(())
     }
 
     #[tokio::test]
-    async fn tokens() -> Result<(), LinkedErr<E>> {
-        let samples = include_str!("../tests/reading/values.sibs").to_string();
+    async fn tokens() {
+        let samples = include_str!("../tests/reading/values.sibs");
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
+        let cfg = Configuration::logs();
         for sample in samples.iter() {
-            count += runner(sample, |_, mut reader| {
+            count += read_string!(&cfg, sample, |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                let entity = Values::read(&mut reader)?.unwrap();
+                let entity = src.report_err_if(Values::read(reader))?.unwrap();
                 assert_eq!(
                     trim_carets(&entity.to_string()),
                     reader.get_fragment(&entity.token)?.lined,
@@ -190,27 +191,25 @@ mod reading {
                     );
                 }
                 count += 1;
-                Ok(count)
-            })
-            .await?;
+                Ok::<usize, LinkedErr<E>>(count)
+            });
         }
         assert_eq!(count, samples.len());
-        Ok(())
     }
 
     #[tokio::test]
-    async fn error() -> Result<(), LinkedErr<E>> {
-        let samples = include_str!("../tests/error/values.sibs").to_string();
+    async fn error() {
+        let samples = include_str!("../tests/error/values.sibs");
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
+        let cfg = Configuration::logs();
         for sample in samples.iter() {
-            let (_, mut reader, journal) = get_reader_for_str(sample);
-            journal.destroy().await;
-            assert!(Values::read(&mut reader).is_err());
-            count += 1;
+            count += read_string!(&cfg, sample, |reader: &mut Reader, _: &mut Sources| {
+                assert!(Values::read(reader).is_err());
+                Ok::<usize, LinkedErr<E>>(1)
+            });
         }
         assert_eq!(count, samples.len());
-        Ok(())
     }
 }
 
@@ -222,9 +221,10 @@ mod processing {
         inf::{
             any::AnyValue,
             operator::{Operator, E},
-            tests::*,
+            Configuration, Context, Journal, Scope,
         },
-        reader::{chars, Reading, Sources},
+        process_string, read_string,
+        reader::{chars, Reader, Reading, Sources},
     };
 
     const VALUES: &[(&str, &str)] = &[
@@ -238,32 +238,30 @@ mod processing {
     const NESTED_VALUES: &[(&str, &str)] = &[("a6", "c:a;d:b;d:c")];
 
     #[tokio::test]
-    async fn reading() -> Result<(), LinkedErr<E>> {
-        let components: Vec<Component> = runner(
-            include_str!("../tests/processing/values_components.sibs"),
-            |_, mut reader| {
+    async fn reading() {
+        let components: Vec<Component> = read_string!(
+            &Configuration::logs(),
+            &include_str!("../tests/processing/values_components.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
                 let mut components: Vec<Component> = Vec::new();
-                while let Some(component) = Component::read(&mut reader)? {
+                while let Some(component) = src.report_err_if(Component::read(reader))? {
                     components.push(component);
                 }
                 Ok::<Vec<Component>, LinkedErr<E>>(components)
-            },
-        )
-        .await?;
-        let (tasks, src): (Vec<Task>, Sources) = runner(
-            include_str!("../tests/processing/values.sibs"),
-            |src, mut reader| {
+            }
+        );
+        process_string!(
+            &Configuration::logs(),
+            &include_str!("../tests/processing/values.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Task> = Vec::new();
-                while let Some(task) = Task::read(&mut reader)? {
+                while let Some(task) = src.report_err_if(Task::read(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
                 }
-                Ok::<(Vec<Task>, Sources), LinkedErr<E>>((tasks, src))
+                Ok::<Vec<Task>, LinkedErr<E>>(tasks)
             },
-        )
-        .await?;
-        execution(&src, |cx, sc| {
-            Box::pin(async move {
+            |tasks: Vec<Task>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
                     assert!(task
                         .execute(components.first(), &components, &[], cx.clone(), sc.clone())
@@ -290,11 +288,9 @@ mod processing {
                     }
                     assert_eq!(output.join(";"), value.to_string());
                 }
-                Ok(())
-            })
-        })
-        .await;
-        Ok(())
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
     }
 }
 

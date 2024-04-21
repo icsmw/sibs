@@ -124,21 +124,23 @@ mod reading {
     use crate::{
         elements::PatternString,
         error::LinkedErr,
-        inf::{operator::Operator, tests::*},
-        reader::{Reading, E},
+        inf::{operator::Operator, tests::*, Configuration},
+        read_string,
+        reader::{Reader, Reading, Sources, E},
     };
 
     #[tokio::test]
-    async fn reading() -> Result<(), LinkedErr<E>> {
-        runner(
-            include_str!("../../tests/reading/pattern_string.sibs"),
-            |mut src, mut reader| {
+    async fn reading() {
+        read_string!(
+            &Configuration::logs(),
+            &include_str!("../../tests/reading/pattern_string.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
                 let origins = include_str!("../../tests/reading/pattern_string.sibs")
                     .split('\n')
                     .map(|s| s.to_string())
                     .collect::<Vec<String>>();
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(PatternString::read(&mut reader))? {
+                while let Some(entity) = src.report_err_if(PatternString::read(reader))? {
                     assert_eq!(
                         trim_carets(reader.recent()),
                         trim_carets(&entity.to_string()),
@@ -153,19 +155,19 @@ mod reading {
                 }
                 assert_eq!(count, 96);
                 assert!(reader.rest().trim().is_empty());
-                Ok(())
-            },
-        )
-        .await
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
     }
 
     #[tokio::test]
-    async fn tokens() -> Result<(), LinkedErr<E>> {
-        runner(
-            include_str!("../../tests/reading/pattern_string.sibs"),
-            |_, mut reader| {
+    async fn tokens() {
+        read_string!(
+            &Configuration::logs(),
+            &include_str!("../../tests/reading/pattern_string.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = PatternString::read(&mut reader)? {
+                while let Some(entity) = PatternString::read(reader)? {
                     assert_eq!(
                         trim_carets(&entity.to_string()),
                         reader.get_fragment(&entity.token)?.content
@@ -180,10 +182,9 @@ mod reading {
                 }
                 assert_eq!(count, 96);
                 assert!(reader.rest().trim().is_empty());
-                Ok(())
-            },
-        )
-        .await
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
     }
 }
 

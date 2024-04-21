@@ -213,18 +213,20 @@ mod reading {
     use crate::{
         elements::{ElTarget, Element, Task},
         error::LinkedErr,
-        inf::{operator::Operator, tests::*},
-        reader::{chars, Reading, E},
+        inf::{operator::Operator, tests::*, Configuration},
+        read_string,
+        reader::{chars, Reader, Reading, Sources, E},
     };
 
     #[tokio::test]
-    async fn reading() -> Result<(), LinkedErr<E>> {
-        runner(
-            include_str!("../tests/reading/tasks.sibs"),
-            |mut src, mut reader| {
+    async fn reading() {
+        read_string!(
+            &Configuration::logs(),
+            &include_str!("../tests/reading/tasks.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
                 while let Some(el) =
-                    src.report_err_if(Element::include(&mut reader, &[ElTarget::Task]))?
+                    src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
                 {
                     assert!(matches!(el, Element::Task(..)));
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
@@ -233,19 +235,21 @@ mod reading {
                 }
                 assert!(reader.rest().trim().is_empty());
                 assert_eq!(count, 11);
-                Ok(())
-            },
-        )
-        .await
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
     }
 
     #[tokio::test]
-    async fn tokens() -> Result<(), LinkedErr<E>> {
-        runner(
-            include_str!("../tests/reading/tasks.sibs"),
-            |_, mut reader| {
+    async fn tokens() {
+        read_string!(
+            &Configuration::logs(),
+            &include_str!("../tests/reading/tasks.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(el) = Element::include(&mut reader, &[ElTarget::Task])? {
+                while let Some(el) =
+                    src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert!(matches!(el, Element::Task(..)));
                     if let Element::Task(el, _) = el {
@@ -278,26 +282,27 @@ mod reading {
                 }
                 assert!(reader.rest().trim().is_empty());
                 assert_eq!(count, 11);
-                Ok(())
-            },
-        )
-        .await
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
     }
 
     #[tokio::test]
-    async fn error() -> Result<(), LinkedErr<E>> {
-        let samples = include_str!("../tests/error/tasks.sibs").to_string();
+    async fn error() {
+        let samples = include_str!("../tests/error/tasks.sibs");
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            count += runner(sample, |_, mut reader| {
-                assert!(Task::read(&mut reader).is_err());
-                Ok(1)
-            })
-            .await?;
+            count += read_string!(
+                &Configuration::logs(),
+                sample,
+                |reader: &mut Reader, _: &mut Sources| {
+                    assert!(Task::read(reader).is_err());
+                    Ok::<usize, LinkedErr<E>>(1)
+                }
+            );
         }
         assert_eq!(count, samples.len());
-        Ok(())
     }
 }
 
@@ -308,52 +313,50 @@ mod processing {
         error::LinkedErr,
         inf::{
             operator::{Operator, E},
-            tests::*,
+            Configuration, Context, Journal, Scope,
         },
-        reader::{chars, Reading, Sources},
+        process_string,
+        reader::{chars, Reader, Reading, Sources},
     };
 
     const VALUES: &[&[&str]] = &[&["a"], &["a", "b"], &["a"], &["a", "b"], &["a", "b", "c"]];
 
     #[tokio::test]
-    async fn reading() -> Result<(), LinkedErr<E>> {
-        let (tasks, mut src): (Vec<Task>, Sources) = runner(
-            include_str!("../tests/processing/tasks.sibs"),
-            |src, mut reader| {
+    async fn reading() {
+        process_string!(
+            &Configuration::logs(),
+            &include_str!("../tests/processing/tasks.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Task> = Vec::new();
-                while let Some(task) = Task::read(&mut reader)? {
+                while let Some(task) = src.report_err_if(Task::read(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
                 }
-                Ok::<(Vec<Task>, Sources), LinkedErr<E>>((tasks, src))
+                Ok::<Vec<Task>, LinkedErr<E>>(tasks)
             },
-        )
-        .await?;
-        for (i, task) in tasks.iter().enumerate() {
-            let result = execution(&src, |cx, sc| {
-                Box::pin(async move {
-                    task.execute(
-                        None,
-                        &[],
-                        &VALUES[i]
-                            .iter()
-                            .map(|s| s.to_string())
-                            .collect::<Vec<String>>(),
-                        cx,
-                        sc,
-                    )
-                    .await
-                })
-            })
-            .await?
-            .expect("Task returns some value");
-            assert_eq!(
-                result.get_as_string().expect("Task returns string value"),
-                "true".to_owned()
-            );
-        }
-
-        Ok(())
+            |tasks: Vec<Task>, cx: Context, sc: Scope, _: Journal| async move {
+                for (i, task) in tasks.iter().enumerate() {
+                    let result = task
+                        .execute(
+                            None,
+                            &[],
+                            &VALUES[i]
+                                .iter()
+                                .map(|s| s.to_string())
+                                .collect::<Vec<String>>(),
+                            cx.clone(),
+                            sc.clone(),
+                        )
+                        .await?
+                        .expect("Task returns some value");
+                    assert_eq!(
+                        result.get_as_string().expect("Task returns string value"),
+                        "true".to_owned()
+                    );
+                }
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
     }
 }
 

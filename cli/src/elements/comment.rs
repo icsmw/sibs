@@ -68,26 +68,27 @@ mod reading {
     use crate::{
         elements::Task,
         error::LinkedErr,
-        inf::tests::*,
-        reader::{chars, Reading, E},
+        inf::Configuration,
+        read_string,
+        reader::{chars, Reader, Reading, Sources, E},
     };
 
     #[tokio::test]
-    async fn reading() -> Result<(), LinkedErr<E>> {
-        runner(
-            include_str!("../tests/reading/comments.sibs"),
-            |mut src, mut reader| {
-                while let Some(entity) = src.report_err_if(Task::read(&mut reader))? {
+    async fn reading() {
+        read_string!(
+            &Configuration::logs(),
+            &include_str!("../tests/reading/comments.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
+                while let Some(entity) = src.report_err_if(Task::read(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     for el in entity.block.elements.iter() {
                         assert_eq!(el.get_metadata().comments().len(), 2);
                     }
                 }
                 assert!(reader.rest().trim().is_empty());
-                Ok(())
-            },
-        )
-        .await
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
     }
 }
 

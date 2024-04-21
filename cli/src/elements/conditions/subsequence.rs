@@ -164,66 +164,71 @@ mod reading {
     use crate::{
         elements::Subsequence,
         error::LinkedErr,
-        inf::{operator::Operator, tests::*},
-        reader::{Reading, E},
+        inf::{operator::Operator, tests::*, Configuration},
+        read_string,
+        reader::{Reader, Reading, Sources, E},
     };
 
     #[tokio::test]
-    async fn reading() -> Result<(), LinkedErr<E>> {
+    async fn reading() {
         let content = include_str!("../../tests/reading/subsequence.sibs")
             .split('\n')
             .map(|s| s.to_string())
             .collect::<Vec<String>>();
         let mut count = 0;
         for str in content.iter() {
-            count += runner(str, |mut src, mut reader| {
-                let entity = src.report_err_if(Subsequence::read(&mut reader))?;
-                assert!(entity.is_some(), "Line: {}", count + 1);
-                let entity = entity.unwrap();
-                assert_eq!(
-                    trim_carets(str),
-                    trim_carets(&format!("{entity}")),
-                    "Line: {}",
-                    count + 1
-                );
-                Ok(1)
-            })
-            .await?;
+            count += read_string!(
+                &Configuration::logs(),
+                str,
+                |reader: &mut Reader, src: &mut Sources| {
+                    let entity = src.report_err_if(Subsequence::read(reader))?;
+                    assert!(entity.is_some(), "Line: {}", count + 1);
+                    let entity = entity.unwrap();
+                    assert_eq!(
+                        trim_carets(str),
+                        trim_carets(&format!("{entity}")),
+                        "Line: {}",
+                        count + 1
+                    );
+                    Ok::<usize, LinkedErr<E>>(1)
+                }
+            );
         }
         assert_eq!(count, content.len());
-        Ok(())
     }
 
     #[tokio::test]
-    async fn tokens() -> Result<(), LinkedErr<E>> {
+    async fn tokens() {
         let content = include_str!("../../tests/reading/subsequence.sibs")
             .split('\n')
             .map(|s| s.to_string())
             .collect::<Vec<String>>();
         for (count, str) in content.iter().enumerate() {
-            runner(str, |_, mut reader| {
-                let entity = Subsequence::read(&mut reader)?;
-                assert!(entity.is_some(), "Line: {}", count + 1);
-                let entity = entity.unwrap();
-                assert_eq!(
-                    trim_carets(&format!("{entity}")),
-                    trim_carets(&reader.get_fragment(&entity.token)?.lined),
-                    "Line: {}",
-                    count + 1
-                );
-                for el in entity.subsequence.iter() {
+            read_string!(
+                &Configuration::logs(),
+                str,
+                |reader: &mut Reader, src: &mut Sources| {
+                    let entity = src.report_err_if(Subsequence::read(reader))?;
+                    assert!(entity.is_some(), "Line: {}", count + 1);
+                    let entity = entity.unwrap();
                     assert_eq!(
-                        trim_carets(&format!("{el}")),
-                        trim_carets(&reader.get_fragment(&el.token())?.lined),
+                        trim_carets(&format!("{entity}")),
+                        trim_carets(&reader.get_fragment(&entity.token)?.lined),
                         "Line: {}",
                         count + 1
                     );
+                    for el in entity.subsequence.iter() {
+                        assert_eq!(
+                            trim_carets(&format!("{el}")),
+                            trim_carets(&reader.get_fragment(&el.token())?.lined),
+                            "Line: {}",
+                            count + 1
+                        );
+                    }
+                    Ok::<(), LinkedErr<E>>(())
                 }
-                Ok(())
-            })
-            .await?;
+            );
         }
-        Ok(())
     }
 }
 
