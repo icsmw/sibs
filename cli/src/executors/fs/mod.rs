@@ -119,14 +119,18 @@ pub fn register(store: &mut Store) -> Result<(), E> {
 
 #[cfg(test)]
 mod test {
+    use journal::Journal;
+
     use crate::{
         elements::Task,
         error::LinkedErr,
         inf::{
+            journal,
             operator::{Operator, E},
-            tests::*,
+            Configuration, Context, Scope,
         },
-        reader::{chars, Reading, Sources},
+        process_string,
+        reader::{chars, Reader, Reading, Sources},
     };
 
     const TESTS: &[&str] = &[
@@ -135,7 +139,7 @@ mod test {
     ];
 
     #[tokio::test]
-    async fn reading() -> Result<(), E> {
+    async fn reading() {
         std::env::set_var("TEST_VAR", "TEST");
         let temp_file = std::env::temp_dir()
             .join("test.txt")
@@ -149,30 +153,35 @@ mod test {
             src
         }
         for test in TESTS.iter() {
-            let (tasks, mut src): (Vec<Task>, Sources) = runner(
+            process_string!(
+                &Configuration::logs(),
                 &apply_hooks(format!("test[{test}]"), hooks),
-                |src, mut reader| {
+                |reader: &mut Reader, src: &mut Sources| {
                     let mut tasks: Vec<Task> = Vec::new();
-                    while let Some(task) = Task::read(&mut reader)? {
+                    while let Some(task) = src.report_err_if(Task::read(reader))? {
                         let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                         tasks.push(task);
                     }
-                    Ok::<(Vec<Task>, Sources), LinkedErr<E>>((tasks, src))
+                    Ok::<Vec<Task>, LinkedErr<E>>(tasks)
                 },
-            )
-            .await?;
-            for task in tasks.iter() {
-                let result = execution(&src, |cx, sc| {
-                    Box::pin(async move { task.execute(None, &[], &[], cx, sc).await })
-                })
-                .await;
-                let value = src.report_err_if(result)?.expect("test returns some value");
-                assert_eq!(
-                    value.get_as_string().expect("test returns string value"),
-                    "true".to_owned()
-                );
-            }
+                |tasks: Vec<Task>, cx: Context, sc: Scope, journal: Journal| async move {
+                    for task in tasks.iter() {
+                        let result = task.execute(None, &[], &[], cx.clone(), sc.clone()).await;
+                        if let Err(err) = result.as_ref() {
+                            journal.report(err.into());
+                        }
+                        assert_eq!(
+                            result
+                                .expect("run of task is success")
+                                .expect("test returns some value")
+                                .get_as_string()
+                                .expect("test returns string value"),
+                            "true".to_owned()
+                        );
+                    }
+                    Ok::<(), LinkedErr<E>>(())
+                }
+            );
         }
-        Ok(())
     }
 }

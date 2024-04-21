@@ -203,7 +203,7 @@ mod reading {
             count += read_string!(
                 &Configuration::logs(),
                 sample,
-                |reader: &mut Reader, src: &mut Sources| {
+                |reader: &mut Reader, _: &mut Sources| {
                     let opt = Optional::read(reader);
                     println!("{opt:?}");
                     assert!(opt.is_err());
@@ -222,7 +222,6 @@ mod processing {
         error::LinkedErr,
         inf::{
             operator::{Operator, E},
-            tests::*,
             Configuration, Context, Journal, Scope,
         },
         process_string,
@@ -265,8 +264,9 @@ mod proptest {
     use crate::{
         elements::{ElTarget, Element, Optional, Task},
         error::LinkedErr,
-        inf::{operator::E, tests::*},
-        reader::Reading,
+        inf::{operator::E, tests::*, Configuration},
+        read_string,
+        reader::{Reader, Reading, Sources},
     };
     use proptest::prelude::*;
 
@@ -326,17 +326,19 @@ mod proptest {
         }
     }
 
-    fn reading(optional: Optional) -> Result<(), LinkedErr<E>> {
+    fn reading(optional: Optional) {
         get_rt().block_on(async {
             let origin = format!("test [\n{optional};\n];");
-            runner(&origin, |_, mut reader| {
-                while let Some(task) = Task::read(&mut reader)? {
-                    assert_eq!(format!("{task};"), origin);
+            read_string!(
+                &Configuration::logs(),
+                &origin,
+                |reader: &mut Reader, src: &mut Sources| {
+                    while let Some(task) = src.report_err_if(Task::read(reader))? {
+                        assert_eq!(format!("{task};"), origin);
+                    }
+                    Ok::<(), LinkedErr<E>>(())
                 }
-                Ok::<(), LinkedErr<E>>(())
-            })
-            .await?;
-            Ok(())
+            );
         })
     }
 
@@ -349,11 +351,7 @@ mod proptest {
         fn test_run_task(
             args in any_with::<Optional>(0)
         ) {
-            let res = reading(args.clone());
-            if res.is_err() {
-                println!("{res:?}");
-            }
-            prop_assert!(res.is_ok());
+            reading(args.clone());
         }
     }
 }

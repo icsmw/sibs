@@ -459,8 +459,9 @@ mod proptest {
     use crate::{
         elements::{ElTarget, Element, Function, Task},
         error::LinkedErr,
-        inf::{operator::E, tests::*},
-        reader::Reading,
+        inf::{operator::E, tests::*, Configuration},
+        read_string,
+        reader::{Reader, Reading, Sources},
     };
     use proptest::prelude::*;
 
@@ -522,17 +523,19 @@ mod proptest {
         }
     }
 
-    fn reading(func: Function) -> Result<(), LinkedErr<E>> {
+    fn reading(func: Function) {
         get_rt().block_on(async {
             let origin = format!("test [\n{func};\n];");
-            runner(&origin, |_, mut reader| {
-                while let Some(task) = Task::read(&mut reader)? {
-                    assert_eq!(format!("{task};"), origin);
+            read_string!(
+                &Configuration::logs(),
+                &origin,
+                |reader: &mut Reader, src: &mut Sources| {
+                    while let Some(task) = src.report_err_if(Task::read(reader))? {
+                        assert_eq!(format!("{task};"), origin);
+                    }
+                    Ok::<(), LinkedErr<E>>(())
                 }
-                Ok::<(), LinkedErr<E>>(())
-            })
-            .await?;
-            Ok(())
+            );
         })
     }
 
@@ -545,11 +548,7 @@ mod proptest {
         fn test_run_task(
             args in any_with::<Function>(0)
         ) {
-            let res = reading(args.clone());
-            if res.is_err() {
-                println!("{res:?}");
-            }
-            prop_assert!(res.is_ok());
+            reading(args.clone());
         }
     }
 }

@@ -259,8 +259,9 @@ mod proptest {
     use crate::{
         elements::{task::Task, Block, Each, ElTarget, Element, VariableName},
         error::LinkedErr,
-        inf::{operator::E, tests::*},
-        reader::Reading,
+        inf::{operator::E, tests::*, Configuration},
+        read_string,
+        reader::{Reader, Reading, Sources},
     };
     use proptest::prelude::*;
 
@@ -284,17 +285,19 @@ mod proptest {
         }
     }
 
-    fn reading(each: Each) -> Result<(), LinkedErr<E>> {
+    fn reading(each: Each) {
         get_rt().block_on(async {
             let origin = format!("test [\n{each};\n];");
-            runner(&origin, |_, mut reader| {
-                while let Some(task) = Task::read(&mut reader)? {
-                    assert_eq!(format!("{task};"), origin);
+            read_string!(
+                &Configuration::logs(),
+                &origin,
+                |reader: &mut Reader, src: &mut Sources| {
+                    while let Some(task) = src.report_err_if(Task::read(reader))? {
+                        assert_eq!(format!("{task};"), origin);
+                    }
+                    Ok::<(), LinkedErr<E>>(())
                 }
-                Ok::<(), LinkedErr<E>>(())
-            })
-            .await?;
-            Ok(())
+            );
         })
     }
 
@@ -307,11 +310,7 @@ mod proptest {
         fn test_run_task(
             args in any_with::<Each>(0)
         ) {
-            let res = reading(args.clone());
-            if res.is_err() {
-                println!("{res:?}");
-            }
-            prop_assert!(res.is_ok());
+            reading(args.clone());
         }
     }
 }

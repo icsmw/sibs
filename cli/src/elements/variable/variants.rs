@@ -99,42 +99,45 @@ mod reading {
     use crate::{
         elements::VariableVariants,
         error::LinkedErr,
-        inf::tests::*,
-        reader::{Reading, E},
+        inf::{tests::*, Configuration},
+        read_string,
+        reader::{Reader, Reading, Sources, E},
     };
 
     #[tokio::test]
-    async fn reading() -> Result<(), LinkedErr<E>> {
-        let samples = include_str!("../../tests/reading/variants.sibs").to_string();
+    async fn reading() {
+        let samples = include_str!("../../tests/reading/variants.sibs");
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            count += runner(sample, |mut src, mut reader| {
-                assert!(src
-                    .report_err_if(VariableVariants::read(&mut reader))
-                    .is_ok());
-                Ok(1)
-            })
-            .await?;
+            count += read_string!(
+                &Configuration::logs(),
+                sample,
+                |reader: &mut Reader, src: &mut Sources| {
+                    assert!(src.report_err_if(VariableVariants::read(reader)).is_ok());
+                    Ok::<usize, LinkedErr<E>>(1)
+                }
+            );
         }
         assert_eq!(count, samples.len());
-        Ok(())
     }
 
     #[tokio::test]
-    async fn error() -> Result<(), LinkedErr<E>> {
+    async fn error() {
         let samples = include_str!("../../tests/error/variants.sibs");
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
-            count += runner(sample, |_, mut reader| {
-                assert!(VariableVariants::read(&mut reader).is_err());
-                Ok(1)
-            })
-            .await?;
+            count += read_string!(
+                &Configuration::logs(),
+                sample,
+                |reader: &mut Reader, _: &mut Sources| {
+                    assert!(VariableVariants::read(reader).is_err());
+                    Ok::<usize, LinkedErr<E>>(1)
+                }
+            );
         }
         assert_eq!(count, samples.len());
-        Ok(())
     }
 }
 

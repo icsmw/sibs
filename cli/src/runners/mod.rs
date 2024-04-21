@@ -79,14 +79,18 @@ macro_rules! process_string {
             return exit(journal, "Expecting &Configuration as the first argument").await;
         };
         let content = $content as &dyn Any;
-        let Some(content) = content.downcast_ref::<&str>().cloned() else {
+        let content = if let Some(content) = content.downcast_ref::<&str>().cloned() {
+            content.to_string()
+        } else if let Some(content) = content.downcast_ref::<String>().cloned() {
+            content
+        } else {
             return exit(journal, "Expecting &content as the second argument").await;
         };
         let journal = Journal::init(cfg);
         let mut src = Sources::new(&journal);
         let mut reader = src
             .reader()
-            .unbound(content)
+            .unbound(&content)
             .expect("Unbound reader is created");
 
         let result = panic::catch_unwind(AssertUnwindSafe(|| $reading(&mut reader, &mut src)));
