@@ -353,7 +353,6 @@ impl Element {
         Self::parse(reader, targets, true)
     }
 
-    #[cfg(test)]
     pub fn get_metadata(&self) -> &Metadata {
         match self {
             Self::Function(_, md) => md,
@@ -626,7 +625,7 @@ impl Operator for Element {
         sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
-            match self {
+            let result = match self {
                 Self::Function(v, _) => v.execute(owner, components, args, cx, sc).await,
                 Self::If(v, _) => v.execute(owner, components, args, cx, sc).await,
                 Self::Each(v, _) => v.execute(owner, components, args, cx, sc).await,
@@ -654,6 +653,11 @@ impl Operator for Element {
                 Self::VariableType(..) => Ok(None),
                 Self::SimpleString(v, _) => v.execute(owner, components, args, cx, sc).await,
                 Self::Comment(_) => Ok(None),
+            };
+            if self.get_metadata().tolerance && result.is_err() {
+                Ok(None)
+            } else {
+                result
             }
         })
     }
@@ -688,16 +692,12 @@ mod processing {
                 Ok::<Vec<Element>, LinkedErr<E>>(elements)
             },
             |elements: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
-                // for el in elements.iter() {
-                //     let result = el
-                //         .execute(None, &[], &[], cx.clone(), sc.clone())
-                //         .await?
-                //         .expect("Task returns some value");
-                //     assert_eq!(
-                //         result.get_as_string().expect("Task returns string value"),
-                //         "true".to_owned()
-                //     );
-                // }
+                for el in elements.iter() {
+                    assert!(el
+                        .execute(None, &[], &[], cx.clone(), sc.clone())
+                        .await?
+                        .is_none());
+                }
                 Ok::<(), LinkedErr<E>>(())
             }
         );
