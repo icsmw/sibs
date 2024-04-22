@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Block, Component, ElTarget, Element, SimpleString},
+    elements::{Component, ElTarget, Element, SimpleString},
     error::LinkedErr,
     inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
     reader::{chars, Reader, Reading, E},
@@ -11,7 +11,7 @@ pub struct Task {
     pub name: SimpleString,
     pub declarations: Vec<Element>,
     pub dependencies: Vec<Element>,
-    pub block: Block,
+    pub block: Box<Element>,
     pub token: usize,
 }
 
@@ -71,7 +71,7 @@ impl Reading<Task> for Task {
                     Err(E::UnrecognizedCode(inner.move_to().end()).by_reader(&inner))?;
                 }
             }
-            if let Some(block) = Block::read(reader)? {
+            if let Some(block) = Element::include(reader, &[ElTarget::Block])? {
                 Ok(Some(Task {
                     name: SimpleString {
                         value: name,
@@ -80,7 +80,7 @@ impl Reading<Task> for Task {
                     declarations,
                     dependencies,
                     token: close(reader),
-                    block,
+                    block: Box::new(block),
                 }))
             } else {
                 Err(E::FailFindTaskActions.linked(&name_token))
@@ -263,7 +263,7 @@ mod reading {
                         );
                         assert_eq!(
                             trim_carets(&el.block.to_string()),
-                            trim_carets(&reader.get_fragment(&el.block.token)?.lined)
+                            trim_carets(&reader.get_fragment(&el.block.token())?.lined)
                         );
                         for declaration in el.declarations.iter() {
                             assert_eq!(
@@ -385,12 +385,12 @@ mod proptest {
                     Element::arbitrary_with((vec![ElTarget::Reference], deep)),
                     0..=5,
                 ),
-                Block::arbitrary_with(deep),
+                Element::arbitrary_with((vec![ElTarget::Block], deep)),
                 "[a-zA-Z_]*".prop_map(String::from),
             )
                 .prop_map(|(declarations, dependencies, block, name)| Task {
                     declarations,
-                    block,
+                    block: Box::new(block),
                     token: 0,
                     dependencies,
                     name: SimpleString {

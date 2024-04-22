@@ -66,7 +66,7 @@ impl Formation for Comment {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::Task,
+        elements::{Element, Task},
         error::LinkedErr,
         inf::Configuration,
         read_string,
@@ -81,8 +81,12 @@ mod reading {
             |reader: &mut Reader, src: &mut Sources| {
                 while let Some(entity) = src.report_err_if(Task::read(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-                    for el in entity.block.elements.iter() {
-                        assert_eq!(el.get_metadata().comments().len(), 2);
+                    if let Element::Block(block, _) = entity.block.as_ref() {
+                        for el in block.elements.iter() {
+                            assert_eq!(el.get_metadata().comments().len(), 2);
+                        }
+                    } else {
+                        panic!("Fail to get task's block");
                     }
                 }
                 assert!(reader.rest().trim().is_empty());

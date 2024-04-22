@@ -131,12 +131,18 @@ mod reading {
                     if let (Element::Task(origin, _), Element::Task(formated, _)) =
                         (el, &formated.elements[i])
                     {
-                        assert_eq!(origin.block.elements.len(), formated.block.elements.len());
-                        let origin = &origin.block.elements;
-                        let formated = &formated.block.elements;
-                        for (i, el) in origin.iter().enumerate() {
-                            assert_eq!(el.inner_to_string(), formated[i].inner_to_string());
-                            count += 1;
+                        if let (Element::Block(origin, _), Element::Block(formated, _)) =
+                            (origin.block.as_ref(), formated.block.as_ref())
+                        {
+                            assert_eq!(origin.elements.len(), formated.elements.len());
+                            let origin = &origin.elements;
+                            let formated = &formated.elements;
+                            for (i, el) in origin.iter().enumerate() {
+                                assert_eq!(el.inner_to_string(), formated[i].inner_to_string());
+                                count += 1;
+                            }
+                        } else {
+                            panic!("Fail to read blocks of tasks")
                         }
                     }
                 }

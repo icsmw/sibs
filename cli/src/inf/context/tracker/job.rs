@@ -1,4 +1,4 @@
-use crate::inf::{journal::OwnedJournal, operator::OperatorResult, tracker::Tracker};
+use crate::inf::{journal::OwnedJournal, tracker::Tracker};
 use std::{fmt::Display, time::Instant};
 
 #[derive(Clone, Debug)]
