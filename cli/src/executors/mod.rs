@@ -5,6 +5,7 @@ pub mod fs;
 pub mod load;
 pub mod store;
 pub mod str;
+pub mod test;
 
 use crate::{inf::any::AnyValue, inf::context::Context};
 use api::*;
@@ -37,6 +38,7 @@ pub fn register(store: &mut Store) -> Result<(), E> {
     str::register(store)?;
     fs::register(store)?;
     env::register(store)?;
+    test::register(store)?;
     Ok(())
 }
 
