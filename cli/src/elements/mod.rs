@@ -660,6 +660,51 @@ impl Operator for Element {
 }
 
 #[cfg(test)]
+mod processing {
+    use crate::{
+        elements::{ElTarget, Element},
+        error::LinkedErr,
+        inf::{
+            operator::{Operator, E},
+            Configuration, Context, Journal, Scope,
+        },
+        process_string,
+        reader::{chars, Reader, Sources},
+    };
+
+    #[tokio::test]
+    async fn reading() {
+        process_string!(
+            &Configuration::logs(),
+            &include_str!("../tests/processing/tolerance.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
+                let mut elements: Vec<Element> = Vec::new();
+                while let Some(el) =
+                    src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                {
+                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                    elements.push(el);
+                }
+                Ok::<Vec<Element>, LinkedErr<E>>(elements)
+            },
+            |elements: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
+                for el in elements.iter() {
+                    // let result = el
+                    //     .execute(None, &[], &[], cx.clone(), sc.clone())
+                    //     .await?
+                    //     .expect("Task returns some value");
+                    // assert_eq!(
+                    //     result.get_as_string().expect("Task returns string value"),
+                    //     "true".to_owned()
+                    // );
+                }
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
+    }
+}
+
+#[cfg(test)]
 mod proptest {
     use crate::{
         elements::{

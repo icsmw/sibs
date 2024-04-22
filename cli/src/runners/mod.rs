@@ -37,10 +37,7 @@ macro_rules! read_string {
         };
         let journal = Journal::init(cfg);
         let mut src = Sources::new(&journal);
-        let mut reader = src
-            .reader()
-            .unbound(&content)
-            .expect("Unbound reader is created");
+        let mut reader = Reader::unbound(&mut src, &content).expect("Unbound reader is created");
         #[allow(clippy::redundant_closure_call)]
         let result = panic::catch_unwind(AssertUnwindSafe(|| $reading(&mut reader, &mut src)));
         let output = match result {
@@ -84,10 +81,7 @@ macro_rules! process_string {
         };
         let journal = Journal::init(cfg);
         let mut src = Sources::new(&journal);
-        let mut reader = src
-            .reader()
-            .unbound(&content)
-            .expect("Unbound reader is created");
+        let mut reader = Reader::unbound(&mut src, &content).expect("Unbound reader is created");
         #[allow(clippy::redundant_closure_call)]
         let result = panic::catch_unwind(AssertUnwindSafe(|| $reading(&mut reader, &mut src)));
         let output = match result {

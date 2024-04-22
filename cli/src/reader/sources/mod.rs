@@ -1,9 +1,7 @@
-mod extentions;
 mod ids;
 mod map;
 mod maps;
 
-pub use extentions::*;
 pub use ids::*;
 pub use map::*;
 pub use maps::*;
@@ -39,9 +37,6 @@ impl Sources {
     pub fn iter(&self) -> std::collections::hash_map::Iter<'_, PathBuf, MapRef> {
         self.maps.iter()
     }
-    pub fn reader(&mut self) -> ReaderGetter<'_> {
-        ReaderGetter::new(self)
-    }
     pub fn add_from_file(&mut self, filename: &PathBuf) -> Result<MapRef, E> {
         let map = Rc::new(RefCell::new(Map::new(
             self.ids.clone(),
@@ -49,6 +44,11 @@ impl Sources {
             &fs::read_to_string(filename)?,
         )));
         self.maps.insert(filename, map.clone())
+    }
+    pub fn add_from_str(&mut self, content: &str) -> Result<MapRef, E> {
+        let filename = PathBuf::from(format!("binding with string; case: {}", Uuid::new_v4()));
+        let map = Rc::new(RefCell::new(Map::new(self.ids.clone(), &filename, content)));
+        self.maps.insert(&filename, map.clone())
     }
     pub fn report_err<T: Clone>(&mut self, err: &LinkedErr<T>) -> Result<(), E>
     where

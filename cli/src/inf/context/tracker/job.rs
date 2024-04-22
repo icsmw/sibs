@@ -25,6 +25,7 @@ impl Job {
 
     pub fn output(&self, log: &str) {
         self.tracker.msg(self.id, log);
+        self.journal.verb(log);
     }
 
     pub fn success(&self) {

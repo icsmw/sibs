@@ -8,10 +8,7 @@ mod walker {
     pub fn get_reader_for_str(content: &str) -> (Sources, Reader) {
         let journal = Journal::dummy();
         let mut src = Sources::new(&journal);
-        let reader = src
-            .reader()
-            .unbound(content)
-            .expect("Unbound reader is created");
+        let reader = Reader::unbound(&mut src, content).expect("Unbound reader is created");
         (src, reader)
     }
 

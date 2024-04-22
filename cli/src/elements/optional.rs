@@ -205,7 +205,6 @@ mod reading {
                 sample,
                 |reader: &mut Reader, _: &mut Sources| {
                     let opt = Optional::read(reader);
-                    println!("{opt:?}");
                     assert!(opt.is_err());
                     Ok::<usize, LinkedErr<E>>(1)
                 }

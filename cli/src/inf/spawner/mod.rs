@@ -33,7 +33,6 @@ fn spawn(command: &str, cwd: &PathBuf) -> Result<Child, E> {
 #[cfg(not(windows))]
 fn spawn(command: &str, cwd: &PathBuf) -> Result<Child, E> {
     let (cmd, args) = parse_command(command);
-    println!("{cwd:?}");
     Command::new(cmd)
         .args(args)
         .current_dir(cwd)

@@ -74,7 +74,8 @@ impl Reader {
     ) -> Pin<Box<dyn Future<Output = ReadFileResult> + 'a>> {
         let journal = journal.clone();
         Box::pin(async move {
-            let mut reader = Sources::new(&journal).reader().unbound(content)?;
+            let mut src = Sources::new(&journal);
+            let mut reader = Reader::unbound(&mut src, content)?;
             let mut elements: Vec<Element> = Vec::new();
             while let Some(el) =
                 Element::include(&mut reader, &[ElTarget::Function, ElTarget::Component])?
@@ -95,14 +96,14 @@ impl Reader {
             Ok(elements)
         })
     }
-    pub fn unbound(content: &str) -> Result<Self, E> {
-        let map = Map::unbound(content);
+    pub fn unbound(src: &mut Sources, content: &str) -> Result<Self, E> {
+        let map = src.add_from_str(content)?;
         Ok(Self {
             content: content.to_owned(),
             pos: 0,
             chars: &[],
             offset: 0,
-            map: Rc::new(RefCell::new(map)),
+            map,
             #[cfg(test)]
             recent: 0,
         })

@@ -1,0 +1,3 @@
+test() [
+    `attempt to run fake command`;???????
+];
