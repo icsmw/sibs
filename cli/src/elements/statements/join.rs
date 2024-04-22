@@ -1,7 +1,11 @@
+use tokio::{spawn, task::JoinHandle};
+
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
+    inf::{
+        Context, Formation, FormationCursor, Operator, OperatorPinnedResult, OperatorResult, Scope,
+    },
     reader::{words, Reader, Reading, E},
 };
 use std::fmt;
@@ -65,16 +69,59 @@ impl Operator for Join {
     }
     fn perform<'a>(
         &'a self,
-        _owner: Option<&'a Component>,
-        _components: &'a [Component],
-        _args: &'a [String],
-        _cx: Context,
-        _sc: Scope,
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: Context,
+        sc: Scope,
     ) -> OperatorPinnedResult {
+        fn clone(
+            owner: Option<&Component>,
+            components: &[Component],
+            args: &[String],
+            cx: &Context,
+            sc: &Scope,
+        ) -> (
+            Option<Component>,
+            Vec<Component>,
+            Vec<String>,
+            Context,
+            Scope,
+        ) {
+            (
+                owner.cloned().clone(),
+                components.to_vec(),
+                args.to_vec(),
+                cx.clone(),
+                sc.clone(),
+            )
+        }
         Box::pin(async move {
-            // let Element::Values(values, _) = self.elements.as_ref() else {
-            //     return Err(operator::E::NoOperationsToJoin.by(self));
-            // };
+            let Element::Values(values, _) = self.elements.as_ref() else {
+                return Ok(None);
+            };
+            let tasks = values
+                .elements
+                .iter()
+                .cloned()
+                .map(|el| {
+                    let params = clone(owner, components, args, &cx, &sc);
+                    spawn(async move {
+                        el.execute(params.0.as_ref(), &params.1, &params.2, params.3, params.4)
+                            .await
+                    })
+                })
+                .collect::<Vec<JoinHandle<OperatorResult>>>();
+            for task in tasks {
+                task.await;
+            }
+            // for el in elements.into_iter() {
+            //     let params = clone(owner, components, args, &cx, &sc);
+            //     spawn(async move {
+            //         el.execute(params.0.as_ref(), &params.1, &params.2, params.3, params.4)
+            //             .await
+            //     });
+            // }
             // let mut operations: Vec<OperatorPinnedResult> = Vec::new();
             // for el in values.elements.iter() {
             //     operations.push(el.execute(owner, components, args, cx));
@@ -163,6 +210,42 @@ mod reading {
             );
         }
         assert_eq!(count, samples.len());
+    }
+}
+
+#[cfg(test)]
+mod processing {
+    use crate::{
+        elements::Element,
+        error::LinkedErr,
+        inf::{
+            journal::{Configuration, Journal},
+            Context, Operator, Scope,
+        },
+        process_file,
+        reader::{error::E, Reader, Sources},
+    };
+
+    #[tokio::test]
+    async fn reading() {
+        let target = std::env::current_dir()
+            .unwrap()
+            .join("./src/tests/processing/join.sibs");
+        process_file!(
+            &Configuration::logs(),
+            &target,
+            |elements: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
+                assert_eq!(elements.len(), 1);
+                let Some(Element::Component(el, _md)) = elements.first() else {
+                    panic!("Component isn't found");
+                };
+                assert!(el
+                    .execute(None, &[], &[String::from("test")], cx, sc)
+                    .await
+                    .is_ok());
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
     }
 }
 

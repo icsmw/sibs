@@ -1,0 +1,10 @@
+/// Testing join 
+#(join: ../../../../target/debug)
+    /// Success exit
+    test [
+        JOIN (
+            `./exit 0 200 10 100`;
+            `./exit 0 400 10 100`;
+            `./exit 0 600 10 100`;
+        );
+    ];

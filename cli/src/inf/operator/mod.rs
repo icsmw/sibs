@@ -7,7 +7,7 @@ use crate::{
 pub use error::E;
 use std::{future::Future, pin::Pin};
 
-pub type OperatorPinnedResult<'a> = Pin<Box<dyn Future<Output = OperatorResult> + 'a>>;
+pub type OperatorPinnedResult<'a> = Pin<Box<dyn Future<Output = OperatorResult> + 'a + Send>>;
 pub type OperatorResult = Result<Option<AnyValue>, LinkedErr<E>>;
 
 pub trait Operator {
@@ -19,7 +19,10 @@ pub trait Operator {
         args: &'a [String],
         cx: Context,
         sc: Scope,
-    ) -> OperatorPinnedResult {
+    ) -> OperatorPinnedResult
+    where
+        Self: Sync,
+    {
         Box::pin(async move {
             cx.atlas.set_map_position(self.token()).await?;
             let result = self.perform(owner, components, args, cx.clone(), sc).await;
