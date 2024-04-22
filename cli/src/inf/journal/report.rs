@@ -64,14 +64,15 @@ impl Report {
             _ => None,
         }
     }
-    pub fn print(&self) {
+    pub fn print(&self, tolerance: bool) {
+        let title = if tolerance {
+            Style::new().yellow().bold().apply_to("TOLERANT ERROR:")
+        } else {
+            Style::new().red().bold().apply_to("ERROR:")
+        };
         match self {
             Self::LinkedErr(err) => {
-                eprintln!(
-                    "{} {}",
-                    Style::new().red().bold().apply_to("ERROR:"),
-                    Style::new().white().apply_to(&err.e)
-                );
+                eprintln!("{title} {}", Style::new().white().apply_to(&err.e));
             }
             Self::Report { report, err: _ } => eprintln!("{report}"),
             Self::Trace { trace, report, err } => {
@@ -81,18 +82,10 @@ impl Report {
                 if let Some(report) = report {
                     eprintln!("{report}");
                 }
-                eprintln!(
-                    "{} {}",
-                    Style::new().red().bold().apply_to("ERROR:"),
-                    Style::new().white().apply_to(&err.e)
-                );
+                eprintln!("{title} {}", Style::new().white().apply_to(&err.e));
             }
             Self::String(err) => {
-                eprintln!(
-                    "{} {}",
-                    Style::new().red().bold().apply_to("ERROR:"),
-                    Style::new().white().apply_to(&err)
-                );
+                eprintln!("{title} {}", Style::new().white().apply_to(&err));
             }
         }
     }

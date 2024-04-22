@@ -75,6 +75,7 @@ fn timestamp() -> u128 {
 pub struct Storage {
     messages: Vec<LogMessage>,
     reports: Vec<Report>,
+    tolarant: HashSet<Uuid>,
     since: u128,
     cfg: Configuration,
 }
@@ -85,11 +86,11 @@ impl Storage {
         self.reports.iter().for_each(|r| {
             if let Some(uuid) = r.err_uuid() {
                 if !reported.contains(&uuid) {
-                    r.print();
+                    r.print(self.tolarant.contains(&uuid));
                     reported.insert(uuid);
                 }
             } else {
-                r.print();
+                r.print(false);
             }
         });
     }
@@ -97,6 +98,7 @@ impl Storage {
         Self {
             messages: Vec::new(),
             reports: Vec::new(),
+            tolarant: HashSet::new(),
             cfg,
             since: timestamp(),
         }
@@ -120,5 +122,8 @@ impl Storage {
     }
     pub fn report(&mut self, report: Report) {
         self.reports.push(report);
+    }
+    pub fn add_tolerant(&mut self, uuid: Uuid) {
+        self.tolarant.insert(uuid);
     }
 }

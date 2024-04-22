@@ -13,12 +13,14 @@
 - also for references like (:client:lint, :platform:lint) or @tasks::parallel(:client:lint; :shared:lint; :wrapper:lint;);???
 - invalid UTF from command
 - add general executor with journal inside and automatic shutdowing
-- missed commands:
+- missed commands/functions:
 -- break
 -- loop
 -- print/echo
--- try / catch
+-- logs
+-- try / catch / check err
 -- exit
+
 
 NO Errors:
 `create-user --name={$user_name} --role={IF $is_admin == "true" ["admin";]  ["user";]}`

@@ -12,6 +12,7 @@ pub use cfg::*;
 pub use owned::*;
 pub use report::*;
 pub use storage::*;
+use uuid::Uuid;
 
 use std::sync::Arc;
 use tokio::{
@@ -47,6 +48,9 @@ impl Journal {
                     Demand::Report(report) => {
                         storage.report(report);
                     }
+                    Demand::Toleranted(uuid) => {
+                        storage.add_tolerant(uuid);
+                    }
                     Demand::Destroy => {
                         break;
                     }
@@ -79,7 +83,13 @@ impl Journal {
     pub fn report(&self, report: Report) {
         if let Err(_err) = self.tx.send(Demand::Report(report.clone())) {
             eprintln!("Fail to store report; printing instead");
-            report.print();
+            report.print(false);
+        }
+    }
+
+    pub fn as_tolerant(&self, uuid: &Uuid) {
+        if let Err(_err) = self.tx.send(Demand::Toleranted(*uuid)) {
+            eprintln!("Fail to mark report/error as tolerant");
         }
     }
 

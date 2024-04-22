@@ -30,7 +30,7 @@ pub use variable::*;
 
 use crate::{
     error::LinkedErr,
-    inf::{Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
+    inf::{journal, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt::{self, Display};
@@ -625,6 +625,7 @@ impl Operator for Element {
         sc: Scope,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
+            let journal = cx.journal.clone();
             let result = match self {
                 Self::Function(v, _) => v.execute(owner, components, args, cx, sc).await,
                 Self::If(v, _) => v.execute(owner, components, args, cx, sc).await,
@@ -654,7 +655,8 @@ impl Operator for Element {
                 Self::SimpleString(v, _) => v.execute(owner, components, args, cx, sc).await,
                 Self::Comment(_) => Ok(None),
             };
-            if self.get_metadata().tolerance && result.is_err() {
+            if let (true, Err(err)) = (self.get_metadata().tolerance, result.as_ref()) {
+                journal.as_tolerant(&err.uuid);
                 Ok(None)
             } else {
                 result
