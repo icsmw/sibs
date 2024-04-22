@@ -9,3 +9,13 @@ test [
         "true";
     ];
 ];
+test [
+    IF @test::return_bool(true) [
+        "true";
+    ];
+];
+test [
+    IF !@test::return_bool(false) [
+        "true";
+    ];
+];

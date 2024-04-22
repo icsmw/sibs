@@ -10,7 +10,7 @@ pub const OPEN_BRACKET: char = '(';
 pub const CLOSE_BRACKET: char = ')';
 pub const OPEN_SQ_BRACKET: char = '[';
 pub const CLOSE_SQ_BRACKET: char = ']';
-// pub const EXCLAMATION: char = '!';
+pub const EXCLAMATION: char = '!';
 pub const EQUAL: char = '=';
 pub const CARET: char = '\n';
 pub const SERIALIZING: char = '\\';

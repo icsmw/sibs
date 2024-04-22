@@ -6,6 +6,8 @@ $mode != "dev"
 "dev" != $mode
 "true" == @env::is_os(window)
 "true" != @env::is_os(window)
+"true" == !@env::is_os(window)
+"true" != !@env::is_os(window)
 $version == "1.0"
 $status != "success"
 @env(PROD) == "false"

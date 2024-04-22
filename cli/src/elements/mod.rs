@@ -30,7 +30,10 @@ pub use variable::*;
 
 use crate::{
     error::LinkedErr,
-    inf::{journal, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
+    inf::{
+        journal, operator, AnyValue, Context, Formation, FormationCursor, Operator,
+        OperatorPinnedResult, Scope,
+    },
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt::{self, Display};
@@ -71,6 +74,7 @@ pub struct Metadata {
     // Element: Comment | Meta
     pub elements: Vec<Element>,
     pub tolerance: bool,
+    pub inverting: bool,
 }
 
 impl Metadata {
@@ -78,6 +82,7 @@ impl Metadata {
         Metadata {
             elements: Vec::new(),
             tolerance: false,
+            inverting: false,
         }
     }
     pub fn comments(&self) -> Vec<&Comment> {
@@ -205,6 +210,11 @@ impl Element {
         let md = Metadata {
             elements,
             tolerance: false,
+            inverting: if targets.contains(&ElTarget::Function) {
+                reader.move_to().char(&[&chars::EXCLAMATION]).is_some()
+            } else {
+                false
+            },
         };
         if includes == targets.contains(&ElTarget::Combination) {
             if let Some(el) = Combination::read(reader)? {
@@ -460,7 +470,12 @@ impl fmt::Display for Element {
             A: Display,
         {
             format!(
-                "{md}{el}{}",
+                "{md}{}{el}{}",
+                if md.inverting {
+                    chars::EXCLAMATION.to_string()
+                } else {
+                    String::new()
+                },
                 if md.tolerance {
                     chars::QUESTION.to_string()
                 } else {
@@ -542,8 +557,13 @@ impl Formation for Element {
             A: Formation,
         {
             format!(
-                "{}{}{}",
+                "{}{}{}{}",
                 md.format(cursor),
+                if md.inverting {
+                    chars::EXCLAMATION.to_string()
+                } else {
+                    String::new()
+                },
                 el.format(cursor),
                 if md.tolerance {
                     chars::QUESTION.to_string()
@@ -657,10 +677,20 @@ impl Operator for Element {
             };
             if let (true, Err(err)) = (self.get_metadata().tolerance, result.as_ref()) {
                 journal.as_tolerant(&err.uuid);
-                Ok(None)
-            } else {
-                result
+                return Ok(None);
             }
+            if let (Ok(res), Element::Function(_, md)) = (result.as_ref(), self) {
+                if md.inverting && res.is_none() {
+                    return Err(operator::E::InvertingOnEmptyReturn.by(self));
+                }
+                if let (true, Some(res)) = (md.inverting, res) {
+                    let Some(b_res) = res.get_as_bool() else {
+                        return Err(operator::E::InvertingOnNotBool.by(self));
+                    };
+                    return Ok(Some(AnyValue::new(!b_res)));
+                }
+            }
+            result
         })
     }
 }
@@ -731,6 +761,7 @@ mod proptest {
                 .prop_map(|tolerance| Metadata {
                     elements: Vec::new(),
                     tolerance,
+                    inverting: false,
                 })
                 .boxed()
         }

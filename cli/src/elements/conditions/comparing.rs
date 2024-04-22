@@ -193,11 +193,11 @@ impl Operator for Comparing {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::Comparing,
+        elements::{Comparing, ElTarget, Element},
         error::LinkedErr,
         inf::{operator::Operator, tests::*, Configuration},
         read_string,
-        reader::{Reader, Reading, Sources, E},
+        reader::{chars, Reader, Reading, Sources, E},
     };
 
     #[tokio::test]
@@ -212,7 +212,8 @@ mod reading {
                 &Configuration::logs(),
                 str,
                 |reader: &mut Reader, src: &mut Sources| {
-                    let entity = src.report_err_if(Comparing::read(reader))?;
+                    let entity =
+                        src.report_err_if(Element::include(reader, &[ElTarget::Comparing]))?;
                     assert!(entity.is_some(), "Line: {}", count + 1);
                     let entity = entity.unwrap();
                     assert_eq!(
@@ -241,25 +242,42 @@ mod reading {
                 &Configuration::logs(),
                 str,
                 |reader: &mut Reader, src: &mut Sources| {
-                    let entity = src.report_err_if(Comparing::read(reader))?;
+                    let entity =
+                        src.report_err_if(Element::include(reader, &[ElTarget::Comparing]))?;
                     assert!(entity.is_some(), "Line: {}", count + 1);
                     let entity = entity.unwrap();
                     assert_eq!(
                         trim_carets(&format!("{entity}")),
-                        reader.get_fragment(&entity.token)?.lined
+                        reader.get_fragment(&entity.token())?.lined
                     );
-                    assert_eq!(
-                        trim_semicolon(&trim_carets(&entity.left.to_string())),
-                        trim_semicolon(&trim_carets(
-                            &reader.get_fragment(&entity.left.token())?.lined
-                        )),
-                    );
-                    assert_eq!(
-                        trim_semicolon(&trim_carets(&entity.right.to_string())),
-                        trim_semicolon(&trim_carets(
-                            &reader.get_fragment(&entity.right.token())?.lined
-                        )),
-                    );
+                    if let Element::Comparing(entity, _) = entity {
+                        assert_eq!(
+                            trim_semicolon(&trim_carets(&entity.left.to_string())),
+                            trim_semicolon(&trim_carets(&format!(
+                                "{}{}",
+                                if entity.left.get_metadata().inverting {
+                                    chars::EXCLAMATION.to_string()
+                                } else {
+                                    String::new()
+                                },
+                                reader.get_fragment(&entity.left.token())?.lined
+                            ))),
+                        );
+                        assert_eq!(
+                            trim_semicolon(&trim_carets(&entity.right.to_string())),
+                            trim_semicolon(&trim_carets(&format!(
+                                "{}{}",
+                                if entity.right.get_metadata().inverting {
+                                    chars::EXCLAMATION.to_string()
+                                } else {
+                                    String::new()
+                                },
+                                reader.get_fragment(&entity.right.token())?.lined
+                            ))),
+                        );
+                    } else {
+                        panic!("Fail to extract Element::Comparing")
+                    }
                     Ok::<usize, LinkedErr<E>>(1)
                 }
             );

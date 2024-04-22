@@ -1,5 +1,4 @@
 $mode != = "dev";
-$mode != ! "dev";
 @env::is_os(window) == "true;
 @env::is_os(window) != -true";
 @env::is_os(window) == ("a", "b");

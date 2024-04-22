@@ -40,6 +40,10 @@ pub enum E {
     InvalidNumberOfArgumentsForDeclaration,
     #[error("Fail to extract bool value for condition")]
     FailToExtractConditionValue,
+    #[error("Cannot apply inverting \"!\" to empty return")]
+    InvertingOnEmptyReturn,
+    #[error("Cannot apply inverting \"!\" on none-bool return")]
+    InvertingOnNotBool,
     #[error("Fail to get value as string")]
     FailToGetValueAsString,
     #[error("Fail to get string value")]
