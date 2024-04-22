@@ -1,6 +1,7 @@
 use crate::error::{LinkedErr, LinkedErrSerialized};
 use console::Style;
 use std::fmt;
+use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub enum Status {
@@ -55,6 +56,14 @@ pub enum Report {
 }
 
 impl Report {
+    pub fn err_uuid(&self) -> Option<Uuid> {
+        match self {
+            Self::LinkedErr(err) => Some(err.uuid),
+            Self::Report { report, err } => Some(err.uuid),
+            Self::Trace { trace, report, err } => Some(err.uuid),
+            _ => None,
+        }
+    }
     pub fn print(&self) {
         match self {
             Self::LinkedErr(err) => {
@@ -65,8 +74,18 @@ impl Report {
                 );
             }
             Self::Report { report, err: _ } => eprintln!("{report}"),
-            Self::Trace { .. } => {
-                panic!("Footprint: Not implemented!")
+            Self::Trace { trace, report, err } => {
+                trace.iter().for_each(|(fragment, status)| {
+                    eprintln!("{fragment}");
+                });
+                if let Some(report) = report {
+                    eprintln!("{report}");
+                }
+                eprintln!(
+                    "{} {}",
+                    Style::new().red().bold().apply_to("ERROR:"),
+                    Style::new().white().apply_to(&err.e)
+                );
             }
             Self::String(err) => {
                 eprintln!(

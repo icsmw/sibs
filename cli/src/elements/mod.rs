@@ -689,14 +689,14 @@ mod processing {
             },
             |elements: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for el in elements.iter() {
-                    // let result = el
-                    //     .execute(None, &[], &[], cx.clone(), sc.clone())
-                    //     .await?
-                    //     .expect("Task returns some value");
-                    // assert_eq!(
-                    //     result.get_as_string().expect("Task returns string value"),
-                    //     "true".to_owned()
-                    // );
+                    let result = el
+                        .execute(None, &[], &[], cx.clone(), sc.clone())
+                        .await?
+                        .expect("Task returns some value");
+                    assert_eq!(
+                        result.get_as_string().expect("Task returns string value"),
+                        "true".to_owned()
+                    );
                 }
                 Ok::<(), LinkedErr<E>>(())
             }

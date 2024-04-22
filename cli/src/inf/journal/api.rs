@@ -1,6 +1,7 @@
 use crate::inf::journal::{Level, Report};
 
 /// Represents API of LifeCycle.
+#[derive(Debug)]
 pub enum Demand {
     /// Adds log message
     ///

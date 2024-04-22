@@ -17,7 +17,6 @@ type FootprintRef = (usize, Option<String>);
 #[derive(Debug)]
 pub struct Footprints {
     footprints: Vec<FootprintRef>,
-    reported: HashSet<Uuid>,
     journal: Journal,
     deep: usize,
 }
@@ -26,7 +25,6 @@ impl Footprints {
     pub fn new(journal: &Journal, deep: Option<usize>) -> Self {
         Self {
             footprints: Vec::new(),
-            reported: HashSet::new(),
             journal: journal.clone(),
             deep: deep.unwrap_or(TRACE_DEFAILT_DEEP),
         }
@@ -40,9 +38,6 @@ impl Footprints {
         }
     }
     pub fn report_err(&mut self, maps: &mut Maps, err: LinkedErrSerialized) -> Result<(), E> {
-        if self.reported.contains(&err.uuid) {
-            return Ok(());
-        }
         let mut records: Vec<Footprint> = Vec::new();
         for (token, value) in self.footprints.iter() {
             records.push((

@@ -1,9 +1,11 @@
 use crate::inf::journal::{Configuration, Output, Report};
 use console::Style;
 use std::{
+    collections::HashSet,
     fmt,
     time::{SystemTime, UNIX_EPOCH},
 };
+use uuid::Uuid;
 
 #[derive(Clone, Debug)]
 pub enum Level {
@@ -30,6 +32,7 @@ impl fmt::Display for Level {
     }
 }
 
+#[derive(Debug)]
 pub struct LogMessage {
     owner: String,
     msg: String,
@@ -68,6 +71,7 @@ fn timestamp() -> u128 {
         .as_millis()
 }
 
+#[derive(Debug)]
 pub struct Storage {
     messages: Vec<LogMessage>,
     reports: Vec<Report>,
@@ -77,8 +81,16 @@ pub struct Storage {
 
 impl Storage {
     pub fn print(&self) {
+        let mut reported: HashSet<Uuid> = HashSet::new();
         self.reports.iter().for_each(|r| {
-            r.print();
+            if let Some(uuid) = r.err_uuid() {
+                if !reported.contains(&uuid) {
+                    r.print();
+                    reported.insert(uuid);
+                }
+            } else {
+                r.print();
+            }
         });
     }
     pub fn new(cfg: Configuration) -> Self {
