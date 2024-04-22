@@ -68,9 +68,7 @@ impl Reading<Block> for Block {
                         }))
                     };
                 } else {
-                    break Err(
-                        E::UnrecognizedCode(inner.token()?.content.to_owned()).by_reader(&inner)
-                    );
+                    break Err(E::UnrecognizedCode(inner.move_to().end()).by_reader(&inner));
                 }
             }
         } else {
