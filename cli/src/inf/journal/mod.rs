@@ -1,5 +1,6 @@
 mod api;
 mod cfg;
+mod extentions;
 mod owned;
 mod report;
 mod storage;
@@ -9,6 +10,7 @@ use std::fmt::Display;
 
 use api::*;
 pub use cfg::*;
+use extentions::*;
 pub use owned::*;
 pub use report::*;
 pub use storage::*;
@@ -51,6 +53,14 @@ impl Journal {
                     Demand::Toleranted(uuid) => {
                         storage.add_tolerant(uuid);
                     }
+                    Demand::Collect(id, msg) => {
+                        storage.collect(id, msg);
+                    }
+                    Demand::CollectionClose(owner, id, level) => {
+                        if let Some(msg) = storage.collected(id) {
+                            storage.log(owner, msg, level);
+                        }
+                    }
                     Demand::Destroy => {
                         break;
                     }
@@ -80,6 +90,10 @@ impl Journal {
         Ok(())
     }
 
+    pub fn collecting(&self) -> Collecting<'_> {
+        Collecting::new(self)
+    }
+
     pub fn report(&self, report: Report) {
         if let Err(_err) = self.tx.send(Demand::Report(report.clone())) {
             eprintln!("Fail to store report; printing instead");
@@ -93,8 +107,8 @@ impl Journal {
         }
     }
 
-    pub fn owned(&self, owner: String) -> OwnedJournal {
-        OwnedJournal::new(owner, self.clone())
+    pub fn owned(&self, id: usize, owner: String) -> OwnedJournal {
+        OwnedJournal::new(id, owner, self.clone())
     }
 
     pub fn info<'a, O, M>(&self, owner: O, msg: M)

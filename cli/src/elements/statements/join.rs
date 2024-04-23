@@ -115,22 +115,11 @@ impl Operator for Join {
             for task in tasks {
                 task.await;
             }
-            // for el in elements.into_iter() {
-            //     let params = clone(owner, components, args, &cx, &sc);
-            //     spawn(async move {
-            //         el.execute(params.0.as_ref(), &params.1, &params.2, params.3, params.4)
-            //             .await
-            //     });
-            // }
-            // let mut operations: Vec<OperatorPinnedResult> = Vec::new();
-            // for el in values.elements.iter() {
-            //     operations.push(el.execute(owner, components, args, cx));
-            // }
-            // let operations = values
-            //     .elements
-            //     .iter()
-            //     .map(|o| o.execute(owner, components, args, cx))
-            //     .collect::<Vec<OperatorPinnedResult>>();
+            // TODO:
+            // - collect results
+            // - test with references to tasks
+            // - abort on error of some task
+            // - collect logs of each task
             Ok(None)
         })
     }

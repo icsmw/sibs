@@ -1,7 +1,7 @@
 use crate::inf::journal::{Configuration, Output, Report};
 use console::Style;
 use std::{
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     fmt,
     time::{SystemTime, UNIX_EPOCH},
 };
@@ -78,6 +78,7 @@ pub struct Storage {
     tolarant: HashSet<Uuid>,
     since: u128,
     cfg: Configuration,
+    collected: HashMap<usize, String>,
 }
 
 impl Storage {
@@ -101,6 +102,7 @@ impl Storage {
             tolarant: HashSet::new(),
             cfg,
             since: timestamp(),
+            collected: HashMap::new(),
         }
     }
     pub fn log<'a, T>(&mut self, owner: T, msg: T, level: Level)
@@ -125,5 +127,15 @@ impl Storage {
     }
     pub fn add_tolerant(&mut self, uuid: Uuid) {
         self.tolarant.insert(uuid);
+    }
+    pub fn collect(&mut self, id: usize, msg: String) {
+        let offset = " ".repeat(4);
+        self.collected
+            .entry(id)
+            .and_modify(|cnt| cnt.push_str(&format!("\n{offset}{msg}",)))
+            .or_insert(format!("\n{offset}{msg}",));
+    }
+    pub fn collected(&mut self, id: usize) -> Option<String> {
+        self.collected.remove(&id)
     }
 }

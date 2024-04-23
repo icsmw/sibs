@@ -1,4 +1,7 @@
-use crate::inf::{journal::OwnedJournal, tracker::Tracker};
+use crate::inf::{
+    journal::{Level, OwnedJournal},
+    tracker::Tracker,
+};
 use std::{fmt::Display, time::Instant};
 
 #[derive(Clone, Debug)]
@@ -25,17 +28,19 @@ impl Job {
 
     pub fn output(&self, log: &str) {
         self.tracker.msg(self.id, log);
-        self.journal.verb(log);
+        self.journal.append(log);
     }
 
     pub fn success(&self) {
         self.info(format!("done in {}ms", self.ts.elapsed().as_millis()));
         self.tracker.success(self.id);
+        self.journal.collected(Level::Verb);
     }
 
     pub fn fail(&self) {
         self.info(format!("failed in {}ms", self.ts.elapsed().as_millis()));
         self.tracker.fail(self.id);
+        self.journal.collected(Level::Err);
     }
 
     pub fn info<'a, T>(&self, msg: T)

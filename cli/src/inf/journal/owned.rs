@@ -1,15 +1,26 @@
-use crate::inf::journal::Journal;
+use crate::inf::journal::{Journal, Level};
 use std::fmt::Display;
 
 #[derive(Debug, Clone)]
 pub struct OwnedJournal {
     owner: String,
     journal: Journal,
+    id: usize,
 }
 
 impl OwnedJournal {
-    pub fn new(owner: String, journal: Journal) -> Self {
-        Self { owner, journal }
+    pub fn new(id: usize, owner: String, journal: Journal) -> Self {
+        Self { owner, journal, id }
+    }
+
+    pub fn append(&self, msg: &str) {
+        self.journal.collecting().append(self.id, msg.to_owned());
+    }
+
+    pub fn collected(&self, level: Level) {
+        self.journal
+            .collecting()
+            .close(self.owner.clone(), self.id, level);
     }
 
     pub fn info<'a, T>(&self, msg: T)

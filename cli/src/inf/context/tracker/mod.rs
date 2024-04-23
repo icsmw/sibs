@@ -53,7 +53,7 @@ impl Tracker {
             tx,
             state: state.clone(),
         };
-        let own = journal.owned(String::from("Tracker"));
+        let own = journal.owned(0, String::from("Tracker"));
         let self_ref = instance.clone();
         spawn(async move {
             let mut progress: Progress = Progress::new(journal.cfg.as_ref().clone());
@@ -71,8 +71,12 @@ impl Tracker {
                             }
                         };
                         let _ = own.err_if(
-                            rx.send(Ok(Job::new(&self_ref, sequence, journal.owned(alias))))
-                                .map_err(|_| "Demand::CreateJob"),
+                            rx.send(Ok(Job::new(
+                                &self_ref,
+                                sequence,
+                                journal.owned(sequence, alias),
+                            )))
+                            .map_err(|_| "Demand::CreateJob"),
                         );
                     }
                     Demand::Message(sequence, msg) => {
