@@ -20,6 +20,8 @@ pub enum E {
     NoCurrentWorkingFolder,
     #[error("Tracker error: {0}")]
     TrackerError(tracker::E),
+    #[error("Join error: {0}")]
+    JoinError(String),
     #[error("Spawing process error: {0}")]
     SpawningError(spawner::E),
     #[error("Context error: {0}")]

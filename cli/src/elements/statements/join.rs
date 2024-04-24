@@ -1,14 +1,18 @@
-use tokio::{spawn, task::JoinHandle};
-
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        Context, Formation, FormationCursor, Operator, OperatorPinnedResult, OperatorResult, Scope,
+        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
+        OperatorResult, Scope,
     },
     reader::{words, Reader, Reading, E},
 };
+use futures::stream::{FuturesUnordered, StreamExt, StreamFuture};
 use std::fmt;
+use tokio::{
+    spawn,
+    task::{JoinError, JoinHandle},
+};
 
 #[derive(Debug, Clone)]
 pub struct Join {
@@ -63,6 +67,20 @@ impl Formation for Join {
     }
 }
 
+enum TaskError {
+    Join(JoinError),
+    Operator(LinkedErr<operator::E>),
+}
+
+impl From<TaskError> for LinkedErr<operator::E> {
+    fn from(err: TaskError) -> Self {
+        match err {
+            TaskError::Operator(err) => err,
+            TaskError::Join(err) => operator::E::JoinError(err.to_string()).unlinked(),
+        }
+    }
+}
+
 impl Operator for Join {
     fn token(&self) -> usize {
         self.token
@@ -96,11 +114,48 @@ impl Operator for Join {
                 sc.clone(),
             )
         }
+        async fn wait(
+            tasks: &mut [JoinHandle<OperatorResult>],
+        ) -> Result<Vec<Option<AnyValue>>, TaskError> {
+            let mut results: Vec<Option<AnyValue>> = Vec::new();
+            let mut futures = FuturesUnordered::new();
+            for task in tasks {
+                futures.push(task);
+            }
+            while let Some(result) = futures.next().await {
+                match result {
+                    Ok(Ok(result)) => {
+                        results.push(result);
+                    }
+                    Ok(Err(err)) => {
+                        return Err(TaskError::Operator(err));
+                    }
+                    Err(err) => {
+                        return Err(TaskError::Join(err));
+                    }
+                }
+            }
+            Ok(results)
+        }
+        async fn abort(tasks: &mut [JoinHandle<OperatorResult>]) -> u16 {
+            let mut finished = 0;
+            for task in tasks.iter_mut().filter(|t| !t.is_finished()).map(|task| {
+                task.abort();
+                task
+            }) {
+                finished += 1;
+                if task.is_finished() {
+                    continue;
+                }
+                let _ = task.await;
+            }
+            finished
+        }
         Box::pin(async move {
             let Element::Values(values, _) = self.elements.as_ref() else {
                 return Ok(None);
             };
-            let tasks = values
+            let mut tasks = values
                 .elements
                 .iter()
                 .cloned()
@@ -112,15 +167,24 @@ impl Operator for Join {
                     })
                 })
                 .collect::<Vec<JoinHandle<OperatorResult>>>();
-            for task in tasks {
-                task.await;
+            match wait(&mut tasks).await {
+                Ok(result) => Ok(Some(AnyValue::new(result))),
+                Err(err) => {
+                    let cancelled = abort(&mut tasks).await;
+                    if cancelled > 0 {
+                        cx.journal.warn(
+                            "JOIN".to_owned(),
+                            format!("{cancelled} parallel tasks were cancelled"),
+                        );
+                    }
+                    Err(err.into())
+                }
             }
             // TODO:
             // - collect results
             // - test with references to tasks
-            // - abort on error of some task
-            // - collect logs of each task
-            Ok(None)
+            // [ok] abort on error of some task
+            // [ok] collect logs of each task
         })
     }
 }

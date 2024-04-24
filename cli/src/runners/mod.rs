@@ -59,7 +59,7 @@ macro_rules! read_string {
 #[macro_export]
 macro_rules! process_string {
     ($cfg:expr, $content:expr, $reading:expr, $executing:expr) => {{
-        use futures_lite::FutureExt;
+        use futures::FutureExt;
         use std::{
             any::Any,
             panic::{self, AssertUnwindSafe},
@@ -118,7 +118,7 @@ macro_rules! process_string {
 #[macro_export]
 macro_rules! process_file {
     ($cfg:expr, $filename:expr, $executing:expr) => {{
-        use futures_lite::FutureExt;
+        use futures::FutureExt;
         use std::{any::Any, panic::AssertUnwindSafe, path::PathBuf};
         use $crate::{inf::Scenario, runners::exit};
 
@@ -167,11 +167,10 @@ macro_rules! process_file {
         }
     }};
 }
-
 #[macro_export]
 macro_rules! read_file {
     ($cfg:expr, $filename:expr, $executing:expr) => {{
-        use futures_lite::FutureExt;
+        use futures::FutureExt;
         use std::{any::Any, panic::AssertUnwindSafe, path::PathBuf};
         use $crate::{
             inf::{Context, Scenario},

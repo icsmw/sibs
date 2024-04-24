@@ -114,7 +114,11 @@ pub async fn run(command: &str, cwd: &PathBuf, cx: Context) -> Result<RunResult,
             .wait()
             .await
             .map(|res| {
-                job.success();
+                if res.success() {
+                    job.success();
+                } else {
+                    job.fail();
+                }
                 res
             })
             .map_err(|e| {

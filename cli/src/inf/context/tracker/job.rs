@@ -38,9 +38,9 @@ impl Job {
     }
 
     pub fn fail(&self) {
-        self.info(format!("failed in {}ms", self.ts.elapsed().as_millis()));
-        self.tracker.fail(self.id);
         self.journal.collected(Level::Err);
+        self.tracker.fail(self.id);
+        self.err(format!("failed in {}ms", self.ts.elapsed().as_millis()));
     }
 
     pub fn info<'a, T>(&self, msg: T)

@@ -7,7 +7,6 @@ edition = "2021"
 
 [dependencies]
 console = "0.15.8"
-futures-lite = "2.2.0"
 indicatif = "0.17.7"
 regex = "1.10.3"
 terminal_size = "0.3.0"
@@ -16,6 +15,7 @@ tokio = { version = "1", features = ["rt", "rt-multi-thread", "process", "sync",
 tokio-stream = "0.1.14"
 tokio-util = { version = "0.7", features = ["codec"] }
 importer = { path = "../importer" }
+futures = "0.3.30"
 
 [dependencies.uuid]
 version = "1.8.0"

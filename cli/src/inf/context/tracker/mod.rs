@@ -3,13 +3,13 @@ mod error;
 mod job;
 mod progress;
 
-use crate::inf::Journal;
+use crate::inf::{Journal, Level};
 use api::*;
 use console::style;
 pub use error::E;
 pub use job::Job;
 use progress::*;
-use std::fmt;
+use std::{collections::HashMap, fmt};
 use tokio::{
     spawn,
     sync::{
@@ -57,6 +57,7 @@ impl Tracker {
         let self_ref = instance.clone();
         spawn(async move {
             let mut progress: Progress = Progress::new(journal.cfg.as_ref().clone());
+            let mut jobs: HashMap<usize, String> = HashMap::new();
             while let Some(tick) = rx.recv().await {
                 match tick {
                     Demand::CreateJob(alias, len, rx) => {
@@ -74,10 +75,11 @@ impl Tracker {
                             rx.send(Ok(Job::new(
                                 &self_ref,
                                 sequence,
-                                journal.owned(sequence, alias),
+                                journal.owned(sequence, alias.clone()),
                             )))
                             .map_err(|_| "Demand::CreateJob"),
                         );
+                        jobs.insert(sequence, alias);
                     }
                     Demand::Message(sequence, msg) => {
                         progress.set_message(sequence, &msg);
@@ -87,9 +89,14 @@ impl Tracker {
                     }
                     Demand::Finished(sequence, result) => {
                         progress.finish(sequence, result.clone());
+                        let _ = jobs.remove(&sequence);
                     }
                     Demand::Destroy => {
                         progress.destroy();
+                        jobs.iter().for_each(|(seq, alias)| {
+                            journal.collecting().close(alias.clone(), *seq, Level::Warn);
+                            journal.warn(alias, format!("\"{alias}\" isn't finished"))
+                        });
                         break;
                     }
                 }
