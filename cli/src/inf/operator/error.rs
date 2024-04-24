@@ -14,7 +14,7 @@ pub enum E {
     NotSupported,
     #[error("Function's argument doesn't have return value")]
     NotAllArguamentsHasReturn,
-    #[error("Spawned process exist with error")]
+    #[error("Spawned process exit with error")]
     SpawnedProcessExitWithError,
     #[error("No current working folder")]
     NoCurrentWorkingFolder,
