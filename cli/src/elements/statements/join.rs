@@ -116,8 +116,8 @@ impl Operator for Join {
         }
         async fn wait(
             tasks: &mut [JoinHandle<OperatorResult>],
-        ) -> Result<Vec<Option<AnyValue>>, TaskError> {
-            let mut results: Vec<Option<AnyValue>> = Vec::new();
+        ) -> Result<Vec<AnyValue>, TaskError> {
+            let mut results: Vec<AnyValue> = Vec::new();
             let mut futures = FuturesUnordered::new();
             for task in tasks {
                 futures.push(task);
@@ -125,7 +125,7 @@ impl Operator for Join {
             while let Some(result) = futures.next().await {
                 match result {
                     Ok(Ok(result)) => {
-                        results.push(result);
+                        results.push(result.unwrap_or_else(|| AnyValue::new(())));
                     }
                     Ok(Err(err)) => {
                         return Err(TaskError::Operator(err));
@@ -168,7 +168,7 @@ impl Operator for Join {
                 })
                 .collect::<Vec<JoinHandle<OperatorResult>>>();
             match wait(&mut tasks).await {
-                Ok(result) => Ok(Some(AnyValue::new(result))),
+                Ok(result) => Ok(Some(AnyValue::vec(result))),
                 Err(err) => {
                     let cancelled = abort(&mut tasks).await;
                     if cancelled > 0 {
@@ -180,11 +180,6 @@ impl Operator for Join {
                     Err(err.into())
                 }
             }
-            // TODO:
-            // - collect results
-            // - test with references to tasks
-            // [ok] abort on error of some task
-            // [ok] collect logs of each task
         })
     }
 }
@@ -292,10 +287,78 @@ mod processing {
                 let Some(Element::Component(el, _md)) = elements.first() else {
                     panic!("Component isn't found");
                 };
-                assert!(el
-                    .execute(None, &[], &[String::from("test")], cx, sc)
+                let results = el
+                    .execute(None, &[], &[String::from("test_a")], cx.clone(), sc.clone())
                     .await
-                    .is_ok());
+                    .expect("run is successfull")
+                    .expect("join returns vector of results");
+                assert!(results.is_vec());
+                assert_eq!(results.as_vec().len(), 4);
+                let results = el
+                    .execute(Some(el), &[], &[String::from("test_b")], cx, sc)
+                    .await
+                    .expect("run is successfull")
+                    .expect("join returns vector of results");
+                assert!(results.is_vec());
+                assert_eq!(results.as_vec().len(), 2);
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn errors() {
+        let target = std::env::current_dir()
+            .unwrap()
+            .join("./src/tests/processing/join.sibs");
+        process_file!(
+            &Configuration::logs(),
+            &target,
+            |elements: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
+                assert_eq!(elements.len(), 1);
+                let Some(Element::Component(el, _md)) = elements.first() else {
+                    panic!("Component isn't found");
+                };
+                assert!(el
+                    .execute(
+                        Some(el),
+                        &[],
+                        &[String::from("test_c")],
+                        cx.clone(),
+                        sc.clone()
+                    )
+                    .await
+                    .is_err());
+                assert!(el
+                    .execute(
+                        Some(el),
+                        &[],
+                        &[String::from("test_d")],
+                        cx.clone(),
+                        sc.clone()
+                    )
+                    .await
+                    .is_err());
+                assert!(el
+                    .execute(
+                        Some(el),
+                        &[],
+                        &[String::from("test_e")],
+                        cx.clone(),
+                        sc.clone()
+                    )
+                    .await
+                    .is_err());
+                assert!(el
+                    .execute(
+                        Some(el),
+                        &[],
+                        &[String::from("test_f")],
+                        cx.clone(),
+                        sc.clone()
+                    )
+                    .await
+                    .is_err());
                 Ok::<(), LinkedErr<E>>(())
             }
         );

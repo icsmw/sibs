@@ -19,8 +19,16 @@ impl<T: Any + Debug + Send + Sync + 'static> DebugAny for T {
 }
 
 #[derive(Debug)]
+enum InnerType {
+    Multiple,
+    Single,
+}
+
+#[derive(Debug)]
 pub struct AnyValue {
     value: Box<dyn DebugAny>,
+    values: Vec<AnyValue>,
+    inner_ty: InnerType,
     type_id: TypeId,
 }
 
@@ -31,7 +39,18 @@ impl AnyValue {
     {
         Self {
             value: Box::new(val),
+            values: Vec::new(),
+            inner_ty: InnerType::Single,
             type_id: TypeId::of::<T>(),
+        }
+    }
+
+    pub fn vec(values: Vec<AnyValue>) -> Self {
+        Self {
+            value: Box::new(()),
+            values,
+            inner_ty: InnerType::Multiple,
+            type_id: TypeId::of::<()>(),
         }
     }
 
@@ -234,6 +253,14 @@ impl AnyValue {
                     Err(_) => None,
                 }
             })
+    }
+
+    pub fn is_vec(&self) -> bool {
+        matches!(self.inner_ty, InnerType::Multiple)
+    }
+
+    pub fn as_vec(&self) -> &[AnyValue] {
+        &self.values
     }
 }
 

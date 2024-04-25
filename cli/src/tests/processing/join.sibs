@@ -1,11 +1,48 @@
 /// Testing join 
 #(join: ../../../../target/debug)
-    /// Success exit
-    test [
+    test_a [
         JOIN (
-            `./exit 0 10000 10 100`;
-            `./exit 0 10000 10 100`;
-            `./exit 1 300 10 100`;
-            `./exit 0 10000 10 100`;
+            `./exit 0 100 10 100`;
+            `./exit 0 100 10 100`;
+            `./exit 0 100 10 100`;
+            `./exit 0 100 10 100`;
+        );
+    ];
+    test_b [
+        JOIN (
+            `./exit 0 100 10 100`;
+            :self:test_a;
+        );
+    ];
+    // One with error
+    test_c [
+        JOIN (
+            `./exit 0 100 10 100`;
+            `./exit 0 100 10 100`;
+            `./exit 1 100 10 100`;
+            `./exit 0 100 10 100`;
+        );
+    ];
+    // All with errors
+    test_d [
+        JOIN (
+            `./exit 1 100 10 100`;
+            `./exit 1 100 10 100`;
+            `./exit 1 100 10 100`;
+            `./exit 1 100 10 100`;
+        );
+    ];
+    test_e [
+        JOIN (
+            `./exit 0 100 10 100`;
+            :self:test_c;
+        );
+    ];
+    test_f [
+        JOIN (
+            `./exit 0 100 10 100`;
+            :self:test_b;
+            :self:test_c;
+            :self:test_d;
         );
     ];
