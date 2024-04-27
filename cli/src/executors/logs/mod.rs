@@ -42,11 +42,11 @@ mod test {
     ];
 
     const LOGS: &[&str] = &[
-        "[ERROR][...]: Hello World!",
-        "[WARNING][...]: Hello World!",
-        "[DEBUG][...]: Hello World!",
-        "[VERBOSE][...]: Hello World!",
-        "[INFO][...]: Hello World!",
+        "[ERROR]: Hello World!",
+        "[WARNING]: Hello World!",
+        "[DEBUG]: Hello World!",
+        "[VERBOSE]: Hello World!",
+        "[INFO]: Hello World!",
     ];
 
     #[tokio::test]

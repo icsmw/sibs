@@ -9,7 +9,7 @@ pub fn execute(msgs: Vec<AnyValue>, cx: Context, _sc: Scope) -> ExecutorPinnedRe
     Box::pin(async move {
         for msg in msgs.iter() {
             cx.journal.debug(
-                "...".to_owned(),
+                String::new(),
                 msg.get_as_string().unwrap_or(format!("{msg:?}")),
             );
         }

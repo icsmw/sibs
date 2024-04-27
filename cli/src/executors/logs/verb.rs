@@ -5,11 +5,11 @@ use crate::{
 
 pub const NAME: &str = "verb";
 
-pub fn execute(msgs: Vec<AnyValue>, cx: Context, sc: Scope) -> ExecutorPinnedResult {
+pub fn execute(msgs: Vec<AnyValue>, cx: Context, _sc: Scope) -> ExecutorPinnedResult {
     Box::pin(async move {
         for msg in msgs.iter() {
             cx.journal.verb(
-                "...".to_owned(),
+                String::new(),
                 msg.get_as_string().unwrap_or(format!("{msg:?}")),
             );
         }
