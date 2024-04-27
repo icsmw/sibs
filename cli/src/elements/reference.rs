@@ -186,7 +186,7 @@ mod reading {
     #[tokio::test]
     async fn reading() {
         read_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &include_str!("../tests/reading/refs.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
@@ -210,7 +210,7 @@ mod reading {
     #[tokio::test]
     async fn tokens() {
         read_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &include_str!("../tests/reading/refs.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
@@ -239,7 +239,7 @@ mod reading {
         let mut count = 0;
         for sample in samples.iter() {
             count += read_string!(
-                &Configuration::logs(),
+                &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, _: &mut Sources| {
                     let result = Reference::read(reader);

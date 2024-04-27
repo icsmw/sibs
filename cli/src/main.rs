@@ -18,7 +18,7 @@ async fn main() {
     else {
         exit(1);
     };
-    let journal = Journal::init(cfg);
+    let journal = Journal::unwrapped(cfg);
     if let Err(err) = cli::process(journal.clone()).await {
         journal.err("cli::process", err.to_string());
     }

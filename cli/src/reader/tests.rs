@@ -333,7 +333,7 @@ mod reading {
     #[tokio::test]
     async fn reading() {
         read_file!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &std::env::current_dir()
                 .unwrap()
                 .join("./src/tests/reading/full/build.sibs"),

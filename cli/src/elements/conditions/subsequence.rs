@@ -178,7 +178,7 @@ mod reading {
         let mut count = 0;
         for str in content.iter() {
             count += read_string!(
-                &Configuration::logs(),
+                &Configuration::logs(false),
                 str,
                 |reader: &mut Reader, src: &mut Sources| {
                     let entity = src.report_err_if(Subsequence::read(reader))?;
@@ -205,7 +205,7 @@ mod reading {
             .collect::<Vec<String>>();
         for (count, str) in content.iter().enumerate() {
             read_string!(
-                &Configuration::logs(),
+                &Configuration::logs(false),
                 str,
                 |reader: &mut Reader, src: &mut Sources| {
                     let entity = src.report_err_if(Subsequence::read(reader))?;

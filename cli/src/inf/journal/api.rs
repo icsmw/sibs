@@ -1,4 +1,5 @@
 use crate::inf::journal::{Level, Report};
+use tokio::sync::oneshot;
 use uuid::Uuid;
 
 /// Represents API of LifeCycle.
@@ -40,6 +41,12 @@ pub enum Demand {
     /// * `usize` - id of thread/job
     /// * `Level` - level of logs
     CollectionClose(String, usize, Level),
+    /// Reads all message until this
+    ///
+    /// # Parameters
+    ///
+    /// * `oneshot::Sender<()>` - Channel to response
+    Flush(oneshot::Sender<()>),
     /// Emit shutdown of events loop
     Destroy,
 }

@@ -44,6 +44,7 @@ pub async fn get_journal_configuration() -> Result<journal::Configuration, E> {
             .get_value_no_cx::<args::exertion::Trace, bool>()
             .await?
             .unwrap_or(false),
+        writing: true,
     })
 }
 

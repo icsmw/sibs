@@ -3,6 +3,7 @@ pub mod env;
 mod error;
 pub mod fs;
 pub mod load;
+pub mod logs;
 pub mod store;
 pub mod str;
 pub mod test;
@@ -38,6 +39,7 @@ pub fn register(store: &mut Store) -> Result<(), E> {
     str::register(store)?;
     fs::register(store)?;
     env::register(store)?;
+    logs::register(store)?;
     test::register(store)?;
     Ok(())
 }

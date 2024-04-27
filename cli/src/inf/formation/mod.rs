@@ -77,7 +77,7 @@ pub trait Formation {
 
 pub async fn format_file(filename: &PathBuf) -> Result<(), LinkedErr<E>> {
     let mut cursor = FormationCursor::default();
-    let journal = Journal::init(Configuration::logs());
+    let journal = Journal::init(Configuration::logs(false))?;
     let elements = Reader::read_file(filename, false, None, &journal).await?;
     let mut file = fs::OpenOptions::new().write(true).open(filename)?;
     for el in elements {
@@ -90,7 +90,7 @@ pub async fn format_file(filename: &PathBuf) -> Result<(), LinkedErr<E>> {
 #[cfg(test)]
 pub async fn format_string(content: &str) -> Result<String, LinkedErr<E>> {
     let mut cursor = FormationCursor::default();
-    let journal = Journal::init(Configuration::logs());
+    let journal = Journal::init(Configuration::logs(false))?;
     let elements = Reader::read_string(content, &journal).await?;
     let mut output = String::new();
     for el in elements {
@@ -110,7 +110,7 @@ mod reading {
 
     #[tokio::test]
     async fn reading() -> Result<(), LinkedErr<E>> {
-        let journal = Journal::init(Configuration::logs());
+        let journal = Journal::init(Configuration::logs(false))?;
         let origin =
             Reader::read_string(include_str!("../../tests/formation.sibs"), &journal).await?;
         let formated = Reader::read_string(

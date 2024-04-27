@@ -1,8 +1,11 @@
-use crate::inf::journal::{Configuration, Output, Report};
-use console::Style;
+use crate::inf::journal::{Configuration, Output, Report, E};
+use console::{strip_ansi_codes, Style};
 use std::{
     collections::{HashMap, HashSet},
+    env::temp_dir,
     fmt,
+    fs::{File, OpenOptions},
+    io::Write,
     time::{SystemTime, UNIX_EPOCH},
 };
 use uuid::Uuid;
@@ -73,12 +76,14 @@ fn timestamp() -> u128 {
 
 #[derive(Debug)]
 pub struct Storage {
+    uuid: Uuid,
     messages: Vec<LogMessage>,
     reports: Vec<Report>,
     tolarant: HashSet<Uuid>,
     since: u128,
     cfg: Configuration,
     collected: HashMap<usize, String>,
+    file: Option<File>,
 }
 
 impl Storage {
@@ -95,15 +100,47 @@ impl Storage {
             }
         });
     }
-    pub fn new(cfg: Configuration) -> Self {
-        Self {
+    pub fn new(cfg: Configuration) -> Result<Self, E> {
+        let uuid = Uuid::new_v4();
+        let path = if let Some(path) = &cfg.log_file {
+            path.to_owned()
+        } else {
+            temp_dir().join(format!("{}-{uuid}.sibs.log", timestamp()))
+        };
+        let file = if cfg.writing {
+            Some(
+                OpenOptions::new()
+                    .create(true)
+                    .truncate(true)
+                    .write(true)
+                    .open(&path)?,
+            )
+        } else {
+            None
+        };
+        let mut instance = Self {
+            uuid,
             messages: Vec::new(),
             reports: Vec::new(),
             tolarant: HashSet::new(),
             cfg,
             since: timestamp(),
             collected: HashMap::new(),
-        }
+            file,
+        };
+        instance.log(
+            "",
+            &format!(
+                "Session has been started. {}",
+                if instance.file.is_some() {
+                    format!("Log file: {}", path.to_string_lossy())
+                } else {
+                    String::from("Logs aren't writing into file.")
+                }
+            ),
+            Level::Info,
+        );
+        Ok(instance)
     }
     pub fn log<'a, T>(&mut self, owner: T, msg: T, level: Level)
     where
@@ -115,12 +152,26 @@ impl Storage {
             level,
             time: timestamp(),
         });
-        if let (Some(msg), true) = (
-            self.messages.last(),
-            matches!(self.cfg.output, Output::Logs),
-        ) {
-            println!("{}", msg.to_ascii_string(self.since));
+        if let Some(msg) = self.messages.last() {
+            if matches!(self.cfg.output, Output::Logs) {
+                println!("{}", msg.to_ascii_string(self.since));
+            }
+            if let Some(file) = self.file.as_mut() {
+                if let Err(err) = writeln!(
+                    file,
+                    "{}",
+                    strip_ansi_codes(&msg.to_ascii_string(self.since))
+                ) {
+                    eprintln!("Fail to write logs: {err:?}");
+                }
+            }
         }
+    }
+    pub fn flush(&mut self) -> Result<(), E> {
+        if let Some(file) = self.file.as_mut() {
+            file.flush()?;
+        }
+        Ok(())
     }
     pub fn report(&mut self, report: Report) {
         self.reports.push(report);

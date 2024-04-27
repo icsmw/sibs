@@ -1,15 +1,16 @@
 mod api;
 mod cfg;
+mod error;
 mod extentions;
 mod owned;
 mod report;
 mod storage;
 
-use crate::error::E;
 use std::fmt::Display;
 
 use api::*;
 pub use cfg::*;
+pub use error::*;
 use extentions::*;
 pub use owned::*;
 pub use report::*;
@@ -19,7 +20,10 @@ use uuid::Uuid;
 use std::sync::Arc;
 use tokio::{
     spawn,
-    sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
+    sync::{
+        mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
+        oneshot,
+    },
 };
 use tokio_util::sync::CancellationToken;
 
@@ -31,7 +35,12 @@ pub struct Journal {
 }
 
 impl Journal {
-    pub fn init(cfg: Configuration) -> Self {
+    pub fn unwrapped(cfg: Configuration) -> Self {
+        Self::init(cfg)
+            .map_err(|e| eprintln!("{e}"))
+            .expect("Journal has been created")
+    }
+    pub fn init(cfg: Configuration) -> Result<Self, E> {
         let (tx, mut rx): (UnboundedSender<Demand>, UnboundedReceiver<Demand>) =
             unbounded_channel();
         let state = CancellationToken::new();
@@ -40,7 +49,7 @@ impl Journal {
             cfg: Arc::new(cfg.clone()),
             state: state.clone(),
         };
-        let mut storage = Storage::new(cfg);
+        let mut storage = Storage::new(cfg)?;
         spawn(async move {
             while let Some(demand) = rx.recv().await {
                 match demand {
@@ -61,6 +70,14 @@ impl Journal {
                             storage.log(owner, msg, level);
                         }
                     }
+                    Demand::Flush(tx) => {
+                        if storage.flush().is_err() {
+                            storage.log("Journal", "Fail to flush log's storage", Level::Err);
+                        }
+                        if tx.send(()).is_err() {
+                            storage.log("Journal", "Fail to responce on Demand::Flush", Level::Err);
+                        }
+                    }
                     Demand::Destroy => {
                         break;
                     }
@@ -69,7 +86,7 @@ impl Journal {
             storage.print();
             state.cancel();
         });
-        instance
+        Ok(instance)
     }
 
     #[cfg(test)]
@@ -77,15 +94,14 @@ impl Journal {
         let (tx, _rx): (UnboundedSender<Demand>, UnboundedReceiver<Demand>) = unbounded_channel();
         Self {
             tx,
-            cfg: Arc::new(Configuration::logs()),
+            cfg: Arc::new(Configuration::logs(false)),
             state: CancellationToken::new(),
         }
     }
     pub async fn destroy(&self) -> Result<(), E> {
-        self.tx.send(Demand::Destroy).map_err(|_e| E {
-            sig: String::from("Journal"),
-            msg: String::from("Fail to destroy logger because channel error"),
-        })?;
+        self.tx
+            .send(Demand::Destroy)
+            .map_err(|_e| E::ShutdownFail)?;
         self.state.cancelled().await;
         Ok(())
     }
@@ -102,8 +118,18 @@ impl Journal {
     }
 
     pub fn as_tolerant(&self, uuid: &Uuid) {
-        if let Err(_err) = self.tx.send(Demand::Toleranted(*uuid)) {
+        if self.tx.send(Demand::Toleranted(*uuid)).is_err() {
             eprintln!("Fail to mark report/error as tolerant");
+        }
+    }
+
+    pub async fn flush(&self) {
+        let (tx, rx) = oneshot::channel();
+        if self.tx.send(Demand::Flush(tx)).is_err() {
+            eprintln!("Fail to flush journal");
+        }
+        if rx.await.is_err() {
+            eprintln!("Fail to get response on flushing journal");
         }
     }
 

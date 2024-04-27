@@ -148,7 +148,7 @@ mod reading {
     #[tokio::test]
     async fn reading() {
         read_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &include_str!("../../tests/reading/command.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let origins = include_str!("../../tests/reading/command.sibs")
@@ -182,7 +182,7 @@ mod reading {
     #[tokio::test]
     async fn tokens() {
         read_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &include_str!("../../tests/reading/command.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;

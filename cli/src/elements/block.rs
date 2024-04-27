@@ -151,7 +151,7 @@ mod reading {
     #[tokio::test]
     async fn reading() {
         read_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &format!(
                 "[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
                 include_str!("../tests/reading/if.sibs"),
@@ -177,7 +177,7 @@ mod reading {
     #[tokio::test]
     async fn tokens() {
         read_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &format!(
                 "[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
                 include_str!("../tests/reading/if.sibs"),
@@ -264,7 +264,7 @@ mod proptest {
         get_rt().block_on(async {
             let origin = format!("test {block};");
             read_string!(
-                &Configuration::logs(),
+                &Configuration::logs(false),
                 &origin,
                 |reader: &mut Reader, src: &mut Sources| {
                     while let Some(task) = src.report_err_if(Task::read(reader))? {

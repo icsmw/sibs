@@ -197,7 +197,7 @@ mod reading {
     #[tokio::test]
     async fn reading() {
         read_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &include_str!("../../tests/reading/join.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
@@ -219,7 +219,7 @@ mod reading {
     #[tokio::test]
     async fn tokens() {
         read_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &include_str!("../../tests/reading/join.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
@@ -249,7 +249,7 @@ mod reading {
         let mut count = 0;
         for sample in samples.iter() {
             count += read_string!(
-                &Configuration::logs(),
+                &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, _: &mut Sources| {
                     assert!(Join::read(reader).is_err());
@@ -280,7 +280,7 @@ mod processing {
             .unwrap()
             .join("./src/tests/processing/join.sibs");
         process_file!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &target,
             |elements: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 assert_eq!(elements.len(), 1);
@@ -312,7 +312,7 @@ mod processing {
             .unwrap()
             .join("./src/tests/processing/join.sibs");
         process_file!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &target,
             |elements: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 assert_eq!(elements.len(), 1);
@@ -406,7 +406,7 @@ mod proptest {
         get_rt().block_on(async {
             let origin = format!("test [\n{join};\n];");
             read_string!(
-                &Configuration::logs(),
+                &Configuration::logs(false),
                 &origin,
                 |reader: &mut Reader, src: &mut Sources| {
                     while let Some(task) = src.report_err_if(Task::read(reader))? {

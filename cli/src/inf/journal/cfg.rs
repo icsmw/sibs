@@ -46,14 +46,23 @@ pub struct Configuration {
     pub log_file: Option<PathBuf>,
     pub output: Output,
     pub trace: bool,
+    pub writing: bool,
 }
-
 impl Configuration {
-    pub fn logs() -> Self {
+    pub fn logs(writing: bool) -> Self {
         Configuration {
             log_file: None,
             output: Output::Logs,
             trace: true,
+            writing,
+        }
+    }
+    pub fn to_file(filepath: PathBuf) -> Self {
+        Configuration {
+            log_file: Some(filepath),
+            output: Output::Logs,
+            trace: true,
+            writing: true,
         }
     }
 }
@@ -64,6 +73,7 @@ impl Default for Configuration {
             log_file: None,
             output: Output::Progress,
             trace: false,
+            writing: true,
         }
     }
 }

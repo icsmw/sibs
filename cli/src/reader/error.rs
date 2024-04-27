@@ -4,7 +4,7 @@ use crate::{
     error,
     error::LinkedErr,
     executors,
-    inf::{context, map, operator},
+    inf::{context, journal, map, operator},
     reader::Reader,
 };
 use thiserror::Error;
@@ -135,6 +135,8 @@ pub enum E {
     OperatorError(String),
     #[error("Map error: {0}")]
     MapError(map::E),
+    #[error("Journal error: {0}")]
+    JournalError(journal::E),
 }
 
 impl E {
@@ -160,6 +162,12 @@ impl From<E> for LinkedErr<E> {
 impl From<map::E> for E {
     fn from(value: map::E) -> Self {
         E::MapError(value)
+    }
+}
+
+impl From<journal::E> for LinkedErr<E> {
+    fn from(e: journal::E) -> Self {
+        E::JournalError(e).unlinked()
     }
 }
 

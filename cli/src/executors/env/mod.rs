@@ -88,7 +88,7 @@ mod test {
         }
         for test in TESTS.iter() {
             process_string!(
-                &Configuration::logs(),
+                &Configuration::logs(false),
                 &apply_hooks(format!("test[{test}]"), hooks),
                 |reader: &mut Reader, src: &mut Sources| {
                     let mut tasks: Vec<Task> = Vec::new();

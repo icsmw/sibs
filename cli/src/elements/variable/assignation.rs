@@ -115,7 +115,7 @@ mod reading {
     #[tokio::test]
     async fn reading() {
         read_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &include_str!("../../tests/reading/variable_assignation.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
@@ -139,7 +139,7 @@ mod reading {
     #[tokio::test]
     async fn tokens() {
         read_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &include_str!("../../tests/reading/variable_assignation.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
@@ -180,7 +180,7 @@ mod reading {
         let mut count = 0;
         for sample in samples.iter() {
             count += read_string!(
-                &Configuration::logs(),
+                &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, _: &mut Sources| {
                     assert!(VariableAssignation::read(reader).is_err());
@@ -217,7 +217,7 @@ mod processing {
     #[tokio::test]
     async fn reading() {
         process_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &include_str!("../../tests/processing/variable_assignation.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Task> = Vec::new();
@@ -306,7 +306,7 @@ mod proptest {
         get_rt().block_on(async {
             let origin = format!("test [\n{assignation};\n];");
             read_string!(
-                &Configuration::logs(),
+                &Configuration::logs(false),
                 &origin,
                 |reader: &mut Reader, src: &mut Sources| {
                     while let Some(task) = src.report_err_if(Task::read(reader))? {

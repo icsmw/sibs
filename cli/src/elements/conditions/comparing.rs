@@ -209,7 +209,7 @@ mod reading {
         let mut count = 0;
         for str in content.iter() {
             count += read_string!(
-                &Configuration::logs(),
+                &Configuration::logs(false),
                 str,
                 |reader: &mut Reader, src: &mut Sources| {
                     let entity =
@@ -239,7 +239,7 @@ mod reading {
         let mut count = 0;
         for str in content.iter() {
             count += read_string!(
-                &Configuration::logs(),
+                &Configuration::logs(false),
                 str,
                 |reader: &mut Reader, src: &mut Sources| {
                     let entity =
@@ -292,7 +292,7 @@ mod reading {
         let mut count = 0;
         for sample in samples.iter() {
             count += read_string!(
-                &Configuration::logs(),
+                &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, _: &mut Sources| {
                     let cmp = Comparing::read(reader);

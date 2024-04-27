@@ -76,7 +76,7 @@ mod reading {
     #[tokio::test]
     async fn reading() {
         read_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &include_str!("../tests/reading/comments.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 while let Some(entity) = src.report_err_if(Task::read(reader))? {

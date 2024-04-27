@@ -146,7 +146,7 @@ mod reading {
         let samples = include_str!("../tests/reading/values.sibs");
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
-        let cfg = Configuration::logs();
+        let cfg = Configuration::logs(false);
         for sample in samples.iter() {
             count += read_string!(&cfg, sample, |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
@@ -171,7 +171,7 @@ mod reading {
         let samples = include_str!("../tests/reading/values.sibs");
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
-        let cfg = Configuration::logs();
+        let cfg = Configuration::logs(false);
         for sample in samples.iter() {
             count += read_string!(&cfg, sample, |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
@@ -202,7 +202,7 @@ mod reading {
         let samples = include_str!("../tests/error/values.sibs");
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
-        let cfg = Configuration::logs();
+        let cfg = Configuration::logs(false);
         for sample in samples.iter() {
             count += read_string!(&cfg, sample, |reader: &mut Reader, _: &mut Sources| {
                 assert!(Values::read(reader).is_err());
@@ -240,7 +240,7 @@ mod processing {
     #[tokio::test]
     async fn reading() {
         let components: Vec<Component> = read_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &include_str!("../tests/processing/values_components.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut components: Vec<Component> = Vec::new();
@@ -251,7 +251,7 @@ mod processing {
             }
         );
         process_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &include_str!("../tests/processing/values.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Task> = Vec::new();

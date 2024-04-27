@@ -22,7 +22,7 @@ macro_rules! read_string {
         };
         use $crate::{inf::Journal, runners::exit};
 
-        let journal = Journal::init(Configuration::logs());
+        let journal = Journal::unwrapped(Configuration::logs(false));
         let cfg = $cfg as &dyn Any;
         let Some(cfg) = cfg.downcast_ref::<Configuration>().cloned() else {
             return exit(journal, "Expecting &Configuration as the first argument").await;
@@ -35,7 +35,7 @@ macro_rules! read_string {
         } else {
             return exit(journal, "Expecting &content as the second argument").await;
         };
-        let journal = Journal::init(cfg);
+        let journal = Journal::unwrapped(cfg);
         let mut src = Sources::new(&journal);
         let mut reader = Reader::unbound(&mut src, &content).expect("Unbound reader is created");
         #[allow(clippy::redundant_closure_call)]
@@ -66,7 +66,7 @@ macro_rules! process_string {
         };
         use $crate::{inf::Scenario, runners::exit};
 
-        let journal = Journal::init(Configuration::logs());
+        let journal = Journal::unwrapped(Configuration::logs(false));
         let cfg = $cfg as &dyn Any;
         let Some(cfg) = cfg.downcast_ref::<Configuration>().cloned() else {
             return exit(journal, "Expecting &Configuration as the first argument").await;
@@ -79,7 +79,7 @@ macro_rules! process_string {
         } else {
             return exit(journal, "Expecting &content as the second argument").await;
         };
-        let journal = Journal::init(cfg);
+        let journal = Journal::unwrapped(cfg);
         let mut src = Sources::new(&journal);
         let mut reader = Reader::unbound(&mut src, &content).expect("Unbound reader is created");
         #[allow(clippy::redundant_closure_call)]
@@ -122,7 +122,7 @@ macro_rules! process_file {
         use std::{any::Any, panic::AssertUnwindSafe, path::PathBuf};
         use $crate::{inf::Scenario, runners::exit};
 
-        let journal = Journal::init(Configuration::logs());
+        let journal = Journal::unwrapped(Configuration::logs(false));
         let cfg = $cfg as &dyn Any;
         let Some(cfg) = cfg.downcast_ref::<Configuration>().cloned() else {
             return exit(journal, "Expecting &Configuration as the first argument").await;
@@ -131,7 +131,7 @@ macro_rules! process_file {
         let Some(filename) = filename.downcast_ref::<PathBuf>().cloned() else {
             return exit(journal, "Expecting &PathBuf as the second argument").await;
         };
-        let journal = Journal::init(cfg);
+        let journal = Journal::unwrapped(cfg);
         let scenario = match Scenario::from(&filename) {
             Ok(scenario) => scenario,
             Err(err) => {
@@ -177,7 +177,7 @@ macro_rules! read_file {
             runners::exit,
         };
 
-        let journal = Journal::init(Configuration::logs());
+        let journal = Journal::unwrapped(Configuration::logs(false));
         let cfg = $cfg as &dyn Any;
         let Some(cfg) = cfg.downcast_ref::<Configuration>().cloned() else {
             return exit(journal, "Expecting &Configuration as the first argument").await;
@@ -186,7 +186,7 @@ macro_rules! read_file {
         let Some(filename) = filename.downcast_ref::<PathBuf>().cloned() else {
             return exit(journal, "Expecting &PathBuf as the second argument").await;
         };
-        let journal = Journal::init(cfg);
+        let journal = Journal::unwrapped(cfg);
         let scenario = match Scenario::from(&filename) {
             Ok(scenario) => scenario,
             Err(err) => {

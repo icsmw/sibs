@@ -217,7 +217,7 @@ mod reading {
             .collect::<Vec<&str>>();
         let tasks = include_str!("../tests/reading/tasks.sibs");
         read_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &components
                 .iter()
                 .map(|c| format!("{c}\n{tasks}"))
@@ -246,7 +246,7 @@ mod reading {
             .collect::<Vec<&str>>();
         let tasks = include_str!("../tests/reading/tasks.sibs");
         read_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &components
                 .iter()
                 .map(|c| format!("{c}\n{tasks}"))
@@ -300,7 +300,7 @@ mod reading {
         let mut count = 0;
         for sample in samples.iter() {
             count += read_string!(
-                &Configuration::logs(),
+                &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, _: &mut Sources| {
                     assert!(Component::read(reader).is_err());
@@ -335,7 +335,7 @@ mod processing {
     #[tokio::test]
     async fn reading() {
         process_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &include_str!("../tests/processing/component.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut components: Vec<Component> = Vec::new();

@@ -99,7 +99,7 @@ mod reading {
         let mut count = 0;
         for sample in samples.iter() {
             count += read_string!(
-                &Configuration::logs(),
+                &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, src: &mut Sources| {
                     src.report_err_if(VariableName::read(reader))?.unwrap();
@@ -117,7 +117,7 @@ mod reading {
         let mut count = 0;
         for sample in samples.iter() {
             count += read_string!(
-                &Configuration::logs(),
+                &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, src: &mut Sources| {
                     let variable_name = src.report_err_if(VariableName::read(reader))?.unwrap();
@@ -138,7 +138,7 @@ mod reading {
         let mut count = 0;
         for sample in samples.iter() {
             count += read_string!(
-                &Configuration::logs(),
+                &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, _: &mut Sources| {
                     assert!(VariableName::read(reader).is_err());

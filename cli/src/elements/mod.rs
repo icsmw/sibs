@@ -711,7 +711,7 @@ mod processing {
     #[tokio::test]
     async fn reading() {
         process_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &include_str!("../tests/processing/tolerance.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut elements: Vec<Element> = Vec::new();
@@ -965,7 +965,7 @@ mod proptest {
         get_rt().block_on(async {
             let origin = format!("{el};");
             read_string!(
-                &Configuration::logs(),
+                &Configuration::logs(false),
                 &origin,
                 |reader: &mut Reader, src: &mut Sources| {
                     while let Some(block) = src.report_err_if(Block::read(reader))? {

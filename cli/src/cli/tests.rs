@@ -15,7 +15,7 @@ async fn reading() {
         .unwrap()
         .join("./src/tests/cli/handle_exit.sibs");
     process_file!(
-        &Configuration::logs(),
+        &Configuration::logs(false),
         &target,
         |elements: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
             assert_eq!(elements.len(), 1);

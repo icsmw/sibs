@@ -197,7 +197,7 @@ mod reading {
     async fn reading() {
         let content = include_str!("../../tests/reading/if.sibs");
         read_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &content,
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
@@ -222,7 +222,7 @@ mod reading {
     async fn tokens() {
         let content = include_str!("../../tests/reading/if.sibs");
         read_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &content,
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
@@ -270,7 +270,7 @@ mod reading {
         let mut count = 0;
         for sample in samples.iter() {
             count += read_string!(
-                &Configuration::logs(),
+                &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, _: &mut Sources| {
                     assert!(If::read(reader).is_err());
@@ -301,7 +301,7 @@ mod processing {
             .match_indices("test [")
             .count();
         process_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &include_str!("../../tests/processing/if.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Task> = Vec::new();
@@ -387,7 +387,7 @@ mod proptest {
         get_rt().block_on(async {
             let origin = format!("test [\n{if_block};\n];");
             read_string!(
-                &Configuration::logs(),
+                &Configuration::logs(false),
                 &origin,
                 |reader: &mut Reader, src: &mut Sources| {
                     while let Some(task) = src.report_err_if(Task::read(reader))? {

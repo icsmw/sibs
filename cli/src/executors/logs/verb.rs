@@ -1,0 +1,19 @@
+use crate::{
+    executors::{ExecutorPinnedResult, E},
+    inf::any::AnyValue,
+    inf::context::Context,
+};
+
+pub const NAME: &str = "verb";
+
+pub fn execute(msgs: Vec<AnyValue>, cx: Context) -> ExecutorPinnedResult {
+    Box::pin(async move {
+        for msg in msgs.iter() {
+            cx.journal.verb(
+                "...".to_owned(),
+                msg.get_as_string().unwrap_or(format!("{msg:?}")),
+            );
+        }
+        Ok(AnyValue::new(()))
+    })
+}

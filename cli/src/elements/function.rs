@@ -333,7 +333,7 @@ mod reading {
         let content = include_str!("../tests/reading/function.sibs");
         let len = content.split('\n').count();
         read_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &include_str!("../tests/reading/function.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
@@ -359,7 +359,7 @@ mod reading {
         let content = include_str!("../tests/reading/function.sibs");
         let len = content.split('\n').count();
         read_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &include_str!("../tests/reading/function.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
@@ -389,7 +389,7 @@ mod reading {
         let samples = include_str!("../tests/error/function.sibs");
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
-        let cfg = Configuration::logs();
+        let cfg = Configuration::logs(false);
         for sample in samples.iter() {
             count += read_string!(&cfg, sample, |reader: &mut Reader, _: &mut Sources| {
                 let func = Function::read(reader);
@@ -427,7 +427,7 @@ mod processing {
     #[tokio::test]
     async fn reading() {
         process_string!(
-            &Configuration::logs(),
+            &Configuration::logs(false),
             &include_str!("../tests/processing/functions.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Task> = Vec::new();
@@ -527,7 +527,7 @@ mod proptest {
         get_rt().block_on(async {
             let origin = format!("test [\n{func};\n];");
             read_string!(
-                &Configuration::logs(),
+                &Configuration::logs(false),
                 &origin,
                 |reader: &mut Reader, src: &mut Sources| {
                     while let Some(task) = src.report_err_if(Task::read(reader))? {
