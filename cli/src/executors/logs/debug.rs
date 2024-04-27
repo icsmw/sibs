@@ -1,8 +1,4 @@
-use crate::{
-    executors::{ExecutorPinnedResult, E},
-    inf::any::AnyValue,
-    inf::context::Context,
-};
+use crate::{executors::ExecutorPinnedResult, inf::any::AnyValue, inf::context::Context};
 
 pub const NAME: &str = "debug";
 
