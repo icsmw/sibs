@@ -75,3 +75,8 @@ impl From<operator::E> for E {
         E::OperatorError(e)
     }
 }
+impl From<LinkedErr<operator::E>> for E {
+    fn from(e: LinkedErr<operator::E>) -> Self {
+        E::OperatorError(e.e)
+    }
+}

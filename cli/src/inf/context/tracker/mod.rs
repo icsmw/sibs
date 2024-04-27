@@ -65,7 +65,7 @@ impl Tracker {
                             Ok(sequence) => sequence,
                             Err(err) => {
                                 let _ = own.err_if(
-                                    rx.send(Err(E::ProgressBarError(err.to_string())))
+                                    rx.send(Err(E::ProgressBar(err.to_string())))
                                         .map_err(|_| err),
                                 );
                                 continue;
@@ -116,7 +116,7 @@ impl Tracker {
         let (tx, rx) = oneshot::channel();
         self.tx
             .send(Demand::CreateJob(job.to_string(), max, tx))
-            .map_err(|e| E::ChannelError(format!("Fail to send tick: {e}")))?;
+            .map_err(|e| E::Channel(format!("Fail to send tick: {e}")))?;
         rx.await?
     }
 
@@ -145,7 +145,7 @@ impl Tracker {
     pub async fn destroy(&self) -> Result<(), E> {
         self.tx
             .send(Demand::Destroy)
-            .map_err(|e| E::ChannelError(format!("Fail to send tick: {e}")))?;
+            .map_err(|e| E::Channel(format!("Fail to send tick: {e}")))?;
         self.state.cancelled().await;
         Ok(())
     }

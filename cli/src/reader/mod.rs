@@ -249,7 +249,7 @@ fn read_file<'a>(
                     Err(E::OnlyImportFunctionAllowedOnRoot.by_reader(&reader))?;
                 }
                 let path = if func.args.len() == 1 {
-                    Import::get(PathBuf::from(func.args[0].to_string()), cwd)?
+                    Import::get(PathBuf::from(func.args[0].to_string()), cwd.to_path_buf())?
                 } else {
                     return Err(E::ImportFunctionInvalidArgs.by_reader(&reader))?;
                 };

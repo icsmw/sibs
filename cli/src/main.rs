@@ -20,7 +20,7 @@ async fn main() {
     };
     let journal = Journal::init(cfg);
     if let Err(err) = cli::process(journal.clone()).await {
-        journal.err("cli::process", &err.to_string());
+        journal.err("cli::process", err.to_string());
     }
     if let Err(err) = journal.destroy().await {
         eprintln!("{err}");

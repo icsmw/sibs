@@ -23,15 +23,6 @@ impl Map {
             ids,
         }
     }
-    pub fn unbound(content: &str) -> Self {
-        Self {
-            fragments: HashMap::new(),
-            content: content.to_owned(),
-            filename: PathBuf::from(Uuid::new_v4().to_string()),
-            recent: None,
-            ids: Ids::new(),
-        }
-    }
     pub fn contains_token(&self, token: &usize) -> bool {
         self.fragments.contains_key(token)
     }

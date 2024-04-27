@@ -120,11 +120,7 @@ pub async fn process(journal: Journal) -> Result<(), E> {
                     cx.clone(),
                     sc.clone(),
                 )
-                .await
-                .map_err(|err| {
-                    let _ = cx.atlas.report_err(&err);
-                    err.e
-                })?;
+                .await?;
             Ok(())
         } else {
             Err(E::ComponentNotExists(component.to_string()))

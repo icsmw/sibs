@@ -26,7 +26,7 @@ impl From<Error> for E {
 pub struct Import {}
 
 impl Import {
-    pub fn get(mut path: PathBuf, cwd: &PathBuf) -> Result<PathBuf, E> {
+    pub fn get(mut path: PathBuf, cwd: PathBuf) -> Result<PathBuf, E> {
         if path.is_relative() {
             path = cwd.join(path);
         }

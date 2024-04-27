@@ -46,8 +46,7 @@ impl Progress {
             Ok(self.sequence)
         } else {
             let spinner_style =
-                ProgressStyle::with_template("{spinner} {prefix:.bold.dim} {wide_msg}")
-                    .map_err(|e| E::ProgressBarError(e.to_string()))?
+                ProgressStyle::with_template("{spinner} {prefix:.bold.dim} {wide_msg}")?
                     .tick_chars("▂▃▅▆▇▆▅▃▂ ");
             let bar = self.mp.add(ProgressBar::new(len.unwrap_or(u64::MAX)));
             bar.set_style(spinner_style.clone());
