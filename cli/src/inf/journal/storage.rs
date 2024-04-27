@@ -1,4 +1,5 @@
 use crate::inf::journal::{Configuration, Output, Report, E};
+use chrono::Utc;
 use console::{strip_ansi_codes, Style};
 use std::{
     collections::{HashMap, HashSet},
@@ -59,9 +60,13 @@ impl LogMessage {
                 .apply_to(self.level.to_string()),
         };
         format!(
-            "[{}][{level}][{}]: {}",
+            "[{}][{level}]{}: {}",
             self.time - since,
-            self.owner,
+            if self.owner.is_empty() {
+                "".to_owned()
+            } else {
+                format!("[{}]", self.owner)
+            },
             self.msg
         )
     }
@@ -76,7 +81,6 @@ fn timestamp() -> u128 {
 
 #[derive(Debug)]
 pub struct Storage {
-    uuid: Uuid,
     messages: Vec<LogMessage>,
     reports: Vec<Report>,
     tolarant: HashSet<Uuid>,
@@ -119,7 +123,6 @@ impl Storage {
             None
         };
         let mut instance = Self {
-            uuid,
             messages: Vec::new(),
             reports: Vec::new(),
             tolarant: HashSet::new(),
@@ -131,7 +134,8 @@ impl Storage {
         instance.log(
             "",
             &format!(
-                "Session has been started. {}",
+                "Session has been started at {}. {}",
+                Utc::now(),
                 if instance.file.is_some() {
                     format!("Log file: {}", path.to_string_lossy())
                 } else {

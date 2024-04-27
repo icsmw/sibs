@@ -1,6 +1,6 @@
 use crate::{
     executors::ExecutorResult,
-    inf::{AnyValue, Context},
+    inf::{AnyValue, Context, Scope},
 };
 use tokio::sync::oneshot;
 
@@ -13,11 +13,14 @@ pub enum Demand {
     ///
     /// * `String` - Name of function
     /// * `AnyValue` - Function argument
+    /// * `Context` - Global context
+    /// * `Scope` - Task's scope
     /// * `oneshot::Sender<ExecutorResult>` - Response channel with result of executing
     Execute(
         String,
         Vec<AnyValue>,
         Context,
+        Scope,
         oneshot::Sender<ExecutorResult>,
     ),
     /// Emit shutdown of events loop

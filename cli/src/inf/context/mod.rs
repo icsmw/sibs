@@ -8,11 +8,13 @@ pub use error::E;
 pub use scenario::*;
 pub use tracker::*;
 
-use crate::{executors::Functions, inf::journal::Journal, reader::Sources};
+use crate::{
+    executors::Functions,
+    inf::{AnyValue, Journal, Scope},
+    reader::Sources,
+};
 use tokio::spawn;
 use tokio_util::sync::CancellationToken;
-
-use super::AnyValue;
 
 #[derive(Clone, Debug)]
 pub struct Context {
@@ -67,7 +69,7 @@ impl Context {
     /// # Returns
     ///
     /// `Ok(AnyValue)` result of executing
-    pub async fn execute(&self, name: &str, args: Vec<AnyValue>) -> Result<AnyValue, E> {
-        Ok(self.funcs.execute(name, args, self.clone()).await?)
+    pub async fn execute(&self, name: &str, args: Vec<AnyValue>, sc: Scope) -> Result<AnyValue, E> {
+        Ok(self.funcs.execute(name, args, self.clone(), sc).await?)
     }
 }

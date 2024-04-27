@@ -1,8 +1,11 @@
-use crate::{executors::ExecutorPinnedResult, inf::any::AnyValue, inf::context::Context};
+use crate::{
+    executors::ExecutorPinnedResult,
+    inf::{AnyValue, Context, Scope},
+};
 
 pub const NAME: &str = "info";
 
-pub fn execute(msgs: Vec<AnyValue>, cx: Context) -> ExecutorPinnedResult {
+pub fn execute(msgs: Vec<AnyValue>, cx: Context, sc: Scope) -> ExecutorPinnedResult {
     Box::pin(async move {
         for msg in msgs.iter() {
             cx.journal.info(

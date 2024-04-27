@@ -8,7 +8,7 @@ pub mod store;
 pub mod str;
 pub mod test;
 
-use crate::{inf::any::AnyValue, inf::context::Context};
+use crate::inf::{any::AnyValue, context::Context, Scope};
 use api::*;
 pub use error::E;
 use std::{future::Future, pin::Pin};
@@ -24,10 +24,10 @@ use tokio_util::sync::CancellationToken;
 
 pub type ExecutorPinnedResult = Pin<Box<dyn Future<Output = ExecutorResult> + Send>>;
 pub type ExecutorResult = Result<AnyValue, E>;
-pub type ExecutorFn = fn(Vec<AnyValue>, Context) -> ExecutorPinnedResult;
+pub type ExecutorFn = fn(Vec<AnyValue>, Context, Scope) -> ExecutorPinnedResult;
 
 pub trait Executor {
-    fn execute(args: Vec<AnyValue>, cx: Context) -> ExecutorPinnedResult;
+    fn execute(args: Vec<AnyValue>, cx: Context, sc: Scope) -> ExecutorPinnedResult;
     fn get_name() -> String;
 }
 
@@ -64,12 +64,12 @@ impl Functions {
         spawn(async move {
             while let Some(demand) = rx.recv().await {
                 match demand {
-                    Demand::Execute(name, args, cx, tx) => {
+                    Demand::Execute(name, args, cx, sc, tx) => {
                         let Some(executor) = store.get(&name) else {
                             let _ = tx.send(Err(E::FunctionNotExists(name)));
                             continue;
                         };
-                        let result = executor(args, cx).await;
+                        let result = executor(args, cx, sc).await;
                         let _ = tx.send(result);
                     }
                     Demand::Destroy => {
@@ -101,10 +101,11 @@ impl Functions {
         name: &str,
         args: Vec<AnyValue>,
         cx: Context,
+        sc: Scope,
     ) -> Result<AnyValue, E> {
         let (tx, rx) = oneshot::channel();
         self.tx
-            .send(Demand::Execute(name.to_owned(), args, cx, tx))?;
+            .send(Demand::Execute(name.to_owned(), args, cx, sc, tx))?;
         rx.await?
     }
 }

@@ -34,7 +34,7 @@ pub fn import(args: TokenStream, input: TokenStream) -> TokenStream {
         format!("{}::{fn_name}", opt.ns)
     };
     TokenStream::from(quote! {
-        fn #func_name(args: Vec<AnyValue>, cx: Context) -> ExecutorPinnedResult {
+        fn #func_name(args: Vec<AnyValue>, cx: Context, sc: Scope) -> ExecutorPinnedResult {
             Box::pin(async move {
                 if args.len() != #args_required {
                     return Err(E::InvalidArgumentsCount(#args_required.to_string(), args.len().to_string()));

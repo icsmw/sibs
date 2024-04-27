@@ -308,11 +308,12 @@ impl Operator for Function {
                         &func.name,
                         func.get_processed_args(owner, components, inputs, cx.clone(), sc.clone())
                             .await?,
+                        sc.clone(),
                     )
                     .await?,
                 );
             };
-            Ok(Some(cx.execute(&self.name, args).await?))
+            Ok(Some(cx.execute(&self.name, args, sc).await?))
         })
     }
 }

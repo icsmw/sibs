@@ -16,6 +16,7 @@ tokio-stream = "0.1.14"
 tokio-util = { version = "0.7", features = ["codec"] }
 importer = { path = "../importer" }
 futures = "0.3.30"
+chrono = "0.4.38"
 
 [dependencies.uuid]
 version = "1.8.0"

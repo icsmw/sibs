@@ -1,7 +1,6 @@
 use crate::{
     executors::{Executor, ExecutorPinnedResult, E},
-    inf::any::AnyValue,
-    inf::context::Context,
+    inf::{any::AnyValue, context::Context, Scope},
 };
 use std::path::PathBuf;
 use thiserror::Error;
@@ -37,7 +36,7 @@ impl Import {
     }
 }
 impl Executor for Import {
-    fn execute(_: Vec<AnyValue>, _cx: Context) -> ExecutorPinnedResult {
+    fn execute(_: Vec<AnyValue>, _cx: Context, _sc: Scope) -> ExecutorPinnedResult {
         Box::pin(async { Err(Error::IsNotUsedInRuntime.into()) })
     }
 
