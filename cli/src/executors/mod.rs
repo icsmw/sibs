@@ -1,4 +1,5 @@
 mod api;
+pub mod cx;
 pub mod env;
 mod error;
 pub mod fs;
@@ -40,6 +41,7 @@ pub fn register(store: &mut Store) -> Result<(), E> {
     fs::register(store)?;
     env::register(store)?;
     logs::register(store)?;
+    cx::register(store)?;
     test::register(store)?;
     Ok(())
 }

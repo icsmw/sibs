@@ -28,6 +28,8 @@ pub enum E {
     RecvError(String),
     #[error("Fail to send channel message: {0}")]
     SendError(String),
+    #[error("Error on executing \"{0}\": {1}")]
+    Executing(String, String),
 }
 
 impl From<context::E> for E {
