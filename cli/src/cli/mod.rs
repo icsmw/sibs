@@ -112,7 +112,10 @@ pub async fn process(journal: Journal) -> Result<(), E> {
             .iter()
             .find(|comp| comp.name.to_string() == component)
         {
-            let sc = Scope::init(Some(cx.scenario.filename.clone()), &journal);
+            let sc = Scope::init(
+                cx.scenario.filename.parent().map(|p| p.to_path_buf()),
+                &journal,
+            );
             component
                 .execute(
                     Some(component),

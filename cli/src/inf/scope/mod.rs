@@ -32,7 +32,7 @@ impl Scope {
         };
         let journal = journal.owned("Scope".to_owned(), None);
         journal.info(format!(
-            "CWD: {}",
+            "initial CWD: {}",
             cwd.as_ref()
                 .map(|cwd| cwd.to_string_lossy().to_string())
                 .unwrap_or("no CWD context".to_string())
