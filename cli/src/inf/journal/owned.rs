@@ -1,3 +1,5 @@
+use uuid::Uuid;
+
 use crate::inf::journal::{Journal, Level};
 use std::fmt::Display;
 
@@ -5,22 +7,26 @@ use std::fmt::Display;
 pub struct OwnedJournal {
     owner: String,
     journal: Journal,
-    id: usize,
+    uuid: Uuid,
 }
 
 impl OwnedJournal {
-    pub fn new(id: usize, owner: String, journal: Journal) -> Self {
-        Self { owner, journal, id }
+    pub fn new(uuid: Uuid, owner: String, journal: Journal) -> Self {
+        Self {
+            owner,
+            journal,
+            uuid,
+        }
     }
 
     pub fn append(&self, msg: &str) {
-        self.journal.collecting().append(self.id, msg.to_owned());
+        self.journal.collecting().append(self.uuid, msg.to_owned());
     }
 
     pub fn collected(&self, level: Level) {
         self.journal
             .collecting()
-            .close(self.owner.clone(), self.id, level);
+            .close(self.owner.clone(), self.uuid, level);
     }
 
     pub fn info<'a, T>(&self, msg: T)

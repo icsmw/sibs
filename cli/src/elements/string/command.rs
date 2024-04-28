@@ -119,8 +119,8 @@ impl Operator for Command {
                 .ok_or(operator::E::NoCurrentWorkingFolder.by(self))?
                 .clone();
             match spawner::run(&command, &cwd, cx).await {
-                Ok(result) => {
-                    if result.status.success() {
+                Ok(status) => {
+                    if status.success() {
                         Ok(Some(AnyValue::new(())))
                     } else {
                         Err(operator::E::SpawnedProcessExitWithError.by(self))

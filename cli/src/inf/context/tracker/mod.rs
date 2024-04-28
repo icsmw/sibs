@@ -18,6 +18,7 @@ use tokio::{
     },
 };
 use tokio_util::sync::CancellationToken;
+use uuid::Uuid;
 
 #[derive(Clone, Debug)]
 pub enum OperationResult {
@@ -53,11 +54,11 @@ impl Tracker {
             tx,
             state: state.clone(),
         };
-        let own = journal.owned(0, String::from("Tracker"));
+        let own = journal.owned(String::from("Tracker"), None);
         let self_ref = instance.clone();
         spawn(async move {
             let mut progress: Progress = Progress::new(journal.cfg.as_ref().clone());
-            let mut jobs: HashMap<usize, String> = HashMap::new();
+            let mut jobs: HashMap<usize, (Uuid, String)> = HashMap::new();
             while let Some(tick) = rx.recv().await {
                 match tick {
                     Demand::CreateJob(alias, len, rx) => {
@@ -71,15 +72,16 @@ impl Tracker {
                                 continue;
                             }
                         };
+                        let uuid = Uuid::new_v4();
                         let _ = own.err_if(
                             rx.send(Ok(Job::new(
                                 &self_ref,
                                 sequence,
-                                journal.owned(sequence, alias.clone()),
+                                journal.owned(alias.clone(), Some(uuid)),
                             )))
                             .map_err(|_| "Demand::CreateJob"),
                         );
-                        jobs.insert(sequence, alias);
+                        jobs.insert(sequence, (uuid, alias));
                     }
                     Demand::Message(sequence, msg) => {
                         progress.set_message(sequence, &msg);
@@ -93,8 +95,10 @@ impl Tracker {
                     }
                     Demand::Destroy => {
                         progress.destroy();
-                        jobs.iter().for_each(|(seq, alias)| {
-                            journal.collecting().close(alias.clone(), *seq, Level::Warn);
+                        jobs.iter().for_each(|(seq, (uuid, alias))| {
+                            journal
+                                .collecting()
+                                .close(alias.clone(), *uuid, Level::Warn);
                             journal.warn(alias, format!("\"{alias}\" isn't finished"))
                         });
                         break;

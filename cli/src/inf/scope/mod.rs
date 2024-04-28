@@ -1,6 +1,6 @@
 mod api;
 
-use crate::inf::{context::E, AnyValue};
+use crate::inf::{context::E, AnyValue, Journal};
 use api::*;
 use std::{
     sync::Arc,
@@ -22,7 +22,7 @@ pub struct Scope {
 }
 
 impl Scope {
-    pub fn init(mut cwd: Option<PathBuf>) -> Self {
+    pub fn init(mut cwd: Option<PathBuf>, journal: &Journal) -> Self {
         let (tx, mut rx): (UnboundedSender<api::Demand>, UnboundedReceiver<api::Demand>) =
             unbounded_channel();
         let state = CancellationToken::new();
@@ -30,6 +30,13 @@ impl Scope {
             tx,
             state: state.clone(),
         };
+        let journal = journal.owned("Scope".to_owned(), None);
+        journal.info(format!(
+            "CWD: {}",
+            cwd.as_ref()
+                .map(|cwd| cwd.to_string_lossy().to_string())
+                .unwrap_or("no CWD context".to_string())
+        ));
         spawn(async move {
             let mut vars: HashMap<String, Arc<AnyValue>> = HashMap::new();
             while let Some(demand) = rx.recv().await {
@@ -42,6 +49,12 @@ impl Scope {
                     }
                     api::Demand::SetCwd(path, tx) => {
                         cwd = path;
+                        journal.info(format!(
+                            "set CWD to: {}",
+                            cwd.as_ref()
+                                .map(|cwd| cwd.to_string_lossy().to_string())
+                                .unwrap_or("no CWD context".to_string())
+                        ));
                         let _ = tx.send(());
                     }
                     api::Demand::GetCwd(tx) => {

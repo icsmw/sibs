@@ -62,11 +62,11 @@ impl Journal {
                     Demand::Toleranted(uuid) => {
                         storage.add_tolerant(uuid);
                     }
-                    Demand::Collect(id, msg) => {
-                        storage.collect(id, msg);
+                    Demand::Collect(uuid, msg) => {
+                        storage.collect(uuid, msg);
                     }
-                    Demand::CollectionClose(owner, id, level) => {
-                        if let Some(msg) = storage.collected(id) {
+                    Demand::CollectionClose(owner, uuid, level) => {
+                        if let Some(msg) = storage.collected(uuid) {
                             storage.log(owner, msg, level);
                         }
                     }
@@ -82,6 +82,9 @@ impl Journal {
                         break;
                     }
                 }
+            }
+            if storage.flush().is_err() {
+                storage.log("Journal", "Fail to flush log's storage", Level::Err);
             }
             storage.print();
             state.cancel();
@@ -123,6 +126,7 @@ impl Journal {
         }
     }
 
+    #[cfg(test)]
     pub async fn flush(&self) {
         let (tx, rx) = oneshot::channel();
         if self.tx.send(Demand::Flush(tx)).is_err() {
@@ -133,8 +137,8 @@ impl Journal {
         }
     }
 
-    pub fn owned(&self, id: usize, owner: String) -> OwnedJournal {
-        OwnedJournal::new(id, owner, self.clone())
+    pub fn owned(&self, owner: String, uuid: Option<Uuid>) -> OwnedJournal {
+        OwnedJournal::new(uuid.unwrap_or_else(|| Uuid::new_v4()), owner, self.clone())
     }
 
     pub fn info<'a, O, M>(&self, owner: O, msg: M)

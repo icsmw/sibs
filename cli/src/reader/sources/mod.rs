@@ -45,6 +45,7 @@ impl Sources {
         )));
         self.maps.insert(filename, map.clone())
     }
+    #[cfg(test)]
     pub fn add_from_str(&mut self, content: &str) -> Result<MapRef, E> {
         let filename = PathBuf::from(format!("binding with string; case: {}", Uuid::new_v4()));
         let map = Rc::new(RefCell::new(Map::new(self.ids.clone(), &filename, content)));

@@ -96,6 +96,7 @@ impl Reader {
             Ok(elements)
         })
     }
+    #[cfg(test)]
     pub fn unbound(src: &mut Sources, content: &str) -> Result<Self, E> {
         let map = src.add_from_str(content)?;
         Ok(Self {

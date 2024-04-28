@@ -49,13 +49,7 @@ fn parse_command(command: &str) -> (&str, Vec<&str>) {
     (parts.remove(0), parts)
 }
 
-pub struct RunResult {
-    pub stdout: String,
-    pub stdin: String,
-    pub status: ExitStatus,
-}
-
-pub async fn run(command: &str, cwd: &PathBuf, cx: Context) -> Result<RunResult, E> {
+pub async fn run(command: &str, cwd: &PathBuf, cx: Context) -> Result<ExitStatus, E> {
     let job = cx
         .tracker
         .create_job(
@@ -91,39 +85,31 @@ pub async fn run(command: &str, cwd: &PathBuf, cx: Context) -> Result<RunResult,
             }
         }
     }
-    let (stdout, stdin) = join!(
+    join!(
         async {
-            let mut lines = String::new();
             while let Some(line) = stdout.next().await {
-                lines = format!("{lines}\n{}", post_logs(line, &job));
+                post_logs(line, &job);
             }
-            lines
         },
         async {
-            let mut lines = String::new();
             while let Some(line) = stderr.next().await {
-                lines = format!("{lines}\n{}", post_logs(line, &job));
+                post_logs(line, &job);
             }
-            lines
         }
     );
-    Ok(RunResult {
-        stdin,
-        stdout,
-        status: child
-            .wait()
-            .await
-            .map(|res| {
-                if res.success() {
-                    job.success();
-                } else {
-                    job.fail();
-                }
-                res
-            })
-            .map_err(|e| {
+    Ok(child
+        .wait()
+        .await
+        .map(|res| {
+            if res.success() {
+                job.success();
+            } else {
                 job.fail();
-                E::Executing(command.to_string(), e.to_string())
-            })?,
-    })
+            }
+            res
+        })
+        .map_err(|e| {
+            job.fail();
+            E::Executing(command.to_string(), e.to_string())
+        })?)
 }

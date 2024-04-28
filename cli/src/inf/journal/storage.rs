@@ -86,7 +86,7 @@ pub struct Storage {
     tolarant: HashSet<Uuid>,
     since: u128,
     cfg: Configuration,
-    collected: HashMap<usize, String>,
+    collected: HashMap<Uuid, String>,
     file: Option<File>,
 }
 
@@ -183,14 +183,14 @@ impl Storage {
     pub fn add_tolerant(&mut self, uuid: Uuid) {
         self.tolarant.insert(uuid);
     }
-    pub fn collect(&mut self, id: usize, msg: String) {
+    pub fn collect(&mut self, uuid: Uuid, msg: String) {
         let offset = " ".repeat(4);
         self.collected
-            .entry(id)
+            .entry(uuid)
             .and_modify(|cnt| cnt.push_str(&format!("\n{offset}{msg}",)))
             .or_insert(format!("\n{offset}{msg}",));
     }
-    pub fn collected(&mut self, id: usize) -> Option<String> {
-        self.collected.remove(&id)
+    pub fn collected(&mut self, uuid: Uuid) -> Option<String> {
+        self.collected.remove(&uuid)
     }
 }

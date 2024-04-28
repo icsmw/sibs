@@ -29,18 +29,18 @@ pub enum Demand {
     ///
     /// # Parameters
     ///
-    /// * `usize` - id of thread/job
+    /// * `Uuid` - Uuid of thread/job
     /// * `String` - message to collect (will be append to already collected)
-    Collect(usize, String),
+    Collect(Uuid, String),
     /// Finish collecting logs for given thread/job. Depending on configuration
     /// logs will be posted or not
     ///
     /// # Parameters
     ///
     /// * `String` - Owner/sender of logs
-    /// * `usize` - id of thread/job
+    /// * `usizUuiUuidde` - Uuid of thread/job
     /// * `Level` - level of logs
-    CollectionClose(String, usize, Level),
+    CollectionClose(String, Uuid, Level),
     /// Reads all message until this
     ///
     /// # Parameters

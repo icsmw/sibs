@@ -1,3 +1,5 @@
+use uuid::Uuid;
+
 use crate::inf::{journal::api::Demand, Journal, Level};
 
 #[derive(Debug)]
@@ -9,17 +11,17 @@ impl<'a> Collecting<'a> {
         Self { bound }
     }
 
-    pub fn append(&self, id: usize, msg: String) {
-        if let Err(_err) = self.bound.tx.send(Demand::Collect(id, msg)) {
+    pub fn append(&self, uuid: Uuid, msg: String) {
+        if let Err(_err) = self.bound.tx.send(Demand::Collect(uuid, msg)) {
             eprintln!("Fail to store report; printing instead");
         }
     }
 
-    pub fn close(&self, owner: String, id: usize, level: Level) {
+    pub fn close(&self, owner: String, uuid: Uuid, level: Level) {
         if let Err(_err) = self
             .bound
             .tx
-            .send(Demand::CollectionClose(owner, id, level))
+            .send(Demand::CollectionClose(owner, uuid, level))
         {
             eprintln!("Fail to store report; printing instead");
         }

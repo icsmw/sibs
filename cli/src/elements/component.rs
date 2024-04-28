@@ -186,11 +186,14 @@ impl Operator for Component {
                     self.get_tasks_names(),
                 )
             })?;
-            let sc = Scope::init(if let Some(path) = self.cwd.as_ref() {
-                Some(cx.scenario.to_abs_path(path)?)
-            } else {
-                None
-            });
+            let sc = Scope::init(
+                if let Some(path) = self.cwd.as_ref() {
+                    Some(cx.scenario.to_abs_path(path)?)
+                } else {
+                    None
+                },
+                &cx.journal,
+            );
             let result = task
                 .execute(owner, components, &args[1..], cx, sc.clone())
                 .await;
