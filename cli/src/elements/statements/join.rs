@@ -7,7 +7,7 @@ use crate::{
     },
     reader::{words, Reader, Reading, E},
 };
-use futures::stream::{FuturesUnordered, StreamExt, StreamFuture};
+use futures::stream::{FuturesUnordered, StreamExt};
 use std::fmt;
 use tokio::{
     spawn,

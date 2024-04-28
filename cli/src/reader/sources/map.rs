@@ -1,5 +1,3 @@
-use uuid::Uuid;
-
 use crate::{inf::map::Mapping, reader::Ids};
 use std::{cell::RefCell, collections::HashMap, path::PathBuf, rc::Rc};
 

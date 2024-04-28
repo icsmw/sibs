@@ -51,9 +51,9 @@ impl Sources {
         let map = Rc::new(RefCell::new(Map::new(self.ids.clone(), &filename, content)));
         self.maps.insert(&filename, map.clone())
     }
-    pub fn report_err<T: Clone>(&mut self, err: &LinkedErr<T>) -> Result<(), E>
+    pub fn report_err<T>(&mut self, err: &LinkedErr<T>) -> Result<(), E>
     where
-        T: std::error::Error + fmt::Display + ToString,
+        T: Clone + std::error::Error + fmt::Display + ToString,
     {
         let Some(token) = err.token.as_ref() else {
             self.journal.report(err.into());

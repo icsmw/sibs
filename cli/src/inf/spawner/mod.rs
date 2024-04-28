@@ -97,7 +97,7 @@ pub async fn run(command: &str, cwd: &PathBuf, cx: Context) -> Result<ExitStatus
             }
         }
     );
-    Ok(child
+    child
         .wait()
         .await
         .map(|res| {
@@ -111,5 +111,5 @@ pub async fn run(command: &str, cwd: &PathBuf, cx: Context) -> Result<ExitStatus
         .map_err(|e| {
             job.fail();
             E::Executing(command.to_string(), e.to_string())
-        })?)
+        })
 }

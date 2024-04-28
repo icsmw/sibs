@@ -27,11 +27,6 @@ pub type ExecutorPinnedResult = Pin<Box<dyn Future<Output = ExecutorResult> + Se
 pub type ExecutorResult = Result<AnyValue, E>;
 pub type ExecutorFn = fn(Vec<AnyValue>, Context, Scope) -> ExecutorPinnedResult;
 
-pub trait Executor {
-    fn execute(args: Vec<AnyValue>, cx: Context, sc: Scope) -> ExecutorPinnedResult;
-    fn get_name() -> String;
-}
-
 pub fn get_name(path: &str) -> String {
     let parts = path.split("::").collect::<Vec<&str>>();
     let count = parts.len();

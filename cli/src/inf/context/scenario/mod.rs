@@ -24,6 +24,7 @@ impl Scenario {
             Err(E::ScenarioNotFound)
         }
     }
+    #[cfg(test)]
     pub fn dummy() -> Self {
         Self {
             path: PathBuf::new(),

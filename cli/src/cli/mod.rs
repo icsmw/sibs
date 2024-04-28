@@ -125,6 +125,7 @@ pub async fn process(journal: Journal) -> Result<(), E> {
                     sc.clone(),
                 )
                 .await?;
+            cx.destroy().await?;
             Ok(())
         } else {
             Err(E::ComponentNotExists(component.to_string()))

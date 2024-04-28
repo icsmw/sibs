@@ -31,8 +31,8 @@ pub use variable::*;
 use crate::{
     error::LinkedErr,
     inf::{
-        journal, operator, AnyValue, Context, Formation, FormationCursor, Operator,
-        OperatorPinnedResult, Scope,
+        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
+        Scope,
     },
     reader::{chars, Reader, Reading, E},
 };

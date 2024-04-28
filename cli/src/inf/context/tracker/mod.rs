@@ -95,7 +95,7 @@ impl Tracker {
                     }
                     Demand::Destroy => {
                         progress.destroy();
-                        jobs.iter().for_each(|(seq, (uuid, alias))| {
+                        jobs.iter().for_each(|(_seq, (uuid, alias))| {
                             journal
                                 .collecting()
                                 .close(alias.clone(), *uuid, Level::Warn);

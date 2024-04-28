@@ -29,6 +29,7 @@ impl OwnedJournal {
             .close(self.owner.clone(), self.uuid, level);
     }
 
+    #[allow(dead_code)]
     pub fn info<'a, T>(&self, msg: T)
     where
         T: 'a + ToOwned + ToString + Display,
@@ -36,6 +37,7 @@ impl OwnedJournal {
         self.journal.info(&self.owner, msg);
     }
 
+    #[allow(dead_code)]
     pub fn debug<'a, T>(&self, msg: T)
     where
         T: 'a + ToOwned + ToString + Display,
@@ -43,6 +45,7 @@ impl OwnedJournal {
         self.journal.debug(&self.owner, msg);
     }
 
+    #[allow(dead_code)]
     pub fn verb<'a, T>(&self, msg: T)
     where
         T: 'a + ToOwned + ToString + Display,
@@ -50,6 +53,7 @@ impl OwnedJournal {
         self.journal.verb(&self.owner, msg);
     }
 
+    #[allow(dead_code)]
     pub fn err<'a, T>(&self, msg: T)
     where
         T: 'a + ToOwned + ToString + Display,
@@ -57,6 +61,7 @@ impl OwnedJournal {
         self.journal.err(&self.owner, msg);
     }
 
+    #[allow(dead_code)]
     pub fn warn<'a, T>(&self, msg: T)
     where
         T: 'a + ToOwned + ToString + Display,

@@ -43,6 +43,7 @@ impl Job {
         self.err(format!("failed in {}ms", self.ts.elapsed().as_millis()));
     }
 
+    #[allow(dead_code)]
     pub fn info<'a, T>(&self, msg: T)
     where
         T: 'a + ToOwned + ToString + Display,
@@ -50,6 +51,7 @@ impl Job {
         self.journal.info(msg);
     }
 
+    #[allow(dead_code)]
     pub fn debug<'a, T>(&self, msg: T)
     where
         T: 'a + ToOwned + ToString + Display,
@@ -57,6 +59,7 @@ impl Job {
         self.journal.debug(msg);
     }
 
+    #[allow(dead_code)]
     pub fn verb<'a, T>(&self, msg: T)
     where
         T: 'a + ToOwned + ToString + Display,
@@ -64,6 +67,7 @@ impl Job {
         self.journal.verb(msg);
     }
 
+    #[allow(dead_code)]
     pub fn err<'a, T>(&self, msg: T)
     where
         T: 'a + ToOwned + ToString + Display,
@@ -71,6 +75,7 @@ impl Job {
         self.journal.err(msg);
     }
 
+    #[allow(dead_code)]
     pub fn warn<'a, T>(&self, msg: T)
     where
         T: 'a + ToOwned + ToString + Display,

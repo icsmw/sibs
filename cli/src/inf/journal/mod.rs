@@ -20,10 +20,7 @@ use uuid::Uuid;
 use std::sync::Arc;
 use tokio::{
     spawn,
-    sync::{
-        mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
-        oneshot,
-    },
+    sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
 };
 use tokio_util::sync::CancellationToken;
 
@@ -128,6 +125,7 @@ impl Journal {
 
     #[cfg(test)]
     pub async fn flush(&self) {
+        use tokio::sync::oneshot;
         let (tx, rx) = oneshot::channel();
         if self.tx.send(Demand::Flush(tx)).is_err() {
             eprintln!("Fail to flush journal");
@@ -138,7 +136,7 @@ impl Journal {
     }
 
     pub fn owned(&self, owner: String, uuid: Option<Uuid>) -> OwnedJournal {
-        OwnedJournal::new(uuid.unwrap_or_else(|| Uuid::new_v4()), owner, self.clone())
+        OwnedJournal::new(uuid.unwrap_or_else(Uuid::new_v4), owner, self.clone())
     }
 
     pub fn info<'a, O, M>(&self, owner: O, msg: M)

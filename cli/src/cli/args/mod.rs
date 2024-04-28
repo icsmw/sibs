@@ -5,7 +5,7 @@ pub mod exertion;
 use crate::{
     cli::error::E,
     elements::Element,
-    inf::{term, AnyValue, Context},
+    inf::{term, AnyValue},
 };
 pub use action::*;
 pub use arg::*;

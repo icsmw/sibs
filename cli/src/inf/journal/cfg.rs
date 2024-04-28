@@ -57,6 +57,7 @@ impl Configuration {
             writing,
         }
     }
+    #[cfg(test)]
     pub fn to_file(filepath: PathBuf) -> Self {
         Configuration {
             log_file: Some(filepath),

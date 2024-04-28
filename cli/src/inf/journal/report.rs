@@ -59,8 +59,12 @@ impl Report {
     pub fn err_uuid(&self) -> Option<Uuid> {
         match self {
             Self::LinkedErr(err) => Some(err.uuid),
-            Self::Report { report, err } => Some(err.uuid),
-            Self::Trace { trace, report, err } => Some(err.uuid),
+            Self::Report { report: _, err } => Some(err.uuid),
+            Self::Trace {
+                trace: _,
+                report: _,
+                err,
+            } => Some(err.uuid),
             _ => None,
         }
     }
@@ -76,7 +80,7 @@ impl Report {
             }
             Self::Report { report, err: _ } => eprintln!("{report}"),
             Self::Trace { trace, report, err } => {
-                trace.iter().for_each(|(fragment, status)| {
+                trace.iter().for_each(|(fragment, _status)| {
                     eprintln!("{fragment}");
                 });
                 if let Some(report) = report {

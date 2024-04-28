@@ -10,7 +10,7 @@ pub mod words;
 use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
-    executors::{load::Import, Executor},
+    executors::load,
     inf::{
         map::{Fragment, Mapping},
         Journal,
@@ -81,7 +81,7 @@ impl Reader {
                 Element::include(&mut reader, &[ElTarget::Function, ElTarget::Component])?
             {
                 if let Element::Function(func, _) = &el {
-                    if Import::get_name() != func.name {
+                    if load::NAME != func.name {
                         Err(E::OnlyImportFunctionAllowedOnRoot.by_reader(&reader))?;
                     }
                     if func.args.len() != 1 {
@@ -246,11 +246,11 @@ fn read_file<'a>(
             Element::include(&mut reader, &[ElTarget::Function, ElTarget::Component])?
         {
             if let Element::Function(func, _) = &el {
-                if Import::get_name() != func.name {
+                if load::NAME != func.name {
                     Err(E::OnlyImportFunctionAllowedOnRoot.by_reader(&reader))?;
                 }
                 let path = if func.args.len() == 1 {
-                    Import::get(PathBuf::from(func.args[0].to_string()), cwd.to_path_buf())?
+                    load::get(PathBuf::from(func.args[0].to_string()), cwd.to_path_buf())?
                 } else {
                     return Err(E::ImportFunctionInvalidArgs.by_reader(&reader))?;
                 };
