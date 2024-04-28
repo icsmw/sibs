@@ -1,9 +1,11 @@
 use crate::{
-    executors::ExecutorPinnedResult,
+    executors::{get_name, ExecutorPinnedResult},
     inf::{AnyValue, Context, Scope},
 };
 
-pub const NAME: &str = "info";
+pub fn name() -> String {
+    get_name(module_path!())
+}
 
 pub fn execute(msgs: Vec<AnyValue>, cx: Context, _sc: Scope) -> ExecutorPinnedResult {
     Box::pin(async move {

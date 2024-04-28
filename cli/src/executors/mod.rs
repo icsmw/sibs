@@ -32,6 +32,15 @@ pub trait Executor {
     fn get_name() -> String;
 }
 
+pub fn get_name(path: &str) -> String {
+    let parts = path.split("::").collect::<Vec<&str>>();
+    let count = parts.len();
+    parts
+        .into_iter()
+        .skip(count.saturating_sub(2))
+        .collect::<Vec<&str>>()
+        .join("::")
+}
 pub trait TryAnyTo<T> {
     fn try_to(&self) -> Result<T, E>;
 }

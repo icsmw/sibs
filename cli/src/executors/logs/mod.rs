@@ -7,14 +7,11 @@ mod warn;
 use crate::{executors::Store, executors::E};
 
 pub fn register(store: &mut Store) -> Result<(), E> {
-    fn name(func: &str) -> String {
-        format!("logs::{func}")
-    }
-    store.insert(name(debug::NAME), debug::execute)?;
-    store.insert(name(err::NAME), err::execute)?;
-    store.insert(name(warn::NAME), warn::execute)?;
-    store.insert(name(info::NAME), info::execute)?;
-    store.insert(name(verb::NAME), verb::execute)?;
+    store.insert(debug::name(), debug::execute)?;
+    store.insert(err::name(), err::execute)?;
+    store.insert(warn::name(), warn::execute)?;
+    store.insert(info::name(), info::execute)?;
+    store.insert(verb::name(), verb::execute)?;
     Ok(())
 }
 

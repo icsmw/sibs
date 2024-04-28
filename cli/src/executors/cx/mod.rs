@@ -4,11 +4,8 @@ mod set_cwd;
 use crate::{executors::Store, executors::E};
 
 pub fn register(store: &mut Store) -> Result<(), E> {
-    fn name(func: &str) -> String {
-        format!("cx::{func}")
-    }
-    store.insert(name(set_cwd::NAME), set_cwd::execute)?;
-    store.insert(name(get_cwd::NAME), get_cwd::execute)?;
+    store.insert(set_cwd::name(), set_cwd::execute)?;
+    store.insert(get_cwd::name(), get_cwd::execute)?;
     Ok(())
 }
 

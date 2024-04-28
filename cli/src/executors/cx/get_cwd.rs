@@ -1,12 +1,13 @@
 use crate::{
-    executors::{ExecutorPinnedResult, E},
+    executors::{get_name, ExecutorPinnedResult},
     inf::{AnyValue, Context, Scope},
 };
 
-pub const NAME: &str = "get_cwd";
+pub fn name() -> String {
+    get_name(module_path!())
+}
 
 pub fn execute(_: Vec<AnyValue>, _cx: Context, sc: Scope) -> ExecutorPinnedResult {
-    module_path!();
     Box::pin(async move {
         Ok(AnyValue::new(
             sc.get_cwd()
