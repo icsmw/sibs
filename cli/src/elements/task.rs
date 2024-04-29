@@ -363,7 +363,7 @@ mod processing {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        elements::{Block, ElTarget, Element, SimpleString, Task},
+        elements::{ElTarget, Element, SimpleString, Task},
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
