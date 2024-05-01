@@ -40,7 +40,7 @@ impl Footprints {
             records.push((
                 // TODO: return here good formated fragment
                 maps.get(token)?.get_fragment(token)?.content,
-                Status::Output(value.clone()),
+                Status::Success(value.clone()),
             ));
         }
         let Some(token) = err.token else {

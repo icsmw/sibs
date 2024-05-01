@@ -1,12 +1,34 @@
-use crate::error::{LinkedErr, LinkedErrSerialized};
+use crate::{
+    error::{LinkedErr, LinkedErrSerialized},
+    inf::term,
+};
 use console::Style;
 use std::fmt;
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub enum Status {
-    Output(Option<String>),
+    Success(Option<String>),
     Error(String),
+}
+
+impl fmt::Display for Status {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Success(result) => term::styled(&format!(
+                    "[color:green]success[/color]: [b]{}[/b]",
+                    result
+                        .as_ref()
+                        .map(|r| r.to_string())
+                        .unwrap_or("None".to_owned())
+                )),
+                Self::Error(err) => term::styled(&format!("[color:red]error[/color]: {err}")),
+            }
+        )
+    }
 }
 
 /// Footprint of executing
@@ -80,9 +102,11 @@ impl Report {
             }
             Self::Report { report, err: _ } => eprintln!("{report}"),
             Self::Trace { trace, report, err } => {
-                trace.iter().for_each(|(fragment, _status)| {
-                    eprintln!("{fragment}");
+                term::print("\n[b][color:yellow]PREVIOUS TO ERROR ACTIONS:[/color][/b]");
+                trace.iter().for_each(|(fragment, status)| {
+                    term::print(&format!("{fragment}: [b]{status}[/b]"));
                 });
+                term::print("\n[b][color:red]ERROR REPORT:[/color][/b]");
                 if let Some(report) = report {
                     eprintln!("{report}");
                 }
