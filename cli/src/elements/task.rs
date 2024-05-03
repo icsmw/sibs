@@ -405,7 +405,7 @@ mod processing {
                 Ok::<Vec<Component>, LinkedErr<E>>(components)
             },
             |components: Vec<Component>, cx: Context, sc: Scope, _: Journal| async move {
-                for (i, component) in components.iter().enumerate() {
+                for component in components.iter() {
                     if !component.name.value.ends_with("_run") {
                         continue;
                     }
