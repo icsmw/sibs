@@ -1,0 +1,29 @@
+#(a)
+    test($a: a | b) [
+        IF $a == "a" [
+            "one";
+        ] ELSE [
+            "---";
+        ];
+    ];
+#(b)
+    test($a: a | b; $b: {string}) [
+        IF $a == "a" && $b == "b" [
+            "two";
+        ] ELSE [
+            "---";
+        ];
+    ];
+#(c_run)
+    test($a: a | b; $b: {string})(
+        $res_a = :a:test($a);
+        $res_b = :b:test($a; $b);
+    ) [
+        @logs::info("output from :a:test($a) => {$res_a}");
+        @logs::info("output from :b:test($b) => {$res_b}");
+        IF $res_a == "one" && $res_b == "two" [
+            "true";
+        ] ELSE [
+            "false";
+        ];
+    ];

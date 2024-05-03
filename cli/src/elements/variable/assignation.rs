@@ -46,6 +46,7 @@ impl Reading<VariableAssignation> for VariableAssignation {
                     ElTarget::VariableName,
                     ElTarget::Integer,
                     ElTarget::Boolean,
+                    ElTarget::Reference,
                 ],
             )?
             .ok_or(E::FailToParseRightSideOfAssignation.by_reader(reader))?;
@@ -287,6 +288,7 @@ mod proptest {
                             ElTarget::VariableName,
                             ElTarget::Integer,
                             ElTarget::Boolean,
+                            ElTarget::Reference,
                         ]
                     },
                     deep,

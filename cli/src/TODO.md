@@ -10,9 +10,7 @@
 - add named arguments for functions @hash (track:(bla, bla); run:(bla))
 - Task:has_meta - not implemented... it's dummy method
 - a way to run tasks in parallel: `sibs * --lint` will run lint task for all components, which has it
-- also for references like (:client:lint, :platform:lint) or @tasks::parallel(:client:lint; :shared:lint; :wrapper:lint;);???
 - invalid UTF from command
-- add general executor with journal inside and automatic shutdowing
 - missed commands/functions:
 -- break
 -- loop

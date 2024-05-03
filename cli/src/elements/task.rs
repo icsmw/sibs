@@ -1,7 +1,10 @@
 use crate::{
     elements::{Component, ElTarget, Element, SimpleString},
     error::LinkedErr,
-    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
+    inf::{
+        operator, Context, DebugAny, Formation, FormationCursor, Operator, OperatorPinnedResult,
+        Scope,
+    },
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -63,7 +66,10 @@ impl Reading<Task> for Task {
                 .is_some()
             {
                 let mut inner = reader.token()?.bound;
-                while let Some(el) = Element::include(&mut inner, &[ElTarget::Reference])? {
+                while let Some(el) = Element::include(
+                    &mut inner,
+                    &[ElTarget::Reference, ElTarget::VariableAssignation],
+                )? {
                     let _ = inner.move_to().char(&[&chars::SEMICOLON]);
                     dependencies.push(el);
                 }
@@ -203,6 +209,11 @@ impl Operator for Task {
                     return Err(operator::E::InvalidVariableDeclaration.by(self));
                 }
             }
+            for dependency in self.dependencies.iter() {
+                dependency
+                    .execute(owner, components, &[], cx.clone(), sc.clone())
+                    .await?;
+            }
             self.block.execute(owner, components, args, cx, sc).await
         })
     }
@@ -235,6 +246,28 @@ mod reading {
                 }
                 assert!(reader.rest().trim().is_empty());
                 assert_eq!(count, 11);
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn deps() {
+        read_string!(
+            &Configuration::logs(false),
+            &include_str!("../tests/reading/deps.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
+                let mut count = 0;
+                while let Some(el) =
+                    src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                {
+                    assert!(matches!(el, Element::Task(..)));
+                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                    assert_eq!(trim_carets(reader.recent()), trim_carets(&format!("{el};")));
+                    count += 1;
+                }
+                assert!(reader.rest().trim().is_empty());
+                assert_eq!(count, 1);
                 Ok::<(), LinkedErr<E>>(())
             }
         );
@@ -309,7 +342,7 @@ mod reading {
 #[cfg(test)]
 mod processing {
     use crate::{
-        elements::Task,
+        elements::{Component, Task},
         error::LinkedErr,
         inf::{
             operator::{Operator, E},
@@ -349,6 +382,43 @@ mod processing {
                         )
                         .await?
                         .expect("Task returns some value");
+                    assert_eq!(
+                        result.get_as_string().expect("Task returns string value"),
+                        "true".to_owned()
+                    );
+                }
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn deps() {
+        process_string!(
+            &Configuration::logs(false),
+            &include_str!("../tests/processing/deps.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
+                let mut components: Vec<Component> = Vec::new();
+                while let Some(comp) = src.report_err_if(Component::read(reader))? {
+                    components.push(comp);
+                }
+                Ok::<Vec<Component>, LinkedErr<E>>(components)
+            },
+            |components: Vec<Component>, cx: Context, sc: Scope, _: Journal| async move {
+                for (i, component) in components.iter().enumerate() {
+                    if !component.name.value.ends_with("_run") {
+                        continue;
+                    }
+                    let result = component
+                        .execute(
+                            Some(component),
+                            &components,
+                            &["test".to_owned(), "a".to_owned(), "b".to_owned()],
+                            cx.clone(),
+                            sc.clone(),
+                        )
+                        .await?
+                        .expect("component returns some value");
                     assert_eq!(
                         result.get_as_string().expect("Task returns string value"),
                         "true".to_owned()

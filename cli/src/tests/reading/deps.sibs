@@ -1,0 +1,11 @@
+test($a: a | b; $b: {string})(
+    $res_a = :a:test($a);
+    $res_b = :b:test($a; $b)
+) [
+    IF $res_a == "true" && $res_b == "true" [
+        "true";
+    ] ELSE [
+        "false";
+    ];
+];
+
