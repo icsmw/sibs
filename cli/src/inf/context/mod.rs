@@ -53,26 +53,28 @@ impl Context {
         };
         let journal = journal.clone();
         spawn(async move {
-            let shutdown = async move {
-                let _ = tracker.destroy().await;
-                let _ = atlas.destroy().await;
-                let _ = funcs.destroy().await;
+            let shutdown = move || {
+                Box::pin(async move {
+                    let _ = tracker.destroy().await;
+                    let _ = atlas.destroy().await;
+                    let _ = funcs.destroy().await;
+                })
             };
             let exit = rx.recv().await.expect("Correct destroy signal to context");
             if let Some((code, msg)) = exit {
                 journal.warn("", format!("Forced exit with code {code}"));
+                journal.flush().await;
+                shutdown().await;
                 if let Some(msg) = msg {
                     if code == 0 {
-                        journal.warn("", msg);
+                        println!("{msg}");
                     } else {
-                        journal.err("", msg);
+                        eprintln!("{msg}");
                     }
                 }
-                journal.flush().await;
-                shutdown.await;
                 process::exit(code);
             } else {
-                shutdown.await;
+                shutdown().await;
             }
             state.cancel();
         });

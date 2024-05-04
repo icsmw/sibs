@@ -126,6 +126,6 @@ mod test {
         .output()
         .expect("failed to execute process");
         assert_eq!(output.status.code(), Some(1));
-        assert!(String::from_utf8_lossy(&output.stdout).contains("Hello World!"));
+        assert!(String::from_utf8_lossy(&output.stderr).contains("Hello World!"));
     }
 }
