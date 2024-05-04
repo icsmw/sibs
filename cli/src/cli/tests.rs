@@ -12,7 +12,7 @@ use crate::{
 #[tokio::test]
 async fn reading() {
     let target = std::env::current_dir()
-        .unwrap()
+        .expect("current folder detected")
         .join("./src/tests/cli/handle_exit.sibs");
     process_file!(
         &Configuration::logs(false),

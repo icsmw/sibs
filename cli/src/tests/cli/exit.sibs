@@ -4,18 +4,18 @@
         @process::exit;
         @logs::info("This logs should NOT be visible");
     ];
-    with_message [
+    success_with_message [
         @logs::info("This logs should be visible");
         @process::exit(0; "Hello World!");
         @logs::info("This logs should NOT be visible");
     ];
-    with_error [
+    error [
         @logs::info("This logs should be visible");
-        @process::exit(2);
+        @process::exit(1);
         @logs::info("This logs should NOT be visible");
     ];
-    with_error_message [
+    error_with_message [
         @logs::info("This logs should be visible");
-        @process::exit(2; "Hello World!");
+        @process::exit(1; "Hello World!");
         @logs::info("This logs should NOT be visible");
     ];
