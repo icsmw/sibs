@@ -3,6 +3,8 @@ pub mod error;
 pub mod scenario;
 pub mod tracker;
 
+use std::process;
+
 pub use atlas::*;
 pub use error::E;
 pub use scenario::*;
@@ -13,8 +15,13 @@ use crate::{
     inf::{AnyValue, Journal, Scope},
     reader::Sources,
 };
-use tokio::spawn;
+use tokio::{
+    spawn,
+    sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
+};
 use tokio_util::sync::CancellationToken;
+
+pub type ExitCode = Option<(i32, Option<String>)>;
 
 #[derive(Clone, Debug)]
 pub struct Context {
@@ -23,17 +30,18 @@ pub struct Context {
     pub scenario: Scenario,
     pub journal: Journal,
     pub funcs: Functions,
+    tx: UnboundedSender<ExitCode>,
     state: CancellationToken,
-    signal: CancellationToken,
 }
 
 impl Context {
     pub fn init(scenario: Scenario, src: &Sources, journal: &Journal) -> Result<Self, E> {
         let state = CancellationToken::new();
-        let signal = CancellationToken::new();
         let tracker = Tracker::init(journal.clone());
         let atlas = Atlas::init(src, journal);
         let funcs = Functions::init()?;
+        let (tx, mut rx): (UnboundedSender<ExitCode>, UnboundedReceiver<ExitCode>) =
+            unbounded_channel();
         let instance = Self {
             scenario,
             tracker: tracker.clone(),
@@ -41,21 +49,44 @@ impl Context {
             atlas: atlas.clone(),
             funcs: funcs.clone(),
             state: state.clone(),
-            signal: signal.clone(),
+            tx,
         };
+        let journal = journal.clone();
         spawn(async move {
-            signal.cancelled().await;
-            let _ = tracker.destroy().await;
-            let _ = atlas.destroy().await;
-            let _ = funcs.destroy().await;
+            let shutdown = async move {
+                let _ = tracker.destroy().await;
+                let _ = atlas.destroy().await;
+                let _ = funcs.destroy().await;
+            };
+            let exit = rx.recv().await.expect("Correct destroy signal to context");
+            if let Some((code, msg)) = exit {
+                journal.warn("", format!("Forced exit with code {code}"));
+                if let Some(msg) = msg {
+                    if code == 0 {
+                        journal.warn("", msg);
+                    } else {
+                        journal.err("", msg);
+                    }
+                }
+                journal.flush().await;
+                shutdown.await;
+                process::exit(code);
+            } else {
+                shutdown.await;
+            }
             state.cancel();
         });
         Ok(instance)
     }
 
     pub async fn destroy(&self) -> Result<(), E> {
-        self.signal.cancel();
+        self.tx.send(None)?;
         self.state.cancelled().await;
+        Ok(())
+    }
+
+    pub async fn exit(&self, code: i32, msg: Option<String>) -> Result<(), E> {
+        self.tx.send(Some((code, msg)))?;
         Ok(())
     }
 

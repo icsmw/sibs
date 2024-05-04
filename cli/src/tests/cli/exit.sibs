@@ -1,0 +1,21 @@
+#(a)
+    success [
+        @logs::info("This logs should be visible");
+        @process::exit;
+        @logs::info("This logs should NOT be visible");
+    ];
+    with_message [
+        @logs::info("This logs should be visible");
+        @process::exit(0; "Hello World!");
+        @logs::info("This logs should NOT be visible");
+    ];
+    with_error [
+        @logs::info("This logs should be visible");
+        @process::exit(2);
+        @logs::info("This logs should NOT be visible");
+    ];
+    with_error_message [
+        @logs::info("This logs should be visible");
+        @process::exit(2; "Hello World!");
+        @logs::info("This logs should NOT be visible");
+    ];

@@ -5,6 +5,7 @@ mod error;
 pub mod fs;
 pub mod load;
 pub mod logs;
+pub mod process;
 pub mod store;
 pub mod str;
 pub mod test;
@@ -46,6 +47,7 @@ pub fn register(store: &mut Store) -> Result<(), E> {
     env::register(store)?;
     logs::register(store)?;
     cx::register(store)?;
+    process::register(store)?;
     test::register(store)?;
     Ok(())
 }

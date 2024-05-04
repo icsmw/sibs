@@ -6,7 +6,6 @@
 - add simple assignation $a = $b
 - add web-server for remote access
 - dry-run: run and ignore terminal commands & show a map of executing
-- this is valid "@fs::path_join [$tmp_path $file_name];", this is NOT "@fs::path_join [$tmp_path; $file_name;];" or "@fs::path_join [$tmp_path ,$file_name];". Error should be shown.
 - add named arguments for functions @hash (track:(bla, bla); run:(bla))
 - Task:has_meta - not implemented... it's dummy method
 - a way to run tasks in parallel: `sibs * --lint` will run lint task for all components, which has it
@@ -15,7 +14,6 @@
 -- break
 -- loop
 -- print/echo
--- logs
 -- try / catch / check err
 -- exit
 

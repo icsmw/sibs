@@ -123,7 +123,6 @@ impl Journal {
         }
     }
 
-    #[cfg(test)]
     pub async fn flush(&self) {
         use tokio::sync::oneshot;
         let (tx, rx) = oneshot::channel();
