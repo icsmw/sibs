@@ -19,11 +19,15 @@ async fn main() {
         exit(1);
     };
     let journal = Journal::unwrapped(cfg);
-    if let Err(err) = cli::process(journal.clone()).await {
+    let code = if let Err(err) = cli::process(journal.clone()).await {
         journal.err("cli::process", err.to_string());
-    }
+        1
+    } else {
+        0
+    };
     if let Err(err) = journal.destroy().await {
         eprintln!("{err}");
         exit(1);
     }
+    exit(code)
 }

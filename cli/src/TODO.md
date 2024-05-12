@@ -14,7 +14,6 @@
 - missed commands/functions:
 -- break
 -- loop
--- print/echo
 -- try / catch / check err
 
 

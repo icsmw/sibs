@@ -92,6 +92,7 @@ pub async fn process(journal: Journal) -> Result<(), E> {
     let no_actions = arguments.has::<args::exertion::Help>() || income.is_empty();
     arguments.run::<args::exertion::Help>(&elements).await?;
     if no_actions {
+        cx.destroy().await?;
         return Ok(());
     }
     let components = elements
@@ -104,12 +105,12 @@ pub async fn process(journal: Journal) -> Result<(), E> {
             }
         })
         .collect::<Vec<Component>>();
-    if let Some(component) = if components.is_empty() {
+    let result = if let Some(component) = if components.is_empty() {
         None
     } else {
         Some(income.remove(0))
     } {
-        if let Some(component) = components
+        let result = if let Some(component) = components
             .iter()
             .find(|comp| comp.name.to_string() == component)
         {
@@ -126,13 +127,16 @@ pub async fn process(journal: Journal) -> Result<(), E> {
                     sc.clone(),
                     CancellationToken::new(),
                 )
-                .await?;
-            cx.destroy().await?;
-            Ok(())
+                .await
+                .map(|_| ())
+                .map_err(|e| e.into())
         } else {
             Err(E::ComponentNotExists(component.to_string()))
-        }
+        };
+        result.map(|_| ())
     } else {
         Err(E::NoArguments)
-    }
+    };
+    cx.destroy().await?;
+    result
 }
