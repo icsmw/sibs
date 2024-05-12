@@ -1,4 +1,6 @@
 mod error;
+mod token;
+
 use crate::{
     elements::Component,
     error::LinkedErr,
@@ -6,6 +8,7 @@ use crate::{
 };
 pub use error::E;
 use std::{future::Future, pin::Pin};
+pub use token::*;
 
 pub type OperatorPinnedResult<'a> = Pin<Box<dyn Future<Output = OperatorResult> + 'a + Send>>;
 pub type OperatorResult = Result<Option<AnyValue>, LinkedErr<E>>;
@@ -19,13 +22,17 @@ pub trait Operator {
         args: &'a [String],
         cx: Context,
         sc: Scope,
+        token: OperatorToken,
     ) -> OperatorPinnedResult
     where
         Self: Sync,
     {
         Box::pin(async move {
             cx.atlas.set_map_position(self.token()).await?;
-            let result = self.perform(owner, components, args, cx.clone(), sc).await;
+            let confirmation = token.get_confirmation();
+            let result = self
+                .perform(owner, components, args, cx.clone(), sc, token)
+                .await;
             match result.as_ref() {
                 Ok(value) => {
                     cx.atlas.add_footprint(self.token(), value).await?;
@@ -34,6 +41,8 @@ pub trait Operator {
                     cx.atlas.report_err(&err.link_if(&self.token())).await?;
                 }
             }
+            confirmation();
+            println!(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> EXECUTING DONE");
             result
         })
     }
@@ -44,6 +53,7 @@ pub trait Operator {
         _args: &'a [String],
         _cx: Context,
         _sc: Scope,
+        _token: OperatorToken,
     ) -> OperatorPinnedResult {
         Box::pin(async { Err(E::NotSupported.unlinked()) })
     }

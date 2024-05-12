@@ -1,7 +1,10 @@
 use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
-    inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
+    inf::{
+        AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
+        OperatorToken, Scope,
+    },
     reader::{words, Reader, Reading, E},
 };
 use std::fmt;
@@ -48,6 +51,7 @@ impl Operator for Boolean {
         _inputs: &'a [String],
         _cx: Context,
         _sc: Scope,
+        _token: OperatorToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move { Ok(Some(AnyValue::new(self.value))) })
     }

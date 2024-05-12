@@ -8,11 +8,14 @@ use std::{
 use tokio::{
     join,
     process::{Child, Command},
+    select,
 };
 use tokio_stream::StreamExt;
 use tokio_util::codec::{self, LinesCodec, LinesCodecError};
 
 pub use error::E;
+
+use super::OperatorToken;
 
 #[cfg(windows)]
 fn spawn(command: &str, cwd: &PathBuf) -> Result<Child, E> {
@@ -49,7 +52,33 @@ fn parse_command(command: &str) -> (&str, Vec<&str>) {
     (parts.remove(0), parts)
 }
 
-pub async fn run(command: &str, cwd: &PathBuf, cx: Context) -> Result<ExitStatus, E> {
+pub async fn run(
+    token: OperatorToken,
+    command: &str,
+    cwd: &PathBuf,
+    cx: Context,
+) -> Result<Option<ExitStatus>, E> {
+    fn post_logs(line: Result<String, LinesCodecError>, job: &Job) -> String {
+        match line {
+            Ok(line) => {
+                job.output(line.trim_end());
+                job.progress(None);
+                line
+            }
+            Err(err) => {
+                job.err(format!("Error during decoding command output: {err}",));
+                String::new()
+            }
+        }
+    }
+    fn chk_status(exit_status: ExitStatus, job: &Job) -> Option<ExitStatus> {
+        if exit_status.success() {
+            job.success();
+        } else {
+            job.fail();
+        }
+        Some(exit_status)
+    }
     let job = cx
         .tracker
         .create_job(
@@ -72,44 +101,55 @@ pub async fn run(command: &str, cwd: &PathBuf, cx: Context) -> Result<ExitStatus
             .ok_or_else(|| E::Setup(String::from("Fail to get stderr handle")))?,
         LinesCodec::default(),
     );
-    fn post_logs(line: Result<String, LinesCodecError>, job: &Job) -> String {
-        match line {
-            Ok(line) => {
-                job.output(line.trim_end());
-                job.progress(None);
-                line
-            }
-            Err(err) => {
-                job.err(format!("Error during decoding command output: {err}",));
-                String::new()
+    token.finish();
+    select! {
+        res = async {
+            join!(
+                async {
+                    while let Some(line) = stdout.next().await {
+                        post_logs(line, &job);
+                    }
+                },
+                async {
+                    while let Some(line) = stderr.next().await {
+                        post_logs(line, &job);
+                    }
+                }
+            );
+            child.wait().await
+            .map(|status| chk_status(status, &job))
+            .map_err(|e| {
+                job.fail();
+                E::Executing(command.to_string(), e.to_string())
+            })
+        } => {
+            println!(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> DONE");
+            res
+        }
+        _ = async {
+            println!(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> WAITING FOR CANCELLATION");
+            token.cancelled().await;
+            println!(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> CANCELLATION SIGNAL HAS BEEN GOTTEN");
+        } => {
+            println!(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> CANCELLED");
+            match child.try_wait() {
+                Ok(Some(status)) => {
+                    Ok(chk_status(status, &job))
+                }
+                Ok(None) => {
+                    if let Err(err) = child.kill().await {
+                        job.err(format!("fail to kill process: {err}"));
+                    } else {
+                        job.output("process has been killed");
+                    }
+                    job.fail();
+                    Ok(None)
+                }
+                Err(err) => {
+                    job.fail();
+                    Err(E::Executing(command.to_string(), err.to_string()))
+                }
             }
         }
     }
-    join!(
-        async {
-            while let Some(line) = stdout.next().await {
-                post_logs(line, &job);
-            }
-        },
-        async {
-            while let Some(line) = stderr.next().await {
-                post_logs(line, &job);
-            }
-        }
-    );
-    child
-        .wait()
-        .await
-        .map(|res| {
-            if res.success() {
-                job.success();
-            } else {
-                job.fail();
-            }
-            res
-        })
-        .map_err(|e| {
-            job.fail();
-            E::Executing(command.to_string(), e.to_string())
-        })
 }

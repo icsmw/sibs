@@ -1,3 +1,5 @@
+use operator::OperatorToken;
+
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
@@ -136,16 +138,24 @@ impl Operator for Comparing {
         args: &'a [String],
         cx: Context,
         sc: Scope,
+        mut token: OperatorToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let left = self
                 .left
-                .execute(owner, components, args, cx.clone(), sc.clone())
+                .execute(
+                    owner,
+                    components,
+                    args,
+                    cx.clone(),
+                    sc.clone(),
+                    token.child(),
+                )
                 .await?
                 .ok_or(operator::E::NoResultFromLeftOnComparing)?;
             let right = self
                 .right
-                .execute(owner, components, args, cx, sc)
+                .execute(owner, components, args, cx, sc, token)
                 .await?
                 .ok_or(operator::E::NoResultFromRightOnComparing)?;
             Ok(Some(match self.cmp {

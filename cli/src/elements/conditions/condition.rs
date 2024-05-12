@@ -1,7 +1,10 @@
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
+    inf::{
+        AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
+        OperatorToken, Scope,
+    },
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -72,12 +75,13 @@ impl Operator for Condition {
         args: &'a [String],
         cx: Context,
         sc: Scope,
+        token: OperatorToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             Ok(Some(AnyValue::new(
                 *self
                     .subsequence
-                    .execute(owner, components, args, cx, sc)
+                    .execute(owner, components, args, cx, sc, token)
                     .await?
                     .ok_or(E::NoValueFromSubsequence)?
                     .get_as::<bool>()

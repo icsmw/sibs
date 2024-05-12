@@ -1,3 +1,5 @@
+use operator::OperatorToken;
+
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
@@ -99,11 +101,19 @@ impl Operator for Optional {
         args: &'a [String],
         cx: Context,
         sc: Scope,
+        mut token: OperatorToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let condition = *self
                 .condition
-                .execute(owner, components, args, cx.clone(), sc.clone())
+                .execute(
+                    owner,
+                    components,
+                    args,
+                    cx.clone(),
+                    sc.clone(),
+                    token.child(),
+                )
                 .await?
                 .ok_or(operator::E::FailToExtractConditionValue)?
                 .get_as::<bool>()
@@ -111,7 +121,9 @@ impl Operator for Optional {
             if !condition {
                 Ok(None)
             } else {
-                self.action.execute(owner, components, args, cx, sc).await
+                self.action
+                    .execute(owner, components, args, cx, sc, token)
+                    .await
             }
         })
     }
@@ -221,7 +233,7 @@ mod processing {
         error::LinkedErr,
         inf::{
             operator::{Operator, E},
-            Configuration, Context, Journal, Scope,
+            Configuration, Context, Journal, OperatorToken, Scope,
         },
         process_string,
         reader::{chars, Reader, Reading, Sources},
@@ -243,7 +255,7 @@ mod processing {
             |tasks: Vec<Task>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
                     let result = task
-                        .execute(None, &[], &[], cx.clone(), sc.clone())
+                        .execute(None, &[], &[], cx.clone(), sc.clone(), OperatorToken::new())
                         .await?
                         .expect("Task returns some value");
                     assert_eq!(

@@ -1,3 +1,5 @@
+use operator::OperatorToken;
+
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
@@ -50,6 +52,7 @@ impl Operator for VariableDeclaration {
         args: &'a [String],
         cx: Context,
         sc: Scope,
+        mut token: OperatorToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let input = if args.len() != 1 {
@@ -59,15 +62,22 @@ impl Operator for VariableDeclaration {
             };
             let mut output = if let Element::VariableType(el, _) = self.declaration.as_ref() {
                 Some(
-                    el.execute(owner, components, &[input.clone()], cx.clone(), sc.clone())
-                        .await?,
+                    el.execute(
+                        owner,
+                        components,
+                        &[input.clone()],
+                        cx.clone(),
+                        sc.clone(),
+                        token.child(),
+                    )
+                    .await?,
                 )
             } else {
                 None
             };
             output = if let Element::VariableVariants(el, _) = self.declaration.as_ref() {
                 Some(
-                    el.execute(owner, components, &[input], cx, sc.clone())
+                    el.execute(owner, components, &[input], cx, sc.clone(), token)
                         .await?,
                 )
             } else {

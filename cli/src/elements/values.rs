@@ -1,7 +1,10 @@
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
+    inf::{
+        AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
+        OperatorToken, Scope,
+    },
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -116,14 +119,22 @@ impl Operator for Values {
         args: &'a [String],
         cx: Context,
         sc: Scope,
+        mut token: OperatorToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let mut values: Vec<AnyValue> = Vec::new();
             for el in self.elements.iter() {
                 values.push(
-                    el.execute(owner, components, args, cx.clone(), sc.clone())
-                        .await?
-                        .unwrap_or(AnyValue::new(())),
+                    el.execute(
+                        owner,
+                        components,
+                        args,
+                        cx.clone(),
+                        sc.clone(),
+                        token.child(),
+                    )
+                    .await?
+                    .unwrap_or(AnyValue::new(())),
                 );
             }
             Ok(Some(AnyValue::new(values)))
@@ -221,7 +232,7 @@ mod processing {
         inf::{
             any::AnyValue,
             operator::{Operator, E},
-            Configuration, Context, Journal, Scope,
+            Configuration, Context, Journal, OperatorToken, Scope,
         },
         process_string, read_string,
         reader::{chars, Reader, Reading, Sources},
@@ -264,7 +275,14 @@ mod processing {
             |tasks: Vec<Task>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
                     assert!(task
-                        .execute(components.first(), &components, &[], cx.clone(), sc.clone())
+                        .execute(
+                            components.first(),
+                            &components,
+                            &[],
+                            cx.clone(),
+                            sc.clone(),
+                            OperatorToken::new()
+                        )
                         .await?
                         .is_some());
                 }

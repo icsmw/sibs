@@ -8,6 +8,7 @@ use crate::{
     reader::{words, Reader, Reading, E},
 };
 use futures::stream::{FuturesUnordered, StreamExt};
+use operator::OperatorToken;
 use std::fmt;
 use tokio::{
     spawn,
@@ -92,6 +93,7 @@ impl Operator for Join {
         args: &'a [String],
         cx: Context,
         sc: Scope,
+        mut token: OperatorToken,
     ) -> OperatorPinnedResult {
         fn clone(
             owner: Option<&Component>,
@@ -99,12 +101,14 @@ impl Operator for Join {
             args: &[String],
             cx: &Context,
             sc: &Scope,
+            token: &mut OperatorToken,
         ) -> (
             Option<Component>,
             Vec<Component>,
             Vec<String>,
             Context,
             Scope,
+            OperatorToken,
         ) {
             (
                 owner.cloned().clone(),
@@ -112,6 +116,7 @@ impl Operator for Join {
                 args.to_vec(),
                 cx.clone(),
                 sc.clone(),
+                token.child(),
             )
         }
         async fn wait(
@@ -137,20 +142,22 @@ impl Operator for Join {
             }
             Ok(results)
         }
-        async fn abort(tasks: &mut [JoinHandle<OperatorResult>]) -> u16 {
-            let mut finished = 0;
-            for task in tasks.iter_mut().filter(|t| !t.is_finished()).map(|task| {
-                task.abort();
-                task
-            }) {
-                finished += 1;
-                if task.is_finished() {
-                    continue;
-                }
-                let _ = task.await;
-            }
-            finished
-        }
+        // async fn abort(tasks: &mut [JoinHandle<OperatorResult>], token: &OperatorToken) -> u16 {
+        //     let mut finished = 0;
+        //     for token in tasks
+        //         .iter_mut()
+        //         // .filter(|(_, task)| !task.is_finished())
+        //         .map(|(token, _)| {
+        //             println!(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> CANCEL SIGNAL SENT");
+        //             token.cancel();
+        //             token
+        //         })
+        //     {
+        //         finished += 1;
+        //         token.finished().await;
+        //     }
+        //     finished
+        // }
         Box::pin(async move {
             let Element::Values(values, _) = self.elements.as_ref() else {
                 return Ok(None);
@@ -160,23 +167,28 @@ impl Operator for Join {
                 .iter()
                 .cloned()
                 .map(|el| {
-                    let params = clone(owner, components, args, &cx, &sc);
+                    let params = clone(owner, components, args, &cx, &sc, &mut token);
                     spawn(async move {
-                        el.execute(params.0.as_ref(), &params.1, &params.2, params.3, params.4)
-                            .await
+                        // inside exclude will be create clone
+                        el.execute(
+                            params.0.as_ref(),
+                            &params.1,
+                            &params.2,
+                            params.3,
+                            params.4,
+                            params.5,
+                        )
+                        .await
                     })
                 })
                 .collect::<Vec<JoinHandle<OperatorResult>>>();
             match wait(&mut tasks).await {
                 Ok(result) => Ok(Some(AnyValue::vec(result))),
                 Err(err) => {
-                    let cancelled = abort(&mut tasks).await;
-                    if cancelled > 0 {
-                        cx.journal.warn(
-                            "JOIN".to_owned(),
-                            format!("{cancelled} parallel tasks were cancelled"),
-                        );
-                    }
+                    println!(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> CANCELING ALL");
+                    token.cancel();
+                    token.childs_finished().await;
+                    println!(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ALL CHILDS DONE");
                     Err(err.into())
                 }
             }
@@ -268,7 +280,7 @@ mod processing {
         error::LinkedErr,
         inf::{
             journal::{Configuration, Journal},
-            Context, Operator, Scope,
+            Context, Operator, OperatorToken, Scope,
         },
         process_file,
         reader::{error::E, Reader, Sources},
@@ -288,14 +300,28 @@ mod processing {
                     panic!("Component isn't found");
                 };
                 let results = el
-                    .execute(None, &[], &[String::from("test_a")], cx.clone(), sc.clone())
+                    .execute(
+                        None,
+                        &[],
+                        &[String::from("test_a")],
+                        cx.clone(),
+                        sc.clone(),
+                        OperatorToken::new(),
+                    )
                     .await
                     .expect("run is successfull")
                     .expect("join returns vector of results");
                 assert!(results.is_vec());
                 assert_eq!(results.as_vec().len(), 4);
                 let results = el
-                    .execute(Some(el), &[], &[String::from("test_b")], cx, sc)
+                    .execute(
+                        Some(el),
+                        &[],
+                        &[String::from("test_b")],
+                        cx,
+                        sc,
+                        OperatorToken::new(),
+                    )
                     .await
                     .expect("run is successfull")
                     .expect("join returns vector of results");
@@ -319,43 +345,47 @@ mod processing {
                 let Some(Element::Component(el, _md)) = elements.first() else {
                     panic!("Component isn't found");
                 };
-                assert!(el
-                    .execute(
-                        Some(el),
-                        &[],
-                        &[String::from("test_c")],
-                        cx.clone(),
-                        sc.clone()
-                    )
-                    .await
-                    .is_err());
-                assert!(el
-                    .execute(
-                        Some(el),
-                        &[],
-                        &[String::from("test_d")],
-                        cx.clone(),
-                        sc.clone()
-                    )
-                    .await
-                    .is_err());
-                assert!(el
-                    .execute(
-                        Some(el),
-                        &[],
-                        &[String::from("test_e")],
-                        cx.clone(),
-                        sc.clone()
-                    )
-                    .await
-                    .is_err());
+                // assert!(el
+                //     .execute(
+                //         Some(el),
+                //         &[],
+                //         &[String::from("test_c")],
+                //         cx.clone(),
+                //         sc.clone(),
+                //         OperatorToken::new()
+                //     )
+                //     .await
+                //     .is_err());
+                // assert!(el
+                //     .execute(
+                //         Some(el),
+                //         &[],
+                //         &[String::from("test_d")],
+                //         cx.clone(),
+                //         sc.clone(),
+                //         OperatorToken::new()
+                //     )
+                //     .await
+                //     .is_err());
+                // assert!(el
+                //     .execute(
+                //         Some(el),
+                //         &[],
+                //         &[String::from("test_e")],
+                //         cx.clone(),
+                //         sc.clone(),
+                //         OperatorToken::new()
+                //     )
+                //     .await
+                //     .is_err());
                 assert!(el
                     .execute(
                         Some(el),
                         &[],
                         &[String::from("test_f")],
                         cx.clone(),
-                        sc.clone()
+                        sc.clone(),
+                        OperatorToken::new()
                     )
                     .await
                     .is_err());

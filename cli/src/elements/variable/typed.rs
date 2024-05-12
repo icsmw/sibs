@@ -1,3 +1,5 @@
+use operator::OperatorToken;
+
 use crate::{
     elements::Component,
     error::LinkedErr,
@@ -87,6 +89,7 @@ impl Operator for VariableType {
         args: &'a [String],
         _cx: Context,
         _sc: Scope,
+        _token: OperatorToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let value = if args.len() != 1 {

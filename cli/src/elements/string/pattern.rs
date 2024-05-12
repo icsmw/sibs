@@ -1,3 +1,5 @@
+use operator::OperatorToken;
+
 use crate::{
     elements::{string, Component, ElTarget, Element},
     error::LinkedErr,
@@ -96,6 +98,7 @@ impl Operator for PatternString {
         args: &'a [String],
         cx: Context,
         sc: Scope,
+        mut token: OperatorToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let mut output = String::new();
@@ -106,7 +109,14 @@ impl Operator for PatternString {
                     output = format!(
                         "{output}{}",
                         element
-                            .execute(owner, components, args, cx.clone(), sc.clone())
+                            .execute(
+                                owner,
+                                components,
+                                args,
+                                cx.clone(),
+                                sc.clone(),
+                                token.child()
+                            )
                             .await?
                             .ok_or(operator::E::FailToExtractValue)?
                             .get_as_string()

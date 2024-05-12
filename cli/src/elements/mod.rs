@@ -19,6 +19,7 @@ pub use component::*;
 pub use conditions::*;
 pub use function::*;
 pub use meta::*;
+use operator::OperatorToken;
 pub use optional::*;
 pub use primitives::*;
 pub use reference::*;
@@ -643,36 +644,41 @@ impl Operator for Element {
         args: &'a [String],
         cx: Context,
         sc: Scope,
+        token: OperatorToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let journal = cx.journal.clone();
             let result = match self {
-                Self::Function(v, _) => v.perform(owner, components, args, cx, sc).await,
-                Self::If(v, _) => v.perform(owner, components, args, cx, sc).await,
-                Self::Each(v, _) => v.perform(owner, components, args, cx, sc).await,
-                Self::First(v, _) => v.perform(owner, components, args, cx, sc).await,
-                Self::Join(v, _) => v.perform(owner, components, args, cx, sc).await,
-                Self::VariableAssignation(v, _) => v.perform(owner, components, args, cx, sc).await,
-                Self::Comparing(v, _) => v.perform(owner, components, args, cx, sc).await,
-                Self::Combination(v, _) => v.perform(owner, components, args, cx, sc).await,
-                Self::Condition(v, _) => v.perform(owner, components, args, cx, sc).await,
-                Self::Subsequence(v, _) => v.perform(owner, components, args, cx, sc).await,
-                Self::Optional(v, _) => v.perform(owner, components, args, cx, sc).await,
-                Self::Reference(v, _) => v.perform(owner, components, args, cx, sc).await,
-                Self::PatternString(v, _) => v.perform(owner, components, args, cx, sc).await,
-                Self::VariableName(v, _) => v.perform(owner, components, args, cx, sc).await,
-                Self::Values(v, _) => v.perform(owner, components, args, cx, sc).await,
-                Self::Block(v, _) => v.perform(owner, components, args, cx, sc).await,
-                Self::Command(v, _) => v.perform(owner, components, args, cx, sc).await,
-                Self::Task(v, _) => v.perform(owner, components, args, cx, sc).await,
-                Self::Component(v, _) => v.perform(owner, components, args, cx, sc).await,
-                Self::Integer(v, _) => v.perform(owner, components, args, cx, sc).await,
-                Self::Boolean(v, _) => v.perform(owner, components, args, cx, sc).await,
+                Self::Function(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::If(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::Each(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::First(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::Join(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::VariableAssignation(v, _) => {
+                    v.perform(owner, components, args, cx, sc, token).await
+                }
+                Self::Comparing(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::Combination(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::Condition(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::Subsequence(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::Optional(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::Reference(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::PatternString(v, _) => {
+                    v.perform(owner, components, args, cx, sc, token).await
+                }
+                Self::VariableName(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::Values(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::Block(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::Command(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::Task(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::Component(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::Integer(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::Boolean(v, _) => v.perform(owner, components, args, cx, sc, token).await,
                 Self::Meta(..) => Ok(None),
                 Self::VariableDeclaration(..) => Ok(None),
                 Self::VariableVariants(..) => Ok(None),
                 Self::VariableType(..) => Ok(None),
-                Self::SimpleString(v, _) => v.perform(owner, components, args, cx, sc).await,
+                Self::SimpleString(v, _) => v.perform(owner, components, args, cx, sc, token).await,
                 Self::Comment(_) => Ok(None),
             };
             if let (true, Err(err)) = (self.get_metadata().tolerance, result.as_ref()) {
@@ -702,7 +708,7 @@ mod processing {
         error::LinkedErr,
         inf::{
             operator::{Operator, E},
-            Configuration, Context, Journal, Scope,
+            Configuration, Context, Journal, OperatorToken, Scope,
         },
         process_string,
         reader::{chars, Reader, Sources},
@@ -726,7 +732,7 @@ mod processing {
             |elements: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for el in elements.iter() {
                     assert!(el
-                        .execute(None, &[], &[], cx.clone(), sc.clone())
+                        .execute(None, &[], &[], cx.clone(), sc.clone(), OperatorToken::new())
                         .await?
                         .is_none());
                 }

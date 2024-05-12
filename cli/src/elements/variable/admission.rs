@@ -1,3 +1,5 @@
+use operator::OperatorToken;
+
 use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
@@ -56,6 +58,7 @@ impl Operator for VariableName {
         _: &'a [String],
         _: Context,
         sc: Scope,
+        _token: OperatorToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let value = sc

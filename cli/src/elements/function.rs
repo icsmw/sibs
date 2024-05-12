@@ -1,3 +1,5 @@
+use operator::OperatorToken;
+
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
@@ -190,13 +192,21 @@ impl Function {
         inputs: &'a [String],
         cx: Context,
         sc: Scope,
+        mut token: OperatorToken,
     ) -> Result<Vec<AnyValue>, operator::E> {
         let mut values: Vec<AnyValue> = Vec::new();
         for arg in self.args.iter() {
             values.push(
-                arg.execute(owner, components, inputs, cx.clone(), sc.clone())
-                    .await?
-                    .ok_or(operator::E::NotAllArguamentsHasReturn)?,
+                arg.execute(
+                    owner,
+                    components,
+                    inputs,
+                    cx.clone(),
+                    sc.clone(),
+                    token.child(),
+                )
+                .await?
+                .ok_or(operator::E::NotAllArguamentsHasReturn)?,
             )
         }
         Ok(values)
@@ -296,18 +306,33 @@ impl Operator for Function {
         inputs: &'a [String],
         cx: Context,
         sc: Scope,
+        mut token: OperatorToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let mut args: Vec<AnyValue> = self
-                .get_processed_args(owner, components, inputs, cx.clone(), sc.clone())
+                .get_processed_args(
+                    owner,
+                    components,
+                    inputs,
+                    cx.clone(),
+                    sc.clone(),
+                    token.child(),
+                )
                 .await?;
             if let Some(func) = self.feed.as_ref() {
                 args.insert(
                     0,
                     cx.execute(
                         &func.name,
-                        func.get_processed_args(owner, components, inputs, cx.clone(), sc.clone())
-                            .await?,
+                        func.get_processed_args(
+                            owner,
+                            components,
+                            inputs,
+                            cx.clone(),
+                            sc.clone(),
+                            token,
+                        )
+                        .await?,
                         sc.clone(),
                     )
                     .await?,
@@ -419,7 +444,7 @@ mod processing {
         error::LinkedErr,
         inf::{
             operator::{Operator, E},
-            Configuration, Context, Journal, Scope,
+            Configuration, Context, Journal, OperatorToken, Scope,
         },
         process_string,
         reader::{chars, Reader, Reading, Sources},
@@ -441,7 +466,7 @@ mod processing {
             |tasks: Vec<Task>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
                     let result = task
-                        .execute(None, &[], &[], cx.clone(), sc.clone())
+                        .execute(None, &[], &[], cx.clone(), sc.clone(), OperatorToken::new())
                         .await?
                         .expect("Task returns some value");
                     assert_eq!(

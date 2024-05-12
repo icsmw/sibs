@@ -10,7 +10,7 @@ use crate::{
         journal::{self, Journal},
         operator::Operator,
         scenario::Scenario,
-        term, Scope,
+        term, OperatorToken, Scope,
     },
     reader::{Reader, Sources},
 };
@@ -123,6 +123,7 @@ pub async fn process(journal: Journal) -> Result<(), E> {
                     &income,
                     cx.clone(),
                     sc.clone(),
+                    OperatorToken::new(),
                 )
                 .await?;
             cx.destroy().await?;

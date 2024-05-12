@@ -16,6 +16,8 @@ pub enum E {
     NotAllArguamentsHasReturn,
     #[error("Spawned process exit with error")]
     SpawnedProcessExitWithError,
+    #[error("Spawned process has been cancelled")]
+    SpawnedProcessCancelledError,
     #[error("No current working folder")]
     NoCurrentWorkingFolder,
     #[error("Tracker error: {0}")]

@@ -1,3 +1,5 @@
+use operator::OperatorToken;
+
 use crate::{
     elements::{ElTarget, Element, SimpleString, Task},
     error::LinkedErr,
@@ -174,6 +176,7 @@ impl Operator for Component {
         args: &'a [String],
         cx: Context,
         _sc: Scope,
+        token: OperatorToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let task = args.first().ok_or_else(|| {
@@ -195,7 +198,7 @@ impl Operator for Component {
                 &cx.journal,
             );
             let result = task
-                .execute(owner, components, &args[1..], cx, sc.clone())
+                .execute(owner, components, &args[1..], cx, sc.clone(), token)
                 .await;
             sc.destroy().await?;
             result
@@ -322,7 +325,7 @@ mod processing {
         error::LinkedErr,
         inf::{
             operator::{Operator, E},
-            Configuration, Context, Journal, Scope,
+            Configuration, Context, Journal, OperatorToken, Scope,
         },
         process_string,
         reader::{Reader, Reading, Sources},
@@ -359,6 +362,7 @@ mod processing {
                                 .collect::<Vec<String>>(),
                             cx.clone(),
                             sc.clone(),
+                            OperatorToken::new(),
                         )
                         .await?
                         .expect("component returns some value");

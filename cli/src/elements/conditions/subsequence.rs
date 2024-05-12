@@ -1,7 +1,10 @@
 use crate::{
     elements::{Cmb, Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
+    inf::{
+        AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
+        OperatorToken, Scope,
+    },
     reader::{chars, words, Reader, Reading, E},
 };
 use std::fmt;
@@ -127,12 +130,20 @@ impl Operator for Subsequence {
         args: &'a [String],
         cx: Context,
         sc: Scope,
+        mut token: OperatorToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let mut last_value = true;
             for el in self.subsequence.iter() {
                 let value = el
-                    .execute(owner, components, args, cx.clone(), sc.clone())
+                    .execute(
+                        owner,
+                        components,
+                        args,
+                        cx.clone(),
+                        sc.clone(),
+                        token.child(),
+                    )
                     .await?
                     .ok_or(E::NoValueFromSubsequenceElement)?;
                 if let Some(cmb) = value.get_as::<Cmb>() {

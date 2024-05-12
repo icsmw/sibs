@@ -1,3 +1,5 @@
+use operator::OperatorToken;
+
 use crate::{
     elements::{string, Component, ElTarget, Element},
     error::LinkedErr,
@@ -96,6 +98,7 @@ impl Operator for Command {
         inputs: &'a [String],
         cx: Context,
         sc: Scope,
+        mut token: OperatorToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let mut command = String::new();
@@ -105,7 +108,14 @@ impl Operator for Command {
                 } else {
                     command.push_str(
                         &element
-                            .execute(owner, components, inputs, cx.clone(), sc.clone())
+                            .execute(
+                                owner,
+                                components,
+                                inputs,
+                                cx.clone(),
+                                sc.clone(),
+                                token.child(),
+                            )
                             .await?
                             .ok_or(operator::E::FailToExtractValue.by(self))?
                             .get_as_string()
@@ -118,18 +128,16 @@ impl Operator for Command {
                 .await?
                 .ok_or(operator::E::NoCurrentWorkingFolder.by(self))?
                 .clone();
-            match spawner::run(&command, &cwd, cx).await {
-                Ok(status) => {
+            match spawner::run(token, &command, &cwd, cx).await {
+                Ok(None) => Err(operator::E::SpawnedProcessCancelledError.by(self)),
+                Ok(Some(status)) => {
                     if status.success() {
                         Ok(Some(AnyValue::new(())))
                     } else {
                         Err(operator::E::SpawnedProcessExitWithError.by(self))
                     }
                 }
-                Err(e) => {
-                    // job.err(e.to_string());
-                    Err(e)?
-                }
+                Err(e) => Err(e)?,
             }
         })
     }

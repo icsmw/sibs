@@ -1,7 +1,9 @@
 use crate::{
     elements::{Block, Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
+    inf::{
+        Context, Formation, FormationCursor, Operator, OperatorPinnedResult, OperatorToken, Scope,
+    },
     reader::{words, Reader, Reading, E},
 };
 use std::fmt;
@@ -62,8 +64,13 @@ impl Operator for First {
         args: &'a [String],
         cx: Context,
         sc: Scope,
+        token: OperatorToken,
     ) -> OperatorPinnedResult {
-        Box::pin(async move { self.block.execute(owner, components, args, cx, sc).await })
+        Box::pin(async move {
+            self.block
+                .execute(owner, components, args, cx, sc, token)
+                .await
+        })
     }
 }
 
@@ -151,7 +158,7 @@ mod processing {
         error::LinkedErr,
         inf::{
             operator::{Operator, E},
-            Configuration, Context, Journal, Scope,
+            Configuration, Context, Journal, OperatorToken, Scope,
         },
         process_string,
         reader::{chars, Reader, Reading, Sources},
@@ -173,7 +180,7 @@ mod processing {
             |tasks: Vec<Task>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
                     let result = task
-                        .execute(None, &[], &[], cx.clone(), sc.clone())
+                        .execute(None, &[], &[], cx.clone(), sc.clone(), OperatorToken::new())
                         .await?
                         .expect("Task returns some value");
                     assert_eq!(

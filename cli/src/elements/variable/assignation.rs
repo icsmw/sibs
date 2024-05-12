@@ -1,3 +1,5 @@
+use operator::OperatorToken;
+
 use crate::{
     elements::{Component, ElTarget, Element, VariableName},
     error::LinkedErr,
@@ -90,11 +92,12 @@ impl Operator for VariableAssignation {
         args: &'a [String],
         cx: Context,
         sc: Scope,
+        token: OperatorToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let assignation = &self.assignation;
             let value = assignation
-                .execute(owner, components, args, cx, sc.clone())
+                .execute(owner, components, args, cx, sc.clone(), token)
                 .await?
                 .ok_or(operator::E::NoValueToAssign(self.variable.name.clone()))?;
             sc.set_var(&self.variable.name, value).await?;
@@ -200,7 +203,7 @@ mod processing {
         error::LinkedErr,
         inf::{
             operator::{Operator, E},
-            Configuration, Context, Journal, Scope,
+            Configuration, Context, Journal, OperatorToken, Scope,
         },
         process_string,
         reader::{chars, Reader, Reading, Sources},
@@ -231,7 +234,7 @@ mod processing {
             |tasks: Vec<Task>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
                     assert!(task
-                        .execute(None, &[], &[], cx.clone(), sc.clone())
+                        .execute(None, &[], &[], cx.clone(), sc.clone(), OperatorToken::new())
                         .await?
                         .is_some());
                 }

@@ -1,3 +1,5 @@
+use operator::OperatorToken;
+
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
@@ -132,6 +134,7 @@ impl Operator for Reference {
         inputs: &'a [String],
         cx: Context,
         sc: Scope,
+        mut token: OperatorToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let target = owner.ok_or(operator::E::NoOwnerComponent.by(self))?;
@@ -161,14 +164,21 @@ impl Operator for Reference {
             for input in self.inputs.iter() {
                 args.push(
                     input
-                        .execute(owner, components, inputs, cx.clone(), sc.clone())
+                        .execute(
+                            owner,
+                            components,
+                            inputs,
+                            cx.clone(),
+                            sc.clone(),
+                            token.child(),
+                        )
                         .await?
                         .ok_or(operator::E::FailToGetAnyValueAsTaskArg.by(self))?
                         .get_as_string()
                         .ok_or(operator::E::FailToGetStringValue.by(self))?,
                 );
             }
-            task.execute(owner, components, &args, cx, sc).await
+            task.execute(owner, components, &args, cx, sc, token).await
         })
     }
 }

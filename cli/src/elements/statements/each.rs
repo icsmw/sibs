@@ -1,3 +1,5 @@
+use operator::OperatorToken;
+
 use crate::{
     elements::{Block, Component, ElTarget, Element, VariableName},
     error::LinkedErr,
@@ -95,11 +97,19 @@ impl Operator for Each {
         args: &'a [String],
         cx: Context,
         sc: Scope,
+        mut token: OperatorToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let inputs = self
                 .input
-                .execute(owner, components, args, cx.clone(), sc.clone())
+                .execute(
+                    owner,
+                    components,
+                    args,
+                    cx.clone(),
+                    sc.clone(),
+                    token.child(),
+                )
                 .await?
                 .ok_or(operator::E::NoInputForEach)?
                 .get_as_strings()
@@ -110,7 +120,14 @@ impl Operator for Each {
                     .await?;
                 output = self
                     .block
-                    .execute(owner, components, args, cx.clone(), sc.clone())
+                    .execute(
+                        owner,
+                        components,
+                        args,
+                        cx.clone(),
+                        sc.clone(),
+                        token.child(),
+                    )
                     .await?;
             }
             Ok(if output.is_none() {
@@ -214,7 +231,7 @@ mod processing {
         error::LinkedErr,
         inf::{
             operator::{Operator, E},
-            Configuration, Context, Journal, Scope,
+            Configuration, Context, Journal, OperatorToken, Scope,
         },
         process_string,
         reader::{chars, Reader, Reading, Sources},
@@ -237,7 +254,7 @@ mod processing {
             |tasks: Vec<Task>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
                     assert!(task
-                        .execute(None, &[], &[], cx.clone(), sc.clone())
+                        .execute(None, &[], &[], cx.clone(), sc.clone(), OperatorToken::new())
                         .await?
                         .is_some());
                 }

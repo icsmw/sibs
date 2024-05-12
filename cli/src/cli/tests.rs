@@ -3,7 +3,7 @@ use crate::{
     error::LinkedErr,
     inf::{
         journal::{Configuration, Journal},
-        Context, Operator, Scope,
+        Context, Operator, OperatorToken, Scope,
     },
     process_file,
     reader::{error::E, Reader, Sources},
@@ -23,7 +23,14 @@ async fn reading() {
                 panic!("Component isn't found");
             };
             assert!(el
-                .execute(None, &[], &[String::from("success")], cx, sc)
+                .execute(
+                    None,
+                    &[],
+                    &[String::from("success")],
+                    cx,
+                    sc,
+                    OperatorToken::new()
+                )
                 .await
                 .is_ok());
             Ok::<(), LinkedErr<E>>(())

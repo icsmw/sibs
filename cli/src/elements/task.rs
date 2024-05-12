@@ -1,3 +1,5 @@
+use operator::OperatorToken;
+
 use crate::{
     elements::{Component, ElTarget, Element, SimpleString},
     error::LinkedErr,
@@ -179,6 +181,7 @@ impl Operator for Task {
         args: &'a [String],
         cx: Context,
         sc: Scope,
+        mut token: OperatorToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             if self.declarations.len() != args.len() {
@@ -203,6 +206,7 @@ impl Operator for Task {
                             &[args[i].to_owned()],
                             cx.clone(),
                             sc.clone(),
+                            token.child(),
                         )
                         .await?;
                 } else {
@@ -211,10 +215,19 @@ impl Operator for Task {
             }
             for dependency in self.dependencies.iter() {
                 dependency
-                    .execute(owner, components, &[], cx.clone(), sc.clone())
+                    .execute(
+                        owner,
+                        components,
+                        &[],
+                        cx.clone(),
+                        sc.clone(),
+                        token.child(),
+                    )
                     .await?;
             }
-            self.block.execute(owner, components, args, cx, sc).await
+            self.block
+                .execute(owner, components, args, cx, sc, token)
+                .await
         })
     }
 }
@@ -346,7 +359,7 @@ mod processing {
         error::LinkedErr,
         inf::{
             operator::{Operator, E},
-            Configuration, Context, Journal, Scope,
+            Configuration, Context, Journal, OperatorToken, Scope,
         },
         process_string,
         reader::{chars, Reader, Reading, Sources},
@@ -379,6 +392,7 @@ mod processing {
                                 .collect::<Vec<String>>(),
                             cx.clone(),
                             sc.clone(),
+                            OperatorToken::new(),
                         )
                         .await?
                         .expect("Task returns some value");
@@ -416,6 +430,7 @@ mod processing {
                             &["test".to_owned(), "a".to_owned(), "b".to_owned()],
                             cx.clone(),
                             sc.clone(),
+                            OperatorToken::new(),
                         )
                         .await?
                         .expect("component returns some value");

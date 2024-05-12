@@ -1,3 +1,5 @@
+use operator::OperatorToken;
+
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
@@ -26,23 +28,31 @@ impl Operator for Thread {
         args: &'a [String],
         cx: Context,
         sc: Scope,
+        mut token: OperatorToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             match self {
                 Self::If(subsequence, block) => {
                     if *subsequence
-                        .execute(owner, components, args, cx.clone(), sc.clone())
+                        .execute(
+                            owner,
+                            components,
+                            args,
+                            cx.clone(),
+                            sc.clone(),
+                            token.child(),
+                        )
                         .await?
                         .ok_or(operator::E::NoResultFromProviso)?
                         .get_as::<bool>()
                         .ok_or(operator::E::NoBoolResultFromProviso)?
                     {
-                        block.execute(owner, components, args, cx, sc).await
+                        block.execute(owner, components, args, cx, sc, token).await
                     } else {
                         Ok(None)
                     }
                 }
-                Self::Else(block) => block.execute(owner, components, args, cx, sc).await,
+                Self::Else(block) => block.execute(owner, components, args, cx, sc, token).await,
             }
         })
     }
@@ -168,11 +178,19 @@ impl Operator for If {
         args: &'a [String],
         cx: Context,
         sc: Scope,
+        mut token: OperatorToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             for thread in self.threads.iter() {
                 if let Some(output) = thread
-                    .execute(owner, components, args, cx.clone(), sc.clone())
+                    .execute(
+                        owner,
+                        components,
+                        args,
+                        cx.clone(),
+                        sc.clone(),
+                        token.child(),
+                    )
                     .await?
                 {
                     return Ok(Some(output));
@@ -289,7 +307,7 @@ mod processing {
         error::LinkedErr,
         inf::{
             operator::{Operator, E},
-            Configuration, Context, Journal, Scope,
+            Configuration, Context, Journal, OperatorToken, Scope,
         },
         process_string,
         reader::{chars, Reader, Reading, Sources},
@@ -314,7 +332,7 @@ mod processing {
             |tasks: Vec<Task>, cx: Context, sc: Scope, _: Journal| async move {
                 for (i, task) in tasks.iter().enumerate() {
                     let result = task
-                        .execute(None, &[], &[], cx.clone(), sc.clone())
+                        .execute(None, &[], &[], cx.clone(), sc.clone(), OperatorToken::new())
                         .await?
                         .expect("IF returns some value");
                     assert_eq!(
