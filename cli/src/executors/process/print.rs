@@ -7,7 +7,7 @@ pub fn name() -> String {
     get_last_name(module_path!())
 }
 
-pub fn execute(args: Vec<AnyValue>, cx: Context, _sc: Scope) -> ExecutorPinnedResult {
+pub fn execute(args: Vec<AnyValue>, _cx: Context, _sc: Scope) -> ExecutorPinnedResult {
     Box::pin(async move {
         args.iter().for_each(|arg| {
             if let Some(str) = arg.get_as_string() {
@@ -39,7 +39,7 @@ mod test {
                 .to_str()
                 .expect("path parsed"),
             "a",
-            "success",
+            "print",
             "--output",
             "logs",
         ])
