@@ -37,6 +37,13 @@ pub fn get_name(path: &str) -> String {
         .collect::<Vec<&str>>()
         .join("::")
 }
+
+pub fn get_last_name(path: &str) -> String {
+    path.split("::")
+        .last()
+        .expect("Module should have at least one member")
+        .to_owned()
+}
 pub trait TryAnyTo<T> {
     fn try_to(&self) -> Result<T, E>;
 }

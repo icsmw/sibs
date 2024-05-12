@@ -1,10 +1,10 @@
 use crate::{
-    executors::{get_name, ExecutorPinnedResult},
+    executors::{get_last_name, ExecutorPinnedResult},
     inf::{operator, AnyValue, Context, Scope},
 };
 
 pub fn name() -> String {
-    get_name(module_path!())
+    get_last_name(module_path!())
 }
 
 pub fn execute(args: Vec<AnyValue>, cx: Context, _sc: Scope) -> ExecutorPinnedResult {
