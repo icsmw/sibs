@@ -1,4 +1,4 @@
-use operator::OperatorToken;
+use tokio_util::sync::CancellationToken;
 
 use crate::{
     elements::{Component, ElTarget, Element},
@@ -28,7 +28,7 @@ impl Operator for Thread {
         args: &'a [String],
         cx: Context,
         sc: Scope,
-        mut token: OperatorToken,
+        token: CancellationToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             match self {
@@ -40,7 +40,7 @@ impl Operator for Thread {
                             args,
                             cx.clone(),
                             sc.clone(),
-                            token.child(),
+                            token.clone(),
                         )
                         .await?
                         .ok_or(operator::E::NoResultFromProviso)?
@@ -178,7 +178,7 @@ impl Operator for If {
         args: &'a [String],
         cx: Context,
         sc: Scope,
-        mut token: OperatorToken,
+        token: CancellationToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             for thread in self.threads.iter() {
@@ -189,7 +189,7 @@ impl Operator for If {
                         args,
                         cx.clone(),
                         sc.clone(),
-                        token.child(),
+                        token.clone(),
                     )
                     .await?
                 {
@@ -302,12 +302,14 @@ mod reading {
 
 #[cfg(test)]
 mod processing {
+    use tokio_util::sync::CancellationToken;
+
     use crate::{
         elements::Task,
         error::LinkedErr,
         inf::{
             operator::{Operator, E},
-            Configuration, Context, Journal, OperatorToken, Scope,
+            Configuration, Context, Journal, Scope,
         },
         process_string,
         reader::{chars, Reader, Reading, Sources},
@@ -332,7 +334,14 @@ mod processing {
             |tasks: Vec<Task>, cx: Context, sc: Scope, _: Journal| async move {
                 for (i, task) in tasks.iter().enumerate() {
                     let result = task
-                        .execute(None, &[], &[], cx.clone(), sc.clone(), OperatorToken::new())
+                        .execute(
+                            None,
+                            &[],
+                            &[],
+                            cx.clone(),
+                            sc.clone(),
+                            CancellationToken::new(),
+                        )
                         .await?
                         .expect("IF returns some value");
                     assert_eq!(

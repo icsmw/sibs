@@ -11,11 +11,12 @@ use tokio::{
     select,
 };
 use tokio_stream::StreamExt;
-use tokio_util::codec::{self, LinesCodec, LinesCodecError};
+use tokio_util::{
+    codec::{self, LinesCodec, LinesCodecError},
+    sync::CancellationToken,
+};
 
 pub use error::E;
-
-use super::OperatorToken;
 
 #[cfg(windows)]
 fn spawn(command: &str, cwd: &PathBuf) -> Result<Child, E> {
@@ -53,7 +54,7 @@ fn parse_command(command: &str) -> (&str, Vec<&str>) {
 }
 
 pub async fn run(
-    token: OperatorToken,
+    token: CancellationToken,
     command: &str,
     cwd: &PathBuf,
     cx: Context,
@@ -101,7 +102,6 @@ pub async fn run(
             .ok_or_else(|| E::Setup(String::from("Fail to get stderr handle")))?,
         LinesCodec::default(),
     );
-    token.finish();
     select! {
         res = async {
             join!(
@@ -123,15 +123,11 @@ pub async fn run(
                 E::Executing(command.to_string(), e.to_string())
             })
         } => {
-            println!(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> DONE");
             res
         }
         _ = async {
-            println!(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> WAITING FOR CANCELLATION");
             token.cancelled().await;
-            println!(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> CANCELLATION SIGNAL HAS BEEN GOTTEN");
         } => {
-            println!(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> CANCELLED");
             match child.try_wait() {
                 Ok(Some(status)) => {
                     Ok(chk_status(status, &job))
@@ -142,7 +138,7 @@ pub async fn run(
                     } else {
                         job.output("process has been killed");
                     }
-                    job.fail();
+                    job.cancelled();
                     Ok(None)
                 }
                 Err(err) => {

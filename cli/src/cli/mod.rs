@@ -10,7 +10,7 @@ use crate::{
         journal::{self, Journal},
         operator::Operator,
         scenario::Scenario,
-        term, OperatorToken, Scope,
+        term, Scope,
     },
     reader::{Reader, Sources},
 };
@@ -20,6 +20,7 @@ use std::{
     env::{self, current_dir},
     path::PathBuf,
 };
+use tokio_util::sync::CancellationToken;
 
 fn get_arguments() -> Result<(Vec<String>, Arguments), E> {
     let mut income = env::args().collect::<Vec<String>>();
@@ -123,7 +124,7 @@ pub async fn process(journal: Journal) -> Result<(), E> {
                     &income,
                     cx.clone(),
                     sc.clone(),
-                    OperatorToken::new(),
+                    CancellationToken::new(),
                 )
                 .await?;
             cx.destroy().await?;

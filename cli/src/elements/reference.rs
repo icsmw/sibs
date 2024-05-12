@@ -1,4 +1,4 @@
-use operator::OperatorToken;
+use tokio_util::sync::CancellationToken;
 
 use crate::{
     elements::{Component, ElTarget, Element},
@@ -134,7 +134,7 @@ impl Operator for Reference {
         inputs: &'a [String],
         cx: Context,
         sc: Scope,
-        mut token: OperatorToken,
+        token: CancellationToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let target = owner.ok_or(operator::E::NoOwnerComponent.by(self))?;
@@ -170,7 +170,7 @@ impl Operator for Reference {
                             inputs,
                             cx.clone(),
                             sc.clone(),
-                            token.child(),
+                            token.clone(),
                         )
                         .await?
                         .ok_or(operator::E::FailToGetAnyValueAsTaskArg.by(self))?

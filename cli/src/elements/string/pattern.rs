@@ -1,4 +1,4 @@
-use operator::OperatorToken;
+use tokio_util::sync::CancellationToken;
 
 use crate::{
     elements::{string, Component, ElTarget, Element},
@@ -98,7 +98,7 @@ impl Operator for PatternString {
         args: &'a [String],
         cx: Context,
         sc: Scope,
-        mut token: OperatorToken,
+        token: CancellationToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let mut output = String::new();
@@ -115,7 +115,7 @@ impl Operator for PatternString {
                                 args,
                                 cx.clone(),
                                 sc.clone(),
-                                token.child()
+                                token.clone()
                             )
                             .await?
                             .ok_or(operator::E::FailToExtractValue)?

@@ -1,10 +1,9 @@
+use tokio_util::sync::CancellationToken;
+
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{
-        AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
-        OperatorToken, Scope,
-    },
+    inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -75,7 +74,7 @@ impl Operator for Condition {
         args: &'a [String],
         cx: Context,
         sc: Scope,
-        token: OperatorToken,
+        token: CancellationToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             Ok(Some(AnyValue::new(

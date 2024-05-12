@@ -1,4 +1,4 @@
-use operator::OperatorToken;
+use tokio_util::sync::CancellationToken;
 
 use crate::{
     elements::{Component, ElTarget, Element},
@@ -138,7 +138,7 @@ impl Operator for Comparing {
         args: &'a [String],
         cx: Context,
         sc: Scope,
-        mut token: OperatorToken,
+        token: CancellationToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let left = self
@@ -149,7 +149,7 @@ impl Operator for Comparing {
                     args,
                     cx.clone(),
                     sc.clone(),
-                    token.child(),
+                    token.clone(),
                 )
                 .await?
                 .ok_or(operator::E::NoResultFromLeftOnComparing)?;

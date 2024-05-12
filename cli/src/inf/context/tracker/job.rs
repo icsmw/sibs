@@ -43,6 +43,12 @@ impl Job {
         self.err(format!("failed in {}ms", self.ts.elapsed().as_millis()));
     }
 
+    pub fn cancelled(&self) {
+        self.journal.collected(Level::Warn);
+        self.tracker.cancelled(self.id);
+        self.warn(format!("cancelled in {}ms", self.ts.elapsed().as_millis()));
+    }
+
     #[allow(dead_code)]
     pub fn info<'a, T>(&self, msg: T)
     where

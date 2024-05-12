@@ -1,10 +1,9 @@
+use tokio_util::sync::CancellationToken;
+
 use crate::{
     elements::Component,
     error::LinkedErr,
-    inf::{
-        AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
-        OperatorToken, Scope,
-    },
+    inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
     reader::{words, Reader, Reading, E},
 };
 use std::fmt;
@@ -75,7 +74,7 @@ impl Operator for Combination {
         _args: &'a [String],
         _cx: Context,
         _sc: Scope,
-        _token: OperatorToken,
+        _token: CancellationToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move { Ok(Some(AnyValue::new(self.cmb.clone()))) })
     }

@@ -120,6 +120,7 @@ pub fn register(store: &mut Store) -> Result<(), E> {
 #[cfg(test)]
 mod test {
     use journal::Journal;
+    use tokio_util::sync::CancellationToken;
 
     use crate::{
         elements::Task,
@@ -127,7 +128,7 @@ mod test {
         inf::{
             journal,
             operator::{Operator, E},
-            Configuration, Context, OperatorToken, Scope,
+            Configuration, Context, Scope,
         },
         process_string,
         reader::{chars, Reader, Reading, Sources},
@@ -167,7 +168,14 @@ mod test {
                 |tasks: Vec<Task>, cx: Context, sc: Scope, journal: Journal| async move {
                     for task in tasks.iter() {
                         let result = task
-                            .execute(None, &[], &[], cx.clone(), sc.clone(), OperatorToken::new())
+                            .execute(
+                                None,
+                                &[],
+                                &[],
+                                cx.clone(),
+                                sc.clone(),
+                                CancellationToken::new(),
+                            )
                             .await;
                         if let Err(err) = result.as_ref() {
                             journal.report(err.into());

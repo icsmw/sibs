@@ -1,5 +1,4 @@
 mod error;
-mod token;
 
 use crate::{
     elements::Component,
@@ -8,7 +7,7 @@ use crate::{
 };
 pub use error::E;
 use std::{future::Future, pin::Pin};
-pub use token::*;
+use tokio_util::sync::CancellationToken;
 
 pub type OperatorPinnedResult<'a> = Pin<Box<dyn Future<Output = OperatorResult> + 'a + Send>>;
 pub type OperatorResult = Result<Option<AnyValue>, LinkedErr<E>>;
@@ -22,14 +21,13 @@ pub trait Operator {
         args: &'a [String],
         cx: Context,
         sc: Scope,
-        token: OperatorToken,
+        token: CancellationToken,
     ) -> OperatorPinnedResult
     where
         Self: Sync,
     {
         Box::pin(async move {
             cx.atlas.set_map_position(self.token()).await?;
-            let confirmation = token.get_confirmation();
             let result = self
                 .perform(owner, components, args, cx.clone(), sc, token)
                 .await;
@@ -41,8 +39,6 @@ pub trait Operator {
                     cx.atlas.report_err(&err.link_if(&self.token())).await?;
                 }
             }
-            confirmation();
-            println!(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> EXECUTING DONE");
             result
         })
     }
@@ -53,7 +49,7 @@ pub trait Operator {
         _args: &'a [String],
         _cx: Context,
         _sc: Scope,
-        _token: OperatorToken,
+        _token: CancellationToken,
     ) -> OperatorPinnedResult {
         Box::pin(async { Err(E::NotSupported.unlinked()) })
     }

@@ -1,4 +1,4 @@
-use operator::OperatorToken;
+use tokio_util::sync::CancellationToken;
 
 use crate::{
     elements::{ElTarget, Element, SimpleString, Task},
@@ -176,7 +176,7 @@ impl Operator for Component {
         args: &'a [String],
         cx: Context,
         _sc: Scope,
-        token: OperatorToken,
+        token: CancellationToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let task = args.first().ok_or_else(|| {
@@ -320,12 +320,14 @@ mod reading {
 
 #[cfg(test)]
 mod processing {
+    use tokio_util::sync::CancellationToken;
+
     use crate::{
         elements::Component,
         error::LinkedErr,
         inf::{
             operator::{Operator, E},
-            Configuration, Context, Journal, OperatorToken, Scope,
+            Configuration, Context, Journal, Scope,
         },
         process_string,
         reader::{Reader, Reading, Sources},
@@ -362,7 +364,7 @@ mod processing {
                                 .collect::<Vec<String>>(),
                             cx.clone(),
                             sc.clone(),
-                            OperatorToken::new(),
+                            CancellationToken::new(),
                         )
                         .await?
                         .expect("component returns some value");

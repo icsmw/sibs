@@ -1,4 +1,4 @@
-use operator::OperatorToken;
+use tokio_util::sync::CancellationToken;
 
 use crate::{
     elements::{Component, ElTarget},
@@ -58,7 +58,7 @@ impl Operator for VariableName {
         _: &'a [String],
         _: Context,
         sc: Scope,
-        _token: OperatorToken,
+        _token: CancellationToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let value = sc

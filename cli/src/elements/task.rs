@@ -1,12 +1,9 @@
-use operator::OperatorToken;
+use tokio_util::sync::CancellationToken;
 
 use crate::{
     elements::{Component, ElTarget, Element, SimpleString},
     error::LinkedErr,
-    inf::{
-        operator, Context, DebugAny, Formation, FormationCursor, Operator, OperatorPinnedResult,
-        Scope,
-    },
+    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -181,7 +178,7 @@ impl Operator for Task {
         args: &'a [String],
         cx: Context,
         sc: Scope,
-        mut token: OperatorToken,
+        token: CancellationToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             if self.declarations.len() != args.len() {
@@ -206,7 +203,7 @@ impl Operator for Task {
                             &[args[i].to_owned()],
                             cx.clone(),
                             sc.clone(),
-                            token.child(),
+                            token.clone(),
                         )
                         .await?;
                 } else {
@@ -221,7 +218,7 @@ impl Operator for Task {
                         &[],
                         cx.clone(),
                         sc.clone(),
-                        token.child(),
+                        token.clone(),
                     )
                     .await?;
             }
@@ -354,12 +351,14 @@ mod reading {
 
 #[cfg(test)]
 mod processing {
+    use tokio_util::sync::CancellationToken;
+
     use crate::{
         elements::{Component, Task},
         error::LinkedErr,
         inf::{
             operator::{Operator, E},
-            Configuration, Context, Journal, OperatorToken, Scope,
+            Configuration, Context, Journal, Scope,
         },
         process_string,
         reader::{chars, Reader, Reading, Sources},
@@ -392,7 +391,7 @@ mod processing {
                                 .collect::<Vec<String>>(),
                             cx.clone(),
                             sc.clone(),
-                            OperatorToken::new(),
+                            CancellationToken::new(),
                         )
                         .await?
                         .expect("Task returns some value");
@@ -430,7 +429,7 @@ mod processing {
                             &["test".to_owned(), "a".to_owned(), "b".to_owned()],
                             cx.clone(),
                             sc.clone(),
-                            OperatorToken::new(),
+                            CancellationToken::new(),
                         )
                         .await?
                         .expect("component returns some value");

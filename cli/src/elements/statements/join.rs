@@ -8,12 +8,12 @@ use crate::{
     reader::{words, Reader, Reading, E},
 };
 use futures::stream::{FuturesUnordered, StreamExt};
-use operator::OperatorToken;
 use std::fmt;
 use tokio::{
     spawn,
     task::{JoinError, JoinHandle},
 };
+use tokio_util::sync::CancellationToken;
 
 #[derive(Debug, Clone)]
 pub struct Join {
@@ -93,7 +93,7 @@ impl Operator for Join {
         args: &'a [String],
         cx: Context,
         sc: Scope,
-        mut token: OperatorToken,
+        token: CancellationToken,
     ) -> OperatorPinnedResult {
         fn clone(
             owner: Option<&Component>,
@@ -101,14 +101,14 @@ impl Operator for Join {
             args: &[String],
             cx: &Context,
             sc: &Scope,
-            token: &mut OperatorToken,
+            token: &CancellationToken,
         ) -> (
             Option<Component>,
             Vec<Component>,
             Vec<String>,
             Context,
             Scope,
-            OperatorToken,
+            CancellationToken,
         ) {
             (
                 owner.cloned().clone(),
@@ -116,13 +116,14 @@ impl Operator for Join {
                 args.to_vec(),
                 cx.clone(),
                 sc.clone(),
-                token.child(),
+                token.clone(),
             )
         }
         async fn wait(
             tasks: &mut [JoinHandle<OperatorResult>],
-        ) -> Result<Vec<AnyValue>, TaskError> {
-            let mut results: Vec<AnyValue> = Vec::new();
+            token: CancellationToken,
+        ) -> Result<Vec<Result<AnyValue, LinkedErr<operator::E>>>, TaskError> {
+            let mut results: Vec<Result<AnyValue, LinkedErr<operator::E>>> = Vec::new();
             let mut futures = FuturesUnordered::new();
             for task in tasks {
                 futures.push(task);
@@ -130,10 +131,14 @@ impl Operator for Join {
             while let Some(result) = futures.next().await {
                 match result {
                     Ok(Ok(result)) => {
-                        results.push(result.unwrap_or_else(|| AnyValue::new(())));
+                        results.push(Ok(result.unwrap_or_else(|| AnyValue::new(()))));
                     }
                     Ok(Err(err)) => {
-                        return Err(TaskError::Operator(err));
+                        if !token.is_cancelled() {
+                            token.cancel();
+                        }
+                        results.push(Err(err));
+                        // return Err(TaskError::Operator(err));
                     }
                     Err(err) => {
                         return Err(TaskError::Join(err));
@@ -142,22 +147,6 @@ impl Operator for Join {
             }
             Ok(results)
         }
-        // async fn abort(tasks: &mut [JoinHandle<OperatorResult>], token: &OperatorToken) -> u16 {
-        //     let mut finished = 0;
-        //     for token in tasks
-        //         .iter_mut()
-        //         // .filter(|(_, task)| !task.is_finished())
-        //         .map(|(token, _)| {
-        //             println!(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> CANCEL SIGNAL SENT");
-        //             token.cancel();
-        //             token
-        //         })
-        //     {
-        //         finished += 1;
-        //         token.finished().await;
-        //     }
-        //     finished
-        // }
         Box::pin(async move {
             let Element::Values(values, _) = self.elements.as_ref() else {
                 return Ok(None);
@@ -167,7 +156,7 @@ impl Operator for Join {
                 .iter()
                 .cloned()
                 .map(|el| {
-                    let params = clone(owner, components, args, &cx, &sc, &mut token);
+                    let params = clone(owner, components, args, &cx, &sc, &token);
                     spawn(async move {
                         // inside exclude will be create clone
                         el.execute(
@@ -182,15 +171,20 @@ impl Operator for Join {
                     })
                 })
                 .collect::<Vec<JoinHandle<OperatorResult>>>();
-            match wait(&mut tasks).await {
-                Ok(result) => Ok(Some(AnyValue::vec(result))),
-                Err(err) => {
-                    println!(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> CANCELING ALL");
-                    token.cancel();
-                    token.childs_finished().await;
-                    println!(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ALL CHILDS DONE");
-                    Err(err.into())
+            match wait(&mut tasks, token).await {
+                Ok(results) => {
+                    let mut output: Vec<AnyValue> = Vec::new();
+                    for result in results.into_iter() {
+                        match result {
+                            Ok(value) => output.push(value),
+                            Err(err) => {
+                                return Err(err);
+                            }
+                        };
+                    }
+                    Ok(Some(AnyValue::vec(output)))
                 }
+                Err(err) => Err(err.into()),
             }
         })
     }
@@ -275,12 +269,14 @@ mod reading {
 
 #[cfg(test)]
 mod processing {
+    use tokio_util::sync::CancellationToken;
+
     use crate::{
         elements::Element,
         error::LinkedErr,
         inf::{
             journal::{Configuration, Journal},
-            Context, Operator, OperatorToken, Scope,
+            Context, Operator, Scope,
         },
         process_file,
         reader::{error::E, Reader, Sources},
@@ -306,7 +302,7 @@ mod processing {
                         &[String::from("test_a")],
                         cx.clone(),
                         sc.clone(),
-                        OperatorToken::new(),
+                        CancellationToken::new(),
                     )
                     .await
                     .expect("run is successfull")
@@ -320,7 +316,7 @@ mod processing {
                         &[String::from("test_b")],
                         cx,
                         sc,
-                        OperatorToken::new(),
+                        CancellationToken::new(),
                     )
                     .await
                     .expect("run is successfull")
@@ -385,7 +381,7 @@ mod processing {
                         &[String::from("test_f")],
                         cx.clone(),
                         sc.clone(),
-                        OperatorToken::new()
+                        CancellationToken::new()
                     )
                     .await
                     .is_err());

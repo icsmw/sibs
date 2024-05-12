@@ -1,9 +1,9 @@
+use tokio_util::sync::CancellationToken;
+
 use crate::{
     elements::{Block, Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{
-        Context, Formation, FormationCursor, Operator, OperatorPinnedResult, OperatorToken, Scope,
-    },
+    inf::{Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
     reader::{words, Reader, Reading, E},
 };
 use std::fmt;
@@ -64,7 +64,7 @@ impl Operator for First {
         args: &'a [String],
         cx: Context,
         sc: Scope,
-        token: OperatorToken,
+        token: CancellationToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             self.block
@@ -153,12 +153,14 @@ mod reading {
 
 #[cfg(test)]
 mod processing {
+    use tokio_util::sync::CancellationToken;
+
     use crate::{
         elements::Task,
         error::LinkedErr,
         inf::{
             operator::{Operator, E},
-            Configuration, Context, Journal, OperatorToken, Scope,
+            Configuration, Context, Journal, Scope,
         },
         process_string,
         reader::{chars, Reader, Reading, Sources},
@@ -180,7 +182,14 @@ mod processing {
             |tasks: Vec<Task>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
                     let result = task
-                        .execute(None, &[], &[], cx.clone(), sc.clone(), OperatorToken::new())
+                        .execute(
+                            None,
+                            &[],
+                            &[],
+                            cx.clone(),
+                            sc.clone(),
+                            CancellationToken::new(),
+                        )
                         .await?
                         .expect("Task returns some value");
                     assert_eq!(

@@ -19,13 +19,13 @@ pub use component::*;
 pub use conditions::*;
 pub use function::*;
 pub use meta::*;
-use operator::OperatorToken;
 pub use optional::*;
 pub use primitives::*;
 pub use reference::*;
 pub use statements::{each::*, first::*, join::Join, If::*};
 pub use string::{command::*, pattern::*, simple::*};
 pub use task::*;
+use tokio_util::sync::CancellationToken;
 pub use values::*;
 pub use variable::*;
 
@@ -644,7 +644,7 @@ impl Operator for Element {
         args: &'a [String],
         cx: Context,
         sc: Scope,
-        token: OperatorToken,
+        token: CancellationToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let journal = cx.journal.clone();
@@ -703,12 +703,14 @@ impl Operator for Element {
 
 #[cfg(test)]
 mod processing {
+    use tokio_util::sync::CancellationToken;
+
     use crate::{
         elements::{ElTarget, Element},
         error::LinkedErr,
         inf::{
             operator::{Operator, E},
-            Configuration, Context, Journal, OperatorToken, Scope,
+            Configuration, Context, Journal, Scope,
         },
         process_string,
         reader::{chars, Reader, Sources},
@@ -732,7 +734,14 @@ mod processing {
             |elements: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for el in elements.iter() {
                     assert!(el
-                        .execute(None, &[], &[], cx.clone(), sc.clone(), OperatorToken::new())
+                        .execute(
+                            None,
+                            &[],
+                            &[],
+                            cx.clone(),
+                            sc.clone(),
+                            CancellationToken::new()
+                        )
                         .await?
                         .is_none());
                 }

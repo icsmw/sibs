@@ -24,6 +24,7 @@ use uuid::Uuid;
 pub enum OperationResult {
     Success,
     Failed,
+    Cancelled,
 }
 
 impl fmt::Display for OperationResult {
@@ -34,6 +35,7 @@ impl fmt::Display for OperationResult {
             match self {
                 OperationResult::Success => style("done").bold().green(),
                 OperationResult::Failed => style("fail").bold().red(),
+                OperationResult::Cancelled => style("cancelled").bold().yellow(),
             }
         )
     }
@@ -143,6 +145,13 @@ impl Tracker {
         Self::send(
             self.tx
                 .send(Demand::Finished(sequence, OperationResult::Failed)),
+        );
+    }
+
+    pub fn cancelled(&self, sequence: usize) {
+        Self::send(
+            self.tx
+                .send(Demand::Finished(sequence, OperationResult::Cancelled)),
         );
     }
 

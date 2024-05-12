@@ -1,10 +1,9 @@
+use tokio_util::sync::CancellationToken;
+
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{
-        AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
-        OperatorToken, Scope,
-    },
+    inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -125,7 +124,7 @@ impl Operator for Block {
         args: &'a [String],
         cx: Context,
         sc: Scope,
-        mut token: OperatorToken,
+        token: CancellationToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let mut output: Option<AnyValue> = None;
@@ -137,7 +136,7 @@ impl Operator for Block {
                         args,
                         cx.clone(),
                         sc.clone(),
-                        token.child(),
+                        token.clone(),
                     )
                     .await?;
                 if let (Some(ElTarget::First), true) = (self.owner.as_ref(), output.is_some()) {

@@ -1,4 +1,4 @@
-use operator::OperatorToken;
+use tokio_util::sync::CancellationToken;
 
 use crate::{
     elements::{Block, Component, ElTarget, Element, VariableName},
@@ -97,7 +97,7 @@ impl Operator for Each {
         args: &'a [String],
         cx: Context,
         sc: Scope,
-        mut token: OperatorToken,
+        token: CancellationToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let inputs = self
@@ -108,7 +108,7 @@ impl Operator for Each {
                     args,
                     cx.clone(),
                     sc.clone(),
-                    token.child(),
+                    token.clone(),
                 )
                 .await?
                 .ok_or(operator::E::NoInputForEach)?
@@ -126,7 +126,7 @@ impl Operator for Each {
                         args,
                         cx.clone(),
                         sc.clone(),
-                        token.child(),
+                        token.clone(),
                     )
                     .await?;
             }
@@ -226,12 +226,14 @@ mod reading {
 
 #[cfg(test)]
 mod processing {
+    use tokio_util::sync::CancellationToken;
+
     use crate::{
         elements::Task,
         error::LinkedErr,
         inf::{
             operator::{Operator, E},
-            Configuration, Context, Journal, OperatorToken, Scope,
+            Configuration, Context, Journal, Scope,
         },
         process_string,
         reader::{chars, Reader, Reading, Sources},
@@ -254,7 +256,14 @@ mod processing {
             |tasks: Vec<Task>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
                     assert!(task
-                        .execute(None, &[], &[], cx.clone(), sc.clone(), OperatorToken::new())
+                        .execute(
+                            None,
+                            &[],
+                            &[],
+                            cx.clone(),
+                            sc.clone(),
+                            CancellationToken::new()
+                        )
                         .await?
                         .is_some());
                 }

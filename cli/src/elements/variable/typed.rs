@@ -1,4 +1,4 @@
-use operator::OperatorToken;
+use tokio_util::sync::CancellationToken;
 
 use crate::{
     elements::Component,
@@ -89,7 +89,7 @@ impl Operator for VariableType {
         args: &'a [String],
         _cx: Context,
         _sc: Scope,
-        _token: OperatorToken,
+        _token: CancellationToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let value = if args.len() != 1 {

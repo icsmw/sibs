@@ -22,12 +22,13 @@ mod test {
         error::LinkedErr,
         inf::{
             operator::{Operator, E},
-            Configuration, Context, Journal, OperatorToken, Scope,
+            Configuration, Context, Journal, Scope,
         },
         process_string,
         reader::{chars, Reader, Reading, Sources},
     };
     use std::{env::temp_dir, fs::read_to_string};
+    use tokio_util::sync::CancellationToken;
     use uuid::Uuid;
 
     const TESTS: &[&str] = &[
@@ -64,7 +65,14 @@ mod test {
                 |tasks: Vec<Task>, cx: Context, sc: Scope, journal: Journal| async move {
                     for task in tasks.iter() {
                         let result = task
-                            .execute(None, &[], &[], cx.clone(), sc.clone(), OperatorToken::new())
+                            .execute(
+                                None,
+                                &[],
+                                &[],
+                                cx.clone(),
+                                sc.clone(),
+                                CancellationToken::new(),
+                            )
                             .await;
                         if let Err(err) = result.as_ref() {
                             journal.report(err.into());

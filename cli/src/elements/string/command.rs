@@ -1,4 +1,4 @@
-use operator::OperatorToken;
+use tokio_util::sync::CancellationToken;
 
 use crate::{
     elements::{string, Component, ElTarget, Element},
@@ -98,7 +98,7 @@ impl Operator for Command {
         inputs: &'a [String],
         cx: Context,
         sc: Scope,
-        mut token: OperatorToken,
+        token: CancellationToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let mut command = String::new();
@@ -114,7 +114,7 @@ impl Operator for Command {
                                 inputs,
                                 cx.clone(),
                                 sc.clone(),
-                                token.child(),
+                                token.clone(),
                             )
                             .await?
                             .ok_or(operator::E::FailToExtractValue.by(self))?
@@ -129,7 +129,10 @@ impl Operator for Command {
                 .ok_or(operator::E::NoCurrentWorkingFolder.by(self))?
                 .clone();
             match spawner::run(token, &command, &cwd, cx).await {
-                Ok(None) => Err(operator::E::SpawnedProcessCancelledError.by(self)),
+                Ok(None) => {
+                    // Err(operator::E::SpawnedProcessCancelledError.by(self))
+                    Ok(None)
+                }
                 Ok(Some(status)) => {
                     if status.success() {
                         Ok(Some(AnyValue::new(())))
