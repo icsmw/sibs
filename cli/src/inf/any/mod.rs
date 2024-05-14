@@ -3,7 +3,9 @@ use std::{
     any::{Any, TypeId},
     fmt,
     fmt::Debug,
+    path::PathBuf,
 };
+
 pub trait DebugAny: Any + Debug + Send + Sync {
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
@@ -59,6 +61,121 @@ impl AnyValue {
             self.value.as_ref().as_any().downcast_ref()
         } else {
             None
+        }
+    }
+
+    pub fn duplicate(&self) -> Result<AnyValue, E> {
+        match self.inner_ty {
+            InnerType::Single => {
+                if let Some(v) = self.get_as::<AnyValue>() {
+                    return v.duplicate();
+                } else if let Some(v) = self.get_as::<Vec<AnyValue>>() {
+                    let mut out: Vec<AnyValue> = Vec::new();
+                    for value in v.iter() {
+                        out.push(value.duplicate()?);
+                    }
+                    return Ok(AnyValue::new(out));
+                }
+                self.
+                // Check primitives
+                get_as::<bool>()
+                .map(|v| AnyValue::new(v.to_owned()))
+                .or_else(|| self.get_as::<i8>().map(|v| AnyValue::new(*v)))
+                .or_else(|| self.get_as::<i16>().map(|v| AnyValue::new(*v)))
+                .or_else(|| self.get_as::<i32>().map(|v| AnyValue::new(*v)))
+                .or_else(|| self.get_as::<i64>().map(|v| AnyValue::new(*v)))
+                .or_else(|| self.get_as::<i128>().map(|v| AnyValue::new(*v)))
+                .or_else(|| self.get_as::<isize>().map(|v| AnyValue::new(*v)))
+                .or_else(|| self.get_as::<u8>().map(|v| AnyValue::new(*v)))
+                .or_else(|| self.get_as::<u16>().map(|v| AnyValue::new(*v)))
+                .or_else(|| self.get_as::<u32>().map(|v| AnyValue::new(*v)))
+                .or_else(|| self.get_as::<u64>().map(|v| AnyValue::new(*v)))
+                .or_else(|| self.get_as::<u128>().map(|v| AnyValue::new(*v)))
+                .or_else(|| self.get_as::<usize>().map(|v| AnyValue::new(*v)))
+                .or_else(|| self.get_as::<f32>().map(|v| AnyValue::new(*v)))
+                .or_else(|| self.get_as::<f64>().map(|v| AnyValue::new(*v)))
+                .or_else(|| self.get_as::<String>().map(|v| AnyValue::new(v.to_owned())))
+                .or_else(|| {
+                    self.get_as::<PathBuf>()
+                        .map(|v| AnyValue::new(v.to_owned()))
+                })
+                // Check vectors
+                .or_else(|| {
+                    self.get_as::<Vec<bool>>()
+                        .map(|v| AnyValue::new::<Vec<bool>>(v.clone()))
+                })
+                .or_else(|| {
+                    self.get_as::<Vec<i8>>()
+                        .map(|v| AnyValue::new::<Vec<i8>>(v.clone()))
+                })
+                .or_else(|| {
+                    self.get_as::<Vec<i16>>()
+                        .map(|v| AnyValue::new::<Vec<i16>>(v.clone()))
+                })
+                .or_else(|| {
+                    self.get_as::<Vec<i32>>()
+                        .map(|v| AnyValue::new::<Vec<i32>>(v.clone()))
+                })
+                .or_else(|| {
+                    self.get_as::<Vec<i64>>()
+                        .map(|v| AnyValue::new::<Vec<i64>>(v.clone()))
+                })
+                .or_else(|| {
+                    self.get_as::<Vec<i128>>()
+                        .map(|v| AnyValue::new::<Vec<i128>>(v.clone()))
+                })
+                .or_else(|| {
+                    self.get_as::<Vec<isize>>()
+                        .map(|v| AnyValue::new::<Vec<isize>>(v.clone()))
+                })
+                .or_else(|| {
+                    self.get_as::<Vec<u8>>()
+                        .map(|v| AnyValue::new::<Vec<u8>>(v.clone()))
+                })
+                .or_else(|| {
+                    self.get_as::<Vec<u16>>()
+                        .map(|v| AnyValue::new::<Vec<u16>>(v.clone()))
+                })
+                .or_else(|| {
+                    self.get_as::<Vec<u32>>()
+                        .map(|v| AnyValue::new::<Vec<u32>>(v.clone()))
+                })
+                .or_else(|| {
+                    self.get_as::<Vec<u64>>()
+                        .map(|v| AnyValue::new::<Vec<u64>>(v.clone()))
+                })
+                .or_else(|| {
+                    self.get_as::<Vec<u128>>()
+                        .map(|v| AnyValue::new::<Vec<u128>>(v.clone()))
+                })
+                .or_else(|| {
+                    self.get_as::<Vec<usize>>()
+                        .map(|v| AnyValue::new::<Vec<usize>>(v.clone()))
+                })
+                .or_else(|| {
+                    self.get_as::<Vec<f32>>()
+                        .map(|v| AnyValue::new::<Vec<f32>>(v.clone()))
+                })
+                .or_else(|| {
+                    self.get_as::<Vec<f64>>()
+                        .map(|v| AnyValue::new::<Vec<f64>>(v.clone()))
+                })
+                .or_else(|| {
+                    self.get_as::<Vec<String>>()
+                        .map(|v| AnyValue::new::<Vec<String>>(v.clone()))
+                })
+                .or_else(|| {
+                    self.get_as::<Vec<PathBuf>>()
+                        .map(|v| AnyValue::new::<Vec<PathBuf>>(v.clone()))
+                }).ok_or(E::NotSupportedType(format!("Value: {:?}; type: {:?}", self.value, self.type_id)))
+            }
+            InnerType::Multiple => {
+                let mut values: Vec<AnyValue> = Vec::new();
+                for value in self.values.iter() {
+                    values.push(value.duplicate()?);
+                }
+                Ok(AnyValue::vec(values))
+            }
         }
     }
 
@@ -160,7 +277,7 @@ impl AnyValue {
             .or_else(|| reference.downcast_ref::<bool>().map(|v| v.to_string()))
             .or_else(|| {
                 reference
-                    .downcast_ref::<std::path::PathBuf>()
+                    .downcast_ref::<PathBuf>()
                     .map(|v| v.to_string_lossy().to_string())
             })
             .or_else(|| {
@@ -231,13 +348,11 @@ impl AnyValue {
                     .map(|v| v.iter().map(|v| v.to_string()).collect::<Vec<String>>())
             })
             .or_else(|| {
-                reference
-                    .downcast_ref::<Vec<std::path::PathBuf>>()
-                    .map(|v| {
-                        v.iter()
-                            .map(|v| v.to_string_lossy().to_string())
-                            .collect::<Vec<String>>()
-                    })
+                reference.downcast_ref::<Vec<PathBuf>>().map(|v| {
+                    v.iter()
+                        .map(|v| v.to_string_lossy().to_string())
+                        .collect::<Vec<String>>()
+                })
             })
             .or_else(|| {
                 let try_collect = |values: Option<&Vec<AnyValue>>| -> Result<Vec<String>, ()> {
@@ -270,23 +385,23 @@ impl fmt::Display for AnyValue {
     }
 }
 
-impl TryAnyTo<std::path::PathBuf> for AnyValue {
-    fn try_to(&self) -> Result<std::path::PathBuf, E> {
-        Ok(std::path::PathBuf::from(
+impl TryAnyTo<PathBuf> for AnyValue {
+    fn try_to(&self) -> Result<PathBuf, E> {
+        Ok(PathBuf::from(
             self.get_as_string()
                 .ok_or(E::Converting(String::from("PathBuf")))?,
         ))
     }
 }
 
-impl TryAnyTo<Vec<std::path::PathBuf>> for AnyValue {
-    fn try_to(&self) -> Result<Vec<std::path::PathBuf>, E> {
+impl TryAnyTo<Vec<PathBuf>> for AnyValue {
+    fn try_to(&self) -> Result<Vec<PathBuf>, E> {
         let vec = Ok(self
             .get_as_strings()
             .ok_or(E::Converting(String::from("PathBuf")))?
             .iter()
-            .map(std::path::PathBuf::from)
-            .collect::<Vec<std::path::PathBuf>>());
+            .map(PathBuf::from)
+            .collect::<Vec<PathBuf>>());
         vec
     }
 }

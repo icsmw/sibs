@@ -41,11 +41,19 @@ impl Scope {
             let mut vars: HashMap<String, Arc<AnyValue>> = HashMap::new();
             while let Some(demand) = rx.recv().await {
                 match demand {
-                    api::Demand::SetVariable(k, v, tx) => {
+                    api::Demand::SetVariable(k, v, warn, tx) => {
+                        if warn && vars.contains_key(&k) {
+                            journal.warn(format!(
+                                "Variable \"{k}\" will be overwritten with new value"
+                            ));
+                        }
                         let _ = tx.send(vars.insert(k, Arc::new(v)).is_some());
                     }
                     api::Demand::GetVariable(k, tx) => {
                         let _ = tx.send(vars.get(&k).cloned());
+                    }
+                    api::Demand::GetVariables(tx) => {
+                        let _ = tx.send(vars.clone());
                     }
                     api::Demand::SetCwd(path, tx) => {
                         cwd = path;
@@ -86,10 +94,7 @@ impl Scope {
     /// `Ok(bool)` true - if value replaced; false - if not, or `Err(E)` in case
     /// of any channel related error
     pub async fn set_var(&self, key: &str, value: AnyValue) -> Result<bool, E> {
-        let (tx, rx) = oneshot::channel();
-        self.tx
-            .send(Demand::SetVariable(key.to_owned(), value, tx))?;
-        Ok(rx.await?)
+        self.setting_var(key, value, false).await
     }
     /// Getting variable value
     ///
@@ -105,6 +110,24 @@ impl Scope {
         let (tx, rx) = oneshot::channel();
         self.tx.send(Demand::GetVariable(key.to_owned(), tx))?;
         Ok(rx.await?)
+    }
+    /// Returns all variables defined in the scope
+    async fn get_vars(&self) -> Result<HashMap<String, Arc<AnyValue>>, E> {
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(Demand::GetVariables(tx))?;
+        Ok(rx.await?)
+    }
+    /// Import all variables from given scope. Post warn logs if some variable would
+    /// be overwriten because exists on destination scope
+    ///
+    /// # Arguments
+    ///
+    /// * `src` - source scope to import variables from
+    pub async fn import_vars(&self, src: &Scope) -> Result<(), E> {
+        for (key, value) in src.get_vars().await? {
+            self.setting_var(&key, value.duplicate()?, true).await?;
+        }
+        Ok(())
     }
     /// Setting cwd (current working folder)
     ///
@@ -129,6 +152,25 @@ impl Scope {
     pub async fn get_cwd(&self) -> Result<Option<PathBuf>, E> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(Demand::GetCwd(tx))?;
+        Ok(rx.await?)
+    }
+    /// Setting variable value
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - Key/Name of variable
+    /// * `value` - Variable value
+    /// * `warn` - Log warning if variable already exists. Variable still will be
+    /// overwritten
+    ///
+    /// # Returns
+    ///
+    /// `Ok(bool)` true - if value replaced; false - if not, or `Err(E)` in case
+    /// of any channel related error
+    async fn setting_var(&self, key: &str, value: AnyValue, warn: bool) -> Result<bool, E> {
+        let (tx, rx) = oneshot::channel();
+        self.tx
+            .send(Demand::SetVariable(key.to_owned(), value, warn, tx))?;
         Ok(rx.await?)
     }
 }

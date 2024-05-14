@@ -3,7 +3,10 @@ use tokio_util::sync::CancellationToken;
 use crate::{
     elements::{ElTarget, Element, SimpleString, Task},
     error::LinkedErr,
-    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
+    inf::{
+        operator, scenario, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
+        Scope,
+    },
     reader::{chars, words, Reader, Reading, E},
 };
 use std::{fmt, path::PathBuf};
@@ -28,6 +31,13 @@ impl Component {
             } else {
                 None
             }
+        })
+    }
+    pub fn get_cwd(&self, cx: &Context) -> Result<Option<PathBuf>, scenario::E> {
+        Ok(if let Some(path) = self.cwd.as_ref() {
+            Some(cx.scenario.to_abs_path(path)?)
+        } else {
+            None
         })
     }
     pub fn get_tasks(&self) -> Vec<&Task> {
@@ -100,7 +110,6 @@ impl Reading<Component> for Component {
                     let _ = inner.move_to().char(&[&chars::SEMICOLON]);
                     elements.push(el);
                 }
-
                 Ok(Some(Component {
                     name: SimpleString {
                         value: name,

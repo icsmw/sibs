@@ -11,6 +11,7 @@
 - a way to run tasks in parallel: `sibs * --lint` will run lint task for all components, which has it
 - invalid UTF from command
 - implement Cancellation on @exit function
+- limit AnyValue only with supported types
 - missed commands/functions:
 -- break
 -- loop

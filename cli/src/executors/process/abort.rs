@@ -9,7 +9,7 @@ pub fn name() -> String {
 
 pub fn execute(args: Vec<AnyValue>, cx: Context, _sc: Scope) -> ExecutorPinnedResult {
     Box::pin(async move {
-        cx.exit(
+        cx.abort(
             if let Some(arg) = args.first() {
                 arg.get_as_integer()
                     .ok_or(operator::E::FailToExtractValue)?
@@ -43,11 +43,11 @@ mod test {
         .current_dir(cwd.join("../target/debug"))
         .args([
             "--scenario",
-            cwd.join("./src/tests/cli/exit.sibs")
+            cwd.join("./src/tests/cli/abort.sibs")
                 .to_str()
                 .expect("path parsed"),
-            "a",
-            "success",
+            "abort",
+            "success_test",
             "--output",
             "logs",
         ])
@@ -68,11 +68,11 @@ mod test {
         .current_dir(cwd.join("../target/debug"))
         .args([
             "--scenario",
-            cwd.join("./src/tests/cli/exit.sibs")
+            cwd.join("./src/tests/cli/abort.sibs")
                 .to_str()
                 .expect("path parsed"),
-            "a",
-            "success_with_message",
+            "abort",
+            "success_with_message_test",
             "--output",
             "logs",
         ])
@@ -94,11 +94,11 @@ mod test {
         .current_dir(cwd.join("../target/debug"))
         .args([
             "--scenario",
-            cwd.join("./src/tests/cli/exit.sibs")
+            cwd.join("./src/tests/cli/abort.sibs")
                 .to_str()
                 .expect("path parsed"),
-            "a",
-            "error",
+            "abort",
+            "error_test",
             "--output",
             "logs",
         ])
@@ -119,11 +119,11 @@ mod test {
         .current_dir(cwd.join("../target/debug"))
         .args([
             "--scenario",
-            cwd.join("./src/tests/cli/exit.sibs")
+            cwd.join("./src/tests/cli/abort.sibs")
                 .to_str()
                 .expect("path parsed"),
-            "a",
-            "error_with_message",
+            "abort",
+            "error_with_message_test",
             "--output",
             "logs",
         ])

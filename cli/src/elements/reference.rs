@@ -138,22 +138,23 @@ impl Operator for Reference {
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let target = owner.ok_or(operator::E::NoOwnerComponent.by(self))?;
-            let (parent, task) = if self.path.len() == 1 {
-                (target, &self.path[0])
+            let (parent, task, scope, inner_scope) = if self.path.len() == 1 {
+                (target, &self.path[0], sc.clone(), true)
             } else if self.path.len() == 2 {
-                (
-                    if self.path[0] == SELF {
-                        target
-                    } else {
-                        components
-                            .iter()
-                            .find(|c| c.name.to_string() == self.path[0])
-                            .ok_or(
-                                operator::E::NotFoundComponent(self.path[0].to_owned()).by(self),
-                            )?
-                    },
-                    &self.path[1],
-                )
+                let (parent, scope, inner_scope) = if self.path[0] == SELF {
+                    (target, sc.clone(), true)
+                } else {
+                    let parent = components
+                        .iter()
+                        .find(|c| c.name.to_string() == self.path[0])
+                        .ok_or(operator::E::NotFoundComponent(self.path[0].to_owned()).by(self))?;
+                    (
+                        parent,
+                        Scope::init(parent.get_cwd(&cx)?, &cx.journal),
+                        false,
+                    )
+                };
+                (parent, &self.path[1], scope, inner_scope)
             } else {
                 return Err(operator::E::InvalidPartsInReference.by(self));
             };
@@ -178,7 +179,14 @@ impl Operator for Reference {
                         .ok_or(operator::E::FailToGetStringValue.by(self))?,
                 );
             }
-            task.execute(owner, components, &args, cx, sc, token).await
+            let result = task
+                .execute(owner, components, &args, cx, scope.clone(), token)
+                .await;
+            if !inner_scope {
+                sc.import_vars(&scope).await?;
+                scope.destroy().await?;
+            }
+            result
         })
     }
 }

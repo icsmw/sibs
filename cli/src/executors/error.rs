@@ -12,6 +12,8 @@ pub enum E {
     FunctionExecuting(String, String),
     #[error("Fail convert value to: {0}")]
     Converting(String),
+    #[error("Type isn't supported")]
+    NotSupportedType(String),
     #[error("Invalid arguments length; required: {0}; gotten: {1}")]
     InvalidArgumentsCount(String, String),
     #[error("IO error: {0}")]

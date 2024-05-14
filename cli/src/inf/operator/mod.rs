@@ -27,6 +27,10 @@ pub trait Operator {
         Self: Sync,
     {
         Box::pin(async move {
+            if cx.is_aborting() {
+                cx.journal.warn("runner", "skipping, because aborting");
+                return Ok(None);
+            }
             cx.atlas.set_map_position(self.token()).await?;
             let result = self
                 .perform(owner, components, args, cx.clone(), sc, token)
@@ -39,6 +43,7 @@ pub trait Operator {
                     cx.atlas.report_err(&err.link_if(&self.token())).await?;
                 }
             }
+
             result
         })
     }

@@ -38,6 +38,8 @@ pub enum E {
     TaskNotExists(String, String, Vec<String>),
     #[error("Fail to extract value")]
     FailToExtractValue,
+    #[error("Fail to get expected argument")]
+    NoExpectedArgument,
     #[error("Fail to get declared variable")]
     FailToGetDeclaredVariable,
     #[error("Cannot declare input because invalid number of income arguments")]

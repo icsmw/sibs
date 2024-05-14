@@ -125,7 +125,7 @@ pub async fn process(journal: Journal) -> Result<(), E> {
                     &income,
                     cx.clone(),
                     sc.clone(),
-                    CancellationToken::new(),
+                    cx.aborting.clone(),
                 )
                 .await
                 .map(|_| ())

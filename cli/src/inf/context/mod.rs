@@ -21,7 +21,27 @@ use tokio::{
 };
 use tokio_util::sync::CancellationToken;
 
-pub type ExitCode = Option<(i32, Option<String>)>;
+/// Defines a way to close application
+pub enum ExitCode {
+    /// Immediately close the application with given exit's code and message. It will
+    /// not wait for operations, which might be still running.
+    ///
+    /// # Parameters
+    ///
+    /// * `i32` - exit code
+    /// * `Option<String>` - message to post in stdout before exit
+    Immediately(i32, Option<String>),
+    /// Store given exit code and message to use it as soon destructor of context
+    /// will be called in regular way.
+    ///
+    /// # Parameters
+    ///
+    /// * `i32` - exit code
+    /// * `Option<String>` - message to post in stdout before exit
+    Aborting(i32, Option<String>),
+    /// Close application in regular way
+    Regular,
+}
 
 #[derive(Clone, Debug)]
 pub struct Context {
@@ -30,6 +50,7 @@ pub struct Context {
     pub scenario: Scenario,
     pub journal: Journal,
     pub funcs: Functions,
+    pub aborting: CancellationToken,
     tx: UnboundedSender<ExitCode>,
     state: CancellationToken,
 }
@@ -49,32 +70,45 @@ impl Context {
             atlas: atlas.clone(),
             funcs: funcs.clone(),
             state: state.clone(),
+            aborting: CancellationToken::new(),
             tx,
         };
         let journal = journal.clone();
         spawn(async move {
-            let shutdown = move || {
+            let shutdown = || {
                 Box::pin(async move {
                     let _ = tracker.destroy().await;
                     let _ = atlas.destroy().await;
                     let _ = funcs.destroy().await;
                 })
             };
-            let exit = rx.recv().await.expect("Correct destroy signal to context");
-            if let Some((code, msg)) = exit {
-                journal.warn("", format!("Forced exit with code {code}"));
-                journal.flush().await;
-                shutdown().await;
-                if let Some(msg) = msg {
-                    if code == 0 {
-                        println!("{msg}");
-                    } else {
-                        eprintln!("{msg}");
-                    }
+            let mut exit_code = ExitCode::Regular;
+            while let Some(code) = rx.recv().await {
+                let breaking = !matches!(code, ExitCode::Aborting(..));
+                if !matches!(code, ExitCode::Regular) {
+                    exit_code = code;
                 }
-                process::exit(code);
-            } else {
-                shutdown().await;
+                if breaking {
+                    break;
+                }
+            }
+            match exit_code {
+                ExitCode::Immediately(code, msg) | ExitCode::Aborting(code, msg) => {
+                    journal.warn("", format!("Forced exit with code {code}"));
+                    journal.flush().await;
+                    shutdown().await;
+                    if let Some(msg) = msg {
+                        if code == 0 {
+                            println!("{msg}");
+                        } else {
+                            eprintln!("{msg}");
+                        }
+                    }
+                    process::exit(code);
+                }
+                ExitCode::Regular => {
+                    shutdown().await;
+                }
             }
             state.cancel();
         });
@@ -82,14 +116,39 @@ impl Context {
     }
 
     pub async fn destroy(&self) -> Result<(), E> {
-        self.tx.send(None)?;
+        self.tx.send(ExitCode::Regular)?;
         self.state.cancelled().await;
         Ok(())
     }
 
+    /// Destroy context with dependencies and immediately exit from the application
+    /// with given exit's code and message. It will not wait for operations, which
+    /// might be still running.
+    ///
+    /// # Arguments
+    ///
+    /// * `code` - code to exit
+    /// * `msg` - message to post into stdout before exit
     pub async fn exit(&self, code: i32, msg: Option<String>) -> Result<(), E> {
-        self.tx.send(Some((code, msg)))?;
+        self.tx.send(ExitCode::Immediately(code, msg))?;
         Ok(())
+    }
+
+    /// Send cancellation signal to context and waits for all. Set code of exit
+    /// after all operation will be done/cancelled.
+    ///
+    /// # Arguments
+    ///
+    /// * `code` - code to exit
+    /// * `msg` - message to post into stdout before exit
+    pub async fn abort(&self, code: i32, msg: Option<String>) -> Result<(), E> {
+        self.tx.send(ExitCode::Aborting(code, msg))?;
+        self.aborting.cancel();
+        Ok(())
+    }
+
+    pub fn is_aborting(&self) -> bool {
+        self.aborting.is_cancelled()
     }
 
     /// Execute target function

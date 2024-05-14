@@ -1,4 +1,5 @@
 use crate::reader::chars;
+use std::process::Output;
 use tokio::runtime::{Builder, Runtime};
 
 pub const MAX_DEEP: usize = 5;
@@ -15,6 +16,15 @@ pub fn trim_semicolon(src: &str) -> String {
     } else {
         src.to_owned()
     }
+}
+
+pub fn print_stdout(output: &Output) {
+    let border = "=".repeat(100);
+    println!(
+        "{border}\n{}\n{border}\n{}{border}",
+        output.status,
+        String::from_utf8_lossy(&output.stdout),
+    );
 }
 
 pub fn get_rt() -> Runtime {
