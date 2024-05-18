@@ -9,7 +9,6 @@ pub fn name() -> String {
 
 pub fn execute(args: Vec<AnyValue>, cx: Context, _sc: Scope) -> ExecutorPinnedResult {
     Box::pin(async move {
-        println!(">>>>>>>>>>>>>>>>>>> execute exit");
         cx.exit(
             if let Some(arg) = args.first() {
                 arg.as_num().ok_or(operator::E::FailToExtractValue)?
