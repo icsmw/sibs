@@ -184,7 +184,7 @@ mod test {
                             result
                                 .expect("run of task is success")
                                 .expect("test returns some value")
-                                .get_as_string()
+                                .as_string()
                                 .expect("test returns string value"),
                             "true".to_owned()
                         );

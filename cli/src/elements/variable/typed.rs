@@ -98,13 +98,13 @@ impl Operator for VariableType {
                 args[0].to_owned()
             };
             Ok(Some(match &self.var_type {
-                Types::String => AnyValue::new(value),
+                Types::String => AnyValue::new(value)?,
                 Types::Number => AnyValue::new(value.parse::<isize>().map_err(|e| {
                     operator::E::ParseStringError(Types::Number.to_string(), e.to_string())
-                })?),
+                })?)?,
                 Types::Bool => AnyValue::new(value.parse::<bool>().map_err(|e| {
                     operator::E::ParseStringError(Types::Bool.to_string(), e.to_string())
-                })?),
+                })?)?,
             }))
         })
     }

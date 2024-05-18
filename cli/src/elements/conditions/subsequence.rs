@@ -145,26 +145,26 @@ impl Operator for Subsequence {
                     )
                     .await?
                     .ok_or(E::NoValueFromSubsequenceElement)?;
-                if let Some(cmb) = value.get_as::<Cmb>() {
+                if let Some(cmb) = value.get::<Cmb>() {
                     match cmb {
                         Cmb::And => {
                             if !last_value {
-                                return Ok(Some(AnyValue::new(false)));
+                                return Ok(Some(AnyValue::new(false)?));
                             }
                         }
                         Cmb::Or => {
                             if last_value {
-                                return Ok(Some(AnyValue::new(true)));
+                                return Ok(Some(AnyValue::new(true)?));
                             }
                         }
                     }
-                } else if let Some(value) = value.get_as_bool() {
+                } else if let Some(value) = value.as_bool() {
                     last_value = value;
                 } else {
                     Err(E::FailToParseValueOfSubsequenceElement)?;
                 }
             }
-            Ok(Some(AnyValue::new(last_value)))
+            Ok(Some(AnyValue::new(last_value)?))
         })
     }
 }

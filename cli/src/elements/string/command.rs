@@ -118,7 +118,7 @@ impl Operator for Command {
                             )
                             .await?
                             .ok_or(operator::E::FailToExtractValue.by(self))?
-                            .get_as_string()
+                            .as_string()
                             .ok_or(operator::E::FailToGetValueAsString.by(self))?,
                     );
                 }
@@ -135,7 +135,7 @@ impl Operator for Command {
                 }
                 Ok(Some(status)) => {
                     if status.success() {
-                        Ok(Some(AnyValue::new(())))
+                        Ok(Some(AnyValue::empty()))
                     } else {
                         Err(operator::E::SpawnedProcessExitWithError.by(self))
                     }

@@ -160,40 +160,28 @@ impl Operator for Comparing {
                 .ok_or(operator::E::NoResultFromRightOnComparing)?;
             Ok(Some(match self.cmp {
                 Cmp::LeftBig | Cmp::RightBig => {
-                    let left = left
-                        .get_as_integer()
-                        .ok_or(operator::E::FailToGetIntegerValue)?;
-                    let right = right
-                        .get_as_integer()
-                        .ok_or(operator::E::FailToGetIntegerValue)?;
+                    let left = left.as_num().ok_or(operator::E::FailToGetIntegerValue)?;
+                    let right = right.as_num().ok_or(operator::E::FailToGetIntegerValue)?;
                     AnyValue::new(
                         (matches!(self.cmp, Cmp::LeftBig) && left > right)
                             || matches!(self.cmp, Cmp::RightBig) && left < right,
-                    )
+                    )?
                 }
                 Cmp::LeftBigInc | Cmp::RightBigInc => {
-                    let left = left
-                        .get_as_integer()
-                        .ok_or(operator::E::FailToGetIntegerValue)?;
-                    let right = right
-                        .get_as_integer()
-                        .ok_or(operator::E::FailToGetIntegerValue)?;
+                    let left = left.as_num().ok_or(operator::E::FailToGetIntegerValue)?;
+                    let right = right.as_num().ok_or(operator::E::FailToGetIntegerValue)?;
                     AnyValue::new(
                         (matches!(self.cmp, Cmp::LeftBigInc) && left >= right)
                             || matches!(self.cmp, Cmp::RightBigInc) && left <= right,
-                    )
+                    )?
                 }
                 _ => {
-                    let left = left
-                        .get_as_string()
-                        .ok_or(operator::E::FailToGetStringValue)?;
-                    let right = right
-                        .get_as_string()
-                        .ok_or(operator::E::FailToGetStringValue)?;
+                    let left = left.as_string().ok_or(operator::E::FailToGetStringValue)?;
+                    let right = right.as_string().ok_or(operator::E::FailToGetStringValue)?;
                     AnyValue::new(
                         (matches!(self.cmp, Cmp::Equal) && left == right)
                             || (matches!(self.cmp, Cmp::NotEqual) && left != right),
-                    )
+                    )?
                 }
             }))
         })

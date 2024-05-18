@@ -125,7 +125,7 @@ impl Scope {
     /// * `src` - source scope to import variables from
     pub async fn import_vars(&self, src: &Scope) -> Result<(), E> {
         for (key, value) in src.get_vars().await? {
-            self.setting_var(&key, value.duplicate()?, true).await?;
+            self.setting_var(&key, value.duplicate(), true).await?;
         }
         Ok(())
     }

@@ -116,7 +116,7 @@ impl Operator for Optional {
                 )
                 .await?
                 .ok_or(operator::E::FailToExtractConditionValue)?
-                .get_as::<bool>()
+                .get::<bool>()
                 .ok_or(operator::E::FailToExtractConditionValue)?;
             if !condition {
                 Ok(None)
@@ -268,7 +268,7 @@ mod processing {
                         .await?
                         .expect("Task returns some value");
                     assert_eq!(
-                        result.get_as_string().expect("Task returns string value"),
+                        result.as_string().expect("Task returns string value"),
                         "true".to_owned()
                     );
                 }

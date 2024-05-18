@@ -1,6 +1,6 @@
 use std::{fmt, path::PathBuf};
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum Output {
     Progress,
     Logs,

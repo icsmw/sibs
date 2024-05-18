@@ -396,7 +396,7 @@ mod processing {
                         .await?
                         .expect("Task returns some value");
                     assert_eq!(
-                        result.get_as_string().expect("Task returns string value"),
+                        result.as_string().expect("Task returns string value"),
                         "true".to_owned()
                     );
                 }
@@ -434,7 +434,7 @@ mod processing {
                         .await?
                         .expect("component returns some value");
                     assert_eq!(
-                        result.get_as_string().expect("Task returns string value"),
+                        result.as_string().expect("Task returns string value"),
                         "true".to_owned()
                     );
                 }

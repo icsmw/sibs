@@ -54,7 +54,7 @@ impl Operator for Integer {
         _sc: Scope,
         _token: CancellationToken,
     ) -> OperatorPinnedResult {
-        Box::pin(async move { Ok(Some(AnyValue::new(self.value))) })
+        Box::pin(async move { Ok(Some(AnyValue::new(self.value)?)) })
     }
 }
 

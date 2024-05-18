@@ -50,7 +50,7 @@ impl Action for Format {
     fn action<'a>(&'a self, _components: &'a [Element]) -> ActionPinnedResult {
         Box::pin(async move {
             format_file(&self.filename).await?;
-            Ok(AnyValue::new(()))
+            Ok(AnyValue::empty())
         })
     }
 }

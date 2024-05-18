@@ -44,7 +44,7 @@ impl Operator for Thread {
                         )
                         .await?
                         .ok_or(operator::E::NoResultFromProviso)?
-                        .get_as::<bool>()
+                        .get::<bool>()
                         .ok_or(operator::E::NoBoolResultFromProviso)?
                     {
                         block.execute(owner, components, args, cx, sc, token).await
@@ -345,7 +345,7 @@ mod processing {
                         .await?
                         .expect("IF returns some value");
                     assert_eq!(
-                        result.get_as_string().expect("IF returns string value"),
+                        result.as_string().expect("IF returns string value"),
                         "true".to_owned(),
                         "Line: {}",
                         i + 1

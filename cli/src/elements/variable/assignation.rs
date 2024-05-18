@@ -101,7 +101,7 @@ impl Operator for VariableAssignation {
                 .await?
                 .ok_or(operator::E::NoValueToAssign(self.variable.name.clone()))?;
             sc.set_var(&self.variable.name, value).await?;
-            Ok(Some(AnyValue::new(())))
+            Ok(Some(AnyValue::empty()))
         })
     }
 }
@@ -249,7 +249,7 @@ mod processing {
                 }
                 for (name, value) in VALUES.iter() {
                     assert_eq!(
-                        sc.get_var(name).await?.unwrap().get_as_string().unwrap(),
+                        sc.get_var(name).await?.unwrap().as_string().unwrap(),
                         value.to_string()
                     );
                 }

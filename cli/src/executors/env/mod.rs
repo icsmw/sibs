@@ -3,9 +3,25 @@ use crate::{
     executors::{ExecutorPinnedResult, TryAnyTo, E},
     inf::{AnyValue, Context, Scope},
 };
+use any::check_type;
 use importer::import;
 
+#[check_type]
+fn test_any(key: String) {
+    println!("{key}");
+}
+
+#[test]
+fn te() {
+    test_any("keyyyy".to_owned());
+}
+
 pub fn register(store: &mut Store) -> Result<(), E> {
+    #[check_type]
+    fn test_any(key: String) {
+        println!("{key}");
+    }
+
     #[import(env)]
     fn var(key: String) -> Result<String, E> {
         Ok(match std::env::var(key) {
@@ -119,7 +135,7 @@ mod test {
                             result
                                 .expect("run of task is success")
                                 .expect("test returns some value")
-                                .get_as_string()
+                                .as_string()
                                 .expect("test returns string value"),
                             "true".to_owned()
                         );

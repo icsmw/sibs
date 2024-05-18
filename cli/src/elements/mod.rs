@@ -690,10 +690,10 @@ impl Operator for Element {
                     return Err(operator::E::InvertingOnEmptyReturn.by(self));
                 }
                 if let (true, Some(res)) = (md.inverting, res) {
-                    let Some(b_res) = res.get_as_bool() else {
+                    let Some(b_res) = res.as_bool() else {
                         return Err(operator::E::InvertingOnNotBool.by(self));
                     };
-                    return Ok(Some(AnyValue::new(!b_res)));
+                    return Ok(Some(AnyValue::new(!b_res)?));
                 }
             }
             result

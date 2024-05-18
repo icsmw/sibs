@@ -42,6 +42,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "any"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -632,6 +641,7 @@ dependencies = [
 name = "sibs"
 version = "0.1.0"
 dependencies = [
+ "any",
  "chrono",
  "console",
  "futures",

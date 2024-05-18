@@ -112,11 +112,11 @@ impl Operator for Each {
                 )
                 .await?
                 .ok_or(operator::E::NoInputForEach)?
-                .get_as_strings()
+                .as_strings()
                 .ok_or(operator::E::FailConvertInputIntoStringsForEach)?;
             let mut output: Option<AnyValue> = None;
             for iteration in inputs.iter() {
-                sc.set_var(&self.variable.name, AnyValue::new(iteration.to_string()))
+                sc.set_var(&self.variable.name, AnyValue::new(iteration.to_string())?)
                     .await?;
                 output = self
                     .block
@@ -131,7 +131,7 @@ impl Operator for Each {
                     .await?;
             }
             Ok(if output.is_none() {
-                Some(AnyValue::new(()))
+                Some(AnyValue::empty())
             } else {
                 output
             })
@@ -269,7 +269,7 @@ mod processing {
                 }
                 for (name, value) in VALUES.iter() {
                     assert_eq!(
-                        sc.get_var(name).await?.unwrap().get_as_string().unwrap(),
+                        sc.get_var(name).await?.unwrap().as_string().unwrap(),
                         value.to_string()
                     );
                 }

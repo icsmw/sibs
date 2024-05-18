@@ -143,7 +143,7 @@ impl Action for Help {
                 });
                 term::print(&output);
             }
-            Ok(AnyValue::new(()))
+            Ok(AnyValue::empty())
         })
     }
 }

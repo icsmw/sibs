@@ -12,11 +12,11 @@ pub fn import(args: TokenStream, input: TokenStream) -> TokenStream {
     let fn_name = &item_fn.sig.ident;
     let args = &item_fn.sig.inputs;
     let args_required: usize = args.len();
-    let mut argsuments: Vec<proc_macro2::TokenStream> = Vec::new();
+    let mut arguments: Vec<proc_macro2::TokenStream> = Vec::new();
     for (i, arg) in args.iter().enumerate() {
         if let syn::FnArg::Typed(pat_type) = arg {
             match pat_type.ty.borrow() {
-                Type::Array(_) | Type::Path(_) => argsuments.push(quote! {
+                Type::Array(_) | Type::Path(_) => arguments.push(quote! {
                     args[#i].try_to()?,
                 }),
                 _ => {
@@ -40,7 +40,7 @@ pub fn import(args: TokenStream, input: TokenStream) -> TokenStream {
                     return Err(E::InvalidArgumentsCount(#args_required.to_string(), args.len().to_string()));
                 }
                 #item_fn;
-                Ok(AnyValue::new(#fn_name(#(#argsuments)*)?))
+                Ok(AnyValue::new(#fn_name(#(#arguments)*)?)?)
             })
         }
         store.insert(

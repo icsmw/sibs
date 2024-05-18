@@ -175,7 +175,7 @@ impl Operator for Reference {
                         )
                         .await?
                         .ok_or(operator::E::FailToGetAnyValueAsTaskArg.by(self))?
-                        .get_as_string()
+                        .as_string()
                         .ok_or(operator::E::FailToGetStringValue.by(self))?,
                 );
             }

@@ -119,12 +119,12 @@ impl Operator for PatternString {
                             )
                             .await?
                             .ok_or(operator::E::FailToExtractValue)?
-                            .get_as_string()
+                            .as_string()
                             .ok_or(operator::E::FailToGetValueAsString)?
                     );
                 }
             }
-            Ok(Some(AnyValue::new(output)))
+            Ok(Some(AnyValue::new(output)?))
         })
     }
 }

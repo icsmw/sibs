@@ -72,7 +72,7 @@ impl Arguments {
         &self,
     ) -> Result<Option<O>, E> {
         if let Some(action) = self.actions.get(&T::key()) {
-            Ok(action.action(&[]).await?.get_as::<O>().cloned())
+            Ok(action.action(&[]).await?.get::<O>().cloned())
         } else {
             Ok(None)
         }

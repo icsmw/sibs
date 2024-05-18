@@ -9,7 +9,7 @@ use crate::{
 
 const ARGS: [&str; 2] = ["--output", "-o"];
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub struct Output {
     pub output: journal::Output,
 }
@@ -42,7 +42,7 @@ impl Argument for Output {
 
 impl Action for Output {
     fn action<'a>(&'a self, _components: &'a [Element]) -> ActionPinnedResult {
-        Box::pin(async move { Ok(AnyValue::new(self.output.clone())) })
+        Box::pin(async move { Ok(AnyValue::new(self.output.clone())?) })
     }
     fn key(&self) -> String {
         ARGS[0].to_owned()

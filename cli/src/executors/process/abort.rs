@@ -11,19 +11,18 @@ pub fn execute(args: Vec<AnyValue>, cx: Context, _sc: Scope) -> ExecutorPinnedRe
     Box::pin(async move {
         cx.abort(
             if let Some(arg) = args.first() {
-                arg.get_as_integer()
-                    .ok_or(operator::E::FailToExtractValue)?
+                arg.as_num().ok_or(operator::E::FailToExtractValue)?
             } else {
                 0
             } as i32,
             if let Some(arg) = args.get(1) {
-                Some(arg.get_as_string().ok_or(operator::E::FailToExtractValue)?)
+                Some(arg.as_string().ok_or(operator::E::FailToExtractValue)?)
             } else {
                 None
             },
         )
         .await?;
-        Ok(AnyValue::new(()))
+        Ok(AnyValue::empty())
     })
 }
 

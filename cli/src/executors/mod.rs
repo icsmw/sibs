@@ -10,7 +10,7 @@ pub mod store;
 pub mod str;
 pub mod test;
 
-use crate::inf::{any::AnyValue, context::Context, Scope};
+use crate::inf::{AnyValue, Context, Scope};
 use api::*;
 pub use error::E;
 use std::{future::Future, pin::Pin};

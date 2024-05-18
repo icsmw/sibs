@@ -1,4 +1,4 @@
-mod args;
+pub mod args;
 pub mod error;
 #[cfg(test)]
 mod tests;
@@ -20,7 +20,6 @@ use std::{
     env::{self, current_dir},
     path::PathBuf,
 };
-use tokio_util::sync::CancellationToken;
 
 fn get_arguments() -> Result<(Vec<String>, Arguments), E> {
     let mut income = env::args().collect::<Vec<String>>();

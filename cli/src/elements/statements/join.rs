@@ -131,7 +131,7 @@ impl Operator for Join {
             while let Some(result) = futures.next().await {
                 match result {
                     Ok(Ok(result)) => {
-                        results.push(Ok(result.unwrap_or_else(|| AnyValue::new(()))));
+                        results.push(Ok(result.unwrap_or_else(|| AnyValue::empty())));
                     }
                     Ok(Err(err)) => {
                         if !token.is_cancelled() {
@@ -182,7 +182,7 @@ impl Operator for Join {
                             }
                         };
                     }
-                    Ok(Some(AnyValue::vec(output)))
+                    Ok(Some(AnyValue::new(output)?))
                 }
                 Err(err) => Err(err.into()),
             }
@@ -276,7 +276,7 @@ mod processing {
         error::LinkedErr,
         inf::{
             journal::{Configuration, Journal},
-            Context, Operator, Scope,
+            AnyValue, Context, Operator, Scope,
         },
         process_file,
         reader::{error::E, Reader, Sources},
@@ -307,8 +307,14 @@ mod processing {
                     .await
                     .expect("run is successfull")
                     .expect("join returns vector of results");
-                assert!(results.is_vec());
-                assert_eq!(results.as_vec().len(), 4);
+                assert!(results.get::<Vec<AnyValue>>().is_some());
+                assert_eq!(
+                    results
+                        .get::<Vec<AnyValue>>()
+                        .expect("JOIN returns Vec<AnyValue>")
+                        .len(),
+                    4
+                );
                 let results = el
                     .execute(
                         Some(el),
@@ -321,8 +327,14 @@ mod processing {
                     .await
                     .expect("run is successfull")
                     .expect("join returns vector of results");
-                assert!(results.is_vec());
-                assert_eq!(results.as_vec().len(), 2);
+                assert!(results.get::<Vec<AnyValue>>().is_some());
+                assert_eq!(
+                    results
+                        .get::<Vec<AnyValue>>()
+                        .expect("JOIN returns Vec<AnyValue>")
+                        .len(),
+                    2
+                );
                 Ok::<(), LinkedErr<E>>(())
             }
         );

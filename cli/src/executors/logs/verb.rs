@@ -12,9 +12,9 @@ pub fn execute(msgs: Vec<AnyValue>, cx: Context, _sc: Scope) -> ExecutorPinnedRe
         for msg in msgs.iter() {
             cx.journal.verb(
                 String::new(),
-                msg.get_as_string().unwrap_or(format!("{msg:?}")),
+                msg.as_string().unwrap_or(format!("{msg:?}")),
             );
         }
-        Ok(AnyValue::new(()))
+        Ok(AnyValue::empty())
     })
 }

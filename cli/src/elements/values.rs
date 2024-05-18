@@ -133,10 +133,10 @@ impl Operator for Values {
                         token.clone(),
                     )
                     .await?
-                    .unwrap_or(AnyValue::new(())),
+                    .unwrap_or(AnyValue::empty()),
                 );
             }
-            Ok(Some(AnyValue::new(values)))
+            Ok(Some(AnyValue::new(values)?))
         })
     }
 }
@@ -231,9 +231,8 @@ mod processing {
         elements::{Component, Task},
         error::LinkedErr,
         inf::{
-            any::AnyValue,
             operator::{Operator, E},
-            Configuration, Context, Journal, Scope,
+            AnyValue, Configuration, Context, Journal, Scope,
         },
         process_string, read_string,
         reader::{chars, Reader, Reading, Sources},
@@ -292,7 +291,7 @@ mod processing {
                         sc.get_var(name)
                             .await?
                             .unwrap()
-                            .get_as_strings()
+                            .as_strings()
                             .unwrap()
                             .join(";"),
                         value.to_string()
@@ -300,10 +299,10 @@ mod processing {
                 }
                 for (name, value) in NESTED_VALUES.iter() {
                     let stored = sc.get_var(name).await?.unwrap();
-                    let values = stored.get_as::<Vec<AnyValue>>().unwrap();
+                    let values = stored.get::<Vec<AnyValue>>().unwrap();
                     let mut output: Vec<String> = Vec::new();
                     for value in values.iter() {
-                        output = [output, value.get_as_strings().unwrap()].concat();
+                        output = [output, value.as_strings().unwrap()].concat();
                     }
                     assert_eq!(output.join(";"), value.to_string());
                 }

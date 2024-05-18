@@ -48,7 +48,7 @@ impl Operator for SimpleString {
         _sc: Scope,
         _token: CancellationToken,
     ) -> OperatorPinnedResult {
-        Box::pin(async move { Ok(Some(AnyValue::new(self.value.to_string()))) })
+        Box::pin(async move { Ok(Some(AnyValue::new(self.value.to_string())?)) })
     }
 }
 

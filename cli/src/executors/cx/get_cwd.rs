@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use crate::{
     executors::{get_name, ExecutorPinnedResult},
     inf::{AnyValue, Context, Scope},
@@ -10,10 +12,7 @@ pub fn name() -> String {
 pub fn execute(_: Vec<AnyValue>, _cx: Context, sc: Scope) -> ExecutorPinnedResult {
     Box::pin(async move {
         Ok(AnyValue::new(
-            sc.get_cwd()
-                .await?
-                .map(|p| p.to_string_lossy().to_string())
-                .unwrap_or(String::new()),
-        ))
+            sc.get_cwd().await?.unwrap_or(PathBuf::new()),
+        )?)
     })
 }

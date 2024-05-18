@@ -10,13 +10,13 @@ pub fn name() -> String {
 pub fn execute(args: Vec<AnyValue>, _cx: Context, _sc: Scope) -> ExecutorPinnedResult {
     Box::pin(async move {
         args.iter().for_each(|arg| {
-            if let Some(str) = arg.get_as_string() {
+            if let Some(str) = arg.as_string() {
                 println!("{str}");
             } else {
                 println!("{arg:?}");
             }
         });
-        Ok(AnyValue::new(()))
+        Ok(AnyValue::empty())
     })
 }
 

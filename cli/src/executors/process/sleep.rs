@@ -13,10 +13,10 @@ pub fn execute(args: Vec<AnyValue>, _cx: Context, _sc: Scope) -> ExecutorPinnedR
         sleep(Duration::from_millis(
             args.first()
                 .ok_or(operator::E::NoExpectedArgument)?
-                .get_as_integer()
+                .as_num()
                 .ok_or(operator::E::FailToExtractValue)? as u64,
         ))
         .await;
-        Ok(AnyValue::new(()))
+        Ok(AnyValue::empty())
     })
 }

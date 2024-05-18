@@ -1,0 +1,38 @@
+const ALLOWED: &[&str] = &[
+    "bool",
+    "String",
+    "i8",
+    "i16",
+    "i32",
+    "i64",
+    "i128",
+    "isize",
+    "u8",
+    "u16",
+    "u32",
+    "u64",
+    "u128",
+    "usize",
+    "PathBuf",
+    "AnyValue",
+    "Vec<bool>",
+    "Vec<String>",
+    "Vec<i8>",
+    "Vec<i16>",
+    "Vec<i32>",
+    "Vec<i64>",
+    "Vec<i128>",
+    "Vec<isize>",
+    "Vec<u8>",
+    "Vec<u16>",
+    "Vec<u32>",
+    "Vec<u64>",
+    "Vec<u128>",
+    "Vec<usize>",
+    "Vec<PathBuf>",
+    "Vec<AnyValue>",
+];
+
+pub fn is(ty: &str) -> bool {
+    ALLOWED.contains(&ty)
+}

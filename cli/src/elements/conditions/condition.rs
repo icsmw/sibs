@@ -83,9 +83,9 @@ impl Operator for Condition {
                     .execute(owner, components, args, cx, sc, token)
                     .await?
                     .ok_or(E::NoValueFromSubsequence)?
-                    .get_as::<bool>()
+                    .get::<bool>()
                     .ok_or(E::NoBoolValueFromSubsequence)?,
-            )))
+            )?))
         })
     }
 }

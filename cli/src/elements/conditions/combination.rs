@@ -8,7 +8,7 @@ use crate::{
 };
 use std::fmt;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum Cmb {
     And,
     Or,
@@ -76,7 +76,7 @@ impl Operator for Combination {
         _sc: Scope,
         _token: CancellationToken,
     ) -> OperatorPinnedResult {
-        Box::pin(async move { Ok(Some(AnyValue::new(self.cmb.clone()))) })
+        Box::pin(async move { Ok(Some(AnyValue::new(self.cmb.clone())?)) })
     }
 }
 

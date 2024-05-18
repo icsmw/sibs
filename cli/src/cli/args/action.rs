@@ -6,7 +6,7 @@ pub type ActionResult = Result<AnyValue, E>;
 
 pub trait Action: Debug {
     fn action<'a>(&'a self, _components: &'a [Element]) -> ActionPinnedResult {
-        Box::pin(async move { Ok(AnyValue::new(())) })
+        Box::pin(async move { Ok(AnyValue::empty()) })
     }
     fn no_context(&self) -> bool {
         false

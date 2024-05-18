@@ -71,7 +71,7 @@ impl Operator for VariableVariants {
                 args[0].to_owned()
             };
             if self.values.contains(&value) {
-                Ok(Some(AnyValue::new(value)))
+                Ok(Some(AnyValue::new(value)?))
             } else {
                 Err(
                     operator::E::NotDeclaredValueAsArgument(value, self.values.join(" | "))

@@ -17,7 +17,7 @@ pub fn execute(path: Vec<AnyValue>, _cx: Context, sc: Scope) -> ExecutorPinnedRe
                 "Expecting only one income argument as a CWD".to_owned(),
             ));
         }
-        let path = PathBuf::from(path[0].get_as_string().ok_or(E::Executing(
+        let path = PathBuf::from(path[0].as_string().ok_or(E::Executing(
             name(),
             "Cannot extract argument as string".to_owned(),
         ))?);
@@ -41,6 +41,6 @@ pub fn execute(path: Vec<AnyValue>, _cx: Context, sc: Scope) -> ExecutorPinnedRe
             ));
         }
         sc.set_cwd(Some(path.clone())).await?;
-        Ok(AnyValue::new(path.to_string_lossy().to_string()))
+        Ok(AnyValue::new(path)?)
     })
 }

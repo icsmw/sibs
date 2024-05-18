@@ -97,6 +97,7 @@ impl Context {
                     journal.warn("", format!("Forced exit with code {code}"));
                     journal.flush().await;
                     shutdown().await;
+                    println!(">>>>>>>>>>>>>>>>>>> will exit with: {code}");
                     if let Some(msg) = msg {
                         if code == 0 {
                             println!("{msg}");

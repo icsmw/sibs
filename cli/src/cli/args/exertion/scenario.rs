@@ -42,7 +42,7 @@ impl Argument for Scenario {
 
 impl Action for Scenario {
     fn action<'a>(&'a self, _components: &'a [Element]) -> ActionPinnedResult {
-        Box::pin(async move { Ok(AnyValue::new(self.scenario.clone())) })
+        Box::pin(async move { Ok(AnyValue::new(self.scenario.clone())?) })
     }
     fn key(&self) -> String {
         ARGS[0].to_owned()

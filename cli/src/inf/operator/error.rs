@@ -1,7 +1,7 @@
 use crate::{
     error::LinkedErr,
     executors,
-    inf::{context, context::atlas, scenario, spawner, tracker, Operator},
+    inf::{context, context::atlas, scenario, spawner, tracker, value, Operator},
     reader,
 };
 use thiserror::Error;
@@ -94,6 +94,8 @@ pub enum E {
     AtlasError(atlas::E),
     #[error("Scenario error: {0}")]
     ScenarioError(scenario::E),
+    #[error("AnyValue error: {0}")]
+    ValueError(value::E),
 }
 
 impl E {
@@ -108,6 +110,18 @@ impl E {
 impl From<tracker::E> for E {
     fn from(e: tracker::E) -> Self {
         Self::TrackerError(e)
+    }
+}
+
+impl From<value::E> for E {
+    fn from(e: value::E) -> Self {
+        Self::ValueError(e)
+    }
+}
+
+impl From<value::E> for LinkedErr<E> {
+    fn from(e: value::E) -> Self {
+        LinkedErr::unlinked(E::ValueError(e))
     }
 }
 

@@ -61,14 +61,12 @@ impl Operator for VariableName {
         _token: CancellationToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
-            let value = sc
-                .get_var(&self.name)
-                .await?
-                .ok_or(operator::E::VariableIsNotAssigned(self.name.to_owned()))?;
-            Ok(value
-                .get_as_string()
-                .map(AnyValue::new)
-                .or_else(|| value.get_as_strings().map(AnyValue::new)))
+            Ok(Some(
+                sc.get_var(&self.name)
+                    .await?
+                    .ok_or(operator::E::VariableIsNotAssigned(self.name.to_owned()))?
+                    .duplicate(),
+            ))
         })
     }
 }

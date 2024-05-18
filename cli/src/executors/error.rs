@@ -1,10 +1,10 @@
-use crate::inf::{context, operator};
+use crate::inf::{context, operator, value};
 use thiserror::Error;
 use tokio::sync::{mpsc, oneshot};
 
 #[derive(Error, Debug, Clone)]
 pub enum E {
-    #[error("Scenario error: {0}")]
+    #[error("Context error: {0}")]
     Context(String),
     #[error("Operator error: {0}")]
     Operator(String),
@@ -32,11 +32,19 @@ pub enum E {
     SendError(String),
     #[error("Error on executing \"{0}\": {1}")]
     Executing(String, String),
+    #[error("AnyValue error: {0}")]
+    AnyValue(value::E),
 }
 
 impl From<context::E> for E {
     fn from(e: context::E) -> Self {
         E::Context(e.to_string())
+    }
+}
+
+impl From<value::E> for E {
+    fn from(e: value::E) -> Self {
+        E::AnyValue(e)
     }
 }
 
