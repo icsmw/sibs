@@ -7,6 +7,7 @@ use std::{
     fmt,
     fs::{File, OpenOptions},
     io::Write,
+    path::PathBuf,
     time::{SystemTime, UNIX_EPOCH},
 };
 use uuid::Uuid;
@@ -81,16 +82,65 @@ fn timestamp() -> u128 {
 
 #[derive(Debug)]
 pub struct Storage {
-    messages: Vec<LogMessage>,
     reports: Vec<Report>,
     tolarant: HashSet<Uuid>,
     since: u128,
     cfg: Configuration,
     collected: HashMap<Uuid, String>,
     file: Option<File>,
+    filename: Option<PathBuf>,
+    touched: bool,
 }
 
 impl Storage {
+    fn greeting(&mut self) {
+        self.log(
+            "",
+            &format!(
+                "Session has been started at {}. {}",
+                Utc::now(),
+                if let Some(filename) = self.filename.as_ref() {
+                    format!("Log file: {}", filename.to_string_lossy())
+                } else {
+                    String::from("Logs aren't writing into file.")
+                }
+            ),
+            Level::Info,
+        );
+    }
+    pub fn new(cfg: Configuration) -> Result<Self, E> {
+        let uuid = Uuid::new_v4();
+        let path = if let Some(path) = &cfg.log_file {
+            path.to_owned()
+        } else {
+            temp_dir().join(format!("{}-{uuid}.sibs.log", timestamp()))
+        };
+        let (file, filename) = if cfg.writing {
+            (
+                Some(
+                    OpenOptions::new()
+                        .create(true)
+                        .truncate(true)
+                        .write(true)
+                        .open(&path)?,
+                ),
+                Some(path),
+            )
+        } else {
+            (None, None)
+        };
+        Ok(Self {
+            reports: Vec::new(),
+            tolarant: HashSet::new(),
+            cfg,
+            since: timestamp(),
+            collected: HashMap::new(),
+            file,
+            filename,
+            touched: false,
+        })
+    }
+
     pub fn print(&self) {
         let mut reported: HashSet<Uuid> = HashSet::new();
         self.reports.iter().for_each(|r| {
@@ -104,70 +154,31 @@ impl Storage {
             }
         });
     }
-    pub fn new(cfg: Configuration) -> Result<Self, E> {
-        let uuid = Uuid::new_v4();
-        let path = if let Some(path) = &cfg.log_file {
-            path.to_owned()
-        } else {
-            temp_dir().join(format!("{}-{uuid}.sibs.log", timestamp()))
-        };
-        let file = if cfg.writing {
-            Some(
-                OpenOptions::new()
-                    .create(true)
-                    .truncate(true)
-                    .write(true)
-                    .open(&path)?,
-            )
-        } else {
-            None
-        };
-        let mut instance = Self {
-            messages: Vec::new(),
-            reports: Vec::new(),
-            tolarant: HashSet::new(),
-            cfg,
-            since: timestamp(),
-            collected: HashMap::new(),
-            file,
-        };
-        instance.log(
-            "",
-            &format!(
-                "Session has been started at {}. {}",
-                Utc::now(),
-                if instance.file.is_some() {
-                    format!("Log file: {}", path.to_string_lossy())
-                } else {
-                    String::from("Logs aren't writing into file.")
-                }
-            ),
-            Level::Info,
-        );
-        Ok(instance)
-    }
+
     pub fn log<'a, T>(&mut self, owner: T, msg: T, level: Level)
     where
         T: 'a + ToOwned + ToString,
     {
-        self.messages.push(LogMessage {
+        if !self.touched {
+            self.touched = true;
+            self.greeting();
+        }
+        let msg = LogMessage {
             owner: owner.to_string(),
             msg: msg.to_string(),
             level,
             time: timestamp(),
-        });
-        if let Some(msg) = self.messages.last() {
-            if matches!(self.cfg.output, Output::Logs) {
-                println!("{}", msg.to_ascii_string(self.since));
-            }
-            if let Some(file) = self.file.as_mut() {
-                if let Err(err) = writeln!(
-                    file,
-                    "{}",
-                    strip_ansi_codes(&msg.to_ascii_string(self.since))
-                ) {
-                    eprintln!("Fail to write logs: {err:?}");
-                }
+        };
+        if matches!(self.cfg.output, Output::Logs) {
+            println!("{}", msg.to_ascii_string(self.since));
+        }
+        if let Some(file) = self.file.as_mut() {
+            if let Err(err) = writeln!(
+                file,
+                "{}",
+                strip_ansi_codes(&msg.to_ascii_string(self.since))
+            ) {
+                eprintln!("Fail to write logs: {err:?}");
             }
         }
     }
