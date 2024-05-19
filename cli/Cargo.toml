@@ -15,7 +15,6 @@ tokio = { version = "1", features = ["rt", "rt-multi-thread", "process", "sync",
 tokio-stream = "0.1.14"
 tokio-util = { version = "0.7", features = ["codec"] }
 importer = { path = "../importer" }
-any = { path = "../any" }
 futures = "0.3.30"
 chrono = "0.4.38"
 
