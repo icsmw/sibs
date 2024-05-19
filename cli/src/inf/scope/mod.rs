@@ -14,6 +14,7 @@ use tokio::{
     },
 };
 use tokio_util::sync::CancellationToken;
+use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct Scope {
@@ -26,6 +27,7 @@ impl Scope {
         let (tx, mut rx): (UnboundedSender<api::Demand>, UnboundedReceiver<api::Demand>) =
             unbounded_channel();
         let state = CancellationToken::new();
+        let mut loops: Vec<(Uuid, CancellationToken)> = Vec::new();
         let instance = Self {
             tx,
             state: state.clone(),
@@ -67,6 +69,32 @@ impl Scope {
                     }
                     api::Demand::GetCwd(tx) => {
                         let _ = tx.send(cwd.clone());
+                    }
+                    api::Demand::OpenLoop(tx) => {
+                        let token = CancellationToken::new();
+                        let uuid = Uuid::new_v4();
+                        loops.push((uuid, token.clone()));
+                        let _ = tx.send((uuid, token));
+                    }
+                    api::Demand::CloseLoop(uuid, tx) => {
+                        loops.iter().for_each(|(id, token)| {
+                            if id == &uuid {
+                                token.cancel();
+                            }
+                        });
+                        loops.retain(|(id, _)| id != &uuid);
+                        let _ = tx.send(());
+                    }
+                    api::Demand::BreakLoop(tx) => {
+                        let _ = tx.send(
+                            loops
+                                .pop()
+                                .map(|(_, token)| {
+                                    token.cancel();
+                                    true
+                                })
+                                .unwrap_or(false),
+                        );
                     }
                     Demand::Destroy => {
                         break;
@@ -154,6 +182,41 @@ impl Scope {
         self.tx.send(Demand::GetCwd(tx))?;
         Ok(rx.await?)
     }
+    /// Opening loop in current scope. It's needed only to manage breaking of loop
+    ///
+    /// # Returns
+    ///
+    /// `Ok((Uuid, CancellationToken))` Uuid of registred loop and cancellation token
+    /// to track state of loop
+    pub async fn open_loop(&self) -> Result<(Uuid, CancellationToken), E> {
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(Demand::OpenLoop(tx))?;
+        Ok(rx.await?)
+    }
+
+    /// Close opened loop and send cancel signal to token
+    ///
+    /// # Arguments
+    ///
+    /// * `uuid` - Uuid of target loop
+    pub async fn close_loop(&self, uuid: Uuid) -> Result<(), E> {
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(Demand::CloseLoop(uuid, tx))?;
+        Ok(rx.await?)
+    }
+
+    /// Breaks current loop if exists.
+    ///
+    /// # Returns
+    ///
+    /// `Ok(bool)` true if break-signal has been sent
+    /// to track state of loop
+    pub async fn break_loop(&self) -> Result<bool, E> {
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(Demand::BreakLoop(tx))?;
+        Ok(rx.await?)
+    }
+
     /// Setting variable value
     ///
     /// # Arguments

@@ -115,7 +115,11 @@ impl Operator for Each {
                 .as_strings()
                 .ok_or(operator::E::FailConvertInputIntoStringsForEach)?;
             let mut output: Option<AnyValue> = None;
+            let (loop_uuid, loop_token) = sc.open_loop().await?;
             for iteration in inputs.iter() {
+                if loop_token.is_cancelled() {
+                    break;
+                }
                 sc.set_var(&self.variable.name, AnyValue::new(iteration.to_string())?)
                     .await?;
                 output = self
@@ -130,6 +134,7 @@ impl Operator for Each {
                     )
                     .await?;
             }
+            sc.close_loop(loop_uuid).await?;
             Ok(if output.is_none() {
                 Some(AnyValue::empty())
             } else {

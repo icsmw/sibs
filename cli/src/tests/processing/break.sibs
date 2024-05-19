@@ -1,0 +1,22 @@
+test [
+    $elements = ("one"; "two"; "three");
+    EACH($el; $elements) [
+        $a = "{$el}";
+        IF $a == "two" [
+            BREAK;
+        ];
+    ];
+    
+    $elements = ("one"; "two");
+    EACH($el; $elements) [
+        $b = "{$el}";
+        IF $b == "one" [
+            BREAK;
+        ];
+    ];
+
+    EACH($el; $elements) [
+        $c = "{$el}";
+        BREAK;
+    ];
+];

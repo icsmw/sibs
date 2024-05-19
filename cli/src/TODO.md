@@ -11,13 +11,12 @@
 - a way to run tasks in parallel: `sibs * --lint` will run lint task for all components, which has it
 - invalid UTF from command
 - implement Cancellation on @exit function
-- limit AnyValue only with supported types
 - feature: signals and waiter... stop at some point of script until signal -> will allow sync parallel tasks
-- switch AnyValue to enum
 - missed commands/functions:
 -- break
 -- loop
 -- try / catch / check err
+- add anti-deadlock
 
 
 NO Errors:

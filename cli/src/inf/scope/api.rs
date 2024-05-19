@@ -1,6 +1,8 @@
 use crate::inf::AnyValue;
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 use tokio::sync::oneshot;
+use tokio_util::sync::CancellationToken;
+use uuid::Uuid;
 
 /// Represents API of tast's context. Because each task has own context and
 /// multiple tasks could be runned concurrency, communication goes via channels.
@@ -42,6 +44,26 @@ pub enum Demand {
     /// * `Option<PathBuf>` - Current working folder of task
     /// * `oneshot::Sender<()>` - Response channel
     SetCwd(Option<PathBuf>, oneshot::Sender<()>),
+    /// Set current loop signature and returns UUID of it. Setting loop allows to send
+    /// break signal and detect target loop to be stopped
+    ///
+    /// # Parameters
+    ///
+    /// * `oneshot::Sender<(Uuid, CancellationToken)>` - Response channel. Uuid of loop
+    /// and CancellationToken to check a state of loop
+    OpenLoop(oneshot::Sender<(Uuid, CancellationToken)>),
+    /// Close loop.
+    ///
+    /// # Parameters
+    /// * `Uuid` - UUID of target loop
+    /// * `oneshot::Sender<()>` - Response channel
+    CloseLoop(Uuid, oneshot::Sender<()>),
+    /// Breaks current loop if exists.
+    ///
+    /// # Parameters
+    /// * `oneshot::Sender<()>` - Response channel. Returns true if break-signal has
+    /// been sent
+    BreakLoop(oneshot::Sender<bool>),
     /// Emit shutdown of events loop
     Destroy,
 }

@@ -22,7 +22,7 @@ pub use meta::*;
 pub use optional::*;
 pub use primitives::*;
 pub use reference::*;
-pub use statements::{each::*, first::*, join::Join, If::*};
+pub use statements::{breaker::*, each::*, first::*, join::Join, If::*};
 pub use string::{command::*, pattern::*, simple::*};
 pub use task::*;
 use tokio_util::sync::CancellationToken;
@@ -44,6 +44,7 @@ pub enum ElTarget {
     Function,
     If,
     Each,
+    Breaker,
     First,
     Join,
     VariableAssignation,
@@ -158,6 +159,7 @@ impl Formation for Metadata {
 pub enum Element {
     Function(Function, Metadata),
     If(If, Metadata),
+    Breaker(Breaker, Metadata),
     Each(Each, Metadata),
     First(First, Metadata),
     Join(Join, Metadata),
@@ -217,6 +219,11 @@ impl Element {
                 false
             },
         };
+        if includes == targets.contains(&ElTarget::Breaker) {
+            if let Some(el) = Breaker::read(reader)? {
+                return Ok(Some(Element::Breaker(el, md)));
+            }
+        }
         if includes == targets.contains(&ElTarget::Combination) {
             if let Some(el) = Combination::read(reader)? {
                 return Ok(Some(Element::Combination(el, md)));
@@ -368,6 +375,7 @@ impl Element {
         match self {
             Self::Function(_, md) => md,
             Self::If(_, md) => md,
+            Self::Breaker(_, md) => md,
             Self::Each(_, md) => md,
             Self::First(_, md) => md,
             Self::Join(_, md) => md,
@@ -402,6 +410,7 @@ impl Element {
         match self {
             Self::Function(..) => ElTarget::Function,
             Self::If(..) => ElTarget::If,
+            Self::Breaker(..) => ElTarget::Breaker,
             Self::Each(..) => ElTarget::Each,
             Self::First(..) => ElTarget::First,
             Self::Join(..) => ElTarget::Join,
@@ -436,6 +445,7 @@ impl Element {
             Self::Function(v, _) => v.to_string(),
             Self::If(v, _) => v.to_string(),
             Self::Each(v, _) => v.to_string(),
+            Self::Breaker(v, _) => v.to_string(),
             Self::First(v, _) => v.to_string(),
             Self::Join(v, _) => v.to_string(),
             Self::VariableAssignation(v, _) => v.to_string(),
@@ -490,6 +500,7 @@ impl fmt::Display for Element {
             match self {
                 Self::Function(v, md) => as_string(v, md),
                 Self::If(v, md) => as_string(v, md),
+                Self::Breaker(v, md) => as_string(v, md),
                 Self::Each(v, md) => as_string(v, md),
                 Self::First(v, md) => as_string(v, md),
                 Self::Join(v, md) => as_string(v, md),
@@ -525,6 +536,7 @@ impl Formation for Element {
         match self {
             Self::Function(v, _) => v.elements_count(),
             Self::If(v, _) => v.elements_count(),
+            Self::Breaker(v, _) => v.elements_count(),
             Self::Each(v, _) => v.elements_count(),
             Self::First(v, _) => v.elements_count(),
             Self::Join(v, _) => v.elements_count(),
@@ -576,6 +588,7 @@ impl Formation for Element {
         match self {
             Self::Function(v, m) => format_el(v, m, cursor),
             Self::If(v, m) => format_el(v, m, cursor),
+            Self::Breaker(v, m) => format_el(v, m, cursor),
             Self::Each(v, m) => format_el(v, m, cursor),
             Self::First(v, m) => format_el(v, m, cursor),
             Self::Join(v, m) => format_el(v, m, cursor),
@@ -610,6 +623,7 @@ impl Operator for Element {
         match self {
             Self::Function(v, _) => v.token(),
             Self::If(v, _) => v.token(),
+            Self::Breaker(v, _) => v.token(),
             Self::Each(v, _) => v.token(),
             Self::First(v, _) => v.token(),
             Self::Join(v, _) => v.token(),
@@ -651,6 +665,7 @@ impl Operator for Element {
             let result = match self {
                 Self::Function(v, _) => v.perform(owner, components, args, cx, sc, token).await,
                 Self::If(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::Breaker(v, _) => v.perform(owner, components, args, cx, sc, token).await,
                 Self::Each(v, _) => v.perform(owner, components, args, cx, sc, token).await,
                 Self::First(v, _) => v.perform(owner, components, args, cx, sc, token).await,
                 Self::Join(v, _) => v.perform(owner, components, args, cx, sc, token).await,
