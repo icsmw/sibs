@@ -248,6 +248,7 @@ mod proptest {
                             ElTarget::If,
                             ElTarget::Optional,
                             ElTarget::First,
+                            ElTarget::Breaker,
                             ElTarget::Each,
                             ElTarget::Join,
                             ElTarget::Command,

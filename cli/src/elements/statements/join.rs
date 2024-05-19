@@ -353,39 +353,39 @@ mod processing {
                 let Some(Element::Component(el, _md)) = elements.first() else {
                     panic!("Component isn't found");
                 };
-                // assert!(el
-                //     .execute(
-                //         Some(el),
-                //         &[],
-                //         &[String::from("test_c")],
-                //         cx.clone(),
-                //         sc.clone(),
-                //         OperatorToken::new()
-                //     )
-                //     .await
-                //     .is_err());
-                // assert!(el
-                //     .execute(
-                //         Some(el),
-                //         &[],
-                //         &[String::from("test_d")],
-                //         cx.clone(),
-                //         sc.clone(),
-                //         OperatorToken::new()
-                //     )
-                //     .await
-                //     .is_err());
-                // assert!(el
-                //     .execute(
-                //         Some(el),
-                //         &[],
-                //         &[String::from("test_e")],
-                //         cx.clone(),
-                //         sc.clone(),
-                //         OperatorToken::new()
-                //     )
-                //     .await
-                //     .is_err());
+                assert!(el
+                    .execute(
+                        Some(el),
+                        &[],
+                        &[String::from("test_c")],
+                        cx.clone(),
+                        sc.clone(),
+                        CancellationToken::new()
+                    )
+                    .await
+                    .is_err());
+                assert!(el
+                    .execute(
+                        Some(el),
+                        &[],
+                        &[String::from("test_d")],
+                        cx.clone(),
+                        sc.clone(),
+                        CancellationToken::new()
+                    )
+                    .await
+                    .is_err());
+                assert!(el
+                    .execute(
+                        Some(el),
+                        &[],
+                        &[String::from("test_e")],
+                        cx.clone(),
+                        sc.clone(),
+                        CancellationToken::new()
+                    )
+                    .await
+                    .is_err());
                 assert!(el
                     .execute(
                         Some(el),

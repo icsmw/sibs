@@ -1,7 +1,7 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{Component, ElTarget, Element},
+    elements::{Component, ElTarget},
     error::LinkedErr,
     inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
     reader::{words, Reader, Reading, E},
@@ -61,7 +61,7 @@ impl Operator for Breaker {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::{Breaker, Each, Element},
+        elements::Each,
         error::LinkedErr,
         inf::{tests::*, Configuration},
         read_string,
@@ -172,55 +172,18 @@ mod processing {
     }
 }
 
-// #[cfg(test)]
-// mod proptest {
+#[cfg(test)]
+mod proptest {
 
-//     use crate::{
-//         elements::{Block, Breaker, Task},
-//         error::LinkedErr,
-//         inf::{operator::E, tests::*, Configuration},
-//         read_string,
-//         reader::{Reader, Reading, Sources},
-//     };
-//     use proptest::prelude::*;
+    use crate::elements::Breaker;
+    use proptest::prelude::*;
 
-//     impl Arbitrary for Breaker {
-//         type Parameters = usize;
-//         type Strategy = BoxedStrategy<Self>;
+    impl Arbitrary for Breaker {
+        type Parameters = usize;
+        type Strategy = BoxedStrategy<Self>;
 
-//         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
-//             Block::arbitrary_with(deep)
-//                 .prop_map(|block| Breaker { block, token: 0 })
-//                 .boxed()
-//         }
-//     }
-
-//     fn reading(first: Breaker) {
-//         get_rt().block_on(async {
-//             let origin = format!("test [\n{first};\n];");
-//             read_string!(
-//                 &Configuration::logs(false),
-//                 &origin,
-//                 |reader: &mut Reader, src: &mut Sources| {
-//                     while let Some(task) = src.report_err_if(Task::read(reader))? {
-//                         assert_eq!(format!("{task};"), origin);
-//                     }
-//                     Ok::<(), LinkedErr<E>>(())
-//                 }
-//             );
-//         })
-//     }
-
-//     proptest! {
-//         #![proptest_config(ProptestConfig {
-//             max_shrink_iters: 5000,
-//             ..ProptestConfig::with_cases(10)
-//         })]
-//         #[test]
-//         fn test_run_task(
-//             args in any_with::<Breaker>(0)
-//         ) {
-//             reading(args.clone());
-//         }
-//     }
-// }
+        fn arbitrary_with(_deep: Self::Parameters) -> Self::Strategy {
+            Just(Breaker { token: 0 }).boxed()
+        }
+    }
+}

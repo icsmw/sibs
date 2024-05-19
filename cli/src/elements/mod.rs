@@ -770,10 +770,10 @@ mod processing {
 mod proptest {
     use crate::{
         elements::{
-            Block, Boolean, Combination, Command, Comment, Comparing, Component, Condition, Each,
-            ElTarget, Element, First, Function, If, Integer, Meta, Metadata, Optional,
-            PatternString, Reference, SimpleString, Subsequence, Task, Values, VariableAssignation,
-            VariableDeclaration, VariableName, VariableType, VariableVariants,
+            Block, Boolean, Breaker, Combination, Command, Comment, Comparing, Component,
+            Condition, Each, ElTarget, Element, First, Function, If, Integer, Join, Meta, Metadata,
+            Optional, PatternString, Reference, SimpleString, Subsequence, Task, Values,
+            VariableAssignation, VariableDeclaration, VariableName, VariableType, VariableVariants,
         },
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
@@ -803,6 +803,20 @@ mod proptest {
             collected.push(
                 Combination::arbitrary()
                     .prop_map(|el| Element::Combination(el, Metadata::default()))
+                    .boxed(),
+            );
+        }
+        if targets.contains(&ElTarget::Breaker) {
+            collected.push(
+                Breaker::arbitrary_with(deep + 1)
+                    .prop_map(|el| Element::Breaker(el, Metadata::default()))
+                    .boxed(),
+            );
+        }
+        if targets.contains(&ElTarget::Join) {
+            collected.push(
+                Join::arbitrary_with(deep + 1)
+                    .prop_map(|el| Element::Join(el, Metadata::default()))
                     .boxed(),
             );
         }
