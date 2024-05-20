@@ -60,7 +60,7 @@ impl Context {
         let state = CancellationToken::new();
         let tracker = Tracker::init(journal.clone());
         let atlas = Atlas::init(src, journal);
-        let funcs = Functions::init()?;
+        let funcs = Functions::init(journal)?;
         let (tx, mut rx): (UnboundedSender<ExitCode>, UnboundedReceiver<ExitCode>) =
             unbounded_channel();
         let instance = Self {

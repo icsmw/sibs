@@ -1,5 +1,5 @@
 use crate::inf::AnyValue;
-use std::{collections::HashMap, path::PathBuf, sync::Arc};
+use std::{collections::HashMap, fmt, path::PathBuf, sync::Arc};
 use tokio::sync::oneshot;
 use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
@@ -66,4 +66,24 @@ pub enum Demand {
     BreakLoop(oneshot::Sender<bool>),
     /// Emit shutdown of events loop
     Destroy,
+}
+
+impl fmt::Display for Demand {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::SetVariable(..) => "SetVariable",
+                Self::SetCwd(..) => "SetCwd",
+                Self::BreakLoop(..) => "BreakLoop",
+                Self::CloseLoop(..) => "CloseLoop",
+                Self::Destroy => "Destroy",
+                Self::GetCwd(..) => "GetCwd",
+                Self::GetVariable(..) => "GetVariable",
+                Self::GetVariables(..) => "GetVariables",
+                Self::OpenLoop(..) => "OpenLoop",
+            }
+        )
+    }
 }

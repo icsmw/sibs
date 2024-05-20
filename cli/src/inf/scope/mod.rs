@@ -16,6 +16,11 @@ use tokio::{
 use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
 
+enum Action {
+    Check(bool),
+    Break,
+}
+
 #[derive(Debug, Clone)]
 pub struct Scope {
     tx: UnboundedSender<api::Demand>,
@@ -42,21 +47,20 @@ impl Scope {
         spawn(async move {
             let mut vars: HashMap<String, Arc<AnyValue>> = HashMap::new();
             while let Some(demand) = rx.recv().await {
-                match demand {
+                let requested = demand.to_string();
+                let action = match demand {
                     api::Demand::SetVariable(k, v, warn, tx) => {
                         if warn && vars.contains_key(&k) {
                             journal.warn(format!(
                                 "Variable \"{k}\" will be overwritten with new value"
                             ));
                         }
-                        let _ = tx.send(vars.insert(k, Arc::new(v)).is_some());
+                        Action::Check(tx.send(vars.insert(k, Arc::new(v)).is_some()).is_err())
                     }
                     api::Demand::GetVariable(k, tx) => {
-                        let _ = tx.send(vars.get(&k).cloned());
+                        Action::Check(tx.send(vars.get(&k).cloned()).is_err())
                     }
-                    api::Demand::GetVariables(tx) => {
-                        let _ = tx.send(vars.clone());
-                    }
+                    api::Demand::GetVariables(tx) => Action::Check(tx.send(vars.clone()).is_err()),
                     api::Demand::SetCwd(path, tx) => {
                         cwd = path;
                         journal.info(format!(
@@ -65,16 +69,14 @@ impl Scope {
                                 .map(|cwd| cwd.to_string_lossy().to_string())
                                 .unwrap_or("no CWD context".to_string())
                         ));
-                        let _ = tx.send(());
+                        Action::Check(tx.send(()).is_err())
                     }
-                    api::Demand::GetCwd(tx) => {
-                        let _ = tx.send(cwd.clone());
-                    }
+                    api::Demand::GetCwd(tx) => Action::Check(tx.send(cwd.clone()).is_err()),
                     api::Demand::OpenLoop(tx) => {
                         let token = CancellationToken::new();
                         let uuid = Uuid::new_v4();
                         loops.push((uuid, token.clone()));
-                        let _ = tx.send((uuid, token));
+                        Action::Check(tx.send((uuid, token)).is_err())
                     }
                     api::Demand::CloseLoop(uuid, tx) => {
                         loops.iter().for_each(|(id, token)| {
@@ -83,10 +85,10 @@ impl Scope {
                             }
                         });
                         loops.retain(|(id, _)| id != &uuid);
-                        let _ = tx.send(());
+                        Action::Check(tx.send(()).is_err())
                     }
-                    api::Demand::BreakLoop(tx) => {
-                        let _ = tx.send(
+                    api::Demand::BreakLoop(tx) => Action::Check(
+                        tx.send(
                             loops
                                 .pop()
                                 .map(|(_, token)| {
@@ -94,9 +96,19 @@ impl Scope {
                                     true
                                 })
                                 .unwrap_or(false),
-                        );
+                        )
+                        .is_err(),
+                    ),
+                    Demand::Destroy => Action::Break,
+                };
+                match action {
+                    Action::Check(is_err) => {
+                        if is_err {
+                            journal.err(format!("Fail to send response for \"{requested}\""));
+                            break;
+                        }
                     }
-                    Demand::Destroy => {
+                    Action::Break => {
                         break;
                     }
                 }
@@ -105,11 +117,14 @@ impl Scope {
         });
         instance
     }
+
+    /// Destroy scope due sending destroy command and waiting for abort confirmation
     pub async fn destroy(&self) -> Result<(), E> {
         self.tx.send(Demand::Destroy)?;
         self.state.cancelled().await;
         Ok(())
     }
+
     /// Setting variable value
     ///
     /// # Arguments
@@ -124,6 +139,7 @@ impl Scope {
     pub async fn set_var(&self, key: &str, value: AnyValue) -> Result<bool, E> {
         self.setting_var(key, value, false).await
     }
+
     /// Getting variable value
     ///
     /// # Arguments
@@ -139,12 +155,14 @@ impl Scope {
         self.tx.send(Demand::GetVariable(key.to_owned(), tx))?;
         Ok(rx.await?)
     }
+
     /// Returns all variables defined in the scope
     async fn get_vars(&self) -> Result<HashMap<String, Arc<AnyValue>>, E> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(Demand::GetVariables(tx))?;
         Ok(rx.await?)
     }
+
     /// Import all variables from given scope. Post warn logs if some variable would
     /// be overwriten because exists on destination scope
     ///
@@ -157,6 +175,7 @@ impl Scope {
         }
         Ok(())
     }
+
     /// Setting cwd (current working folder)
     ///
     /// # Arguments
@@ -171,6 +190,7 @@ impl Scope {
         self.tx.send(Demand::SetCwd(cwd, tx))?;
         Ok(rx.await?)
     }
+
     /// Getting cwd (current working folder)
     ///
     /// # Returns
@@ -182,6 +202,7 @@ impl Scope {
         self.tx.send(Demand::GetCwd(tx))?;
         Ok(rx.await?)
     }
+
     /// Opening loop in current scope. It's needed only to manage breaking of loop
     ///
     /// # Returns

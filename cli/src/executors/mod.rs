@@ -10,7 +10,7 @@ pub mod store;
 pub mod str;
 pub mod test;
 
-use crate::inf::{AnyValue, Context, Scope};
+use crate::inf::{AnyValue, Context, Journal, Scope};
 use api::*;
 pub use error::E;
 use std::{future::Future, pin::Pin};
@@ -66,7 +66,7 @@ pub struct Functions {
 }
 
 impl Functions {
-    pub fn init() -> Result<Self, E> {
+    pub fn init(journal: &Journal) -> Result<Self, E> {
         let (tx, mut rx): (UnboundedSender<api::Demand>, UnboundedReceiver<api::Demand>) =
             unbounded_channel();
         let state = CancellationToken::new();
@@ -75,17 +75,22 @@ impl Functions {
             state: state.clone(),
         };
         let mut store = Store::new();
+        let journal = journal.owned("Functions".to_owned(), None);
         register(&mut store)?;
         spawn(async move {
             while let Some(demand) = rx.recv().await {
                 match demand {
                     Demand::Execute(name, args, cx, sc, tx) => {
                         let Some(executor) = store.get(&name) else {
-                            let _ = tx.send(Err(E::FunctionNotExists(name)));
+                            if tx.send(Err(E::FunctionNotExists(name))).is_err() {
+                                journal.err("Fail send response for Execute command");
+                            }
                             continue;
                         };
                         let result = executor(args, cx, sc).await;
-                        let _ = tx.send(result);
+                        if tx.send(result).is_err() {
+                            journal.err("Fail send response for Execute command");
+                        }
                     }
                     Demand::Destroy => {
                         break;

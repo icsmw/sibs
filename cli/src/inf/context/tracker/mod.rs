@@ -63,12 +63,12 @@ impl Tracker {
             let mut jobs: HashMap<usize, (Uuid, String)> = HashMap::new();
             while let Some(tick) = rx.recv().await {
                 match tick {
-                    Demand::CreateJob(alias, len, rx) => {
+                    Demand::CreateJob(alias, len, tx) => {
                         let sequence = match progress.create(&alias, len) {
                             Ok(sequence) => sequence,
                             Err(err) => {
                                 let _ = own.err_if(
-                                    rx.send(Err(E::ProgressBar(err.to_string())))
+                                    tx.send(Err(E::ProgressBar(err.to_string())))
                                         .map_err(|_| err),
                                 );
                                 continue;
@@ -76,7 +76,7 @@ impl Tracker {
                         };
                         let uuid = Uuid::new_v4();
                         let _ = own.err_if(
-                            rx.send(Ok(Job::new(
+                            tx.send(Ok(Job::new(
                                 &self_ref,
                                 sequence,
                                 journal.owned(alias.clone(), Some(uuid)),

@@ -13,8 +13,6 @@
 - implement Cancellation on @exit function
 - feature: signals and waiter... stop at some point of script until signal -> will allow sync parallel tasks
 - missed commands/functions:
--- break
--- loop
 -- try / catch / check err
 - add anti-deadlock
 

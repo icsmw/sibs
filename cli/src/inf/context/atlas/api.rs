@@ -1,4 +1,5 @@
 use crate::{error::LinkedErrSerialized, inf::context::atlas::E};
+use std::fmt;
 use tokio::sync::oneshot;
 
 /// Represents API of tast's context. Because each task has own context and
@@ -28,4 +29,19 @@ pub enum Demand {
     SetMapPosition(usize, oneshot::Sender<Result<(), E>>),
     /// Emit shutdown of events loop
     Destroy,
+}
+
+impl fmt::Display for Demand {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::AddFootprint(..) => "AddFootprint",
+                Self::Destroy => "Destroy",
+                Self::ReportErr(..) => "ReportErr",
+                Self::SetMapPosition(..) => "SetMapPosition",
+            }
+        )
+    }
 }

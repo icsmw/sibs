@@ -1,0 +1,47 @@
+/// Testing join 
+#(join: ../../../../target/debug)
+    emitter [
+        JOIN (
+            `./exit 0 100 1000 10`;
+            `./exit 0 200 1000 10`;
+            `./exit 0 300 1000 10`;
+            `./exit 0 400 1000 10`;
+        );
+        @signal::emit("a");
+    ];
+    waiter_a [
+        @signal::wait("a");
+        JOIN (
+            `./exit 0 100 1000 10`;
+            `./exit 0 200 1000 10`;
+            `./exit 0 300 1000 10`;
+            `./exit 0 400 1000 10`;
+        );
+        $a = "ok";
+    ];
+    waiter_b [
+        JOIN (
+            `./exit 0 100 1000 10`;
+            `./exit 0 200 1000 10`;
+            `./exit 0 300 1000 10`;
+            `./exit 0 400 1000 10`;
+        );
+        @signal::wait("a");
+        JOIN (
+            `./exit 0 100 1000 10`;
+            `./exit 0 200 1000 10`;
+            `./exit 0 300 1000 10`;
+            `./exit 0 400 1000 10`;
+        );
+        $b = "ok";
+    ];
+    run [
+        JOIN (
+            :self:emitter;
+            :self:waiter_a;
+            :self:waiter_b;
+        );
+    ]
+
+
+@signal::wait(:component:build);
