@@ -12,7 +12,7 @@ pub use tracker::*;
 
 use crate::{
     executors::Functions,
-    inf::{AnyValue, Journal, Scope},
+    inf::{AnyValue, Journal, Scope, Signals},
     reader::Sources,
 };
 use tokio::{
@@ -51,6 +51,8 @@ pub struct Context {
     pub journal: Journal,
     pub funcs: Functions,
     pub aborting: CancellationToken,
+    pub scope: Scope,
+    pub signals: Signals,
     tx: UnboundedSender<ExitCode>,
     state: CancellationToken,
 }
@@ -61,6 +63,8 @@ impl Context {
         let tracker = Tracker::init(journal.clone());
         let atlas = Atlas::init(src, journal);
         let funcs = Functions::init(journal)?;
+        let scope = Scope::init(None, journal);
+        let signals = Signals::init(journal);
         let (tx, mut rx): (UnboundedSender<ExitCode>, UnboundedReceiver<ExitCode>) =
             unbounded_channel();
         let instance = Self {
@@ -70,16 +74,21 @@ impl Context {
             atlas: atlas.clone(),
             funcs: funcs.clone(),
             state: state.clone(),
+            scope: scope.clone(),
+            signals: signals.clone(),
             aborting: CancellationToken::new(),
             tx,
         };
         let journal = journal.clone();
         spawn(async move {
-            let shutdown = || {
+            let shutdown = |journal: &Journal| {
+                let journal = journal.clone();
                 Box::pin(async move {
-                    let _ = tracker.destroy().await;
-                    let _ = atlas.destroy().await;
-                    let _ = funcs.destroy().await;
+                    let _ = journal.err_if("tracker", tracker.destroy().await);
+                    let _ = journal.err_if("atlas", atlas.destroy().await);
+                    let _ = journal.err_if("functions", funcs.destroy().await);
+                    let _ = journal.err_if("global scope", scope.destroy().await);
+                    let _ = journal.err_if("signals", signals.destroy().await);
                 })
             };
             let mut exit_code = ExitCode::Regular;
@@ -96,7 +105,7 @@ impl Context {
                 ExitCode::Immediately(code, msg) | ExitCode::Aborting(code, msg) => {
                     journal.warn("", format!("Forced exit with code {code}"));
                     journal.flush().await;
-                    shutdown().await;
+                    shutdown(&journal).await;
                     if let Some(msg) = msg {
                         if code == 0 {
                             println!("{msg}");
@@ -107,7 +116,7 @@ impl Context {
                     process::exit(code);
                 }
                 ExitCode::Regular => {
-                    shutdown().await;
+                    shutdown(&journal).await;
                 }
             }
             state.cancel();

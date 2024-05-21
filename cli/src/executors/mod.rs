@@ -6,6 +6,7 @@ pub mod fs;
 pub mod load;
 pub mod logs;
 pub mod process;
+pub mod sig;
 pub mod store;
 pub mod str;
 pub mod test;
@@ -55,6 +56,7 @@ pub fn register(store: &mut Store) -> Result<(), E> {
     logs::register(store)?;
     cx::register(store)?;
     process::register(store)?;
+    sig::register(store)?;
     test::register(store)?;
     Ok(())
 }
@@ -80,16 +82,15 @@ impl Functions {
         spawn(async move {
             while let Some(demand) = rx.recv().await {
                 match demand {
-                    Demand::Execute(name, args, cx, sc, tx) => {
+                    Demand::Execute(name, tx) => {
                         let Some(executor) = store.get(&name) else {
                             if tx.send(Err(E::FunctionNotExists(name))).is_err() {
                                 journal.err("Fail send response for Execute command");
                             }
                             continue;
                         };
-                        let result = executor(args, cx, sc).await;
-                        if tx.send(result).is_err() {
-                            journal.err("Fail send response for Execute command");
+                        if tx.send(Ok(executor)).is_err() {
+                            journal.err(format!("Fail send function's execute: {name}"));
                         }
                     }
                     Demand::Destroy => {
@@ -124,8 +125,8 @@ impl Functions {
         sc: Scope,
     ) -> Result<AnyValue, E> {
         let (tx, rx) = oneshot::channel();
-        self.tx
-            .send(Demand::Execute(name.to_owned(), args, cx, sc, tx))?;
-        rx.await?
+        self.tx.send(Demand::Execute(name.to_owned(), tx))?;
+        let executor = rx.await??;
+        executor(args, cx, sc).await
     }
 }

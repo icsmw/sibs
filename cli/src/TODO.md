@@ -15,7 +15,8 @@
 - missed commands/functions:
 -- try / catch / check err
 - add anti-deadlock
-
+- Error MissedSemicolon doesn't give error report with error location. Canbe tested with signal.sibs. Remove 
+semicollon and the end on "true".
 
 NO Errors:
 `create-user --name={$user_name} --role={IF $is_admin == "true" ["admin";]  ["user";]}`

@@ -1,5 +1,7 @@
+use std::sync::Arc;
+
 use crate::{
-    executors::ExecutorResult,
+    executors::{ExecutorFn, E},
     inf::{AnyValue, Context, Scope},
 };
 use tokio::sync::oneshot;
@@ -12,17 +14,9 @@ pub enum Demand {
     /// # Parameters
     ///
     /// * `String` - Name of function
-    /// * `AnyValue` - Function argument
-    /// * `Context` - Global context
-    /// * `Scope` - Task's scope
-    /// * `oneshot::Sender<ExecutorResult>` - Response channel with result of executing
-    Execute(
-        String,
-        Vec<AnyValue>,
-        Context,
-        Scope,
-        oneshot::Sender<ExecutorResult>,
-    ),
+    /// * `oneshot::Sender<Result<Arc<ExecutorFn>, E>>` - Response channel with reference
+    /// to function's executor
+    Execute(String, oneshot::Sender<Result<Arc<ExecutorFn>, E>>),
     /// Emit shutdown of events loop
     Destroy,
 }

@@ -5,35 +5,20 @@
             `./exit 0 100 1000 10`;
             `./exit 0 200 1000 10`;
             `./exit 0 300 1000 10`;
-            `./exit 0 400 1000 10`;
+            `./exit 0 1000 1000 10`;
         );
-        @signal::emit("a");
+        @sig::emit("a");
+        "true";
     ];
     waiter_a [
-        @signal::wait("a");
-        JOIN (
-            `./exit 0 100 1000 10`;
-            `./exit 0 200 1000 10`;
-            `./exit 0 300 1000 10`;
-            `./exit 0 400 1000 10`;
-        );
-        $a = "ok";
+        @sig::wait("a");
+        @cx::set_var("a";"ok a");
+        "true";
     ];
     waiter_b [
-        JOIN (
-            `./exit 0 100 1000 10`;
-            `./exit 0 200 1000 10`;
-            `./exit 0 300 1000 10`;
-            `./exit 0 400 1000 10`;
-        );
-        @signal::wait("a");
-        JOIN (
-            `./exit 0 100 1000 10`;
-            `./exit 0 200 1000 10`;
-            `./exit 0 300 1000 10`;
-            `./exit 0 400 1000 10`;
-        );
-        $b = "ok";
+        @sig::wait("a");
+        @cx::set_var("b";"ok b");
+        "true";
     ];
     run [
         JOIN (
@@ -44,4 +29,4 @@
     ]
 
 
-@signal::wait(:component:build);
+@sig::wait(:component:build);

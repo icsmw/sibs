@@ -178,6 +178,17 @@ impl Journal {
         self.insert(owner, msg, Level::Warn);
     }
 
+    pub fn err_if<'a, O, T, E>(&self, owner: O, res: Result<T, E>) -> Result<T, E>
+    where
+        O: 'a + ToOwned + ToString + Display,
+        E: Display,
+    {
+        if let Err(err) = res.as_ref() {
+            self.err(owner, err.to_string());
+        }
+        res
+    }
+
     fn insert<'a, O, M>(&self, owner: O, msg: M, level: Level)
     where
         O: 'a + ToOwned + ToString + Display,

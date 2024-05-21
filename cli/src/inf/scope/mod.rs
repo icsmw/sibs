@@ -19,12 +19,14 @@ use uuid::Uuid;
 enum Action {
     Check(bool),
     Break,
+    Nothing,
 }
 
 #[derive(Debug, Clone)]
 pub struct Scope {
     tx: UnboundedSender<api::Demand>,
     state: CancellationToken,
+    path: String,
 }
 
 impl Scope {
@@ -36,6 +38,7 @@ impl Scope {
         let instance = Self {
             tx,
             state: state.clone(),
+            path: String::new(),
         };
         let journal = journal.owned("Scope".to_owned(), None);
         journal.info(format!(
@@ -111,6 +114,7 @@ impl Scope {
                     Action::Break => {
                         break;
                     }
+                    Action::Nothing => {}
                 }
             }
             state.cancel();
@@ -224,6 +228,27 @@ impl Scope {
         let (tx, rx) = oneshot::channel();
         self.tx.send(Demand::CloseLoop(uuid, tx))?;
         Ok(rx.await?)
+    }
+
+    /// Sets a fullname  of current task. This command is used for bind logs with
+    /// current task
+    ///
+    /// # Arguments
+    ///
+    /// * `fullname` - fullname of task
+    pub fn set_current_task(&mut self, fullname: String) {
+        self.path = fullname;
+    }
+
+    /// Returns a fullname  of current task.
+    ///
+    /// # Arguments
+    ///
+    /// # Returns
+    ///
+    /// `String` - fullname of current task
+    pub fn get_current_task(&self) -> &str {
+        &self.path
     }
 
     /// Breaks current loop if exists.

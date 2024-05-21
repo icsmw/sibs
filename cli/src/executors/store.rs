@@ -1,9 +1,9 @@
 use crate::executors::{ExecutorFn, E};
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 #[derive(Debug)]
 pub struct Store {
-    executors: HashMap<String, ExecutorFn>,
+    executors: HashMap<String, Arc<ExecutorFn>>,
 }
 
 impl Store {
@@ -20,11 +20,11 @@ impl Store {
         if self.executors.contains_key(&name) {
             return Err(E::FunctionExists(name));
         }
-        self.executors.insert(name, executor);
+        self.executors.insert(name, Arc::new(executor));
         Ok(())
     }
 
-    pub fn get(&self, name: &str) -> Option<&ExecutorFn> {
-        self.executors.get(name)
+    pub fn get(&self, name: &str) -> Option<Arc<ExecutorFn>> {
+        self.executors.get(name).cloned()
     }
 }

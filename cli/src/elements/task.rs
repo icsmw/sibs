@@ -177,7 +177,7 @@ impl Operator for Task {
         components: &'a [Component],
         args: &'a [String],
         cx: Context,
-        sc: Scope,
+        mut sc: Scope,
         token: CancellationToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
@@ -222,6 +222,12 @@ impl Operator for Task {
                     )
                     .await?;
             }
+            let owner_name = owner.map(|o| o.name.to_string()).unwrap_or_default();
+            sc.set_current_task(format!(
+                "{owner_name}{}{}",
+                if owner_name.is_empty() { "" } else { ":" },
+                self.name
+            ));
             self.block
                 .execute(owner, components, args, cx, sc, token)
                 .await

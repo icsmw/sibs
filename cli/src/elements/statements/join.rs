@@ -176,7 +176,9 @@ impl Operator for Join {
                     let mut output: Vec<AnyValue> = Vec::new();
                     for result in results.into_iter() {
                         match result {
-                            Ok(value) => output.push(value),
+                            Ok(value) => {
+                                output.push(value);
+                            }
                             Err(err) => {
                                 return Err(err);
                             }
