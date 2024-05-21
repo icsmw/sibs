@@ -74,7 +74,7 @@ pub enum Report {
     /// during initialization.
     ///
     /// - The `String` is error message.
-    String(String),
+    Error(String),
 }
 
 impl Report {
@@ -100,6 +100,9 @@ impl Report {
             Self::LinkedErr(err) => {
                 eprintln!("{title} {}", Style::new().white().apply_to(&err.e));
             }
+            Self::Error(err) => {
+                eprintln!("{title} {}", Style::new().white().apply_to(&err));
+            }
             Self::Report { report, err: _ } => eprintln!("{report}"),
             Self::Trace { trace, report, err } => {
                 term::print("\n[b][color:yellow]PREVIOUS TO ERROR ACTIONS:[/color][/b]");
@@ -112,22 +115,25 @@ impl Report {
                 }
                 eprintln!("{title} {}", Style::new().white().apply_to(&err.e));
             }
-            Self::String(err) => {
-                eprintln!("{title} {}", Style::new().white().apply_to(&err));
-            }
         }
     }
 }
 
 impl From<&str> for Report {
     fn from(val: &str) -> Self {
-        Self::String(val.to_owned())
+        Self::Error(val.to_owned())
     }
 }
 
 impl From<&String> for Report {
     fn from(val: &String) -> Self {
-        Self::String(val.to_owned())
+        Self::Error(val.to_owned())
+    }
+}
+
+impl From<String> for Report {
+    fn from(val: String) -> Self {
+        Self::Error(val)
     }
 }
 

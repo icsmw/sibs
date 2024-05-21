@@ -65,7 +65,6 @@ macro_rules! process_string {
             panic::{self, AssertUnwindSafe},
         };
         use $crate::{inf::Scenario, runners::exit};
-
         let journal = Journal::unwrapped(Configuration::logs(false));
         let cfg = $cfg as &dyn Any;
         let Some(cfg) = cfg.downcast_ref::<Configuration>().cloned() else {
@@ -143,6 +142,9 @@ macro_rules! process_file {
             match Reader::read_file(&scenario.filename, true, Some(&mut src), &journal).await {
                 Ok(elements) => elements,
                 Err(err) => {
+                    if let Err(err) = src.report_err(&err) {
+                        journal.report(err.to_string().into());
+                    }
                     return exit(journal, &err).await;
                 }
             };
@@ -198,6 +200,9 @@ macro_rules! read_file {
             match Reader::read_file(&scenario.filename, true, Some(&mut src), &journal).await {
                 Ok(elements) => elements,
                 Err(err) => {
+                    if let Err(err) = src.report_err(&err) {
+                        journal.report(err.to_string().into());
+                    }
                     return exit(journal, &err).await;
                 }
             };
