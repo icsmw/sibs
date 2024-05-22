@@ -3,7 +3,7 @@ use std::process::exit;
 mod cli;
 mod elements;
 mod error;
-mod executors;
+mod functions;
 mod inf;
 mod reader;
 mod runners;

@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use crate::{
     error,
     error::LinkedErr,
-    executors,
+    functions,
     inf::{context, journal, map, operator},
     reader::Reader,
 };
@@ -130,7 +130,7 @@ pub enum E {
     #[error("Context error: {0}")]
     ContextError(context::E),
     #[error("Executor error: {0}")]
-    ExecutorError(executors::E),
+    ExecutorError(functions::E),
     #[error("Operator error: {0}")]
     OperatorError(String),
     #[error("Map error: {0}")]
@@ -183,8 +183,8 @@ impl From<context::E> for LinkedErr<E> {
     }
 }
 
-impl From<executors::E> for LinkedErr<E> {
-    fn from(e: executors::E) -> Self {
+impl From<functions::E> for LinkedErr<E> {
+    fn from(e: functions::E) -> Self {
         E::ExecutorError(e).unlinked()
     }
 }
@@ -213,8 +213,8 @@ impl From<context::E> for E {
     }
 }
 
-impl From<executors::E> for E {
-    fn from(e: executors::E) -> Self {
+impl From<functions::E> for E {
+    fn from(e: functions::E) -> Self {
         E::ExecutorError(e)
     }
 }

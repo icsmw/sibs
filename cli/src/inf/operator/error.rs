@@ -1,6 +1,6 @@
 use crate::{
     error::LinkedErr,
-    executors,
+    functions,
     inf::{context, context::atlas, scenario, spawner, tracker, value, Operator},
     reader,
 };
@@ -29,7 +29,7 @@ pub enum E {
     #[error("Context error: {0}")]
     ContextError(context::E),
     #[error("Executor error: {0}")]
-    ExecutorError(executors::E),
+    ExecutorError(functions::E),
     #[error("Reader error: {0}")]
     ReaderError(reader::E),
     #[error("No task for component: {0}. Available tasks: {1:?}")]
@@ -149,8 +149,8 @@ impl From<context::E> for E {
     }
 }
 
-impl From<executors::E> for E {
-    fn from(e: executors::E) -> Self {
+impl From<functions::E> for E {
+    fn from(e: functions::E) -> Self {
         Self::ExecutorError(e)
     }
 }
@@ -215,8 +215,8 @@ impl From<spawner::E> for LinkedErr<E> {
     }
 }
 
-impl From<executors::E> for LinkedErr<E> {
-    fn from(e: executors::E) -> Self {
+impl From<functions::E> for LinkedErr<E> {
+    fn from(e: functions::E) -> Self {
         LinkedErr::unlinked(E::ExecutorError(e))
     }
 }
