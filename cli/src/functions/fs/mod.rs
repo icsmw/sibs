@@ -1,11 +1,10 @@
 use crate::{
-    functions::Store,
-    functions::{ExecutorPinnedResult, TryAnyTo, E},
-    inf::{AnyValue, Context, Scope},
+    functions::{ExecutorFn, ExecutorPinnedResult, TryAnyTo, E},
+    inf::{AnyValue, Context, Scope, Store},
 };
 use importer::import;
 
-pub fn register(store: &mut Store) -> Result<(), E> {
+pub fn register(store: &mut Store<ExecutorFn>) -> Result<(), E> {
     #[import(fs)]
     fn create_dir(path: std::path::PathBuf) -> Result<(), E> {
         Ok(std::fs::create_dir(path)?)

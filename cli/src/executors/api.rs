@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::functions::{ExecutorFn, E};
+use crate::executors::{ExecutorFn, E};
 use tokio::sync::oneshot;
 
 /// Represents API of tast's context. Because each task has own context and

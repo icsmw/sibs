@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
 use crate::{
-    functions::{get_name, ExecutorPinnedResult},
-    inf::{AnyValue, Context, Scope},
+    functions::ExecutorPinnedResult,
+    inf::{tools::get_name, AnyValue, Context, Scope},
 };
 
 pub fn name() -> String {

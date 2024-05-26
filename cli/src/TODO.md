@@ -41,3 +41,6 @@ true != false doesn't work
 19 │         `ls -lsa`;
 20 │     ];
 ```
+
+- features:
+-- detect type of project behind each component (nodejs, rust, ruby etc)

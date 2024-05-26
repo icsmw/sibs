@@ -1,6 +1,6 @@
 use crate::{
-    functions::{get_name, ExecutorPinnedResult, E},
-    inf::{AnyValue, Context, Scope},
+    functions::{ExecutorPinnedResult, E},
+    inf::{tools::get_name, AnyValue, Context, Scope},
 };
 
 pub fn name() -> String {

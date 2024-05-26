@@ -1,6 +1,6 @@
 use crate::{
-    functions::{get_last_name, ExecutorPinnedResult},
-    inf::{operator, AnyValue, Context, Scope},
+    functions::ExecutorPinnedResult,
+    inf::{operator, tools::get_last_name, AnyValue, Context, Scope},
 };
 use tokio::time::{sleep, Duration};
 

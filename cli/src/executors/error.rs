@@ -32,10 +32,10 @@ pub enum E {
     SendError(String),
     #[error("Error on executing \"{0}\": {1}")]
     Executing(String, String),
-    #[error("Store error: {0}")]
-    Store(store::E),
     #[error("AnyValue error: {0}")]
     AnyValue(value::E),
+    #[error("Store error: {0}")]
+    Store(store::E),
 }
 
 impl From<store::E> for E {

@@ -1,16 +1,11 @@
 mod api;
-pub mod cx;
-pub mod env;
 mod error;
-pub mod fs;
-pub mod load;
-pub mod logs;
-pub mod process;
-pub mod sig;
-pub mod str;
-pub mod test;
+mod inspect;
 
-use crate::inf::{AnyValue, Context, Journal, Scope, Store};
+use crate::{
+    elements::{Element, Function, Task},
+    inf::{Context, Journal, Scope, Store},
+};
 use api::*;
 pub use error::E;
 use std::{future::Future, pin::Pin};
@@ -24,32 +19,21 @@ use tokio::{
 use tokio_util::sync::CancellationToken;
 
 pub type ExecutorPinnedResult = Pin<Box<dyn Future<Output = ExecutorResult> + Send>>;
-pub type ExecutorResult = Result<AnyValue, E>;
-pub type ExecutorFn = fn(Vec<AnyValue>, Context, Scope) -> ExecutorPinnedResult;
-
-pub trait TryAnyTo<T> {
-    fn try_to(&self) -> Result<T, E>;
-}
+pub type ExecutorResult = Result<bool, E>;
+pub type ExecutorFn = fn(&Task, &[Element], Context, Scope) -> ExecutorPinnedResult;
 
 pub fn register(store: &mut Store<ExecutorFn>) -> Result<(), E> {
-    str::register(store)?;
-    fs::register(store)?;
-    env::register(store)?;
-    logs::register(store)?;
-    cx::register(store)?;
-    process::register(store)?;
-    sig::register(store)?;
-    test::register(store)?;
+    inspect::register(store)?;
     Ok(())
 }
 
 #[derive(Clone, Debug)]
-pub struct Functions {
+pub struct Executors {
     tx: UnboundedSender<api::Demand>,
     state: CancellationToken,
 }
 
-impl Functions {
+impl Executors {
     pub fn init(journal: &Journal) -> Result<Self, E> {
         let (tx, mut rx): (UnboundedSender<api::Demand>, UnboundedReceiver<api::Demand>) =
             unbounded_channel();
@@ -59,7 +43,7 @@ impl Functions {
             state: state.clone(),
         };
         let mut store = Store::<ExecutorFn>::new();
-        let journal = journal.owned("Functions".to_owned(), None);
+        let journal = journal.owned("Executors".to_owned(), None);
         register(&mut store)?;
         spawn(async move {
             while let Some(demand) = rx.recv().await {
@@ -89,26 +73,29 @@ impl Functions {
         self.state.cancelled().await;
         Ok(())
     }
-    /// Execute target function
+    /// Execute target executor
     ///
     /// # Arguments
     ///
-    /// * `name` - name of target function
-    /// * `args` - arguments
+    /// * `function` - function to execute
+    /// * `task` - related task
+    /// * `cx` - global context
+    /// * `sc` - related task's scope
     ///
     /// # Returns
     ///
-    /// `Ok(AnyValue)` result of executing
+    /// `Ok(bool)` true - if task has to be run; false - if task can be skipped
     pub async fn execute(
         &self,
-        name: &str,
-        args: Vec<AnyValue>,
+        function: &Function,
+        task: &Task,
         cx: Context,
         sc: Scope,
-    ) -> Result<AnyValue, E> {
+    ) -> Result<bool, E> {
         let (tx, rx) = oneshot::channel();
-        self.tx.send(Demand::Execute(name.to_owned(), tx))?;
+        self.tx
+            .send(Demand::Execute(function.name.to_owned(), tx))?;
         let executor = rx.await??;
-        executor(args, cx, sc).await
+        executor(task, &function.args, cx, sc).await
     }
 }
