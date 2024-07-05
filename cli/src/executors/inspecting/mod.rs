@@ -1,4 +1,4 @@
-mod inspect;
+mod hash;
 
 use crate::{
     executors::{ExecutorFn, E},
@@ -6,6 +6,6 @@ use crate::{
 };
 
 pub fn register(store: &mut Store<ExecutorFn>) -> Result<(), E> {
-    store.insert(inspect::name(), inspect::execute)?;
+    store.insert(hash::name(), hash::execute)?;
     Ok(())
 }

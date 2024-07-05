@@ -1,0 +1,3 @@
+@env::is_os(linux) -> :build("a");
+@env::is_os(window) -> (:build("a"); :build("b"));
+@env::is_os(window) -> (:build("a"));

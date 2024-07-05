@@ -20,18 +20,20 @@ pub struct Component {
 }
 
 impl Component {
-    pub fn get_task(&self, name: &str) -> Option<&Task> {
-        self.elements.iter().find_map(|el| {
+    pub fn get_task(&self, name: &str) -> Option<(&Task, Vec<&Element>)> {
+        let mut funcs = Vec::new();
+        for el in self.elements.iter() {
             if let Element::Task(task, _) = el {
                 if task.get_name() == name {
-                    Some(task)
+                    return Some((task, funcs));
                 } else {
-                    None
+                    funcs.clear();
                 }
-            } else {
-                None
+            } else if matches!(el, Element::Function(..)) {
+                funcs.push(el);
             }
-        })
+        }
+        None
     }
     pub fn get_cwd(&self, cx: &Context) -> Result<Option<PathBuf>, scenario::E> {
         Ok(if let Some(path) = self.cwd.as_ref() {
@@ -105,7 +107,7 @@ impl Reading<Component> for Component {
                 let mut inner = reader.token()?.bound;
                 let mut elements: Vec<Element> = Vec::new();
                 while let Some(el) =
-                    Element::include(&mut inner, &[ElTarget::Task, ElTarget::Function])?
+                    Element::include(&mut inner, &[ElTarget::Task, ElTarget::Gatekeeper])?
                 {
                     let _ = inner.move_to().char(&[&chars::SEMICOLON]);
                     elements.push(el);
@@ -191,7 +193,7 @@ impl Operator for Component {
             let task = args.first().ok_or_else(|| {
                 operator::E::NoTaskForComponent(self.name.to_string(), self.get_tasks_names())
             })?;
-            let task = self.get_task(task).ok_or_else(|| {
+            let (task, gatekeepers) = self.get_task(task).ok_or_else(|| {
                 operator::E::TaskNotExists(
                     self.name.to_string(),
                     task.to_owned(),
@@ -386,6 +388,41 @@ mod processing {
             }
         );
     }
+
+    // #[tokio::test]
+    // async fn gatekeeper() {
+    //     process_string!(
+    //         &Configuration::logs(false),
+    //         &include_str!("../tests/processing/gatekeeper.sibs"),
+    //         |reader: &mut Reader, src: &mut Sources| {
+    //             let mut components: Vec<Component> = Vec::new();
+    //             while let Some(task) = src.report_err_if(Component::read(reader))? {
+    //                 components.push(task);
+    //             }
+    //             Ok::<Vec<Component>, LinkedErr<E>>(components)
+    //         },
+    //         |components: Vec<Component>, cx: Context, sc: Scope, _: Journal| async move {
+    //             for component in components.iter() {
+    //                 let result = component
+    //                     .execute(
+    //                         Some(component),
+    //                         &components,
+    //                         &["test".to_owned(), "a".to_owned()],
+    //                         cx.clone(),
+    //                         sc.clone(),
+    //                         CancellationToken::new(),
+    //                     )
+    //                     .await?
+    //                     .expect("component returns some value");
+    //                 assert_eq!(
+    //                     result.as_string().expect("Task returns string value"),
+    //                     "true".to_owned()
+    //                 );
+    //             }
+    //             Ok::<(), LinkedErr<E>>(())
+    //         }
+    //     );
+    // }
 }
 
 #[cfg(test)]

@@ -105,6 +105,10 @@ pub enum E {
     NoComponentDefinition,
     #[error("Fail to find optional redirection: \"=>\"")]
     NoOptionalRedirection,
+    #[error("Fail to find related task for gatekeeper: \"->\"")]
+    NoReferenceForGatekeeper,
+    #[error("Gatekeeper should be refered to task")]
+    GatekeeperShouldRefToTask,
     #[error("Fail to detect an action for optional statements")]
     FailFindActionForOptional,
     #[error("No loop input EACH($var) input [...]")]

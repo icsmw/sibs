@@ -13,6 +13,7 @@ pub const CMP_LBIG: &str = ">";
 pub const CMP_RBIG_INC: &str = "<=";
 pub const CMP_LBIG_INC: &str = ">=";
 pub const DO_ON: &str = "=>";
+pub const REF_TO: &str = "->";
 pub const META: &str = "///";
 pub const COMMENT: &str = "//";
 pub const COMP: &str = "#(";

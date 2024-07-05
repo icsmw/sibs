@@ -27,6 +27,3 @@
             :self:waiter_b;
         );
     ]
-
-
-@sig::wait(:component:build);

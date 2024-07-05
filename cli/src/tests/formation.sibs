@@ -2,9 +2,7 @@
 @import(./defaults.sibs);
 /// Application 
 #(app: ./app)
-    @hash 
-        (("./src"; "./dist"; :client; :shared; :wrapper);
-        (:build("dev")));
+    @hash ("./src"; "./dist"; :client; :shared; :wrapper) -> (:build("dev"));
     /// Building electron application 
     /// build dev >> build developing version
     /// build prod >> build production version

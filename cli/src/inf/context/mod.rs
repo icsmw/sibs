@@ -11,6 +11,8 @@ pub use scenario::*;
 pub use tracker::*;
 
 use crate::{
+    elements::{Element, Task},
+    executors::Executors,
     functions::Functions,
     inf::{AnyValue, Journal, Scope, Signals},
     reader::Sources,
@@ -50,6 +52,7 @@ pub struct Context {
     pub scenario: Scenario,
     pub journal: Journal,
     pub funcs: Functions,
+    pub execs: Executors,
     pub aborting: CancellationToken,
     pub scope: Scope,
     pub signals: Signals,
@@ -63,6 +66,7 @@ impl Context {
         let tracker = Tracker::init(journal.clone());
         let atlas = Atlas::init(src, journal);
         let funcs = Functions::init(journal)?;
+        let execs = Executors::init(journal)?;
         let scope = Scope::init(None, journal);
         let signals = Signals::init(journal);
         let (tx, mut rx): (UnboundedSender<ExitCode>, UnboundedReceiver<ExitCode>) =
@@ -73,6 +77,7 @@ impl Context {
             journal: journal.clone(),
             atlas: atlas.clone(),
             funcs: funcs.clone(),
+            execs: execs.clone(),
             state: state.clone(),
             scope: scope.clone(),
             signals: signals.clone(),
@@ -87,6 +92,7 @@ impl Context {
                     let _ = journal.err_if("tracker", tracker.destroy().await);
                     let _ = journal.err_if("atlas", atlas.destroy().await);
                     let _ = journal.err_if("functions", funcs.destroy().await);
+                    let _ = journal.err_if("executors", execs.destroy().await);
                     let _ = journal.err_if("global scope", scope.destroy().await);
                     let _ = journal.err_if("signals", signals.destroy().await);
                 })
@@ -171,6 +177,15 @@ impl Context {
     ///
     /// `Ok(AnyValue)` result of executing
     pub async fn execute(&self, name: &str, args: Vec<AnyValue>, sc: Scope) -> Result<AnyValue, E> {
+        // TODO: switch to element instead "name"
         Ok(self.funcs.execute(name, args, self.clone(), sc).await?)
+    }
+
+    pub async fn gatekeeper(&self, el: &Element, task: &Task, sc: Scope) -> Result<bool, E> {
+        let Element::Function(function, md) = el else {
+            return Err(E::IsNotFunction);
+        };
+        println!(">>>>>>>>>>>>>>>>>>>>>>>>> RUN GATEKEEPER FOR: {:?}", task);
+        Ok(self.execs.execute(function, task, self.clone(), sc).await?)
     }
 }

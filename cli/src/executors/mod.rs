@@ -1,6 +1,6 @@
 mod api;
 mod error;
-mod inspect;
+mod inspecting;
 
 use crate::{
     elements::{Element, Function, Task},
@@ -23,7 +23,7 @@ pub type ExecutorResult = Result<bool, E>;
 pub type ExecutorFn = fn(&Task, &[Element], Context, Scope) -> ExecutorPinnedResult;
 
 pub fn register(store: &mut Store<ExecutorFn>) -> Result<(), E> {
-    inspect::register(store)?;
+    inspecting::register(store)?;
     Ok(())
 }
 

@@ -158,7 +158,7 @@ impl Operator for Reference {
             } else {
                 return Err(operator::E::InvalidPartsInReference.by(self));
             };
-            let task = parent.get_task(task).ok_or(
+            let (task, gatekeepers) = parent.get_task(task).ok_or(
                 operator::E::TaskNotFound(task.to_owned(), parent.name.to_string()).by(self),
             )?;
             let mut args: Vec<String> = Vec::new();

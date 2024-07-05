@@ -3,6 +3,7 @@ mod comment;
 mod component;
 mod conditions;
 mod function;
+mod gatekeeper;
 mod meta;
 mod optional;
 mod primitives;
@@ -18,6 +19,7 @@ pub use comment::*;
 pub use component::*;
 pub use conditions::*;
 pub use function::*;
+pub use gatekeeper::*;
 pub use meta::*;
 pub use optional::*;
 pub use primitives::*;
@@ -49,6 +51,7 @@ pub enum ElTarget {
     Join,
     VariableAssignation,
     Optional,
+    Gatekeeper,
     Reference,
     PatternString,
     VariableName,
@@ -165,6 +168,7 @@ pub enum Element {
     Join(Join, Metadata),
     VariableAssignation(VariableAssignation, Metadata),
     Optional(Optional, Metadata),
+    Gatekeeper(Gatekeeper, Metadata),
     Reference(Reference, Metadata),
     PatternString(PatternString, Metadata),
     VariableName(VariableName, Metadata),
@@ -257,6 +261,11 @@ impl Element {
         if includes == targets.contains(&ElTarget::Optional) {
             if let Some(el) = Optional::read(reader)? {
                 return Ok(Some(Element::Optional(el, md)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::Gatekeeper) {
+            if let Some(el) = Gatekeeper::read(reader)? {
+                return Ok(Some(Element::Gatekeeper(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::Comparing) {
@@ -385,6 +394,7 @@ impl Element {
             Self::Condition(_, md) => md,
             Self::Subsequence(_, md) => md,
             Self::Optional(_, md) => md,
+            Self::Gatekeeper(_, md) => md,
             Self::Reference(_, md) => md,
             Self::PatternString(_, md) => md,
             Self::VariableName(_, md) => md,
@@ -420,6 +430,7 @@ impl Element {
             Self::Condition(..) => ElTarget::Condition,
             Self::Subsequence(..) => ElTarget::Subsequence,
             Self::Optional(..) => ElTarget::Optional,
+            Self::Gatekeeper(..) => ElTarget::Gatekeeper,
             Self::Reference(..) => ElTarget::Reference,
             Self::PatternString(..) => ElTarget::PatternString,
             Self::VariableName(..) => ElTarget::VariableName,
@@ -454,6 +465,7 @@ impl Element {
             Self::Condition(v, _) => v.to_string(),
             Self::Subsequence(v, _) => v.to_string(),
             Self::Optional(v, _) => v.to_string(),
+            Self::Gatekeeper(v, _) => v.to_string(),
             Self::Reference(v, _) => v.to_string(),
             Self::PatternString(v, _) => v.to_string(),
             Self::VariableName(v, _) => v.to_string(),
@@ -510,6 +522,7 @@ impl fmt::Display for Element {
                 Self::Condition(v, md) => as_string(v, md),
                 Self::Subsequence(v, md) => as_string(v, md),
                 Self::Optional(v, md) => as_string(v, md),
+                Self::Gatekeeper(v, md) => as_string(v, md),
                 Self::Reference(v, md) => as_string(v, md),
                 Self::PatternString(v, md) => as_string(v, md),
                 Self::VariableName(v, md) => as_string(v, md),
@@ -546,6 +559,7 @@ impl Formation for Element {
             Self::Condition(v, _) => v.elements_count(),
             Self::Subsequence(v, _) => v.elements_count(),
             Self::Optional(v, _) => v.elements_count(),
+            Self::Gatekeeper(v, _) => v.elements_count(),
             Self::Reference(v, _) => v.elements_count(),
             Self::PatternString(v, _) => v.elements_count(),
             Self::VariableName(v, _) => v.elements_count(),
@@ -598,6 +612,7 @@ impl Formation for Element {
             Self::Condition(v, m) => format_el(v, m, cursor),
             Self::Subsequence(v, m) => format_el(v, m, cursor),
             Self::Optional(v, m) => format_el(v, m, cursor),
+            Self::Gatekeeper(v, m) => format_el(v, m, cursor),
             Self::Reference(v, m) => format_el(v, m, cursor),
             Self::PatternString(v, m) => format_el(v, m, cursor),
             Self::VariableName(v, m) => format_el(v, m, cursor),
@@ -633,6 +648,7 @@ impl Operator for Element {
             Self::Condition(v, _) => v.token(),
             Self::Subsequence(v, _) => v.token(),
             Self::Optional(v, _) => v.token(),
+            Self::Gatekeeper(v, _) => v.token(),
             Self::Reference(v, _) => v.token(),
             Self::PatternString(v, _) => v.token(),
             Self::VariableName(v, _) => v.token(),
@@ -677,6 +693,7 @@ impl Operator for Element {
                 Self::Condition(v, _) => v.perform(owner, components, args, cx, sc, token).await,
                 Self::Subsequence(v, _) => v.perform(owner, components, args, cx, sc, token).await,
                 Self::Optional(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::Gatekeeper(v, _) => v.perform(owner, components, args, cx, sc, token).await,
                 Self::Reference(v, _) => v.perform(owner, components, args, cx, sc, token).await,
                 Self::PatternString(v, _) => {
                     v.perform(owner, components, args, cx, sc, token).await
@@ -771,9 +788,10 @@ mod proptest {
     use crate::{
         elements::{
             Block, Boolean, Breaker, Combination, Command, Comment, Comparing, Component,
-            Condition, Each, ElTarget, Element, First, Function, If, Integer, Join, Meta, Metadata,
-            Optional, PatternString, Reference, SimpleString, Subsequence, Task, Values,
-            VariableAssignation, VariableDeclaration, VariableName, VariableType, VariableVariants,
+            Condition, Each, ElTarget, Element, First, Function, Gatekeeper, If, Integer, Join,
+            Meta, Metadata, Optional, PatternString, Reference, SimpleString, Subsequence, Task,
+            Values, VariableAssignation, VariableDeclaration, VariableName, VariableType,
+            VariableVariants,
         },
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
@@ -917,6 +935,13 @@ mod proptest {
             collected.push(
                 Optional::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::Optional(el, Metadata::default()))
+                    .boxed(),
+            );
+        }
+        if targets.contains(&ElTarget::Gatekeeper) {
+            collected.push(
+                Gatekeeper::arbitrary_with(deep + 1)
+                    .prop_map(|el| Element::Gatekeeper(el, Metadata::default()))
                     .boxed(),
             );
         }
