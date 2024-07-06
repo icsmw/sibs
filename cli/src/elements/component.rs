@@ -208,6 +208,7 @@ impl Operator for Component {
                 },
                 &cx.journal,
             );
+            let mut skip = false;
             if !gatekeepers.is_empty() {
                 let actual_ref = task
                     .get_actual_ref(
@@ -219,32 +220,40 @@ impl Operator for Component {
                         token.clone(),
                     )
                     .await?;
-                println!(">>>>>>>>>>>>>>>>>>>>>>Actual REF: {actual_ref}");
                 for gatekeeper in gatekeepers.iter() {
                     let Element::Gatekeeper(gatekeeper, _) = gatekeeper else {
                         continue;
                     };
-                    if gatekeeper
-                        .get_refs()
-                        .iter()
-                        .any(|reference| reference == &&actual_ref)
-                    {
-                        println!(">>>>>>>>>>>>>>>>>>>> REF MATCH");
+                    let refs = gatekeeper.get_refs();
+                    if !refs.is_empty() && !refs.iter().any(|reference| reference == &&actual_ref) {
+                        continue;
                     }
-                    println!(
-                        ">>>>>>>>>>>>>>>>>>>>>>> REFS: {}",
-                        gatekeeper
-                            .get_refs()
-                            .iter()
-                            .map(|r| r.to_string())
-                            .collect::<Vec<String>>()
-                            .join(", ")
-                    )
+                    if !gatekeeper
+                        .execute(
+                            owner,
+                            components,
+                            &[],
+                            cx.clone(),
+                            sc.clone(),
+                            token.clone(),
+                        )
+                        .await?
+                        .ok_or(operator::E::NoValueFromGatekeeper)?
+                        .as_bool()
+                        .ok_or(operator::E::NoBoolValueFromGatekeeper)?
+                    {
+                        skip = true;
+                    } else {
+                        break;
+                    }
                 }
             }
-            let result = task
-                .execute(owner, components, &args[1..], cx, sc.clone(), token)
-                .await;
+            let result = if !skip {
+                task.execute(owner, components, &args[1..], cx, sc.clone(), token)
+                    .await
+            } else {
+                Ok(None)
+            };
             sc.destroy().await?;
             result
         })

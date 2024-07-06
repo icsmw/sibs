@@ -12,6 +12,10 @@ pub enum E {
     InvalidVariableDeclaration,
     #[error("Attempt to create reference from none string arguments")]
     NoneStringTaskArgumentForReference,
+    #[error("Gatekeeper doesn't return value")]
+    NoValueFromGatekeeper,
+    #[error("Gatekeeper doesn't return bool value")]
+    NoBoolValueFromGatekeeper,
     #[error("Operator method isn't supported")]
     NotSupported,
     #[error("Function's argument doesn't have return value")]

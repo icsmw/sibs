@@ -1,5 +1,5 @@
 use crate::{
-    functions::ExecutorPinnedResult,
+    functions::{ExecutorPinnedResult, E},
     inf::{tools::get_name, AnyValue, Context, Scope},
 };
 
@@ -7,16 +7,22 @@ pub fn name() -> String {
     get_name(module_path!())
 }
 
-pub fn execute(args: Vec<AnyValue>, _cx: Context, _sc: Scope) -> ExecutorPinnedResult {
+pub fn execute(args: Vec<AnyValue>, _cx: Context, sc: Scope) -> ExecutorPinnedResult {
     Box::pin(async move {
-        args.iter().for_each(|arg| {
-            if let Some(str) = arg.as_string() {
-                println!("{str}");
-            } else {
-                println!("{arg:?}");
-            }
-        });
-        Ok(AnyValue::empty())
+        let cwd = sc
+            .get_cwd()
+            .await?
+            .ok_or(E::IO(String::from("No CWD path")))?;
+        let mut paths = Vec::new();
+        for arg in args.iter() {
+            let Some(arg) = arg.as_path_buf() else {
+                return Err(E::InvalidFunctionArg(format!(
+                    "{arg:?} has to be a string or path"
+                )));
+            };
+            paths.push(cwd.join(arg));
+        }
+        Ok(AnyValue::bool(true))
     })
 }
 
