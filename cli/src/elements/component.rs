@@ -228,6 +228,7 @@ impl Operator for Component {
                     if !refs.is_empty() && !refs.iter().any(|reference| reference == &&actual_ref) {
                         continue;
                     }
+                    // On "true" - task should be done; on "false" - can be skipped.
                     if !gatekeeper
                         .execute(
                             owner,
@@ -244,8 +245,15 @@ impl Operator for Component {
                     {
                         skip = true;
                     } else {
+                        skip = false;
                         break;
                     }
+                }
+                if skip {
+                    cx.journal.debug(
+                        task.get_name(),
+                        format!("{actual_ref} will be skipped because gatekeeper conclusion"),
+                    );
                 }
             }
             let result = if !skip {
