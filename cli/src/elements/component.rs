@@ -21,16 +21,16 @@ pub struct Component {
 
 impl Component {
     pub fn get_task(&self, name: &str) -> Option<(&Task, Vec<&Element>)> {
-        let mut funcs = Vec::new();
+        let mut gatekeepers = Vec::new();
         for el in self.elements.iter() {
             if let Element::Task(task, _) = el {
                 if task.get_name() == name {
-                    return Some((task, funcs));
+                    return Some((task, gatekeepers));
                 } else {
-                    funcs.clear();
+                    gatekeepers.clear();
                 }
-            } else if matches!(el, Element::Function(..)) {
-                funcs.push(el);
+            } else if matches!(el, Element::Gatekeeper(..)) {
+                gatekeepers.push(el);
             }
         }
         None
@@ -208,6 +208,40 @@ impl Operator for Component {
                 },
                 &cx.journal,
             );
+            if !gatekeepers.is_empty() {
+                let actual_ref = task
+                    .get_actual_ref(
+                        owner,
+                        components,
+                        &args[1..],
+                        cx.clone(),
+                        sc.clone(),
+                        token.clone(),
+                    )
+                    .await?;
+                println!(">>>>>>>>>>>>>>>>>>>>>>Actual REF: {actual_ref}");
+                for gatekeeper in gatekeepers.iter() {
+                    let Element::Gatekeeper(gatekeeper, _) = gatekeeper else {
+                        continue;
+                    };
+                    if gatekeeper
+                        .get_refs()
+                        .iter()
+                        .any(|reference| reference == &&actual_ref)
+                    {
+                        println!(">>>>>>>>>>>>>>>>>>>> REF MATCH");
+                    }
+                    println!(
+                        ">>>>>>>>>>>>>>>>>>>>>>> REFS: {}",
+                        gatekeeper
+                            .get_refs()
+                            .iter()
+                            .map(|r| r.to_string())
+                            .collect::<Vec<String>>()
+                            .join(", ")
+                    )
+                }
+            }
             let result = task
                 .execute(owner, components, &args[1..], cx, sc.clone(), token)
                 .await;

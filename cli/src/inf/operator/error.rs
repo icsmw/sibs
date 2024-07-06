@@ -10,6 +10,8 @@ use thiserror::Error;
 pub enum E {
     #[error("Invalid variable declaration")]
     InvalidVariableDeclaration,
+    #[error("Attempt to create reference from none string arguments")]
+    NoneStringTaskArgumentForReference,
     #[error("Operator method isn't supported")]
     NotSupported,
     #[error("Function's argument doesn't have return value")]

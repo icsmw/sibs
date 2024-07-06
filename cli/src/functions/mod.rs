@@ -3,6 +3,7 @@ pub mod cx;
 pub mod env;
 mod error;
 pub mod fs;
+pub mod hash;
 pub mod load;
 pub mod logs;
 pub mod process;
@@ -39,6 +40,7 @@ pub fn register(store: &mut Store<ExecutorFn>) -> Result<(), E> {
     cx::register(store)?;
     process::register(store)?;
     sig::register(store)?;
+    hash::register(store)?;
     test::register(store)?;
     Ok(())
 }

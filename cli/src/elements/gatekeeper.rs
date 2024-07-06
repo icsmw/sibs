@@ -1,7 +1,7 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{Component, ElTarget, Element},
+    elements::{Component, ElTarget, Element, Reference},
     error::LinkedErr,
     inf::{
         operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
@@ -18,6 +18,21 @@ pub struct Gatekeeper {
     pub token: usize,
 }
 
+impl Gatekeeper {
+    pub fn get_refs(&self) -> Vec<&Reference> {
+        let mut refs = Vec::new();
+        let Element::Values(values, _) = self.refs.as_ref() else {
+            unreachable!("References can be stored only in Values of Gatekeeper")
+        };
+        for el in values.elements.iter() {
+            let Element::Reference(reference, _) = el else {
+                unreachable!("Only references can be stored in Gatekeeper")
+            };
+            refs.push(reference);
+        }
+        refs
+    }
+}
 impl Reading<Gatekeeper> for Gatekeeper {
     fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
         if reader.rest().trim().starts_with(words::REF_TO) {
@@ -213,7 +228,7 @@ mod processing {
     use tokio_util::sync::CancellationToken;
 
     use crate::{
-        elements::Task,
+        elements::Component,
         error::LinkedErr,
         inf::{
             operator::{Operator, E},
@@ -227,32 +242,28 @@ mod processing {
     async fn reading() {
         process_string!(
             &Configuration::logs(false),
-            &include_str!("../tests/processing/optional.sibs"),
+            &include_str!("../tests/processing/gatekeeper.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
-                let mut tasks: Vec<Task> = Vec::new();
-                while let Some(task) = src.report_err_if(Task::read(reader))? {
+                let mut components: Vec<Component> = Vec::new();
+                while let Some(component) = src.report_err_if(Component::read(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-                    tasks.push(task);
+                    components.push(component);
                 }
-                Ok::<Vec<Task>, LinkedErr<E>>(tasks)
+                Ok::<Vec<Component>, LinkedErr<E>>(components)
             },
-            |tasks: Vec<Task>, cx: Context, sc: Scope, _: Journal| async move {
-                for task in tasks.iter() {
-                    let result = task
+            |components: Vec<Component>, cx: Context, sc: Scope, _: Journal| async move {
+                for component in components.iter() {
+                    let result = component
                         .execute(
                             None,
-                            &[],
-                            &[],
+                            &components,
+                            &[String::from("test"), String::from("a")],
                             cx.clone(),
                             sc.clone(),
                             CancellationToken::new(),
                         )
-                        .await?
-                        .expect("Task returns some value");
-                    assert_eq!(
-                        result.as_string().expect("Task returns string value"),
-                        "true".to_owned()
-                    );
+                        .await
+                        .expect("Component is executed");
                 }
                 Ok::<(), LinkedErr<E>>(())
             }

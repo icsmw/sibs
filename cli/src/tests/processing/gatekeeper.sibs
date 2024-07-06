@@ -1,10 +1,15 @@
 #(a: ./)
-    @inspecting::hash("../processing"; "../error") -> (:test("a"));
+    @hash::inspect("../processing"; "../error") -> (:test("a"));
     test($a: a | b) [
         @print("Task test is done with {$a}");
     ];
 #(b: ./)
-    @inspecting::hash("../processing"; "../error") -> ();
+    @hash::inspect("../processing"; "../error") -> (:test("a"); :test("b"));
+    test($a: a | b) [
+        @print("Task test is done with {$a}");
+    ];
+#(c: ./)
+    @hash::inspect("../processing"; "../error") -> ();
     test($a: a | b) [
         @print("Task test is done with {$a}");
     ];

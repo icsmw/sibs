@@ -6,7 +6,10 @@ use crate::{
     inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
     reader::{chars, Reader, Reading, E},
 };
-use std::fmt;
+use std::{
+    cmp::{Eq, PartialEq},
+    fmt,
+};
 
 const SELF: &str = "self";
 
@@ -16,6 +19,13 @@ pub struct Reference {
     pub inputs: Vec<Element>,
     pub token: usize,
 }
+
+impl PartialEq for Reference {
+    fn eq(&self, other: &Self) -> bool {
+        self.to_string() == other.to_string()
+    }
+}
+impl Eq for Reference {}
 
 impl Reading<Reference> for Reference {
     fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {

@@ -3,7 +3,10 @@ use tokio_util::sync::CancellationToken;
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
+    inf::{
+        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
+        Scope,
+    },
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -13,6 +16,50 @@ pub struct VariableDeclaration {
     pub variable: Box<Element>,
     pub declaration: Box<Element>,
     pub token: usize,
+}
+
+impl VariableDeclaration {
+    pub async fn get_val<'a>(
+        &'a self,
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: Context,
+        sc: Scope,
+        token: CancellationToken,
+    ) -> Result<AnyValue, LinkedErr<operator::E>> {
+        let input = if args.len() != 1 {
+            Err(operator::E::InvalidNumberOfArgumentsForDeclaration)?
+        } else {
+            args[0].to_owned()
+        };
+        let mut output = if let Element::VariableType(el, _) = self.declaration.as_ref() {
+            Some(
+                el.execute(
+                    owner,
+                    components,
+                    &[input.clone()],
+                    cx.clone(),
+                    sc.clone(),
+                    token.clone(),
+                )
+                .await?,
+            )
+        } else {
+            None
+        };
+        output = if let Element::VariableVariants(el, _) = self.declaration.as_ref() {
+            Some(
+                el.execute(owner, components, &[input], cx, sc.clone(), token)
+                    .await?,
+            )
+        } else {
+            output
+        };
+        Ok(output
+            .ok_or(operator::E::FailToExtractValue)?
+            .ok_or(operator::E::NoValueToDeclareTaskArgument)?)
+    }
 }
 
 impl Reading<VariableDeclaration> for VariableDeclaration {
@@ -55,43 +102,14 @@ impl Operator for VariableDeclaration {
         token: CancellationToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
-            let input = if args.len() != 1 {
-                Err(operator::E::InvalidNumberOfArgumentsForDeclaration)?
-            } else {
-                args[0].to_owned()
-            };
-            let mut output = if let Element::VariableType(el, _) = self.declaration.as_ref() {
-                Some(
-                    el.execute(
-                        owner,
-                        components,
-                        &[input.clone()],
-                        cx.clone(),
-                        sc.clone(),
-                        token.clone(),
-                    )
-                    .await?,
-                )
-            } else {
-                None
-            };
-            output = if let Element::VariableVariants(el, _) = self.declaration.as_ref() {
-                Some(
-                    el.execute(owner, components, &[input], cx, sc.clone(), token)
-                        .await?,
-                )
-            } else {
-                output
-            };
             sc.set_var(
                 if let Element::VariableName(el, _) = self.variable.as_ref() {
                     &el.name
                 } else {
                     Err(operator::E::FailToGetDeclaredVariable)?
                 },
-                output
-                    .ok_or(operator::E::FailToExtractValue)?
-                    .ok_or(operator::E::NoValueToDeclareTaskArgument)?,
+                self.get_val(owner, components, args, cx, sc.clone(), token)
+                    .await?,
             )
             .await?;
             Ok(None)

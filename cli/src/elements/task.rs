@@ -1,9 +1,15 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{Component, ElTarget, Element, SimpleString},
+    elements::{
+        Boolean, Component, ElTarget, Element, Integer, Metadata, PatternString, Reference,
+        SimpleString,
+    },
     error::LinkedErr,
-    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
+    inf::{
+        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
+        Scope,
+    },
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;
@@ -20,6 +26,96 @@ pub struct Task {
 impl Task {
     pub fn get_name(&self) -> &str {
         &self.name.value
+    }
+    pub async fn get_args_values<'a>(
+        &'a self,
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: Context,
+        sc: Scope,
+        token: CancellationToken,
+    ) -> Result<Vec<AnyValue>, LinkedErr<operator::E>> {
+        if self.declarations.len() != args.len() {
+            Err(operator::E::DismatchTaskArgumentsCount(
+                self.declarations.len(),
+                self.declarations
+                    .iter()
+                    .map(|d| d.to_string())
+                    .collect::<Vec<String>>()
+                    .join(", "),
+                args.len(),
+                args.join(", "),
+            )
+            .by(self))?;
+        }
+        let mut values = Vec::new();
+        for (i, el) in self.declarations.iter().enumerate() {
+            if let Element::VariableDeclaration(declaration, _) = el {
+                values.push(
+                    declaration
+                        .get_val(
+                            owner,
+                            components,
+                            &[args[i].to_owned()],
+                            cx.clone(),
+                            sc.clone(),
+                            token.clone(),
+                        )
+                        .await?,
+                );
+            } else {
+                return Err(operator::E::InvalidVariableDeclaration.by(self));
+            }
+        }
+        Ok(values)
+    }
+    pub async fn get_actual_ref<'a>(
+        &'a self,
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+        args: &'a [String],
+        cx: Context,
+        sc: Scope,
+        token: CancellationToken,
+    ) -> Result<Reference, LinkedErr<operator::E>> {
+        let mut inputs = Vec::new();
+        for arg in self
+            .get_args_values(owner, components, args, cx, sc, token)
+            .await?
+            .into_iter()
+        {
+            if let Some(v) = arg.as_num() {
+                inputs.push(Element::Integer(
+                    Integer { value: v, token: 0 },
+                    Metadata::empty(),
+                ));
+            } else if let AnyValue::bool(v) = arg {
+                inputs.push(Element::Boolean(
+                    Boolean { value: v, token: 0 },
+                    Metadata::empty(),
+                ));
+            } else if let Some(value) = arg.as_string() {
+                inputs.push(Element::PatternString(
+                    PatternString {
+                        pattern: value.clone(),
+                        elements: vec![Element::SimpleString(
+                            SimpleString { value, token: 0 },
+                            Metadata::empty(),
+                        )],
+                        token: 0,
+                    },
+                    Metadata::empty(),
+                ));
+            } else {
+                return Err(operator::E::NoneStringTaskArgumentForReference.by(self));
+            }
+        }
+        Ok(Reference {
+            path: vec![self.get_name().to_owned()],
+            inputs,
+            token: 0,
+        })
     }
 }
 

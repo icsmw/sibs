@@ -26,7 +26,10 @@ impl Reading<Values> for Values {
             let mut inner = token.bound;
             let mut elements: Vec<Element> = Vec::new();
             if inner.rest().trim().is_empty() {
-                Err(E::EmptyValue.linked(&token.id))?;
+                return Ok(Some(Values {
+                    token: close(reader),
+                    elements,
+                }));
             }
             while let Some(el) = Element::include(
                 &mut inner,

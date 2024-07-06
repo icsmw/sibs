@@ -1,4 +1,3 @@
 $var = not_valid_value;
-$var = ();
 $var = [];
 $var = IF $dev == "one" [ @env::is_os ];

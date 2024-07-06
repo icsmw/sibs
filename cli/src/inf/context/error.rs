@@ -1,4 +1,4 @@
-use crate::{executors, functions, inf::context::scenario, reader};
+use crate::{functions, inf::context::scenario, reader};
 use thiserror::Error;
 use tokio::sync::{mpsc, oneshot};
 
@@ -6,8 +6,6 @@ use tokio::sync::{mpsc, oneshot};
 pub enum E {
     #[error("Scenario error: {0}")]
     ScenarionError(scenario::E),
-    #[error("Executors error: {0}")]
-    ExecutorsError(executors::E),
     #[error("Functions error: {0}")]
     FunctionsError(functions::E),
     #[error("Reader error: {0}")]
@@ -37,12 +35,6 @@ impl From<scenario::E> for E {
 impl From<functions::E> for E {
     fn from(e: functions::E) -> Self {
         E::FunctionsError(e)
-    }
-}
-
-impl From<executors::E> for E {
-    fn from(e: executors::E) -> Self {
-        E::ExecutorsError(e)
     }
 }
 
