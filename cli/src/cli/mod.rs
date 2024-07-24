@@ -109,30 +109,30 @@ pub async fn process(journal: Journal) -> Result<(), E> {
     } else {
         Some(income.remove(0))
     } {
-        let result = if let Some(component) = components
+        let Some(component) = components
             .iter()
             .find(|comp| comp.name.to_string() == component)
-        {
-            let sc = Scope::init(
-                cx.scenario.filename.parent().map(|p| p.to_path_buf()),
-                &journal,
-            );
-            component
-                .execute(
-                    Some(component),
-                    &components,
-                    &income,
-                    cx.clone(),
-                    sc.clone(),
-                    cx.aborting.clone(),
-                )
-                .await
-                .map(|_| ())
-                .map_err(|e| e.into())
-        } else {
-            Err(E::ComponentNotExists(component.to_string()))
+        else {
+            return Err(E::ComponentNotExists(component.to_string()));
         };
-        result.map(|_| ())
+        let sc = Scope::init(
+            cx.scenario.filename.parent().map(|p| p.to_path_buf()),
+            &journal,
+        );
+        let result = component
+            .execute(
+                Some(component),
+                &components,
+                &income,
+                cx.clone(),
+                sc.clone(),
+                cx.aborting.clone(),
+            )
+            .await
+            .map(|_| ())
+            .map_err(|e| e.into());
+        sc.destroy().await?;
+        result
     } else {
         Err(E::NoArguments)
     };

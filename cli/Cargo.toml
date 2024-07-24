@@ -17,6 +17,10 @@ tokio-util = { version = "0.7", features = ["codec"] }
 importer = { path = "../importer" }
 futures = "0.3.30"
 chrono = "0.4.38"
+bstorage = "0.2.1"
+serde = { version = "1.0", features = ["derive"] }
+blake3 = "1.5.3"
+fshasher = "0.3.1"
 
 [dependencies.uuid]
 version = "1.8.0"

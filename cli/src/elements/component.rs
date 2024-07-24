@@ -439,41 +439,6 @@ mod processing {
             }
         );
     }
-
-    // #[tokio::test]
-    // async fn gatekeeper() {
-    //     process_string!(
-    //         &Configuration::logs(false),
-    //         &include_str!("../tests/processing/gatekeeper.sibs"),
-    //         |reader: &mut Reader, src: &mut Sources| {
-    //             let mut components: Vec<Component> = Vec::new();
-    //             while let Some(task) = src.report_err_if(Component::read(reader))? {
-    //                 components.push(task);
-    //             }
-    //             Ok::<Vec<Component>, LinkedErr<E>>(components)
-    //         },
-    //         |components: Vec<Component>, cx: Context, sc: Scope, _: Journal| async move {
-    //             for component in components.iter() {
-    //                 let result = component
-    //                     .execute(
-    //                         Some(component),
-    //                         &components,
-    //                         &["test".to_owned(), "a".to_owned()],
-    //                         cx.clone(),
-    //                         sc.clone(),
-    //                         CancellationToken::new(),
-    //                     )
-    //                     .await?
-    //                     .expect("component returns some value");
-    //                 assert_eq!(
-    //                     result.as_string().expect("Task returns string value"),
-    //                     "true".to_owned()
-    //                 );
-    //             }
-    //             Ok::<(), LinkedErr<E>>(())
-    //         }
-    //     );
-    // }
 }
 
 #[cfg(test)]

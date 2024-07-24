@@ -38,6 +38,8 @@ pub enum E {
     Store(store::E),
     #[error("AnyValue error: {0}")]
     AnyValue(value::E),
+    #[error("Other error: {0}")]
+    Other(String),
 }
 
 impl From<store::E> for E {
