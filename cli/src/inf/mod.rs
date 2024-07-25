@@ -20,5 +20,4 @@ pub use operator::*;
 pub use scope::*;
 pub use signals::*;
 pub use store::*;
-pub use term::*;
 pub use value::*;

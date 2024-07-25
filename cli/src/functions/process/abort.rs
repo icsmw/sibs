@@ -1,4 +1,5 @@
 use crate::{
+    elements::FuncArg,
     functions::ExecutorPinnedResult,
     inf::{operator, tools::get_last_name, AnyValue, Context, Scope},
 };
@@ -7,16 +8,25 @@ pub fn name() -> String {
     get_last_name(module_path!())
 }
 
-pub fn execute(args: Vec<AnyValue>, cx: Context, _sc: Scope) -> ExecutorPinnedResult {
+pub fn execute(
+    args: Vec<FuncArg>,
+    _args_token: usize,
+    cx: Context,
+    _sc: Scope,
+) -> ExecutorPinnedResult {
     Box::pin(async move {
         cx.abort(
             if let Some(arg) = args.first() {
-                arg.as_num().ok_or(operator::E::FailToExtractValue)?
+                arg.value.as_num().ok_or(operator::E::FailToExtractValue)?
             } else {
                 0
             } as i32,
             if let Some(arg) = args.get(1) {
-                Some(arg.as_string().ok_or(operator::E::FailToExtractValue)?)
+                Some(
+                    arg.value
+                        .as_string()
+                        .ok_or(operator::E::FailToExtractValue)?,
+                )
             } else {
                 None
             },

@@ -70,13 +70,11 @@ impl Formation for Join {
 
 enum TaskError {
     Join(JoinError),
-    Operator(LinkedErr<operator::E>),
 }
 
 impl From<TaskError> for LinkedErr<operator::E> {
     fn from(err: TaskError) -> Self {
         match err {
-            TaskError::Operator(err) => err,
             TaskError::Join(err) => operator::E::JoinError(err.to_string()).unlinked(),
         }
     }
@@ -131,7 +129,7 @@ impl Operator for Join {
             while let Some(result) = futures.next().await {
                 match result {
                     Ok(Ok(result)) => {
-                        results.push(Ok(result.unwrap_or_else(|| AnyValue::empty())));
+                        results.push(Ok(result.unwrap_or_else(AnyValue::empty)));
                     }
                     Ok(Err(err)) => {
                         if !token.is_cancelled() {

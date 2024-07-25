@@ -3,10 +3,7 @@ use tokio_util::sync::CancellationToken;
 use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
-    inf::{
-        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
-        Scope,
-    },
+    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
     reader::{chars, Reader, Reading, E},
 };
 use std::fmt;

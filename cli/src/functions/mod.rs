@@ -11,7 +11,11 @@ pub mod sig;
 pub mod str;
 pub mod test;
 
-use crate::inf::{AnyValue, Context, Journal, Scope, Store};
+use crate::{
+    elements::FuncArg,
+    error::LinkedErr,
+    inf::{AnyValue, Context, Journal, Scope, Store},
+};
 use api::*;
 pub use error::E;
 use std::{future::Future, pin::Pin};
@@ -25,8 +29,8 @@ use tokio::{
 use tokio_util::sync::CancellationToken;
 
 pub type ExecutorPinnedResult = Pin<Box<dyn Future<Output = ExecutorResult> + Send>>;
-pub type ExecutorResult = Result<AnyValue, E>;
-pub type ExecutorFn = fn(Vec<AnyValue>, Context, Scope) -> ExecutorPinnedResult;
+pub type ExecutorResult = Result<AnyValue, LinkedErr<E>>;
+pub type ExecutorFn = fn(Vec<FuncArg>, usize, Context, Scope) -> ExecutorPinnedResult;
 
 pub trait TryAnyTo<T> {
     fn try_to(&self) -> Result<T, E>;
@@ -104,13 +108,14 @@ impl Functions {
     pub async fn execute(
         &self,
         name: &str,
-        args: Vec<AnyValue>,
+        args: Vec<FuncArg>,
+        args_token: usize,
         cx: Context,
         sc: Scope,
-    ) -> Result<AnyValue, E> {
+    ) -> Result<AnyValue, LinkedErr<E>> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(Demand::Execute(name.to_owned(), tx))?;
         let executor = rx.await??;
-        executor(args, cx, sc).await
+        executor(args, args_token, cx, sc).await
     }
 }

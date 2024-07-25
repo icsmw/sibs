@@ -1,6 +1,7 @@
 use crate::inf::{journal::Report, Journal};
 use std::process;
 
+#[allow(unused)]
 pub async fn exit<T>(journal: Journal, err: T)
 where
     T: std::fmt::Debug + Into<Report>,

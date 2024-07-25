@@ -173,6 +173,7 @@ impl AnyValue {
         }
     }
 
+    #[allow(unused)]
     pub fn get_mut<T: 'static>(&mut self) -> Option<&mut T> {
         match self {
             AnyValue::Cmb(v) if TypeId::of::<T>() == TypeId::of::<Cmb>() => {

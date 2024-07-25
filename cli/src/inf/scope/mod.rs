@@ -19,7 +19,6 @@ use uuid::Uuid;
 enum Action {
     Check(bool),
     Break,
-    Nothing,
 }
 
 #[derive(Debug, Clone)]
@@ -114,7 +113,6 @@ impl Scope {
                     Action::Break => {
                         break;
                     }
-                    Action::Nothing => {}
                 }
             }
             state.cancel();

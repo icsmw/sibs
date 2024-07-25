@@ -71,6 +71,7 @@ pub enum ElTarget {
     VariableVariants,
     VariableType,
     SimpleString,
+    #[allow(unused)]
     Comment,
 }
 
@@ -90,6 +91,7 @@ impl Metadata {
             inverting: false,
         }
     }
+    #[allow(unused)]
     pub fn comments(&self) -> Vec<&Comment> {
         self.elements
             .iter()

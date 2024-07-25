@@ -12,6 +12,21 @@ use crate::{
 use std::fmt;
 
 #[derive(Debug, Clone)]
+pub struct FuncArg {
+    pub value: AnyValue,
+    pub token: usize,
+}
+
+impl FuncArg {
+    pub fn new(value: AnyValue, token: usize) -> Self {
+        Self { value, token }
+    }
+    pub fn err<T: Clone + fmt::Display>(&self, err: T) -> LinkedErr<T> {
+        LinkedErr::new(err, Some(self.token))
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Function {
     pub name: String,
     pub args: Vec<Element>,
@@ -193,10 +208,10 @@ impl Function {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> Result<Vec<AnyValue>, operator::E> {
-        let mut values: Vec<AnyValue> = Vec::new();
+    ) -> Result<Vec<FuncArg>, operator::E> {
+        let mut values: Vec<FuncArg> = Vec::new();
         for arg in self.args.iter() {
-            values.push(
+            values.push(FuncArg::new(
                 arg.execute(
                     owner,
                     components,
@@ -207,7 +222,8 @@ impl Function {
                 )
                 .await?
                 .ok_or(operator::E::NotAllArguamentsHasReturn)?,
-            )
+                arg.token(),
+            ))
         }
         Ok(values)
     }
@@ -309,7 +325,7 @@ impl Operator for Function {
         token: CancellationToken,
     ) -> OperatorPinnedResult {
         Box::pin(async move {
-            let mut args: Vec<AnyValue> = self
+            let mut args: Vec<FuncArg> = self
                 .get_processed_args(
                     owner,
                     components,
@@ -322,23 +338,29 @@ impl Operator for Function {
             if let Some(func) = self.feed.as_ref() {
                 args.insert(
                     0,
-                    cx.execute(
-                        &func.name,
-                        func.get_processed_args(
-                            owner,
-                            components,
-                            inputs,
-                            cx.clone(),
+                    FuncArg::new(
+                        cx.execute(
+                            &func.name,
+                            func.get_processed_args(
+                                owner,
+                                components,
+                                inputs,
+                                cx.clone(),
+                                sc.clone(),
+                                token,
+                            )
+                            .await?,
+                            func.args_token,
                             sc.clone(),
-                            token,
                         )
                         .await?,
-                        sc.clone(),
-                    )
-                    .await?,
+                        func.token(),
+                    ),
                 );
             };
-            Ok(Some(cx.execute(&self.name, args, sc).await?))
+            Ok(Some(
+                cx.execute(&self.name, args, self.args_token, sc).await?,
+            ))
         })
     }
 }

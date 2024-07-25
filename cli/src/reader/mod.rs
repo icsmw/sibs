@@ -29,7 +29,9 @@ pub trait Reading<T> {
 pub struct Token {
     pub content: String,
     pub id: usize,
+    #[allow(unused)]
     pub from: usize,
+    #[allow(unused)]
     pub len: usize,
     pub bound: Reader,
 }

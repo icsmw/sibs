@@ -13,19 +13,14 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct PatternString {
-    pub pattern: String,
     pub elements: Vec<Element>,
     pub token: usize,
 }
 
 impl Reading<PatternString> for PatternString {
     fn read(reader: &mut Reader) -> Result<Option<PatternString>, LinkedErr<E>> {
-        if let Some((pattern, elements, token)) = string::read(reader, chars::QUOTES)? {
-            Ok(Some(PatternString {
-                pattern,
-                elements,
-                token,
-            }))
+        if let Some((_, elements, token)) = string::read(reader, chars::QUOTES)? {
+            Ok(Some(PatternString { elements, token }))
         } else {
             Ok(None)
         }
@@ -210,7 +205,6 @@ mod proptest {
         fn default() -> Self {
             PatternString {
                 elements: Vec::new(),
-                pattern: String::from("default"),
                 token: 0,
             }
         }
@@ -237,7 +231,6 @@ mod proptest {
                                 },
                                 Metadata::empty(),
                             )],
-                            pattern,
                             token: 0,
                         }
                     })
@@ -257,18 +250,12 @@ mod proptest {
                     ),
                 )
                     .prop_map(|(injections, mut noise)| {
-                        let mut pattern: String = String::new();
                         let mut elements: Vec<Element> = Vec::new();
-                        for (i, injection) in injections.into_iter().enumerate() {
-                            pattern = format!("{}{{{injection}}}", noise[i]);
+                        for injection in injections.into_iter() {
                             elements.extend_from_slice(&[noise.remove(0), injection]);
                         }
                         elements.push(noise.remove(0));
-                        PatternString {
-                            elements,
-                            pattern,
-                            token: 0,
-                        }
+                        PatternString { elements, token: 0 }
                     })
                     .boxed()
             }

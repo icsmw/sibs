@@ -131,15 +131,15 @@ pub enum E {
     IO(String),
     #[error("{0}: {1}")]
     OwnedError(String, String),
-    #[error("Context error: {0}")]
+    #[error("{0}")]
     ContextError(context::E),
-    #[error("Executor error: {0}")]
+    #[error("{0}")]
     ExecutorError(functions::E),
-    #[error("Operator error: {0}")]
-    OperatorError(String),
-    #[error("Map error: {0}")]
+    #[error("{0}")]
+    OperatorError(Box<operator::E>),
+    #[error("{0}")]
     MapError(map::E),
-    #[error("Journal error: {0}")]
+    #[error("{0}")]
     JournalError(journal::E),
 }
 
@@ -177,7 +177,7 @@ impl From<journal::E> for LinkedErr<E> {
 
 impl From<operator::E> for LinkedErr<E> {
     fn from(e: operator::E) -> Self {
-        E::OperatorError(e.to_string()).unlinked()
+        E::OperatorError(Box::new(e)).unlinked()
     }
 }
 

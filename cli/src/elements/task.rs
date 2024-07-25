@@ -98,7 +98,6 @@ impl Task {
             } else if let Some(value) = arg.as_string() {
                 inputs.push(Element::PatternString(
                     PatternString {
-                        pattern: value.clone(),
                         elements: vec![Element::SimpleString(
                             SimpleString { value, token: 0 },
                             Metadata::empty(),

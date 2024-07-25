@@ -9,7 +9,7 @@ pub enum E {
     Setup(String),
     #[error("Error on executing \"{0}\": {1}")]
     Executing(String, String),
-    #[error("Tracker error {0}")]
+    #[error("{0}")]
     TrackerError(tracker::E),
 }
 

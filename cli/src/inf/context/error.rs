@@ -4,16 +4,14 @@ use tokio::sync::{mpsc, oneshot};
 
 #[derive(Error, Debug, Clone)]
 pub enum E {
-    #[error("Scenario error: {0}")]
+    #[error("{0}")]
     ScenarionError(scenario::E),
-    #[error("Functions error: {0}")]
+    #[error("{0}")]
     FunctionsError(functions::E),
-    #[error("Reader error: {0}")]
+    #[error("{0}")]
     ReaderError(String),
     #[error("IO error: {0}")]
     IO(String),
-    #[error("Element isn't a Function")]
-    IsNotFunction,
     #[error("Fail to receive channel message: {0}")]
     RecvError(String),
     #[error("Fail to send channel message: {0}")]

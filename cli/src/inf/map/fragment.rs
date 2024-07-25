@@ -3,9 +3,13 @@ use regex::Regex;
 #[derive(Debug)]
 pub struct Fragment {
     pub content: String,
+    #[allow(unused)]
     pub lined: String,
+    #[allow(unused)]
     pub from: usize,
+    #[allow(unused)]
     pub len: usize,
+    #[allow(unused)]
     pub to: usize,
 }
 

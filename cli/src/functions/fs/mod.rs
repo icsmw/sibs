@@ -1,4 +1,5 @@
 use crate::{
+    elements::FuncArg,
     functions::{ExecutorFn, ExecutorPinnedResult, TryAnyTo, E},
     inf::{AnyValue, Context, Scope, Store},
 };

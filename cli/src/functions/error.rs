@@ -1,19 +1,20 @@
-use crate::inf::{context, operator, store, value};
+use crate::{
+    error::LinkedErr,
+    inf::{context, operator, store, value},
+};
 use thiserror::Error;
 use tokio::sync::{mpsc, oneshot};
 
 #[derive(Error, Debug, Clone)]
 pub enum E {
-    #[error("Context error: {0}")]
+    #[error("{0}")]
     Context(String),
-    #[error("Operator error: {0}")]
+    #[error("{0}")]
     Operator(String),
     #[error("Function \"{0}\" executing error: {1}")]
     FunctionExecuting(String, String),
     #[error("Fail convert value to: {0}")]
     Converting(String),
-    #[error("Type isn't supported")]
-    NotSupportedType(String),
     #[error("Invalid function's argument: {0}")]
     InvalidFunctionArg(String),
     #[error("Invalid arguments length; required: {0}; gotten: {1}")]
@@ -24,8 +25,6 @@ pub enum E {
     SystemTimeError(String),
     #[error("VarError error: {0}")]
     VarError(String),
-    #[error("Function \"{0}\" already has been registred")]
-    FunctionExists(String),
     #[error("Function \"{0}\" not exists")]
     FunctionNotExists(String),
     #[error("Fail to receive channel message: {0}")]
@@ -34,14 +33,67 @@ pub enum E {
     SendError(String),
     #[error("Error on executing \"{0}\": {1}")]
     Executing(String, String),
-    #[error("Store error: {0}")]
+    #[error("{0}")]
     Store(store::E),
-    #[error("AnyValue error: {0}")]
+    #[error("{0}")]
     AnyValue(value::E),
-    #[error("Other error: {0}")]
+    #[error("{0}")]
     Other(String),
 }
 
+impl From<context::E> for LinkedErr<E> {
+    fn from(err: context::E) -> Self {
+        LinkedErr::unlinked(err.into())
+    }
+}
+
+impl From<value::E> for LinkedErr<E> {
+    fn from(err: value::E) -> Self {
+        LinkedErr::unlinked(err.into())
+    }
+}
+
+impl From<E> for LinkedErr<E> {
+    fn from(err: E) -> Self {
+        LinkedErr::unlinked(err)
+    }
+}
+
+impl From<fshasher::E> for LinkedErr<E> {
+    fn from(err: fshasher::E) -> Self {
+        LinkedErr::unlinked(err.into())
+    }
+}
+
+impl From<bstorage::E> for LinkedErr<E> {
+    fn from(err: bstorage::E) -> Self {
+        LinkedErr::unlinked(err.into())
+    }
+}
+
+impl From<operator::E> for LinkedErr<E> {
+    fn from(err: operator::E) -> Self {
+        LinkedErr::unlinked(err.into())
+    }
+}
+
+impl From<oneshot::error::RecvError> for LinkedErr<E> {
+    fn from(value: oneshot::error::RecvError) -> Self {
+        LinkedErr::unlinked(E::RecvError(value.to_string()))
+    }
+}
+
+impl<T> From<mpsc::error::SendError<T>> for LinkedErr<E> {
+    fn from(value: mpsc::error::SendError<T>) -> Self {
+        LinkedErr::unlinked(E::SendError(value.to_string()))
+    }
+}
+
+// impl From<LinkedErr<context::E>> for LinkedErr<E> {
+//     fn from(err: LinkedErr<context::E>) -> Self {
+//         LinkedErr::new(err.e.into(), err.token)
+//     }
+// }
 impl From<store::E> for E {
     fn from(e: store::E) -> Self {
         E::Store(e)

@@ -26,15 +26,15 @@ pub enum E {
     IO(#[from] std::io::Error),
     #[error("Syntax error: {0}")]
     ReaderError(reader::error::E),
-    #[error("Context error: {0}")]
+    #[error("{0}")]
     ContextError(context::E),
-    #[error("Scenario error: {0}")]
+    #[error("{0}")]
     ScenarioError(scenario::E),
     #[error("Fail to execute.\n{0}")]
     OperatorError(operator::E),
-    #[error("AnyValue error: {0}")]
+    #[error("{0}")]
     AnyValue(value::E),
-    #[error("Error: {0}")]
+    #[error("{0}")]
     Other(String),
 }
 

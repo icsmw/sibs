@@ -1,6 +1,6 @@
-use std::path::Path;
-
 use crate::{
+    elements::FuncArg,
+    error::LinkedErr,
     functions::{ExecutorPinnedResult, E},
     inf::{tools::get_name, AnyValue, Context, Scope},
 };
@@ -10,6 +10,7 @@ use fshasher::{
     hasher::blake::Blake, reader::buffering::Buffering, Entry, Filter, Options as HasherOptions,
 };
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 
 /// TODO:
 /// - PatternFilter isn't available
@@ -45,10 +46,15 @@ pub fn name() -> String {
     get_name(module_path!())
 }
 
-pub fn execute(args: Vec<AnyValue>, cx: Context, sc: Scope) -> ExecutorPinnedResult {
+pub fn execute(
+    args: Vec<FuncArg>,
+    args_token: usize,
+    cx: Context,
+    sc: Scope,
+) -> ExecutorPinnedResult {
     Box::pin(async move {
         if args.len() != 3 {
-            return Err(E::InvalidFunctionArg(
+            return Err(LinkedErr::new(E::InvalidFunctionArg(
                 if args.len() == 1 {
                     "Missed paths to exclude from inspecting: @hash::inspect(string[], string[] <= missed argument, bool)"
                 } else if args.len() == 2 {
@@ -56,34 +62,34 @@ pub fn execute(args: Vec<AnyValue>, cx: Context, sc: Scope) -> ExecutorPinnedRes
                 } else {
                     "No arguments for @hash::inspect(string[], string[], bool)"
                 }.to_string(),
-            ));
+            ), Some(args_token)))?;
         }
         let cwd = sc
             .get_cwd()
             .await?
             .ok_or(E::IO(String::from("No CWD path")))?;
-        let dests = if let Some(patterns) = args[0].as_path_bufs() {
+        let dests = if let Some(patterns) = args[0].value.as_path_bufs() {
             patterns.into_iter().map(|p| cwd.join(p)).collect()
-        } else if let Some(pattern) = args[0].as_path_buf() {
+        } else if let Some(pattern) = args[0].value.as_path_buf() {
             vec![cwd.join(pattern)]
         } else {
-            return Err(E::InvalidFunctionArg(
+            return Err(args[0].err(E::InvalidFunctionArg(
                 "Invalid argument; expecting string[] | string".to_string(),
-            ));
+            )));
         };
-        let mut exclude = if let Some(patterns) = args[1].as_strings() {
+        let mut exclude = if let Some(patterns) = args[1].value.as_strings() {
             patterns
-        } else if let Some(pattern) = args[1].as_string() {
+        } else if let Some(pattern) = args[1].value.as_string() {
             vec![pattern]
         } else {
-            return Err(E::InvalidFunctionArg(
+            return Err(args[1].err(E::InvalidFunctionArg(
                 "Invalid argument; expecting string[] | string".to_string(),
-            ));
+            )));
         };
-        let Some(gitignore) = args[2].as_bool() else {
-            return Err(E::InvalidFunctionArg(
+        let Some(gitignore) = args[2].value.as_bool() else {
+            return Err(args[2].err(E::InvalidFunctionArg(
                 "Invalid argument; expecting bool".to_string(),
-            ));
+            )));
         };
         let mut storage = Storage::create(cwd.join(".sibs"))?;
         let mut summary = Vec::new();

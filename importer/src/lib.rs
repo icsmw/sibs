@@ -17,7 +17,7 @@ pub fn import(args: TokenStream, input: TokenStream) -> TokenStream {
         if let syn::FnArg::Typed(pat_type) = arg {
             match pat_type.ty.borrow() {
                 Type::Array(_) | Type::Path(_) => arguments.push(quote! {
-                    args[#i].try_to()?,
+                    args[#i].value.try_to()?,
                 }),
                 _ => {
                     panic!("Only Type::Array and Type::Path are supported");
@@ -34,10 +34,10 @@ pub fn import(args: TokenStream, input: TokenStream) -> TokenStream {
         format!("{}::{fn_name}", opt.ns)
     };
     TokenStream::from(quote! {
-        fn #func_name(args: Vec<AnyValue>, cx: Context, sc: Scope) -> ExecutorPinnedResult {
+        fn #func_name(args: Vec<FuncArg>, args_token: usize, cx: Context, sc: Scope) -> ExecutorPinnedResult {
             Box::pin(async move {
                 if args.len() != #args_required {
-                    return Err(E::InvalidArgumentsCount(#args_required.to_string(), args.len().to_string()));
+                    return Err(crate::error::LinkedErr::new(E::InvalidArgumentsCount(#args_required.to_string(), args.len().to_string()), Some(args_token)))?;
                 }
                 #item_fn;
                 Ok(AnyValue::new(#fn_name(#(#arguments)*)?)?)

@@ -22,21 +22,19 @@ pub enum E {
     NotAllArguamentsHasReturn,
     #[error("Spawned process exit with error")]
     SpawnedProcessExitWithError,
-    #[error("Spawned process has been cancelled")]
-    SpawnedProcessCancelledError,
     #[error("No current working folder")]
     NoCurrentWorkingFolder,
-    #[error("Tracker error: {0}")]
+    #[error("{0}")]
     TrackerError(tracker::E),
     #[error("Join error: {0}")]
     JoinError(String),
-    #[error("Spawing process error: {0}")]
+    #[error("{0}")]
     SpawningError(spawner::E),
-    #[error("Context error: {0}")]
+    #[error("{0}")]
     ContextError(context::E),
-    #[error("Executor error: {0}")]
+    #[error("{0}")]
     ExecutorError(functions::E),
-    #[error("Reader error: {0}")]
+    #[error("{0}")]
     ReaderError(reader::E),
     #[error("No task for component: {0}. Available tasks: {1:?}")]
     NoTaskForComponent(String, Vec<String>),
@@ -96,11 +94,11 @@ pub enum E {
     TaskNotFound(String, String),
     #[error("Fail to parse string to {{{0}}}: {1}")]
     ParseStringError(String, String),
-    #[error("Atlas error: {0}")]
+    #[error("{0}")]
     AtlasError(atlas::E),
-    #[error("Scenario error: {0}")]
+    #[error("{0}")]
     ScenarioError(scenario::E),
-    #[error("AnyValue error: {0}")]
+    #[error("{0}")]
     ValueError(value::E),
 }
 
@@ -128,6 +126,12 @@ impl From<value::E> for E {
 impl From<value::E> for LinkedErr<E> {
     fn from(e: value::E) -> Self {
         LinkedErr::unlinked(E::ValueError(e))
+    }
+}
+
+impl From<LinkedErr<context::E>> for LinkedErr<E> {
+    fn from(e: LinkedErr<context::E>) -> Self {
+        LinkedErr::new(e.e.into(), e.token)
     }
 }
 

@@ -10,7 +10,7 @@ pub enum E {
     RecvError(String),
     #[error("Fail to send channel message: {0}")]
     SendError(String),
-    #[error("Map error: {0}")]
+    #[error("{0}")]
     MapError(map::E),
 }
 
