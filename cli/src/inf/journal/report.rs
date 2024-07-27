@@ -63,7 +63,7 @@ pub enum Report {
     ///
     /// * `trace` list of previous to error footprints.
     /// * `report` is related map report as string. can be None in case if
-    /// `LinkedErr` isn't bound to any token.
+    ///   `LinkedErr` isn't bound to any token.
     /// * `err` representation of `LindedErr`.
     Trace {
         trace: Vec<Footprint>,

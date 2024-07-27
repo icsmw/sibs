@@ -14,7 +14,7 @@ pub enum Demand {
     /// * `String` - Key/Name of variable
     /// * `AnyValue` - Variable value
     /// * `bool` - true - log warning if variable exists; false - do not log any; variable will
-    /// be overwritten in anyway.
+    ///   be overwritten in anyway.
     /// * `oneshot::Sender<bool>` - Response channel. True - if value replaced; false - if not
     SetVariable(String, AnyValue, bool, oneshot::Sender<bool>),
     /// Getting variable value
@@ -50,7 +50,7 @@ pub enum Demand {
     /// # Parameters
     ///
     /// * `oneshot::Sender<(Uuid, CancellationToken)>` - Response channel. Uuid of loop
-    /// and CancellationToken to check a state of loop
+    ///   and CancellationToken to check a state of loop
     OpenLoop(oneshot::Sender<(Uuid, CancellationToken)>),
     /// Close loop.
     ///
@@ -62,7 +62,7 @@ pub enum Demand {
     ///
     /// # Parameters
     /// * `oneshot::Sender<()>` - Response channel. Returns true if break-signal has
-    /// been sent
+    ///   been sent
     BreakLoop(oneshot::Sender<bool>),
     /// Emit shutdown of events loop
     Destroy,

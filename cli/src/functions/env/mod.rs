@@ -8,10 +8,7 @@ use importer::import;
 pub fn register(store: &mut Store<ExecutorFn>) -> Result<(), E> {
     #[import(env)]
     fn var(key: String) -> Result<String, E> {
-        Ok(match std::env::var(key) {
-            Ok(v) => v,
-            Err(_) => String::from(""),
-        })
+        Ok(std::env::var(key).unwrap_or_default())
     }
     #[import(env)]
     fn set_var(key: String, value: String) -> Result<(), E> {

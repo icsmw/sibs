@@ -12,7 +12,7 @@ pub enum Demand {
     ///
     /// * `String` - Name of function
     /// * `oneshot::Sender<Result<Arc<ExecutorFn>, E>>` - Response channel with reference
-    /// to function's executor
+    ///   to function's executor
     Execute(String, oneshot::Sender<Result<Arc<ExecutorFn>, E>>),
     /// Emit shutdown of events loop
     Destroy,

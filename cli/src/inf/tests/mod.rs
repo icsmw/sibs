@@ -1,6 +1,9 @@
+mod usecase;
+
 use crate::reader::chars;
 use std::process::Output;
 use tokio::runtime::{Builder, Runtime};
+pub use usecase::*;
 
 pub const MAX_DEEP: usize = 5;
 

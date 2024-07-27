@@ -19,7 +19,7 @@ pub fn execute(
     module_path!();
     Box::pin(async move {
         if paths.len() != 1 {
-            return Err(LinkedErr::new(
+            Err(LinkedErr::new(
                 E::Executing(
                     name(),
                     "Expecting only one income argument as a CWD".to_owned(),

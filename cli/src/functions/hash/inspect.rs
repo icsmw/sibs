@@ -130,69 +130,80 @@ pub fn execute(
 
 #[cfg(test)]
 mod test {
-    use tokio_util::sync::CancellationToken;
-
     use crate::{
         elements::Component,
         error::LinkedErr,
         inf::{
             operator::{Operator, E},
+            tests::*,
             Configuration, Context, Journal, Scope,
         },
         process_string,
         reader::{chars, Reader, Reading, Sources},
     };
+    use tokio_util::sync::CancellationToken;
 
-    const CASES: &[&[(&[&str], bool)]] = &[
+    const CASES: &[&[(&[&str], bool, Option<bool>)]] = &[
         &[
-            (&["test_a", "a"], true),
-            // (&["test_a", "a"], false),
-            // (&["test_a", "b"], true),
+            (&["test_a", "a"], false, Some(true)),
+            (&["test_a", "a"], false, None),
+            (&["test_a", "a"], true, Some(true)),
+            (&["test_a", "b"], false, Some(true)),
+            (&["test_a", "b"], false, Some(true)),
         ],
         &[
-            (&["test_b", "a"], true),
-            // (&["test_b", "a"], false),
-            // (&["test_b", "b"], false),
+            (&["test_b", "a"], true, Some(true)),
+            (&["test_b", "a"], false, None),
+            (&["test_b", "b"], false, None),
+            (&["test_b", "a"], true, Some(true)),
+            (&["test_b", "b"], true, Some(true)),
         ],
         &[
-            (&["test_c", "a"], true),
-            // (&["test_c", "a"], false),
-            // (&["test_c", "b"], false),
+            (&["test_c", "a"], true, Some(true)),
+            (&["test_c", "a"], false, None),
+            (&["test_c", "b"], false, None),
+            (&["test_c", "a"], true, Some(true)),
+            (&["test_c", "b"], true, Some(true)),
         ],
     ];
-    const TEST_ERR: &str = r#"
-#(a: ./)
-    @hash::inspect(("./src/"; "../cli"); (); true) -> (:wrong_name("a"));
-    test_a($a: a | b) [
-        @print("[A] Task test is done with {$a}");
-    ];
-#(b: ./)
-    @hash::inspect(("./src/"; "../cli"); (); true) -> (:test_b("a"); :wrong_name("b"));
-    test_b($a: a | b) [
-        @print("[B] Task test is done with {$a}");
-    ];"#;
     const TEST: &str = r#"
 #(a: ./)
-    @hash::inspect(("./src/"; "../cli"); (); true) -> (:test_a("a"));
+    @hash::inspect((__paths__); (); true) -> (:test_a("a"));
     test_a($a: a | b) [
         @print("Task A test is done with {$a}");
+        true;
     ];
 #(b: ./)
-    @hash::inspect(("./src/"; "../cli"); (); true) -> (:test_b("a"); :test_b("b"));
+    @hash::inspect((__paths__); (); true) -> (:test_b("a"); :test_b("b"));
     test_b($a: a | b) [
         @print("Task B test is done with {$a}");
+        true;
     ];
 #(c: ./)
-    @hash::inspect(("./src/"; "../cli"); (); true) -> ();
+    @hash::inspect((__paths__); (); true) -> ();
     test_c($a: a | b) [
         @print("Task C test is done with {$a}");
+        true;
     ];"#;
+    const PATHS_HOOK: &str = "__paths__";
 
     #[tokio::test]
-    async fn reading() {
+    async fn processing() {
+        let mut usecases = [
+            UseCase::gen(Strategy::Number(3), Strategy::Number(10), 3).expect("Usecase is created"),
+            UseCase::gen(Strategy::Number(3), Strategy::Number(10), 3).expect("Usecase is created"),
+        ];
+        let content = TEST.replace(
+            PATHS_HOOK,
+            &usecases
+                .iter()
+                .map(|uc| format!("\"{}\"", uc.root.display()))
+                .collect::<Vec<String>>()
+                .join(";"),
+        );
         process_string!(
             &Configuration::logs(false),
-            &TEST,
+            &content,
             |reader: &mut Reader, src: &mut Sources| {
                 let mut components: Vec<Component> = Vec::new();
                 while let Some(component) = src.report_err_if(Component::read(reader))? {
@@ -201,10 +212,15 @@ mod test {
                 }
                 Ok::<Vec<Component>, LinkedErr<E>>(components)
             },
-            |components: Vec<Component>, cx: Context, sc: Scope, journal: Journal| async move {
+            |components: Vec<Component>, cx: Context, sc: Scope, _journal: Journal| async move {
                 for (n, component) in components.iter().enumerate() {
                     let case = CASES[n];
-                    for (args, res) in case {
+                    for (args, needs_changes, expected_result) in case {
+                        if *needs_changes {
+                            for usecase in usecases.iter_mut() {
+                                usecase.change(1).expect("UseCase has been changed");
+                            }
+                        }
                         let result = component
                             .execute(
                                 Some(component),
@@ -215,32 +231,13 @@ mod test {
                                 CancellationToken::new(),
                             )
                             .await?;
+                        assert_eq!(result.is_some(), expected_result.is_some());
                         println!("{result:?}");
                     }
                 }
-                // for task in tasks.iter() {
-                //     let result = task
-                //         .execute(
-                //             None,
-                //             &[],
-                //             &[],
-                //             cx.clone(),
-                //             sc.clone(),
-                //             CancellationToken::new(),
-                //         )
-                //         .await;
-                //     if let Err(err) = result.as_ref() {
-                //         journal.report(err.into());
-                //     }
-                //     assert_eq!(
-                //         result
-                //             .expect("run of task is success")
-                //             .expect("test returns some value")
-                //             .as_string()
-                //             .expect("test returns string value"),
-                //         "true".to_owned()
-                //     );
-                // }
+                for usecase in usecases.iter_mut() {
+                    usecase.clean().expect("UseCase has been changed");
+                }
                 Ok::<(), LinkedErr<E>>(())
             }
         );

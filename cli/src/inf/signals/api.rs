@@ -19,7 +19,7 @@ pub enum Demand {
     ///
     /// * `String` - Name of signal
     /// * `oneshot::Sender<bool>` - Response channel. True - if signal had
-    /// listeners; false - if no.
+    ///   listeners; false - if no.
     Emit(String, oneshot::Sender<bool>),
     /// Emit shutdown of events loop
     Destroy,

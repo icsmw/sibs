@@ -18,7 +18,7 @@ pub fn execute(
     module_path!();
     Box::pin(async move {
         if args.len() != 1 {
-            return Err(LinkedErr::new(
+            Err(LinkedErr::new(
                 E::Executing(name(), "Expecting 1 income argument: varname".to_owned()),
                 Some(args_token),
             ))?;

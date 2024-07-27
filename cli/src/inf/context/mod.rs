@@ -180,11 +180,10 @@ impl Context {
         sc: Scope,
     ) -> Result<AnyValue, LinkedErr<E>> {
         // TODO: switch to element instead "name"
-        Ok(self
-            .funcs
+        self.funcs
             .execute(name, args, args_token, self.clone(), sc)
             .await
-            .map_err(|e| LinkedErr::new(e.e.into(), e.token))?)
+            .map_err(|e| LinkedErr::new(e.e.into(), e.token))
     }
 
     // pub async fn test_func(&self, name: &str, args: Vec<AnyValue>, sc: Scope) -> Result<AnyValue, E> {

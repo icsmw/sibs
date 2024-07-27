@@ -268,7 +268,7 @@ impl Scope {
     /// * `key` - Key/Name of variable
     /// * `value` - Variable value
     /// * `warn` - Log warning if variable already exists. Variable still will be
-    /// overwritten
+    ///   overwritten
     ///
     /// # Returns
     ///
