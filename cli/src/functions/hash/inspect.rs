@@ -143,7 +143,8 @@ mod test {
     };
     use tokio_util::sync::CancellationToken;
 
-    const CASES: &[&[(&[&str], bool, Option<bool>)]] = &[
+    type CaseExpectation<'a> = (&'a [&'a str], bool, Option<bool>);
+    const CASES: &[&[CaseExpectation]] = &[
         &[
             (&["test_a", "a"], false, Some(true)),
             (&["test_a", "a"], false, None),

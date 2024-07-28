@@ -931,7 +931,7 @@ mod proptest {
             );
         }
         if targets.contains(&ElTarget::Meta) {
-            collected.push(Meta::arbitrary().prop_map(|el| Element::Meta(el)).boxed());
+            collected.push(Meta::arbitrary().prop_map(Element::Meta).boxed());
         }
         if targets.contains(&ElTarget::Optional) {
             collected.push(

@@ -11,7 +11,7 @@ use crate::{
 };
 use std::fmt;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct PatternString {
     pub elements: Vec<Element>,
     pub token: usize,
@@ -201,14 +201,6 @@ mod proptest {
     };
     use proptest::prelude::*;
 
-    impl Default for PatternString {
-        fn default() -> Self {
-            PatternString {
-                elements: Vec::new(),
-                token: 0,
-            }
-        }
-    }
     impl Arbitrary for PatternString {
         type Parameters = usize;
         type Strategy = BoxedStrategy<Self>;

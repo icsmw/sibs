@@ -1,7 +1,7 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{ElTarget, Element, SimpleString, Task},
+    elements::{ElTarget, Element, Gatekeeper, SimpleString, Task},
     error::LinkedErr,
     inf::{
         operator, scenario, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
@@ -208,55 +208,33 @@ impl Operator for Component {
                 },
                 &cx.journal,
             );
-            let mut skip = false;
-            if !gatekeepers.is_empty() {
-                let actual_ref = task
-                    .get_actual_ref(
-                        owner,
-                        components,
-                        &args[1..],
-                        cx.clone(),
-                        sc.clone(),
-                        token.clone(),
-                    )
-                    .await?;
-                for gatekeeper in gatekeepers.iter() {
-                    let Element::Gatekeeper(gatekeeper, _) = gatekeeper else {
-                        continue;
-                    };
-                    let refs = gatekeeper.get_refs();
-                    if !refs.is_empty() && !refs.iter().any(|reference| reference == &&actual_ref) {
-                        continue;
-                    }
-                    // On "true" - task should be done; on "false" - can be skipped.
-                    if !gatekeeper
-                        .execute(
-                            owner,
-                            components,
-                            &[],
-                            cx.clone(),
-                            sc.clone(),
-                            token.clone(),
-                        )
-                        .await?
-                        .ok_or(operator::E::NoValueFromGatekeeper)?
-                        .as_bool()
-                        .ok_or(operator::E::NoBoolValueFromGatekeeper)?
-                    {
-                        skip = true;
-                    } else {
-                        skip = false;
-                        break;
-                    }
-                }
-                if skip {
-                    cx.journal.debug(
-                        task.get_name(),
-                        format!("{actual_ref} will be skipped because gatekeeper conclusion"),
-                    );
-                }
+            let task_ref = task
+                .as_reference(
+                    owner,
+                    components,
+                    &args[1..],
+                    cx.clone(),
+                    sc.clone(),
+                    token.clone(),
+                )
+                .await?;
+            let skippable = Gatekeeper::skippable(
+                gatekeepers,
+                &task_ref,
+                owner,
+                components,
+                cx.clone(),
+                sc.clone(),
+                token.clone(),
+            )
+            .await?;
+            if skippable {
+                cx.journal.debug(
+                    task.get_name(),
+                    format!("{task_ref} will be skipped because gatekeeper conclusion",),
+                );
             }
-            let result = if !skip {
+            let result = if !skippable {
                 task.execute(owner, components, &args[1..], cx, sc.clone(), token)
                     .await
             } else {

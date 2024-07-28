@@ -3,31 +3,13 @@ use log::debug;
 use rand::Rng;
 use std::{
     env::temp_dir,
-    fs::{create_dir, remove_dir_all, remove_file, OpenOptions},
+    fs::{create_dir, remove_dir_all, OpenOptions},
     io::{self, Write},
     path::PathBuf,
     time::Instant,
 };
 pub(crate) use strategy::Strategy;
 use uuid::Uuid;
-
-pub struct UseCaseEmpty {
-    pub root: PathBuf,
-}
-
-impl UseCaseEmpty {
-    pub fn gen() -> Result<Self, io::Error> {
-        let root = temp_dir().join(Uuid::new_v4().to_string());
-        create_dir(&root)?;
-        Ok(Self { root })
-    }
-    pub fn clean(&self) -> Result<(), io::Error> {
-        if !self.root.exists() {
-            return Ok(());
-        }
-        remove_dir_all(&self.root)
-    }
-}
 pub struct UseCase {
     pub files: Vec<PathBuf>,
     pub root: PathBuf,
@@ -109,34 +91,6 @@ impl UseCase {
             let mut file = OpenOptions::new().append(true).open(filename)?;
             file.write_all(Uuid::new_v4().as_bytes())?;
             file.flush()?;
-        }
-        Ok(())
-    }
-
-    pub fn remove(&self, count: usize) -> Result<(), io::Error> {
-        if self.files.is_empty() {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                "No files has been created. Cannot change a state",
-            ));
-        }
-        if count > self.files.len() - 1 {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                "Cannot remove more files than created",
-            ));
-        }
-        let s = rand::thread_rng().gen_range(0..self.files.len() - 1 - count);
-        for i in s..(s + count) {
-            let Some(filename) = self.files.get(i) else {
-                return Err(io::Error::new(
-                    io::ErrorKind::NotFound,
-                    "Cannot find a file path by index",
-                ));
-            };
-            if filename.exists() {
-                remove_file(filename)?;
-            }
         }
         Ok(())
     }

@@ -69,13 +69,10 @@ impl Sources {
         Ok(())
     }
     #[cfg(test)]
-    pub fn report_err_if<T, E: Clone>(
+    pub fn report_err_if<T, E: std::error::Error + fmt::Display + ToString + Clone>(
         &mut self,
         result: Result<T, LinkedErr<E>>,
-    ) -> Result<T, LinkedErr<E>>
-    where
-        E: std::error::Error + fmt::Display + ToString,
-    {
+    ) -> Result<T, LinkedErr<E>> {
         if let Err(err) = result.as_ref() {
             self.report_err(err).expect("Error report created");
         }

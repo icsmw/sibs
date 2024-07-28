@@ -11,15 +11,6 @@ pub struct Map {
 }
 
 impl Map {
-    #[cfg(test)]
-    pub fn new(filename: &PathBuf, content: &str) -> Self {
-        Self {
-            fragments: HashMap::new(),
-            content: content.to_owned(),
-            filename: filename.to_owned(),
-            cursor: None,
-        }
-    }
     pub fn set_cursor(&mut self, token: usize) {
         self.cursor = Some(token);
     }

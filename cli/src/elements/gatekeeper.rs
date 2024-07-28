@@ -32,6 +32,47 @@ impl Gatekeeper {
         }
         refs
     }
+    #[allow(clippy::too_many_arguments)]
+    pub async fn skippable<'a>(
+        gatekeepers: Vec<&Element>,
+        task_ref: &Reference,
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+        cx: Context,
+        sc: Scope,
+        token: CancellationToken,
+    ) -> Result<bool, LinkedErr<operator::E>> {
+        if gatekeepers.is_empty() {
+            return Ok(false);
+        }
+        for gatekeeper in gatekeepers.iter() {
+            let Element::Gatekeeper(gatekeeper, _) = gatekeeper else {
+                continue;
+            };
+            let refs = gatekeeper.get_refs();
+            if !refs.is_empty() && !refs.iter().any(|reference| reference == &task_ref) {
+                return Ok(false);
+            }
+            // On "true" - task should be done; on "false" - can be skipped.
+            if gatekeeper
+                .execute(
+                    owner,
+                    components,
+                    &[],
+                    cx.clone(),
+                    sc.clone(),
+                    token.clone(),
+                )
+                .await?
+                .ok_or(operator::E::NoValueFromGatekeeper)?
+                .as_bool()
+                .ok_or(operator::E::NoBoolValueFromGatekeeper)?
+            {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    }
 }
 impl Reading<Gatekeeper> for Gatekeeper {
     fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {

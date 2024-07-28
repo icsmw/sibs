@@ -1,7 +1,7 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{Component, ElTarget, Element},
+    elements::{Component, ElTarget, Element, Gatekeeper},
     error::LinkedErr,
     inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
     reader::{chars, Reader, Reading, E},
@@ -189,9 +189,38 @@ impl Operator for Reference {
                         .ok_or(operator::E::FailToGetStringValue.by(self))?,
                 );
             }
-            let result = task
-                .execute(owner, components, &args, cx, scope.clone(), token)
-                .await;
+            let task_ref = task
+                .as_reference(
+                    owner,
+                    components,
+                    &args,
+                    cx.clone(),
+                    sc.clone(),
+                    token.clone(),
+                )
+                .await?;
+            let skippable = Gatekeeper::skippable(
+                gatekeepers,
+                &task_ref,
+                owner,
+                components,
+                cx.clone(),
+                scope.clone(),
+                token.clone(),
+            )
+            .await?;
+            if skippable {
+                cx.journal.debug(
+                    task.get_name(),
+                    format!("{task_ref} will be skipped because gatekeeper conclusion",),
+                );
+            }
+            let result = if !skippable {
+                task.execute(owner, components, &args, cx, scope.clone(), token)
+                    .await
+            } else {
+                Ok(None)
+            };
             if !inner_scope {
                 sc.import_vars(&scope).await?;
                 scope.destroy().await?;

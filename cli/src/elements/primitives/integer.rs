@@ -69,7 +69,7 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-            (std::isize::MIN..std::isize::MAX)
+            (isize::MIN..isize::MAX)
                 .prop_map(|value| Integer { value, token: 0 })
                 .boxed()
         }

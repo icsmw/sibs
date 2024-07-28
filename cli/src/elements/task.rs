@@ -70,7 +70,7 @@ impl Task {
         }
         Ok(values)
     }
-    pub async fn get_actual_ref<'a>(
+    pub async fn as_reference<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
