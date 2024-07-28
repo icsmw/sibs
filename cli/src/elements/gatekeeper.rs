@@ -313,7 +313,6 @@ mod processing {
                             .await
                             .expect("Component is executed");
                         assert_eq!(result.is_some(), expected_result.is_some());
-                        println!("{result:?}");
                     }
                 }
                 Ok::<(), LinkedErr<E>>(())
