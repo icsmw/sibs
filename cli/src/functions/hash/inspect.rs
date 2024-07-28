@@ -233,7 +233,6 @@ mod test {
                             )
                             .await?;
                         assert_eq!(result.is_some(), expected_result.is_some());
-                        println!("{result:?}");
                     }
                 }
                 for usecase in usecases.iter_mut() {

@@ -264,53 +264,63 @@ mod reading {
     }
 }
 
-// #[cfg(test)]
-// mod processing {
-//     use tokio_util::sync::CancellationToken;
+#[cfg(test)]
+mod processing {
+    use tokio_util::sync::CancellationToken;
 
-//     use crate::{
-//         elements::Component,
-//         error::LinkedErr,
-//         inf::{
-//             operator::{Operator, E},
-//             Configuration, Context, Journal, Scope,
-//         },
-//         process_string,
-//         reader::{chars, Reader, Reading, Sources},
-//     };
-
-//     #[tokio::test]
-//     async fn reading() {
-//         process_string!(
-//             &Configuration::logs(false),
-//             &include_str!("../tests/processing/gatekeeper.sibs"),
-//             |reader: &mut Reader, src: &mut Sources| {
-//                 let mut components: Vec<Component> = Vec::new();
-//                 while let Some(component) = src.report_err_if(Component::read(reader))? {
-//                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-//                     components.push(component);
-//                 }
-//                 Ok::<Vec<Component>, LinkedErr<E>>(components)
-//             },
-//             |components: Vec<Component>, cx: Context, sc: Scope, _: Journal| async move {
-//                 for component in components.iter() {
-//                     let result = component
-//                         .execute(
-//                             None,
-//                             &components,
-//                             &[String::from("test"), String::from("a")],
-//                             cx.clone(),
-//                             sc.clone(),
-//                             CancellationToken::new(),
-//                         )
-//                         .await
-//                         .expect("Component is executed");
-//                 }
-//                 Ok::<(), LinkedErr<E>>(())
-//             }
-//         );
-//     }
-// }
+    use crate::{
+        elements::Component,
+        error::LinkedErr,
+        inf::{
+            operator::{Operator, E},
+            Configuration, Context, Journal, Scope,
+        },
+        process_string,
+        reader::{chars, Reader, Reading, Sources},
+    };
+    const CASES: &[&[(&[&str], Option<bool>)]] = &[
+        &[(&["test", "a"], None), (&["test", "b"], Some(true))],
+        &[(&["test", "a"], None), (&["test", "b"], None)],
+        &[(&["test", "a"], None), (&["test", "b"], None)],
+        &[(&["test", "a"], None), (&["test", "b"], Some(true))],
+    ];
+    #[tokio::test]
+    async fn reading() {
+        process_string!(
+            &Configuration::logs(false),
+            &include_str!("../tests/processing/gatekeeper.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
+                let mut components: Vec<Component> = Vec::new();
+                while let Some(component) = src.report_err_if(Component::read(reader))? {
+                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                    components.push(component);
+                }
+                Ok::<Vec<Component>, LinkedErr<E>>(components)
+            },
+            |components: Vec<Component>, cx: Context, sc: Scope, _: Journal| async move {
+                for (n, component) in components.iter().enumerate() {
+                    let case = CASES[n];
+                    for (args, expected_result) in case.iter() {
+                        let result = component
+                            .execute(
+                                Some(component),
+                                &components,
+                                &args.iter().map(|s| s.to_string()).collect::<Vec<String>>(),
+                                cx.clone(),
+                                sc.clone(),
+                                CancellationToken::new(),
+                            )
+                            .await
+                            .expect("Component is executed");
+                        assert_eq!(result.is_some(), expected_result.is_some());
+                        println!("{result:?}");
+                    }
+                }
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
+    }
+}
 
 #[cfg(test)]
 mod proptest {
