@@ -5,17 +5,17 @@ test [
 test [
     $a = @env::os;
     $b = @env::is_os($a) >> @str::repeat(3);
-    IF $b == "truetruetrue" [
+    if $b == "truetruetrue" [
         "true";
     ];
 ];
 test [
-    IF @test::return_bool(true) [
+    if @test::return_bool(true) [
         "true";
     ];
 ];
 test [
-    IF !@test::return_bool(false) [
+    if !@test::return_bool(false) [
         "true";
     ];
 ];

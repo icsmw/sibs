@@ -1,35 +1,35 @@
 test($a: a | b) [
-    IF $a == "a" [
+    if $a == "a" [
         "true";
-    ] ELSE [
+    ] else [
         "false";
     ];
 ];
 test($a: a | b; $b: a | b) [
-    IF $a == "a" && $b == "b" [
+    if $a == "a" && $b == "b" [
         "true";
-    ] ELSE [
+    ] else [
         "false";
     ];
 ];
 test($a: {string}) [
-    IF $a == "a" [
+    if $a == "a" [
         "true";
-    ] ELSE [
+    ] else [
         "false";
     ];
 ];
 test($a: {string}; $b: a | b) [
-    IF $a == "a" && $b == "b" [
+    if $a == "a" && $b == "b" [
         "true";
-    ] ELSE [
+    ] else [
         "false";
     ];
 ];
 test($a: {string}; $b: a | b; $c: {string}) [
-    IF $a == "a" && $b == "b" && $c == "c" [
+    if $a == "a" && $b == "b" && $c == "c" [
         "true";
-    ] ELSE [
+    ] else [
         "false";
     ];
 ];

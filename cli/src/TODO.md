@@ -19,7 +19,7 @@
 semicollon and the end on "true".
 
 NO Errors:
-`create-user --name={$user_name} --role={IF $is_admin == "true" ["admin";]  ["user";]}`
+`create-user --name={$user_name} --role={if $is_admin == "true" ["admin";]  ["user";]}`
 $is_verified AND $has_permission => @proceed_with_action;
 true != false doesn't work
 
@@ -27,7 +27,7 @@ true != false doesn't work
 ```
 1 │         $c_str = "value_c_{$a_str}-{$b_str}";
 12 │         $d_bool = @env::is_os(linux);
-13 │         IF @env::is_os(linux) [
+13 │         if @env::is_os(linux) [
 14 │             :self:build("smth"; "prod1");
                                       ^^^^^
                                       Calling of task

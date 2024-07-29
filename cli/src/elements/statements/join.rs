@@ -53,7 +53,7 @@ impl Reading<Join> for Join {
 
 impl fmt::Display for Join {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "JOIN {}", self.elements)
+        write!(f, "join {}", self.elements)
     }
 }
 
@@ -61,7 +61,7 @@ impl Formation for Join {
     fn format(&self, cursor: &mut FormationCursor) -> String {
         let mut inner = cursor.reown(Some(ElTarget::Join));
         format!(
-            "{}JOIN {}",
+            "{}join {}",
             cursor.offset_as_string_if(&[ElTarget::Block]),
             self.elements.format(&mut inner)
         )
@@ -311,7 +311,7 @@ mod processing {
                 assert_eq!(
                     results
                         .get::<Vec<AnyValue>>()
-                        .expect("JOIN returns Vec<AnyValue>")
+                        .expect("join returns Vec<AnyValue>")
                         .len(),
                     4
                 );
@@ -331,7 +331,7 @@ mod processing {
                 assert_eq!(
                     results
                         .get::<Vec<AnyValue>>()
-                        .expect("JOIN returns Vec<AnyValue>")
+                        .expect("join returns Vec<AnyValue>")
                         .len(),
                     2
                 );

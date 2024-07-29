@@ -1,7 +1,7 @@
 /// Testing join 
 #(join: ../../../../target/debug)
     test_a [
-        JOIN (
+        join (
             `./exit 0 100 1000 10`;
             `./exit 0 200 1000 10`;
             `./exit 0 300 1000 10`;
@@ -9,14 +9,14 @@
         );
     ];
     test_b [
-        JOIN (
+        join (
             `./exit 0 100 1000 10`;
             :self:test_a;
         );
     ];
     // One with error
     test_c [
-        JOIN (
+        join (
             `./exit 0 100 1000 10`;
             `./exit 0 200 1000 10`;
             `./exit 1 300 1000 10`;
@@ -25,7 +25,7 @@
     ];
     // All with errors
     test_d [
-        JOIN (
+        join (
             `./exit 1 100 1000 10`;
             `./exit 1 200 1000 10`;
             `./exit 1 300 1000 10`;
@@ -33,13 +33,13 @@
         );
     ];
     test_e [
-        JOIN (
+        join (
             `./exit 0 100 1000 10`;
             :self:test_c;
         );
     ];
     test_f [
-        JOIN (
+        join (
             `./exit 0 100 1000 10`;
             :self:test_b;
             :self:test_c;

@@ -64,8 +64,8 @@ impl fmt::Display for Thread {
             f,
             "{}",
             match self {
-                Self::If(el, block) => format!("IF {el} {block}"),
-                Self::Else(block) => format!("ELSE {block}"),
+                Self::If(el, block) => format!("if {el} {block}"),
+                Self::Else(block) => format!("else {block}"),
             }
         )
     }
@@ -81,13 +81,13 @@ impl Formation for Thread {
     fn format(&self, cursor: &mut FormationCursor) -> String {
         match self {
             Self::If(el, block) => format!(
-                "{}IF {} {}",
+                "{}if {} {}",
                 cursor.offset_as_string_if(&[ElTarget::Block]),
                 el.format(cursor),
                 block.format(cursor)
             ),
             Self::Else(block) => format!(
-                "{}ELSE {}",
+                "{}else {}",
                 cursor.offset_as_string_if(&[ElTarget::Block]),
                 block.format(cursor)
             ),
@@ -343,9 +343,9 @@ mod processing {
                             CancellationToken::new(),
                         )
                         .await?
-                        .expect("IF returns some value");
+                        .expect("if returns some value");
                     assert_eq!(
-                        result.as_string().expect("IF returns string value"),
+                        result.as_string().expect("if returns string value"),
                         "true".to_owned(),
                         "Line: {}",
                         i + 1

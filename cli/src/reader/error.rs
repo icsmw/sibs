@@ -87,17 +87,17 @@ pub enum E {
     InvalidReference(String),
     #[error("No destination function after >")]
     NoDestFunction,
-    #[error("No loop variable EACH($var)")]
+    #[error("No loop variable each($var)")]
     NoLoopVariable,
-    #[error("No loop variable declaration; expecting: EACH($var)")]
+    #[error("No loop variable declaration; expecting: each($var)")]
     NoLoopInitialization,
     #[error("No component body")]
     NoComponentBody,
-    #[error("No FIRST statement body")]
+    #[error("No first statement body")]
     NoFIRSTStatementBody,
-    #[error("No JOIN statement body; JOIN(<ref; ref; ...>)")]
+    #[error("No join statement body; join(<ref; ref; ...>)")]
     NoJOINStatementBody,
-    #[error("JOIN statement can include only references to tasks; JOIN(<ref; ref; ...>)")]
+    #[error("join statement can include only references to tasks; join(<ref; ref; ...>)")]
     NotReferenceInJOIN,
     #[error("Group [...] is expecting")]
     NoGroup,
@@ -111,13 +111,13 @@ pub enum E {
     GatekeeperShouldRefToTask,
     #[error("Fail to detect an action for optional statements")]
     FailFindActionForOptional,
-    #[error("No loop input EACH($var) input [...]")]
+    #[error("No loop input each($var) input [...]")]
     NoLoopInput,
-    #[error("Fail to find condition(s) for IF statement")]
+    #[error("Fail to find condition(s) for if statement")]
     NoConditionForIfStatement,
-    #[error("Fail to find actions block for IF statement")]
+    #[error("Fail to find actions block for if statement")]
     NoBlockForIfStatement,
-    #[error("Main actions block for IF statement is missed")]
+    #[error("Main actions block for if statement is missed")]
     NoMainBlockForIfStatement,
     #[error("No values related to variable")]
     NoVariableValues,

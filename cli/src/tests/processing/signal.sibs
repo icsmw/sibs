@@ -1,7 +1,7 @@
 /// Testing join 
 #(join: ../../../../target/debug)
     emitter [
-        JOIN (
+        join (
             `./exit 0 100 1000 10`;
             `./exit 0 200 1000 10`;
             `./exit 0 300 1000 10`;
@@ -21,7 +21,7 @@
         "true";
     ];
     run [
-        JOIN (
+        join (
             :self:emitter;
             :self:waiter_a;
             :self:waiter_b;

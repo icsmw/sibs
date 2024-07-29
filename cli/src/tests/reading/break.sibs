@@ -1,17 +1,17 @@
-EACH($file; $files) [
+each($file; $files) [
     @sh(tgz ./release/{$file});
-    BREAK;
+    break;
 ];
-EACH($file; $files) [
-    IF $file != "." && $file != ".." [
+each($file; $files) [
+    if $file != "." && $file != ".." [
         @sh(tgz ./release/{$file});
-        BREAK;
+        break;
     ];
 ];
-EACH($file; $files) [
-    IF $file != "." && $file != ".." [
+each($file; $files) [
+    if $file != "." && $file != ".." [
         @sh(tgz ./release/{$file});
-    ] ELSE [
-        BREAK;
+    ] else [
+        break;
     ];
 ];

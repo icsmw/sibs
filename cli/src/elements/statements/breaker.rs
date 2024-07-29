@@ -28,13 +28,13 @@ impl Reading<Breaker> for Breaker {
 
 impl fmt::Display for Breaker {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "BREAK")
+        write!(f, "break")
     }
 }
 
 impl Formation for Breaker {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        format!("{}BREAK", cursor.offset_as_string_if(&[ElTarget::Block]),)
+        format!("{}break", cursor.offset_as_string_if(&[ElTarget::Block]),)
     }
 }
 

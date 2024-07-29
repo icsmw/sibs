@@ -74,9 +74,9 @@ pub enum E {
     VariableIsNotAssigned(String),
     #[error("Fail assign variable \"{0}\"; no value")]
     NoValueToAssign(String),
-    #[error("Fail to get input for EACH statements")]
+    #[error("Fail to get input for each statements")]
     NoInputForEach,
-    #[error("Fail to convert input for EACH statements into vector of strings")]
+    #[error("Fail to convert input for each statements into vector of strings")]
     FailConvertInputIntoStringsForEach,
     #[error("Declared {0} argument(s) ([{1}]); passed {2} argument(s) ([{3}])")]
     DismatchTaskArgumentsCount(usize, String, usize, String),

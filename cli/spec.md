@@ -169,7 +169,7 @@ Block is a collection/list of others. Content of block locked between “[…]�
 [
    @is_os(“windows) => `format c:`;
    $os_name = @get_os_name;
-   IF $os_name == “windows” [
+   if $os_name == “windows” [
        @print(“damn”);
    ]
 ]
@@ -196,29 +196,29 @@ Inside block can be:
 # If statement
 Very classic statement:
 
-IF conditions [
+if conditions [
    // actions to do
    // actually this is Block element
 ]
 
-IF conditions [ … ] IF conditions [ …. ]
+if conditions [ … ] if conditions [ …. ]
 
-IF conditions [ … ] ELSE [ … ]
+if conditions [ … ] else [ … ]
 
-IF conditions [ … ] IF conditions [ …. ] ELSE [ … ] 
+if conditions [ … ] if conditions [ …. ] else [ … ] 
 
 As for conditions it supports logical operators AND, OR
 
-IF condition && condition […]
-IF condition || condition […]
+if condition && condition […]
+if condition || condition […]
 
 Conditions can be grouped with (…)
 
-IF (condition && condition) || condition […]
+if (condition && condition) || condition […]
 
 Nested groups are supported too
 
-IF (condition && condition && (condition || condition)) || condition […]
+if (condition && condition && (condition || condition)) || condition […]
 
 As action If has Block element.
 
@@ -245,7 +245,7 @@ First runs actions one by one and returns the first value from some actions (not
 
 Iterate values
 
-EACH($file; $files) [
+each($file; $files) [
     // do something for each $file
 ];
 

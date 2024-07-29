@@ -1,11 +1,11 @@
-pub const IF: &str = "IF";
+pub const IF: &str = "if";
 pub const OR: &str = "||";
 pub const AND: &str = "&&";
-pub const ELSE: &str = "ELSE";
-pub const FIRST: &str = "FIRST";
-pub const BREAK: &str = "BREAK";
-pub const JOIN: &str = "JOIN";
-pub const EACH: &str = "EACH";
+pub const ELSE: &str = "else";
+pub const FIRST: &str = "first";
+pub const BREAK: &str = "break";
+pub const JOIN: &str = "join";
+pub const EACH: &str = "each";
 pub const CMP_TRUE: &str = "==";
 pub const CMP_FALSE: &str = "!=";
 pub const CMP_RBIG: &str = "<";

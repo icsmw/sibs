@@ -23,19 +23,19 @@ build($mode: dev | prod) [
     ];
     // Building electron application
     // Building electron application
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
-    ] ELSE [
-        @cd(./linux);
-    ];
-    // Building electron application
-    // Building electron application
-    IF $variable == "one" [
+    ] else [
         @cd(./linux);
     ];
     // Building electron application
     // Building electron application
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" [
+        @cd(./linux);
+    ];
+    // Building electron application
+    // Building electron application
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
     ];
 ];

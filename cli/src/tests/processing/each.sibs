@@ -1,16 +1,16 @@
 test [
     $elements = ("one"; "two"; "three");
-    EACH($el; $elements) [
+    each($el; $elements) [
         $a = "{$el}";
     ];
     
     $elements = ("one"; "two");
-    EACH($el; $elements) [
+    each($el; $elements) [
         $b = "{$el}";
     ];
 
     $elements = ("one");
-    EACH($el; $elements) [
+    each($el; $elements) [
         $c = "{$el}";
     ];
 ];

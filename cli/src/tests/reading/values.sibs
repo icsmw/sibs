@@ -26,14 +26,14 @@
 (true; false; @is_valid);
 ($var1; $var2; @get_value);
 ("Nested {$inside}"; @nested_function);
-(IF $var ["True";] ELSE ["False";]; 42);
+(if $var ["True";] else ["False";]; 42);
 (`command_with {$injection}`; @functionC; 100);
 ($var3 == "check"; @compare($var4; $var5); "Result");
-(IF $var6 ["Yes";] ELSE ["No";]; @result_function);
-("String"; IF @check_condition ["Condition met";]);
+(if $var6 ["Yes";] else ["No";]; @result_function);
+("String"; if @check_condition ["Condition met";]);
 (@calculate(1; 2); "String with {$variable}");
 ($numericVar; @functionD("arg"); "End");
-("Start"; IF @if_check ["Passed";] ELSE ["Failed";]);
+("Start"; if @if_check ["Passed";] else ["Failed";]);
 (@get_status; 200; "HTTP OK");
 ("Level1"; ("Level2"; "Level3"; @deep_function); $deepVar);
 (@outer_function; (`inner_command`); "Inner string");
@@ -49,14 +49,14 @@
 (true; false; "Boolean values");
 ("Pattern {$nested}"; @pattern_function);
 (@value_check == "OK"; "Check"; $varCheck);
-(IF $varStatus ["Active";] ELSE ["Inactive";]; "Status check");
-("Start"; @start_function; IF $startCondition ["Go";]);
+(if $varStatus ["Active";] else ["Inactive";]; "Status check");
+("Start"; @start_function; if $startCondition ["Go";]);
 (`start_command`; "Command start"; @command_function);
 ("Variable {$varName}"; $varValue; @variable_function);
 (@integer_function(1; 2); 300; "Integer with function");
 ("Boolean {@expression}"; @boolean_expression; false);
-(@complex_scenario; "Scenario result"; IF $scenarioCondition ["True case";]);
+(@complex_scenario; "Scenario result"; if $scenarioCondition ["True case";]);
 ("Nested functions"; @outer(@inner("arg")); "After function");
 (@check_value($valueToCheck); "Value checked"; `check_command`);
-("Final value"; @final_function; IF $finalCondition ["True final";]);
+("Final value"; @final_function; if $finalCondition ["True final";]);
 (true != false; @func(true != false))

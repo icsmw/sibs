@@ -1,16 +1,16 @@
 #(a)
     test($a: a | b) [
-        IF $a == "a" [
+        if $a == "a" [
             "one";
-        ] ELSE [
+        ] else [
             "---";
         ];
     ];
 #(b)
     test($a: a | b; $b: {string}) [
-        IF $a == "a" && $b == "b" [
+        if $a == "a" && $b == "b" [
             "two";
-        ] ELSE [
+        ] else [
             "---";
         ];
     ];
@@ -21,9 +21,9 @@
     ) [
         @logs::info("output from :a:test($a) => {$res_a}");
         @logs::info("output from :b:test($b) => {$res_b}");
-        IF $res_a == "one" && $res_b == "two" [
+        if $res_a == "one" && $res_b == "two" [
             "true";
-        ] ELSE [
+        ] else [
             "false";
         ];
     ];
@@ -42,9 +42,9 @@
     ) [
         @logs::info("$var_from_comp_d => {$var_from_comp_d}");
         @logs::info("$var_from_comp_e => {$var_from_comp_e}");
-        IF $var_from_comp_d == "changed_a" && $var_from_comp_e == "changed_a_b" [
+        if $var_from_comp_d == "changed_a" && $var_from_comp_e == "changed_a_b" [
             "true";
-        ] ELSE [
+        ] else [
             "false";
         ];
     ];

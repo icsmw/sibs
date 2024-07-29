@@ -12,15 +12,15 @@ build($mode: dev | prod) [
         `zip ./release/unpacked-win {$file_name}`;
         @cd(..);
     ];
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
-    ] ELSE [
-        @cd(./linux);
-    ];
-    IF $variable == "one" [
+    ] else [
         @cd(./linux);
     ];
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" [
+        @cd(./linux);
+    ];
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
     ];
 ];
@@ -35,15 +35,15 @@ custom($input: {string}) [
         `zip ./release/unpacked-win {$file_name}`;
         @cd(..);
     ];
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
-    ] ELSE [
-        @cd(./linux);
-    ];
-    IF $variable == "one" [
+    ] else [
         @cd(./linux);
     ];
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" [
+        @cd(./linux);
+    ];
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
     ];
 ];
@@ -58,15 +58,15 @@ build_multi($mode: dev | prod; $target: win | linux) [
         `zip ./release/unpacked-win {$file_name}`;
         @cd(..);
     ];
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
-    ] ELSE [
-        @cd(./linux);
-    ];
-    IF $variable == "one" [
+    ] else [
         @cd(./linux);
     ];
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" [
+        @cd(./linux);
+    ];
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
     ];
 ];
@@ -81,15 +81,15 @@ build_b($mode: dev | prod; $target: win | linux; $input: {string}) [
         `zip ./release/unpacked-win {$file_name}`;
         @cd(..);
     ];
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
-    ] ELSE [
-        @cd(./linux);
-    ];
-    IF $variable == "one" [
+    ] else [
         @cd(./linux);
     ];
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" [
+        @cd(./linux);
+    ];
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
     ];
 ];
@@ -104,15 +104,15 @@ build_c($input_a: {string}; $mode: dev | prod; $target: win | linux; $input_b: {
         `zip ./release/unpacked-win {$file_name}`;
         @cd(..);
     ];
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
-    ] ELSE [
-        @cd(./linux);
-    ];
-    IF $variable == "one" [
+    ] else [
         @cd(./linux);
     ];
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" [
+        @cd(./linux);
+    ];
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
     ];
 ];
@@ -127,15 +127,15 @@ distribution [
         `zip ./release/unpacked-win {$file_name}`;
         @cd(..);
     ];
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
-    ] ELSE [
-        @cd(./linux);
-    ];
-    IF $variable == "one" [
+    ] else [
         @cd(./linux);
     ];
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" [
+        @cd(./linux);
+    ];
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
     ];
 ];
@@ -156,15 +156,15 @@ build($mode: dev | prod)(
         `zip ./release/unpacked-win {$file_name}`;
         @cd(..);
     ];
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
-    ] ELSE [
-        @cd(./linux);
-    ];
-    IF $variable == "one" [
+    ] else [
         @cd(./linux);
     ];
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" [
+        @cd(./linux);
+    ];
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
     ];
 ];
@@ -182,15 +182,15 @@ custom($input: {string})(
         `zip ./release/unpacked-win {$file_name}`;
         @cd(..);
     ];
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
-    ] ELSE [
-        @cd(./linux);
-    ];
-    IF $variable == "one" [
+    ] else [
         @cd(./linux);
     ];
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" [
+        @cd(./linux);
+    ];
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
     ];
 ];
@@ -208,15 +208,15 @@ build_multi($mode: dev | prod; $target: win | linux)(
         `zip ./release/unpacked-win {$file_name}`;
         @cd(..);
     ];
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
-    ] ELSE [
-        @cd(./linux);
-    ];
-    IF $variable == "one" [
+    ] else [
         @cd(./linux);
     ];
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" [
+        @cd(./linux);
+    ];
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
     ];
 ];
@@ -234,15 +234,15 @@ build_b($mode: dev | prod; $target: win | linux; $input: {string})(
         `zip ./release/unpacked-win {$file_name}`;
         @cd(..);
     ];
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
-    ] ELSE [
-        @cd(./linux);
-    ];
-    IF $variable == "one" [
+    ] else [
         @cd(./linux);
     ];
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" [
+        @cd(./linux);
+    ];
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
     ];
 ];
@@ -262,15 +262,15 @@ build_c($input_a: {string}; $mode: dev | prod; $target: win | linux; $input_b: {
         `zip ./release/unpacked-win {$file_name}`;
         @cd(..);
     ];
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
-    ] ELSE [
-        @cd(./linux);
-    ];
-    IF $variable == "one" [
+    ] else [
         @cd(./linux);
     ];
-    IF $variable == "one" || $variable == "two" [
+    if $variable == "one" [
+        @cd(./linux);
+    ];
+    if $variable == "one" || $variable == "two" [
         @cd(./linux);
     ];
 ];

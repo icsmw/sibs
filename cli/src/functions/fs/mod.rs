@@ -135,8 +135,8 @@ mod test {
     };
 
     const TESTS: &[&str] = &[
-        r#"$tmp_path = @env::temp_dir; $file_name = "test.txt"; $file = @fs::path_join(($tmp_path; $file_name)); IF $file == "__temp_file__" ["true";] ELSE ["false";];"#,
-        // r#"$file = @fs::path_join(@env::temp_dir; "test.txt"); IF $file == "__temp_file__" ["true";] ELSE ["false";];"#,
+        r#"$tmp_path = @env::temp_dir; $file_name = "test.txt"; $file = @fs::path_join(($tmp_path; $file_name)); if $file == "__temp_file__" ["true";] else ["false";];"#,
+        // r#"$file = @fs::path_join(@env::temp_dir; "test.txt"); if $file == "__temp_file__" ["true";] else ["false";];"#,
     ];
 
     #[tokio::test]

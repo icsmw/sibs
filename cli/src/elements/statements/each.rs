@@ -70,14 +70,14 @@ impl Reading<Each> for Each {
 
 impl fmt::Display for Each {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "EACH({}; {}) {}", self.variable, self.input, self.block)
+        write!(f, "each({}; {}) {}", self.variable, self.input, self.block)
     }
 }
 
 impl Formation for Each {
     fn format(&self, cursor: &mut FormationCursor) -> String {
         format!(
-            "{}EACH({}; {}) {}",
+            "{}each({}; {}) {}",
             cursor.offset_as_string_if(&[ElTarget::Block]),
             self.variable,
             self.input,

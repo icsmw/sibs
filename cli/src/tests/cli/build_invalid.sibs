@@ -10,10 +10,10 @@
         $b_str = "value_b_{@env::is_os linux}";
         $c_str = "value_c_{$a_str}-{$b_str}";
         $d_bool = @env::is_os linux;
-        IF @env::is_os linux [
+        if @env::is_os linux [
             :self:build(smth, prod);
         ];
-        IF @env::os == "linux" [ @env::is_os; ];
+        if @env::os == "linux" [ @env::is_os; ];
     ];
     build($input_a: {string}; $mode: dev | prod;) [
         $a_str = "value_a";

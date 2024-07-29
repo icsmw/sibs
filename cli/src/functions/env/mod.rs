@@ -59,13 +59,13 @@ mod test {
     };
 
     const TESTS: &[&str] = &[
-        r#"IF @env::var(TEST_VAR) == "__test_var__" ["true";] ELSE ["false";];"#,
-        r#"IF @env::family == "__family__" ["true";] ELSE ["false";];"#,
-        r#"IF @env::os == "__os__" ["true";] ELSE ["false";];"#,
-        r#"IF @env::arch == "__arch__" ["true";] ELSE ["false";];"#,
-        r#"IF @env::temp_dir == "__temp_dir__" ["true";] ELSE ["false";];"#,
-        r#"@env::remove_var(TEST_VAR); IF @env::var(TEST_VAR) == "" ["true";] ELSE ["false";];"#,
-        r#"@env::set_var(TEST_VAR; "VALUE"); IF @env::var(TEST_VAR) == "VALUE" ["true";] ELSE ["false";];"#,
+        r#"if @env::var(TEST_VAR) == "__test_var__" ["true";] else ["false";];"#,
+        r#"if @env::family == "__family__" ["true";] else ["false";];"#,
+        r#"if @env::os == "__os__" ["true";] else ["false";];"#,
+        r#"if @env::arch == "__arch__" ["true";] else ["false";];"#,
+        r#"if @env::temp_dir == "__temp_dir__" ["true";] else ["false";];"#,
+        r#"@env::remove_var(TEST_VAR); if @env::var(TEST_VAR) == "" ["true";] else ["false";];"#,
+        r#"@env::set_var(TEST_VAR; "VALUE"); if @env::var(TEST_VAR) == "VALUE" ["true";] else ["false";];"#,
     ];
 
     #[tokio::test]

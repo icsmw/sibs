@@ -82,7 +82,7 @@ mod test {
                 assert_eq!(
                     results
                         .get::<Vec<AnyValue>>()
-                        .expect("JOIN returns Vec<AnyValue>")
+                        .expect("join returns Vec<AnyValue>")
                         .len(),
                     3
                 );

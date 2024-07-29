@@ -1,7 +1,7 @@
 /// Testing join 
 #(join: ../../../../target/debug)
     test_a [
-        JOIN (
+        join (
             `./exit 0 1000 1000 10`;
             `./exit 0 2000 1000 10`;
             `./exit 0 3000 1000 10`;
@@ -11,25 +11,25 @@
 
 #(abort)
     success_test [
-        JOIN (
+        join (
             :join:test_a;
             :self:success;
         );
     ]
     success_with_message_test [
-        JOIN (
+        join (
             :join:test_a;
             :self:success_with_message;
         );
     ]
     error_test [
-        JOIN (
+        join (
             :join:test_a;
             :self:error;
         );
     ]
     error_with_message_test [
-        JOIN (
+        join (
             :join:test_a;
             :self:error_with_message;
         );
