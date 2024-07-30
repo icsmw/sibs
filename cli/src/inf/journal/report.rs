@@ -161,13 +161,3 @@ impl From<(Vec<Footprint>, Option<String>, LinkedErrSerialized)> for Report {
         }
     }
 }
-
-// impl<T: Clone + fmt::Display> From<(Vec<Footprint>, Option<String>, &LinkedErr<T>)> for Report {
-//     fn from(val: (Vec<Footprint>, Option<String>, &LinkedErr<T>)) -> Self {
-//         Self::Trace {
-//             trace: val.0,
-//             report: val.1,
-//             err: val.2.serialize(),
-//         }
-//     }
-// }

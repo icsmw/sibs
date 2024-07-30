@@ -6,7 +6,7 @@ pub use error::E;
 pub use fragment::*;
 use std::{collections::HashMap, fmt::Display, path::PathBuf};
 
-const REPORT_LN_AROUND: usize = 8;
+const REPORT_LN_AROUND: usize = 6;
 
 pub trait Mapping {
     fn get_filename(&self) -> &PathBuf;
@@ -124,8 +124,11 @@ pub trait Mapping {
         Ok(format!(
             "file: {}\n{}",
             self.get_filename().to_string_lossy(),
-            report[(error_first_ln - error_first_ln.min(REPORT_LN_AROUND))
-                ..report.len().min(error_last_ln + REPORT_LN_AROUND)]
+            report[(error_first_ln.min(if error_first_ln >= REPORT_LN_AROUND {
+                error_first_ln - REPORT_LN_AROUND
+            } else {
+                0
+            }))..report.len().min(error_last_ln + REPORT_LN_AROUND)]
                 .join("\n")
         ))
     }
