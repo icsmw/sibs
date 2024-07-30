@@ -30,42 +30,27 @@ impl OwnedJournal {
     }
 
     #[allow(dead_code)]
-    pub fn info<'a, T>(&self, msg: T)
-    where
-        T: 'a + ToOwned + ToString + Display,
-    {
+    pub fn info<T: AsRef<str>>(&self, msg: T) {
         self.journal.info(&self.owner, msg);
     }
 
     #[allow(dead_code)]
-    pub fn debug<'a, T>(&self, msg: T)
-    where
-        T: 'a + ToOwned + ToString + Display,
-    {
+    pub fn debug<T: AsRef<str>>(&self, msg: T) {
         self.journal.debug(&self.owner, msg);
     }
 
     #[allow(dead_code)]
-    pub fn verb<'a, T>(&self, msg: T)
-    where
-        T: 'a + ToOwned + ToString + Display,
-    {
+    pub fn verb<T: AsRef<str>>(&self, msg: T) {
         self.journal.verb(&self.owner, msg);
     }
 
     #[allow(dead_code)]
-    pub fn err<'a, T>(&self, msg: T)
-    where
-        T: 'a + ToOwned + ToString + Display,
-    {
+    pub fn err<T: AsRef<str>>(&self, msg: T) {
         self.journal.err(&self.owner, msg);
     }
 
     #[allow(dead_code)]
-    pub fn warn<'a, T>(&self, msg: T)
-    where
-        T: 'a + ToOwned + ToString + Display,
-    {
+    pub fn warn<T: AsRef<str>>(&self, msg: T) {
         self.journal.warn(&self.owner, msg);
     }
 

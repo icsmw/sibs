@@ -155,17 +155,18 @@ impl Storage {
         });
     }
 
-    pub fn log<'a, T>(&mut self, owner: T, msg: T, level: Level)
+    pub fn log<O, M>(&mut self, owner: O, msg: M, level: Level)
     where
-        T: 'a + ToOwned + ToString,
+        O: AsRef<str>,
+        M: AsRef<str>,
     {
         if !self.touched {
             self.touched = true;
             self.greeting();
         }
         let msg = LogMessage {
-            owner: owner.to_string(),
-            msg: msg.to_string(),
+            owner: owner.as_ref().to_string(),
+            msg: msg.as_ref().to_string(),
             level,
             time: timestamp(),
         };

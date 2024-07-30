@@ -1,5 +1,4 @@
 use console::strip_ansi_codes;
-use std::fmt::Display;
 
 mod bold;
 mod color;
@@ -16,17 +15,14 @@ pub fn striped_len(str: &str) -> usize {
     strip_ansi_codes(str).len()
 }
 
-pub fn apply<'a, T>(width: usize, str: &T) -> String
-where
-    T: 'a + ToOwned + ToString + Display + ?Sized,
-{
+pub fn apply<T: AsRef<str>>(width: usize, str: T) -> String {
     let mut elements: Vec<Box<dyn Styled>> = vec![
         Box::new(bold::Bold::new(width)),
         Box::new(color::Color::new(width)),
         Box::new(ordered::Ordered::new(width)),
     ];
     let lines = str
-        .to_string()
+        .as_ref()
         .split('\n')
         .map(|s| {
             let mut out = s.to_owned();

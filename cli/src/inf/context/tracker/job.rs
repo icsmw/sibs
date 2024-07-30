@@ -2,7 +2,7 @@ use crate::inf::{
     journal::{Level, OwnedJournal},
     tracker::Tracker,
 };
-use std::{fmt::Display, time::Instant};
+use std::time::Instant;
 
 #[derive(Clone, Debug)]
 pub struct Job {
@@ -50,42 +50,27 @@ impl Job {
     }
 
     #[allow(dead_code)]
-    pub fn info<'a, T>(&self, msg: T)
-    where
-        T: 'a + ToOwned + ToString + Display,
-    {
+    pub fn info<T: AsRef<str>>(&self, msg: T) {
         self.journal.info(msg);
     }
 
     #[allow(dead_code)]
-    pub fn debug<'a, T>(&self, msg: T)
-    where
-        T: 'a + ToOwned + ToString + Display,
-    {
+    pub fn debug<T: AsRef<str>>(&self, msg: T) {
         self.journal.debug(msg);
     }
 
     #[allow(dead_code)]
-    pub fn verb<'a, T>(&self, msg: T)
-    where
-        T: 'a + ToOwned + ToString + Display,
-    {
+    pub fn verb<T: AsRef<str>>(&self, msg: T) {
         self.journal.verb(msg);
     }
 
     #[allow(dead_code)]
-    pub fn err<'a, T>(&self, msg: T)
-    where
-        T: 'a + ToOwned + ToString + Display,
-    {
+    pub fn err<T: AsRef<str>>(&self, msg: T) {
         self.journal.err(msg);
     }
 
     #[allow(dead_code)]
-    pub fn warn<'a, T>(&self, msg: T)
-    where
-        T: 'a + ToOwned + ToString + Display,
-    {
+    pub fn warn<T: AsRef<str>>(&self, msg: T) {
         self.journal.warn(msg);
     }
 }

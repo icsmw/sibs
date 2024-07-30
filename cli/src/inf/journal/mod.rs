@@ -140,47 +140,47 @@ impl Journal {
 
     pub fn info<'a, O, M>(&self, owner: O, msg: M)
     where
-        O: 'a + ToOwned + ToString + Display,
-        M: 'a + ToOwned + ToString + Display,
+        O: AsRef<str>,
+        M: AsRef<str>,
     {
         self.insert(owner, msg, Level::Info);
     }
 
-    pub fn debug<'a, O, M>(&self, owner: O, msg: M)
+    pub fn debug<O, M>(&self, owner: O, msg: M)
     where
-        O: 'a + ToOwned + ToString + Display,
-        M: 'a + ToOwned + ToString + Display,
+        O: AsRef<str>,
+        M: AsRef<str>,
     {
         self.insert(owner, msg, Level::Debug);
     }
 
-    pub fn verb<'a, O, M>(&self, owner: O, msg: M)
+    pub fn verb<O, M>(&self, owner: O, msg: M)
     where
-        O: 'a + ToOwned + ToString + Display,
-        M: 'a + ToOwned + ToString + Display,
+        O: AsRef<str>,
+        M: AsRef<str>,
     {
         self.insert(owner, msg, Level::Verb);
     }
 
-    pub fn err<'a, O, M>(&self, owner: O, msg: M)
+    pub fn err<O, M>(&self, owner: O, msg: M)
     where
-        O: 'a + ToOwned + ToString + Display,
-        M: 'a + ToOwned + ToString + Display,
+        O: AsRef<str>,
+        M: AsRef<str>,
     {
         self.insert(owner, msg, Level::Err);
     }
 
-    pub fn warn<'a, O, M>(&self, owner: O, msg: M)
+    pub fn warn<O, M>(&self, owner: O, msg: M)
     where
-        O: 'a + ToOwned + ToString + Display,
-        M: 'a + ToOwned + ToString + Display,
+        O: AsRef<str>,
+        M: AsRef<str>,
     {
         self.insert(owner, msg, Level::Warn);
     }
 
-    pub fn err_if<'a, O, T, E>(&self, owner: O, res: Result<T, E>) -> Result<T, E>
+    pub fn err_if<O, T, E>(&self, owner: O, res: Result<T, E>) -> Result<T, E>
     where
-        O: 'a + ToOwned + ToString + Display,
+        O: AsRef<str>,
         E: Display,
     {
         if let Err(err) = res.as_ref() {
@@ -189,17 +189,22 @@ impl Journal {
         res
     }
 
-    fn insert<'a, O, M>(&self, owner: O, msg: M, level: Level)
+    fn insert<O, M>(&self, owner: O, msg: M, level: Level)
     where
-        O: 'a + ToOwned + ToString + Display,
-        M: 'a + ToOwned + ToString + Display,
+        O: AsRef<str>,
+        M: AsRef<str>,
     {
         if let Err(_err) = self.tx.send(Demand::Log(
-            owner.to_string(),
-            msg.to_string(),
+            owner.as_ref().to_string(),
+            msg.as_ref().to_string(),
             level.clone(),
         )) {
-            eprintln!("FSL: [{owner}][{}]: {msg}", level);
+            eprintln!(
+                "FSL: [{}][{}]: {}",
+                owner.as_ref().to_string(),
+                level,
+                msg.as_ref().to_string()
+            );
         }
     }
 }

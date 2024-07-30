@@ -4,7 +4,7 @@ mod fragment;
 use console::Style;
 pub use error::E;
 pub use fragment::*;
-use std::{collections::HashMap, fmt::Display, path::PathBuf};
+use std::{collections::HashMap, path::PathBuf};
 
 const REPORT_LN_AROUND: usize = 6;
 
@@ -37,29 +37,23 @@ pub trait Mapping {
             content[0..(from + len)].split('\n').count(),
         ))
     }
-    fn report_err<'a, T>(&mut self, token: &usize, msg: T) -> Result<String, E>
-    where
-        T: 'a + ToOwned + ToString,
-    {
+    fn report_err<T: AsRef<str>>(&mut self, token: &usize, msg: T) -> Result<String, E> {
         self.report_gen(
             token,
             format!(
                 "{} {}",
                 Style::new().red().bold().apply_to("ERROR:"),
-                Style::new().white().apply_to(msg.to_string())
+                Style::new().white().apply_to(msg.as_ref().to_string())
             ),
             Some(Style::new().red().bold()),
         )
     }
-    fn report_gen<'a, T>(
+    fn report_gen<T: AsRef<str>>(
         &mut self,
         token: &usize,
         msg: T,
         style: Option<Style>,
-    ) -> Result<String, E>
-    where
-        T: 'a + Display,
-    {
+    ) -> Result<String, E> {
         let (from, len) = self
             .get_fragments()
             .get(token)
@@ -91,7 +85,7 @@ pub trait Mapping {
             })
             .collect::<Vec<usize>>();
         if error_lns.is_empty() {
-            return Ok(format!("{msg}\n",));
+            return Ok(format!("{}\n", msg.as_ref()));
         }
         cursor = 0;
         let error_first_ln = *error_lns.first().unwrap_or(&0);
@@ -109,14 +103,20 @@ pub trait Mapping {
                             *from_ln + filler.len() + (i + 1).to_string().len() + "| ".len(),
                         );
                         format!(
-                            "{}{filler}│ {ln}\n{offset}{}\n{offset}{msg}\n",
+                            "{}{filler}│ {ln}\n{offset}{}\n{offset}{}\n",
                             i + 1,
                             style.apply_to("^".repeat(*len)),
+                            msg.as_ref()
                         )
                     } else if error_last_ln != i {
                         format!("{}{filler}{} {ln}", i + 1, style.apply_to(">"))
                     } else {
-                        format!("{}{filler}{} {ln}\n{msg}\n", i + 1, style.apply_to(">"),)
+                        format!(
+                            "{}{filler}{} {ln}\n{}\n",
+                            i + 1,
+                            style.apply_to(">"),
+                            msg.as_ref()
+                        )
                     }
                 } else {
                     format!("{}{filler}│ {ln}", i + 1)

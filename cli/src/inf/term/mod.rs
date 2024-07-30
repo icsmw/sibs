@@ -1,20 +1,12 @@
 mod styled;
 
-use std::fmt::Display;
-
 use terminal_size::terminal_size;
 
-pub fn print<'a, T>(content: &T)
-where
-    T: 'a + ToOwned + ToString + Display + ?Sized,
-{
+pub fn print<T: AsRef<str>>(content: T) {
     println!("{}", styled::apply(term_width(), content));
 }
 
-pub fn styled<'a, T>(content: &T) -> String
-where
-    T: 'a + ToOwned + ToString + Display + ?Sized,
-{
+pub fn styled<T: AsRef<str>>(content: T) -> String {
     styled::apply(term_width(), content)
 }
 

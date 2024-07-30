@@ -33,15 +33,12 @@ impl Progress {
             cfg,
         }
     }
-    pub fn create<'a, T>(&mut self, alias: T, len: Option<u64>) -> Result<usize, E>
-    where
-        T: 'a + ToOwned + ToString,
-    {
+    pub fn create<T: AsRef<str>>(&mut self, alias: T, len: Option<u64>) -> Result<usize, E> {
         self.sequence += 1;
         if !matches!(self.cfg.output, Output::Progress) {
             self.bars.insert(
                 self.sequence,
-                (None, Instant::now(), alias.to_string(), None),
+                (None, Instant::now(), alias.as_ref().to_string(), None),
             );
             Ok(self.sequence)
         } else {
@@ -52,18 +49,15 @@ impl Progress {
             bar.set_style(spinner_style.clone());
             self.bars.insert(
                 self.sequence,
-                (Some(bar), Instant::now(), alias.to_string(), None),
+                (Some(bar), Instant::now(), alias.as_ref().to_string(), None),
             );
             self.reprint();
             Ok(self.sequence)
         }
     }
-    pub fn set_message<'a, T>(&mut self, sequence: usize, msg: T)
-    where
-        T: 'a + ToOwned + ToString,
-    {
+    pub fn set_message<T: AsRef<str>>(&mut self, sequence: usize, msg: T) {
         if let Some((Some(bar), _, _alias, _)) = self.bars.get(&sequence) {
-            bar.set_message(msg.to_string());
+            bar.set_message(msg.as_ref().to_string());
             self.reprint();
         }
     }

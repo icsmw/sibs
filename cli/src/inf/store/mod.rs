@@ -14,11 +14,8 @@ impl<T> Store<T> {
             executors: HashMap::new(),
         }
     }
-    pub fn insert<'b, N>(&mut self, name: N, executor: T) -> Result<(), E>
-    where
-        N: 'b + ToOwned + ToString,
-    {
-        let name = name.to_string();
+    pub fn insert<S: AsRef<str>>(&mut self, name: S, executor: T) -> Result<(), E> {
+        let name = name.as_ref().to_string();
         if self.executors.contains_key(&name) {
             return Err(E::ItemAlreadyExists(name));
         }
