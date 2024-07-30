@@ -12,7 +12,7 @@
         $c_str = "value_c_{$a_str}-{$b_str}";
         $d_bool = @env::is_os(linux);
         if @env::is_os(linux) [
-            :self:build("smth"; "pro1d");
+            :self:build("smth"; "prod1");
         ];
     ];
     /// Building electron application

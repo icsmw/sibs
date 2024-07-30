@@ -33,6 +33,8 @@ pub trait Mapping {
             content[*from..(from + len)].to_string(),
             *from,
             *len,
+            content[0..*from].split('\n').count(),
+            content[0..(from + len)].split('\n').count(),
         ))
     }
     fn report_err<'a, T>(&mut self, token: &usize, msg: T) -> Result<String, E>

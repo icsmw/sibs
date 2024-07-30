@@ -39,7 +39,7 @@ impl Footprints {
         for (token, value) in self.footprints.iter() {
             records.push((
                 // TODO: return here good formated fragment
-                maps.get(token)?.get_fragment(token)?.content,
+                maps.get(token)?.get_fragment(token)?,
                 Status::Success(value.clone()),
             ));
         }
@@ -48,7 +48,7 @@ impl Footprints {
             return Ok(());
         };
         records.push((
-            maps.get(&token)?.get_fragment(&token)?.content,
+            maps.get(&token)?.get_fragment(&token)?,
             Status::Error(err.e.clone()),
         ));
         self.journal.report(

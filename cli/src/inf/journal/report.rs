@@ -1,6 +1,6 @@
 use crate::{
     error::{LinkedErr, LinkedErrSerialized},
-    inf::term,
+    inf::{map::Fragment, term},
 };
 use console::Style;
 use std::fmt;
@@ -35,7 +35,7 @@ impl fmt::Display for Status {
 ///
 /// - The `String` is fragment of executed code, which return a value.
 /// - The `Status` returned result during executing.
-pub type Footprint = (String, Status);
+pub type Footprint = (Fragment, Status);
 
 #[derive(Debug, Clone)]
 pub enum Report {
@@ -107,7 +107,10 @@ impl Report {
             Self::Trace { trace, report, err } => {
                 term::print("\n[b][color:yellow]PREVIOUS TO ERROR ACTIONS:[/color][/b]");
                 trace.iter().for_each(|(fragment, status)| {
-                    term::print(&format!("{fragment}: [b]{status}[/b]"));
+                    term::print(&format!(
+                        "{}-{}: {} [b]{status}[/b]",
+                        fragment.from_ln, fragment.to_ln, fragment.content
+                    ));
                 });
                 term::print("\n[b][color:red]ERROR REPORT:[/color][/b]");
                 if let Some(report) = report {
