@@ -62,7 +62,7 @@ pub struct Comparing {
 impl Reading<Comparing> for Comparing {
     fn read(reader: &mut Reader) -> Result<Option<Comparing>, LinkedErr<E>> {
         let restore = reader.pin();
-        let close = reader.open_token();
+        let close = reader.open_token(ElTarget::Comparing);
         let left = if let Some(el) = Element::include(
             reader,
             &[

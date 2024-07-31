@@ -38,7 +38,7 @@ pub struct Function {
 impl Reading<Function> for Function {
     fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
         reader.move_to().any();
-        let close = reader.open_token();
+        let close = reader.open_token(ElTarget::Function);
         if reader.move_to().char(&[&chars::AT]).is_some() {
             let (name, ends_with) = reader
                 .until()
@@ -58,7 +58,7 @@ impl Reading<Function> for Function {
             ) {
                 Err(E::InvalidFunctionName(name.to_string()).by_reader(reader))?;
             }
-            let args_close = reader.open_token();
+            let args_close = reader.open_token(ElTarget::Function);
             if matches!(
                 ends_with,
                 Some(chars::SEMICOLON) | Some(chars::CLOSE_BRACKET) | Some(chars::QUESTION)

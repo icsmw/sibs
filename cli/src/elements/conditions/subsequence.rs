@@ -16,7 +16,7 @@ pub struct Subsequence {
 
 impl Reading<Subsequence> for Subsequence {
     fn read(reader: &mut Reader) -> Result<Option<Subsequence>, LinkedErr<E>> {
-        let close = reader.open_token();
+        let close = reader.open_token(ElTarget::Subsequence);
         let mut subsequence: Vec<Element> = Vec::new();
         while !reader.rest().trim().is_empty() {
             if subsequence.is_empty()

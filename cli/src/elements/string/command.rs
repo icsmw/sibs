@@ -19,7 +19,7 @@ pub struct Command {
 
 impl Reading<Command> for Command {
     fn read(reader: &mut Reader) -> Result<Option<Command>, LinkedErr<E>> {
-        if let Some((_, elements, token)) = string::read(reader, chars::TILDA)? {
+        if let Some((_, elements, token)) = string::read(reader, chars::TILDA, ElTarget::Command)? {
             Ok(Some(Command { elements, token }))
         } else {
             Ok(None)

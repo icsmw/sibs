@@ -1,7 +1,7 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::Component,
+    elements::{Component, ElTarget},
     error::LinkedErr,
     inf::{
         operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
@@ -40,7 +40,7 @@ pub struct VariableType {
 
 impl Reading<VariableType> for VariableType {
     fn read(reader: &mut Reader) -> Result<Option<VariableType>, LinkedErr<E>> {
-        let close = reader.open_token();
+        let close = reader.open_token(ElTarget::VariableType);
         if reader.move_to().char(&[&chars::TYPE_OPEN]).is_some() {
             if let Some((word, _char)) = reader.until().char(&[&chars::TYPE_CLOSE]) {
                 reader.move_to().next();

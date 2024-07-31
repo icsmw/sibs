@@ -18,14 +18,14 @@ impl fmt::Display for Status {
             f,
             "{}",
             match self {
-                Self::Success(result) => term::styled(&format!(
+                Self::Success(result) => term::styled(format!(
                     "[color:green]success[/color]: [b]{}[/b]",
                     result
                         .as_ref()
                         .map(|r| r.to_string())
                         .unwrap_or("None".to_owned())
                 )),
-                Self::Error(err) => term::styled(&format!("[color:red]error[/color]: {err}")),
+                Self::Error(err) => term::styled(format!("[color:red]error[/color]: {err}")),
             }
         )
     }
@@ -107,9 +107,13 @@ impl Report {
             Self::Trace { trace, report, err } => {
                 term::print("\n[b][color:yellow]PREVIOUS TO ERROR ACTIONS:[/color][/b]");
                 trace.iter().for_each(|(fragment, status)| {
-                    term::print(&format!(
-                        "{}-{}: {} [b]{status}[/b]",
-                        fragment.from_ln, fragment.to_ln, fragment.content
+                    term::print(format!(
+                        "{}({})-{}({}): {} [b]{status}[/b]",
+                        fragment.from_ln,
+                        fragment.from_pos,
+                        fragment.to_ln,
+                        fragment.to_pos,
+                        fragment.content
                     ));
                 });
                 term::print("\n[b][color:red]ERROR REPORT:[/color][/b]");

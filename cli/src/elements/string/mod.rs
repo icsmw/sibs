@@ -13,10 +13,11 @@ pub type PatternStringResult = (String, Vec<Element>, usize);
 pub fn read(
     reader: &mut Reader,
     wrapper: char,
+    el: ElTarget,
 ) -> Result<Option<PatternStringResult>, LinkedErr<E>> {
     let restore = reader.pin();
     reader.trim();
-    let close = reader.open_token();
+    let close = reader.open_token(el);
     if reader.move_to().char(&[&wrapper]).is_some() {
         let mut elements: Vec<Element> = Vec::new();
         let mut closed = false;

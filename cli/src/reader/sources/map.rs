@@ -1,10 +1,13 @@
-use crate::{inf::map::Mapping, reader::Ids};
+use crate::{
+    elements::ElTarget,
+    inf::map::{MapFragment, Mapping},
+    reader::Ids,
+};
 use std::{cell::RefCell, collections::HashMap, path::PathBuf, rc::Rc};
 
 #[derive(Debug, Clone)]
 pub struct Map {
-    //              <id,    (from,  len  )>
-    pub fragments: HashMap<usize, (usize, usize)>,
+    pub fragments: HashMap<usize, MapFragment>,
     pub content: String,
     pub filename: PathBuf,
     recent: Option<usize>,
@@ -36,17 +39,17 @@ impl Map {
             }
         }
     }
-    pub fn last(&self) -> Option<(usize, (usize, usize))> {
+    pub fn last(&self) -> Option<(usize, MapFragment)> {
         if let Some(id) = self.recent {
-            self.fragments.get(&id).map(|coors| (id, *coors))
+            self.fragments.get(&id).map(|coors| (id, coors.clone()))
         } else {
             None
         }
     }
-    pub fn add(&mut self, from: usize, len: usize) -> usize {
+    pub fn add(&mut self, el: Option<ElTarget>, from: usize, len: usize) -> usize {
         let id = self.ids.borrow_mut().get();
         self.recent = Some(id);
-        self.fragments.insert(id, (from, len));
+        self.fragments.insert(id, MapFragment::new(el, from, len));
         id
     }
 }
@@ -58,7 +61,7 @@ impl Mapping for Map {
     fn get_content(&self) -> &str {
         &self.content
     }
-    fn get_fragments(&self) -> &HashMap<usize, (usize, usize)> {
+    fn get_fragments(&self) -> &HashMap<usize, MapFragment> {
         &self.fragments
     }
 }

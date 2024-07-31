@@ -64,7 +64,7 @@ impl VariableDeclaration {
 
 impl Reading<VariableDeclaration> for VariableDeclaration {
     fn read(reader: &mut Reader) -> Result<Option<VariableDeclaration>, LinkedErr<E>> {
-        let close = reader.open_token();
+        let close = reader.open_token(ElTarget::VariableDeclaration);
         if let Some(variable) = Element::include(reader, &[ElTarget::VariableName])? {
             if reader.move_to().char(&[&chars::COLON]).is_some() {
                 if let Some(declaration) = Element::include(

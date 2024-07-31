@@ -23,7 +23,7 @@ pub struct Join {
 
 impl Reading<Join> for Join {
     fn read(reader: &mut Reader) -> Result<Option<Join>, LinkedErr<E>> {
-        let close = reader.open_token();
+        let close = reader.open_token(ElTarget::Join);
         if reader.move_to().word(&[words::JOIN]).is_some() {
             let Some(Element::Values(elements, md)) =
                 Element::include(reader, &[ElTarget::Values])?

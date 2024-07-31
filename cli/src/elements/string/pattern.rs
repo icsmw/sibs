@@ -19,7 +19,9 @@ pub struct PatternString {
 
 impl Reading<PatternString> for PatternString {
     fn read(reader: &mut Reader) -> Result<Option<PatternString>, LinkedErr<E>> {
-        if let Some((_, elements, token)) = string::read(reader, chars::QUOTES)? {
+        if let Some((_, elements, token)) =
+            string::read(reader, chars::QUOTES, ElTarget::PatternString)?
+        {
             Ok(Some(PatternString { elements, token }))
         } else {
             Ok(None)

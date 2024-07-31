@@ -15,7 +15,7 @@ pub struct Breaker {
 
 impl Reading<Breaker> for Breaker {
     fn read(reader: &mut Reader) -> Result<Option<Breaker>, LinkedErr<E>> {
-        let close = reader.open_token();
+        let close = reader.open_token(ElTarget::Breaker);
         if reader.move_to().word(&[words::BREAK]).is_some() {
             Ok(Some(Breaker {
                 token: close(reader),

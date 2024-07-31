@@ -120,7 +120,7 @@ impl Task {
 
 impl Reading<Task> for Task {
     fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
-        let close = reader.open_token();
+        let close = reader.open_token(ElTarget::Task);
         if let Some((name, stopped_on)) = reader
             .until()
             .char(&[&chars::OPEN_BRACKET, &chars::OPEN_SQ_BRACKET])

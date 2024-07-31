@@ -16,7 +16,7 @@ pub struct Values {
 
 impl Reading<Values> for Values {
     fn read(reader: &mut Reader) -> Result<Option<Values>, LinkedErr<E>> {
-        let close = reader.open_token();
+        let close = reader.open_token(ElTarget::Values);
         if reader
             .group()
             .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)

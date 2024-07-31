@@ -16,7 +16,7 @@ pub struct Condition {
 
 impl Reading<Condition> for Condition {
     fn read(reader: &mut Reader) -> Result<Option<Condition>, LinkedErr<E>> {
-        let close = reader.open_token();
+        let close = reader.open_token(ElTarget::Condition);
         if reader
             .group()
             .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)

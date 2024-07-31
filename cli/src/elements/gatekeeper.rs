@@ -80,7 +80,7 @@ impl Reading<Gatekeeper> for Gatekeeper {
             return Ok(None);
         }
         let restore = reader.pin();
-        let close = reader.open_token();
+        let close = reader.open_token(ElTarget::Gatekeeper);
         let function = if let Some(el) = Element::include(reader, &[ElTarget::Function])? {
             Box::new(el)
         } else {

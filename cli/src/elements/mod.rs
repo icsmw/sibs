@@ -41,7 +41,7 @@ use crate::{
 };
 use std::fmt::{self, Display};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
 pub enum ElTarget {
     Function,
     If,

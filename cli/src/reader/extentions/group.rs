@@ -34,7 +34,7 @@ impl<'a> Group<'a> {
             } else if char == *close && !serialized {
                 count -= 1;
                 if let (0, Some(opened)) = (count, opened) {
-                    self.bound.index(opened, str.len());
+                    self.bound.index(None, opened, str.len());
                     self.bound.pos += pos + 1;
                     return Some(str);
                 }

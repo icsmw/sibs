@@ -57,7 +57,7 @@ impl FormationCursor {
     pub fn right(&mut self) -> Self {
         FormationCursor {
             offset: self.offset + 1,
-            parent: self.parent.clone(),
+            parent: self.parent,
         }
     }
     pub fn reown(&mut self, parent: Option<ElTarget>) -> Self {

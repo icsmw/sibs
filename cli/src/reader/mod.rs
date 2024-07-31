@@ -159,38 +159,38 @@ impl Reader {
             }
         }
     }
-    pub(self) fn index(&mut self, from: usize, len: usize) {
-        self.map.borrow_mut().add(from + self.offset, len);
+    pub(self) fn index(&mut self, el: Option<ElTarget>, from: usize, len: usize) {
+        self.map.borrow_mut().add(el, from + self.offset, len);
     }
     pub fn token(&self) -> Result<Token, E> {
         let content = self.map.borrow().content.to_string();
         self.map
             .borrow_mut()
             .last()
-            .map(|(id, (from, len))| {
-                let value = if len == 0 {
+            .map(|(id, fr)| {
+                let value = if fr.len() == 0 {
                     String::new()
                 } else {
-                    content[from..(from + len)].to_string()
+                    content[fr.from()..fr.to()].to_string()
                 };
                 Token {
                     content: value.to_string(),
                     id,
-                    from,
-                    len,
-                    bound: self.inherit(value, from),
+                    from: fr.from(),
+                    len: fr.len(),
+                    bound: self.inherit(value, fr.from()),
                 }
             })
             .ok_or(E::FailGetToken)
     }
-    pub fn open_token(&mut self) -> impl Fn(&mut Reader) -> usize {
+    pub fn open_token(&mut self, el: ElTarget) -> impl Fn(&mut Reader) -> usize {
         self.move_to().any();
         let from = self.pos + self.offset;
         move |reader: &mut Reader| {
             reader
                 .map
                 .borrow_mut()
-                .add(from, (reader.pos + reader.offset) - from)
+                .add(Some(el), from, (reader.pos + reader.offset) - from)
         }
     }
     pub fn pin(&mut self) -> impl Fn(&mut Reader) {

@@ -21,7 +21,7 @@ impl Reading<Optional> for Optional {
             return Ok(None);
         }
         let restore = reader.pin();
-        let close = reader.open_token();
+        let close = reader.open_token(ElTarget::Optional);
         let condition = if let Some(el) = Element::include(
             reader,
             &[

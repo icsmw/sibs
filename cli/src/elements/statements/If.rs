@@ -104,7 +104,7 @@ pub struct If {
 impl Reading<If> for If {
     fn read(reader: &mut Reader) -> Result<Option<If>, LinkedErr<E>> {
         let mut threads: Vec<Thread> = Vec::new();
-        let close = reader.open_token();
+        let close = reader.open_token(ElTarget::If);
         while !reader.rest().trim().is_empty() {
             if reader.move_to().word(&[words::IF]).is_some() {
                 let conditions =

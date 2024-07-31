@@ -17,7 +17,7 @@ pub struct VariableName {
 impl Reading<VariableName> for VariableName {
     fn read(reader: &mut Reader) -> Result<Option<VariableName>, LinkedErr<E>> {
         reader.move_to().any();
-        let close = reader.open_token();
+        let close = reader.open_token(ElTarget::VariableName);
         if reader.move_to().char(&[&chars::DOLLAR]).is_some() {
             let content = reader
                 .until()

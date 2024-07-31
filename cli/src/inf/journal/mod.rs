@@ -138,7 +138,7 @@ impl Journal {
         OwnedJournal::new(uuid.unwrap_or_else(Uuid::new_v4), owner, self.clone())
     }
 
-    pub fn info<'a, O, M>(&self, owner: O, msg: M)
+    pub fn info<O, M>(&self, owner: O, msg: M)
     where
         O: AsRef<str>,
         M: AsRef<str>,
@@ -199,12 +199,7 @@ impl Journal {
             msg.as_ref().to_string(),
             level.clone(),
         )) {
-            eprintln!(
-                "FSL: [{}][{}]: {}",
-                owner.as_ref().to_string(),
-                level,
-                msg.as_ref().to_string()
-            );
+            eprintln!("FSL: [{}][{}]: {}", owner.as_ref(), level, msg.as_ref());
         }
     }
 }

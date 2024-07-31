@@ -14,6 +14,7 @@ pub type OperatorResult = Result<Option<AnyValue>, LinkedErr<E>>;
 
 pub trait Operator {
     fn token(&self) -> usize;
+    // fn el_target(&self) -> ElTarget;
     fn execute<'a>(
         &'a self,
         owner: Option<&'a Component>,

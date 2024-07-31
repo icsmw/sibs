@@ -96,14 +96,13 @@ impl Storage {
     fn greeting(&mut self) {
         self.log(
             "",
-            &format!(
+            format!(
                 "Session has been started at {}. {}",
                 Utc::now(),
-                if let Some(filename) = self.filename.as_ref() {
-                    format!("Log file: {}", filename.to_string_lossy())
-                } else {
-                    String::from("Logs aren't writing into file.")
-                }
+                self.filename
+                    .as_ref()
+                    .map(|filename| format!("Log file: {}", filename.to_string_lossy()))
+                    .unwrap_or_else(|| String::from("Logs aren't writing into file."))
             ),
             Level::Info,
         );

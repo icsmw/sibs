@@ -29,7 +29,7 @@ impl Eq for Reference {}
 
 impl Reading<Reference> for Reference {
     fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
-        let close = reader.open_token();
+        let close = reader.open_token(ElTarget::Reference);
         if reader.move_to().char(&[&chars::COLON]).is_some() {
             let mut path: Vec<String> = Vec::new();
             let mut inputs: Vec<Element> = Vec::new();

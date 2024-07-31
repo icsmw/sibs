@@ -1,6 +1,7 @@
 mod error;
 mod fragment;
 
+use crate::elements::ElTarget;
 use console::Style;
 pub use error::E;
 pub use fragment::*;
@@ -8,33 +9,69 @@ use std::{collections::HashMap, path::PathBuf};
 
 const REPORT_LN_AROUND: usize = 6;
 
+#[derive(Debug, Clone)]
+pub struct MapFragment {
+    el: Option<ElTarget>,
+    from: usize,
+    len: usize,
+}
+
+impl MapFragment {
+    pub fn new(el: Option<ElTarget>, from: usize, len: usize) -> Self {
+        Self { el, from, len }
+    }
+    pub fn to(&self) -> usize {
+        self.from + self.len
+    }
+    pub fn from(&self) -> usize {
+        self.from
+    }
+    pub fn len(&self) -> usize {
+        self.len
+    }
+    pub fn el(&self) -> Option<ElTarget> {
+        self.el
+    }
+}
+
 pub trait Mapping {
     fn get_filename(&self) -> &PathBuf;
-    fn get_fragments(&self) -> &HashMap<usize, (usize, usize)>;
+    fn get_fragments(&self) -> &HashMap<usize, MapFragment>;
     fn get_content(&self) -> &str;
     fn contains(&self, token: &usize) -> bool {
         self.get_fragments().contains_key(token)
     }
     fn get_fragment(&self, token: &usize) -> Result<Fragment, E> {
         let content = self.get_content();
-        let (from, len) = self
+        let fr = self
             .get_fragments()
             .get(token)
             .ok_or(E::TokenNotFound(*token))?;
-        if content.len() < from + len {
+        if content.len() < fr.to() {
             Err(E::TokenHasInvalidRange(
                 *token,
                 content.len(),
-                *from,
-                from + len,
+                fr.from,
+                fr.to(),
             ))?;
         }
         Ok(Fragment::new(
-            content[*from..(from + len)].to_string(),
-            *from,
-            *len,
-            content[0..*from].split('\n').count(),
-            content[0..(from + len)].split('\n').count(),
+            fr.el(),
+            content[fr.from..fr.to()].to_string(),
+            fr.from,
+            fr.len,
+            content[0..fr.from].split('\n').count(),
+            content[0..fr.to()].split('\n').count(),
+            content[0..fr.from]
+                .split('\n')
+                .last()
+                .map(|s| s.len())
+                .unwrap_or_default(),
+            content[0..fr.to()]
+                .split('\n')
+                .last()
+                .map(|s| s.len())
+                .unwrap_or_default(),
         ))
     }
     fn report_err<T: AsRef<str>>(&mut self, token: &usize, msg: T) -> Result<String, E> {
@@ -54,27 +91,27 @@ pub trait Mapping {
         msg: T,
         style: Option<Style>,
     ) -> Result<String, E> {
-        let (from, len) = self
+        let fr = self
             .get_fragments()
             .get(token)
             .ok_or(E::TokenNotFound(*token))?;
         let content = self.get_content();
         let num_rate = content.split('\n').count().to_string().len() + 1;
         let mut cursor: usize = 0;
-        let from_ln = &content[0..*from]
+        let from_ln = &content[0..fr.from]
             .split('\n')
             .last()
             .map(|s| s.len())
             .unwrap_or(0);
-        let error_range = *from..(from + len);
+        let error_range = fr.from..fr.to();
         let error_lns = content
             .split('\n')
             .enumerate()
             .filter_map(|(i, ln)| {
                 let range = cursor..=cursor + ln.len();
                 cursor += ln.len() + 1;
-                if range.contains(from)
-                    || range.contains(&(from + len))
+                if range.contains(&fr.from)
+                    || range.contains(&fr.to())
                     || error_range.contains(range.start())
                     || error_range.contains(range.end())
                 {
@@ -105,7 +142,7 @@ pub trait Mapping {
                         format!(
                             "{}{filler}│ {ln}\n{offset}{}\n{offset}{}\n",
                             i + 1,
-                            style.apply_to("^".repeat(*len)),
+                            style.apply_to("^".repeat(fr.len)),
                             msg.as_ref()
                         )
                     } else if error_last_ln != i {

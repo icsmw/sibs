@@ -123,7 +123,7 @@ impl Action for Help {
                     });
                     term::print(&output);
                 } else {
-                    term::print(&format!("Component [b]\"{component}\"[/b] isn't found."));
+                    term::print(format!("Component [b]\"{component}\"[/b] isn't found."));
                     return Err(E::ComponentNotExists(component.to_string()));
                 }
             } else {

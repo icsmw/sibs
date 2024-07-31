@@ -52,7 +52,7 @@ pub async fn process(journal: Journal) -> Result<(), E> {
     let (mut income, arguments) = get_arguments()?;
     if arguments.all_without_context().await? {
         if !income.is_empty() {
-            term::print(&format!(
+            term::print(format!(
                 r#"[b]WARNING:[\b] Ingore next arguments: {}"#,
                 income.join(", ")
             ));

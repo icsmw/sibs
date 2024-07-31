@@ -18,7 +18,7 @@ impl<'a> Until<'a> {
         let content = &self.bound.content[self.bound.pos..];
         for (pos, char) in content.chars().enumerate() {
             if !serialized && (targets.contains(&&char) || (char.is_whitespace() && whitespace)) {
-                self.bound.index(self.bound.pos, pos);
+                self.bound.index(None, self.bound.pos, pos);
                 self.bound.pos += pos;
                 return Some((str, char));
             }
@@ -48,7 +48,8 @@ impl<'a> Until<'a> {
                 if clean.ends_with(word) {
                     let next_pos = self.bound.pos + pos - (word.len() - 1);
                     let read = self.bound.content[self.bound.pos..next_pos].to_string();
-                    self.bound.index(self.bound.pos, pos - (word.len() - 1));
+                    self.bound
+                        .index(None, self.bound.pos, pos - (word.len() - 1));
                     self.bound.pos = next_pos;
                     return Some((read, word.to_string()));
                 }

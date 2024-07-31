@@ -17,7 +17,7 @@ impl<'a> MoveTo<'a> {
                 continue;
             }
             return if chars.contains(&&char) {
-                self.bound.index(self.bound.pos, pos);
+                self.bound.index(None, self.bound.pos, pos);
                 self.bound.pos += pos + 1;
                 Some(char)
             } else {
@@ -60,7 +60,7 @@ impl<'a> MoveTo<'a> {
             let from = self.bound.pos;
             self.any();
             self.bound.pos += found.len();
-            self.bound.index(from, self.bound.pos - from);
+            self.bound.index(None, from, self.bound.pos - from);
             Some(found)
         } else {
             None
@@ -82,7 +82,7 @@ impl<'a> MoveTo<'a> {
             let from = self.bound.pos;
             self.any();
             self.bound.pos += found.len();
-            self.bound.index(from, self.bound.pos - from);
+            self.bound.index(None, from, self.bound.pos - from);
             Some(found)
         } else {
             None
@@ -110,7 +110,7 @@ impl<'a> MoveTo<'a> {
                 continue;
             }
             if !str.is_empty() && str != "-" {
-                self.bound.index(self.bound.pos, pos);
+                self.bound.index(None, self.bound.pos, pos);
                 self.bound.pos += pos;
                 return Some(str);
             } else {
@@ -119,7 +119,7 @@ impl<'a> MoveTo<'a> {
         }
         if !str.is_empty() && str != "-" {
             let last = content.len();
-            self.bound.index(self.bound.pos, last);
+            self.bound.index(None, self.bound.pos, last);
             self.bound.pos += last;
             Some(str)
         } else {
@@ -154,7 +154,7 @@ impl<'a> MoveTo<'a> {
         } else {
             self.bound.pos
         };
-        self.bound.index(self.bound.pos, pos - self.bound.pos);
+        self.bound.index(None, self.bound.pos, pos - self.bound.pos);
         self.bound.pos = pos;
         rest
     }

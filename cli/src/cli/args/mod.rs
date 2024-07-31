@@ -43,7 +43,7 @@ impl Arguments {
     }
     pub fn print() {
         term::print(
-            &[
+            [
                 exertion::Scenario::desc(),
                 exertion::Help::desc(),
                 exertion::Trace::desc(),

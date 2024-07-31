@@ -23,7 +23,7 @@ impl Block {
 
 impl Reading<Block> for Block {
     fn read(reader: &mut Reader) -> Result<Option<Block>, LinkedErr<E>> {
-        let close = reader.open_token();
+        let close = reader.open_token(ElTarget::Block);
         if reader
             .group()
             .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)

@@ -20,7 +20,7 @@ pub struct Each {
 
 impl Reading<Each> for Each {
     fn read(reader: &mut Reader) -> Result<Option<Each>, LinkedErr<E>> {
-        let close = reader.open_token();
+        let close = reader.open_token(ElTarget::Each);
         if reader.move_to().word(&[words::EACH]).is_some() {
             let (variable, input) = if reader
                 .group()

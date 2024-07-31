@@ -64,7 +64,7 @@ impl Component {
 
 impl Reading<Component> for Component {
     fn read(reader: &mut Reader) -> Result<Option<Component>, LinkedErr<E>> {
-        let close = reader.open_token();
+        let close = reader.open_token(ElTarget::Component);
         let restore = reader.pin();
         if let Some((before, _)) = reader.until().char(&[&chars::POUND_SIGN]) {
             if !before.is_empty() {

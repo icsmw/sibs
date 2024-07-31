@@ -1,10 +1,12 @@
-use crate::{inf::map::Mapping, reader::Map as ReaderMap};
+use crate::{
+    inf::map::{MapFragment, Mapping},
+    reader::Map as ReaderMap,
+};
 use std::{collections::HashMap, path::PathBuf};
 
 #[derive(Debug, Clone)]
 pub struct Map {
-    //              <id,    (from,  len  )>
-    pub fragments: HashMap<usize, (usize, usize)>,
+    pub fragments: HashMap<usize, MapFragment>,
     pub content: String,
     filename: PathBuf,
     cursor: Option<usize>,
@@ -20,7 +22,7 @@ impl Mapping for Map {
     fn get_filename(&self) -> &PathBuf {
         &self.filename
     }
-    fn get_fragments(&self) -> &HashMap<usize, (usize, usize)> {
+    fn get_fragments(&self) -> &HashMap<usize, MapFragment> {
         &self.fragments
     }
     fn get_content(&self) -> &str {
