@@ -75,6 +75,46 @@ pub enum ElTarget {
     Comment,
 }
 
+impl fmt::Display for ElTarget {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Function => "Function",
+                Self::If => "If",
+                Self::Each => "Each",
+                Self::Breaker => "Breaker",
+                Self::First => "First",
+                Self::Join => "Join",
+                Self::VariableAssignation => "VariableAssignation",
+                Self::Optional => "Optional",
+                Self::Gatekeeper => "Gatekeeper",
+                Self::Reference => "Reference",
+                Self::PatternString => "PatternString",
+                Self::VariableName => "VariableName",
+                Self::Comparing => "Comparing",
+                Self::Combination => "Combination",
+                Self::Subsequence => "Subsequence",
+                Self::Condition => "Condition",
+                Self::Values => "Values",
+                Self::Block => "Block",
+                Self::Meta => "Meta",
+                Self::Command => "Command",
+                Self::Task => "Task",
+                Self::Component => "Component",
+                Self::Integer => "Integer",
+                Self::Boolean => "Boolean",
+                Self::VariableDeclaration => "VariableDeclaration",
+                Self::VariableVariants => "VariableVariants",
+                Self::VariableType => "VariableType",
+                Self::SimpleString => "SimpleString",
+                Self::Comment => "Comment",
+            },
+        )
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct Metadata {
     // Element: Comment | Meta

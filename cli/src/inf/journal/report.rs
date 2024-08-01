@@ -19,7 +19,7 @@ impl fmt::Display for Status {
             "{}",
             match self {
                 Self::Success(result) => term::styled(format!(
-                    "[color:green]success[/color]: [b]{}[/b]",
+                    "[color:green]{}[/color]",
                     result
                         .as_ref()
                         .map(|r| r.to_string())
@@ -106,16 +106,26 @@ impl Report {
             Self::Report { report, err: _ } => eprintln!("{report}"),
             Self::Trace { trace, report, err } => {
                 term::print("\n[b][color:yellow]PREVIOUS TO ERROR ACTIONS:[/color][/b]");
-                trace.iter().for_each(|(fragment, status)| {
-                    term::print(format!(
-                        "{}({})-{}({}): {} [b]{status}[/b]",
-                        fragment.from_ln,
-                        fragment.from_pos,
-                        fragment.to_ln,
-                        fragment.to_pos,
-                        fragment.content
-                    ));
-                });
+                term::print(
+                    trace
+                        .iter()
+                        .map(|(fragment, status)| {
+                            format!(
+                                "Ln: {} [>>] Col: {}:{} [>>]{} [>>] {} [>>] [b]{status}[/b]",
+                                if fragment.from_ln == fragment.to_ln {
+                                    fragment.from_ln.to_string()
+                                } else {
+                                    format!("{}:{}", fragment.from_ln, fragment.to_ln)
+                                },
+                                fragment.from_pos,
+                                fragment.to_pos,
+                                fragment.el.map(|el| el.to_string()).unwrap_or_default(),
+                                fragment.content
+                            )
+                        })
+                        .collect::<Vec<String>>()
+                        .join("\n"),
+                );
                 term::print("\n[b][color:red]ERROR REPORT:[/color][/b]");
                 if let Some(report) = report {
                     eprintln!("{report}");
