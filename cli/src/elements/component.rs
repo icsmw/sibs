@@ -143,7 +143,7 @@ impl fmt::Display for Component {
             self.name,
             self.cwd
                 .as_ref()
-                .map(|cwd| format!(": {}", cwd.to_string_lossy()))
+                .map(|cwd| format!(": {}", cwd.display()))
                 .unwrap_or_default(),
             self.elements
                 .iter()
@@ -165,7 +165,7 @@ impl Formation for Component {
             self.name,
             self.cwd
                 .as_ref()
-                .map(|cwd| format!(": {}", cwd.to_string_lossy()))
+                .map(|cwd| format!(": {}", cwd.display()))
                 .unwrap_or_default(),
             self.elements
                 .iter()
@@ -200,14 +200,13 @@ impl Operator for Component {
                     self.get_tasks_names(),
                 )
             })?;
-            let sc = Scope::init(
-                if let Some(path) = self.cwd.as_ref() {
-                    Some(cx.scenario.to_abs_path(path)?)
-                } else {
-                    None
-                },
-                &cx.journal,
-            );
+            let sc = cx
+                .scope
+                .create(
+                    format!("{}:{}", self.name, task.get_name()),
+                    self.cwd.clone(),
+                )
+                .await?;
             let task_ref = task
                 .as_reference(
                     owner,

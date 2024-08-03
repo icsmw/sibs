@@ -1,6 +1,7 @@
 use crate::{functions, inf::context::scenario, reader};
 use thiserror::Error;
 use tokio::sync::{mpsc, oneshot};
+use uuid::Uuid;
 
 #[derive(Error, Debug, Clone)]
 pub enum E {
@@ -12,6 +13,8 @@ pub enum E {
     ReaderError(String),
     #[error("IO error: {0}")]
     IO(String),
+    #[error("No scope session uuid: {0}")]
+    NoScopeSession(Uuid),
     #[error("Fail to receive channel message: {0}")]
     RecvError(String),
     #[error("Fail to send channel message: {0}")]

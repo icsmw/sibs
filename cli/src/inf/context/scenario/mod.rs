@@ -27,8 +27,8 @@ impl Scenario {
     #[cfg(test)]
     pub fn dummy() -> Self {
         Self {
-            path: PathBuf::new(),
-            filename: PathBuf::new(),
+            path: std::env::temp_dir(),
+            filename: PathBuf::from("dummy.sibs"),
         }
     }
     pub fn from(filename: &Path) -> Result<Self, E> {

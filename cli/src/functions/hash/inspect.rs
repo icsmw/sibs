@@ -12,10 +12,6 @@ use fshasher::{
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
-/// TODO:
-/// - PatternFilter isn't available
-/// - Check why exclude doesn't work with Filter
-///
 impl From<bstorage::E> for E {
     fn from(err: bstorage::E) -> Self {
         E::Other(format!("Storage error: {err}"))
@@ -64,10 +60,7 @@ pub fn execute(
                 }.to_string(),
             ), Some(args_token)))?;
         }
-        let cwd = sc
-            .get_cwd()
-            .await?
-            .ok_or(E::IO(String::from("No CWD path")))?;
+        let cwd = sc.get_cwd().await?;
         let dests = if let Some(patterns) = args[0].value.as_path_bufs() {
             patterns.into_iter().map(|p| cwd.join(p)).collect()
         } else if let Some(pattern) = args[0].value.as_path_buf() {

@@ -3,6 +3,7 @@ pub mod error;
 pub mod scenario;
 pub mod tracker;
 
+use bstorage::Storage;
 use std::process;
 
 pub use atlas::*;
@@ -14,7 +15,7 @@ use crate::{
     elements::FuncArg,
     error::LinkedErr,
     functions::Functions,
-    inf::{AnyValue, Journal, Scope, Signals},
+    inf::{AnyValue, Journal, Scope, ScopeDomain, Signals},
     reader::Sources,
 };
 use tokio::{
@@ -53,7 +54,7 @@ pub struct Context {
     pub journal: Journal,
     pub funcs: Functions,
     pub aborting: CancellationToken,
-    pub scope: Scope,
+    pub scope: ScopeDomain,
     pub signals: Signals,
     tx: UnboundedSender<ExitCode>,
     state: CancellationToken,
@@ -65,7 +66,7 @@ impl Context {
         let tracker = Tracker::init(journal.clone());
         let atlas = Atlas::init(src, journal);
         let funcs = Functions::init(journal)?;
-        let scope = Scope::init(None, journal);
+        let scope = ScopeDomain::init(&scenario.path, journal);
         let signals = Signals::init(journal);
         let (tx, mut rx): (UnboundedSender<ExitCode>, UnboundedReceiver<ExitCode>) =
             unbounded_channel();
@@ -94,6 +95,7 @@ impl Context {
                 })
             };
             let mut exit_code = ExitCode::Regular;
+            let storage: Option<Storage> = None;
             while let Some(code) = rx.recv().await {
                 let breaking = !matches!(code, ExitCode::Aborting(..));
                 if !matches!(code, ExitCode::Regular) {

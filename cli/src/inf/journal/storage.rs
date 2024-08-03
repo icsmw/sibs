@@ -101,7 +101,7 @@ impl Storage {
                 Utc::now(),
                 self.filename
                     .as_ref()
-                    .map(|filename| format!("Log file: {}", filename.to_string_lossy()))
+                    .map(|filename| format!("Log file: {}", filename.display()))
                     .unwrap_or_else(|| String::from("Logs aren't writing into file."))
             ),
             Level::Info,

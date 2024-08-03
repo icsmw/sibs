@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use crate::{
     elements::FuncArg,
     functions::ExecutorPinnedResult,
@@ -16,9 +14,5 @@ pub fn execute(
     _cx: Context,
     sc: Scope,
 ) -> ExecutorPinnedResult {
-    Box::pin(async move {
-        Ok(AnyValue::new(
-            sc.get_cwd().await?.unwrap_or(PathBuf::new()),
-        )?)
-    })
+    Box::pin(async move { Ok(AnyValue::new(sc.get_cwd().await?)?) })
 }

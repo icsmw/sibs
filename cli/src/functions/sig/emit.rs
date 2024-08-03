@@ -30,10 +30,8 @@ pub fn execute(
             "Cannot extract argument as string".to_owned(),
         )))?;
         cx.signals.emit(&signal).await?;
-        cx.journal.debug(
-            sc.get_current_task(),
-            format!("signal \"{signal}\" has been sent"),
-        );
+        sc.journal
+            .debug(format!("signal \"{signal}\" has been sent"));
         Ok(AnyValue::empty())
     })
 }
@@ -87,11 +85,11 @@ mod test {
                     3
                 );
                 assert_eq!(
-                    cx.scope.get_var("a").await?.and_then(|v| v.as_string()),
+                    sc.get_global_var("a").await?.and_then(|v| v.as_string()),
                     Some(String::from("ok a"))
                 );
                 assert_eq!(
-                    cx.scope.get_var("b").await?.and_then(|v| v.as_string()),
+                    sc.get_global_var("b").await?.and_then(|v| v.as_string()),
                     Some(String::from("ok b"))
                 );
                 Ok::<(), LinkedErr<E>>(())

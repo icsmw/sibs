@@ -33,24 +33,16 @@ pub fn execute(
         )))?);
         let path = if path.is_absolute() {
             path
-        } else if let Some(cwd) = sc.get_cwd().await? {
-            cwd.join(path)
         } else {
-            return Err(paths[0].err(E::Executing(
-                name(),
-                format!(
-                    "Cannot switch to relative \"{}\" because CWD isn't setup",
-                    path.to_string_lossy()
-                ),
-            )));
+            sc.get_cwd().await?.join(path)
         };
         if !path.exists() {
             return Err(paths[0].err(E::Executing(
                 name(),
-                format!("Folder {} doesn't exist", path.to_string_lossy()),
+                format!("Folder {} doesn't exist", path.display()),
             )));
         }
-        sc.set_cwd(Some(path.clone())).await?;
+        sc.set_cwd(path.clone()).await?;
         Ok(AnyValue::new(path)?)
     })
 }

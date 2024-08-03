@@ -10,7 +10,7 @@ use crate::{
         journal::{self, Journal},
         operator::Operator,
         scenario::Scenario,
-        term, Scope,
+        term,
     },
     reader::{Reader, Sources},
 };
@@ -115,10 +115,7 @@ pub async fn process(journal: Journal) -> Result<(), E> {
         else {
             return Err(E::ComponentNotExists(component.to_string()));
         };
-        let sc = Scope::init(
-            cx.scenario.filename.parent().map(|p| p.to_path_buf()),
-            &journal,
-        );
+        let sc = cx.scope.create("root", None).await?;
         let result = component
             .execute(
                 Some(component),

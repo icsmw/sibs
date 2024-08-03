@@ -11,9 +11,9 @@ pub struct OwnedJournal {
 }
 
 impl OwnedJournal {
-    pub fn new(uuid: Uuid, owner: String, journal: Journal) -> Self {
+    pub fn new<S: AsRef<str>>(uuid: Uuid, owner: S, journal: Journal) -> Self {
         Self {
-            owner,
+            owner: owner.as_ref().to_string(),
             journal,
             uuid,
         }

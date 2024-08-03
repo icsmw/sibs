@@ -12,26 +12,28 @@ pub fn name() -> String {
 pub fn execute(
     args: Vec<FuncArg>,
     args_token: usize,
-    cx: Context,
+    _cx: Context,
     sc: Scope,
 ) -> ExecutorPinnedResult {
+    module_path!();
     Box::pin(async move {
-        if args.len() != 1 {
-            return Err(LinkedErr::new(
+        if args.len() != 2 {
+            Err(LinkedErr::new(
                 E::Executing(
                     name(),
-                    "Expecting only one income argument as a name of signal".to_owned(),
+                    "Expecting 2 income argument: varname, varvalue".to_owned(),
                 ),
                 Some(args_token),
             ))?;
         }
-        let signal = args[0].value.as_string().ok_or(args[0].err(E::Executing(
-            name(),
-            "Cannot extract argument as string".to_owned(),
-        )))?;
-        let token = cx.signals.get(&signal).await?;
-        sc.journal.debug(format!("waiting for signal \"{signal}\""));
-        token.cancelled().await;
+        sc.set_var(
+            &args[0].value.as_string().ok_or(E::Executing(
+                name(),
+                "Cannot extract argument as string".to_owned(),
+            ))?,
+            args[1].value.duplicate(),
+        )
+        .await?;
         Ok(AnyValue::empty())
     })
 }

@@ -134,7 +134,7 @@ impl Journal {
         }
     }
 
-    pub fn owned(&self, owner: String, uuid: Option<Uuid>) -> OwnedJournal {
+    pub fn owned<S: AsRef<str>>(&self, owner: S, uuid: Option<Uuid>) -> OwnedJournal {
         OwnedJournal::new(uuid.unwrap_or_else(Uuid::new_v4), owner, self.clone())
     }
 

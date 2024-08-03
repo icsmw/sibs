@@ -118,11 +118,7 @@ impl Operator for Command {
                     );
                 }
             }
-            let cwd = sc
-                .get_cwd()
-                .await?
-                .ok_or(operator::E::NoCurrentWorkingFolder.by(self))?
-                .clone();
+            let cwd = sc.get_cwd().await?.clone();
             match spawner::run(token, &command, &cwd, cx).await {
                 Ok(None) => {
                     // Err(operator::E::SpawnedProcessCancelledError.by(self))

@@ -162,7 +162,7 @@ pub trait Mapping {
             .collect::<Vec<String>>();
         Ok(format!(
             "file: {}\n{}",
-            self.get_filename().to_string_lossy(),
+            self.get_filename().display(),
             report[(error_first_ln.min(if error_first_ln >= REPORT_LN_AROUND {
                 error_first_ln - REPORT_LN_AROUND
             } else {

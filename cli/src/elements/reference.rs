@@ -148,26 +148,25 @@ impl Operator for Reference {
     ) -> OperatorPinnedResult {
         Box::pin(async move {
             let target = owner.ok_or(operator::E::NoOwnerComponent.by(self))?;
-            let (parent, task, scope, inner_scope) = if self.path.len() == 1 {
-                (target, &self.path[0], sc.clone(), true)
+            let (parent, task) = if self.path.len() == 1 {
+                (target, &self.path[0])
             } else if self.path.len() == 2 {
-                let (parent, scope, inner_scope) = if self.path[0] == SELF {
-                    (target, sc.clone(), true)
+                let parent = if self.path[0] == SELF {
+                    target
                 } else {
-                    let parent = components
+                    components
                         .iter()
                         .find(|c| c.name.to_string() == self.path[0])
-                        .ok_or(operator::E::NotFoundComponent(self.path[0].to_owned()).by(self))?;
-                    (
-                        parent,
-                        Scope::init(parent.get_cwd(&cx)?, &cx.journal),
-                        false,
-                    )
+                        .ok_or(operator::E::NotFoundComponent(self.path[0].to_owned()).by(self))?
                 };
-                (parent, &self.path[1], scope, inner_scope)
+                (parent, &self.path[1])
             } else {
                 return Err(operator::E::InvalidPartsInReference.by(self));
             };
+            let scope = cx
+                .scope
+                .create(format!("{}:{task}", parent.name), parent.get_cwd(&cx)?)
+                .await?;
             let (task, gatekeepers) = parent.get_task(task).ok_or(
                 operator::E::TaskNotFound(task.to_owned(), parent.name.to_string()).by(self),
             )?;
@@ -221,10 +220,7 @@ impl Operator for Reference {
             } else {
                 Ok(None)
             };
-            if !inner_scope {
-                sc.import_vars(&scope).await?;
-                scope.destroy().await?;
-            }
+            scope.destroy().await?;
             result
         })
     }

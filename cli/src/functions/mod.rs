@@ -1,12 +1,13 @@
 mod api;
-pub mod cx;
 pub mod env;
 mod error;
 pub mod fs;
+pub mod globals;
 pub mod hash;
 pub mod load;
 pub mod logs;
 pub mod process;
+pub mod sc;
 pub mod sig;
 pub mod str;
 pub mod test;
@@ -41,7 +42,8 @@ pub fn register(store: &mut Store<ExecutorFn>) -> Result<(), E> {
     fs::register(store)?;
     env::register(store)?;
     logs::register(store)?;
-    cx::register(store)?;
+    globals::register(store)?;
+    sc::register(store)?;
     process::register(store)?;
     sig::register(store)?;
     hash::register(store)?;
@@ -65,7 +67,7 @@ impl Functions {
             state: state.clone(),
         };
         let mut store = Store::<ExecutorFn>::new();
-        let journal = journal.owned("Functions".to_owned(), None);
+        let journal = journal.owned("Functions", None);
         register(&mut store)?;
         spawn(async move {
             while let Some(demand) = rx.recv().await {

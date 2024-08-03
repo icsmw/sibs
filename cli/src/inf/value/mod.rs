@@ -268,7 +268,7 @@ impl AnyValue {
             Self::u128(v) => Some(v.to_string()),
             Self::usize(v) => Some(v.to_string()),
             Self::bool(v) => Some(v.to_string()),
-            Self::PathBuf(v) => Some(v.to_string_lossy().to_string()),
+            Self::PathBuf(v) => Some(v.display().to_string()),
             Self::String(v) => Some(v.clone()),
             _ => None,
         }
