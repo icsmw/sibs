@@ -29,17 +29,19 @@
     ];
 #(d)
     test($a: a | b) [
-        $var_from_comp_d = "changed_{$a}";
+        @globals::set_var(var_from_comp_d; "changed_{$a}");
     ];
 #(e)
     test($a: a | b; $b: {string}) [
-        $var_from_comp_e = "changed_{$a}_{$b}";
+        @globals::set_var(var_from_comp_e; "changed_{$a}_{$b}");
     ];
 #(f_run)
     test($a: a | b; $b: {string})(
         :d:test($a);
         :e:test($a; $b);
     ) [
+        $var_from_comp_d = @globals::get_var(var_from_comp_d);
+        $var_from_comp_e = @globals::get_var(var_from_comp_e);
         @logs::info("$var_from_comp_d => {$var_from_comp_d}");
         @logs::info("$var_from_comp_e => {$var_from_comp_e}");
         if $var_from_comp_d == "changed_a" && $var_from_comp_e == "changed_a_b" [

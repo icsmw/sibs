@@ -94,7 +94,11 @@ macro_rules! process_string {
             Ok(Ok(output)) => output,
         };
         let cx = Context::init(Scenario::dummy(), &src, &journal).expect("Context is created");
-        let sc = Scope::init(Some(cx.scenario.path.clone()), &journal);
+        let sc = cx
+            .scope
+            .create("TestRunner", Some(cx.scenario.path.clone()))
+            .await
+            .expect("Scope is created");
         #[allow(clippy::redundant_closure_call)]
         let result = AssertUnwindSafe($executing(output, cx.clone(), sc, journal.clone()))
             .catch_unwind()
@@ -150,7 +154,11 @@ macro_rules! process_file {
                 }
             };
         let cx = Context::init(scenario, &src, &journal).expect("Context is created");
-        let sc = Scope::init(Some(cx.scenario.path.clone()), &journal);
+        let sc = cx
+            .scope
+            .create("TestRunner", Some(cx.scenario.path.clone()))
+            .await
+            .expect("Scope is created");
         #[allow(clippy::redundant_closure_call)]
         let result = AssertUnwindSafe($executing(elements, cx.clone(), sc, journal.clone()))
             .catch_unwind()

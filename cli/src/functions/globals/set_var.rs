@@ -12,8 +12,8 @@ pub fn name() -> String {
 pub fn execute(
     args: Vec<FuncArg>,
     args_token: usize,
-    cx: Context,
-    _sc: Scope,
+    _cx: Context,
+    sc: Scope,
 ) -> ExecutorPinnedResult {
     module_path!();
     Box::pin(async move {
@@ -26,15 +26,14 @@ pub fn execute(
                 Some(args_token),
             ))?;
         }
-        cx.scope
-            .set_var(
-                &args[0].value.as_string().ok_or(E::Executing(
-                    name(),
-                    "Cannot extract argument as string".to_owned(),
-                ))?,
-                args[1].value.duplicate(),
-            )
-            .await?;
+        sc.set_global_var(
+            &args[0].value.as_string().ok_or(E::Executing(
+                name(),
+                "Cannot extract argument as string".to_owned(),
+            ))?,
+            args[1].value.duplicate(),
+        )
+        .await?;
         Ok(AnyValue::empty())
     })
 }

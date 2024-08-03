@@ -47,7 +47,7 @@ impl Atlas {
             maps.insert(path.to_owned(), Map::from(map.borrow_mut().clone()));
         });
         let mut footprints = Footprints::new(journal, None);
-        let journal = journal.owned("Atlas".to_owned(), None);
+        let journal = journal.owned("Atlas", None);
         spawn(async move {
             while let Some(demand) = rx.recv().await {
                 let requested = demand.to_string();

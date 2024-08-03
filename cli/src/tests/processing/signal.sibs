@@ -12,12 +12,12 @@
     ];
     waiter_a [
         @sig::wait("a");
-        @cx::set_var("a";"ok a");
+        @globals::set_var("a";"ok a");
         "true";
     ];
     waiter_b [
         @sig::wait("a");
-        @cx::set_var("b";"ok b");
+        @globals::set_var("b";"ok b");
         "true";
     ];
     run [

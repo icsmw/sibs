@@ -22,8 +22,6 @@ pub enum E {
     NotAllArguamentsHasReturn,
     #[error("Spawned process exit with error")]
     SpawnedProcessExitWithError,
-    #[error("No current working folder")]
-    NoCurrentWorkingFolder,
     #[error("{0}")]
     TrackerError(tracker::E),
     #[error("Join error: {0}")]

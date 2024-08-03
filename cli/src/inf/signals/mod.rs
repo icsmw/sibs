@@ -32,7 +32,7 @@ impl Signals {
             tx,
             state: state.clone(),
         };
-        let journal = journal.owned("Signals".to_owned(), None);
+        let journal = journal.owned("Signals", None);
         spawn(async move {
             let mut signals: HashMap<String, CancellationToken> = HashMap::new();
             while let Some(demand) = rx.recv().await {
