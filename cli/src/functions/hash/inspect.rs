@@ -5,7 +5,6 @@ use crate::{
     inf::{tools::get_name, AnyValue, Context, Scope},
 };
 use blake3::Hasher;
-use bstorage::Storage;
 use fshasher::{
     hasher::blake::Blake, reader::buffering::Buffering, Entry, Filter, Options as HasherOptions,
 };
@@ -84,7 +83,7 @@ pub fn execute(
                 "Invalid argument; expecting bool".to_string(),
             )));
         };
-        let mut storage = Storage::create(cwd.join(".sibs"))?;
+        let mut storage = cx.get_storage()?;
         let mut summary = Vec::new();
         dests.iter().for_each(|p| {
             if !p.exists() {

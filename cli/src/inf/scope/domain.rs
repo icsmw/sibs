@@ -35,7 +35,7 @@ impl ScopeDomain {
         let own_journal = journal.owned("Scope Controller", None);
         spawn(async move {
             let mut sessions = Sessions::default();
-            let mut globals = Session::new("globals", root, &journal);
+            let mut globals = Session::new("globals", root.clone(), &journal);
             while let Some(demand) = rx.recv().await {
                 let requested = demand.to_string();
                 if matches!(demand, Demand::Destroy) {

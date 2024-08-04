@@ -19,6 +19,14 @@ pub enum E {
     RecvError(String),
     #[error("Fail to send channel message: {0}")]
     SendError(String),
+    #[error("{0}")]
+    Storage(String),
+}
+
+impl From<bstorage::E> for E {
+    fn from(err: bstorage::E) -> Self {
+        E::Storage(err.to_string())
+    }
 }
 
 impl From<std::io::Error> for E {

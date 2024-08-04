@@ -24,6 +24,8 @@ use tokio::{
 };
 use tokio_util::sync::CancellationToken;
 
+const SIBS_FOLDER: &str = ".sibs";
+
 /// Defines a way to close application
 pub enum ExitCode {
     /// Immediately close the application with given exit's code and message. It will
@@ -90,12 +92,11 @@ impl Context {
                     let _ = journal.err_if("tracker", tracker.destroy().await);
                     let _ = journal.err_if("atlas", atlas.destroy().await);
                     let _ = journal.err_if("functions", funcs.destroy().await);
-                    let _ = journal.err_if("global scope", scope.destroy().await);
+                    let _ = journal.err_if("scope", scope.destroy().await);
                     let _ = journal.err_if("signals", signals.destroy().await);
                 })
             };
             let mut exit_code = ExitCode::Regular;
-            let storage: Option<Storage> = None;
             while let Some(code) = rx.recv().await {
                 let breaking = !matches!(code, ExitCode::Aborting(..));
                 if !matches!(code, ExitCode::Regular) {
@@ -162,6 +163,12 @@ impl Context {
 
     pub fn is_aborting(&self) -> bool {
         self.aborting.is_cancelled()
+    }
+
+    pub fn get_storage(&self) -> Result<Storage, E> {
+        Ok(Storage::create(
+            self.scenario.path.join(SIBS_FOLDER).join("storage"),
+        )?)
     }
 
     /// Execute target function
