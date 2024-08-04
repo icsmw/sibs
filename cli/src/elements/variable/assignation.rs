@@ -14,6 +14,7 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub struct VariableAssignation {
     pub variable: VariableName,
+    pub global: bool,
     pub assignation: Box<Element>,
     pub token: usize,
 }
@@ -22,6 +23,7 @@ impl Reading<VariableAssignation> for VariableAssignation {
     fn read(reader: &mut Reader) -> Result<Option<VariableAssignation>, LinkedErr<E>> {
         let restore = reader.pin();
         let close = reader.open_token(ElTarget::VariableAssignation);
+        let global = reader.move_to().word(&[words::GLOBAL_VAR]).is_some();
         if let Some(Element::VariableName(variable, _)) =
             Element::include(reader, &[ElTarget::VariableName])?
         {
@@ -54,9 +56,12 @@ impl Reading<VariableAssignation> for VariableAssignation {
             .ok_or(E::FailToParseRightSideOfAssignation.by_reader(reader))?;
             Ok(Some(VariableAssignation {
                 variable,
+                global,
                 assignation: Box::new(assignation),
                 token: close(reader),
             }))
+        } else if global {
+            Err(E::InvalidUsageGlobalKeyword.by_reader(reader))
         } else {
             Ok(None)
         }
@@ -65,7 +70,17 @@ impl Reading<VariableAssignation> for VariableAssignation {
 
 impl fmt::Display for VariableAssignation {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} = {}", self.variable, self.assignation)
+        write!(
+            f,
+            "{}{} = {}",
+            if self.global {
+                format!("{} ", words::GLOBAL_VAR)
+            } else {
+                String::new()
+            },
+            self.variable,
+            self.assignation
+        )
     }
 }
 
@@ -100,7 +115,11 @@ impl Operator for VariableAssignation {
                 .execute(owner, components, args, cx, sc.clone(), token)
                 .await?
                 .ok_or(operator::E::NoValueToAssign(self.variable.name.clone()))?;
-            sc.set_var(&self.variable.name, value).await?;
+            if self.global {
+                sc.set_global_var(&self.variable.name, value).await?;
+            } else {
+                sc.set_var(&self.variable.name, value).await?;
+            }
             Ok(Some(AnyValue::empty()))
         })
     }
@@ -133,7 +152,7 @@ mod reading {
                     );
                     count += 1;
                 }
-                assert_eq!(count, 113);
+                assert_eq!(count, 114);
                 assert!(reader.rest().trim().is_empty());
                 Ok::<(), LinkedErr<E>>(())
             }
@@ -171,7 +190,7 @@ mod reading {
                     );
                     count += 1;
                 }
-                assert_eq!(count, 113);
+                assert_eq!(count, 114);
                 assert!(reader.rest().trim().is_empty());
                 Ok::<(), LinkedErr<E>>(())
             }
@@ -211,13 +230,14 @@ mod processing {
         reader::{chars, Reader, Reading, Sources},
     };
 
-    const VALUES: &[(&str, &str)] = &[
-        ("a", "a"),
-        ("b", "b"),
-        ("c", "abc"),
-        ("d", "ababc"),
-        ("e", "ababc"),
-        ("f", "\\{$a\\}\\{$b\\}\\{$c\\}"),
+    const VALUES: &[(&str, &str, bool)] = &[
+        ("a", "a", false),
+        ("b", "b", false),
+        ("c", "abc", false),
+        ("d", "ababc", false),
+        ("e", "ababc", false),
+        ("f", "\\{$a\\}\\{$b\\}\\{$c\\}", false),
+        ("g", "\\{$a\\}\\{$b\\}\\{$c\\}", true),
     ];
 
     #[tokio::test]
@@ -247,9 +267,16 @@ mod processing {
                         .await?
                         .is_some());
                 }
-                for (name, value) in VALUES.iter() {
+                for (name, value, global) in VALUES.iter() {
                     assert_eq!(
-                        sc.get_var(name).await?.unwrap().as_string().unwrap(),
+                        if *global {
+                            sc.get_global_var(name).await?
+                        } else {
+                            sc.get_var(name).await?
+                        }
+                        .unwrap()
+                        .as_string()
+                        .unwrap(),
                         value.to_string()
                     );
                 }
@@ -306,9 +333,11 @@ mod proptest {
                     deep,
                 )),
                 VariableName::arbitrary(),
+                prop_oneof![Just(true), Just(false),].boxed(),
             )
-                .prop_map(move |(assignation, variable)| VariableAssignation {
+                .prop_map(move |(assignation, variable, global)| VariableAssignation {
                     assignation: Box::new(assignation),
+                    global,
                     variable,
                     token: 0,
                 })

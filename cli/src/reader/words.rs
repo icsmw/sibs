@@ -20,3 +20,4 @@ pub const COMP: &str = "#(";
 pub const TRUE: &str = "true";
 pub const FALSE: &str = "false";
 pub const REDIRECT: &str = ">>";
+pub const GLOBAL_VAR: &str = "global";

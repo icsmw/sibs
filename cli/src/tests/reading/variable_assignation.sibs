@@ -111,3 +111,4 @@ $var47 = @functionK($var46; "Last arg");
 $var48 = "Almost there {$var47}";
 $var49 = `penultimate command {$var48}`;
 $var50 = "The last variable {$var49}";
+global $var50 = "The last variable {$var49}";

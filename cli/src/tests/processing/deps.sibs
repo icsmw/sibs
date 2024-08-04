@@ -22,14 +22,14 @@
         @logs::info("output from :a:test($a) => {$res_a}");
         @logs::info("output from :b:test($b) => {$res_b}");
         if $res_a == "one" && $res_b == "two" [
-            "true";
+            true;
         ] else [
-            "false";
+            false;
         ];
     ];
 #(d)
     test($a: a | b) [
-        @globals::set_var(var_from_comp_d; "changed_{$a}");
+        global $var_from_comp_d = "changed_{$a}";
     ];
 #(e)
     test($a: a | b; $b: {string}) [
@@ -45,8 +45,8 @@
         @logs::info("$var_from_comp_d => {$var_from_comp_d}");
         @logs::info("$var_from_comp_e => {$var_from_comp_e}");
         if $var_from_comp_d == "changed_a" && $var_from_comp_e == "changed_a_b" [
-            "true";
+            true;
         ] else [
-            "false";
+            false;
         ];
     ];

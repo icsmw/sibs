@@ -48,7 +48,7 @@ impl<'a> MoveTo<'a> {
         for word in words.iter() {
             if content.starts_with(word) {
                 if let Some(char) = content.chars().nth(word.len()) {
-                    if char.is_alphabetic() {
+                    if char.is_alphabetic() || char.is_alphanumeric() {
                         continue;
                     }
                 }

@@ -29,6 +29,8 @@ pub enum E {
     FailToFindInjection,
     #[error("Fail to parse right side of assignation")]
     FailToParseRightSideOfAssignation,
+    #[error("Invalid usage \"global\" keyword")]
+    InvalidUsageGlobalKeyword,
     #[error("Not ascii variable value: {0}")]
     NotAsciiValue(String),
     #[error("Empty value")]
