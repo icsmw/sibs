@@ -46,6 +46,7 @@ impl Reading<Block> for Block {
                         ElTarget::VariableVariants,
                         ElTarget::VariableType,
                         ElTarget::SimpleString,
+                        ElTarget::Gatekeeper,
                     ],
                 )? {
                     if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
