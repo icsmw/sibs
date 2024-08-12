@@ -73,12 +73,12 @@
 `sync --source={$source_dir} --destination={$backup_dir}/{format_date(now; "YYYYMMDD")}`;
 `scan --path="/data/{$customer_id}" --type={choose("malware"; "vulnerability")}`;
 `generate-report --name="{$user_name}_{current_date()}.pdf" --data-source={$report_data_file}`;
-`create-user --name={$user_name} --role={if $is_admin == "true" ["admin";] else ["user";]}`;
+`create-user --name={$user_name} --role={if $is_admin == "true" {"admin";} else {"user";}}`;
 `set-permission --path="/projects/{$project_id}" --level={map_role_to_permission($user_role)}`;
 `resize-image --source="{$image_path}" --dimensions="{calculate_new_dimensions($width; $height; "50%")}"`;
 `archive-logs --source="/var/log/{$service_name}/" --since="{date_subtract(now; "30d")}" --output="/archives/{$service_name}_logs.tar.gz"`;
 `update-dns --record="www.{$domain}" --type="A" --value="{get_ip($server_name)}"`;
-`renew-certificate --domain={$domain} --method={if $auto_renew == "true" ["auto";] else ["manual";]}`;
+`renew-certificate --domain={$domain} --method={if $auto_renew == "true" {"auto";} else {"manual";}}`;
 `run-script --file="/scripts/{$script_name}.sh" --args="{concat($arg1; $arg2; $arg3)}"`;
 `fetch-data --query="{encode_url("SELECT * FROM users WHERE status = 'active'")}" --database-url={$database_url}`;
 `compile-code --source="{$project_dir}/src" --target="{$project_dir}/build" --flags="{join_paths($flag1; $flag2; "--optimize")}"`;
@@ -86,7 +86,7 @@
 `send-request --url="{$api_endpoint}" --headers="Authorization: Bearer {get_token($api_key)}" --body="{json_encode($request_body)}"`;
 `plot-graph --data-file="{$data_file}" --output="{$output_dir}/graph_{timestamp()}.png" --title="{$graph_title}" --type="{select_graph_type($graph_type)}"`;
 `batch-process --job="{$job_name}" --input-dir="/input/{$batch_id}" --output-dir="/output/{$batch_id}" --config="{load_config($job_config_file)}"`;
-`schedule-meeting --participants="{list_to_csv($participants)}" --datetime="{format_datetime($meeting_date; $meeting_time)}" --agenda="{$agenda}" --location="{if $virtual == "true" ["Zoom";] else [$meeting_room;]}"`;
+`schedule-meeting --participants="{list_to_csv($participants)}" --datetime="{format_datetime($meeting_date; $meeting_time)}" --agenda="{$agenda}" --location="{if $virtual == "true" {"Zoom";} else {$meeting_room;}}"`;
 `export-database --name={$database} --tables="{list_to_csv(filter_tables($database; $include_tables))}" --exclude-tables="{list_to_csv(filter_tables($database; $exclude_tables))}" --format={$export_format}`;
 `update --force --path /var/www/\`site\``;
 `backup --database {$db_name} --output "/backups/\`{$db_name}\`.sql"`;

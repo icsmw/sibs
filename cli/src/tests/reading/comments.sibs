@@ -1,4 +1,4 @@
-@build($mode: dev | prod) [
+@build($mode: dev | prod) {
     // 1Building electron application
     // 2Building electron application
     env::is_os(window) => $file_name = "release{$version}-win.zip";
@@ -16,26 +16,26 @@
     env::is_os(window) => "release{$version}-win.zip";
     // Building electron application
     // Building electron application
-    env::is_os(window) => [
+    env::is_os(window) => {
         cd(something);
         `zip ./release/unpacked-win {$file_name}`;
         cd(..);
-    ];
+    };
     // Building electron application
     // Building electron application
-    if $variable == "one" || $variable == "two" [
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ] else [
+    } else {
         cd(./linux);
-    ];
+    };
     // Building electron application
     // Building electron application
-    if $variable == "one" [
+    if $variable == "one" {
         cd(./linux);
-    ];
+    };
     // Building electron application
     // Building electron application
-    if $variable == "one" || $variable == "two" [
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ];
-];
+    };
+};

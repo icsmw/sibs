@@ -51,7 +51,7 @@ impl Reading<Subsequence> for Subsequence {
                 words::IF,
                 words::ELSE,
                 // &format!("{}", chars::SEMICOLON),
-                &format!("{}", chars::OPEN_SQ_BRACKET),
+                &format!("{}", chars::OPEN_CURLY_BRACE),
             ])
         {
             Ok(Some(Subsequence {

@@ -1,20 +1,20 @@
-@test [
+@test {
     $a = "one";
     $a == "one" => $b = "true";
     $b;
-];
-@test [
+};
+@test {
     $a = "one";
     $a == "one" => $b = "true";
     $b;
-];
-@test [
+};
+@test {
     $a = "one";
     $a == "one" => $b = str::repeat("true"; 1);
     $b;
-];
-@test [
+};
+@test {
     $a = "one";
     $a == "one" => $b = str::repeat(true; 1);
     $b;
-];
+};

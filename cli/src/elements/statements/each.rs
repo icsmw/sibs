@@ -318,7 +318,7 @@ mod proptest {
 
     fn reading(each: Each) {
         get_rt().block_on(async {
-            let origin = format!("test [\n{each};\n];");
+            let origin = format!("test {{\n{each};\n}};");
             read_string!(
                 &Configuration::logs(false),
                 &origin,

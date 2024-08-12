@@ -578,7 +578,7 @@ mod proptest {
 
     fn reading(func: Function) {
         get_rt().block_on(async {
-            let origin = format!("test [\n{func};\n];");
+            let origin = format!("test {{\n{func};\n}};");
             read_string!(
                 &Configuration::logs(false),
                 &origin,

@@ -442,7 +442,7 @@ mod proptest {
 
     fn reading(join: Join) {
         get_rt().block_on(async {
-            let origin = format!("test [\n{join};\n];");
+            let origin = format!("test {{\n{join};\n}};");
             read_string!(
                 &Configuration::logs(false),
                 &origin,

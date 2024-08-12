@@ -1,48 +1,48 @@
 /// Testing join 
 #(join: ../../../../target/debug)
-    @test_a [
+    @test_a {
         join (
             `./exit 0 100 1000 10`;
             `./exit 0 200 1000 10`;
             `./exit 0 300 1000 10`;
             `./exit 0 400 1000 10`;
         );
-    ];
-    @test_b [
+    };
+    @test_b {
         join (
             `./exit 0 100 1000 10`;
             :self:test_a;
         );
-    ];
+    };
     // One with error
-    @test_c [
+    @test_c {
         join (
             `./exit 0 100 1000 10`;
             `./exit 0 200 1000 10`;
             `./exit 1 300 1000 10`;
             `./exit 0 400 1000 10`;
         );
-    ];
+    };
     // All with errors
-    @test_d [
+    @test_d {
         join (
             `./exit 1 100 1000 10`;
             `./exit 1 200 1000 10`;
             `./exit 1 300 1000 10`;
             `./exit 1 400 1000 10`;
         );
-    ];
-    @test_e [
+    };
+    @test_e {
         join (
             `./exit 0 100 1000 10`;
             :self:test_c;
         );
-    ];
-    @test_f [
+    };
+    @test_f {
         join (
             `./exit 0 100 1000 10`;
             :self:test_b;
             :self:test_c;
             :self:test_d;
         );
-    ];
+    };

@@ -1,4 +1,4 @@
-@test() [
+@test() {
     `attempt to run fake command`?;
     test::err("This is test error")?;
-];
+};

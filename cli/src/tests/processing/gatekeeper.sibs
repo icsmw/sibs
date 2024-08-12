@@ -1,27 +1,27 @@
 #(a: ./)
     test::return_bool(false) -> (:test("a"));
-    @test($a: a | b) [
+    @test($a: a | b) {
         print("Task test is done with {$a}");
         true;
-    ];
+    };
 #(b: ./)
     test::return_bool(false) -> (:test("a"); :test("b"));
-    @test($a: a | b) [
+    @test($a: a | b) {
         print("Task test is done with {$a}");
         true;
-    ];
+    };
 #(c: ./)
     test::return_bool(false) -> ();
-    @test($a: a | b) [
+    @test($a: a | b) {
         print("Task test is done with {$a}");
         true;
-    ];
+    };
 #(d: ./)
-    @test($a: a | b) [
+    @test($a: a | b) {
         :self:redirected($a);
-    ];
+    };
     test::return_bool(false) -> (:redirected("a"));
-    @redirected($a: a | b) [
+    @redirected($a: a | b) {
         print("Task test is done with {$a}");
         true;
-    ];
+    };

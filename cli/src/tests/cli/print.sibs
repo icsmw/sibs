@@ -1,4 +1,4 @@
 #(a)
-    @print [
+    @print {
         print("Hello World!");
-    ];
+    };

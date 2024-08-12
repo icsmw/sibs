@@ -1,276 +1,276 @@
 /// Building electron application
-/// [$mode:dev] build developing version
-/// [$mode:prod] build production version
-@build($mode: dev | prod) [
+/// {$mode:dev} build developing version
+/// {$mode:prod} build production version
+@build($mode: dev | prod) {
     env::is_os(window) => $file_name = "release{$version}-win.zip";
     env::is_os(linux) => $file_name = "release{$version}-linux.zip";
     env::is_os(darwin) => $file_name = "release{$version}-darwin.zip";
     env::is_os(linux) => `tgz ./release/unpacked-linux {$file_name}`;
     env::is_os(window) => "release{$version}-win.zip";
-    env::is_os(window) => [
+    env::is_os(window) => {
         cd(something);
         `zip ./release/unpacked-win {$file_name}`;
         cd(..);
-    ];
-    if $variable == "one" || $variable == "two" [
+    };
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ] else [
+    } else {
         cd(./linux);
-    ];
-    if $variable == "one" [
+    };
+    if $variable == "one" {
         cd(./linux);
-    ];
-    if $variable == "one" || $variable == "two" [
+    };
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ];
-];
-@custom($input: {string}) [
+    };
+};
+@custom($input: {string}) {
     env::is_os(window) => $file_name = "release{$version}-win.zip";
     env::is_os(linux) => $file_name = "release{$version}-linux.zip";
     env::is_os(darwin) => $file_name = "release{$version}-darwin.zip";
     env::is_os(linux) => `tgz ./release/unpacked-linux {$file_name}`;
     env::is_os(window) => "release{$version}-win.zip";
-    env::is_os(window) => [
+    env::is_os(window) => {
         cd(something);
         `zip ./release/unpacked-win {$file_name}`;
         cd(..);
-    ];
-    if $variable == "one" || $variable == "two" [
+    };
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ] else [
+    } else {
         cd(./linux);
-    ];
-    if $variable == "one" [
+    };
+    if $variable == "one" {
         cd(./linux);
-    ];
-    if $variable == "one" || $variable == "two" [
+    };
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ];
-];
-@build_multi($mode: dev | prod; $target: win | linux) [
+    };
+};
+@build_multi($mode: dev | prod; $target: win | linux) {
     env::is_os(window) => $file_name = "release{$version}-win.zip";
     env::is_os(linux) => $file_name = "release{$version}-linux.zip";
     env::is_os(darwin) => $file_name = "release{$version}-darwin.zip";
     env::is_os(linux) => `tgz ./release/unpacked-linux {$file_name}`;
     env::is_os(window) => "release{$version}-win.zip";
-    env::is_os(window) => [
+    env::is_os(window) => {
         cd(something);
         `zip ./release/unpacked-win {$file_name}`;
         cd(..);
-    ];
-    if $variable == "one" || $variable == "two" [
+    };
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ] else [
+    } else {
         cd(./linux);
-    ];
-    if $variable == "one" [
+    };
+    if $variable == "one" {
         cd(./linux);
-    ];
-    if $variable == "one" || $variable == "two" [
+    };
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ];
-];
-@build_b($mode: dev | prod; $target: win | linux; $input: {string}) [
+    };
+};
+@build_b($mode: dev | prod; $target: win | linux; $input: {string}) {
     env::is_os(window) => $file_name = "release{$version}-win.zip";
     env::is_os(linux) => $file_name = "release{$version}-linux.zip";
     env::is_os(darwin) => $file_name = "release{$version}-darwin.zip";
     env::is_os(linux) => `tgz ./release/unpacked-linux {$file_name}`;
     env::is_os(window) => "release{$version}-win.zip";
-    env::is_os(window) => [
+    env::is_os(window) => {
         cd(something);
         `zip ./release/unpacked-win {$file_name}`;
         cd(..);
-    ];
-    if $variable == "one" || $variable == "two" [
+    };
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ] else [
+    } else {
         cd(./linux);
-    ];
-    if $variable == "one" [
+    };
+    if $variable == "one" {
         cd(./linux);
-    ];
-    if $variable == "one" || $variable == "two" [
+    };
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ];
-];
-@build_c($input_a: {string}; $mode: dev | prod; $target: win | linux; $input_b: {string}) [
+    };
+};
+@build_c($input_a: {string}; $mode: dev | prod; $target: win | linux; $input_b: {string}) {
     env::is_os(window) => $file_name = "release{$version}-win.zip";
     env::is_os(linux) => $file_name = "release{$version}-linux.zip";
     env::is_os(darwin) => $file_name = "release{$version}-darwin.zip";
     env::is_os(linux) => `tgz ./release/unpacked-linux {$file_name}`;
     env::is_os(window) => "release{$version}-win.zip";
-    env::is_os(window) => [
+    env::is_os(window) => {
         cd(something);
         `zip ./release/unpacked-win {$file_name}`;
         cd(..);
-    ];
-    if $variable == "one" || $variable == "two" [
+    };
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ] else [
+    } else {
         cd(./linux);
-    ];
-    if $variable == "one" [
+    };
+    if $variable == "one" {
         cd(./linux);
-    ];
-    if $variable == "one" || $variable == "two" [
+    };
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ];
-];
-@distribution [
+    };
+};
+@distribution {
     env::is_os(window) => $file_name = "release{$version}-win.zip";
     env::is_os(linux) => $file_name = "release{$version}-linux.zip";
     env::is_os(darwin) => $file_name = "release{$version}-darwin.zip";
     env::is_os(linux) => `tgz ./release/unpacked-linux {$file_name}`;
     env::is_os(window) => "release{$version}-win.zip";
-    env::is_os(window) => [
+    env::is_os(window) => {
         cd(something);
         `zip ./release/unpacked-win {$file_name}`;
         cd(..);
-    ];
-    if $variable == "one" || $variable == "two" [
+    };
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ] else [
+    } else {
         cd(./linux);
-    ];
-    if $variable == "one" [
+    };
+    if $variable == "one" {
         cd(./linux);
-    ];
-    if $variable == "one" || $variable == "two" [
+    };
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ];
-];
+    };
+};
 /// Building electron application
-/// [$mode:dev] build developing version
-/// [$mode:prod] build production version
+/// {$mode:dev} build developing version
+/// {$mode:prod} build production version
 @build($mode: dev | prod)(
     :platform:build($mode);
     :core:build($mode)
-) [
+) {
     env::is_os(window) => $file_name = "release{$version}-win.zip";
     env::is_os(linux) => $file_name = "release{$version}-linux.zip";
     env::is_os(darwin) => $file_name = "release{$version}-darwin.zip";
     env::is_os(linux) => `tgz ./release/unpacked-linux {$file_name}`;
     env::is_os(window) => "release{$version}-win.zip";
-    env::is_os(window) => [
+    env::is_os(window) => {
         cd(something);
         `zip ./release/unpacked-win {$file_name}`;
         cd(..);
-    ];
-    if $variable == "one" || $variable == "two" [
+    };
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ] else [
+    } else {
         cd(./linux);
-    ];
-    if $variable == "one" [
+    };
+    if $variable == "one" {
         cd(./linux);
-    ];
-    if $variable == "one" || $variable == "two" [
+    };
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ];
-];
+    };
+};
 @custom($input: {string})(
     :platform:build($input);
     :core:build($input)
-) [
+) {
     env::is_os(window) => $file_name = "release{$version}-win.zip";
     env::is_os(linux) => $file_name = "release{$version}-linux.zip";
     env::is_os(darwin) => $file_name = "release{$version}-darwin.zip";
     env::is_os(linux) => `tgz ./release/unpacked-linux {$file_name}`;
     env::is_os(window) => "release{$version}-win.zip";
-    env::is_os(window) => [
+    env::is_os(window) => {
         cd(something);
         `zip ./release/unpacked-win {$file_name}`;
         cd(..);
-    ];
-    if $variable == "one" || $variable == "two" [
+    };
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ] else [
+    } else {
         cd(./linux);
-    ];
-    if $variable == "one" [
+    };
+    if $variable == "one" {
         cd(./linux);
-    ];
-    if $variable == "one" || $variable == "two" [
+    };
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ];
-];
+    };
+};
 @build_multi($mode: dev | prod; $target: win | linux)(
     :platform:build($mode; $target);
     :core:build($mode)
-) [
+) {
     env::is_os(window) => $file_name = "release{$version}-win.zip";
     env::is_os(linux) => $file_name = "release{$version}-linux.zip";
     env::is_os(darwin) => $file_name = "release{$version}-darwin.zip";
     env::is_os(linux) => `tgz ./release/unpacked-linux {$file_name}`;
     env::is_os(window) => "release{$version}-win.zip";
-    env::is_os(window) => [
+    env::is_os(window) => {
         cd(something);
         `zip ./release/unpacked-win {$file_name}`;
         cd(..);
-    ];
-    if $variable == "one" || $variable == "two" [
+    };
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ] else [
+    } else {
         cd(./linux);
-    ];
-    if $variable == "one" [
+    };
+    if $variable == "one" {
         cd(./linux);
-    ];
-    if $variable == "one" || $variable == "two" [
+    };
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ];
-];
+    };
+};
 @build_b($mode: dev | prod; $target: win | linux; $input: {string})(
     :platform:build($mode; $target; $input);
     :core:build($mode; $input)
-) [
+) {
     env::is_os(window) => $file_name = "release{$version}-win.zip";
     env::is_os(linux) => $file_name = "release{$version}-linux.zip";
     env::is_os(darwin) => $file_name = "release{$version}-darwin.zip";
     env::is_os(linux) => `tgz ./release/unpacked-linux {$file_name}`;
     env::is_os(window) => "release{$version}-win.zip";
-    env::is_os(window) => [
+    env::is_os(window) => {
         cd(something);
         `zip ./release/unpacked-win {$file_name}`;
         cd(..);
-    ];
-    if $variable == "one" || $variable == "two" [
+    };
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ] else [
+    } else {
         cd(./linux);
-    ];
-    if $variable == "one" [
+    };
+    if $variable == "one" {
         cd(./linux);
-    ];
-    if $variable == "one" || $variable == "two" [
+    };
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ];
-];
+    };
+};
 @build_c($input_a: {string}; $mode: dev | prod; $target: win | linux; $input_b: {string})(
     :lint;
     :smth:deply;
     :platform:build($input_a; $target; $input_b);
     :core:build($target; $input_b)
-) [
+) {
     env::is_os(window) => $file_name = "release{$version}-win.zip";
     env::is_os(linux) => $file_name = "release{$version}-linux.zip";
     env::is_os(darwin) => $file_name = "release{$version}-darwin.zip";
     env::is_os(linux) => `tgz ./release/unpacked-linux {$file_name}`;
     env::is_os(window) => "release{$version}-win.zip";
-    env::is_os(window) => [
+    env::is_os(window) => {
         cd(something);
         `zip ./release/unpacked-win {$file_name}`;
         cd(..);
-    ];
-    if $variable == "one" || $variable == "two" [
+    };
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ] else [
+    } else {
         cd(./linux);
-    ];
-    if $variable == "one" [
+    };
+    if $variable == "one" {
         cd(./linux);
-    ];
-    if $variable == "one" || $variable == "two" [
+    };
+    if $variable == "one" || $variable == "two" {
         cd(./linux);
-    ];
-];
+    };
+};

@@ -127,7 +127,7 @@ impl Reading<Task> for Task {
         };
         let Some((name, stopped_on)) = reader
             .until()
-            .char(&[&chars::OPEN_BRACKET, &chars::OPEN_SQ_BRACKET])
+            .char(&[&chars::OPEN_BRACKET, &chars::OPEN_CURLY_BRACE])
         else {
             restore(reader);
             return Ok(None);
@@ -140,7 +140,7 @@ impl Reading<Task> for Task {
         {
             Err(E::InvalidTaskName(name.clone()).linked(&name_token))?
         }
-        let declarations: Vec<Element> = if stopped_on == chars::OPEN_SQ_BRACKET {
+        let declarations: Vec<Element> = if stopped_on == chars::OPEN_CURLY_BRACE {
             Vec::new()
         } else if reader.until().char(&[&chars::CLOSE_BRACKET]).is_some() {
             reader.move_to().next();

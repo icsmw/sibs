@@ -1,22 +1,22 @@
-@test [
+@test {
     $elements = ("one"; "two"; "three");
-    each($el; $elements) [
+    each($el; $elements) {
         $a = "{$el}";
-        if $a == "two" [
+        if $a == "two" {
             break;
-        ];
-    ];
+        };
+    };
     
     $elements = ("one"; "two");
-    each($el; $elements) [
+    each($el; $elements) {
         $b = "{$el}";
-        if $b == "one" [
+        if $b == "one" {
             break;
-        ];
-    ];
+        };
+    };
 
-    each($el; $elements) [
+    each($el; $elements) {
         $c = "{$el}";
         break;
-    ];
-];
+    };
+};

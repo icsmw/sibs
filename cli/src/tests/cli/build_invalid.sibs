@@ -1,6 +1,6 @@
-#[test: ./tmp]
+#{test: ./tmp}
     /// Test SIBS
-    try [
+    try {
         /// Will try to execute terminal command
         ls -lsa;
         env::is_os windows();
@@ -10,13 +10,13 @@
         $b_str = "value_b_{env::is_os linux()}";
         $c_str = "value_c_{$a_str}-{$b_str}";
         $d_bool = env::is_os linux();
-        if env::is_os linux() [
+        if env::is_os linux() {
             :self:build(smth, prod);
-        ];
-        if env::os() == "linux" [ env::is_os(); ];
-    ];
-    build($input_a: {string}; $mode: dev | prod;) [
+        };
+        if env::os() == "linux" { env::is_os(); };
+    };
+    build($input_a: {string}; $mode: dev | prod;) {
         $a_str = "value_a";
         ls -lsa;
-    ];
+    };
 

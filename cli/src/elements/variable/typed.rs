@@ -41,8 +41,8 @@ pub struct VariableType {
 impl Reading<VariableType> for VariableType {
     fn read(reader: &mut Reader) -> Result<Option<VariableType>, LinkedErr<E>> {
         let close = reader.open_token(ElTarget::VariableType);
-        if reader.move_to().char(&[&chars::TYPE_OPEN]).is_some() {
-            if let Some((word, _char)) = reader.until().char(&[&chars::TYPE_CLOSE]) {
+        if reader.move_to().char(&[&chars::OPEN_CURLY_BRACE]).is_some() {
+            if let Some((word, _char)) = reader.until().char(&[&chars::CLOSE_CURLY_BRACE]) {
                 reader.move_to().next();
                 Ok(Some(VariableType::new(word, close(reader))?))
             } else {

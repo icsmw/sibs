@@ -1,24 +1,24 @@
 #(a)
-    @test($a: a | b) [
-        if $a == "a" [
+    @test($a: a | b) {
+        if $a == "a" {
             "true";
-        ] else [
+        } else {
             "false";
-        ];
-    ];
+        };
+    };
 #(b)
-    @test($a: {string}; $b: a | b; $c: {string}) [
-        if $a == "a" && $b == "b" && $c == "c" [
+    @test($a: {string}; $b: a | b; $c: {string}) {
+        if $a == "a" && $b == "b" && $c == "c" {
             "true";
-        ] else [
+        } else {
             "false";
-        ];
-    ];
+        };
+    };
 #(c)
-    @test($a: {string}; $b: a | b; $c: {string}) [
+    @test($a: {string}; $b: a | b; $c: {string}) {
         :b:test("a"; "b"; "c");
-    ];
+    };
 #(d)
-    @test($a: {string}; $b: a | b; $c: {string}) [
+    @test($a: {string}; $b: a | b; $c: {string}) {
         :a:test("a");
-    ];
+    };

@@ -1,6 +1,6 @@
 pub const SEMICOLON: char = ';';
-pub const TYPE_OPEN: char = '{';
-pub const TYPE_CLOSE: char = '}';
+pub const OPEN_CURLY_BRACE: char = '{';
+pub const CLOSE_CURLY_BRACE: char = '}';
 pub const QUESTION: char = '?';
 pub const COLON: char = ':';
 pub const DOLLAR: char = '$';

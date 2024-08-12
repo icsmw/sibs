@@ -350,7 +350,7 @@ mod proptest {
 
     fn reading(optional: Optional) {
         get_rt().block_on(async {
-            let origin = format!("test [\n{optional};\n];");
+            let origin = format!("test {{\n{optional};\n}};");
             read_string!(
                 &Configuration::logs(false),
                 &origin,

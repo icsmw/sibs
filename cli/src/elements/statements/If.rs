@@ -318,7 +318,7 @@ mod processing {
     #[tokio::test]
     async fn reading() {
         let tasks_count = include_str!("../../tests/processing/if.sibs")
-            .match_indices("test [")
+            .match_indices(chars::AT)
             .count();
         process_string!(
             &Configuration::logs(false),
@@ -412,7 +412,7 @@ mod proptest {
 
     fn reading(if_block: If) {
         get_rt().block_on(async {
-            let origin = format!("test [\n{if_block};\n];");
+            let origin = format!("test {{\n{if_block};\n}};");
             read_string!(
                 &Configuration::logs(false),
                 &origin,

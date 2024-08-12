@@ -347,7 +347,7 @@ mod proptest {
 
     fn reading(assignation: VariableAssignation) {
         get_rt().block_on(async {
-            let origin = format!("test [\n{assignation};\n];");
+            let origin = format!("test {{\n{assignation};\n}};");
             read_string!(
                 &Configuration::logs(false),
                 &origin,

@@ -3,7 +3,7 @@ import(./defaults.sibs);
 #(app: ./app)
     /// Application 
     hash ("./src"; "./dist"; :client; :shared; :wrapper) ->(:build("dev"));
-    @build($mode: dev | prod) [
+    @build($mode: dev | prod) {
         /// Building electron application 
         /// build dev >> build developing version
         /// build prod >> build production version
@@ -22,8 +22,8 @@ import(./defaults.sibs);
         copy(../client/dist/client; ./dist);
         `yarn run build`;
         copy(./package.json; ./dist);
-    ];
-    @release($mode: dev | prod) [
+    };
+    @release($mode: dev | prod) {
         /// Build release artifacts
         /// release dev >> build developing version
         /// release prod >> build production version
@@ -31,38 +31,38 @@ import(./defaults.sibs);
         env::is_os(window) => `yarn run build-win`;
         env::is_os(linux) => `yarn run build-linux`;
         env::is_os(darwin) => `yarn run build-darwin`;
-    ];
-    @distribution [
+    };
+    @distribution {
         /// Name and compress release artifacts
-        $version = read_as_string(./package.json) >> find(/"version": "([\d\.])"/gi);
-        if env::is_os(linux) || env::is_os(darwin) [ "release{$version}-win.zip"; ] else [ "bla"; ];
+        $version = read_as_string(./package.json) >> find(/"version": "({\d\.})"/gi);
+        if env::is_os(linux) || env::is_os(darwin) { "release{$version}-win.zip"; } else { "bla"; };
         env::is_os(window) => $file_name = "release{$version}-win.zip";
         env::is_os(linux) => $file_name = "release{$version}-linux.zip";
         env::is_os(darwin) => $file_name = "release{$version}-darwin.zip";
-        env::is_os(window) => [
+        env::is_os(window) => {
             cd(something);
             `zip ./release/unpacked-win {$file_name}`;
             cd(..);
-        ];
+        };
         env::is_os(linux) => `tgz ./release/unpacked-linux {$file_name}`;
         env::is_os(darwin) => `tgz ./release/unpacked-mac {$file_name}`;
-    ];
-    @collect [
+    };
+    @collect {
         $files = read_as_lines(./some_file);
-        each($file; $files) [
+        each($file; $files) {
             `tgz ./release/{$file}`;
-        ];
+        };
         $files = ls(./path) >> as_lines();
-        each($file; $files) [
-            if $file != "." && $file != ".." [
+        each($file; $files) {
+            if $file != "." && $file != ".." {
                 `tgz ./release/{$file}`;
-            ];
-        ];
-    ];
-    @lint [
+            };
+        };
+    };
+    @lint {
         /// Lint application code
         :TS:lint;
-    ];
+    };
 
 #(client: ./client)
     /// Client (HTML + JS client files)
@@ -70,7 +70,7 @@ import(./defaults.sibs);
     @build($mode: dev | prod)(
         :platform:build($mode);
         :core:build($mode)
-    ) [
+    ) {
         /// Buildind client 
         /// build dev >> build developing (no JS optimization) version
         /// build prod >> build production version
@@ -78,69 +78,69 @@ import(./defaults.sibs);
         remove(./dist);
         $mode == "dev" => `yarn run build`;
         $mode == "prod" => `yarn run prod`;
-    ];
-    @lint [
+    };
+    @lint {
         /// Lint client code
         :TS:lint;
-    ];
+    };
 
 #(shared: ./shared)
     /// Common utils/libs/defs for client, app and wrapper
     hash ("./src"; "./dist"; :client; :shared; :wrapper) ->(:build("dev"));
-    @build [
+    @build {
         /// Compile
         exists(./node_modules) => `yarn install`;
         `yarn run build`;
-    ];
-    @prod [
+    };
+    @prod {
         /// Compile & cleanup node_modules for production
         :self:build;
         remove(./node_modules);
         `yarn install --production`;
-    ];
-    @lint [
+    };
+    @lint {
         :TS:lint;
-    ];
+    };
         
 #(module: ./core/module)
     /// Rust core of application
     hash ("./src"; "./dist"; :client; :shared; :wrapper) ->(:build("dev"));
-    @lint [
+    @lint {
         :RUST:lint;
-    ];
-    @test [
+    };
+    @test {
         :RUST:test;
-    ];
+    };
 
 #(binding: ./core/binding)
     /// Compiler of index.node with rust core application
     hash ("./src"; "./dist"; :client; :shared; :wrapper) ->(:build("dev"));
-    @build [
+    @build {
         `nj-cli build --release`;
-    ];
-    @lint [
+    };
+    @lint {
         :RUST:lint;
-    ];
-    @test [
+    };
+    @test {
         :RUST:test;
-    ];
+    };
 
 #(wrapper: ./core/wrapper)
     /// Rust core wrapped into TypeScript module
     hash ("./src"; "./dist"; :client; :shared; :wrapper) ->(:build("dev"));
-    @build [
+    @build {
         /// Compile
         exists(./node_modules) => `yarn install`;
         :binding:build;
         copy(../binding/dist/index.node; ./dist);
         `yarn run build`;
-    ];
-    @prod [
+    };
+    @prod {
         /// Compile & cleanup node_modules for production
         :self:build;
         remove(./node_modules);
         `yarn install --production`;
-    ];
-    @lint [
+    };
+    @lint {
         :TS:lint;
-    ];
+    };

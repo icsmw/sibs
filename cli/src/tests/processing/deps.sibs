@@ -1,52 +1,52 @@
 #(a)
-    @test($a: a | b) [
-        if $a == "a" [
+    @test($a: a | b) {
+        if $a == "a" {
             "one";
-        ] else [
+        } else {
             "---";
-        ];
-    ];
+        };
+    };
 #(b)
-    @test($a: a | b; $b: {string}) [
-        if $a == "a" && $b == "b" [
+    @test($a: a | b; $b: {string}) {
+        if $a == "a" && $b == "b" {
             "two";
-        ] else [
+        } else {
             "---";
-        ];
-    ];
+        };
+    };
 #(c_run)
     @test($a: a | b; $b: {string})(
         $res_a = :a:test($a);
         $res_b = :b:test($a; $b);
-    ) [
+    ) {
         logs::info("output from :a:test($a) => {$res_a}");
         logs::info("output from :b:test($b) => {$res_b}");
-        if $res_a == "one" && $res_b == "two" [
+        if $res_a == "one" && $res_b == "two" {
             true;
-        ] else [
+        } else {
             false;
-        ];
-    ];
+        };
+    };
 #(d)
-    @test($a: a | b) [
+    @test($a: a | b) {
         global $var_from_comp_d = "changed_{$a}";
-    ];
+    };
 #(e)
-    @test($a: a | b; $b: {string}) [
+    @test($a: a | b; $b: {string}) {
         globals::set_var(var_from_comp_e; "changed_{$a}_{$b}");
-    ];
+    };
 #(f_run)
     @test($a: a | b; $b: {string})(
         :d:test($a);
         :e:test($a; $b);
-    ) [
+    ) {
         $var_from_comp_d = globals::get_var(var_from_comp_d);
         $var_from_comp_e = globals::get_var(var_from_comp_e);
         logs::info("$var_from_comp_d => {$var_from_comp_d}");
         logs::info("$var_from_comp_e => {$var_from_comp_e}");
-        if $var_from_comp_d == "changed_a" && $var_from_comp_e == "changed_a_b" [
+        if $var_from_comp_d == "changed_a" && $var_from_comp_e == "changed_a_b" {
             true;
-        ] else [
+        } else {
             false;
-        ];
-    ];
+        };
+    };

@@ -21,7 +21,7 @@ pub fn read(
     if reader.move_to().char(&[&wrapper]).is_some() {
         let mut elements: Vec<Element> = Vec::new();
         let mut closed = false;
-        while let Some((_, stopped)) = reader.until().char(&[&chars::TYPE_OPEN, &wrapper]) {
+        while let Some((_, stopped)) = reader.until().char(&[&chars::OPEN_CURLY_BRACE, &wrapper]) {
             let inner_token = reader.token()?;
             if stopped == wrapper {
                 elements.push(Element::SimpleString(
@@ -35,7 +35,7 @@ pub fn read(
                 break;
             } else if reader
                 .group()
-                .between(&chars::TYPE_OPEN, &chars::TYPE_CLOSE)
+                .between(&chars::OPEN_CURLY_BRACE, &chars::CLOSE_CURLY_BRACE)
                 .is_some()
             {
                 let mut inner = reader.token()?.bound;

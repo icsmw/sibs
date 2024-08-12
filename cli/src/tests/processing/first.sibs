@@ -1,33 +1,33 @@
-@test [
+@test {
     $a = "one";
-    first [
+    first {
         $a == "two" => "false";
         $a == "three" => "false";
         $a == "one" => "true";
-    ];
-];
-@test [
+    };
+};
+@test {
     $a = "one";
-    first [
+    first {
         $a == "two" => "false";
         $a == "one" => "true";
         $a == "three" => "false";
-    ];
-];
-@test [
+    };
+};
+@test {
     $a = "one";
-    first [
+    first {
         $a == "one" => "true";
         $a == "two" => "false";
         $a == "three" => "false";
-    ];
-];
-@test [
+    };
+};
+@test {
     $a = "one";
-    $b = first [
+    $b = first {
         $a == "two" => str::repeat(bla; 2);
         $a == "three" => str::repeat(bla; 2);
         $a == "one" => str::repeat(bla; 3);
-    ];
+    };
     $b == "blablabla" => "true";
-];
+};

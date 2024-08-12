@@ -1,35 +1,35 @@
-@test($a: a | b) [
-    if $a == "a" [
+@test($a: a | b) {
+    if $a == "a" {
         "true";
-    ] else [
+    } else {
         "false";
-    ];
-];
-@test($a: a | b; $b: a | b) [
-    if $a == "a" && $b == "b" [
+    };
+};
+@test($a: a | b; $b: a | b) {
+    if $a == "a" && $b == "b" {
         "true";
-    ] else [
+    } else {
         "false";
-    ];
-];
-@test($a: {string}) [
-    if $a == "a" [
+    };
+};
+@test($a: {string}) {
+    if $a == "a" {
         "true";
-    ] else [
+    } else {
         "false";
-    ];
-];
-@test($a: {string}; $b: a | b) [
-    if $a == "a" && $b == "b" [
+    };
+};
+@test($a: {string}; $b: a | b) {
+    if $a == "a" && $b == "b" {
         "true";
-    ] else [
+    } else {
         "false";
-    ];
-];
-@test($a: {string}; $b: a | b; $c: {string}) [
-    if $a == "a" && $b == "b" && $c == "c" [
+    };
+};
+@test($a: {string}; $b: a | b; $c: {string}) {
+    if $a == "a" && $b == "b" && $c == "c" {
         "true";
-    ] else [
+    } else {
         "false";
-    ];
-];
+    };
+};

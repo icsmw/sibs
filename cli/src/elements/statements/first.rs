@@ -228,7 +228,7 @@ mod proptest {
 
     fn reading(first: First) {
         get_rt().block_on(async {
-            let origin = format!("test [\n{first};\n];");
+            let origin = format!("test {{\n{first};\n}};");
             read_string!(
                 &Configuration::logs(false),
                 &origin,

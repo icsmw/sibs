@@ -1,21 +1,21 @@
 #(a)
-    @success [
+    @success {
         logs::info("This logs should be visible");
         exit();
         logs::info("This logs should NOT be visible");
-    ];
-    @success_with_message [
+    };
+    @success_with_message {
         logs::info("This logs should be visible");
         exit(0; "Hello World!");
         logs::info("This logs should NOT be visible");
-    ];
-    @error [
+    };
+    @error {
         logs::info("This logs should be visible");
         exit(1);
         logs::info("This logs should NOT be visible");
-    ];
-    @error_with_message [
+    };
+    @error_with_message {
         logs::info("This logs should be visible");
         exit(1; "Hello World!");
         logs::info("This logs should NOT be visible");
-    ];
+    };

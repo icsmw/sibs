@@ -26,7 +26,7 @@ impl Reading<Block> for Block {
         let close = reader.open_token(ElTarget::Block);
         if reader
             .group()
-            .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
+            .between(&chars::OPEN_CURLY_BRACE, &chars::CLOSE_CURLY_BRACE)
             .is_some()
         {
             let mut inner = reader.token()?.bound;
@@ -85,7 +85,7 @@ impl fmt::Display for Block {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "[\n{}{}]",
+            "{{\n{}{}}}",
             self.elements
                 .iter()
                 .map(|el| format!("{el};",))
@@ -103,7 +103,7 @@ impl Formation for Block {
     fn format(&self, cursor: &mut FormationCursor) -> String {
         let mut inner = cursor.reown(Some(ElTarget::Block)).right();
         format!(
-            "[\n{}{}{}]",
+            "{{\n{}{}{}}}",
             self.elements
                 .iter()
                 .map(|el| format!("{};", el.format(&mut inner),))
@@ -165,7 +165,7 @@ mod reading {
         read_string!(
             &Configuration::logs(false),
             &format!(
-                "[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
+                "{{{}}}\n{{{}}}\n{{{}}}\n{{{}}}\n{{{}}}\n{{{}}}",
                 include_str!("../tests/reading/if.sibs"),
                 include_str!("../tests/reading/variable_assignation.sibs"),
                 include_str!("../tests/reading/function.sibs"),
@@ -191,7 +191,7 @@ mod reading {
         read_string!(
             &Configuration::logs(false),
             &format!(
-                "[{}]\n[{}]\n[{}]\n[{}]\n[{}]\n[{}]",
+                "{{{}}}\n{{{}}}\n{{{}}}\n{{{}}}\n{{{}}}\n{{{}}}",
                 include_str!("../tests/reading/if.sibs"),
                 include_str!("../tests/reading/variable_assignation.sibs"),
                 include_str!("../tests/reading/function.sibs"),
