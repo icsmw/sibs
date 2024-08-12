@@ -1,7 +1,7 @@
 /// Test SIBS
 #(test: ./tmp)
     /// Try to build
-    try {
+    @try {
         // Will try to execute terminal command
         `ls -lsa`;
         env::is_os(windows);
@@ -16,14 +16,14 @@
         };
     };
     /// Building electron application
-    /// {b}{color:blue}$input_a{/color}{/b} {string}    {>>}build developing version build developing version build developing version build developing version build developing version build developing version build developing version
-    /// {b}{color:blue}$mode{/color}{/b}:dev            {>>}build developing version
-    /// {b}{color:blue}$mode{/color}{/b}:prod           {>>}build production version
-    build($input_a: {string}; $mode: dev | prod;) {
+    /// [b][color:blue]$input_a[/color][/b] {string}    [>>]build developing version build developing version build developing version build developing version build developing version build developing version build developing version
+    /// [b][color:blue]$mode[/color][/b]:dev            [>>]build developing version
+    /// [b][color:blue]$mode[/color][/b]:prod           [>>]build production version
+    @build($input_a: {string}; $mode: dev | prod;) {
         $a_str = "value_a";
         `ls -lsa`;
     };
-    test($input_a: {string}; $mode: dev | prod;)(
+    @test($input_a: {string}; $mode: dev | prod;)(
         :test:try($mode);
         :test:build($input_a; $mode)
     ) {
