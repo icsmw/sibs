@@ -1,16 +1,16 @@
 each($file; $files) [
-    @sh(tgz ./release/{$file});
+    sh(tgz ./release/{$file});
     break;
 ];
 each($file; $files) [
     if $file != "." && $file != ".." [
-        @sh(tgz ./release/{$file});
+        sh(tgz ./release/{$file});
         break;
     ];
 ];
 each($file; $files) [
     if $file != "." && $file != ".." [
-        @sh(tgz ./release/{$file});
+        sh(tgz ./release/{$file});
     ] else [
         break;
     ];

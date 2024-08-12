@@ -1,4 +1,4 @@
-test [
+@test [
     $a = "one";
     first [
         $a == "two" => "false";
@@ -6,7 +6,7 @@ test [
         $a == "one" => "true";
     ];
 ];
-test [
+@test [
     $a = "one";
     first [
         $a == "two" => "false";
@@ -14,7 +14,7 @@ test [
         $a == "three" => "false";
     ];
 ];
-test [
+@test [
     $a = "one";
     first [
         $a == "one" => "true";
@@ -22,12 +22,12 @@ test [
         $a == "three" => "false";
     ];
 ];
-test [
+@test [
     $a = "one";
     $b = first [
-        $a == "two" => @str::repeat(bla; 2);
-        $a == "three" => @str::repeat(bla; 2);
-        $a == "one" => @str::repeat(bla; 3);
+        $a == "two" => str::repeat(bla; 2);
+        $a == "three" => str::repeat(bla; 2);
+        $a == "one" => str::repeat(bla; 3);
     ];
     $b == "blablabla" => "true";
 ];

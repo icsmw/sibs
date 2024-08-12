@@ -89,9 +89,17 @@ pub async fn format_file(filename: &PathBuf) -> Result<(), LinkedErr<E>> {
 
 #[cfg(test)]
 pub async fn format_string(content: &str) -> Result<String, LinkedErr<E>> {
+    use crate::inf::Report;
+
     let mut cursor = FormationCursor::default();
     let journal = Journal::init(Configuration::logs(false))?;
-    let elements = Reader::read_string(content, &journal).await?;
+    let elements = match Reader::read_string(content, &journal).await {
+        Ok(elements) => elements,
+        Err(err) => {
+            journal.report(Report::LinkedErr(err.serialize()));
+            return Err(err);
+        }
+    };
     let mut output = String::new();
     for el in elements {
         output = format!("{output}\n{}", el.format(&mut cursor));
@@ -102,17 +110,114 @@ pub async fn format_string(content: &str) -> Result<String, LinkedErr<E>> {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::Element,
+        elements::{ElTarget, Element},
         error::LinkedErr,
+        functions::load,
         inf::{format_string, Configuration, Journal},
-        reader::{error::E, Reader},
+        read_string,
+        reader::{chars, error::E, Reader, Sources},
     };
 
     #[tokio::test]
-    async fn reading() -> Result<(), LinkedErr<E>> {
+    async fn reading() {
+        let formated_content = match format_string(include_str!("../../tests/formation.sibs")).await
+        {
+            Ok(r) => r,
+            Err(_) => return,
+        };
+        let mut formated = Vec::new();
+        read_string!(
+            &Configuration::logs(false),
+            &formated_content,
+            |reader: &mut Reader, src: &mut Sources| {
+                while let Some(el) = src.report_err_if(Element::include(
+                    reader,
+                    &[ElTarget::Function, ElTarget::Component],
+                ))? {
+                    if let Element::Function(func, _) = &el {
+                        if load::NAME != func.name {
+                            Err(E::OnlyImportFunctionAllowedOnRoot.by_reader(reader))?;
+                        }
+                        if func.args.len() != 1 {
+                            Err(E::ImportFunctionInvalidArgs.by_reader(reader))?;
+                        };
+                        if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
+                            Err(E::MissedSemicolon.by_reader(reader))?;
+                        }
+                    }
+                    formated.push(el);
+                }
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
+
+        read_string!(
+            &Configuration::logs(false),
+            &include_str!("../../tests/formation.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
+                let mut origin = Vec::new();
+                while let Some(el) = src.report_err_if(Element::include(
+                    reader,
+                    &[ElTarget::Function, ElTarget::Component],
+                ))? {
+                    if let Element::Function(func, _) = &el {
+                        if load::NAME != func.name {
+                            Err(E::OnlyImportFunctionAllowedOnRoot.by_reader(reader))?;
+                        }
+                        if func.args.len() != 1 {
+                            Err(E::ImportFunctionInvalidArgs.by_reader(reader))?;
+                        };
+                        if reader.move_to().char(&[&chars::SEMICOLON]).is_none() {
+                            Err(E::MissedSemicolon.by_reader(reader))?;
+                        }
+                    }
+                    origin.push(el);
+                }
+                assert_eq!(origin.len(), formated.len());
+                let mut count: usize = 0;
+                for (i, el) in origin.iter().enumerate() {
+                    assert_eq!(el.el_target(), formated[i].el_target());
+                    if let (Element::Component(origin, _), Element::Component(formated, _)) =
+                        (el, &formated[i])
+                    {
+                        assert_eq!(origin.elements.len(), formated.elements.len());
+                        for (i, el) in origin.elements.iter().enumerate() {
+                            assert_eq!(el.el_target(), formated.elements[i].el_target());
+                            if let (Element::Task(origin, _), Element::Task(formated, _)) =
+                                (el, &formated.elements[i])
+                            {
+                                if let (Element::Block(origin, _), Element::Block(formated, _)) =
+                                    (origin.block.as_ref(), formated.block.as_ref())
+                                {
+                                    assert_eq!(origin.elements.len(), formated.elements.len());
+                                    let origin = &origin.elements;
+                                    let formated = &formated.elements;
+                                    for (i, el) in origin.iter().enumerate() {
+                                        assert_eq!(
+                                            el.inner_to_string(),
+                                            formated[i].inner_to_string()
+                                        );
+                                        count += 1;
+                                    }
+                                } else {
+                                    panic!("Fail to read blocks of tasks")
+                                }
+                            }
+                        }
+                    }
+                }
+                assert!(count > 50);
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn reading_backup() -> Result<(), LinkedErr<E>> {
         let journal = Journal::init(Configuration::logs(false))?;
         let origin =
             Reader::read_string(include_str!("../../tests/formation.sibs"), &journal).await?;
+
         let formated = Reader::read_string(
             &format_string(include_str!("../../tests/formation.sibs")).await?,
             &journal,

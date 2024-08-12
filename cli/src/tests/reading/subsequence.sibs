@@ -1,86 +1,86 @@
 $variable == "one"
-@one == "one"
+one() == "one"
 $variable == "one" || $variable == "two"
 $variable == "one"
-@env::is_os(linux) || @env::is_os(darwin)
+env::is_os(linux) || env::is_os(darwin)
 $variable == "one"
 $var1 == "active"
-@is_admin($user_id)
+is_admin($user_id)
 $status != "complete" || $progress < 100
 ($temperature > 30) && ($humidity < 50)
-@user_exists("username")
+user_exists("username")
 $error_count > 0
 $light == "off"
-@time_check("22:00")
+time_check("22:00")
 $credits > 0
-@network_status == "connected"
+network_status() == "connected"
 $battery_level < 20
 ($day == "Saturday") || ($day == "Sunday")
 $email_verified
-@file_exists("config")
+file_exists("config")
 $mode == "dark"
-@service_active("database")
+service_active("database")
 $order_processed
 $unread_messages > 0
-@is_holiday_today
+is_holiday_today()
 $user_type == "guest"
-($fuel_level < 25) && (@is_gas_station_nearby)
+($fuel_level < 25) && (is_gas_station_nearby())
 $subscription_active
-@weather("current") == "rainy"
+weather("current") == "rainy"
 $language_preference == "Spanish"
 $disk_space < 10
 $pending_updates
 $task_due
-@cpu_usage > 80
+cpu_usage() > 80
 $is_muted
 $current_song == "last in playlist"
-@is_weekend && $is_vacation
+is_weekend() && $is_vacation
 $login_attempts > 3
-@in_stock($product_id)
+in_stock($product_id)
 $location == "home"
-@is_birth_month($user_id)
+is_birth_month($user_id)
 $is_private_account
-@is_full_moon
+is_full_moon()
 $user_score >= 1000
 $theme_selected
-@is_market_open
+is_market_open()
 $connection_speed < "5Mbps"
 $is_airplane_mode
-@is_member_since("1 year")
+is_member_since("1 year")
 $external_drive_connected
-@battery_status == "charging"
+battery_status() == "charging"
 $document_unsaved
-@is_daylight_savings
-(@functionH("arg8") == $var3) && ($var4 != "mismatch" || $var4 == "mismatch")
-(@functionH("arg8") == $var3 && $var4 != "mismatch") || (@functionH("arg8") == $var3 && $var4 != "mismatch")
-(@check_access("user_id") == true && $status != "restricted") || (@get_role("user_id") == "admin" && $status == "active")
-(@calculate_sum(5; 10) > 10 && $number != 0) || (@calculate_difference(10; 5) < 10 && $number == 5)
-(@is_weekday && $hour >= 9 && $hour < 17) || (@is_holiday && $hour >= 10 && $hour < 15)
-(@get_temperature("city") > 30 && $is_ac_on == false) || (@get_humidity("city") > 70 && $is_dehumidifier_on == false)
-(@user_active("user_id") && $last_login < @now) || (@user_subscription("user_id") == "expired" && $email_sent == false)
-(@item_in_stock("item_id") && $cart_count < 5) || (@promotion_active("promo_code") && $discount_applied == false)
-(@score("user_id") > 1000 && $badge_awarded == false) || (@achievements_count("user_id") >= 10 && $special_reward == false)
-(@distance_to_destination("location") < 5 && $fuel_level > 10) || (@traffic_condition("route") == "clear" && $departure_time <= @now)
-(@is_password_strong($password) && $password_changed_recently == false) || (@has_two_factor_auth("user_id") == false && $account_security_level < 3)
-(@file_exists("path/to/document") && $document_open == false) || (@is_network_connected && $sync_pending == true)
-(@funcA($var1) > 10 && $var2 < 5) || (@funcB("arg") == "result")
-$var3 == true && (@funcC(20) || $var4 != "expected")
-(@funcD("input") != $var5) && $var6 == 100
-$var7 <= 50 || (@funcE($var8) && $var9 > @funcF("param"))
-(@funcG($var10) == "yes") && ($var11 || @funcH(30))
-$var12 && (@funcI($var13) > 40 || $var14 < @funcJ("data"))
-(@funcK($var15; "extra") == $var16) || $var17 != "no"
-$var18 == @funcL("check") && (@funcM($var19) || $var20)
-(@funcN($var21) && $var22) || $var23 < 20
-$var24 != @funcO($var25) && (@funcP("test") == "pass")
-(@funcQ($var26) > 30) || ($var27 && $var28)
-$var29 == "open" && (@funcR($var30) != "closed")
-(@funcS($var31) || $var32) && $var33 < 10
-$var34 && (@funcT($var35) > $var36)
-(@funcU("arg1") == "ok") || ($var37 && $var38 != 50)
-$var39 < @funcV($var40) && ($var41 || @funcW("param2"))
-(@funcX($var42) && $var43) || $var44 == "active"
-$var45 > 10 && (@funcY($var46) || $var47 != "inactive")
-(@funcZ("final") == $var48) && $var49
+is_daylight_savings()
+(functionH("arg8") == $var3) && ($var4 != "mismatch" || $var4 == "mismatch")
+(functionH("arg8") == $var3 && $var4 != "mismatch") || (functionH("arg8") == $var3 && $var4 != "mismatch")
+(check_access("user_id") == true && $status != "restricted") || (get_role("user_id") == "admin" && $status == "active")
+(calculate_sum(5; 10) > 10 && $number != 0) || (calculate_difference(10; 5) < 10 && $number == 5)
+(is_weekday() && $hour >= 9 && $hour < 17) || (is_holiday() && $hour >= 10 && $hour < 15)
+(get_temperature("city") > 30 && $is_ac_on == false) || (get_humidity("city") > 70 && $is_dehumidifier_on == false)
+(user_active("user_id") && $last_login < now()) || (user_subscription("user_id") == "expired" && $email_sent == false)
+(item_in_stock("item_id") && $cart_count < 5) || (promotion_active("promo_code") && $discount_applied == false)
+(score("user_id") > 1000 && $badge_awarded == false) || (achievements_count("user_id") >= 10 && $special_reward == false)
+(distance_to_destination("location") < 5 && $fuel_level > 10) || (traffic_condition("route") == "clear" && $departure_time <= now())
+(is_password_strong($password) && $password_changed_recently == false) || (has_two_factor_auth("user_id") == false && $account_security_level < 3)
+(file_exists("path/to/document") && $document_open == false) || (is_network_connected() && $sync_pending == true)
+(funcA($var1) > 10 && $var2 < 5) || (funcB("arg") == "result")
+$var3 == true && (funcC(20) || $var4 != "expected")
+(funcD("input") != $var5) && $var6 == 100
+$var7 <= 50 || (funcE($var8) && $var9 > funcF("param"))
+(funcG($var10) == "yes") && ($var11 || funcH(30))
+$var12 && (funcI($var13) > 40 || $var14 < funcJ("data"))
+(funcK($var15; "extra") == $var16) || $var17 != "no"
+$var18 == funcL("check") && (funcM($var19) || $var20)
+(funcN($var21) && $var22) || $var23 < 20
+$var24 != funcO($var25) && (funcP("test") == "pass")
+(funcQ($var26) > 30) || ($var27 && $var28)
+$var29 == "open" && (funcR($var30) != "closed")
+(funcS($var31) || $var32) && $var33 < 10
+$var34 && (funcT($var35) > $var36)
+(funcU("arg1") == "ok") || ($var37 && $var38 != 50)
+$var39 < funcV($var40) && ($var41 || funcW("param2"))
+(funcX($var42) && $var43) || $var44 == "active"
+$var45 > 10 && (funcY($var46) || $var47 != "inactive")
+(funcZ("final") == $var48) && $var49
 ($a == true || $b == true || ($a == false && $b == false)) && $r > 7
 ($a == true || $b == true || ($a == false && $b == false && ($c > 6 && $d < 6))) && ($a == true || $b == true || ($a == false && $b == false && ($c > 6 && $d < 6)))

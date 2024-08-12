@@ -120,73 +120,74 @@ impl Task {
 
 impl Reading<Task> for Task {
     fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
+        let restore = reader.pin();
         let close = reader.open_token(ElTarget::Task);
-        if let Some((name, stopped_on)) = reader
+        let Some(_) = reader.move_to().char(&[&chars::AT]) else {
+            return Ok(None);
+        };
+        let Some((name, stopped_on)) = reader
             .until()
             .char(&[&chars::OPEN_BRACKET, &chars::OPEN_SQ_BRACKET])
+        else {
+            restore(reader);
+            return Ok(None);
+        };
+        let (name, name_token) = (name.trim().to_string(), reader.token()?.id);
+        if stopped_on == chars::OPEN_BRACKET {
+            reader.move_to().next();
+        }
+        if !Reader::is_ascii_alphabetic_and_alphanumeric(&name, &[&chars::UNDERSCORE, &chars::DASH])
         {
-            let (name, name_token) = (name.trim().to_string(), reader.token()?.id);
-            if stopped_on == chars::OPEN_BRACKET {
-                reader.move_to().next();
+            Err(E::InvalidTaskName(name.clone()).linked(&name_token))?
+        }
+        let declarations: Vec<Element> = if stopped_on == chars::OPEN_SQ_BRACKET {
+            Vec::new()
+        } else if reader.until().char(&[&chars::CLOSE_BRACKET]).is_some() {
+            reader.move_to().next();
+            let mut declarations: Vec<Element> = Vec::new();
+            let mut inner = reader.token()?.bound;
+            while let Some(el) = Element::include(&mut inner, &[ElTarget::VariableDeclaration])? {
+                let _ = inner.move_to().char(&[&chars::SEMICOLON]);
+                declarations.push(el);
             }
-            if !Reader::is_ascii_alphabetic_and_alphanumeric(
-                &name,
-                &[&chars::UNDERSCORE, &chars::DASH],
-            ) {
-                Err(E::InvalidTaskName(name.clone()).linked(&name_token))?
+            if !inner.is_empty() {
+                Err(E::InvalidTaskArguments(inner.rest().trim().to_string()).by_reader(&inner))?
             }
-            let declarations: Vec<Element> = if stopped_on == chars::OPEN_SQ_BRACKET {
-                Vec::new()
-            } else if reader.until().char(&[&chars::CLOSE_BRACKET]).is_some() {
-                reader.move_to().next();
-                let mut declarations: Vec<Element> = Vec::new();
-                let mut inner = reader.token()?.bound;
-                while let Some(el) = Element::include(&mut inner, &[ElTarget::VariableDeclaration])?
-                {
-                    let _ = inner.move_to().char(&[&chars::SEMICOLON]);
-                    declarations.push(el);
-                }
-                if !inner.is_empty() {
-                    Err(E::InvalidTaskArguments(inner.rest().trim().to_string()).by_reader(&inner))?
-                }
-                declarations
-            } else {
-                Err(E::NoTaskArguments.linked(&name_token))?
-            };
-            let mut dependencies: Vec<Element> = Vec::new();
-            if reader
-                .group()
-                .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
-                .is_some()
-            {
-                let mut inner = reader.token()?.bound;
-                while let Some(el) = Element::include(
-                    &mut inner,
-                    &[ElTarget::Reference, ElTarget::VariableAssignation],
-                )? {
-                    let _ = inner.move_to().char(&[&chars::SEMICOLON]);
-                    dependencies.push(el);
-                }
-                if !inner.is_empty() {
-                    Err(E::UnrecognizedCode(inner.move_to().end()).by_reader(&inner))?;
-                }
-            }
-            if let Some(block) = Element::include(reader, &[ElTarget::Block])? {
-                Ok(Some(Task {
-                    name: SimpleString {
-                        value: name,
-                        token: name_token,
-                    },
-                    declarations,
-                    dependencies,
-                    token: close(reader),
-                    block: Box::new(block),
-                }))
-            } else {
-                Err(E::FailFindTaskActions.linked(&name_token))
-            }
+            declarations
         } else {
-            Ok(None)
+            Err(E::NoTaskArguments.linked(&name_token))?
+        };
+        let mut dependencies: Vec<Element> = Vec::new();
+        if reader
+            .group()
+            .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
+            .is_some()
+        {
+            let mut inner = reader.token()?.bound;
+            while let Some(el) = Element::include(
+                &mut inner,
+                &[ElTarget::Reference, ElTarget::VariableAssignation],
+            )? {
+                let _ = inner.move_to().char(&[&chars::SEMICOLON]);
+                dependencies.push(el);
+            }
+            if !inner.is_empty() {
+                Err(E::UnrecognizedCode(inner.move_to().end()).by_reader(&inner))?;
+            }
+        }
+        if let Some(block) = Element::include(reader, &[ElTarget::Block])? {
+            Ok(Some(Task {
+                name: SimpleString {
+                    value: name,
+                    token: name_token,
+                },
+                declarations,
+                dependencies,
+                token: close(reader),
+                block: Box::new(block),
+            }))
+        } else {
+            Err(E::FailFindTaskActions.linked(&name_token))
         }
     }
 }
@@ -195,7 +196,7 @@ impl fmt::Display for Task {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{}{}{} {}",
+            "@{}{}{} {}",
             self.name.value,
             if self.declarations.is_empty() && self.dependencies.is_empty() {
                 String::new()
@@ -230,7 +231,7 @@ impl Formation for Task {
     fn format(&self, cursor: &mut FormationCursor) -> String {
         let mut inner = cursor.reown(Some(ElTarget::Task));
         format!(
-            "{}{}{}{} {}",
+            "@{}{}{}{} {}",
             cursor.offset_as_string(),
             self.name.value,
             if self.declarations.is_empty() && self.dependencies.is_empty() {

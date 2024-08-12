@@ -1,4 +1,5 @@
 mod block;
+mod call;
 mod comment;
 mod component;
 mod conditions;
@@ -15,6 +16,7 @@ mod values;
 mod variable;
 
 pub use block::*;
+pub use call::*;
 pub use comment::*;
 pub use component::*;
 pub use conditions::*;
@@ -71,6 +73,7 @@ pub enum ElTarget {
     VariableVariants,
     VariableType,
     SimpleString,
+    Call,
     #[allow(unused)]
     Comment,
 }
@@ -109,6 +112,7 @@ impl fmt::Display for ElTarget {
                 Self::VariableVariants => "VariableVariants",
                 Self::VariableType => "VariableType",
                 Self::SimpleString => "SimpleString",
+                Self::Call => "Call",
                 Self::Comment => "Comment",
             },
         )
@@ -229,6 +233,7 @@ pub enum Element {
     VariableVariants(VariableVariants, Metadata),
     VariableType(VariableType, Metadata),
     SimpleString(SimpleString, Metadata),
+    Call(Call, Metadata),
     Meta(Meta),
     Comment(Comment),
 }
@@ -268,6 +273,11 @@ impl Element {
         if includes == targets.contains(&ElTarget::Breaker) {
             if let Some(el) = Breaker::read(reader)? {
                 return Ok(Some(Element::Breaker(el, md)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::Call) {
+            if let Some(el) = Call::read(reader)? {
+                return Ok(Some(Element::Call(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::Combination) {
@@ -325,11 +335,6 @@ impl Element {
                 return Ok(Some(Element::Boolean(el, md)));
             }
         }
-        if includes == targets.contains(&ElTarget::Function) {
-            if let Some(el) = Function::read(reader)? {
-                return Ok(Some(Element::Function(el, tolerance(reader, md))));
-            }
-        }
         if includes == targets.contains(&ElTarget::VariableAssignation) {
             if let Some(el) = VariableAssignation::read(reader)? {
                 return Ok(Some(Element::VariableAssignation(el, md)));
@@ -353,6 +358,11 @@ impl Element {
         if includes == targets.contains(&ElTarget::Join) {
             if let Some(el) = Join::read(reader)? {
                 return Ok(Some(Element::Join(el, md)));
+            }
+        }
+        if includes == targets.contains(&ElTarget::Function) {
+            if let Some(el) = Function::read(reader)? {
+                return Ok(Some(Element::Function(el, tolerance(reader, md))));
             }
         }
         if includes == targets.contains(&ElTarget::Reference) {
@@ -451,6 +461,7 @@ impl Element {
             Self::VariableVariants(_, md) => md,
             Self::VariableType(_, md) => md,
             Self::SimpleString(_, md) => md,
+            Self::Call(_, md) => md,
             Self::Comment(_) | Self::Meta(_) => {
                 panic!("Comment doesn't have metadata");
             }
@@ -488,6 +499,7 @@ impl Element {
             Self::VariableVariants(..) => ElTarget::VariableVariants,
             Self::VariableType(..) => ElTarget::VariableType,
             Self::SimpleString(..) => ElTarget::SimpleString,
+            Self::Call(..) => ElTarget::Call,
             Self::Comment(..) => ElTarget::Comment,
         }
     }
@@ -522,6 +534,7 @@ impl Element {
             Self::VariableVariants(v, _) => v.to_string(),
             Self::VariableType(v, _) => v.to_string(),
             Self::SimpleString(v, _) => v.to_string(),
+            Self::Call(v, _) => v.to_string(),
             Self::Comment(v) => v.to_string(),
             Self::Meta(v) => v.to_string(),
         }
@@ -579,6 +592,7 @@ impl fmt::Display for Element {
                 Self::VariableVariants(v, md) => as_string(v, md),
                 Self::VariableType(v, md) => as_string(v, md),
                 Self::SimpleString(v, md) => as_string(v, md),
+                Self::Call(v, md) => as_string(v, md),
                 Self::Comment(v) => v.to_string(),
                 Self::Meta(v) => v.to_string(),
             }
@@ -616,6 +630,7 @@ impl Formation for Element {
             Self::VariableVariants(v, _) => v.elements_count(),
             Self::VariableType(v, _) => v.elements_count(),
             Self::SimpleString(v, _) => v.elements_count(),
+            Self::Call(v, _) => v.elements_count(),
             Self::Meta(v) => v.elements_count(),
             Self::Comment(v) => v.elements_count(),
         }
@@ -669,6 +684,7 @@ impl Formation for Element {
             Self::VariableVariants(v, m) => format_el(v, m, cursor),
             Self::VariableType(v, m) => format_el(v, m, cursor),
             Self::SimpleString(v, m) => format_el(v, m, cursor),
+            Self::Call(v, m) => format_el(v, m, cursor),
             Self::Meta(v) => v.format(cursor),
             Self::Comment(v) => v.format(cursor),
         }
@@ -705,6 +721,7 @@ impl Operator for Element {
             Self::VariableVariants(v, _) => v.token,
             Self::VariableType(v, _) => v.token,
             Self::SimpleString(v, _) => v.token(),
+            Self::Call(v, _) => v.token(),
             Self::Meta(v) => v.token,
             Self::Comment(v) => v.token,
         }
@@ -753,6 +770,7 @@ impl Operator for Element {
                 Self::VariableVariants(..) => Ok(None),
                 Self::VariableType(..) => Ok(None),
                 Self::SimpleString(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::Call(v, _) => v.perform(owner, components, args, cx, sc, token).await,
                 Self::Comment(_) => Ok(None),
             };
             if let (true, Err(err)) = (self.get_metadata().tolerance, result.as_ref()) {
@@ -829,7 +847,7 @@ mod processing {
 mod proptest {
     use crate::{
         elements::{
-            Block, Boolean, Breaker, Combination, Command, Comment, Comparing, Component,
+            Block, Boolean, Breaker, Call, Combination, Command, Comment, Comparing, Component,
             Condition, Each, ElTarget, Element, First, Function, Gatekeeper, If, Integer, Join,
             Meta, Metadata, Optional, PatternString, Reference, SimpleString, Subsequence, Task,
             Values, VariableAssignation, VariableDeclaration, VariableName, VariableType,

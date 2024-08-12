@@ -51,11 +51,11 @@ pub fn execute(
         if args.len() != 3 {
             return Err(LinkedErr::new(E::InvalidFunctionArg(
                 if args.len() == 1 {
-                    "Missed paths to exclude from inspecting: @hash::inspect(string[], string[] <= missed argument, bool)"
+                    "Missed paths to exclude from inspecting: hash::inspect(string[], string[] <= missed argument, bool)"
                 } else if args.len() == 2 {
-                    "Missed flag to consider or not .gitignore: @hash::inspect(string[], string[], bool <= missed argument)"
+                    "Missed flag to consider or not .gitignore: hash::inspect(string[], string[], bool <= missed argument)"
                 } else {
-                    "No arguments for @hash::inspect(string[], string[], bool)"
+                    "No arguments for hash::inspect(string[], string[], bool)"
                 }.to_string(),
             ), Some(args_token)))?;
         }
@@ -161,21 +161,21 @@ mod test {
     ];
     const TEST: &str = r#"
 #(a: ./)
-    @hash::inspect((__paths__); (); true) -> (:test_a("a"));
-    test_a($a: a | b) [
-        @print("Task A test is done with {$a}");
+    hash::inspect((__paths__); (); true) -> (:test_a("a"));
+    @test_a($a: a | b) [
+        print("Task A test is done with {$a}");
         true;
     ];
 #(b: ./)
-    @hash::inspect((__paths__); (); true) -> (:test_b("a"); :test_b("b"));
-    test_b($a: a | b) [
-        @print("Task B test is done with {$a}");
+    hash::inspect((__paths__); (); true) -> (:test_b("a"); :test_b("b"));
+    @test_b($a: a | b) [
+        print("Task B test is done with {$a}");
         true;
     ];
 #(c: ./)
-    @hash::inspect((__paths__); (); true) -> ();
-    test_c($a: a | b) [
-        @print("Task C test is done with {$a}");
+    hash::inspect((__paths__); (); true) -> ();
+    @test_c($a: a | b) [
+        print("Task C test is done with {$a}");
         true;
     ];"#;
     const PATHS_HOOK: &str = "__paths__";

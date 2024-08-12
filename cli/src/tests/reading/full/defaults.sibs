@@ -1,9 +1,9 @@
 #(defaults)
-    build [
+    @build [
         /// Build application
         :app:build;
     ];
-    lint($target: rust | ts | all) [
+    @lint($target: rust | ts | all) [
         /// Linting task. Quality code checks.
         /// lint rust >> run clippy for all rust modules;
         /// lint ts >> run eslint for all TypeScript modules;

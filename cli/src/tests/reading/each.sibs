@@ -1,32 +1,32 @@
 each($file; $files) [
-    @sh(tgz ./release/{$file});
+    sh(tgz ./release/{$file});
 ];
 each($file; $files) [
     if $file != "." && $file != ".." [
-        @sh(tgz ./release/{$file});
+        sh(tgz ./release/{$file});
     ];
 ];
 each($file; $files) [
     if $file != "." && $file != ".." [
-        @sh(tgz ./release/{$file});
+        sh(tgz ./release/{$file});
     ];
 ];
-each($file; @ls(../output/files)) [
+each($file; ls(../output/files)) [
     if $file != "." && $file != ".." [
-        @sh(tgz ./release/{$file});
+        sh(tgz ./release/{$file});
     ];
 ];
-each($file; @ls(../output/files)) [
+each($file; ls(../output/files)) [
     if $file != "." && $file != ".." [
-        @sh(tgz ./release/{$file});
+        sh(tgz ./release/{$file});
     ];
 ];
-each($file; @ls(../output/files)) [
+each($file; ls(../output/files)) [
     if $file != "." && $file != ".." [
-        @sh(tgz ./release/{$file});
+        sh(tgz ./release/{$file});
     ];
 ];
-each($file; @ls(../output/files)) [
+each($file; ls(../output/files)) [
     if $file != "." && $file != ".." [
         `tgz ./release/{$file}`;
     ];

@@ -1,4 +1,4 @@
-test [
+@test [
     $elements = ("one"; "two"; "three");
     each($el; $elements) [
         $a = "{$el}";

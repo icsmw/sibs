@@ -1,16 +1,16 @@
 #(a)
-    test [
+    @test [
         "a:a";
     ];
 #(b)
-    test [
+    @test [
         "b:b";
     ];
 #(c)
-    test [
+    @test [
         ("c:a");
     ];
 #(d)
-    test [
+    @test [
         ("d:b"; "d:c");
     ];

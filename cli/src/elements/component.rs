@@ -340,7 +340,7 @@ mod reading {
         let samples = include_str!("../tests/error/component.sibs");
         let samples = samples
             .split('\n')
-            .map(|v| format!("{v} [\n@env::is_os;\n];"))
+            .map(|v| format!("{v} [\nenv::is_os();\n];"))
             .collect::<Vec<String>>();
         let mut count = 0;
         for sample in samples.iter() {

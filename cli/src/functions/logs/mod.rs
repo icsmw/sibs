@@ -35,11 +35,11 @@ mod test {
     use uuid::Uuid;
 
     const TESTS: &[&str] = &[
-        r#"@logs::err("Hello World!");"#,
-        r#"@logs::warn("Hello World!");"#,
-        r#"@logs::debug("Hello World!");"#,
-        r#"@logs::verb("Hello World!");"#,
-        r#"@logs::info("Hello World!");"#,
+        r#"logs::err("Hello World!");"#,
+        r#"logs::warn("Hello World!");"#,
+        r#"logs::debug("Hello World!");"#,
+        r#"logs::verb("Hello World!");"#,
+        r#"logs::info("Hello World!");"#,
     ];
 
     const LOGS: &[&str] = &[

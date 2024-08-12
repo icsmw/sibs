@@ -1,41 +1,41 @@
-build($mode: dev | prod) [
+@build($mode: dev | prod) [
     // 1Building electron application
     // 2Building electron application
-    @env::is_os(window) => $file_name = "release{$version}-win.zip";
+    env::is_os(window) => $file_name = "release{$version}-win.zip";
     // Building electron application
     // Building electron application
-    @env::is_os(linux) => $file_name = "release{$version}-linux.zip";
+    env::is_os(linux) => $file_name = "release{$version}-linux.zip";
     // Building electron application
     // Building electron application
-    @env::is_os(darwin) => $file_name = "release{$version}-darwin.zip";
+    env::is_os(darwin) => $file_name = "release{$version}-darwin.zip";
     // Building electron application
     // Building electron application
-    @env::is_os(linux) => `tgz ./release/unpacked-linux {$file_name}`;
+    env::is_os(linux) => `tgz ./release/unpacked-linux {$file_name}`;
     // Building electron application
     // Building electron application
-    @env::is_os(window) => "release{$version}-win.zip";
+    env::is_os(window) => "release{$version}-win.zip";
     // Building electron application
     // Building electron application
-    @env::is_os(window) => [
-        @cd(something);
+    env::is_os(window) => [
+        cd(something);
         `zip ./release/unpacked-win {$file_name}`;
-        @cd(..);
+        cd(..);
     ];
     // Building electron application
     // Building electron application
     if $variable == "one" || $variable == "two" [
-        @cd(./linux);
+        cd(./linux);
     ] else [
-        @cd(./linux);
+        cd(./linux);
     ];
     // Building electron application
     // Building electron application
     if $variable == "one" [
-        @cd(./linux);
+        cd(./linux);
     ];
     // Building electron application
     // Building electron application
     if $variable == "one" || $variable == "two" [
-        @cd(./linux);
+        cd(./linux);
     ];
 ];

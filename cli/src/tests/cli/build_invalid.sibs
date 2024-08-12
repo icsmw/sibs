@@ -3,17 +3,17 @@
     try [
         /// Will try to execute terminal command
         ls -lsa;
-        @env::is_os windows;
-        @env::is_os linux;
-        @env::is_os darwin;
+        env::is_os windows();
+        env::is_os linux();
+        env::is_os darwin();
         $a_str = "value_a";
-        $b_str = "value_b_{@env::is_os linux}";
+        $b_str = "value_b_{env::is_os linux()}";
         $c_str = "value_c_{$a_str}-{$b_str}";
-        $d_bool = @env::is_os linux;
-        if @env::is_os linux [
+        $d_bool = env::is_os linux();
+        if env::is_os linux() [
             :self:build(smth, prod);
         ];
-        if @env::os == "linux" [ @env::is_os; ];
+        if env::os() == "linux" [ env::is_os(); ];
     ];
     build($input_a: {string}; $mode: dev | prod;) [
         $a_str = "value_a";

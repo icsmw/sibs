@@ -1,26 +1,26 @@
 /// Testing join 
 #(join: ../../../../target/debug)
-    emitter [
+    @emitter [
         join (
             `./exit 0 100 1000 10`;
             `./exit 0 200 1000 10`;
             `./exit 0 300 1000 10`;
             `./exit 0 1000 1000 10`;
         );
-        @sig::emit("a");
+        sig::emit("a");
         "true";
     ];
-    waiter_a [
-        @sig::wait("a");
-        @globals::set_var("a";"ok a");
+    @waiter_a [
+        sig::wait("a");
+        globals::set_var("a";"ok a");
         "true";
     ];
-    waiter_b [
-        @sig::wait("a");
-        @globals::set_var("b";"ok b");
+    @waiter_b [
+        sig::wait("a");
+        globals::set_var("b";"ok b");
         "true";
     ];
-    run [
+    @run [
         join (
             :self:emitter;
             :self:waiter_a;

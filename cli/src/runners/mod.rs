@@ -26,7 +26,7 @@ macro_rules! read_string {
         let journal = Journal::unwrapped(Configuration::logs(false));
         let cfg = $cfg as &dyn Any;
         let Some(cfg) = cfg.downcast_ref::<Configuration>().cloned() else {
-            return exit(journal, "Expecting &Configuration as the first argument").await;
+            return exit(journal, "Expecting & Configuration as the first argument").await;
         };
         let content = $content as &dyn Any;
         let content = if let Some(content) = content.downcast_ref::<&str>().cloned() {

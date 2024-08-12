@@ -1,21 +1,21 @@
-test [
-    $a = @env::os;
-    @env::is_os($a);
+@test [
+    $a = env::os();
+    env::is_os($a);
 ];
-test [
-    $a = @env::os;
-    $b = @env::is_os($a) >> @str::repeat(3);
+@test [
+    $a = env::os();
+    $b = env::is_os($a) >> str::repeat(3);
     if $b == "truetruetrue" [
         "true";
     ];
 ];
-test [
-    if @test::return_bool(true) [
+@test [
+    if test::return_bool(true) [
         "true";
     ];
 ];
-test [
-    if !@test::return_bool(false) [
+@test [
+    if !test::return_bool(false) [
         "true";
     ];
 ];

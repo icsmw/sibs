@@ -134,6 +134,14 @@ impl<'a> MoveTo<'a> {
             false
         }
     }
+    pub fn prev(&mut self) -> bool {
+        if self.bound.pos > 0 {
+            self.bound.pos -= 1;
+            true
+        } else {
+            false
+        }
+    }
     #[cfg(test)]
     pub fn if_next(&mut self, target: &str) -> bool {
         let next = self.bound.pos + target.len();

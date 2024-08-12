@@ -1,7 +1,7 @@
 first [
-    @env::is_os(window) => "release{$version}-win.zip";
-    @env::is_os(linux) => "release{$version}-linux.zip";
-    @env::is_os(darwin) => "release{$version}-darwin.zip";
-    @exit(1; "Unsupported OS: {@env::is_os}");
+    env::is_os(window) => "release{$version}-win.zip";
+    env::is_os(linux) => "release{$version}-linux.zip";
+    env::is_os(darwin) => "release{$version}-darwin.zip";
+    exit(1; "Unsupported OS: {env::is_os()}");
 ];
-first [@env::is_os(window) => "release{$version}-win.zip";@env::is_os(linux) => "release{$version}-linux.zip";@env::is_os(darwin) => "release{$version}-darwin.zip";@exit(1; "Unsupported OS: {@env::is_os}");];
+first [env::is_os(window) => "release{$version}-win.zip";env::is_os(linux) => "release{$version}-linux.zip";env::is_os(darwin) => "release{$version}-darwin.zip";exit(1; "Unsupported OS: {env::is_os()}");];

@@ -1,4 +1,4 @@
-test [
+@test [
     $a = "one";
     if $a == "one" [
         "true";
@@ -6,7 +6,7 @@ test [
         "false";
     ];
 ];
-test [
+@test [
     $a = "not one";
     if $a != "one" [
         "true";
@@ -14,7 +14,7 @@ test [
         "false";
     ];
 ];
-test [
+@test [
     $a = "one";
     if $a != "one" [
         "false";
@@ -22,7 +22,7 @@ test [
         "true";
     ];
 ];
-test [
+@test [
     $a = "one";
     $b = "two";
     if $a == "one" || $b == "two" [
@@ -31,7 +31,7 @@ test [
         "false";
     ];
 ];
-test [
+@test [
     $a = "one";
     $b = "two";
     if $a == "one" && $b == "two" [
@@ -40,7 +40,7 @@ test [
         "false";
     ];
 ];
-test [
+@test [
     $a = "one";
     $b = "two";
     if $a != "one" && $b != "two" [
@@ -49,7 +49,7 @@ test [
         "true";
     ];
 ];
-test [
+@test [
     $a = "one";
     if $a == "__" [
         "false";
@@ -59,7 +59,7 @@ test [
         "false";
     ];
 ];
-test [
+@test [
     $a = "one";
     if $a == "__" [
         "false";
@@ -69,7 +69,7 @@ test [
         "true";
     ];
 ];
-test [
+@test [
     $a = "one";
     $b = "two";
     $c = "three";
@@ -79,7 +79,7 @@ test [
         "false";
     ];
 ];
-test [
+@test [
     $a = "one";
     $b = "two";
     $c = "three";
@@ -89,39 +89,39 @@ test [
         "false";
     ];
 ];
-test [
-    $a = @env::os;
-    if @env::is_os($a) == "true" [
+@test [
+    $a = env::os();
+    if env::is_os($a) == "true" [
         "true";
     ] else [
         "false";
     ];
 ];
-test [
-    $a = @env::os;
-    if "true" == @env::is_os($a) [
+@test [
+    $a = env::os();
+    if "true" == env::is_os($a) [
         "true";
     ] else [
         "false";
     ];
 ];
-test [
-    $a = @env::os;
-    if "true" == @env::is_os($a) && @env::is_os($a) == "true"[
+@test [
+    $a = env::os();
+    if "true" == env::is_os($a) && env::is_os($a) == "true"[
         "true";
     ] else [
         "false";
     ];
 ];
-test [
-    $a = @env::os;
-    if "true" == @env::is_os($a) || @env::is_os($a) == "true"[
+@test [
+    $a = env::os();
+    if "true" == env::is_os($a) || env::is_os($a) == "true"[
         "true";
     ] else [
         "false";
     ];
 ];
-test [
+@test [
     $a = "one";
     if $a == "one" [
         true;
@@ -129,7 +129,7 @@ test [
         false;
     ];
 ];
-test [
+@test [
     $a = "not one";
     if $a != "one" [
         true;
@@ -137,7 +137,7 @@ test [
         false;
     ];
 ];
-test [
+@test [
     $a = "one";
     if $a != "one" [
         false;
@@ -145,7 +145,7 @@ test [
         true;
     ];
 ];
-test [
+@test [
     $a = "one";
     $b = "two";
     if $a == "one" || $b == "two" [
@@ -154,7 +154,7 @@ test [
         false;
     ];
 ];
-test [
+@test [
     $a = "one";
     $b = "two";
     if $a == "one" && $b == "two" [
@@ -163,7 +163,7 @@ test [
         false;
     ];
 ];
-test [
+@test [
     $a = "one";
     $b = "two";
     if $a != "one" && $b != "two" [
@@ -172,7 +172,7 @@ test [
         true;
     ];
 ];
-test [
+@test [
     $a = "one";
     if $a == "__" [
         false;
@@ -182,7 +182,7 @@ test [
         false;
     ];
 ];
-test [
+@test [
     $a = "one";
     if $a == "__" [
         false;
@@ -192,7 +192,7 @@ test [
         true;
     ];
 ];
-test [
+@test [
     $a = "one";
     $b = "two";
     $c = "three";
@@ -202,7 +202,7 @@ test [
         false;
     ];
 ];
-test [
+@test [
     $a = "one";
     $b = "two";
     $c = "three";
@@ -212,39 +212,39 @@ test [
         false;
     ];
 ];
-test [
-    $a = @env::os;
-    if @env::is_os($a) == true [
+@test [
+    $a = env::os();
+    if env::is_os($a) == true [
         true;
     ] else [
         false;
     ];
 ];
-test [
-    $a = @env::os;
-    if true == @env::is_os($a) [
+@test [
+    $a = env::os();
+    if true == env::is_os($a) [
         true;
     ] else [
         false;
     ];
 ];
-test [
-    $a = @env::os;
-    if true == @env::is_os($a) && @env::is_os($a) == true[
+@test [
+    $a = env::os();
+    if true == env::is_os($a) && env::is_os($a) == true[
         true;
     ] else [
         false;
     ];
 ];
-test [
-    $a = @env::os;
-    if true == @env::is_os($a) || @env::is_os($a) == true[
+@test [
+    $a = env::os();
+    if true == env::is_os($a) || env::is_os($a) == true[
         true;
     ] else [
         false;
     ];
 ];
-test [
+@test [
     $a = 1;
     if $a == 1 [
         true;
@@ -252,7 +252,7 @@ test [
         false;
     ];
 ];
-test [
+@test [
     $a = "not one";
     if $a != 1 [
         true;
@@ -260,7 +260,7 @@ test [
         false;
     ];
 ];
-test [
+@test [
     $a = 1;
     if $a != 1 [
         false;
@@ -268,7 +268,7 @@ test [
         true;
     ];
 ];
-test [
+@test [
     $a = 1;
     $b = 2;
     if $a == 1 || $b == 2 [
@@ -277,7 +277,7 @@ test [
         false;
     ];
 ];
-test [
+@test [
     $a = 1;
     $b = 2;
     if $a == 1 && $b == 2 [
@@ -286,7 +286,7 @@ test [
         false;
     ];
 ];
-test [
+@test [
     $a = 1;
     $b = 2;
     if $a != 1 && $b != 2 [
@@ -295,7 +295,7 @@ test [
         true;
     ];
 ];
-test [
+@test [
     $a = 1;
     if $a == "__" [
         false;
@@ -305,7 +305,7 @@ test [
         false;
     ];
 ];
-test [
+@test [
     $a = 1;
     if $a == "__" [
         false;
@@ -315,7 +315,7 @@ test [
         true;
     ];
 ];
-test [
+@test [
     $a = 1;
     $b = 2;
     $c = 3;
@@ -325,7 +325,7 @@ test [
         false;
     ];
 ];
-test [
+@test [
     $a = 1;
     $b = 2;
     $c = 3;
@@ -335,71 +335,71 @@ test [
         false;
     ];
 ];
-test [
-    $a = @env::os;
-    if @env::is_os($a) == true [
+@test [
+    $a = env::os();
+    if env::is_os($a) == true [
         true;
     ] else [
         false;
     ];
 ];
-test [
-    $a = @env::os;
-    if true == @env::is_os($a) [
+@test [
+    $a = env::os();
+    if true == env::is_os($a) [
         true;
     ] else [
         false;
     ];
 ];
-test [
-    $a = @env::os;
-    if true == @env::is_os($a) && @env::is_os($a) == true[
+@test [
+    $a = env::os();
+    if true == env::is_os($a) && env::is_os($a) == true[
         true;
     ] else [
         false;
     ];
 ];
-test [
-    $a = @env::os;
-    if true == @env::is_os($a) || @env::is_os($a) == true[
+@test [
+    $a = env::os();
+    if true == env::is_os($a) || env::is_os($a) == true[
         true;
     ] else [
         false;
     ];
 ];
-test [
-    $a = @env::os;
-    if @env::is_os($a) == true [
+@test [
+    $a = env::os();
+    if env::is_os($a) == true [
         true;
     ] else [
         false;
     ];
 ];
-test [
-    $a = @env::os;
-    if @env::is_os($a) [
+@test [
+    $a = env::os();
+    if env::is_os($a) [
         true;
     ] else [
         false;
     ];
 ];
-test [
-    $a = @env::os;
-    if @env::is_os($a) && @env::is_os($a) [
+@test [
+    $a = env::os();
+    if env::is_os($a) && env::is_os($a) [
         true;
     ] else [
         false;
     ];
 ];
-test [
-    $a = @env::os;
-    if @env::is_os($a) || @env::is_os($a) [
+@test [
+    $a = env::os();
+    if env::is_os($a) || env::is_os($a) [
         true;
     ] else [
         false;
     ];
 ];
-test [
+@test [
     $a = 1;
     $b = 2;
     $d = "hello";
@@ -409,85 +409,85 @@ test [
         false;
     ];
 ];
-test [
+@test [
     $a = 10; $b = 20; $c = 30;
     if $a < $b && $c > $b [ true; ] else [ false; ];
 ];
-test [
+@test [
     $x = "apple"; $y = "banana";
     if $x == "apple" || $y == "orange" [ true; ] else [ false; ];
 ];
-test [
+@test [
     $i = true; $j = false;
     if $i == true && $j == false [ true; ] else [ false; ];
 ];
-test [
+@test [
     $m = 5; $n = 5; $o = 10;
     if ($m == $n) && ($o > $m) [ true; ] else [ false; ];
 ];
-test [
+@test [
     $u = "sun"; $v = "moon"; $w = "stars";
     if $u != $v && $v != $w [ true; ] else [ false; ];
 ];
-test [
+@test [
     $a = 5; $b = 10; $c = 15;
     if ($a < $b && $b < $c) || ($c > 10 && $a < 10) [ true; ] else [ false; ];
 ];
-test [
+@test [
     $x = "red"; $y = "blue"; $z = "green";
     if ($x == "red" && $y == "blue") && ($z == "green" || $x == "yellow") [ true; ] else [ false; ];
 ];
-test [
+@test [
     $u = "circle"; $v = "square"; $w = "triangle";
     if ($u == "circle" || $v == "rectangle") && ($w == "triangle" && $v == "square") [ true; ] else [ false; ];
 ];
-test [
+@test [
     $m = 100; $n = 200; $o = 300;
     if ($m < $n && $n < $o) || ($o >= 300 && $m <= 100) [ true; ] else [ false; ];
 ];
-test [$a = 10; $b = 20; if ($a < $b) && ($b > 15) [true;] else [false;];];
-test [$c = "cat"; $d = "dog"; if ($c == "cat") || ($d == "dog") [true;] else [false;];];
-test [$e = true; $f = false; if ($e == true) && ($f == false) [true;] else [false;];];
-test [$g = 5; $h = 5; if ($g == 5) && ($h == 5) [true;] else [false;];];
-test [$i = "ice"; $j = "fire"; if ($i == "ice") || ($j == "fire") [true;] else [false;];];
-test [$k = 1; $l = 2; if ($k == 1) && ($l == 2) [true;] else [false;];];
-test [$m = "moon"; $n = "sun"; if ($m == "moon") || ($n == "sun") [true;] else [false;];];
-test [$o = true; $p = true; if ($o == true) && ($p == true) [true;] else [false;];];
-test [$q = 15; $r = 10; if ($q > 10) && ($r < 15) [true;] else [false;];];
-test [$s = "star"; $t = "planet"; if ($s == "star") || ($t == "planet") [true;] else [false;];];
-test [$u = 3; $v = 3; if ($u == 3) && ($v == 3) [true;] else [false;];];
-test [$w = "water"; $x = "earth"; if ($w == "water") || ($x == "earth") [true;] else [false;];];
-test [$y = true; $z = false; if ($y == true) && ($z == false) [true;] else [false;];];
-test [$aa = 25; $ab = 30; if ($aa < 30) && ($ab > 25) [true;] else [false;];];
-test [$ac = "apple"; $ad = "orange"; if ($ac == "apple") || ($ad == "orange") [true;] else [false;];];
-test [$ae = true; $af = true; if ($ae == true) && ($af == true) [true;] else [false;];];
-test [$ag = 50; $ah = 60; if ($ag < 55) && ($ah > 55) [true;] else [false;];];
-test [$ai = "ink"; $aj = "pen"; if ($ai == "ink") || ($aj == "pen") [true;] else [false;];];
-test [$ak = true; $al = false; if ($ak == true) && ($al == false) [true;] else [false;];];
-test [$am = 100; $an = 200; if ($am < 150) && ($an > 150) [true;] else [false;];];
-test [$ao = "oak"; $ap = "pine"; if ($ao == "oak") || ($ap == "pine") [true;] else [false;];];
-test [$aq = true; $ar = true; if ($aq == true) && ($ar == true) [true;] else [false;];];
-test [$as = 250; $at = 260; if ($as < 255) && ($at > 255) [true;] else [false;];];
-test [$au = "umbrella"; $av = "rain"; if ($au == "umbrella") || ($av == "rain") [true;] else [false;];];
-test [$aw = true; $ax = false; if ($aw == true) && ($ax == false) [true;] else [false;];];
-test [$ay = 300; $az = 400; if ($ay < 350) && ($az > 350) [true;] else [false;];];
-test [$ba = "bat"; $bb = "ball"; if ($ba == "bat") || ($bb == "ball") [true;] else [false;];];
-test [ $a = "apple"; $b = "banana"; if ($a == "apple" && $b == "banana") [ true; ] else [ false; ]; ];
-test [ $x = 5; $y = 10; if ($x < $y || $y == 10) [ true; ] else [ false; ]; ];
-test [ $color = "red"; $speed = 100; if ($color == "red" && ($speed > 90 || $speed < 110)) [ true; ] else [ false; ]; ];
-test [ $day = "Monday"; $temp = 20; if ($day == "Monday" && $temp == 20) [ true; ] else [ false; ]; ];
-test [ $status = "active"; $level = 2; if ($status == "active" || ($level >= 1 && $level <= 3)) [ true; ] else [ false; ]; ];
-test [ $user = "admin"; $access = "full"; if ($user == "admin" && $access == "full") [ true; ] else [ false; ]; ];
-test [ $light = "on"; $door = "open"; if ($light == "on" && $door == "open") [ true; ] else [ false; ]; ];
-test [ $item = "book"; $qty = 1; if ($item == "book" || $qty == 2) [ true; ] else [ false; ]; ];
-test [ $mode = "auto"; $power = "on"; if ($mode == "auto" && ($power == "on" || $power == "off")) [ true; ] else [ false; ]; ];
-test [ $age = 30; $city = "NYC"; if ($age > 25 && $city == "NYC") [ true; ] else [ false; ]; ];
-test [
+@test [$a = 10; $b = 20; if ($a < $b) && ($b > 15) [true;] else [false;];];
+@test [$c = "cat"; $d = "dog"; if ($c == "cat") || ($d == "dog") [true;] else [false;];];
+@test [$e = true; $f = false; if ($e == true) && ($f == false) [true;] else [false;];];
+@test [$g = 5; $h = 5; if ($g == 5) && ($h == 5) [true;] else [false;];];
+@test [$i = "ice"; $j = "fire"; if ($i == "ice") || ($j == "fire") [true;] else [false;];];
+@test [$k = 1; $l = 2; if ($k == 1) && ($l == 2) [true;] else [false;];];
+@test [$m = "moon"; $n = "sun"; if ($m == "moon") || ($n == "sun") [true;] else [false;];];
+@test [$o = true; $p = true; if ($o == true) && ($p == true) [true;] else [false;];];
+@test [$q = 15; $r = 10; if ($q > 10) && ($r < 15) [true;] else [false;];];
+@test [$s = "star"; $t = "planet"; if ($s == "star") || ($t == "planet") [true;] else [false;];];
+@test [$u = 3; $v = 3; if ($u == 3) && ($v == 3) [true;] else [false;];];
+@test [$w = "water"; $x = "earth"; if ($w == "water") || ($x == "earth") [true;] else [false;];];
+@test [$y = true; $z = false; if ($y == true) && ($z == false) [true;] else [false;];];
+@test [$aa = 25; $ab = 30; if ($aa < 30) && ($ab > 25) [true;] else [false;];];
+@test [$ac = "apple"; $ad = "orange"; if ($ac == "apple") || ($ad == "orange") [true;] else [false;];];
+@test [$ae = true; $af = true; if ($ae == true) && ($af == true) [true;] else [false;];];
+@test [$ag = 50; $ah = 60; if ($ag < 55) && ($ah > 55) [true;] else [false;];];
+@test [$ai = "ink"; $aj = "pen"; if ($ai == "ink") || ($aj == "pen") [true;] else [false;];];
+@test [$ak = true; $al = false; if ($ak == true) && ($al == false) [true;] else [false;];];
+@test [$am = 100; $an = 200; if ($am < 150) && ($an > 150) [true;] else [false;];];
+@test [$ao = "oak"; $ap = "pine"; if ($ao == "oak") || ($ap == "pine") [true;] else [false;];];
+@test [$aq = true; $ar = true; if ($aq == true) && ($ar == true) [true;] else [false;];];
+@test [$as = 250; $at = 260; if ($as < 255) && ($at > 255) [true;] else [false;];];
+@test [$au = "umbrella"; $av = "rain"; if ($au == "umbrella") || ($av == "rain") [true;] else [false;];];
+@test [$aw = true; $ax = false; if ($aw == true) && ($ax == false) [true;] else [false;];];
+@test [$ay = 300; $az = 400; if ($ay < 350) && ($az > 350) [true;] else [false;];];
+@test [$ba = "bat"; $bb = "ball"; if ($ba == "bat") || ($bb == "ball") [true;] else [false;];];
+@test [ $a = "apple"; $b = "banana"; if ($a == "apple" && $b == "banana") [ true; ] else [ false; ]; ];
+@test [ $x = 5; $y = 10; if ($x < $y || $y == 10) [ true; ] else [ false; ]; ];
+@test [ $color = "red"; $speed = 100; if ($color == "red" && ($speed > 90 || $speed < 110)) [ true; ] else [ false; ]; ];
+@test [ $day = "Monday"; $temp = 20; if ($day == "Monday" && $temp == 20) [ true; ] else [ false; ]; ];
+@test [ $status = "active"; $level = 2; if ($status == "active" || ($level >= 1 && $level <= 3)) [ true; ] else [ false; ]; ];
+@test [ $user = "admin"; $access = "full"; if ($user == "admin" && $access == "full") [ true; ] else [ false; ]; ];
+@test [ $light = "on"; $door = "open"; if ($light == "on" && $door == "open") [ true; ] else [ false; ]; ];
+@test [ $item = "book"; $qty = 1; if ($item == "book" || $qty == 2) [ true; ] else [ false; ]; ];
+@test [ $mode = "auto"; $power = "on"; if ($mode == "auto" && ($power == "on" || $power == "off")) [ true; ] else [ false; ]; ];
+@test [ $age = 30; $city = "NYC"; if ($age > 25 && $city == "NYC") [ true; ] else [ false; ]; ];
+@test [
     $m = 100; $n = 200; $o = 300; $z = 1; $y = 4;
     if ($m < $n && $n < $o || ($o >= 300 && $m <= 100 && ($z == 1 || $y == 4)))  [ true; ] else [ false; ];
 ];
-test [ $a = 5; $b = "hello"; $c = true; if ($a == 5 && ($b == "hello" || $c)) [ true; ] else [ false; ]; ];
-test [ $x = 10; $y = "world"; $z = false; if ($x > 5 || ($y != "world" && $z)) [ true; ] else [ false; ]; ];
-test [ $i = 15; $j = "test"; $k = true; if ($i <= 15 && ($j == "test" || $k)) [ true; ] else [ false; ]; ];
-test [ $i = 15; $j = "test"; $k = true; if ($i <= 15 && ($k || $j == "test")) [ true; ] else [ false; ]; ];
-test [ $i = true; $j = "test"; $k = true; if ($i && ($k || $j == "test")) [ true; ] else [ false; ]; ];
+@test [ $a = 5; $b = "hello"; $c = true; if ($a == 5 && ($b == "hello" || $c)) [ true; ] else [ false; ]; ];
+@test [ $x = 10; $y = "world"; $z = false; if ($x > 5 || ($y != "world" && $z)) [ true; ] else [ false; ]; ];
+@test [ $i = 15; $j = "test"; $k = true; if ($i <= 15 && ($j == "test" || $k)) [ true; ] else [ false; ]; ];
+@test [ $i = 15; $j = "test"; $k = true; if ($i <= 15 && ($k || $j == "test")) [ true; ] else [ false; ]; ];
+@test [ $i = true; $j = "test"; $k = true; if ($i && ($k || $j == "test")) [ true; ] else [ false; ]; ];

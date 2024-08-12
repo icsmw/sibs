@@ -361,7 +361,7 @@ mod proptest {
 
     fn reading(gatekeeper: Gatekeeper) {
         get_rt().block_on(async {
-            let origin = format!("#(test: ./){gatekeeper};\ntest [\n@print(\"hello world\");\n];");
+            let origin = format!("#(test: ./){gatekeeper};\n@test [\nprint(\"hello world\");\n];");
             read_string!(
                 &Configuration::logs(false),
                 &origin,

@@ -19,6 +19,8 @@ pub enum E {
     UnknownVariableType(String),
     #[error("Not closed variable type declaration")]
     NotClosedTypeDeclaration,
+    #[error("Not closed function arguments (..)")]
+    NotClosedFunctionArgs,
     #[error("No variable type declaration")]
     NoTypeDeclaration,
     #[error("Fail to find String ending")]
@@ -39,13 +41,11 @@ pub enum E {
     IntegerParsingError(String),
     #[error("No content before semicolon")]
     NoContentBeforeSemicolon,
-    #[error("No function arguments")]
-    NoFunctionArguments,
     #[error("Using reserved chars")]
     UsingReservedChars,
     #[error("Missed semicolon")]
     MissedSemicolon,
-    #[error("Only @import function can be used in the root scope")]
+    #[error("Only import function can be used in the root scope")]
     OnlyImportFunctionAllowedOnRoot,
     #[error("\"{0}\" cannot parse task arguments")]
     InvalidTaskArguments(String),
@@ -73,7 +73,7 @@ pub enum E {
     FailToReadConditions,
     #[error("This type of argument cannot be used in references")]
     InvalidArgumentForReference,
-    #[error("Function @import has invalid arguments")]
+    #[error("Function import has invalid arguments")]
     ImportFunctionInvalidArgs,
     #[error("Fail to recognize code: \"{0}\"")]
     UnrecognizedCode(String),

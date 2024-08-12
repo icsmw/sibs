@@ -21,3 +21,32 @@ pub const TRUE: &str = "true";
 pub const FALSE: &str = "false";
 pub const REDIRECT: &str = ">>";
 pub const GLOBAL_VAR: &str = "global";
+
+pub fn is_reserved<S: AsRef<str>>(s: S) -> bool {
+    [
+        IF,
+        OR,
+        AND,
+        ELSE,
+        FIRST,
+        BREAK,
+        JOIN,
+        EACH,
+        CMP_TRUE,
+        CMP_FALSE,
+        CMP_RBIG,
+        CMP_LBIG,
+        CMP_RBIG_INC,
+        CMP_LBIG_INC,
+        DO_ON,
+        REF_TO,
+        META,
+        COMMENT,
+        COMP,
+        TRUE,
+        FALSE,
+        REDIRECT,
+        GLOBAL_VAR,
+    ]
+    .contains(&s.as_ref())
+}
