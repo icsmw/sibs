@@ -340,7 +340,7 @@ mod reading {
         let samples = include_str!("../tests/error/component.sibs");
         let samples = samples
             .split('\n')
-            .map(|v| format!("{v} [\nenv::is_os();\n];"))
+            .map(|v| format!("{v} {{\nenv::is_os();\n}};"))
             .collect::<Vec<String>>();
         let mut count = 0;
         for sample in samples.iter() {
@@ -348,7 +348,9 @@ mod reading {
                 &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, _: &mut Sources| {
-                    assert!(Component::read(reader).is_err());
+                    let res = Component::read(reader);
+                    println!("{res:?}");
+                    assert!(res.is_err());
                     Ok::<usize, LinkedErr<E>>(1)
                 }
             );

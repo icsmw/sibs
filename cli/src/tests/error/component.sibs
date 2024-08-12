@@ -1,15 +1,15 @@
 #[app ./app]
-#[client,: ./client/with spaces in name]
-#[shared=: ./shared/one/to]
-#[defaults;]
-#[wrong^name]
-#[wrong$name]
-#[wrong&name]
-#[wrong*name]
-#[wrong@name]
-#[wrong(name]
-#[wrong)name]
-#[wrong{name]
-#[wrong}name]
-#[wrong/name]
-#[wrong#name]
+#(client,: ./client/with spaces in name)
+#(shared=: ./shared/one/to)
+#(defaults;)
+#(wrong^name)
+#(wrong$name)
+#(wrong&name)
+#(wrong*name)
+#(wrong@name)
+#(wrong(name)
+#(wrong\)name)
+#(wrong{name)
+#(wrong}name)
+#(wrong/name)
+#(wrong#name)
