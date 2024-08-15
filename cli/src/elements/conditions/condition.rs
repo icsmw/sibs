@@ -3,7 +3,10 @@ use tokio_util::sync::CancellationToken;
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
+    inf::{
+        AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult, Scope,
+        TokenGetter, TryExecute,
+    },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
@@ -65,11 +68,14 @@ impl Formation for Condition {
     }
 }
 
-impl Operator for Condition {
+impl TokenGetter for Condition {
     fn token(&self) -> usize {
         self.token
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for Condition {
+    fn try_execute<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -77,7 +83,7 @@ impl Operator for Condition {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move {
             Ok(Some(AnyValue::new(
                 *self
@@ -91,6 +97,8 @@ impl Operator for Condition {
         })
     }
 }
+
+impl Execute for Condition {}
 
 #[cfg(test)]
 mod proptest {

@@ -3,7 +3,10 @@ use tokio_util::sync::CancellationToken;
 use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
-    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
+    inf::{
+        operator, Context, Execute, Formation, FormationCursor, ExecutePinnedResult, Scope,
+        TokenGetter, TryExecute,
+    },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
@@ -46,11 +49,14 @@ impl VariableName {
     }
 }
 
-impl Operator for VariableName {
+impl TokenGetter for VariableName {
     fn token(&self) -> usize {
         self.token
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for VariableName {
+    fn try_execute<'a>(
         &'a self,
         _: Option<&'a Component>,
         _: &'a [Component],
@@ -58,7 +64,7 @@ impl Operator for VariableName {
         _: Context,
         sc: Scope,
         _token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move {
             Ok(Some(
                 sc.get_var(&self.name)
@@ -69,6 +75,8 @@ impl Operator for VariableName {
         })
     }
 }
+
+impl Execute for VariableName {}
 
 impl fmt::Display for VariableName {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

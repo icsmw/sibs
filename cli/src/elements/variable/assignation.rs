@@ -4,8 +4,8 @@ use crate::{
     elements::{Component, ElTarget, Element, VariableName},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
-        Scope,
+        operator, AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult,
+        Scope, TokenGetter, TryExecute,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -96,11 +96,14 @@ impl Formation for VariableAssignation {
     }
 }
 
-impl Operator for VariableAssignation {
+impl TokenGetter for VariableAssignation {
     fn token(&self) -> usize {
         self.token
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for VariableAssignation {
+    fn try_execute<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -108,7 +111,7 @@ impl Operator for VariableAssignation {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move {
             let assignation = &self.assignation;
             let value = assignation
@@ -125,12 +128,14 @@ impl Operator for VariableAssignation {
     }
 }
 
+impl Execute for VariableAssignation {}
+
 #[cfg(test)]
 mod reading {
     use crate::{
         elements::VariableAssignation,
         error::LinkedErr,
-        inf::{operator::Operator, tests::*, Configuration},
+        inf::{operator::TokenGetter, tests::*, Configuration},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -223,7 +228,7 @@ mod processing {
         elements::Task,
         error::LinkedErr,
         inf::{
-            operator::{Operator, E},
+            operator::{Execute, E},
             Configuration, Context, Journal, Scope,
         },
         process_string,

@@ -4,8 +4,8 @@ use crate::{
     elements::{ElTarget, Element, Gatekeeper, SimpleString, Task},
     error::LinkedErr,
     inf::{
-        operator, scenario, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
-        Scope,
+        operator, scenario, Context, Execute, Formation, FormationCursor, ExecutePinnedResult,
+        Scope, TokenGetter, TryExecute,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -175,11 +175,14 @@ impl Formation for Component {
     }
 }
 
-impl Operator for Component {
+impl TokenGetter for Component {
     fn token(&self) -> usize {
         self.token
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for Component {
+    fn try_execute<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -187,7 +190,7 @@ impl Operator for Component {
         cx: Context,
         _sc: Scope,
         token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move {
             let task = args.first().ok_or_else(|| {
                 operator::E::NoTaskForComponent(self.name.to_string(), self.get_tasks_names())
@@ -244,12 +247,14 @@ impl Operator for Component {
     }
 }
 
+impl Execute for Component {}
+
 #[cfg(test)]
 mod reading {
     use crate::{
         elements::{Component, ElTarget, Element},
         error::LinkedErr,
-        inf::{operator::Operator, tests::*, Configuration},
+        inf::{operator::TokenGetter, tests::*, Configuration},
         read_string,
         reader::{Dissect, Reader, Sources, E},
     };
@@ -366,7 +371,7 @@ mod processing {
         elements::Component,
         error::LinkedErr,
         inf::{
-            operator::{Operator, E},
+            operator::{Execute, E},
             Configuration, Context, Journal, Scope,
         },
         process_string,

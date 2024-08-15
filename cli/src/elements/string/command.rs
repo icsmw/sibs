@@ -4,8 +4,8 @@ use crate::{
     elements::{string, Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, spawner, AnyValue, Context, Formation, FormationCursor, Operator,
-        OperatorPinnedResult, Scope,
+        operator, spawner, AnyValue, Context, Execute, Formation, FormationCursor,
+        ExecutePinnedResult, Scope, TokenGetter, TryExecute,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -84,11 +84,14 @@ impl Formation for Command {
     }
 }
 
-impl Operator for Command {
+impl TokenGetter for Command {
     fn token(&self) -> usize {
         self.token
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for Command {
+    fn try_execute<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -96,7 +99,7 @@ impl Operator for Command {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move {
             let mut command = String::new();
             for element in self.elements.iter() {
@@ -139,12 +142,14 @@ impl Operator for Command {
     }
 }
 
+impl Execute for Command {}
+
 #[cfg(test)]
 mod reading {
     use crate::{
         elements::Command,
         error::LinkedErr,
-        inf::{operator::Operator, tests::*, Configuration},
+        inf::{operator::TokenGetter, tests::*, Configuration},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };

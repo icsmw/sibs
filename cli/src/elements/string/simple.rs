@@ -3,7 +3,10 @@ use tokio_util::sync::CancellationToken;
 use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
-    inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
+    inf::{
+        AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult, Scope,
+        TokenGetter, TryExecute,
+    },
     reader::{Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
@@ -38,11 +41,14 @@ impl Formation for SimpleString {
     }
 }
 
-impl Operator for SimpleString {
+impl TokenGetter for SimpleString {
     fn token(&self) -> usize {
         self.token
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for SimpleString {
+    fn try_execute<'a>(
         &'a self,
         _owner: Option<&'a Component>,
         _components: &'a [Component],
@@ -50,10 +56,12 @@ impl Operator for SimpleString {
         _cx: Context,
         _sc: Scope,
         _token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move { Ok(Some(AnyValue::new(self.value.to_string())?)) })
     }
 }
+
+impl Execute for SimpleString {}
 
 #[cfg(test)]
 mod proptest {

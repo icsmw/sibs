@@ -3,7 +3,10 @@ use tokio_util::sync::CancellationToken;
 use crate::{
     elements::{Cmb, Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
+    inf::{
+        AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult, Scope,
+        TokenGetter, TryExecute,
+    },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
@@ -120,11 +123,14 @@ impl Formation for Subsequence {
     }
 }
 
-impl Operator for Subsequence {
+impl TokenGetter for Subsequence {
     fn token(&self) -> usize {
         self.token
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for Subsequence {
+    fn try_execute<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -132,7 +138,7 @@ impl Operator for Subsequence {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move {
             let mut last_value = true;
             for el in self.subsequence.iter() {
@@ -171,12 +177,14 @@ impl Operator for Subsequence {
     }
 }
 
+impl Execute for Subsequence {}
+
 #[cfg(test)]
 mod reading {
     use crate::{
         elements::Subsequence,
         error::LinkedErr,
-        inf::{operator::Operator, tests::*, Configuration},
+        inf::{tests::*, Configuration, TokenGetter},
         read_string,
         reader::{Dissect, Reader, Sources, E},
     };

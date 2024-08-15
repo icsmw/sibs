@@ -9,12 +9,27 @@ pub use error::E;
 use std::{future::Future, pin::Pin};
 use tokio_util::sync::CancellationToken;
 
-pub type OperatorPinnedResult<'a> = Pin<Box<dyn Future<Output = OperatorResult> + 'a + Send>>;
-pub type OperatorResult = Result<Option<AnyValue>, LinkedErr<E>>;
+pub type ExecutePinnedResult<'a> = Pin<Box<dyn Future<Output = ExecuteResult> + 'a + Send>>;
+pub type ExecuteResult = Result<Option<AnyValue>, LinkedErr<E>>;
 
-pub trait Operator {
+pub trait TokenGetter {
     fn token(&self) -> usize;
-    // fn el_target(&self) -> ElTarget;
+}
+pub trait TryExecute {
+    fn try_execute<'a>(
+        &'a self,
+        _owner: Option<&'a Component>,
+        _components: &'a [Component],
+        _args: &'a [String],
+        _cx: Context,
+        _sc: Scope,
+        _token: CancellationToken,
+    ) -> ExecutePinnedResult {
+        Box::pin(async { Err(E::NotSupported.unlinked()) })
+    }
+}
+
+pub trait Execute {
     fn execute<'a>(
         &'a self,
         owner: Option<&'a Component>,
@@ -23,9 +38,9 @@ pub trait Operator {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> OperatorPinnedResult
+    ) -> ExecutePinnedResult
     where
-        Self: Sync,
+        Self: TryExecute + TokenGetter + Sync,
     {
         Box::pin(async move {
             if cx.is_aborting() {
@@ -34,7 +49,7 @@ pub trait Operator {
             }
             cx.atlas.set_map_position(self.token()).await?;
             let result = self
-                .perform(owner, components, args, cx.clone(), sc, token)
+                .try_execute(owner, components, args, cx.clone(), sc, token)
                 .await;
             match result.as_ref() {
                 Ok(value) => {
@@ -44,19 +59,7 @@ pub trait Operator {
                     cx.atlas.report_err(&err.link_if(&self.token())).await?;
                 }
             }
-
             result
         })
-    }
-    fn perform<'a>(
-        &'a self,
-        _owner: Option<&'a Component>,
-        _components: &'a [Component],
-        _args: &'a [String],
-        _cx: Context,
-        _sc: Scope,
-        _token: CancellationToken,
-    ) -> OperatorPinnedResult {
-        Box::pin(async { Err(E::NotSupported.unlinked()) })
     }
 }

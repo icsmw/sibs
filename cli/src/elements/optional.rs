@@ -3,7 +3,10 @@ use tokio_util::sync::CancellationToken;
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
+    inf::{
+        operator, Context, Execute, Formation, FormationCursor, ExecutePinnedResult, Scope,
+        TokenGetter, TryExecute,
+    },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
@@ -90,11 +93,14 @@ impl Formation for Optional {
     }
 }
 
-impl Operator for Optional {
+impl TokenGetter for Optional {
     fn token(&self) -> usize {
         self.token
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for Optional {
+    fn try_execute<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -102,7 +108,7 @@ impl Operator for Optional {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move {
             let condition = *self
                 .condition
@@ -129,12 +135,14 @@ impl Operator for Optional {
     }
 }
 
+impl Execute for Optional {}
+
 #[cfg(test)]
 mod reading {
     use crate::{
         elements::Optional,
         error::LinkedErr,
-        inf::{operator::Operator, tests::*, Configuration},
+        inf::{operator::TokenGetter, tests::*, Configuration},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -236,7 +244,7 @@ mod processing {
         elements::Task,
         error::LinkedErr,
         inf::{
-            operator::{Operator, E},
+            operator::{Execute, E},
             Configuration, Context, Journal, Scope,
         },
         process_string,

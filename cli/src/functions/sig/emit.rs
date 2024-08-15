@@ -45,7 +45,7 @@ mod test {
         error::LinkedErr,
         inf::{
             journal::{Configuration, Journal},
-            AnyValue, Context, Operator, Scope,
+            AnyValue, Context, Execute, Scope,
         },
         process_file,
         reader::{error::E, Reader, Sources},

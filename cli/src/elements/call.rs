@@ -3,7 +3,10 @@ use tokio_util::sync::CancellationToken;
 use crate::{
     elements::{Component, ElTarget, Element, Gatekeeper},
     error::LinkedErr,
-    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
+    inf::{
+        operator, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
+        TokenGetter, TryExecute,
+    },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
@@ -33,11 +36,14 @@ impl Formation for Call {
     }
 }
 
-impl Operator for Call {
+impl TokenGetter for Call {
     fn token(&self) -> usize {
         self.token
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for Call {
+    fn try_execute<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -45,7 +51,9 @@ impl Operator for Call {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move { Ok(None) })
     }
 }
+
+impl Execute for Call {}

@@ -3,7 +3,10 @@ use tokio_util::sync::CancellationToken;
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
+    inf::{
+        AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult, Scope,
+        TokenGetter, TryExecute,
+    },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
@@ -112,11 +115,14 @@ impl Formation for Values {
     }
 }
 
-impl Operator for Values {
+impl TokenGetter for Values {
     fn token(&self) -> usize {
         self.token
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for Values {
+    fn try_execute<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -124,7 +130,7 @@ impl Operator for Values {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move {
             let mut values: Vec<AnyValue> = Vec::new();
             for el in self.elements.iter() {
@@ -146,12 +152,14 @@ impl Operator for Values {
     }
 }
 
+impl Execute for Values {}
+
 #[cfg(test)]
 mod reading {
     use crate::{
         elements::Values,
         error::LinkedErr,
-        inf::{operator::Operator, tests::*, Configuration},
+        inf::{operator::TokenGetter, tests::*, Configuration},
         read_string,
         reader::{Dissect, Reader, Sources, E},
     };
@@ -236,7 +244,7 @@ mod processing {
         elements::{Component, Task},
         error::LinkedErr,
         inf::{
-            operator::{Operator, E},
+            operator::{Execute, E},
             AnyValue, Configuration, Context, Journal, Scope,
         },
         process_string, read_string,

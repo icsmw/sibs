@@ -4,8 +4,8 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
-        Scope,
+        operator, AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult,
+        Scope, TokenGetter, TryExecute,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -90,11 +90,14 @@ impl TryDissect<VariableDeclaration> for VariableDeclaration {
 
 impl Dissect<VariableDeclaration, VariableDeclaration> for VariableDeclaration {}
 
-impl Operator for VariableDeclaration {
+impl TokenGetter for VariableDeclaration {
     fn token(&self) -> usize {
         self.token
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for VariableDeclaration {
+    fn try_execute<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -102,7 +105,7 @@ impl Operator for VariableDeclaration {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move {
             sc.set_var(
                 if let Element::VariableName(el, _) = self.variable.as_ref() {
@@ -118,6 +121,8 @@ impl Operator for VariableDeclaration {
         })
     }
 }
+
+impl Execute for VariableDeclaration {}
 
 impl fmt::Display for VariableDeclaration {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -5,7 +5,7 @@ use crate::{
     error::LinkedErr,
     inf::{
         journal::{Configuration, Journal},
-        Context, Operator, Scope,
+        Context, Execute, Scope,
     },
     process_file,
     reader::{error::E, Reader, Sources},

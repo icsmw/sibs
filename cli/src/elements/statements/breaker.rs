@@ -3,7 +3,10 @@ use tokio_util::sync::CancellationToken;
 use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
-    inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
+    inf::{
+        AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult, Scope,
+        TokenGetter, TryExecute,
+    },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
@@ -40,11 +43,14 @@ impl Formation for Breaker {
     }
 }
 
-impl Operator for Breaker {
+impl TokenGetter for Breaker {
     fn token(&self) -> usize {
         self.token
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for Breaker {
+    fn try_execute<'a>(
         &'a self,
         _owner: Option<&'a Component>,
         _components: &'a [Component],
@@ -52,13 +58,15 @@ impl Operator for Breaker {
         _cx: Context,
         sc: Scope,
         _token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move {
             sc.break_loop().await?;
             Ok(Some(AnyValue::empty()))
         })
     }
 }
+
+impl Execute for Breaker {}
 
 #[cfg(test)]
 mod reading {
@@ -127,7 +135,7 @@ mod processing {
         elements::Task,
         error::LinkedErr,
         inf::{
-            operator::{Operator, E},
+            operator::{Execute, E},
             Configuration, Context, Journal, Scope,
         },
         process_string,

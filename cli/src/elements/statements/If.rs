@@ -3,7 +3,10 @@ use tokio_util::sync::CancellationToken;
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
+    inf::{
+        operator, Context, Execute, Formation, FormationCursor, ExecutePinnedResult, Scope,
+        TokenGetter, TryExecute,
+    },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
@@ -14,14 +17,17 @@ pub enum Thread {
     Else(Element),
 }
 
-impl Operator for Thread {
+impl TokenGetter for Thread {
     fn token(&self) -> usize {
         match self {
             Self::If(el, _) => el.token(),
             Self::Else(block) => block.token(),
         }
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for Thread {
+    fn try_execute<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -29,7 +35,7 @@ impl Operator for Thread {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move {
             match self {
                 Self::If(subsequence, block) => {
@@ -57,6 +63,8 @@ impl Operator for Thread {
         })
     }
 }
+
+impl Execute for Thread {}
 
 impl fmt::Display for Thread {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -169,11 +177,14 @@ impl Formation for If {
     }
 }
 
-impl Operator for If {
+impl TokenGetter for If {
     fn token(&self) -> usize {
         self.token
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for If {
+    fn try_execute<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -181,7 +192,7 @@ impl Operator for If {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move {
             for thread in self.threads.iter() {
                 if let Some(output) = thread
@@ -203,12 +214,14 @@ impl Operator for If {
     }
 }
 
+impl Execute for If {}
+
 #[cfg(test)]
 mod reading {
     use crate::{
         elements::{If, Thread},
         error::LinkedErr,
-        inf::{operator::Operator, tests::*, Configuration},
+        inf::{tests::*, Configuration, TokenGetter},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -310,7 +323,7 @@ mod processing {
         elements::Task,
         error::LinkedErr,
         inf::{
-            operator::{Operator, E},
+            operator::{Execute, E},
             Configuration, Context, Journal, Scope,
         },
         process_string,

@@ -3,7 +3,10 @@ use tokio_util::sync::CancellationToken;
 use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
-    inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
+    inf::{
+        AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
+        TokenGetter, TryExecute,
+    },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
@@ -115,11 +118,14 @@ impl Formation for Block {
     }
 }
 
-impl Operator for Block {
+impl TokenGetter for Block {
     fn token(&self) -> usize {
         self.token
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for Block {
+    fn try_execute<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -127,7 +133,7 @@ impl Operator for Block {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move {
             let mut output: Option<AnyValue> = None;
             for element in self.elements.iter() {
@@ -149,6 +155,8 @@ impl Operator for Block {
         })
     }
 }
+
+impl Execute for Block {}
 
 #[cfg(test)]
 mod reading {

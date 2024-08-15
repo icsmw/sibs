@@ -4,8 +4,8 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
-        Scope,
+        operator, AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult,
+        Scope, TokenGetter, TryExecute,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -305,11 +305,14 @@ impl Formation for Function {
     }
 }
 
-impl Operator for Function {
+impl TokenGetter for Function {
     fn token(&self) -> usize {
         self.token
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for Function {
+    fn try_execute<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -317,7 +320,7 @@ impl Operator for Function {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move {
             let mut args: Vec<FuncArg> = self
                 .get_processed_args(
@@ -359,13 +362,15 @@ impl Operator for Function {
     }
 }
 
+impl Execute for Function {}
+
 #[cfg(test)]
 mod reading {
 
     use crate::{
         elements::Function,
         error::LinkedErr,
-        inf::{operator::Operator, tests::*, Configuration},
+        inf::{operator::TokenGetter, tests::*, Configuration},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -461,7 +466,7 @@ mod processing {
         elements::Task,
         error::LinkedErr,
         inf::{
-            operator::{Operator, E},
+            operator::{Execute, E},
             Configuration, Context, Journal, Scope,
         },
         process_string,

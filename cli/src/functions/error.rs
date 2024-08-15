@@ -10,7 +10,7 @@ pub enum E {
     #[error("{0}")]
     Context(String),
     #[error("{0}")]
-    Operator(String),
+    TryExecute(String),
     #[error("Function \"{0}\" executing error: {1}")]
     FunctionExecuting(String, String),
     #[error("Fail convert value to: {0}")]
@@ -114,7 +114,7 @@ impl From<value::E> for E {
 
 impl From<operator::E> for E {
     fn from(e: operator::E) -> Self {
-        E::Operator(e.to_string())
+        E::TryExecute(e.to_string())
     }
 }
 

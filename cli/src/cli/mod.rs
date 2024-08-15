@@ -8,7 +8,7 @@ use crate::{
     inf::{
         context::Context,
         journal::{self, Journal},
-        operator::Operator,
+        operator::Execute,
         scenario::Scenario,
         term,
     },

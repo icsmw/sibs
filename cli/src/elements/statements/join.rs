@@ -2,8 +2,8 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
-        OperatorResult, Scope,
+        operator, AnyValue, Context, Execute, ExecuteResult, Formation, FormationCursor,
+        ExecutePinnedResult, Scope, TokenGetter, TryExecute,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -82,11 +82,14 @@ impl From<TaskError> for LinkedErr<operator::E> {
     }
 }
 
-impl Operator for Join {
+impl TokenGetter for Join {
     fn token(&self) -> usize {
         self.token
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for Join {
+    fn try_execute<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -94,7 +97,7 @@ impl Operator for Join {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         fn clone(
             owner: Option<&Component>,
             components: &[Component],
@@ -120,7 +123,7 @@ impl Operator for Join {
             )
         }
         async fn wait(
-            tasks: &mut [JoinHandle<OperatorResult>],
+            tasks: &mut [JoinHandle<ExecuteResult>],
             token: CancellationToken,
         ) -> Result<Vec<Result<AnyValue, LinkedErr<operator::E>>>, TaskError> {
             let mut results: Vec<Result<AnyValue, LinkedErr<operator::E>>> = Vec::new();
@@ -138,7 +141,7 @@ impl Operator for Join {
                             token.cancel();
                         }
                         results.push(Err(err));
-                        // return Err(TaskError::Operator(err));
+                        // return Err(TaskError::TryExecute(err));
                     }
                     Err(err) => {
                         return Err(TaskError::Join(err));
@@ -170,7 +173,7 @@ impl Operator for Join {
                         .await
                     })
                 })
-                .collect::<Vec<JoinHandle<OperatorResult>>>();
+                .collect::<Vec<JoinHandle<ExecuteResult>>>();
             match wait(&mut tasks, token).await {
                 Ok(results) => {
                     let mut output: Vec<AnyValue> = Vec::new();
@@ -192,12 +195,14 @@ impl Operator for Join {
     }
 }
 
+impl Execute for Join {}
+
 #[cfg(test)]
 mod reading {
     use crate::{
         elements::Join,
         error::LinkedErr,
-        inf::{tests::*, Configuration, Operator},
+        inf::{tests::*, Configuration, TokenGetter},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -278,7 +283,7 @@ mod processing {
         error::LinkedErr,
         inf::{
             journal::{Configuration, Journal},
-            AnyValue, Context, Operator, Scope,
+            AnyValue, Context, Execute, Scope,
         },
         process_file,
         reader::{error::E, Reader, Sources},

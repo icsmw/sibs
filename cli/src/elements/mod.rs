@@ -36,8 +36,8 @@ pub use variable::*;
 use crate::{
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
-        Scope,
+        operator, AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult,
+        Scope, TokenGetter, TryExecute,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -691,7 +691,7 @@ impl Formation for Element {
     }
 }
 
-impl Operator for Element {
+impl TokenGetter for Element {
     fn token(&self) -> usize {
         match self {
             Self::Function(v, _) => v.token(),
@@ -726,7 +726,10 @@ impl Operator for Element {
             Self::Comment(v) => v.token,
         }
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for Element {
+    fn try_execute<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -734,43 +737,61 @@ impl Operator for Element {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move {
             let journal = cx.journal.clone();
             let result = match self {
-                Self::Function(v, _) => v.perform(owner, components, args, cx, sc, token).await,
-                Self::If(v, _) => v.perform(owner, components, args, cx, sc, token).await,
-                Self::Breaker(v, _) => v.perform(owner, components, args, cx, sc, token).await,
-                Self::Each(v, _) => v.perform(owner, components, args, cx, sc, token).await,
-                Self::First(v, _) => v.perform(owner, components, args, cx, sc, token).await,
-                Self::Join(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::Function(v, _) => v.try_execute(owner, components, args, cx, sc, token).await,
+                Self::If(v, _) => v.try_execute(owner, components, args, cx, sc, token).await,
+                Self::Breaker(v, _) => v.try_execute(owner, components, args, cx, sc, token).await,
+                Self::Each(v, _) => v.try_execute(owner, components, args, cx, sc, token).await,
+                Self::First(v, _) => v.try_execute(owner, components, args, cx, sc, token).await,
+                Self::Join(v, _) => v.try_execute(owner, components, args, cx, sc, token).await,
                 Self::VariableAssignation(v, _) => {
-                    v.perform(owner, components, args, cx, sc, token).await
+                    v.try_execute(owner, components, args, cx, sc, token).await
                 }
-                Self::Comparing(v, _) => v.perform(owner, components, args, cx, sc, token).await,
-                Self::Combination(v, _) => v.perform(owner, components, args, cx, sc, token).await,
-                Self::Condition(v, _) => v.perform(owner, components, args, cx, sc, token).await,
-                Self::Subsequence(v, _) => v.perform(owner, components, args, cx, sc, token).await,
-                Self::Optional(v, _) => v.perform(owner, components, args, cx, sc, token).await,
-                Self::Gatekeeper(v, _) => v.perform(owner, components, args, cx, sc, token).await,
-                Self::Reference(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::Comparing(v, _) => {
+                    v.try_execute(owner, components, args, cx, sc, token).await
+                }
+                Self::Combination(v, _) => {
+                    v.try_execute(owner, components, args, cx, sc, token).await
+                }
+                Self::Condition(v, _) => {
+                    v.try_execute(owner, components, args, cx, sc, token).await
+                }
+                Self::Subsequence(v, _) => {
+                    v.try_execute(owner, components, args, cx, sc, token).await
+                }
+                Self::Optional(v, _) => v.try_execute(owner, components, args, cx, sc, token).await,
+                Self::Gatekeeper(v, _) => {
+                    v.try_execute(owner, components, args, cx, sc, token).await
+                }
+                Self::Reference(v, _) => {
+                    v.try_execute(owner, components, args, cx, sc, token).await
+                }
                 Self::PatternString(v, _) => {
-                    v.perform(owner, components, args, cx, sc, token).await
+                    v.try_execute(owner, components, args, cx, sc, token).await
                 }
-                Self::VariableName(v, _) => v.perform(owner, components, args, cx, sc, token).await,
-                Self::Values(v, _) => v.perform(owner, components, args, cx, sc, token).await,
-                Self::Block(v, _) => v.perform(owner, components, args, cx, sc, token).await,
-                Self::Command(v, _) => v.perform(owner, components, args, cx, sc, token).await,
-                Self::Task(v, _) => v.perform(owner, components, args, cx, sc, token).await,
-                Self::Component(v, _) => v.perform(owner, components, args, cx, sc, token).await,
-                Self::Integer(v, _) => v.perform(owner, components, args, cx, sc, token).await,
-                Self::Boolean(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::VariableName(v, _) => {
+                    v.try_execute(owner, components, args, cx, sc, token).await
+                }
+                Self::Values(v, _) => v.try_execute(owner, components, args, cx, sc, token).await,
+                Self::Block(v, _) => v.try_execute(owner, components, args, cx, sc, token).await,
+                Self::Command(v, _) => v.try_execute(owner, components, args, cx, sc, token).await,
+                Self::Task(v, _) => v.try_execute(owner, components, args, cx, sc, token).await,
+                Self::Component(v, _) => {
+                    v.try_execute(owner, components, args, cx, sc, token).await
+                }
+                Self::Integer(v, _) => v.try_execute(owner, components, args, cx, sc, token).await,
+                Self::Boolean(v, _) => v.try_execute(owner, components, args, cx, sc, token).await,
                 Self::Meta(..) => Ok(None),
                 Self::VariableDeclaration(..) => Ok(None),
                 Self::VariableVariants(..) => Ok(None),
                 Self::VariableType(..) => Ok(None),
-                Self::SimpleString(v, _) => v.perform(owner, components, args, cx, sc, token).await,
-                Self::Call(v, _) => v.perform(owner, components, args, cx, sc, token).await,
+                Self::SimpleString(v, _) => {
+                    v.try_execute(owner, components, args, cx, sc, token).await
+                }
+                Self::Call(v, _) => v.try_execute(owner, components, args, cx, sc, token).await,
                 Self::Comment(_) => Ok(None),
             };
             if let (true, Err(err)) = (self.get_metadata().tolerance, result.as_ref()) {
@@ -793,6 +814,8 @@ impl Operator for Element {
     }
 }
 
+impl Execute for Element {}
+
 #[cfg(test)]
 mod processing {
     use tokio_util::sync::CancellationToken;
@@ -801,7 +824,7 @@ mod processing {
         elements::{ElTarget, Element},
         error::LinkedErr,
         inf::{
-            operator::{Operator, E},
+            operator::{Execute, E},
             Configuration, Context, Journal, Scope,
         },
         process_string,

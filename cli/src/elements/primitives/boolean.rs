@@ -3,7 +3,10 @@ use tokio_util::sync::CancellationToken;
 use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
-    inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
+    inf::{
+        AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult, Scope,
+        TokenGetter, TryExecute,
+    },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
@@ -42,11 +45,14 @@ impl Formation for Boolean {
     }
 }
 
-impl Operator for Boolean {
+impl TokenGetter for Boolean {
     fn token(&self) -> usize {
         self.token
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for Boolean {
+    fn try_execute<'a>(
         &'a self,
         _owner: Option<&'a Component>,
         _components: &'a [Component],
@@ -54,10 +60,12 @@ impl Operator for Boolean {
         _cx: Context,
         _sc: Scope,
         _token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move { Ok(Some(AnyValue::new(self.value)?)) })
     }
 }
+
+impl Execute for Boolean {}
 
 #[cfg(test)]
 mod proptest {

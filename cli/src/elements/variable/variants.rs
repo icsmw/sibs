@@ -4,8 +4,8 @@ use crate::{
     elements::Component,
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
-        Scope,
+        operator, AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult,
+        Scope, TokenGetter, TryExecute,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -53,11 +53,14 @@ impl VariableVariants {
     }
 }
 
-impl Operator for VariableVariants {
+impl TokenGetter for VariableVariants {
     fn token(&self) -> usize {
         self.token
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for VariableVariants {
+    fn try_execute<'a>(
         &'a self,
         _owner: Option<&'a Component>,
         _components: &'a [Component],
@@ -65,7 +68,7 @@ impl Operator for VariableVariants {
         _cx: Context,
         _sc: Scope,
         _token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move {
             let value = if args.len() != 1 {
                 Err(operator::E::InvalidNumberOfArgumentsForDeclaration.by(self))?
@@ -83,6 +86,8 @@ impl Operator for VariableVariants {
         })
     }
 }
+
+impl Execute for VariableVariants {}
 
 impl fmt::Display for VariableVariants {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

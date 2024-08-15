@@ -4,8 +4,8 @@ use crate::{
     elements::{string, Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
-        Scope,
+        operator, AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult,
+        Scope, TokenGetter, TryExecute,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -86,11 +86,14 @@ impl Formation for PatternString {
     }
 }
 
-impl Operator for PatternString {
+impl TokenGetter for PatternString {
     fn token(&self) -> usize {
         self.token
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for PatternString {
+    fn try_execute<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -98,7 +101,7 @@ impl Operator for PatternString {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move {
             let mut output = String::new();
             for element in self.elements.iter() {
@@ -128,12 +131,14 @@ impl Operator for PatternString {
     }
 }
 
+impl Execute for PatternString {}
+
 #[cfg(test)]
 mod reading {
     use crate::{
         elements::PatternString,
         error::LinkedErr,
-        inf::{operator::Operator, tests::*, Configuration},
+        inf::{operator::TokenGetter, tests::*, Configuration},
         read_string,
         reader::{Dissect, Reader, Sources, E},
     };

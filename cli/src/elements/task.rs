@@ -7,8 +7,8 @@ use crate::{
     },
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
-        Scope,
+        operator, AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult,
+        Scope, TokenGetter, TryExecute,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -263,11 +263,14 @@ impl Formation for Task {
     }
 }
 
-impl Operator for Task {
+impl TokenGetter for Task {
     fn token(&self) -> usize {
         self.token
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for Task {
+    fn try_execute<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -275,7 +278,7 @@ impl Operator for Task {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move {
             if self.declarations.len() != args.len() {
                 Err(operator::E::DismatchTaskArgumentsCount(
@@ -325,12 +328,14 @@ impl Operator for Task {
     }
 }
 
+impl Execute for Task {}
+
 #[cfg(test)]
 mod reading {
     use crate::{
         elements::{ElTarget, Element, Task},
         error::LinkedErr,
-        inf::{operator::Operator, tests::*, Configuration},
+        inf::{operator::TokenGetter, tests::*, Configuration},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -453,7 +458,7 @@ mod processing {
         elements::{Component, Task},
         error::LinkedErr,
         inf::{
-            operator::{Operator, E},
+            operator::{Execute, E},
             Configuration, Context, Journal, Scope,
         },
         process_string,

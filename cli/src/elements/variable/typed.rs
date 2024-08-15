@@ -4,8 +4,8 @@ use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
-        Scope,
+        operator, AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult,
+        Scope, TokenGetter, TryExecute,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -80,11 +80,14 @@ impl VariableType {
     }
 }
 
-impl Operator for VariableType {
+impl TokenGetter for VariableType {
     fn token(&self) -> usize {
         self.token
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for VariableType {
+    fn try_execute<'a>(
         &'a self,
         _owner: Option<&'a Component>,
         _components: &'a [Component],
@@ -92,7 +95,7 @@ impl Operator for VariableType {
         _cx: Context,
         _sc: Scope,
         _token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move {
             let value = if args.len() != 1 {
                 Err(operator::E::InvalidNumberOfArgumentsForDeclaration)?
@@ -111,6 +114,8 @@ impl Operator for VariableType {
         })
     }
 }
+
+impl Execute for VariableType {}
 
 impl fmt::Display for VariableType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

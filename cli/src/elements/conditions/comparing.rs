@@ -4,8 +4,8 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
-        Scope,
+        operator, AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult,
+        Scope, TokenGetter, TryExecute,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -125,11 +125,14 @@ impl Formation for Comparing {
     }
 }
 
-impl Operator for Comparing {
+impl TokenGetter for Comparing {
     fn token(&self) -> usize {
         self.token
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for Comparing {
+    fn try_execute<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -137,7 +140,7 @@ impl Operator for Comparing {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move {
             let left = self
                 .left
@@ -186,12 +189,14 @@ impl Operator for Comparing {
     }
 }
 
+impl Execute for Comparing {}
+
 #[cfg(test)]
 mod reading {
     use crate::{
         elements::{Comparing, ElTarget, Element},
         error::LinkedErr,
-        inf::{operator::Operator, tests::*, Configuration},
+        inf::{tests::*, Configuration, TokenGetter},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };

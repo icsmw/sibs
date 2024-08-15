@@ -1,7 +1,7 @@
 use crate::{
     error::LinkedErr,
     functions,
-    inf::{context, context::atlas, scenario, spawner, tracker, value, Operator},
+    inf::{context, context::atlas, scenario, spawner, tracker, value, TokenGetter},
     reader,
 };
 use thiserror::Error;
@@ -16,7 +16,7 @@ pub enum E {
     NoValueFromGatekeeper,
     #[error("Gatekeeper doesn't return bool value")]
     NoBoolValueFromGatekeeper,
-    #[error("Operator method isn't supported")]
+    #[error("TryExecute method isn't supported")]
     NotSupported,
     #[error("Function's argument doesn't have return value")]
     NotAllArguamentsHasReturn,
@@ -101,7 +101,7 @@ pub enum E {
 }
 
 impl E {
-    pub fn by(self, operator: &dyn Operator) -> LinkedErr<E> {
+    pub fn by(self, operator: &dyn TokenGetter) -> LinkedErr<E> {
         LinkedErr::new(self, Some(operator.token()))
     }
     pub fn unlinked(self) -> LinkedErr<E> {

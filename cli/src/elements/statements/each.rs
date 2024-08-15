@@ -4,8 +4,8 @@ use crate::{
     elements::{Block, Component, ElTarget, Element, VariableName},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
-        Scope,
+        operator, AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult,
+        Scope, TokenGetter, TryExecute,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -88,11 +88,14 @@ impl Formation for Each {
     }
 }
 
-impl Operator for Each {
+impl TokenGetter for Each {
     fn token(&self) -> usize {
         self.token
     }
-    fn perform<'a>(
+}
+
+impl TryExecute for Each {
+    fn try_execute<'a>(
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
@@ -100,7 +103,7 @@ impl Operator for Each {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> OperatorPinnedResult {
+    ) -> ExecutePinnedResult {
         Box::pin(async move {
             let inputs = self
                 .input
@@ -146,12 +149,14 @@ impl Operator for Each {
     }
 }
 
+impl Execute for Each {}
+
 #[cfg(test)]
 mod reading {
     use crate::{
         elements::Each,
         error::LinkedErr,
-        inf::{operator::Operator, tests::*, Configuration},
+        inf::{tests::*, Configuration, TokenGetter},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -239,7 +244,7 @@ mod processing {
         elements::Task,
         error::LinkedErr,
         inf::{
-            operator::{Operator, E},
+            operator::{Execute, E},
             Configuration, Context, Journal, Scope,
         },
         process_string,

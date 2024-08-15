@@ -126,7 +126,7 @@ mod test {
         elements::Component,
         error::LinkedErr,
         inf::{
-            operator::{Operator, E},
+            operator::{Execute, E},
             tests::*,
             Configuration, Context, Journal, Scope,
         },

@@ -127,7 +127,7 @@ mod test {
         error::LinkedErr,
         inf::{
             journal,
-            operator::{Operator, E},
+            operator::{Execute, E},
             Configuration, Context, Scope,
         },
         process_string,
