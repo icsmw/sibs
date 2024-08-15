@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
-    reader::{words, Reader, Reading, E},
+    reader::{words, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 
@@ -15,12 +15,11 @@ pub struct Optional {
     pub token: usize,
 }
 
-impl Reading<Optional> for Optional {
-    fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
+impl TryDissect<Optional> for Optional {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
         if reader.rest().trim().starts_with(words::DO_ON) {
             return Ok(None);
         }
-        let restore = reader.pin();
         let close = reader.open_token(ElTarget::Optional);
         let condition = if let Some(el) = Element::include(
             reader,
@@ -37,7 +36,6 @@ impl Reading<Optional> for Optional {
             return Ok(None);
         };
         if !reader.rest().trim().starts_with(words::DO_ON) {
-            restore(reader);
             return Ok(None);
         }
         if reader.move_to().expression(&[words::DO_ON]).is_none() {
@@ -70,6 +68,8 @@ impl Reading<Optional> for Optional {
         }))
     }
 }
+
+impl Dissect<Optional, Optional> for Optional {}
 
 impl fmt::Display for Optional {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -136,7 +136,7 @@ mod reading {
         error::LinkedErr,
         inf::{operator::Operator, tests::*, Configuration},
         read_string,
-        reader::{chars, Reader, Reading, Sources, E},
+        reader::{chars, Dissect, Reader, Sources, E},
     };
 
     #[tokio::test]
@@ -146,7 +146,7 @@ mod reading {
             &include_str!("../tests/reading/optional.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(Optional::read(reader))? {
+                while let Some(entity) = src.report_err_if(Optional::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(reader.recent()),
@@ -170,7 +170,7 @@ mod reading {
             &include_str!("../tests/reading/optional.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(Optional::read(reader))? {
+                while let Some(entity) = src.report_err_if(Optional::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(&format!("{entity}")),
@@ -216,7 +216,7 @@ mod reading {
                 &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, _: &mut Sources| {
-                    let opt = Optional::read(reader);
+                    let opt = Optional::dissect(reader);
                     println!("{opt:?}");
                     println!("{}", reader.rest());
                     assert!(opt.is_err());
@@ -240,7 +240,7 @@ mod processing {
             Configuration, Context, Journal, Scope,
         },
         process_string,
-        reader::{chars, Reader, Reading, Sources},
+        reader::{chars, Dissect, Reader, Sources},
     };
 
     #[tokio::test]
@@ -250,7 +250,7 @@ mod processing {
             &include_str!("../tests/processing/optional.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Task> = Vec::new();
-                while let Some(task) = src.report_err_if(Task::read(reader))? {
+                while let Some(task) = src.report_err_if(Task::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
                 }
@@ -288,7 +288,7 @@ mod proptest {
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
-        reader::{Reader, Reading, Sources},
+        reader::{Dissect, Reader, Sources},
     };
     use proptest::prelude::*;
 
@@ -355,7 +355,7 @@ mod proptest {
                 &Configuration::logs(false),
                 &origin,
                 |reader: &mut Reader, src: &mut Sources| {
-                    while let Some(task) = src.report_err_if(Task::read(reader))? {
+                    while let Some(task) = src.report_err_if(Task::dissect(reader))? {
                         assert_eq!(format!("{task};"), origin);
                     }
                     Ok::<(), LinkedErr<E>>(())

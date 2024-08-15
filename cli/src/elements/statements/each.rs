@@ -7,7 +7,7 @@ use crate::{
         operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
         Scope,
     },
-    reader::{chars, words, Reader, Reading, E},
+    reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 #[derive(Debug, Clone)]
@@ -18,8 +18,8 @@ pub struct Each {
     pub token: usize,
 }
 
-impl Reading<Each> for Each {
-    fn read(reader: &mut Reader) -> Result<Option<Each>, LinkedErr<E>> {
+impl TryDissect<Each> for Each {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<Each>, LinkedErr<E>> {
         let close = reader.open_token(ElTarget::Each);
         if reader.move_to().word(&[words::EACH]).is_some() {
             let (variable, input) = if reader
@@ -67,6 +67,8 @@ impl Reading<Each> for Each {
         }
     }
 }
+
+impl Dissect<Each, Each> for Each {}
 
 impl fmt::Display for Each {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -151,7 +153,7 @@ mod reading {
         error::LinkedErr,
         inf::{operator::Operator, tests::*, Configuration},
         read_string,
-        reader::{chars, Reader, Reading, Sources, E},
+        reader::{chars, Dissect, Reader, Sources, E},
     };
 
     #[tokio::test]
@@ -161,7 +163,7 @@ mod reading {
             &include_str!("../../tests/reading/each.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(Each::read(reader))? {
+                while let Some(entity) = src.report_err_if(Each::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(reader.recent()),
@@ -183,7 +185,7 @@ mod reading {
             &include_str!("../../tests/reading/each.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(Each::read(reader))? {
+                while let Some(entity) = src.report_err_if(Each::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(&format!("{entity}")),
@@ -220,7 +222,7 @@ mod reading {
                 &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, _: &mut Sources| {
-                    assert!(Each::read(reader).is_err());
+                    assert!(Each::dissect(reader).is_err());
                     Ok::<usize, LinkedErr<E>>(1)
                 }
             );
@@ -241,7 +243,7 @@ mod processing {
             Configuration, Context, Journal, Scope,
         },
         process_string,
-        reader::{chars, Reader, Reading, Sources},
+        reader::{chars, Dissect, Reader, Sources},
     };
     const VALUES: &[(&str, &str)] = &[("a", "three"), ("b", "two"), ("c", "one")];
 
@@ -252,7 +254,7 @@ mod processing {
             &include_str!("../../tests/processing/each.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Task> = Vec::new();
-                while let Some(task) = src.report_err_if(Task::read(reader))? {
+                while let Some(task) = src.report_err_if(Task::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
                 }
@@ -292,7 +294,7 @@ mod proptest {
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
-        reader::{Reader, Reading, Sources},
+        reader::{Dissect, Reader, Sources},
     };
     use proptest::prelude::*;
 
@@ -323,7 +325,7 @@ mod proptest {
                 &Configuration::logs(false),
                 &origin,
                 |reader: &mut Reader, src: &mut Sources| {
-                    while let Some(task) = src.report_err_if(Task::read(reader))? {
+                    while let Some(task) = src.report_err_if(Task::dissect(reader))? {
                         assert_eq!(format!("{task};"), origin);
                     }
                     Ok::<(), LinkedErr<E>>(())

@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
-    reader::{chars, Reader, Reading, E},
+    reader::{chars, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 
@@ -21,65 +21,65 @@ impl Block {
     }
 }
 
-impl Reading<Block> for Block {
-    fn read(reader: &mut Reader) -> Result<Option<Block>, LinkedErr<E>> {
+impl TryDissect<Block> for Block {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<Block>, LinkedErr<E>> {
         let close = reader.open_token(ElTarget::Block);
         if reader
             .group()
             .between(&chars::OPEN_CURLY_BRACE, &chars::CLOSE_CURLY_BRACE)
-            .is_some()
+            .is_none()
         {
-            let mut inner = reader.token()?.bound;
-            let block_token_id = reader.token()?.id;
-            let mut elements: Vec<Element> = Vec::new();
-            loop {
-                if let Some(el) = Element::exclude(
-                    &mut inner,
-                    &[
-                        ElTarget::Block,
-                        ElTarget::Task,
-                        ElTarget::Component,
-                        ElTarget::Condition,
-                        ElTarget::Combination,
-                        ElTarget::Subsequence,
-                        ElTarget::VariableDeclaration,
-                        ElTarget::VariableVariants,
-                        ElTarget::VariableType,
-                        ElTarget::SimpleString,
-                        ElTarget::Gatekeeper,
-                        ElTarget::Call,
-                    ],
-                )? {
-                    if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
-                        return if let Some((content, _)) = inner.until().char(&[&chars::SEMICOLON])
-                        {
-                            Err(E::UnrecognizedCode(content).by_reader(&inner))
-                        } else {
-                            Err(E::MissedSemicolon.by_reader(&inner))
-                        };
-                    }
-                    elements.push(el);
-                    continue;
-                }
-                if inner.rest().trim().is_empty() {
-                    break if elements.is_empty() {
-                        Err(E::EmptyBlock.linked(&block_token_id))
+            return Ok(None);
+        }
+        let mut inner = reader.token()?.bound;
+        let block_token_id = reader.token()?.id;
+        let mut elements: Vec<Element> = Vec::new();
+        loop {
+            if let Some(el) = Element::exclude(
+                &mut inner,
+                &[
+                    ElTarget::Block,
+                    ElTarget::Task,
+                    ElTarget::Component,
+                    ElTarget::Condition,
+                    ElTarget::Combination,
+                    ElTarget::Subsequence,
+                    ElTarget::VariableDeclaration,
+                    ElTarget::VariableVariants,
+                    ElTarget::VariableType,
+                    ElTarget::SimpleString,
+                    ElTarget::Gatekeeper,
+                    ElTarget::Call,
+                ],
+            )? {
+                if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
+                    return if let Some((content, _)) = inner.until().char(&[&chars::SEMICOLON]) {
+                        Err(E::UnrecognizedCode(content).by_reader(&inner))
                     } else {
-                        Ok(Some(Block {
-                            elements,
-                            owner: None,
-                            token: close(reader),
-                        }))
+                        Err(E::MissedSemicolon.by_reader(&inner))
                     };
-                } else {
-                    break Err(E::UnrecognizedCode(inner.move_to().end()).by_reader(&inner));
                 }
+                elements.push(el);
+                continue;
             }
-        } else {
-            Ok(None)
+            if inner.rest().trim().is_empty() {
+                break if elements.is_empty() {
+                    Err(E::EmptyBlock.linked(&block_token_id))
+                } else {
+                    Ok(Some(Block {
+                        elements,
+                        owner: None,
+                        token: close(reader),
+                    }))
+                };
+            } else {
+                break Err(E::UnrecognizedCode(inner.move_to().end()).by_reader(&inner));
+            }
         }
     }
 }
+
+impl Dissect<Block, Block> for Block {}
 
 impl fmt::Display for Block {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -157,7 +157,7 @@ mod reading {
         error::LinkedErr,
         inf::{tests::*, Configuration},
         read_string,
-        reader::{Reader, Reading, Sources, E},
+        reader::{Dissect, Reader, Sources, E},
     };
 
     #[tokio::test]
@@ -174,7 +174,7 @@ mod reading {
                 include_str!("../tests/reading/refs.sibs")
             ),
             |reader: &mut Reader, src: &mut Sources| {
-                while let Some(entity) = src.report_err_if(Block::read(reader))? {
+                while let Some(entity) = src.report_err_if(Block::dissect(reader))? {
                     assert_eq!(
                         trim_carets(reader.recent()),
                         trim_carets(&entity.to_string())
@@ -200,7 +200,7 @@ mod reading {
                 include_str!("../tests/reading/refs.sibs")
             ),
             |reader: &mut Reader, src: &mut Sources| {
-                while let Some(entity) = src.report_err_if(Block::read(reader))? {
+                while let Some(entity) = src.report_err_if(Block::dissect(reader))? {
                     assert_eq!(
                         trim_carets(&entity.to_string()),
                         reader.get_fragment(&entity.token)?.lined
@@ -221,7 +221,7 @@ mod proptest {
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
-        reader::{Reader, Reading, Sources},
+        reader::{Dissect, Reader, Sources},
     };
     use proptest::prelude::*;
 
@@ -280,7 +280,7 @@ mod proptest {
                 &Configuration::logs(false),
                 &origin,
                 |reader: &mut Reader, src: &mut Sources| {
-                    while let Some(task) = src.report_err_if(Task::read(reader))? {
+                    while let Some(task) = src.report_err_if(Task::dissect(reader))? {
                         assert_eq!(format!("{task};"), origin);
                     }
                     Ok::<(), LinkedErr<E>>(())

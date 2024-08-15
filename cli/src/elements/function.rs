@@ -7,7 +7,7 @@ use crate::{
         operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
         Scope,
     },
-    reader::{chars, words, Reader, Reading, E},
+    reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 
@@ -35,10 +35,9 @@ pub struct Function {
     pub args_token: usize,
 }
 
-impl Reading<Function> for Function {
-    fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
+impl TryDissect<Function> for Function {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
         reader.move_to().any();
-        let restore = reader.pin();
         let close = reader.open_token(ElTarget::Function);
         let Some((name, mut stop)) = reader.until().char(&[
             &chars::OPEN_BRACKET,
@@ -48,12 +47,10 @@ impl Reading<Function> for Function {
             &chars::OPEN_BRACKET,
             &chars::CLOSE_BRACKET,
         ]) else {
-            restore(reader);
             return Ok(None);
         };
         if stop == chars::WS {
             if reader.move_to().char(&[&chars::OPEN_BRACKET]).is_none() {
-                restore(reader);
                 return Ok(None);
             } else {
                 let _ = reader.move_to().prev();
@@ -80,7 +77,6 @@ impl Reading<Function> for Function {
                 .map(|c| c.is_ascii_digit())
                 .unwrap_or(false)
         {
-            restore(reader);
             return Ok(None);
         }
         let args_close = reader.open_token(ElTarget::Function);
@@ -163,6 +159,8 @@ impl Reading<Function> for Function {
         )?))
     }
 }
+
+impl Dissect<Function, Function> for Function {}
 
 impl Function {
     pub fn new(
@@ -369,7 +367,7 @@ mod reading {
         error::LinkedErr,
         inf::{operator::Operator, tests::*, Configuration},
         read_string,
-        reader::{chars, Reader, Reading, Sources, E},
+        reader::{chars, Dissect, Reader, Sources, E},
     };
 
     #[tokio::test]
@@ -381,7 +379,7 @@ mod reading {
             &include_str!("../tests/reading/function.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(Function::read(reader))? {
+                while let Some(entity) = src.report_err_if(Function::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(reader.recent()),
@@ -407,7 +405,7 @@ mod reading {
             &include_str!("../tests/reading/function.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(Function::read(reader))? {
+                while let Some(entity) = src.report_err_if(Function::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(&format!("{entity}")),
@@ -436,7 +434,7 @@ mod reading {
         let cfg = Configuration::logs(false);
         for sample in samples.iter() {
             count += read_string!(&cfg, sample, |reader: &mut Reader, _: &mut Sources| {
-                let func = Function::read(reader);
+                let func = Function::dissect(reader);
                 if func.is_ok() {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert!(
@@ -467,7 +465,7 @@ mod processing {
             Configuration, Context, Journal, Scope,
         },
         process_string,
-        reader::{chars, Reader, Reading, Sources},
+        reader::{chars, Dissect, Reader, Sources},
     };
 
     #[tokio::test]
@@ -477,7 +475,7 @@ mod processing {
             &include_str!("../tests/processing/functions.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Task> = Vec::new();
-                while let Some(task) = src.report_err_if(Task::read(reader))? {
+                while let Some(task) = src.report_err_if(Task::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
                 }
@@ -514,7 +512,7 @@ mod proptest {
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
-        reader::{Reader, Reading, Sources},
+        reader::{Dissect, Reader, Sources},
     };
     use proptest::prelude::*;
 
@@ -583,7 +581,7 @@ mod proptest {
                 &Configuration::logs(false),
                 &origin,
                 |reader: &mut Reader, src: &mut Sources| {
-                    while let Some(task) = src.report_err_if(Task::read(reader))? {
+                    while let Some(task) = src.report_err_if(Task::dissect(reader))? {
                         assert_eq!(format!("{task};"), origin);
                     }
                     Ok::<(), LinkedErr<E>>(())

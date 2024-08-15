@@ -7,7 +7,7 @@ use crate::{
         operator, scenario, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
         Scope,
     },
-    reader::{chars, words, Reader, Reading, E},
+    reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
 use std::{fmt, path::PathBuf};
 
@@ -62,12 +62,10 @@ impl Component {
     }
 }
 
-impl Reading<Component> for Component {
-    fn read(reader: &mut Reader) -> Result<Option<Component>, LinkedErr<E>> {
+impl TryDissect<Component> for Component {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<Component>, LinkedErr<E>> {
         let close = reader.open_token(ElTarget::Component);
-        let restore = reader.pin();
         let Some((before, _)) = reader.until().char(&[&chars::POUND_SIGN]) else {
-            restore(reader);
             return Ok(None);
         };
         if !before.is_empty() {
@@ -133,6 +131,8 @@ impl Reading<Component> for Component {
         }))
     }
 }
+
+impl Dissect<Component, Component> for Component {}
 
 impl fmt::Display for Component {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -251,7 +251,7 @@ mod reading {
         error::LinkedErr,
         inf::{operator::Operator, tests::*, Configuration},
         read_string,
-        reader::{Reader, Reading, Sources, E},
+        reader::{Dissect, Reader, Sources, E},
     };
 
     #[tokio::test]
@@ -269,7 +269,7 @@ mod reading {
                 .join("\n"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(Component::read(reader))? {
+                while let Some(entity) = src.report_err_if(Component::dissect(reader))? {
                     assert_eq!(
                         trim_carets(reader.recent()),
                         trim_carets(&entity.to_string()),
@@ -347,7 +347,7 @@ mod reading {
                 &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, _: &mut Sources| {
-                    let res = Component::read(reader);
+                    let res = Component::dissect(reader);
                     println!("{res:?}");
                     assert!(res.is_err());
                     Ok::<usize, LinkedErr<E>>(1)
@@ -370,7 +370,7 @@ mod processing {
             Configuration, Context, Journal, Scope,
         },
         process_string,
-        reader::{Reader, Reading, Sources},
+        reader::{Dissect, Reader, Sources},
     };
 
     const VALUES: &[&[&str]] = &[
@@ -387,7 +387,7 @@ mod processing {
             &include_str!("../tests/processing/component.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut components: Vec<Component> = Vec::new();
-                while let Some(task) = src.report_err_if(Component::read(reader))? {
+                while let Some(task) = src.report_err_if(Component::dissect(reader))? {
                     components.push(task);
                 }
                 Ok::<Vec<Component>, LinkedErr<E>>(components)

@@ -1,7 +1,7 @@
 use crate::{
     error::LinkedErr,
     inf::{Formation, FormationCursor},
-    reader::{chars, words, Reader, Reading, E},
+    reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 
@@ -11,29 +11,28 @@ pub struct Comment {
     pub token: usize,
 }
 
-impl Reading<Comment> for Comment {
-    fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
-        let restore = reader.pin();
-        if let Some(stop) = reader.move_to().expression(&[words::META, words::COMMENT]) {
-            if stop == words::META {
-                restore(reader);
-                return Ok(None);
-            }
-            if reader.until().char(&[&chars::CARET]).is_none() {
-                let _ = reader.move_to().end();
-            } else {
-                let _ = reader.move_to().next();
-            }
-            let token = reader.token()?;
-            Ok(Some(Comment {
-                comment: token.content.trim().to_owned(),
-                token: token.id,
-            }))
-        } else {
-            Ok(None)
+impl TryDissect<Comment> for Comment {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
+        let Some(stop) = reader.move_to().expression(&[words::META, words::COMMENT]) else {
+            return Ok(None);
+        };
+        if stop == words::META {
+            return Ok(None);
         }
+        if reader.until().char(&[&chars::CARET]).is_none() {
+            let _ = reader.move_to().end();
+        } else {
+            let _ = reader.move_to().next();
+        }
+        let token = reader.token()?;
+        Ok(Some(Comment {
+            comment: token.content.trim().to_owned(),
+            token: token.id,
+        }))
     }
 }
+
+impl Dissect<Comment, Comment> for Comment {}
 
 impl fmt::Display for Comment {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -70,7 +69,7 @@ mod reading {
         error::LinkedErr,
         inf::Configuration,
         read_string,
-        reader::{chars, Reader, Reading, Sources, E},
+        reader::{chars, Dissect, Reader, Sources, E},
     };
 
     #[tokio::test]
@@ -79,7 +78,7 @@ mod reading {
             &Configuration::logs(false),
             &include_str!("../tests/reading/comments.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
-                while let Some(entity) = src.report_err_if(Task::read(reader))? {
+                while let Some(entity) = src.report_err_if(Task::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     if let Element::Block(block, _) = entity.block.as_ref() {
                         for el in block.elements.iter() {

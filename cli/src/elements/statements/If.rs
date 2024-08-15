@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
-    reader::{words, Reader, Reading, E},
+    reader::{words, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 
@@ -101,8 +101,8 @@ pub struct If {
     pub token: usize,
 }
 
-impl Reading<If> for If {
-    fn read(reader: &mut Reader) -> Result<Option<If>, LinkedErr<E>> {
+impl TryDissect<If> for If {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<If>, LinkedErr<E>> {
         let mut threads: Vec<Thread> = Vec::new();
         let close = reader.open_token(ElTarget::If);
         while !reader.rest().trim().is_empty() {
@@ -134,6 +134,8 @@ impl Reading<If> for If {
         }
     }
 }
+
+impl Dissect<If, If> for If {}
 
 impl fmt::Display for If {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -208,7 +210,7 @@ mod reading {
         error::LinkedErr,
         inf::{operator::Operator, tests::*, Configuration},
         read_string,
-        reader::{chars, Reader, Reading, Sources, E},
+        reader::{chars, Dissect, Reader, Sources, E},
     };
 
     #[tokio::test]
@@ -219,7 +221,7 @@ mod reading {
             &content,
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(If::read(reader))? {
+                while let Some(entity) = src.report_err_if(If::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(reader.recent()),
@@ -244,7 +246,7 @@ mod reading {
             &content,
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(If::read(reader))? {
+                while let Some(entity) = src.report_err_if(If::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(&format!("{entity}")),
@@ -291,7 +293,7 @@ mod reading {
                 &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, _: &mut Sources| {
-                    assert!(If::read(reader).is_err());
+                    assert!(If::dissect(reader).is_err());
                     Ok::<usize, LinkedErr<E>>(1)
                 }
             );
@@ -312,7 +314,7 @@ mod processing {
             Configuration, Context, Journal, Scope,
         },
         process_string,
-        reader::{chars, Reader, Reading, Sources},
+        reader::{chars, Dissect, Reader, Sources},
     };
 
     #[tokio::test]
@@ -325,7 +327,7 @@ mod processing {
             &include_str!("../../tests/processing/if.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Task> = Vec::new();
-                while let Some(task) = src.report_err_if(Task::read(reader))? {
+                while let Some(task) = src.report_err_if(Task::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
                 }
@@ -366,7 +368,7 @@ mod proptest {
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
-        reader::{Reader, Reading, Sources},
+        reader::{Dissect, Reader, Sources},
     };
     use proptest::prelude::*;
 
@@ -417,7 +419,7 @@ mod proptest {
                 &Configuration::logs(false),
                 &origin,
                 |reader: &mut Reader, src: &mut Sources| {
-                    while let Some(task) = src.report_err_if(Task::read(reader))? {
+                    while let Some(task) = src.report_err_if(Task::dissect(reader))? {
                         assert_eq!(format!("{task};"), origin);
                     }
                     Ok::<(), LinkedErr<E>>(())

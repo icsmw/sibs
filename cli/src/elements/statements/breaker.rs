@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
     inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
-    reader::{words, Reader, Reading, E},
+    reader::{words, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 
@@ -13,8 +13,8 @@ pub struct Breaker {
     pub token: usize,
 }
 
-impl Reading<Breaker> for Breaker {
-    fn read(reader: &mut Reader) -> Result<Option<Breaker>, LinkedErr<E>> {
+impl TryDissect<Breaker> for Breaker {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<Breaker>, LinkedErr<E>> {
         let close = reader.open_token(ElTarget::Breaker);
         if reader.move_to().word(&[words::BREAK]).is_some() {
             Ok(Some(Breaker {
@@ -25,6 +25,8 @@ impl Reading<Breaker> for Breaker {
         }
     }
 }
+
+impl Dissect<Breaker, Breaker> for Breaker {}
 
 impl fmt::Display for Breaker {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -65,7 +67,7 @@ mod reading {
         error::LinkedErr,
         inf::{tests::*, Configuration},
         read_string,
-        reader::{chars, Reader, Reading, Sources, E},
+        reader::{chars, Dissect, Reader, Sources, E},
     };
 
     #[tokio::test]
@@ -75,7 +77,7 @@ mod reading {
             &include_str!("../../tests/reading/break.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(Each::read(reader))? {
+                while let Some(entity) = src.report_err_if(Each::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(reader.recent()),
@@ -97,7 +99,7 @@ mod reading {
             &include_str!("../../tests/reading/break.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(Each::read(reader))? {
+                while let Some(entity) = src.report_err_if(Each::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(&format!("{entity}")),
@@ -129,7 +131,7 @@ mod processing {
             Configuration, Context, Journal, Scope,
         },
         process_string,
-        reader::{chars, Reader, Reading, Sources},
+        reader::{chars, Dissect, Reader, Sources},
     };
     const VALUES: &[(&str, &str)] = &[("a", "two"), ("b", "one"), ("c", "one")];
 
@@ -140,7 +142,7 @@ mod processing {
             &include_str!("../../tests/processing/break.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Task> = Vec::new();
-                while let Some(task) = src.report_err_if(Task::read(reader))? {
+                while let Some(task) = src.report_err_if(Task::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
                 }

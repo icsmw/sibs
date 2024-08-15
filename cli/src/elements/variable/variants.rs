@@ -7,7 +7,7 @@ use crate::{
         operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
         Scope,
     },
-    reader::{chars, Reader, Reading, E},
+    reader::{chars, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 
@@ -17,8 +17,8 @@ pub struct VariableVariants {
     pub token: usize,
 }
 
-impl Reading<VariableVariants> for VariableVariants {
-    fn read(reader: &mut Reader) -> Result<Option<VariableVariants>, LinkedErr<E>> {
+impl TryDissect<VariableVariants> for VariableVariants {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<VariableVariants>, LinkedErr<E>> {
         let content = reader
             .until()
             .char(&[&chars::SEMICOLON])
@@ -27,6 +27,8 @@ impl Reading<VariableVariants> for VariableVariants {
         Ok(Some(VariableVariants::new(content, reader.token()?.id)?))
     }
 }
+
+impl Dissect<VariableVariants, VariableVariants> for VariableVariants {}
 
 impl VariableVariants {
     pub fn new(input: String, token: usize) -> Result<Self, LinkedErr<E>> {
@@ -104,7 +106,7 @@ mod reading {
         error::LinkedErr,
         inf::Configuration,
         read_string,
-        reader::{Reader, Reading, Sources, E},
+        reader::{Dissect, Reader, Sources, E},
     };
 
     #[tokio::test]
@@ -117,7 +119,7 @@ mod reading {
                 &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, src: &mut Sources| {
-                    assert!(src.report_err_if(VariableVariants::read(reader)).is_ok());
+                    assert!(src.report_err_if(VariableVariants::dissect(reader)).is_ok());
                     Ok::<usize, LinkedErr<E>>(1)
                 }
             );
@@ -135,7 +137,7 @@ mod reading {
                 &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, _: &mut Sources| {
-                    assert!(VariableVariants::read(reader).is_err());
+                    assert!(VariableVariants::dissect(reader).is_err());
                     Ok::<usize, LinkedErr<E>>(1)
                 }
             );

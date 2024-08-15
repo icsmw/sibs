@@ -4,7 +4,7 @@ use crate::{
     elements::{Cmb, Component, ElTarget, Element},
     error::LinkedErr,
     inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
-    reader::{chars, words, Reader, Reading, E},
+    reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 
@@ -14,8 +14,8 @@ pub struct Subsequence {
     pub token: usize,
 }
 
-impl Reading<Subsequence> for Subsequence {
-    fn read(reader: &mut Reader) -> Result<Option<Subsequence>, LinkedErr<E>> {
+impl TryDissect<Subsequence> for Subsequence {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<Subsequence>, LinkedErr<E>> {
         let close = reader.open_token(ElTarget::Subsequence);
         let mut subsequence: Vec<Element> = Vec::new();
         while !reader.rest().trim().is_empty() {
@@ -63,6 +63,8 @@ impl Reading<Subsequence> for Subsequence {
         }
     }
 }
+
+impl Dissect<Subsequence, Subsequence> for Subsequence {}
 
 impl fmt::Display for Subsequence {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -176,7 +178,7 @@ mod reading {
         error::LinkedErr,
         inf::{operator::Operator, tests::*, Configuration},
         read_string,
-        reader::{Reader, Reading, Sources, E},
+        reader::{Dissect, Reader, Sources, E},
     };
 
     #[tokio::test]
@@ -191,7 +193,7 @@ mod reading {
                 &Configuration::logs(false),
                 str,
                 |reader: &mut Reader, src: &mut Sources| {
-                    let entity = src.report_err_if(Subsequence::read(reader))?;
+                    let entity = src.report_err_if(Subsequence::dissect(reader))?;
                     assert!(entity.is_some(), "Line: {}", count + 1);
                     let entity = entity.unwrap();
                     assert_eq!(
@@ -218,7 +220,7 @@ mod reading {
                 &Configuration::logs(false),
                 str,
                 |reader: &mut Reader, src: &mut Sources| {
-                    let entity = src.report_err_if(Subsequence::read(reader))?;
+                    let entity = src.report_err_if(Subsequence::dissect(reader))?;
                     assert!(entity.is_some(), "Line: {}", count + 1);
                     let entity = entity.unwrap();
                     assert_eq!(

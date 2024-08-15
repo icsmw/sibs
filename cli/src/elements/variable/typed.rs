@@ -7,7 +7,7 @@ use crate::{
         operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
         Scope,
     },
-    reader::{chars, Reader, Reading, E},
+    reader::{chars, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 
@@ -38,8 +38,8 @@ pub struct VariableType {
     pub token: usize,
 }
 
-impl Reading<VariableType> for VariableType {
-    fn read(reader: &mut Reader) -> Result<Option<VariableType>, LinkedErr<E>> {
+impl TryDissect<VariableType> for VariableType {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<VariableType>, LinkedErr<E>> {
         let close = reader.open_token(ElTarget::VariableType);
         if reader.move_to().char(&[&chars::OPEN_CURLY_BRACE]).is_some() {
             if let Some((word, _char)) = reader.until().char(&[&chars::CLOSE_CURLY_BRACE]) {
@@ -53,6 +53,8 @@ impl Reading<VariableType> for VariableType {
         }
     }
 }
+
+impl Dissect<VariableType, VariableType> for VariableType {}
 
 impl VariableType {
     pub fn new(var_type: String, token: usize) -> Result<Self, LinkedErr<E>> {

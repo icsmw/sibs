@@ -131,7 +131,7 @@ mod test {
             Configuration, Context, Journal, Scope,
         },
         process_string,
-        reader::{chars, Reader, Reading, Sources},
+        reader::{chars, Dissect, Reader, Sources},
     };
     use tokio_util::sync::CancellationToken;
 
@@ -199,7 +199,7 @@ mod test {
             &content,
             |reader: &mut Reader, src: &mut Sources| {
                 let mut components: Vec<Component> = Vec::new();
-                while let Some(component) = src.report_err_if(Component::read(reader))? {
+                while let Some(component) = src.report_err_if(Component::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     components.push(component);
                 }

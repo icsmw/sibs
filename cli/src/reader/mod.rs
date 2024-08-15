@@ -21,8 +21,18 @@ use extentions::*;
 pub use sources::*;
 use std::{cell::RefCell, future::Future, path::PathBuf, pin::Pin, rc::Rc};
 
-pub trait Reading<T> {
-    fn read(reader: &mut Reader) -> Result<Option<T>, LinkedErr<E>>;
+pub trait TryDissect<T> {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<T>, LinkedErr<E>>;
+}
+
+pub trait Dissect<T, O: TryDissect<T>> {
+    fn dissect(reader: &mut Reader) -> Result<Option<T>, LinkedErr<E>> {
+        let restore = reader.pin();
+        Ok(O::try_dissect(reader)?.or_else(|| {
+            restore(reader);
+            None
+        }))
+    }
 }
 
 #[derive(Debug)]

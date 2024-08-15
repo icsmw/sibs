@@ -1,7 +1,7 @@
 use crate::{
     error::LinkedErr,
     inf::{Formation, FormationCursor},
-    reader::{chars, words, Reader, Reading, E},
+    reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 
@@ -20,8 +20,8 @@ impl Meta {
     }
 }
 
-impl Reading<Meta> for Meta {
-    fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
+impl TryDissect<Meta> for Meta {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
         let mut inner: Vec<String> = Vec::new();
         while reader.move_to().expression(&[words::META]).is_some() {
             if let Some((line, _)) = reader.until().char(&[&chars::CARET]) {
@@ -40,6 +40,8 @@ impl Reading<Meta> for Meta {
         }
     }
 }
+
+impl Dissect<Meta, Meta> for Meta {}
 
 impl fmt::Display for Meta {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

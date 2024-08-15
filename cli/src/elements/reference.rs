@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget, Element, Gatekeeper},
     error::LinkedErr,
     inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
-    reader::{chars, Reader, Reading, E},
+    reader::{chars, Dissect, Reader, TryDissect, E},
 };
 use std::{
     cmp::{Eq, PartialEq},
@@ -27,8 +27,8 @@ impl PartialEq for Reference {
 }
 impl Eq for Reference {}
 
-impl Reading<Reference> for Reference {
-    fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
+impl TryDissect<Reference> for Reference {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
         let close = reader.open_token(ElTarget::Reference);
         if reader.move_to().char(&[&chars::COLON]).is_some() {
             let mut path: Vec<String> = Vec::new();
@@ -104,6 +104,8 @@ impl Reading<Reference> for Reference {
         }
     }
 }
+
+impl Dissect<Reference, Reference> for Reference {}
 
 impl fmt::Display for Reference {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -233,7 +235,7 @@ mod reading {
         error::LinkedErr,
         inf::{operator::Operator, tests::*, Configuration},
         read_string,
-        reader::{chars, Reader, Reading, Sources, E},
+        reader::{chars, Dissect, Reader, Sources, E},
     };
 
     #[tokio::test]
@@ -243,7 +245,7 @@ mod reading {
             &include_str!("../tests/reading/refs.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(Reference::read(reader))? {
+                while let Some(entity) = src.report_err_if(Reference::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(reader.recent()),
@@ -267,7 +269,7 @@ mod reading {
             &include_str!("../tests/reading/refs.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(Reference::read(reader))? {
+                while let Some(entity) = src.report_err_if(Reference::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     for input in entity.inputs.iter() {
                         assert_eq!(
@@ -295,7 +297,7 @@ mod reading {
                 &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, _: &mut Sources| {
-                    let result = Reference::read(reader);
+                    let result = Reference::dissect(reader);
                     assert!(result.is_err(), "Line: {}", count + 1);
                     Ok::<usize, LinkedErr<E>>(1)
                 }

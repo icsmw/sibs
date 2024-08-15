@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
-    reader::{chars, Reader, Reading, E},
+    reader::{chars, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 
@@ -14,8 +14,8 @@ pub struct Condition {
     pub token: usize,
 }
 
-impl Reading<Condition> for Condition {
-    fn read(reader: &mut Reader) -> Result<Option<Condition>, LinkedErr<E>> {
+impl TryDissect<Condition> for Condition {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<Condition>, LinkedErr<E>> {
         let close = reader.open_token(ElTarget::Condition);
         if reader
             .group()
@@ -36,6 +36,8 @@ impl Reading<Condition> for Condition {
         }
     }
 }
+
+impl Dissect<Condition, Condition> for Condition {}
 
 impl fmt::Display for Condition {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -4,22 +4,22 @@ use crate::{
     elements::{Component, ElTarget, Element, Gatekeeper},
     error::LinkedErr,
     inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
-    reader::{chars, Reader, Reading, E},
+    reader::{chars, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
-
-const SELF: &str = "self";
 
 #[derive(Debug, Clone)]
 pub struct Call {
     pub token: usize,
 }
 
-impl Reading<Call> for Call {
-    fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
+impl TryDissect<Call> for Call {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
         Ok(None)
     }
 }
+
+impl Dissect<Call, Call> for Call {}
 
 impl fmt::Display for Call {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

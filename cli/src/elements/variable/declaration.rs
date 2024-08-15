@@ -7,7 +7,7 @@ use crate::{
         operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
         Scope,
     },
-    reader::{chars, Reader, Reading, E},
+    reader::{chars, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 
@@ -62,8 +62,8 @@ impl VariableDeclaration {
     }
 }
 
-impl Reading<VariableDeclaration> for VariableDeclaration {
-    fn read(reader: &mut Reader) -> Result<Option<VariableDeclaration>, LinkedErr<E>> {
+impl TryDissect<VariableDeclaration> for VariableDeclaration {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<VariableDeclaration>, LinkedErr<E>> {
         let close = reader.open_token(ElTarget::VariableDeclaration);
         if let Some(variable) = Element::include(reader, &[ElTarget::VariableName])? {
             if reader.move_to().char(&[&chars::COLON]).is_some() {
@@ -87,6 +87,8 @@ impl Reading<VariableDeclaration> for VariableDeclaration {
         }
     }
 }
+
+impl Dissect<VariableDeclaration, VariableDeclaration> for VariableDeclaration {}
 
 impl Operator for VariableDeclaration {
     fn token(&self) -> usize {

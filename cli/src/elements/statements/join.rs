@@ -5,7 +5,7 @@ use crate::{
         operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
         OperatorResult, Scope,
     },
-    reader::{words, Reader, Reading, E},
+    reader::{words, Dissect, Reader, TryDissect, E},
 };
 use futures::stream::{FuturesUnordered, StreamExt};
 use std::fmt;
@@ -21,8 +21,8 @@ pub struct Join {
     pub token: usize,
 }
 
-impl Reading<Join> for Join {
-    fn read(reader: &mut Reader) -> Result<Option<Join>, LinkedErr<E>> {
+impl TryDissect<Join> for Join {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<Join>, LinkedErr<E>> {
         let close = reader.open_token(ElTarget::Join);
         if reader.move_to().word(&[words::JOIN]).is_some() {
             let Some(Element::Values(elements, md)) =
@@ -50,6 +50,8 @@ impl Reading<Join> for Join {
         }
     }
 }
+
+impl Dissect<Join, Join> for Join {}
 
 impl fmt::Display for Join {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -197,7 +199,7 @@ mod reading {
         error::LinkedErr,
         inf::{tests::*, Configuration, Operator},
         read_string,
-        reader::{chars, Reader, Reading, Sources, E},
+        reader::{chars, Dissect, Reader, Sources, E},
     };
 
     #[tokio::test]
@@ -207,7 +209,7 @@ mod reading {
             &include_str!("../../tests/reading/join.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(Join::read(reader))? {
+                while let Some(entity) = src.report_err_if(Join::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(reader.recent()),
@@ -229,7 +231,7 @@ mod reading {
             &include_str!("../../tests/reading/join.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(Join::read(reader))? {
+                while let Some(entity) = src.report_err_if(Join::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(&format!("{entity}")),
@@ -258,7 +260,7 @@ mod reading {
                 &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, _: &mut Sources| {
-                    assert!(Join::read(reader).is_err());
+                    assert!(Join::dissect(reader).is_err());
                     Ok::<usize, LinkedErr<E>>(1)
                 }
             );
@@ -411,7 +413,7 @@ mod proptest {
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
-        reader::{Reader, Reading, Sources},
+        reader::{Dissect, Reader, Sources},
     };
     use proptest::prelude::*;
 
@@ -447,7 +449,7 @@ mod proptest {
                 &Configuration::logs(false),
                 &origin,
                 |reader: &mut Reader, src: &mut Sources| {
-                    while let Some(task) = src.report_err_if(Task::read(reader))? {
+                    while let Some(task) = src.report_err_if(Task::dissect(reader))? {
                         assert_eq!(format!("{task};"), origin);
                     }
                     Ok::<(), LinkedErr<E>>(())

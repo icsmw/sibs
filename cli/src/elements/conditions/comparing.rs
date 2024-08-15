@@ -7,7 +7,7 @@ use crate::{
         operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
         Scope,
     },
-    reader::{words, Reader, Reading, E},
+    reader::{words, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 
@@ -59,9 +59,8 @@ pub struct Comparing {
     pub token: usize,
 }
 
-impl Reading<Comparing> for Comparing {
-    fn read(reader: &mut Reader) -> Result<Option<Comparing>, LinkedErr<E>> {
-        let restore = reader.pin();
+impl TryDissect<Comparing> for Comparing {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<Comparing>, LinkedErr<E>> {
         let close = reader.open_token(ElTarget::Comparing);
         let left = if let Some(el) = Element::include(
             reader,
@@ -75,7 +74,6 @@ impl Reading<Comparing> for Comparing {
         )? {
             Box::new(el)
         } else {
-            restore(reader);
             return Ok(None);
         };
         let cmp = if let Some(word) = reader.move_to().expression(&[
@@ -88,7 +86,6 @@ impl Reading<Comparing> for Comparing {
         ]) {
             Cmp::from_str(&word)?
         } else {
-            restore(reader);
             return Ok(None);
         };
         let right = if let Some(el) = Element::include(
@@ -103,7 +100,6 @@ impl Reading<Comparing> for Comparing {
         )? {
             Box::new(el)
         } else {
-            restore(reader);
             return Ok(None);
         };
         Ok(Some(Comparing {
@@ -114,6 +110,8 @@ impl Reading<Comparing> for Comparing {
         }))
     }
 }
+
+impl Dissect<Comparing, Comparing> for Comparing {}
 
 impl fmt::Display for Comparing {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -195,7 +193,7 @@ mod reading {
         error::LinkedErr,
         inf::{operator::Operator, tests::*, Configuration},
         read_string,
-        reader::{chars, Reader, Reading, Sources, E},
+        reader::{chars, Dissect, Reader, Sources, E},
     };
 
     #[tokio::test]
@@ -293,7 +291,7 @@ mod reading {
                 &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, _: &mut Sources| {
-                    let cmp = Comparing::read(reader);
+                    let cmp = Comparing::dissect(reader);
                     assert!(cmp.is_err() || matches!(cmp, Ok(None)));
                     Ok::<usize, LinkedErr<E>>(1)
                 }

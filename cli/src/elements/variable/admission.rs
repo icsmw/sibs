@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
     inf::{operator, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
-    reader::{chars, Reader, Reading, E},
+    reader::{chars, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 
@@ -14,8 +14,8 @@ pub struct VariableName {
     pub token: usize,
 }
 
-impl Reading<VariableName> for VariableName {
-    fn read(reader: &mut Reader) -> Result<Option<VariableName>, LinkedErr<E>> {
+impl TryDissect<VariableName> for VariableName {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<VariableName>, LinkedErr<E>> {
         reader.move_to().any();
         let close = reader.open_token(ElTarget::VariableName);
         if reader.move_to().char(&[&chars::DOLLAR]).is_some() {
@@ -30,6 +30,8 @@ impl Reading<VariableName> for VariableName {
         }
     }
 }
+
+impl Dissect<VariableName, VariableName> for VariableName {}
 
 impl VariableName {
     pub fn new(mut name: String, token: usize) -> Result<Self, LinkedErr<E>> {
@@ -87,7 +89,7 @@ mod reading {
         error::LinkedErr,
         inf::Configuration,
         read_string,
-        reader::{Reader, Reading, Sources, E},
+        reader::{Dissect, Reader, Sources, E},
     };
 
     #[tokio::test]
@@ -100,7 +102,7 @@ mod reading {
                 &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, src: &mut Sources| {
-                    src.report_err_if(VariableName::read(reader))?.unwrap();
+                    src.report_err_if(VariableName::dissect(reader))?.unwrap();
                     Ok::<usize, LinkedErr<E>>(1)
                 }
             );
@@ -118,7 +120,7 @@ mod reading {
                 &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, src: &mut Sources| {
-                    let variable_name = src.report_err_if(VariableName::read(reader))?.unwrap();
+                    let variable_name = src.report_err_if(VariableName::dissect(reader))?.unwrap();
                     let fragment = reader.get_fragment(&reader.token()?.id)?.content;
                     assert_eq!(format!("${}", variable_name.name), fragment);
                     assert_eq!(fragment, variable_name.to_string());
@@ -139,7 +141,7 @@ mod reading {
                 &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, _: &mut Sources| {
-                    assert!(VariableName::read(reader).is_err());
+                    assert!(VariableName::dissect(reader).is_err());
                     Ok::<usize, LinkedErr<E>>(1)
                 }
             );

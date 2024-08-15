@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
     inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
-    reader::{words, Reader, Reading, E},
+    reader::{words, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 
@@ -14,8 +14,9 @@ pub struct Boolean {
     pub token: usize,
 }
 
-impl Reading<Boolean> for Boolean {
-    fn read(reader: &mut Reader) -> Result<Option<Boolean>, LinkedErr<E>> {
+impl TryDissect<Boolean> for Boolean {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<Boolean>, LinkedErr<E>> {
+        reader.move_to().any();
         if let Some(value) = reader.move_to().word(&[words::TRUE, words::FALSE]) {
             Ok(Some(Boolean {
                 value: value == words::TRUE,
@@ -26,6 +27,8 @@ impl Reading<Boolean> for Boolean {
         }
     }
 }
+
+impl Dissect<Boolean, Boolean> for Boolean {}
 
 impl fmt::Display for Boolean {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -131,7 +131,7 @@ mod test {
             Configuration, Context, Scope,
         },
         process_string,
-        reader::{chars, Reader, Reading, Sources},
+        reader::{chars, Dissect, Reader, Sources},
     };
 
     const TESTS: &[&str] = &[
@@ -159,7 +159,7 @@ mod test {
                 &apply_hooks(format!("test[{test}]"), hooks),
                 |reader: &mut Reader, src: &mut Sources| {
                     let mut tasks: Vec<Task> = Vec::new();
-                    while let Some(task) = src.report_err_if(Task::read(reader))? {
+                    while let Some(task) = src.report_err_if(Task::dissect(reader))? {
                         let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                         tasks.push(task);
                     }

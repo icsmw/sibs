@@ -4,7 +4,7 @@ use crate::{
     elements::Component,
     error::LinkedErr,
     inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
-    reader::{words, Reader, Reading, E},
+    reader::{words, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 
@@ -33,8 +33,8 @@ pub struct Combination {
     pub token: usize,
 }
 
-impl Reading<Combination> for Combination {
-    fn read(reader: &mut Reader) -> Result<Option<Combination>, LinkedErr<E>> {
+impl TryDissect<Combination> for Combination {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<Combination>, LinkedErr<E>> {
         if reader.move_to().expression(&[words::AND]).is_some() {
             Ok(Some(Combination {
                 cmb: Cmb::And,
@@ -50,6 +50,8 @@ impl Reading<Combination> for Combination {
         }
     }
 }
+
+impl Dissect<Combination, Combination> for Combination {}
 
 impl fmt::Display for Combination {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

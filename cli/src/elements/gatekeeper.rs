@@ -7,7 +7,7 @@ use crate::{
         operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
         Scope,
     },
-    reader::{words, Reader, Reading, E},
+    reader::{words, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 
@@ -74,12 +74,11 @@ impl Gatekeeper {
         Ok(true)
     }
 }
-impl Reading<Gatekeeper> for Gatekeeper {
-    fn read(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
+impl TryDissect<Gatekeeper> for Gatekeeper {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
         if reader.rest().trim().starts_with(words::REF_TO) {
             return Ok(None);
         }
-        let restore = reader.pin();
         let close = reader.open_token(ElTarget::Gatekeeper);
         let function = if let Some(el) = Element::include(reader, &[ElTarget::Function])? {
             Box::new(el)
@@ -87,7 +86,6 @@ impl Reading<Gatekeeper> for Gatekeeper {
             return Ok(None);
         };
         if !reader.rest().trim().starts_with(words::REF_TO) {
-            restore(reader);
             return Ok(None);
         }
         if reader.move_to().expression(&[words::REF_TO]).is_none() {
@@ -118,6 +116,8 @@ impl Reading<Gatekeeper> for Gatekeeper {
         }))
     }
 }
+
+impl Dissect<Gatekeeper, Gatekeeper> for Gatekeeper {}
 
 impl fmt::Display for Gatekeeper {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -177,7 +177,7 @@ mod reading {
         error::LinkedErr,
         inf::{operator::Operator, tests::*, Configuration},
         read_string,
-        reader::{chars, Reader, Reading, Sources, E},
+        reader::{chars, Dissect, Reader, Sources, E},
     };
 
     #[tokio::test]
@@ -187,7 +187,7 @@ mod reading {
             &include_str!("../tests/reading/gatekeeper.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(Gatekeeper::read(reader))? {
+                while let Some(entity) = src.report_err_if(Gatekeeper::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(reader.recent()),
@@ -211,7 +211,7 @@ mod reading {
             &include_str!("../tests/reading/gatekeeper.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(Gatekeeper::read(reader))? {
+                while let Some(entity) = src.report_err_if(Gatekeeper::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(&format!("{entity}")),
@@ -254,7 +254,7 @@ mod reading {
                 &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, _: &mut Sources| {
-                    let opt = Gatekeeper::read(reader);
+                    let opt = Gatekeeper::dissect(reader);
                     assert!(opt.is_err());
                     Ok::<usize, LinkedErr<E>>(1)
                 }
@@ -276,7 +276,7 @@ mod processing {
             Configuration, Context, Journal, Scope,
         },
         process_string,
-        reader::{chars, Reader, Reading, Sources},
+        reader::{chars, Dissect, Reader, Sources},
     };
     const CASES: &[&[(&[&str], Option<bool>)]] = &[
         &[(&["test", "a"], None), (&["test", "b"], Some(true))],
@@ -291,7 +291,7 @@ mod processing {
             &include_str!("../tests/processing/gatekeeper.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut components: Vec<Component> = Vec::new();
-                while let Some(component) = src.report_err_if(Component::read(reader))? {
+                while let Some(component) = src.report_err_if(Component::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     components.push(component);
                 }
@@ -329,7 +329,7 @@ mod proptest {
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
-        reader::{Reader, Reading, Sources},
+        reader::{Dissect, Reader, Sources},
     };
     use proptest::prelude::*;
 
@@ -367,7 +367,7 @@ mod proptest {
                 &Configuration::logs(false),
                 &origin,
                 |reader: &mut Reader, src: &mut Sources| {
-                    while let Some(component) = src.report_err_if(Component::read(reader))? {
+                    while let Some(component) = src.report_err_if(Component::dissect(reader))? {
                         assert_eq!(format!("{component}"), origin);
                     }
                     Ok::<(), LinkedErr<E>>(())

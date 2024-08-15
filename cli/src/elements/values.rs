@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
-    reader::{chars, Reader, Reading, E},
+    reader::{chars, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 
@@ -14,8 +14,8 @@ pub struct Values {
     pub token: usize,
 }
 
-impl Reading<Values> for Values {
-    fn read(reader: &mut Reader) -> Result<Option<Values>, LinkedErr<E>> {
+impl TryDissect<Values> for Values {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<Values>, LinkedErr<E>> {
         let close = reader.open_token(ElTarget::Values);
         if reader
             .group()
@@ -69,6 +69,8 @@ impl Reading<Values> for Values {
         }
     }
 }
+
+impl Dissect<Values, Values> for Values {}
 
 impl fmt::Display for Values {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -151,7 +153,7 @@ mod reading {
         error::LinkedErr,
         inf::{operator::Operator, tests::*, Configuration},
         read_string,
-        reader::{Reader, Reading, Sources, E},
+        reader::{Dissect, Reader, Sources, E},
     };
 
     #[tokio::test]
@@ -163,7 +165,7 @@ mod reading {
         for sample in samples.iter() {
             count += read_string!(&cfg, sample, |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                let entity = src.report_err_if(Values::read(reader))?;
+                let entity = src.report_err_if(Values::dissect(reader))?;
                 assert!(entity.is_some(), "Line: {}", count + 1);
                 let entity = entity.unwrap();
                 assert_eq!(
@@ -188,7 +190,7 @@ mod reading {
         for sample in samples.iter() {
             count += read_string!(&cfg, sample, |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                let entity = src.report_err_if(Values::read(reader))?.unwrap();
+                let entity = src.report_err_if(Values::dissect(reader))?.unwrap();
                 assert_eq!(
                     trim_carets(&entity.to_string()),
                     reader.get_fragment(&entity.token)?.lined,
@@ -218,7 +220,7 @@ mod reading {
         let cfg = Configuration::logs(false);
         for sample in samples.iter() {
             count += read_string!(&cfg, sample, |reader: &mut Reader, _: &mut Sources| {
-                assert!(Values::read(reader).is_err());
+                assert!(Values::dissect(reader).is_err());
                 Ok::<usize, LinkedErr<E>>(1)
             });
         }
@@ -238,7 +240,7 @@ mod processing {
             AnyValue, Configuration, Context, Journal, Scope,
         },
         process_string, read_string,
-        reader::{chars, Reader, Reading, Sources},
+        reader::{chars, Dissect, Reader, Sources},
     };
 
     const VALUES: &[(&str, &str)] = &[
@@ -258,7 +260,7 @@ mod processing {
             &include_str!("../tests/processing/values_components.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut components: Vec<Component> = Vec::new();
-                while let Some(component) = src.report_err_if(Component::read(reader))? {
+                while let Some(component) = src.report_err_if(Component::dissect(reader))? {
                     components.push(component);
                 }
                 Ok::<Vec<Component>, LinkedErr<E>>(components)
@@ -269,7 +271,7 @@ mod processing {
             &include_str!("../tests/processing/values.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Task> = Vec::new();
-                while let Some(task) = src.report_err_if(Task::read(reader))? {
+                while let Some(task) = src.report_err_if(Task::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
                 }

@@ -7,7 +7,7 @@ use crate::{
         operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
         Scope,
     },
-    reader::{chars, words, Reader, Reading, E},
+    reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 
@@ -19,9 +19,8 @@ pub struct VariableAssignation {
     pub token: usize,
 }
 
-impl Reading<VariableAssignation> for VariableAssignation {
-    fn read(reader: &mut Reader) -> Result<Option<VariableAssignation>, LinkedErr<E>> {
-        let restore = reader.pin();
+impl TryDissect<VariableAssignation> for VariableAssignation {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<VariableAssignation>, LinkedErr<E>> {
         let close = reader.open_token(ElTarget::VariableAssignation);
         let global = reader.move_to().word(&[words::GLOBAL_VAR]).is_some();
         if let Some(Element::VariableName(variable, _)) =
@@ -32,7 +31,6 @@ impl Reading<VariableAssignation> for VariableAssignation {
                 || rest.starts_with(words::CMP_TRUE)
                 || !rest.starts_with(chars::EQUAL)
             {
-                restore(reader);
                 return Ok(None);
             }
             let _ = reader.move_to().char(&[&chars::EQUAL]);
@@ -67,6 +65,8 @@ impl Reading<VariableAssignation> for VariableAssignation {
         }
     }
 }
+
+impl Dissect<VariableAssignation, VariableAssignation> for VariableAssignation {}
 
 impl fmt::Display for VariableAssignation {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -132,7 +132,7 @@ mod reading {
         error::LinkedErr,
         inf::{operator::Operator, tests::*, Configuration},
         read_string,
-        reader::{chars, Reader, Reading, Sources, E},
+        reader::{chars, Dissect, Reader, Sources, E},
     };
 
     #[tokio::test]
@@ -142,7 +142,7 @@ mod reading {
             &include_str!("../../tests/reading/variable_assignation.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(VariableAssignation::read(reader))? {
+                while let Some(entity) = src.report_err_if(VariableAssignation::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(reader.recent()),
@@ -166,7 +166,7 @@ mod reading {
             &include_str!("../../tests/reading/variable_assignation.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(VariableAssignation::read(reader))? {
+                while let Some(entity) = src.report_err_if(VariableAssignation::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(&format!("{entity}")),
@@ -206,7 +206,7 @@ mod reading {
                 &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, _: &mut Sources| {
-                    assert!(VariableAssignation::read(reader).is_err());
+                    assert!(VariableAssignation::dissect(reader).is_err());
                     Ok::<usize, LinkedErr<E>>(1)
                 }
             );
@@ -227,7 +227,7 @@ mod processing {
             Configuration, Context, Journal, Scope,
         },
         process_string,
-        reader::{chars, Reader, Reading, Sources},
+        reader::{chars, Dissect, Reader, Sources},
     };
 
     const VALUES: &[(&str, &str, bool)] = &[
@@ -247,7 +247,7 @@ mod processing {
             &include_str!("../../tests/processing/variable_assignation.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Task> = Vec::new();
-                while let Some(task) = src.report_err_if(Task::read(reader))? {
+                while let Some(task) = src.report_err_if(Task::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
                 }
@@ -293,7 +293,7 @@ mod proptest {
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
-        reader::{Reader, Reading, Sources},
+        reader::{Dissect, Reader, Sources},
     };
     use proptest::prelude::*;
 
@@ -352,7 +352,7 @@ mod proptest {
                 &Configuration::logs(false),
                 &origin,
                 |reader: &mut Reader, src: &mut Sources| {
-                    while let Some(task) = src.report_err_if(Task::read(reader))? {
+                    while let Some(task) = src.report_err_if(Task::dissect(reader))? {
                         assert_eq!(format!("{task};"), origin);
                     }
                     Ok::<(), LinkedErr<E>>(())

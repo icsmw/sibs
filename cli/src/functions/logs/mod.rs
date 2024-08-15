@@ -28,7 +28,7 @@ mod test {
             Configuration, Context, Journal, Scope,
         },
         process_string,
-        reader::{chars, Reader, Reading, Sources},
+        reader::{chars, Dissect, Reader, Sources},
     };
     use std::{env::temp_dir, fs::read_to_string};
     use tokio_util::sync::CancellationToken;
@@ -59,7 +59,7 @@ mod test {
                 &format!("test[{test}]"),
                 |reader: &mut Reader, src: &mut Sources| {
                     let mut tasks: Vec<Task> = Vec::new();
-                    while let Some(task) = src.report_err_if(Task::read(reader))? {
+                    while let Some(task) = src.report_err_if(Task::dissect(reader))? {
                         let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                         tasks.push(task);
                     }

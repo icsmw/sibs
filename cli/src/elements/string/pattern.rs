@@ -7,7 +7,7 @@ use crate::{
         operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
         Scope,
     },
-    reader::{chars, Reader, Reading, E},
+    reader::{chars, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 
@@ -17,8 +17,8 @@ pub struct PatternString {
     pub token: usize,
 }
 
-impl Reading<PatternString> for PatternString {
-    fn read(reader: &mut Reader) -> Result<Option<PatternString>, LinkedErr<E>> {
+impl TryDissect<PatternString> for PatternString {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<PatternString>, LinkedErr<E>> {
         if let Some((_, elements, token)) =
             string::read(reader, chars::QUOTES, ElTarget::PatternString)?
         {
@@ -28,6 +28,8 @@ impl Reading<PatternString> for PatternString {
         }
     }
 }
+
+impl Dissect<PatternString, PatternString> for PatternString {}
 
 impl fmt::Display for PatternString {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -133,7 +135,7 @@ mod reading {
         error::LinkedErr,
         inf::{operator::Operator, tests::*, Configuration},
         read_string,
-        reader::{Reader, Reading, Sources, E},
+        reader::{Dissect, Reader, Sources, E},
     };
 
     #[tokio::test]
@@ -147,7 +149,7 @@ mod reading {
                     .map(|s| s.to_string())
                     .collect::<Vec<String>>();
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(PatternString::read(reader))? {
+                while let Some(entity) = src.report_err_if(PatternString::dissect(reader))? {
                     assert_eq!(
                         trim_carets(reader.recent()),
                         trim_carets(&entity.to_string()),
@@ -174,7 +176,7 @@ mod reading {
             &include_str!("../../tests/reading/pattern_string.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(PatternString::read(reader))? {
+                while let Some(entity) = src.report_err_if(PatternString::dissect(reader))? {
                     assert_eq!(
                         trim_carets(&entity.to_string()),
                         reader.get_fragment(&entity.token)?.content

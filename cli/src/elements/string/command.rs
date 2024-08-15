@@ -7,7 +7,7 @@ use crate::{
         operator, spawner, AnyValue, Context, Formation, FormationCursor, Operator,
         OperatorPinnedResult, Scope,
     },
-    reader::{chars, Reader, Reading, E},
+    reader::{chars, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 
@@ -17,8 +17,8 @@ pub struct Command {
     pub token: usize,
 }
 
-impl Reading<Command> for Command {
-    fn read(reader: &mut Reader) -> Result<Option<Command>, LinkedErr<E>> {
+impl TryDissect<Command> for Command {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<Command>, LinkedErr<E>> {
         if let Some((_, elements, token)) = string::read(reader, chars::TILDA, ElTarget::Command)? {
             Ok(Some(Command { elements, token }))
         } else {
@@ -26,6 +26,8 @@ impl Reading<Command> for Command {
         }
     }
 }
+
+impl Dissect<Command, Command> for Command {}
 
 impl fmt::Display for Command {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -144,7 +146,7 @@ mod reading {
         error::LinkedErr,
         inf::{operator::Operator, tests::*, Configuration},
         read_string,
-        reader::{chars, Reader, Reading, Sources, E},
+        reader::{chars, Dissect, Reader, Sources, E},
     };
 
     #[tokio::test]
@@ -158,7 +160,7 @@ mod reading {
                     .map(|s| s.to_string())
                     .collect::<Vec<String>>();
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(Command::read(reader))? {
+                while let Some(entity) = src.report_err_if(Command::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(reader.recent()),
@@ -188,7 +190,7 @@ mod reading {
             &include_str!("../../tests/reading/command.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
-                while let Some(entity) = src.report_err_if(Command::read(reader))? {
+                while let Some(entity) = src.report_err_if(Command::dissect(reader))? {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert_eq!(
                         trim_carets(&entity.to_string()),

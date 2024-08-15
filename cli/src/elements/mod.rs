@@ -39,7 +39,7 @@ use crate::{
         operator, AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult,
         Scope,
     },
-    reader::{chars, Reader, Reading, E},
+    reader::{chars, Dissect, Reader, TryDissect, E},
 };
 use std::fmt::{self, Display};
 
@@ -251,10 +251,10 @@ impl Element {
         let mut elements: Vec<Element> = Vec::new();
         loop {
             let before = elements.len();
-            if let Some(el) = Comment::read(reader)? {
+            if let Some(el) = Comment::dissect(reader)? {
                 elements.push(Element::Comment(el));
             }
-            if let Some(el) = Meta::read(reader)? {
+            if let Some(el) = Meta::dissect(reader)? {
                 elements.push(Element::Meta(el));
             }
             if before == elements.len() {
@@ -271,147 +271,147 @@ impl Element {
             },
         };
         if includes == targets.contains(&ElTarget::Breaker) {
-            if let Some(el) = Breaker::read(reader)? {
+            if let Some(el) = Breaker::dissect(reader)? {
                 return Ok(Some(Element::Breaker(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::Call) {
-            if let Some(el) = Call::read(reader)? {
+            if let Some(el) = Call::dissect(reader)? {
                 return Ok(Some(Element::Call(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::Combination) {
-            if let Some(el) = Combination::read(reader)? {
+            if let Some(el) = Combination::dissect(reader)? {
                 return Ok(Some(Element::Combination(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::Subsequence) {
-            if let Some(el) = Subsequence::read(reader)? {
+            if let Some(el) = Subsequence::dissect(reader)? {
                 return Ok(Some(Element::Subsequence(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::Condition) {
-            if let Some(el) = Condition::read(reader)? {
+            if let Some(el) = Condition::dissect(reader)? {
                 return Ok(Some(Element::Condition(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::Meta) {
-            if let Some(el) = Meta::read(reader)? {
+            if let Some(el) = Meta::dissect(reader)? {
                 return Ok(Some(Element::Meta(el)));
             }
         }
         if includes == targets.contains(&ElTarget::Command) {
-            if let Some(el) = Command::read(reader)? {
+            if let Some(el) = Command::dissect(reader)? {
                 return Ok(Some(Element::Command(el, tolerance(reader, md))));
             }
         }
         if includes == targets.contains(&ElTarget::If) {
-            if let Some(el) = If::read(reader)? {
+            if let Some(el) = If::dissect(reader)? {
                 return Ok(Some(Element::If(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::Optional) {
-            if let Some(el) = Optional::read(reader)? {
+            if let Some(el) = Optional::dissect(reader)? {
                 return Ok(Some(Element::Optional(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::Gatekeeper) {
-            if let Some(el) = Gatekeeper::read(reader)? {
+            if let Some(el) = Gatekeeper::dissect(reader)? {
                 return Ok(Some(Element::Gatekeeper(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::Comparing) {
-            if let Some(el) = Comparing::read(reader)? {
+            if let Some(el) = Comparing::dissect(reader)? {
                 return Ok(Some(Element::Comparing(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::Integer) {
-            if let Some(el) = Integer::read(reader)? {
+            if let Some(el) = Integer::dissect(reader)? {
                 return Ok(Some(Element::Integer(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::Boolean) {
-            if let Some(el) = Boolean::read(reader)? {
+            if let Some(el) = Boolean::dissect(reader)? {
                 return Ok(Some(Element::Boolean(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::VariableAssignation) {
-            if let Some(el) = VariableAssignation::read(reader)? {
+            if let Some(el) = VariableAssignation::dissect(reader)? {
                 return Ok(Some(Element::VariableAssignation(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::VariableName) {
-            if let Some(el) = VariableName::read(reader)? {
+            if let Some(el) = VariableName::dissect(reader)? {
                 return Ok(Some(Element::VariableName(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::Each) {
-            if let Some(el) = Each::read(reader)? {
+            if let Some(el) = Each::dissect(reader)? {
                 return Ok(Some(Element::Each(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::First) {
-            if let Some(el) = First::read(reader)? {
+            if let Some(el) = First::dissect(reader)? {
                 return Ok(Some(Element::First(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::Join) {
-            if let Some(el) = Join::read(reader)? {
+            if let Some(el) = Join::dissect(reader)? {
                 return Ok(Some(Element::Join(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::Function) {
-            if let Some(el) = Function::read(reader)? {
+            if let Some(el) = Function::dissect(reader)? {
                 return Ok(Some(Element::Function(el, tolerance(reader, md))));
             }
         }
         if includes == targets.contains(&ElTarget::Reference) {
-            if let Some(el) = Reference::read(reader)? {
+            if let Some(el) = Reference::dissect(reader)? {
                 return Ok(Some(Element::Reference(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::PatternString) {
-            if let Some(el) = PatternString::read(reader)? {
+            if let Some(el) = PatternString::dissect(reader)? {
                 return Ok(Some(Element::PatternString(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::Block) {
-            if let Some(el) = Block::read(reader)? {
+            if let Some(el) = Block::dissect(reader)? {
                 return Ok(Some(Element::Block(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::Values) {
-            if let Some(el) = Values::read(reader)? {
+            if let Some(el) = Values::dissect(reader)? {
                 return Ok(Some(Element::Values(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::Component) {
-            if let Some(el) = Component::read(reader)? {
+            if let Some(el) = Component::dissect(reader)? {
                 return Ok(Some(Element::Component(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::Task) {
-            if let Some(el) = Task::read(reader)? {
+            if let Some(el) = Task::dissect(reader)? {
                 return Ok(Some(Element::Task(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::VariableDeclaration) {
-            if let Some(el) = VariableDeclaration::read(reader)? {
+            if let Some(el) = VariableDeclaration::dissect(reader)? {
                 return Ok(Some(Element::VariableDeclaration(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::VariableType) {
-            if let Some(el) = VariableType::read(reader)? {
+            if let Some(el) = VariableType::dissect(reader)? {
                 return Ok(Some(Element::VariableType(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::VariableVariants) {
-            if let Some(el) = VariableVariants::read(reader)? {
+            if let Some(el) = VariableVariants::dissect(reader)? {
                 return Ok(Some(Element::VariableVariants(el, md)));
             }
         }
         if includes == targets.contains(&ElTarget::SimpleString) {
-            if let Some(el) = SimpleString::read(reader)? {
+            if let Some(el) = SimpleString::dissect(reader)? {
                 return Ok(Some(Element::SimpleString(el, md)));
             }
         }
@@ -856,7 +856,7 @@ mod proptest {
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
-        reader::{Reader, Reading, Sources},
+        reader::{Dissect, Reader, Sources},
     };
     use proptest::prelude::*;
 
@@ -1097,7 +1097,7 @@ mod proptest {
                 &Configuration::logs(false),
                 &origin,
                 |reader: &mut Reader, src: &mut Sources| {
-                    while let Some(block) = src.report_err_if(Block::read(reader))? {
+                    while let Some(block) = src.report_err_if(Block::dissect(reader))? {
                         assert_eq!(format!("{block};"), origin);
                     }
                     Ok::<(), LinkedErr<E>>(())

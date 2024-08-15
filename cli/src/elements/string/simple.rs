@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
     inf::{AnyValue, Context, Formation, FormationCursor, Operator, OperatorPinnedResult, Scope},
-    reader::{Reader, Reading, E},
+    reader::{Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 
@@ -14,14 +14,17 @@ pub struct SimpleString {
     pub token: usize,
 }
 
-impl Reading<SimpleString> for SimpleString {
-    fn read(reader: &mut Reader) -> Result<Option<SimpleString>, LinkedErr<E>> {
+impl TryDissect<SimpleString> for SimpleString {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<SimpleString>, LinkedErr<E>> {
+        reader.move_to().any();
         Ok(Some(SimpleString {
             value: reader.move_to().end(),
             token: reader.token()?.id,
         }))
     }
 }
+
+impl Dissect<SimpleString, SimpleString> for SimpleString {}
 
 impl fmt::Display for SimpleString {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
