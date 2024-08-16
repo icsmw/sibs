@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult,
+        operator, AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
         Scope, TokenGetter, TryExecute,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
@@ -41,15 +41,14 @@ pub struct VariableType {
 impl TryDissect<VariableType> for VariableType {
     fn try_dissect(reader: &mut Reader) -> Result<Option<VariableType>, LinkedErr<E>> {
         let close = reader.open_token(ElTarget::VariableType);
-        if reader.move_to().char(&[&chars::OPEN_CURLY_BRACE]).is_some() {
-            if let Some((word, _char)) = reader.until().char(&[&chars::CLOSE_CURLY_BRACE]) {
-                reader.move_to().next();
-                Ok(Some(VariableType::new(word, close(reader))?))
-            } else {
-                Err(E::NotClosedTypeDeclaration.by_reader(reader))
-            }
+        if reader.move_to().char(&[&chars::OPEN_CURLY_BRACE]).is_none() {
+            return Ok(None);
+        }
+        if let Some((word, _char)) = reader.until().char(&[&chars::CLOSE_CURLY_BRACE]) {
+            reader.move_to().next();
+            Ok(Some(VariableType::new(word, close(reader))?))
         } else {
-            Ok(None)
+            Err(E::NotClosedTypeDeclaration.by_reader(reader))
         }
     }
 }

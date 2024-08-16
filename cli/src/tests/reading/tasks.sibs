@@ -47,7 +47,7 @@
         cd(./linux);
     };
 };
-@build_multi($mode: dev | prod; $target: win | linux) {
+@build_multi($mode: dev | prod, $target: win | linux) {
     env::is_os(window) => $file_name = "release{$version}-win.zip";
     env::is_os(linux) => $file_name = "release{$version}-linux.zip";
     env::is_os(darwin) => $file_name = "release{$version}-darwin.zip";
@@ -70,7 +70,7 @@
         cd(./linux);
     };
 };
-@build_b($mode: dev | prod; $target: win | linux; $input: {string}) {
+@build_b($mode: dev | prod, $target: win | linux, $input: {string}) {
     env::is_os(window) => $file_name = "release{$version}-win.zip";
     env::is_os(linux) => $file_name = "release{$version}-linux.zip";
     env::is_os(darwin) => $file_name = "release{$version}-darwin.zip";
@@ -93,7 +93,7 @@
         cd(./linux);
     };
 };
-@build_c($input_a: {string}; $mode: dev | prod; $target: win | linux; $input_b: {string}) {
+@build_c($input_a: {string}, $mode: dev | prod, $target: win | linux, $input_b: {string}) {
     env::is_os(window) => $file_name = "release{$version}-win.zip";
     env::is_os(linux) => $file_name = "release{$version}-linux.zip";
     env::is_os(darwin) => $file_name = "release{$version}-darwin.zip";
@@ -194,8 +194,8 @@
         cd(./linux);
     };
 };
-@build_multi($mode: dev | prod; $target: win | linux)(
-    :platform:build($mode; $target);
+@build_multi($mode: dev | prod, $target: win | linux)(
+    :platform:build($mode, $target);
     :core:build($mode)
 ) {
     env::is_os(window) => $file_name = "release{$version}-win.zip";
@@ -220,9 +220,9 @@
         cd(./linux);
     };
 };
-@build_b($mode: dev | prod; $target: win | linux; $input: {string})(
-    :platform:build($mode; $target; $input);
-    :core:build($mode; $input)
+@build_b($mode: dev | prod, $target: win | linux, $input: {string})(
+    :platform:build($mode, $target, $input);
+    :core:build($mode, $input)
 ) {
     env::is_os(window) => $file_name = "release{$version}-win.zip";
     env::is_os(linux) => $file_name = "release{$version}-linux.zip";
@@ -246,11 +246,11 @@
         cd(./linux);
     };
 };
-@build_c($input_a: {string}; $mode: dev | prod; $target: win | linux; $input_b: {string})(
+@build_c($input_a: {string}, $mode: dev | prod, $target: win | linux, $input_b: {string})(
     :lint;
     :smth:deply;
-    :platform:build($input_a; $target; $input_b);
-    :core:build($target; $input_b)
+    :platform:build($input_a, $target, $input_b);
+    :core:build($target, $input_b)
 ) {
     env::is_os(window) => $file_name = "release{$version}-win.zip";
     env::is_os(linux) => $file_name = "release{$version}-linux.zip";

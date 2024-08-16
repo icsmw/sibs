@@ -7,7 +7,7 @@ use crate::{
     },
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult,
+        operator, AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
         Scope, TokenGetter, TryExecute,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
@@ -145,7 +145,7 @@ impl TryDissect<Task> for Task {
             let mut declarations: Vec<Element> = Vec::new();
             let mut inner = reader.token()?.bound;
             while let Some(el) = Element::include(&mut inner, &[ElTarget::VariableDeclaration])? {
-                let _ = inner.move_to().char(&[&chars::SEMICOLON]);
+                let _ = inner.move_to().char(&[&chars::COMMA]);
                 declarations.push(el);
             }
             if !inner.is_empty() {
@@ -207,7 +207,7 @@ impl fmt::Display for Task {
                         .iter()
                         .map(|d| d.to_string())
                         .collect::<Vec<String>>()
-                        .join("; ")
+                        .join(", ")
                 )
             },
             if self.dependencies.is_empty() {
@@ -243,7 +243,7 @@ impl Formation for Task {
                         .iter()
                         .map(|d| d.format(&mut inner))
                         .collect::<Vec<String>>()
-                        .join("; ")
+                        .join(", ")
                 )
             },
             if self.dependencies.is_empty() {

@@ -1,5 +1,5 @@
 @test {
-    $elements = ("one"; "two"; "three");
+    $elements = ("one", "two", "three");
     each($el; $elements) {
         $a = "{$el}";
         if $a == "two" {
@@ -7,7 +7,7 @@
         };
     };
     
-    $elements = ("one"; "two");
+    $elements = ("one", "two");
     each($el; $elements) {
         $b = "{$el}";
         if $b == "one" {

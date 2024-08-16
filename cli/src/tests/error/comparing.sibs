@@ -1,7 +1,7 @@
 $mode != = "dev";
 env::is_os(window) == "true;
 env::is_os(window) != -true";
-env::is_os(window) == ("a", "b");
+env::is_os(window) == ("a", "b",,);
 env::is_os(window) != ("a"; "b",);
 "dev" == =$mode;
 "dev" != $=mode;

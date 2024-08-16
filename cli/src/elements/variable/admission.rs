@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, Formation, FormationCursor, ExecutePinnedResult, Scope,
+        operator, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
         TokenGetter, TryExecute,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
@@ -24,7 +24,13 @@ impl TryDissect<VariableName> for VariableName {
         if reader.move_to().char(&[&chars::DOLLAR]).is_some() {
             let content = reader
                 .until()
-                .char(&[&chars::COLON, &chars::WS, &chars::EQUAL, &chars::SEMICOLON])
+                .char(&[
+                    &chars::COLON,
+                    &chars::WS,
+                    &chars::EQUAL,
+                    &chars::SEMICOLON,
+                    &chars::COMMA,
+                ])
                 .map(|(content, _char)| content)
                 .unwrap_or_else(|| reader.move_to().end());
             Ok(Some(VariableName::new(content, close(reader))?))

@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult,
+        operator, AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
         Scope, TokenGetter, TryExecute,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
@@ -65,25 +65,23 @@ impl VariableDeclaration {
 impl TryDissect<VariableDeclaration> for VariableDeclaration {
     fn try_dissect(reader: &mut Reader) -> Result<Option<VariableDeclaration>, LinkedErr<E>> {
         let close = reader.open_token(ElTarget::VariableDeclaration);
-        if let Some(variable) = Element::include(reader, &[ElTarget::VariableName])? {
-            if reader.move_to().char(&[&chars::COLON]).is_some() {
-                if let Some(declaration) = Element::include(
-                    reader,
-                    &[ElTarget::VariableType, ElTarget::VariableVariants],
-                )? {
-                    Ok(Some(VariableDeclaration {
-                        variable: Box::new(variable),
-                        declaration: Box::new(declaration),
-                        token: close(reader),
-                    }))
-                } else {
-                    Err(E::NoTypeDeclaration.by_reader(reader))
-                }
-            } else {
-                Err(E::NoTypeDeclaration.by_reader(reader))
-            }
+        let Some(variable) = Element::include(reader, &[ElTarget::VariableName])? else {
+            return Ok(None);
+        };
+        if reader.move_to().char(&[&chars::COLON]).is_none() {
+            return Err(E::NoTypeDeclaration.by_reader(reader));
+        }
+        if let Some(declaration) = Element::include(
+            reader,
+            &[ElTarget::VariableType, ElTarget::VariableVariants],
+        )? {
+            Ok(Some(VariableDeclaration {
+                variable: Box::new(variable),
+                declaration: Box::new(declaration),
+                token: close(reader),
+            }))
         } else {
-            Ok(None)
+            Err(E::NoTypeDeclaration.by_reader(reader))
         }
     }
 }

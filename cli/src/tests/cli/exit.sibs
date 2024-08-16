@@ -6,7 +6,7 @@
     };
     @success_with_message {
         logs::info("This logs should be visible");
-        exit(0; "Hello World!");
+        exit(0, "Hello World!");
         logs::info("This logs should NOT be visible");
     };
     @error {
@@ -16,6 +16,6 @@
     };
     @error_with_message {
         logs::info("This logs should be visible");
-        exit(1; "Hello World!");
+        exit(1, "Hello World!");
         logs::info("This logs should NOT be visible");
     };

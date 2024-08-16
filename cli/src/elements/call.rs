@@ -18,6 +18,12 @@ pub struct Call {
 
 impl TryDissect<Call> for Call {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
+        if reader.move_to().char(&[&chars::DOT]).is_none() {
+            return Ok(None);
+        }
+        let Some(el) = Element::include(reader, &[ElTarget::Function])? else {
+            return Ok(None);
+        };
         Ok(None)
     }
 }

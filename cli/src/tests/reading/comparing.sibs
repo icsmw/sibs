@@ -20,7 +20,7 @@ generate_key("secure") != "abc123"
 check("pending") == $check_result
 $number == "42"
 "42" != $number
-sum("20"; "22") == $total
+sum("20", "22") == $total
 get_status($user) == "online"
 "offline" != get_status($user)
 $age == calculate_age("1990-01-01")
@@ -40,10 +40,10 @@ is_prime("7") == "true"
 "false" != is_prime("8")
 $temperature == "100"
 "100" != $temperature
-min("1"; "2"; "3") == "1"
-"10" != max("8"; "9"; "10")
-contains($list; "item") == "true"
-"false" == contains($list; "element")
+min("1", "2", "3") == "1"
+"10" != max("8", "9", "10")
+contains($list, "item") == "true"
+"false" == contains($list, "element")
 $day == "Monday"
 "Friday" != $day
 day_of_week("2024-03-11") == "Monday"
@@ -54,37 +54,37 @@ config("mode") == "debug"
 user_role($user_id) != "admin"
 "path/{$version}" == resolve_path("base/{$env_version}")
 "v{$build_number}" == tag_name("projectX")
-concat("item1"; "item2") == "item1item2"
+concat("item1", "item2") == "item1item2"
 $color_preference != "dark"
 "guest" == default_role()
 encrypt("message") != $cipher_text
 "{$user_name}'s profile" == profile_path($user_id)
-merge_strings("Hello"; "World") == "HelloWorld"
+merge_strings("Hello", "World") == "HelloWorld"
 $permission_level == "read_write"
 "read_only" != $permission_level
-subtract("100"; "30") == "70"
+subtract("100", "30") == "70"
 format_date("2024-01-01") == "01/01/2024"
 "12/31/2023" != format_date("2023-12-31")
 $disk_usage == "500GB"
 "750GB" != $disk_usage
-join_paths("/home/user"; "documents") == "/home/user/documents"
+join_paths("/home/user", "documents") == "/home/user/documents"
 $notification_type != "urgent"
 "completed" == task_status($task_id)
 generate_hash($password) != "hashed_password"
 $selected_option == "option1"
 "option2" != $selected_option
-check_permission($user; "edit") == "granted"
-"denied" != check_permission($user; "delete")
+check_permission($user, "edit") == "granted"
+"denied" != check_permission($user, "delete")
 $theme_color == "blue"
 "red" != $theme_color
-parse_json($json_string; "key") == "value"
-"invalid" != parse_json($json_string; "invalid_key")
+parse_json($json_string, "key") == "value"
+"invalid" != parse_json($json_string, "invalid_key")
 $payment_status == "processed"
 "failed" != $payment_status
 get_extension("file.docx") == "docx"
 "pdf" != get_extension("report.pdf")
-array_to_string(("a"; "b"; "c")) == "abc"
-"xyz" != array_to_string(("x"; "y"; "z"))
+array_to_string(("a", "b", "c")) == "abc"
+"xyz" != array_to_string(("x", "y", "z"))
 $api_version == "v2"
 "v1" != $api_version
 $delivery_method == "email"
@@ -93,14 +93,14 @@ url_encode("https://example.com") == "https%3A%2F%2Fexample.com"
 "http%3A%2F%2Fexample.com" != url_encode("http://example.com")
 $access_level == "full"
 "limited" != $access_level
-replace_string("hello world"; "world"; "there") == "hello there"
-"goodbye world" != replace_string("hello world"; "hello"; "goodbye")
+replace_string("hello world", "world", "there") == "hello there"
+"goodbye world" != replace_string("hello world", "hello", "goodbye")
 $storage_capacity == "1TB"
 "2TB" != $storage_capacity
 to_uppercase("lowercase") == "LOWERCASE"
 "uppercase" != to_uppercase("UPPERCASE")
 get_version($project) == "3.14"
-"2.71" != calculate_version($prev_version; $increment)
+"2.71" != calculate_version($prev_version, $increment)
 user_status("user123") == "active"
 "inactive" != user_status($user_id)
 config("featureX") == "enabled"
@@ -113,8 +113,8 @@ response_code($url) == "200"
 "404" != response_code($endpoint)
 "up" == server_status("server1")
 "down" != server_status($server_id)
-match($text; "pattern") == "true"
-"false" != match($document; "regex")
+match($text, "pattern") == "true"
+"false" != match($document, "regex")
 "available" == resource_status($resource_id)
 "busy" != resource_status("resource2")
 $language == "English"
@@ -149,9 +149,9 @@ $var3 < 10
 $var4 > 20
 get_value($var1) == "value"
 "string" != $var5
-$var6 < calculate(5; 10)
-sum(10; 20; 30) > 50
-"result" == concat("res"; "ult")
+$var6 < calculate(5, 10)
+sum(10, 20, 30) > 50
+"result" == concat("res", "ult")
 $var7 != true
 false == $var8
 $var9 > get_count($list)
@@ -167,8 +167,8 @@ get_min($numbers) != 42
 42 == $var17
 $var20 > "value"
 "value" < $var21
-calculate_difference($var22; $var23) == 5
-10 != sum($var24; $var25)
+calculate_difference($var22, $var23) == 5
+10 != sum($var24, $var25)
 $var26 < get_length($string)
 get_width($object) > 15
 $var27 == true

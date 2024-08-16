@@ -45,6 +45,8 @@ pub enum E {
     UsingReservedChars,
     #[error("Missed semicolon")]
     MissedSemicolon,
+    #[error("Missed comma")]
+    MissedComma,
     #[error("Only import function can be used in the root scope")]
     OnlyImportFunctionAllowedOnRoot,
     #[error("\"{0}\" cannot parse task arguments")]

@@ -36,7 +36,7 @@ pub use variable::*;
 use crate::{
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult,
+        operator, AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
         Scope, TokenGetter, TryExecute,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},

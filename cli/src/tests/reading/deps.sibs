@@ -1,6 +1,6 @@
-@test($a: a | b; $b: {string})(
+@test($a: a | b, $b: {string})(
     $res_a = :a:test($a);
-    $res_b = :b:test($a; $b)
+    $res_b = :b:test($a, $b)
 ) {
     if $res_a == "true" && $res_b == "true" {
         "true";

@@ -161,19 +161,19 @@ mod test {
     ];
     const TEST: &str = r#"
 #(a: ./)
-    hash::inspect((__paths__); (); true) -> (:test_a("a"));
+    hash::inspect((__paths__), (), true) -> (:test_a("a"));
     @test_a($a: a | b) {
         print("Task A test is done with {$a}");
         true;
     };
 #(b: ./)
-    hash::inspect((__paths__); (); true) -> (:test_b("a"); :test_b("b"));
+    hash::inspect((__paths__), (), true) -> (:test_b("a"), :test_b("b"));
     @test_b($a: a | b) {
         print("Task B test is done with {$a}");
         true;
     };
 #(c: ./)
-    hash::inspect((__paths__); (); true) -> ();
+    hash::inspect((__paths__), (), true) -> ();
     @test_c($a: a | b) {
         print("Task C test is done with {$a}");
         true;
@@ -192,7 +192,7 @@ mod test {
                 .iter()
                 .map(|uc| format!("\"{}\"", uc.root.display()))
                 .collect::<Vec<String>>()
-                .join(";"),
+                .join(","),
         );
         process_string!(
             &Configuration::logs(false),

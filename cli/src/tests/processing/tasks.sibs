@@ -5,7 +5,7 @@
         "false";
     };
 };
-@test($a: a | b; $b: a | b) {
+@test($a: a | b, $b: a | b) {
     if $a == "a" && $b == "b" {
         "true";
     } else {
@@ -19,14 +19,14 @@
         "false";
     };
 };
-@test($a: {string}; $b: a | b) {
+@test($a: {string}, $b: a | b) {
     if $a == "a" && $b == "b" {
         "true";
     } else {
         "false";
     };
 };
-@test($a: {string}; $b: a | b; $c: {string}) {
+@test($a: {string}, $b: a | b, $c: {string}) {
     if $a == "a" && $b == "b" && $c == "c" {
         "true";
     } else {

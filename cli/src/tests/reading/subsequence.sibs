@@ -54,7 +54,7 @@ is_daylight_savings()
 (functionH("arg8") == $var3) && ($var4 != "mismatch" || $var4 == "mismatch")
 (functionH("arg8") == $var3 && $var4 != "mismatch") || (functionH("arg8") == $var3 && $var4 != "mismatch")
 (check_access("user_id") == true && $status != "restricted") || (get_role("user_id") == "admin" && $status == "active")
-(calculate_sum(5; 10) > 10 && $number != 0) || (calculate_difference(10; 5) < 10 && $number == 5)
+(calculate_sum(5, 10) > 10 && $number != 0) || (calculate_difference(10, 5) < 10 && $number == 5)
 (is_weekday() && $hour >= 9 && $hour < 17) || (is_holiday() && $hour >= 10 && $hour < 15)
 (get_temperature("city") > 30 && $is_ac_on == false) || (get_humidity("city") > 70 && $is_dehumidifier_on == false)
 (user_active("user_id") && $last_login < now()) || (user_subscription("user_id") == "expired" && $email_sent == false)
@@ -69,7 +69,7 @@ $var3 == true && (funcC(20) || $var4 != "expected")
 $var7 <= 50 || (funcE($var8) && $var9 > funcF("param"))
 (funcG($var10) == "yes") && ($var11 || funcH(30))
 $var12 && (funcI($var13) > 40 || $var14 < funcJ("data"))
-(funcK($var15; "extra") == $var16) || $var17 != "no"
+(funcK($var15, "extra") == $var16) || $var17 != "no"
 $var18 == funcL("check") && (funcM($var19) || $var20)
 (funcN($var21) && $var22) || $var23 < 20
 $var24 != funcO($var25) && (funcP("test") == "pass")

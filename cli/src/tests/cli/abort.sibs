@@ -2,36 +2,36 @@
 #(join: ../../../../target/debug)
     @test_a {
         join (
-            `./exit 0 1000 1000 10`;
-            `./exit 0 2000 1000 10`;
-            `./exit 0 3000 1000 10`;
-            `./exit 0 4000 1000 10`;
+            `./exit 0 1000 1000 10`,
+            `./exit 0 2000 1000 10`,
+            `./exit 0 3000 1000 10`,
+            `./exit 0 4000 1000 10`,
         );
     };
 
 #(abort)
     @success_test {
         join (
-            :join:test_a;
-            :self:success;
+            :join:test_a,
+            :self:success,
         );
     }
     @success_with_message_test {
         join (
-            :join:test_a;
-            :self:success_with_message;
+            :join:test_a,
+            :self:success_with_message,
         );
     }
     @error_test {
         join (
-            :join:test_a;
-            :self:error;
+            :join:test_a,
+            :self:error,
         );
     }
     @error_with_message_test {
         join (
-            :join:test_a;
-            :self:error_with_message;
+            :join:test_a,
+            :self:error_with_message,
         );
     }
     @success {
@@ -42,7 +42,7 @@
     };
     @success_with_message {
         logs::info("This logs should be visible");
-        abort(0; "Hello World!");
+        abort(0, "Hello World!");
         logs::info("This logs should NOT be visible");
     };
     @error {
@@ -52,6 +52,6 @@
     };
     @error_with_message {
         logs::info("This logs should be visible");
-        abort(1; "Hello World!");
+        abort(1, "Hello World!");
         logs::info("This logs should NOT be visible");
     };

@@ -236,7 +236,7 @@ FIRST [
     @env::is_os(window) => "release{$version}-win.zip";
     @env::is_os(linux) => "release{$version}-linux.zip";
     @env::is_os(darwin) => "release{$version}-darwin.zip";
-    @exit(1; "Unsupported OS: {@env::is_os}");
+    @exit(1, "Unsupported OS: {@env::is_os}");
 ];
 
 First runs actions one by one and returns the first value from some actions (not all actions return values)

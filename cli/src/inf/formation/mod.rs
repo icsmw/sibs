@@ -113,7 +113,7 @@ mod reading {
         elements::{ElTarget, Element},
         error::LinkedErr,
         functions::load,
-        inf::{format_string, Configuration, Journal},
+        inf::{format_string, Configuration},
         read_string,
         reader::{chars, error::E, Reader, Sources},
     };
@@ -210,50 +210,5 @@ mod reading {
                 Ok::<(), LinkedErr<E>>(())
             }
         );
-    }
-
-    #[tokio::test]
-    async fn reading_backup() -> Result<(), LinkedErr<E>> {
-        let journal = Journal::init(Configuration::logs(false))?;
-        let origin =
-            Reader::read_string(include_str!("../../tests/formation.sibs"), &journal).await?;
-
-        let formated = Reader::read_string(
-            &format_string(include_str!("../../tests/formation.sibs")).await?,
-            &journal,
-        )
-        .await?;
-        assert_eq!(origin.len(), formated.len());
-        let mut count: usize = 0;
-        for (i, el) in origin.iter().enumerate() {
-            assert_eq!(el.el_target(), formated[i].el_target());
-            if let (Element::Component(origin, _), Element::Component(formated, _)) =
-                (el, &formated[i])
-            {
-                assert_eq!(origin.elements.len(), formated.elements.len());
-                for (i, el) in origin.elements.iter().enumerate() {
-                    assert_eq!(el.el_target(), formated.elements[i].el_target());
-                    if let (Element::Task(origin, _), Element::Task(formated, _)) =
-                        (el, &formated.elements[i])
-                    {
-                        if let (Element::Block(origin, _), Element::Block(formated, _)) =
-                            (origin.block.as_ref(), formated.block.as_ref())
-                        {
-                            assert_eq!(origin.elements.len(), formated.elements.len());
-                            let origin = &origin.elements;
-                            let formated = &formated.elements;
-                            for (i, el) in origin.iter().enumerate() {
-                                assert_eq!(el.inner_to_string(), formated[i].inner_to_string());
-                                count += 1;
-                            }
-                        } else {
-                            panic!("Fail to read blocks of tasks")
-                        }
-                    }
-                }
-            }
-        }
-        assert!(count > 50);
-        Ok(())
     }
 }

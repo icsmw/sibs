@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult,
+        operator, AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
         Scope, TokenGetter, TryExecute,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
@@ -43,6 +43,7 @@ impl TryDissect<Function> for Function {
             &chars::OPEN_BRACKET,
             &chars::CARET,
             &chars::SEMICOLON,
+            &chars::COMMA,
             &chars::WS,
             &chars::OPEN_BRACKET,
             &chars::CLOSE_BRACKET,
@@ -105,11 +106,11 @@ impl TryDissect<Function> for Function {
                     ElTarget::Boolean,
                 ],
             )? {
-                if inner.move_to().char(&[&chars::SEMICOLON]).is_none() && !inner.is_empty() {
+                if inner.move_to().char(&[&chars::COMMA]).is_none() && !inner.is_empty() {
                     Err(E::MissedSemicolon.by_reader(&inner))?;
                 }
                 elements.push(el);
-            } else if let Some((content, _)) = inner.until().char(&[&chars::SEMICOLON]) {
+            } else if let Some((content, _)) = inner.until().char(&[&chars::COMMA]) {
                 if content.trim().is_empty() {
                     Err(E::NoContentBeforeSemicolon.by_reader(&inner))?;
                 }
@@ -117,7 +118,7 @@ impl TryDissect<Function> for Function {
                     Element::include(&mut inner.token()?.bound, &[ElTarget::SimpleString])?
                         .ok_or(E::NoContentBeforeSemicolon.by_reader(&inner))?,
                 );
-                let _ = inner.move_to().char(&[&chars::SEMICOLON]);
+                let _ = inner.move_to().char(&[&chars::COMMA]);
             } else if !inner.is_empty() {
                 elements.push(
                     Element::include(&mut inner, &[ElTarget::SimpleString])?
@@ -236,7 +237,7 @@ impl fmt::Display for Function {
                     .iter()
                     .map(|arg| arg.to_string())
                     .collect::<Vec<String>>()
-                    .join("; "),
+                    .join(", "),
             )
         }
         let feeding: Vec<String> = self.get_feeding().iter().map(|f| to_string(f)).collect();
@@ -267,7 +268,7 @@ impl Formation for Function {
                         arg.format(&mut cursor.reown(Some(ElTarget::Function)).right())
                     ))
                     .collect::<Vec<String>>()
-                    .join("; "),
+                    .join(", "),
                 if func.args.is_empty() {
                     ")".to_string()
                 } else {

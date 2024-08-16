@@ -5,7 +5,7 @@
         true;
     };
 #(b: ./)
-    test::return_bool(false) -> (:test("a"); :test("b"));
+    test::return_bool(false) -> (:test("a"), :test("b"));
     @test($a: a | b) {
         print("Task test is done with {$a}");
         true;

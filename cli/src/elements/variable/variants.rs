@@ -4,7 +4,7 @@ use crate::{
     elements::Component,
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult,
+        operator, AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
         Scope, TokenGetter, TryExecute,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
@@ -21,7 +21,7 @@ impl TryDissect<VariableVariants> for VariableVariants {
     fn try_dissect(reader: &mut Reader) -> Result<Option<VariableVariants>, LinkedErr<E>> {
         let content = reader
             .until()
-            .char(&[&chars::SEMICOLON])
+            .char(&[&chars::SEMICOLON, &chars::COMMA])
             .map(|(content, _)| content)
             .unwrap_or_else(|| reader.move_to().end());
         Ok(Some(VariableVariants::new(content, reader.token()?.id)?))
@@ -142,7 +142,8 @@ mod reading {
                 &Configuration::logs(false),
                 sample,
                 |reader: &mut Reader, _: &mut Sources| {
-                    assert!(VariableVariants::dissect(reader).is_err());
+                    let result = VariableVariants::dissect(reader);
+                    assert!(result.is_err());
                     Ok::<usize, LinkedErr<E>>(1)
                 }
             );

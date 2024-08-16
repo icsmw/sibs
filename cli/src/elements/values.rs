@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult, Scope,
+        AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
         TokenGetter, TryExecute,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
@@ -23,53 +23,50 @@ impl TryDissect<Values> for Values {
         if reader
             .group()
             .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
-            .is_some()
+            .is_none()
         {
-            let token = reader.token()?;
-            let mut inner = token.bound;
-            let mut elements: Vec<Element> = Vec::new();
-            if inner.rest().trim().is_empty() {
-                return Ok(Some(Values {
-                    token: close(reader),
-                    elements,
-                }));
-            }
-            while let Some(el) = Element::include(
-                &mut inner,
-                &[
-                    ElTarget::Command,
-                    ElTarget::Function,
-                    ElTarget::If,
-                    ElTarget::PatternString,
-                    ElTarget::Reference,
-                    ElTarget::Values,
-                    ElTarget::Comparing,
-                    ElTarget::VariableName,
-                    ElTarget::Integer,
-                    ElTarget::Boolean,
-                ],
-            )? {
-                if inner.move_to().char(&[&chars::SEMICOLON]).is_none()
-                    && !inner.rest().trim().is_empty()
-                {
-                    Err(E::MissedSemicolon.by_reader(&inner))?;
-                }
-                elements.push(el);
-            }
-            if !inner.rest().trim().is_empty() {
-                if let Some((content, _)) = inner.until().char(&[&chars::SEMICOLON]) {
-                    Err(E::UnrecognizedCode(content).by_reader(&inner))?;
-                } else {
-                    Err(E::UnrecognizedCode(inner.move_to().end()).by_reader(&inner))?;
-                }
-            }
-            Ok(Some(Values {
+            return Ok(None);
+        }
+        let token = reader.token()?;
+        let mut inner = token.bound;
+        let mut elements: Vec<Element> = Vec::new();
+        if inner.rest().trim().is_empty() {
+            return Ok(Some(Values {
                 token: close(reader),
                 elements,
-            }))
-        } else {
-            Ok(None)
+            }));
         }
+        while let Some(el) = Element::include(
+            &mut inner,
+            &[
+                ElTarget::Command,
+                ElTarget::Function,
+                ElTarget::If,
+                ElTarget::PatternString,
+                ElTarget::Reference,
+                ElTarget::Values,
+                ElTarget::Comparing,
+                ElTarget::VariableName,
+                ElTarget::Integer,
+                ElTarget::Boolean,
+            ],
+        )? {
+            if inner.move_to().char(&[&chars::COMMA]).is_none() && !inner.rest().trim().is_empty() {
+                Err(E::MissedComma.by_reader(&inner))?;
+            }
+            elements.push(el);
+        }
+        if !inner.rest().trim().is_empty() {
+            if let Some((content, _)) = inner.until().char(&[&chars::COMMA]) {
+                Err(E::UnrecognizedCode(content).by_reader(&inner))?;
+            } else {
+                Err(E::UnrecognizedCode(inner.move_to().end()).by_reader(&inner))?;
+            }
+        }
+        Ok(Some(Values {
+            token: close(reader),
+            elements,
+        }))
     }
 }
 
@@ -84,7 +81,7 @@ impl fmt::Display for Values {
                 .iter()
                 .map(|v| v.to_string())
                 .collect::<Vec<String>>()
-                .join("; ")
+                .join(", ")
         )
     }
 }
@@ -106,7 +103,7 @@ impl Formation for Values {
                         v.format(&mut cursor.reown(Some(ElTarget::Values)).right())
                     ))
                     .collect::<Vec<String>>()
-                    .join(";\n"),
+                    .join(",\n"),
                 cursor.offset_as_string_if(&[ElTarget::Block, ElTarget::Function])
             )
         } else {
@@ -228,7 +225,8 @@ mod reading {
         let cfg = Configuration::logs(false);
         for sample in samples.iter() {
             count += read_string!(&cfg, sample, |reader: &mut Reader, _: &mut Sources| {
-                assert!(Values::dissect(reader).is_err());
+                let entity = Values::dissect(reader);
+                assert!(entity.is_err());
                 Ok::<usize, LinkedErr<E>>(1)
             });
         }
@@ -253,13 +251,13 @@ mod processing {
 
     const VALUES: &[(&str, &str)] = &[
         ("a0", "a"),
-        ("a1", "a;b"),
-        ("a2", "a;b;c"),
-        ("a3", "a;b;c"),
-        ("a4", "aa;bb;cc"),
-        ("a5", "a:a;b:b"),
+        ("a1", "a,b"),
+        ("a2", "a,b,c"),
+        ("a3", "a,b,c"),
+        ("a4", "aa,bb,cc"),
+        ("a5", "a:a,b:b"),
     ];
-    const NESTED_VALUES: &[(&str, &str)] = &[("a6", "c:a;d:b;d:c")];
+    const NESTED_VALUES: &[(&str, &str)] = &[("a6", "c:a,d:b,d:c")];
 
     #[tokio::test]
     async fn reading() {
@@ -306,7 +304,7 @@ mod processing {
                             .unwrap()
                             .as_strings()
                             .unwrap()
-                            .join(";"),
+                            .join(","),
                         value.to_string()
                     );
                 }
@@ -317,7 +315,7 @@ mod processing {
                     for value in values.iter() {
                         output = [output, value.as_strings().unwrap()].concat();
                     }
-                    assert_eq!(output.join(";"), value.to_string());
+                    assert_eq!(output.join(","), value.to_string());
                 }
                 Ok::<(), LinkedErr<E>>(())
             }
