@@ -59,8 +59,7 @@ import(./defaults.sibs);
         time_check("22:00") => `night_mode_activate`;
     };
     @functions {
-        read_as_string(./package.json) >> find(/\"version\":\ \"({\d\.})\"/gi);
-        read_as_string(./package.json) >> find(/\"version\":\ \"({\d\.})\"/gi) >> filter(123);
+        read_as_string(./package.json);
         import($variable);
         import($a, $b);
         import($a, $b);

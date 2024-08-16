@@ -19,7 +19,6 @@ pub const COMMENT: &str = "//";
 pub const COMP: &str = "#(";
 pub const TRUE: &str = "true";
 pub const FALSE: &str = "false";
-pub const REDIRECT: &str = ">>";
 pub const GLOBAL_VAR: &str = "global";
 
 pub fn is_reserved<S: AsRef<str>>(s: S) -> bool {
@@ -45,7 +44,6 @@ pub fn is_reserved<S: AsRef<str>>(s: S) -> bool {
         COMP,
         TRUE,
         FALSE,
-        REDIRECT,
         GLOBAL_VAR,
     ]
     .contains(&s.as_ref())

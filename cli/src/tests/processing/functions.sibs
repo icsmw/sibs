@@ -4,7 +4,7 @@
 };
 @test {
     $a = env::os();
-    $b = env::is_os($a) >> str::repeat(3);
+    $b = str::repeat(env::is_os($a), 3);
     if $b == "truetruetrue" {
         "true";
     };

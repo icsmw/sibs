@@ -30,7 +30,6 @@ impl FuncArg {
 pub struct Function {
     pub name: String,
     pub args: Vec<Element>,
-    pub feed: Option<Box<Function>>,
     pub token: usize,
     pub args_token: usize,
 }
@@ -134,24 +133,6 @@ impl TryDissect<Function> for Function {
                 name,
             )?));
         }
-        if reader.move_to().expression(&[words::REDIRECT]).is_some() {
-            let feed_func_token_id = close(reader);
-            let feed_func_args_token_id = args_close(reader);
-            return if let Some(Element::Function(mut dest, _)) =
-                Element::include(reader, &[ElTarget::Function])?
-            {
-                dest.feeding(Self::new(
-                    feed_func_token_id,
-                    feed_func_args_token_id,
-                    elements,
-                    name,
-                )?);
-                dest.set_token(close(reader));
-                Ok(Some(dest))
-            } else {
-                Err(E::NoDestFunction.linked(&reader.token()?.id))
-            };
-        }
         Ok(Some(Self::new(
             close(reader),
             args_close(reader),
@@ -174,30 +155,14 @@ impl Function {
             token,
             args_token,
             name,
-            feed: None,
             args,
         })
     }
-    pub fn feeding(&mut self, func: Function) {
-        if let Some(bound) = self.feed.as_mut() {
-            bound.feeding(func);
-        } else {
-            self.feed = Some(Box::new(func));
-        }
-    }
+
     pub fn set_token(&mut self, token: usize) {
         self.token = token;
     }
-    pub fn get_feeding(&self) -> Vec<&Function> {
-        let mut feeding: Vec<&Function> = Vec::new();
-        let mut current = self;
-        while let Some(feed) = current.feed.as_ref() {
-            feeding.push(feed.as_ref());
-            current = feed;
-        }
-        feeding.reverse();
-        feeding
-    }
+
     pub async fn get_processed_args<'a>(
         &self,
         owner: Option<&'a Component>,
@@ -229,31 +194,22 @@ impl Function {
 
 impl fmt::Display for Function {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fn to_string(func: &Function) -> String {
-            format!(
-                "{}({})",
-                func.name,
-                func.args
-                    .iter()
-                    .map(|arg| arg.to_string())
-                    .collect::<Vec<String>>()
-                    .join(", "),
-            )
-        }
-        let feeding: Vec<String> = self.get_feeding().iter().map(|f| to_string(f)).collect();
         write!(
             f,
-            "{}{}{}",
-            feeding.join(" >> "),
-            if feeding.is_empty() { "" } else { " >> " },
-            to_string(self)
+            "{}({})",
+            self.name,
+            self.args
+                .iter()
+                .map(|arg| arg.to_string())
+                .collect::<Vec<String>>()
+                .join(", "),
         )
     }
 }
 
 impl Formation for Function {
     fn elements_count(&self) -> usize {
-        self.args.len() + self.get_feeding().len()
+        self.args.len()
     }
     fn format(&self, cursor: &mut FormationCursor) -> String {
         fn formated(func: &Function, cursor: &mut FormationCursor) -> String {
@@ -276,29 +232,11 @@ impl Formation for Function {
                 }
             )
         }
-        let feeding = self.get_feeding();
-        let output = if self.to_string().len() > cursor.max_len()
-            || self.args.len() > cursor.max_args()
-            || feeding.len() > cursor.max_args()
-        {
-            format!(
-                "{}{}{}{}",
-                cursor.offset_as_string_if(&[ElTarget::Block]),
-                feeding
-                    .iter()
-                    .map(|f| formated(f, cursor))
-                    .collect::<Vec<String>>()
-                    .join(" >> "),
-                if feeding.is_empty() { "" } else { " >> " },
-                formated(self, cursor)
-            )
-        } else {
-            format!(
-                "{}{}",
-                cursor.offset_as_string_if(&[ElTarget::Block, ElTarget::Component]),
-                self
-            )
-        };
+        let output = format!(
+            "{}{}",
+            cursor.offset_as_string_if(&[ElTarget::Block, ElTarget::Component]),
+            self
+        );
         format!(
             "{output}{}",
             if cursor.parent.is_none() { ";\n" } else { "" }
@@ -323,7 +261,7 @@ impl TryExecute for Function {
         token: CancellationToken,
     ) -> ExecutePinnedResult {
         Box::pin(async move {
-            let mut args: Vec<FuncArg> = self
+            let args: Vec<FuncArg> = self
                 .get_processed_args(
                     owner,
                     components,
@@ -333,29 +271,6 @@ impl TryExecute for Function {
                     token.clone(),
                 )
                 .await?;
-            if let Some(func) = self.feed.as_ref() {
-                args.insert(
-                    0,
-                    FuncArg::new(
-                        cx.execute(
-                            &func.name,
-                            func.get_processed_args(
-                                owner,
-                                components,
-                                inputs,
-                                cx.clone(),
-                                sc.clone(),
-                                token,
-                            )
-                            .await?,
-                            func.args_token,
-                            sc.clone(),
-                        )
-                        .await?,
-                        func.token(),
-                    ),
-                );
-            };
             Ok(Some(
                 cx.execute(&self.name, args, self.args_token, sc).await?,
             ))
@@ -533,7 +448,6 @@ mod proptest {
                         args: Vec::new(),
                         token: 0,
                         args_token: 0,
-                        feed: None,
                         name: if name.is_empty() {
                             "min".to_owned()
                         } else {
@@ -568,7 +482,6 @@ mod proptest {
                         args,
                         token: 0,
                         args_token: 0,
-                        feed: None,
                         name: if name.is_empty() {
                             "min".to_owned()
                         } else {

@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget, Element, VariableName},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult,
+        operator, AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
         Scope, TokenGetter, TryExecute,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
@@ -157,7 +157,7 @@ mod reading {
                     );
                     count += 1;
                 }
-                assert_eq!(count, 114);
+                assert_eq!(count, 112);
                 assert!(reader.rest().trim().is_empty());
                 Ok::<(), LinkedErr<E>>(())
             }
@@ -195,7 +195,7 @@ mod reading {
                     );
                     count += 1;
                 }
-                assert_eq!(count, 114);
+                assert_eq!(count, 112);
                 assert!(reader.rest().trim().is_empty());
                 Ok::<(), LinkedErr<E>>(())
             }
