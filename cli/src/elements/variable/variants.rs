@@ -13,7 +13,7 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct VariableVariants {
-    pub values: Vec<String>,
+    pub values: Vec<AnyValue>,
     pub token: usize,
 }
 
@@ -32,7 +32,7 @@ impl Dissect<VariableVariants, VariableVariants> for VariableVariants {}
 
 impl VariableVariants {
     pub fn new(input: String, token: usize) -> Result<Self, LinkedErr<E>> {
-        let mut values: Vec<String> = Vec::new();
+        let mut values: Vec<AnyValue> = Vec::new();
         for value in input.split('|') {
             let value = value.trim();
             if !value.is_ascii() {
@@ -44,7 +44,11 @@ impl VariableVariants {
             if value.is_empty() {
                 Err(E::EmptyValue.linked(&token))?;
             }
-            values.push(value.to_string());
+            if let Ok(num) = value.parse::<isize>() {
+                values.push(AnyValue::isize(num))
+            } else {
+                values.push(AnyValue::String(value.to_string()));
+            }
         }
         if values.is_empty() {
             Err(E::NoVariableValues.linked(&token))?;
@@ -64,7 +68,7 @@ impl TryExecute for VariableVariants {
         &'a self,
         _owner: Option<&'a Component>,
         _components: &'a [Component],
-        args: &'a [String],
+        args: &'a [AnyValue],
         _cx: Context,
         _sc: Scope,
         _token: CancellationToken,
@@ -76,12 +80,17 @@ impl TryExecute for VariableVariants {
                 args[0].to_owned()
             };
             if self.values.contains(&value) {
-                Ok(Some(AnyValue::new(value)?))
+                Ok(Some(value))
             } else {
-                Err(
-                    operator::E::NotDeclaredValueAsArgument(value, self.values.join(" | "))
-                        .by(self),
+                Err(operator::E::NotDeclaredValueAsArgument(
+                    value.to_string(),
+                    self.values
+                        .iter()
+                        .map(|v| v.to_string())
+                        .collect::<Vec<String>>()
+                        .join(" | "),
                 )
+                .by(self))
             }
         })
     }
@@ -91,7 +100,15 @@ impl Execute for VariableVariants {}
 
 impl fmt::Display for VariableVariants {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.values.join(" | "))
+        write!(
+            f,
+            "{}",
+            self.values
+                .iter()
+                .map(|v| v.as_string().expect("Value variant can be only String"))
+                .collect::<Vec<String>>()
+                .join(" | ")
+        )
     }
 }
 
@@ -154,7 +171,7 @@ mod reading {
 
 #[cfg(test)]
 mod proptest {
-    use crate::elements::VariableVariants;
+    use crate::{elements::VariableVariants, inf::AnyValue};
     use proptest::prelude::*;
 
     impl Arbitrary for VariableVariants {
@@ -167,13 +184,13 @@ mod proptest {
                     values: values
                         .iter()
                         .map(|v| {
-                            if v.is_empty() {
+                            AnyValue::String(if v.is_empty() {
                                 "min".to_owned()
                             } else {
                                 v.to_owned()
-                            }
+                            })
                         })
-                        .collect::<Vec<String>>(),
+                        .collect::<Vec<AnyValue>>(),
                     token: 0,
                 })
                 .boxed()

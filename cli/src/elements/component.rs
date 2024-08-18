@@ -4,8 +4,8 @@ use crate::{
     elements::{ElTarget, Element, Gatekeeper, SimpleString, Task},
     error::LinkedErr,
     inf::{
-        operator, scenario, Context, Execute, Formation, FormationCursor, ExecutePinnedResult,
-        Scope, TokenGetter, TryExecute,
+        operator, scenario, AnyValue, Context, Execute, ExecutePinnedResult, Formation,
+        FormationCursor, Scope, TokenGetter, TryExecute,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -186,16 +186,20 @@ impl TryExecute for Component {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [String],
+        args: &'a [AnyValue],
         cx: Context,
         _sc: Scope,
         token: CancellationToken,
     ) -> ExecutePinnedResult {
         Box::pin(async move {
-            let task = args.first().ok_or_else(|| {
-                operator::E::NoTaskForComponent(self.name.to_string(), self.get_tasks_names())
-            })?;
-            let (task, gatekeepers) = self.get_task(task).ok_or_else(|| {
+            let task = args
+                .first()
+                .map(|task| task.as_string())
+                .flatten()
+                .ok_or_else(|| {
+                    operator::E::NoTaskForComponent(self.name.to_string(), self.get_tasks_names())
+                })?;
+            let (task, gatekeepers) = self.get_task(&task).ok_or_else(|| {
                 operator::E::TaskNotExists(
                     self.name.to_string(),
                     task.to_owned(),
@@ -372,7 +376,7 @@ mod processing {
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
-            Configuration, Context, Journal, Scope,
+            AnyValue, Configuration, Context, Journal, Scope,
         },
         process_string,
         reader::{Dissect, Reader, Sources},
@@ -405,8 +409,8 @@ mod processing {
                             &components,
                             &VALUES[i]
                                 .iter()
-                                .map(|s| s.to_string())
-                                .collect::<Vec<String>>(),
+                                .map(|s| AnyValue::String(s.to_string()))
+                                .collect::<Vec<AnyValue>>(),
                             cx.clone(),
                             sc.clone(),
                             CancellationToken::new(),

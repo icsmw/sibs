@@ -31,7 +31,7 @@ impl Task {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [String],
+        args: &'a [AnyValue],
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -45,7 +45,10 @@ impl Task {
                     .collect::<Vec<String>>()
                     .join(", "),
                 args.len(),
-                args.join(", "),
+                args.iter()
+                    .map(|s| s.to_string())
+                    .collect::<Vec<String>>()
+                    .join(", "),
             )
             .by(self))?;
         }
@@ -74,7 +77,7 @@ impl Task {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [String],
+        args: &'a [AnyValue],
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -274,7 +277,7 @@ impl TryExecute for Task {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [String],
+        args: &'a [AnyValue],
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -289,7 +292,10 @@ impl TryExecute for Task {
                         .collect::<Vec<String>>()
                         .join(", "),
                     args.len(),
-                    args.join(", "),
+                    args.iter()
+                        .map(|d| d.to_string())
+                        .collect::<Vec<String>>()
+                        .join(", "),
                 )
                 .by(self))?;
             }
@@ -459,7 +465,7 @@ mod processing {
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
-            Configuration, Context, Journal, Scope,
+            AnyValue, Configuration, Context, Journal, Scope,
         },
         process_string,
         reader::{chars, Dissect, Reader, Sources},
@@ -488,8 +494,8 @@ mod processing {
                             &[],
                             &VALUES[i]
                                 .iter()
-                                .map(|s| s.to_string())
-                                .collect::<Vec<String>>(),
+                                .map(|s| AnyValue::String(s.to_string()))
+                                .collect::<Vec<AnyValue>>(),
                             cx.clone(),
                             sc.clone(),
                             CancellationToken::new(),
@@ -527,7 +533,11 @@ mod processing {
                         .execute(
                             Some(component),
                             &components,
-                            &["test".to_owned(), "a".to_owned(), "b".to_owned()],
+                            &[
+                                AnyValue::String("test".to_owned()),
+                                AnyValue::String("a".to_owned()),
+                                AnyValue::String("b".to_owned()),
+                            ],
                             cx.clone(),
                             sc.clone(),
                             CancellationToken::new(),

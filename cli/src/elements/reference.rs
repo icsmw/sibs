@@ -4,8 +4,8 @@ use crate::{
     elements::{Component, ElTarget, Element, Gatekeeper},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
-        TokenGetter, TryExecute,
+        operator, AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
+        Scope, TokenGetter, TryExecute,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -149,7 +149,7 @@ impl TryExecute for Reference {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        inputs: &'a [String],
+        inputs: &'a [AnyValue],
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -178,7 +178,7 @@ impl TryExecute for Reference {
             let (task, gatekeepers) = parent.get_task(task).ok_or(
                 operator::E::TaskNotFound(task.to_owned(), parent.name.to_string()).by(self),
             )?;
-            let mut args: Vec<String> = Vec::new();
+            let mut args: Vec<AnyValue> = Vec::new();
             for input in self.inputs.iter() {
                 args.push(
                     input
@@ -191,9 +191,7 @@ impl TryExecute for Reference {
                             token.clone(),
                         )
                         .await?
-                        .ok_or(operator::E::FailToGetAnyValueAsTaskArg.by(self))?
-                        .as_string()
-                        .ok_or(operator::E::FailToGetStringValue.by(self))?,
+                        .ok_or(operator::E::FailToGetAnyValueAsTaskArg.by(self))?,
                 );
             }
             let task_ref = task

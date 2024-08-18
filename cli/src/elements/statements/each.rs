@@ -4,7 +4,7 @@ use crate::{
     elements::{Block, Component, ElTarget, Element, VariableName},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult,
+        operator, AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
         Scope, TokenGetter, TryExecute,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
@@ -99,7 +99,7 @@ impl TryExecute for Each {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [String],
+        args: &'a [AnyValue],
         cx: Context,
         sc: Scope,
         token: CancellationToken,

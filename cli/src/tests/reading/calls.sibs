@@ -1,0 +1,4 @@
+check("something").is_ok();
+check("something").as_string();
+do_smth().as_number();
+do_smth().as_number().and().next();

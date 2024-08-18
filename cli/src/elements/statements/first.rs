@@ -4,8 +4,8 @@ use crate::{
     elements::{Block, Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        Context, Execute, Formation, FormationCursor, ExecutePinnedResult, Scope, TokenGetter,
-        TryExecute,
+        AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
+        TokenGetter, TryExecute,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -69,7 +69,7 @@ impl TryExecute for First {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [String],
+        args: &'a [AnyValue],
         cx: Context,
         sc: Scope,
         token: CancellationToken,

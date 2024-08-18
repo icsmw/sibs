@@ -107,7 +107,7 @@ impl TryExecute for VariableAssignation {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [String],
+        args: &'a [AnyValue],
         cx: Context,
         sc: Scope,
         token: CancellationToken,

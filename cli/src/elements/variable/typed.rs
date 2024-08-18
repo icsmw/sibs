@@ -90,7 +90,7 @@ impl TryExecute for VariableType {
         &'a self,
         _owner: Option<&'a Component>,
         _components: &'a [Component],
-        args: &'a [String],
+        args: &'a [AnyValue],
         _cx: Context,
         _sc: Scope,
         _token: CancellationToken,
@@ -102,13 +102,24 @@ impl TryExecute for VariableType {
                 args[0].to_owned()
             };
             Ok(Some(match &self.var_type {
-                Types::String => AnyValue::new(value)?,
-                Types::Number => AnyValue::new(value.parse::<isize>().map_err(|e| {
-                    operator::E::ParseStringError(Types::Number.to_string(), e.to_string())
-                })?)?,
-                Types::Bool => AnyValue::new(value.parse::<bool>().map_err(|e| {
-                    operator::E::ParseStringError(Types::Bool.to_string(), e.to_string())
-                })?)?,
+                Types::String => {
+                    AnyValue::new(value.as_string().ok_or(operator::E::ParseStringError(
+                        Types::String.to_string(),
+                        "Value isn't String".to_string(),
+                    ))?)?
+                }
+                Types::Number => {
+                    AnyValue::isize(value.as_num().ok_or(operator::E::ParseStringError(
+                        Types::Number.to_string(),
+                        "Value isn't number".to_string(),
+                    ))?)
+                }
+                Types::Bool => {
+                    AnyValue::bool(value.as_bool().ok_or(operator::E::ParseStringError(
+                        Types::Bool.to_string(),
+                        "Value isn't bool".to_string(),
+                    ))?)
+                }
             }))
         })
     }

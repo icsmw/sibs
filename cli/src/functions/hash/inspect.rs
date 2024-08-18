@@ -128,7 +128,7 @@ mod test {
         inf::{
             operator::{Execute, E},
             tests::*,
-            Configuration, Context, Journal, Scope,
+            AnyValue, Configuration, Context, Journal, Scope,
         },
         process_string,
         reader::{chars, Dissect, Reader, Sources},
@@ -218,7 +218,10 @@ mod test {
                             .execute(
                                 Some(component),
                                 &components,
-                                &args.iter().map(|s| s.to_string()).collect::<Vec<String>>(),
+                                &args
+                                    .iter()
+                                    .map(|s| AnyValue::String(s.to_string()))
+                                    .collect::<Vec<AnyValue>>(),
                                 cx.clone(),
                                 sc.clone(),
                                 CancellationToken::new(),

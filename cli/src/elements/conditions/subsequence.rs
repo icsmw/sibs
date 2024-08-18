@@ -4,7 +4,7 @@ use crate::{
     elements::{Cmb, Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult, Scope,
+        AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
         TokenGetter, TryExecute,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
@@ -134,7 +134,7 @@ impl TryExecute for Subsequence {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [String],
+        args: &'a [AnyValue],
         cx: Context,
         sc: Scope,
         token: CancellationToken,

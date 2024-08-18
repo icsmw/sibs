@@ -84,6 +84,11 @@ impl AnyValue {
                     .downcast::<&String>()
                     .map(|v| Self::String((*v).clone()))
             })
+            .or_else(|boxed| {
+                boxed
+                    .downcast::<&str>()
+                    .map(|v| Self::String(v.to_string()))
+            })
             .or_else(|boxed| boxed.downcast::<&i8>().map(|v| Self::i8(**v)))
             .or_else(|boxed| boxed.downcast::<&i16>().map(|v| Self::i16(**v)))
             .or_else(|boxed| boxed.downcast::<&i32>().map(|v| Self::i32(**v)))

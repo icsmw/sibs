@@ -89,8 +89,8 @@ pub enum E {
     EmptyPathToReference,
     #[error("\"{0}\" is an invalid reference")]
     InvalidReference(String),
-    #[error("No destination function after >")]
-    NoDestFunction,
+    #[error("No call function after \".\"")]
+    NoCallFunction,
     #[error("No loop variable each($var)")]
     NoLoopVariable,
     #[error("No loop variable declaration; expecting: each($var)")]
@@ -127,8 +127,6 @@ pub enum E {
     NoVariableValues,
     #[error("No metadata content")]
     NoMetaContent,
-    #[error("Invalid function name: {0}")]
-    InvalidFunctionName(String),
     #[error("Converting error")]
     Infallible(#[from] std::convert::Infallible),
     #[error("IO error")]

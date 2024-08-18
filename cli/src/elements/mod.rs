@@ -122,7 +122,9 @@ impl fmt::Display for ElTarget {
 #[derive(Debug, Clone, Default)]
 pub struct Metadata {
     // Element: Comment | Meta
-    pub elements: Vec<Element>,
+    pub comments: Vec<Comment>,
+    pub meta: Vec<Meta>,
+    pub call: Option<Box<Element>>,
     pub tolerance: bool,
     pub inverting: bool,
 }
@@ -130,48 +132,25 @@ pub struct Metadata {
 impl Metadata {
     pub fn empty() -> Self {
         Metadata {
-            elements: Vec::new(),
+            comments: Vec::new(),
+            meta: Vec::new(),
+            call: None,
             tolerance: false,
             inverting: false,
         }
     }
     #[allow(unused)]
-    pub fn comments(&self) -> Vec<&Comment> {
-        self.elements
-            .iter()
-            .filter_map(|el| {
-                if let Element::Comment(el) = el {
-                    Some(el)
-                } else {
-                    None
-                }
-            })
-            .collect()
+    pub fn comments(&self) -> &[Comment] {
+        &self.comments
     }
-    pub fn meta(&self) -> Vec<&Meta> {
-        self.elements
-            .iter()
-            .filter_map(|el| {
-                if let Element::Meta(el) = el {
-                    Some(el)
-                } else {
-                    None
-                }
-            })
-            .collect()
+    pub fn meta(&self) -> &[Meta] {
+        &self.meta
     }
     pub fn meta_as_lines(&self) -> Vec<&str> {
-        self.elements
-            .iter()
-            .filter_map(|el| {
-                if let Element::Meta(el) = el {
-                    Some(el)
-                } else {
-                    None
-                }
-            })
-            .flat_map(|el| el.as_lines())
-            .collect()
+        self.meta.iter().flat_map(|el| el.as_lines()).collect()
+    }
+    pub fn set_call(&mut self, el: Element) {
+        self.call = Some(Box::new(el));
     }
 }
 
@@ -179,13 +158,19 @@ impl fmt::Display for Metadata {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{}{}",
-            self.elements
+            "{}{}{}{}",
+            self.comments
                 .iter()
                 .map(|c| c.to_string())
                 .collect::<Vec<String>>()
                 .join("\n"),
-            if self.elements.is_empty() { "" } else { "\n" },
+            if self.comments.is_empty() { "" } else { "\n" },
+            self.meta
+                .iter()
+                .map(|c| c.to_string())
+                .collect::<Vec<String>>()
+                .join("\n"),
+            if self.meta.is_empty() { "" } else { "\n" },
         )
     }
 }
@@ -193,13 +178,19 @@ impl fmt::Display for Metadata {
 impl Formation for Metadata {
     fn format(&self, cursor: &mut FormationCursor) -> String {
         format!(
-            "{}{}",
-            self.elements
+            "{}{}{}{}",
+            self.comments
                 .iter()
                 .map(|c| c.format(cursor))
                 .collect::<Vec<String>>()
                 .join("\n"),
-            if self.elements.is_empty() { "" } else { "\n" },
+            if self.comments.is_empty() { "" } else { "\n" },
+            self.meta
+                .iter()
+                .map(|c| c.format(cursor))
+                .collect::<Vec<String>>()
+                .join("\n"),
+            if self.meta.is_empty() { "" } else { "\n" },
         )
     }
 }
@@ -248,21 +239,30 @@ impl Element {
             md.tolerance = reader.move_to().char(&[&chars::QUESTION]).is_some();
             md
         }
-        let mut elements: Vec<Element> = Vec::new();
+        fn next(reader: &mut Reader, mut el: Element) -> Result<Option<Element>, LinkedErr<E>> {
+            let Some(call) = Element::include(reader, &[ElTarget::Call])? else {
+                return Ok(Some(el));
+            };
+            el.get_mut_metadata().set_call(call);
+            Ok(Some(el))
+        }
+        let mut comments: Vec<Comment> = Vec::new();
+        let mut meta: Vec<Meta> = Vec::new();
         loop {
-            let before = elements.len();
             if let Some(el) = Comment::dissect(reader)? {
-                elements.push(Element::Comment(el));
+                comments.push(el);
+                continue;
             }
             if let Some(el) = Meta::dissect(reader)? {
-                elements.push(Element::Meta(el));
+                meta.push(el);
+                continue;
             }
-            if before == elements.len() {
-                break;
-            }
+            break;
         }
         let md = Metadata {
-            elements,
+            comments,
+            meta,
+            call: None,
             tolerance: false,
             inverting: if targets.contains(&ElTarget::Function) {
                 reader.move_to().char(&[&chars::EXCLAMATION]).is_some()
@@ -272,147 +272,149 @@ impl Element {
         };
         if includes == targets.contains(&ElTarget::Breaker) {
             if let Some(el) = Breaker::dissect(reader)? {
-                return Ok(Some(Element::Breaker(el, md)));
+                return next(reader, Element::Breaker(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::Call) {
             if let Some(el) = Call::dissect(reader)? {
-                return Ok(Some(Element::Call(el, md)));
+                return next(reader, Element::Call(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::Combination) {
             if let Some(el) = Combination::dissect(reader)? {
-                return Ok(Some(Element::Combination(el, md)));
+                return next(reader, Element::Combination(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::Subsequence) {
             if let Some(el) = Subsequence::dissect(reader)? {
-                return Ok(Some(Element::Subsequence(el, md)));
+                return next(reader, Element::Subsequence(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::Condition) {
             if let Some(el) = Condition::dissect(reader)? {
-                return Ok(Some(Element::Condition(el, md)));
+                return next(reader, Element::Condition(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::Meta) {
             if let Some(el) = Meta::dissect(reader)? {
-                return Ok(Some(Element::Meta(el)));
+                return next(reader, Element::Meta(el));
             }
         }
         if includes == targets.contains(&ElTarget::Command) {
             if let Some(el) = Command::dissect(reader)? {
-                return Ok(Some(Element::Command(el, tolerance(reader, md))));
+                let to = tolerance(reader, md);
+                return next(reader, Element::Command(el, to));
             }
         }
         if includes == targets.contains(&ElTarget::If) {
             if let Some(el) = If::dissect(reader)? {
-                return Ok(Some(Element::If(el, md)));
+                return next(reader, Element::If(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::Optional) {
             if let Some(el) = Optional::dissect(reader)? {
-                return Ok(Some(Element::Optional(el, md)));
+                return next(reader, Element::Optional(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::Gatekeeper) {
             if let Some(el) = Gatekeeper::dissect(reader)? {
-                return Ok(Some(Element::Gatekeeper(el, md)));
+                return next(reader, Element::Gatekeeper(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::Comparing) {
             if let Some(el) = Comparing::dissect(reader)? {
-                return Ok(Some(Element::Comparing(el, md)));
+                return next(reader, Element::Comparing(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::Integer) {
             if let Some(el) = Integer::dissect(reader)? {
-                return Ok(Some(Element::Integer(el, md)));
+                return next(reader, Element::Integer(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::Boolean) {
             if let Some(el) = Boolean::dissect(reader)? {
-                return Ok(Some(Element::Boolean(el, md)));
+                return next(reader, Element::Boolean(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::VariableAssignation) {
             if let Some(el) = VariableAssignation::dissect(reader)? {
-                return Ok(Some(Element::VariableAssignation(el, md)));
+                return next(reader, Element::VariableAssignation(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::VariableName) {
             if let Some(el) = VariableName::dissect(reader)? {
-                return Ok(Some(Element::VariableName(el, md)));
+                return next(reader, Element::VariableName(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::Each) {
             if let Some(el) = Each::dissect(reader)? {
-                return Ok(Some(Element::Each(el, md)));
+                return next(reader, Element::Each(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::First) {
             if let Some(el) = First::dissect(reader)? {
-                return Ok(Some(Element::First(el, md)));
+                return next(reader, Element::First(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::Join) {
             if let Some(el) = Join::dissect(reader)? {
-                return Ok(Some(Element::Join(el, md)));
+                return next(reader, Element::Join(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::Function) {
             if let Some(el) = Function::dissect(reader)? {
-                return Ok(Some(Element::Function(el, tolerance(reader, md))));
+                let to = tolerance(reader, md);
+                return next(reader, Element::Function(el, to));
             }
         }
         if includes == targets.contains(&ElTarget::Reference) {
             if let Some(el) = Reference::dissect(reader)? {
-                return Ok(Some(Element::Reference(el, md)));
+                return next(reader, Element::Reference(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::PatternString) {
             if let Some(el) = PatternString::dissect(reader)? {
-                return Ok(Some(Element::PatternString(el, md)));
+                return next(reader, Element::PatternString(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::Block) {
             if let Some(el) = Block::dissect(reader)? {
-                return Ok(Some(Element::Block(el, md)));
+                return next(reader, Element::Block(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::Values) {
             if let Some(el) = Values::dissect(reader)? {
-                return Ok(Some(Element::Values(el, md)));
+                return next(reader, Element::Values(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::Component) {
             if let Some(el) = Component::dissect(reader)? {
-                return Ok(Some(Element::Component(el, md)));
+                return next(reader, Element::Component(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::Task) {
             if let Some(el) = Task::dissect(reader)? {
-                return Ok(Some(Element::Task(el, md)));
+                return next(reader, Element::Task(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::VariableDeclaration) {
             if let Some(el) = VariableDeclaration::dissect(reader)? {
-                return Ok(Some(Element::VariableDeclaration(el, md)));
+                return next(reader, Element::VariableDeclaration(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::VariableType) {
             if let Some(el) = VariableType::dissect(reader)? {
-                return Ok(Some(Element::VariableType(el, md)));
+                return next(reader, Element::VariableType(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::VariableVariants) {
             if let Some(el) = VariableVariants::dissect(reader)? {
-                return Ok(Some(Element::VariableVariants(el, md)));
+                return next(reader, Element::VariableVariants(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::SimpleString) {
             if let Some(el) = SimpleString::dissect(reader)? {
-                return Ok(Some(Element::SimpleString(el, md)));
+                return next(reader, Element::SimpleString(el, md));
             }
         }
         Ok(None)
@@ -433,6 +435,42 @@ impl Element {
     }
 
     pub fn get_metadata(&self) -> &Metadata {
+        match self {
+            Self::Function(_, md) => md,
+            Self::If(_, md) => md,
+            Self::Breaker(_, md) => md,
+            Self::Each(_, md) => md,
+            Self::First(_, md) => md,
+            Self::Join(_, md) => md,
+            Self::VariableAssignation(_, md) => md,
+            Self::Comparing(_, md) => md,
+            Self::Combination(_, md) => md,
+            Self::Condition(_, md) => md,
+            Self::Subsequence(_, md) => md,
+            Self::Optional(_, md) => md,
+            Self::Gatekeeper(_, md) => md,
+            Self::Reference(_, md) => md,
+            Self::PatternString(_, md) => md,
+            Self::VariableName(_, md) => md,
+            Self::Values(_, md) => md,
+            Self::Block(_, md) => md,
+            Self::Command(_, md) => md,
+            Self::Task(_, md) => md,
+            Self::Component(_, md) => md,
+            Self::Boolean(_, md) => md,
+            Self::Integer(_, md) => md,
+            Self::VariableDeclaration(_, md) => md,
+            Self::VariableVariants(_, md) => md,
+            Self::VariableType(_, md) => md,
+            Self::SimpleString(_, md) => md,
+            Self::Call(_, md) => md,
+            Self::Comment(_) | Self::Meta(_) => {
+                panic!("Comment doesn't have metadata");
+            }
+        }
+    }
+
+    pub fn get_mut_metadata(&mut self) -> &mut Metadata {
         match self {
             Self::Function(_, md) => md,
             Self::If(_, md) => md,
@@ -548,7 +586,7 @@ impl fmt::Display for Element {
             A: Display,
         {
             format!(
-                "{md}{}{el}{}",
+                "{md}{}{el}{}{}",
                 if md.inverting {
                     chars::EXCLAMATION.to_string()
                 } else {
@@ -556,6 +594,11 @@ impl fmt::Display for Element {
                 },
                 if md.tolerance {
                     chars::QUESTION.to_string()
+                } else {
+                    String::new()
+                },
+                if let Some(call) = md.call.as_ref() {
+                    format!("{}{}", chars::DOT, call)
                 } else {
                     String::new()
                 }
@@ -733,7 +776,7 @@ impl TryExecute for Element {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [String],
+        args: &'a [AnyValue],
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -890,7 +933,9 @@ mod proptest {
         fn arbitrary_with((): Self::Parameters) -> Self::Strategy {
             prop_oneof![Just(true), Just(false),]
                 .prop_map(|tolerance| Metadata {
-                    elements: Vec::new(),
+                    comments: Vec::new(),
+                    meta: Vec::new(),
+                    call: None,
                     tolerance,
                     inverting: false,
                 })

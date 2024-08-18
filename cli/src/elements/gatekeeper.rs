@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget, Element, Reference},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult,
+        operator, AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
         Scope, TokenGetter, TryExecute,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
@@ -148,7 +148,7 @@ impl TryExecute for Gatekeeper {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [String],
+        args: &'a [AnyValue],
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -278,7 +278,7 @@ mod processing {
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
-            Configuration, Context, Journal, Scope,
+            AnyValue, Configuration, Context, Journal, Scope,
         },
         process_string,
         reader::{chars, Dissect, Reader, Sources},
@@ -310,7 +310,10 @@ mod processing {
                             .execute(
                                 Some(component),
                                 &components,
-                                &args.iter().map(|s| s.to_string()).collect::<Vec<String>>(),
+                                &args
+                                    .iter()
+                                    .map(|s| AnyValue::String(s.to_string()))
+                                    .collect::<Vec<AnyValue>>(),
                                 cx.clone(),
                                 sc.clone(),
                                 CancellationToken::new(),

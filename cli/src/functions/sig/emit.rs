@@ -68,7 +68,7 @@ mod test {
                     .execute(
                         Some(el),
                         &[],
-                        &[String::from("run")],
+                        &[AnyValue::String(String::from("run"))],
                         cx.clone(),
                         sc.clone(),
                         CancellationToken::new(),

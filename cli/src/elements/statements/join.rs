@@ -2,8 +2,8 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, ExecuteResult, Formation, FormationCursor,
-        ExecutePinnedResult, Scope, TokenGetter, TryExecute,
+        operator, AnyValue, Context, Execute, ExecutePinnedResult, ExecuteResult, Formation,
+        FormationCursor, Scope, TokenGetter, TryExecute,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -93,7 +93,7 @@ impl TryExecute for Join {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [String],
+        args: &'a [AnyValue],
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -101,14 +101,14 @@ impl TryExecute for Join {
         fn clone(
             owner: Option<&Component>,
             components: &[Component],
-            args: &[String],
+            args: &[AnyValue],
             cx: &Context,
             sc: &Scope,
             token: &CancellationToken,
         ) -> (
             Option<Component>,
             Vec<Component>,
-            Vec<String>,
+            Vec<AnyValue>,
             Context,
             Scope,
             CancellationToken,
@@ -306,7 +306,7 @@ mod processing {
                     .execute(
                         None,
                         &[],
-                        &[String::from("test_a")],
+                        &[AnyValue::String(String::from("test_a"))],
                         cx.clone(),
                         sc.clone(),
                         CancellationToken::new(),
@@ -326,7 +326,7 @@ mod processing {
                     .execute(
                         Some(el),
                         &[],
-                        &[String::from("test_b")],
+                        &[AnyValue::String(String::from("test_b"))],
                         cx,
                         sc,
                         CancellationToken::new(),
@@ -364,7 +364,7 @@ mod processing {
                     .execute(
                         Some(el),
                         &[],
-                        &[String::from("test_c")],
+                        &[AnyValue::String(String::from("test_c"))],
                         cx.clone(),
                         sc.clone(),
                         CancellationToken::new()
@@ -375,7 +375,7 @@ mod processing {
                     .execute(
                         Some(el),
                         &[],
-                        &[String::from("test_d")],
+                        &[AnyValue::String(String::from("test_d"))],
                         cx.clone(),
                         sc.clone(),
                         CancellationToken::new()
@@ -386,7 +386,7 @@ mod processing {
                     .execute(
                         Some(el),
                         &[],
-                        &[String::from("test_e")],
+                        &[AnyValue::String(String::from("test_e"))],
                         cx.clone(),
                         sc.clone(),
                         CancellationToken::new()
@@ -397,7 +397,7 @@ mod processing {
                     .execute(
                         Some(el),
                         &[],
-                        &[String::from("test_f")],
+                        &[AnyValue::String(String::from("test_f"))],
                         cx.clone(),
                         sc.clone(),
                         CancellationToken::new()

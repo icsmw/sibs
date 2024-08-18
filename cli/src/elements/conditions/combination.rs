@@ -4,7 +4,7 @@ use crate::{
     elements::Component,
     error::LinkedErr,
     inf::{
-        AnyValue, Context, Execute, Formation, FormationCursor, ExecutePinnedResult, Scope,
+        AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
         TokenGetter, TryExecute,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
@@ -79,7 +79,7 @@ impl TryExecute for Combination {
         &'a self,
         _owner: Option<&'a Component>,
         _components: &'a [Component],
-        _args: &'a [String],
+        _args: &'a [AnyValue],
         _cx: Context,
         _sc: Scope,
         _token: CancellationToken,
