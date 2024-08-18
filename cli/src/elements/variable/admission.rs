@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
+        operator, Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
         Scope, TokenGetter, TryExecute,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
@@ -66,7 +66,7 @@ impl TryExecute for VariableName {
         &'a self,
         _: Option<&'a Component>,
         _: &'a [Component],
-        _: &'a [AnyValue],
+        _: &'a [Value],
         _: Context,
         sc: Scope,
         _token: CancellationToken,

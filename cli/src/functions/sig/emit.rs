@@ -2,7 +2,7 @@ use crate::{
     elements::FuncArg,
     error::LinkedErr,
     functions::{ExecutorPinnedResult, E},
-    inf::{tools::get_name, AnyValue, Context, Scope},
+    inf::{tools::get_name, Value, Context, Scope},
 };
 
 pub fn name() -> String {
@@ -32,7 +32,7 @@ pub fn execute(
         cx.signals.emit(&signal).await?;
         sc.journal
             .debug(format!("signal \"{signal}\" has been sent"));
-        Ok(AnyValue::empty())
+        Ok(Value::empty())
     })
 }
 
@@ -45,7 +45,7 @@ mod test {
         error::LinkedErr,
         inf::{
             journal::{Configuration, Journal},
-            AnyValue, Context, Execute, Scope,
+            Value, Context, Execute, Scope,
         },
         process_file,
         reader::{error::E, Reader, Sources},
@@ -68,7 +68,7 @@ mod test {
                     .execute(
                         Some(el),
                         &[],
-                        &[AnyValue::String(String::from("run"))],
+                        &[Value::String(String::from("run"))],
                         cx.clone(),
                         sc.clone(),
                         CancellationToken::new(),
@@ -76,11 +76,11 @@ mod test {
                     .await
                     .expect("run is successfull")
                     .expect("join returns vector of results");
-                assert!(results.get::<Vec<AnyValue>>().is_some());
+                assert!(results.get::<Vec<Value>>().is_some());
                 assert_eq!(
                     results
-                        .get::<Vec<AnyValue>>()
-                        .expect("join returns Vec<AnyValue>")
+                        .get::<Vec<Value>>()
+                        .expect("join returns Vec<Value>")
                         .len(),
                     3
                 );

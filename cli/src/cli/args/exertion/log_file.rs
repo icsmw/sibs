@@ -6,7 +6,7 @@ use crate::{
         error::E,
     },
     elements::Element,
-    inf::AnyValue,
+    inf::Value,
 };
 
 const ARGS: [&str; 2] = ["--logs", "-l"];
@@ -38,7 +38,7 @@ impl Argument for LogFile {
 
 impl Action for LogFile {
     fn action<'a>(&'a self, _components: &'a [Element]) -> ActionPinnedResult {
-        Box::pin(async move { Ok(AnyValue::PathBuf(PathBuf::from(&self.filename))) })
+        Box::pin(async move { Ok(Value::PathBuf(PathBuf::from(&self.filename))) })
     }
     fn key(&self) -> String {
         ARGS[0].to_owned()

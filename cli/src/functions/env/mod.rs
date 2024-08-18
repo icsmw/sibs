@@ -1,44 +1,44 @@
 use crate::{
     elements::FuncArg,
     functions::{ExecutorFn, ExecutorPinnedResult, TryAnyTo, E},
-    inf::{AnyValue, Context, Scope, Store},
+    inf::{Value, Context, Scope, Store},
 };
 use importer::import;
 
 pub fn register(store: &mut Store<ExecutorFn>) -> Result<(), E> {
     #[import(env)]
-    fn var(key: String) -> Result<AnyValue, E> {
-        Ok(AnyValue::String(std::env::var(key).unwrap_or_default()))
+    fn var(key: String) -> Result<Value, E> {
+        Ok(Value::String(std::env::var(key).unwrap_or_default()))
     }
     #[import(env)]
-    fn set_var(key: String, value: String) -> Result<AnyValue, E> {
-        Ok(AnyValue::Empty(std::env::set_var(key, value)))
+    fn set_var(key: String, value: String) -> Result<Value, E> {
+        Ok(Value::Empty(std::env::set_var(key, value)))
     }
     #[import(env)]
-    fn remove_var(key: String) -> Result<AnyValue, E> {
-        Ok(AnyValue::Empty(std::env::remove_var(key)))
+    fn remove_var(key: String) -> Result<Value, E> {
+        Ok(Value::Empty(std::env::remove_var(key)))
     }
     #[import(env)]
-    fn temp_dir() -> Result<AnyValue, E> {
-        Ok(AnyValue::PathBuf(std::env::temp_dir()))
+    fn temp_dir() -> Result<Value, E> {
+        Ok(Value::PathBuf(std::env::temp_dir()))
     }
     #[import(env)]
-    fn arch() -> Result<AnyValue, E> {
-        Ok(AnyValue::String(std::env::consts::ARCH.to_string()))
+    fn arch() -> Result<Value, E> {
+        Ok(Value::String(std::env::consts::ARCH.to_string()))
     }
     #[import(env)]
-    fn os() -> Result<AnyValue, E> {
-        Ok(AnyValue::String(std::env::consts::OS.to_string()))
+    fn os() -> Result<Value, E> {
+        Ok(Value::String(std::env::consts::OS.to_string()))
     }
     #[import(env)]
-    fn is_os(os: String) -> Result<AnyValue, E> {
-        Ok(AnyValue::bool(
+    fn is_os(os: String) -> Result<Value, E> {
+        Ok(Value::bool(
             std::env::consts::OS.to_lowercase() == os.to_lowercase(),
         ))
     }
     #[import(env)]
-    fn family() -> Result<AnyValue, E> {
-        Ok(AnyValue::String(std::env::consts::FAMILY.to_string()))
+    fn family() -> Result<Value, E> {
+        Ok(Value::String(std::env::consts::FAMILY.to_string()))
     }
     Ok(())
 }

@@ -4,7 +4,7 @@ use crate::{
         error::E,
     },
     elements::Element,
-    inf::{journal, AnyValue},
+    inf::{journal, Value},
 };
 
 const ARGS: [&str; 2] = ["--output", "-o"];
@@ -42,7 +42,7 @@ impl Argument for Output {
 
 impl Action for Output {
     fn action<'a>(&'a self, _components: &'a [Element]) -> ActionPinnedResult {
-        Box::pin(async move { Ok(AnyValue::Output(self.output.clone())) })
+        Box::pin(async move { Ok(Value::Output(self.output.clone())) })
     }
     fn key(&self) -> String {
         ARGS[0].to_owned()

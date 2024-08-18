@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
+        operator, Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
         Scope, TokenGetter, TryExecute,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
@@ -90,7 +90,7 @@ impl TryExecute for VariableType {
         &'a self,
         _owner: Option<&'a Component>,
         _components: &'a [Component],
-        args: &'a [AnyValue],
+        args: &'a [Value],
         _cx: Context,
         _sc: Scope,
         _token: CancellationToken,
@@ -103,19 +103,19 @@ impl TryExecute for VariableType {
             };
             Ok(Some(match &self.var_type {
                 Types::String => {
-                    AnyValue::String(value.as_string().ok_or(operator::E::ParseStringError(
+                    Value::String(value.as_string().ok_or(operator::E::ParseStringError(
                         Types::String.to_string(),
                         "Value isn't String".to_string(),
                     ))?)
                 }
                 Types::Number => {
-                    AnyValue::isize(value.as_num().ok_or(operator::E::ParseStringError(
+                    Value::isize(value.as_num().ok_or(operator::E::ParseStringError(
                         Types::Number.to_string(),
                         "Value isn't number".to_string(),
                     ))?)
                 }
                 Types::Bool => {
-                    AnyValue::bool(value.as_bool().ok_or(operator::E::ParseStringError(
+                    Value::bool(value.as_bool().ok_or(operator::E::ParseStringError(
                         Types::Bool.to_string(),
                         "Value isn't bool".to_string(),
                     ))?)

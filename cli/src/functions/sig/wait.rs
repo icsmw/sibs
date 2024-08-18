@@ -2,7 +2,7 @@ use crate::{
     elements::FuncArg,
     error::LinkedErr,
     functions::{ExecutorPinnedResult, E},
-    inf::{tools::get_name, AnyValue, Context, Scope},
+    inf::{tools::get_name, Value, Context, Scope},
 };
 
 pub fn name() -> String {
@@ -32,6 +32,6 @@ pub fn execute(
         let token = cx.signals.get(&signal).await?;
         sc.journal.debug(format!("waiting for signal \"{signal}\""));
         token.cancelled().await;
-        Ok(AnyValue::empty())
+        Ok(Value::empty())
     })
 }

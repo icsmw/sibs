@@ -1,26 +1,15 @@
-mod any;
 mod convertor;
 mod error;
-use crate::{
-    elements::Cmb,
-    // cli::args::exertion::Output,
-    inf::journal::Output,
-};
-use any::DebugAny;
+use crate::{elements::Cmb, inf::journal::Output};
 pub use error::E;
-use std::{
-    any::{Any, TypeId},
-    fmt,
-    path::PathBuf,
-};
+use std::{any::TypeId, fmt, path::PathBuf};
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 #[allow(non_camel_case_types)]
-pub enum AnyValue {
+pub enum Value {
     Empty(()),
     Output(Output),
     Cmb(Cmb),
-    BoolTuple((bool, bool)),
     i8(i8),
     i16(i16),
     i32(i32),
@@ -36,10 +25,10 @@ pub enum AnyValue {
     bool(bool),
     PathBuf(PathBuf),
     String(String),
-    Vec(Vec<AnyValue>),
+    Vec(Vec<Value>),
 }
 
-impl AnyValue {
+impl Value {
     pub fn empty() -> Self {
         Self::Empty(())
     }
@@ -50,62 +39,59 @@ impl AnyValue {
 
     pub fn get<T: 'static>(&self) -> Option<&T> {
         match self {
-            AnyValue::Output(v) if TypeId::of::<T>() == TypeId::of::<Output>() => {
+            Value::Output(v) if TypeId::of::<T>() == TypeId::of::<Output>() => {
                 Some(unsafe { &*(v as *const Output as *const T) })
             }
-            AnyValue::Cmb(v) if TypeId::of::<T>() == TypeId::of::<Cmb>() => {
+            Value::Cmb(v) if TypeId::of::<T>() == TypeId::of::<Cmb>() => {
                 Some(unsafe { &*(v as *const Cmb as *const T) })
             }
-            AnyValue::BoolTuple(v) if TypeId::of::<T>() == TypeId::of::<(bool, bool)>() => {
-                Some(unsafe { &*(v as *const (bool, bool) as *const T) })
-            }
-            AnyValue::i8(v) if TypeId::of::<T>() == TypeId::of::<i8>() => {
+            Value::i8(v) if TypeId::of::<T>() == TypeId::of::<i8>() => {
                 Some(unsafe { &*(v as *const i8 as *const T) })
             }
-            AnyValue::i16(v) if TypeId::of::<T>() == TypeId::of::<i16>() => {
+            Value::i16(v) if TypeId::of::<T>() == TypeId::of::<i16>() => {
                 Some(unsafe { &*(v as *const i16 as *const T) })
             }
-            AnyValue::i32(v) if TypeId::of::<T>() == TypeId::of::<i32>() => {
+            Value::i32(v) if TypeId::of::<T>() == TypeId::of::<i32>() => {
                 Some(unsafe { &*(v as *const i32 as *const T) })
             }
-            AnyValue::i64(v) if TypeId::of::<T>() == TypeId::of::<i64>() => {
+            Value::i64(v) if TypeId::of::<T>() == TypeId::of::<i64>() => {
                 Some(unsafe { &*(v as *const i64 as *const T) })
             }
-            AnyValue::i128(v) if TypeId::of::<T>() == TypeId::of::<i128>() => {
+            Value::i128(v) if TypeId::of::<T>() == TypeId::of::<i128>() => {
                 Some(unsafe { &*(v as *const i128 as *const T) })
             }
-            AnyValue::isize(v) if TypeId::of::<T>() == TypeId::of::<isize>() => {
+            Value::isize(v) if TypeId::of::<T>() == TypeId::of::<isize>() => {
                 Some(unsafe { &*(v as *const isize as *const T) })
             }
-            AnyValue::u8(v) if TypeId::of::<T>() == TypeId::of::<u8>() => {
+            Value::u8(v) if TypeId::of::<T>() == TypeId::of::<u8>() => {
                 Some(unsafe { &*(v as *const u8 as *const T) })
             }
-            AnyValue::u16(v) if TypeId::of::<T>() == TypeId::of::<u16>() => {
+            Value::u16(v) if TypeId::of::<T>() == TypeId::of::<u16>() => {
                 Some(unsafe { &*(v as *const u16 as *const T) })
             }
-            AnyValue::u32(v) if TypeId::of::<T>() == TypeId::of::<u32>() => {
+            Value::u32(v) if TypeId::of::<T>() == TypeId::of::<u32>() => {
                 Some(unsafe { &*(v as *const u32 as *const T) })
             }
-            AnyValue::u64(v) if TypeId::of::<T>() == TypeId::of::<u64>() => {
+            Value::u64(v) if TypeId::of::<T>() == TypeId::of::<u64>() => {
                 Some(unsafe { &*(v as *const u64 as *const T) })
             }
-            AnyValue::u128(v) if TypeId::of::<T>() == TypeId::of::<u128>() => {
+            Value::u128(v) if TypeId::of::<T>() == TypeId::of::<u128>() => {
                 Some(unsafe { &*(v as *const u128 as *const T) })
             }
-            AnyValue::usize(v) if TypeId::of::<T>() == TypeId::of::<usize>() => {
+            Value::usize(v) if TypeId::of::<T>() == TypeId::of::<usize>() => {
                 Some(unsafe { &*(v as *const usize as *const T) })
             }
-            AnyValue::bool(v) if TypeId::of::<T>() == TypeId::of::<bool>() => {
+            Value::bool(v) if TypeId::of::<T>() == TypeId::of::<bool>() => {
                 Some(unsafe { &*(v as *const bool as *const T) })
             }
-            AnyValue::PathBuf(v) if TypeId::of::<T>() == TypeId::of::<PathBuf>() => {
+            Value::PathBuf(v) if TypeId::of::<T>() == TypeId::of::<PathBuf>() => {
                 Some(unsafe { &*(v as *const PathBuf as *const T) })
             }
-            AnyValue::String(v) if TypeId::of::<T>() == TypeId::of::<String>() => {
+            Value::String(v) if TypeId::of::<T>() == TypeId::of::<String>() => {
                 Some(unsafe { &*(v as *const String as *const T) })
             }
-            AnyValue::Vec(v) if TypeId::of::<T>() == TypeId::of::<Vec<AnyValue>>() => {
-                Some(unsafe { &*(v as *const Vec<AnyValue> as *const T) })
+            Value::Vec(v) if TypeId::of::<T>() == TypeId::of::<Vec<Value>>() => {
+                Some(unsafe { &*(v as *const Vec<Value> as *const T) })
             }
             _ => None,
         }
@@ -114,59 +100,56 @@ impl AnyValue {
     #[allow(unused)]
     pub fn get_mut<T: 'static>(&mut self) -> Option<&mut T> {
         match self {
-            AnyValue::Cmb(v) if TypeId::of::<T>() == TypeId::of::<Cmb>() => {
+            Value::Cmb(v) if TypeId::of::<T>() == TypeId::of::<Cmb>() => {
                 Some(unsafe { &mut *(v as *mut Cmb as *mut T) })
             }
-            AnyValue::BoolTuple(v) if TypeId::of::<T>() == TypeId::of::<(bool, bool)>() => {
-                Some(unsafe { &mut *(v as *mut (bool, bool) as *mut T) })
-            }
-            AnyValue::i8(v) if TypeId::of::<T>() == TypeId::of::<i8>() => {
+            Value::i8(v) if TypeId::of::<T>() == TypeId::of::<i8>() => {
                 Some(unsafe { &mut *(v as *mut i8 as *mut T) })
             }
-            AnyValue::i16(v) if TypeId::of::<T>() == TypeId::of::<i16>() => {
+            Value::i16(v) if TypeId::of::<T>() == TypeId::of::<i16>() => {
                 Some(unsafe { &mut *(v as *mut i16 as *mut T) })
             }
-            AnyValue::i32(v) if TypeId::of::<T>() == TypeId::of::<i32>() => {
+            Value::i32(v) if TypeId::of::<T>() == TypeId::of::<i32>() => {
                 Some(unsafe { &mut *(v as *mut i32 as *mut T) })
             }
-            AnyValue::i64(v) if TypeId::of::<T>() == TypeId::of::<i64>() => {
+            Value::i64(v) if TypeId::of::<T>() == TypeId::of::<i64>() => {
                 Some(unsafe { &mut *(v as *mut i64 as *mut T) })
             }
-            AnyValue::i128(v) if TypeId::of::<T>() == TypeId::of::<i128>() => {
+            Value::i128(v) if TypeId::of::<T>() == TypeId::of::<i128>() => {
                 Some(unsafe { &mut *(v as *mut i128 as *mut T) })
             }
-            AnyValue::isize(v) if TypeId::of::<T>() == TypeId::of::<isize>() => {
+            Value::isize(v) if TypeId::of::<T>() == TypeId::of::<isize>() => {
                 Some(unsafe { &mut *(v as *mut isize as *mut T) })
             }
-            AnyValue::u8(v) if TypeId::of::<T>() == TypeId::of::<u8>() => {
+            Value::u8(v) if TypeId::of::<T>() == TypeId::of::<u8>() => {
                 Some(unsafe { &mut *(v as *mut u8 as *mut T) })
             }
-            AnyValue::u16(v) if TypeId::of::<T>() == TypeId::of::<u16>() => {
+            Value::u16(v) if TypeId::of::<T>() == TypeId::of::<u16>() => {
                 Some(unsafe { &mut *(v as *mut u16 as *mut T) })
             }
-            AnyValue::u32(v) if TypeId::of::<T>() == TypeId::of::<u32>() => {
+            Value::u32(v) if TypeId::of::<T>() == TypeId::of::<u32>() => {
                 Some(unsafe { &mut *(v as *mut u32 as *mut T) })
             }
-            AnyValue::u64(v) if TypeId::of::<T>() == TypeId::of::<u64>() => {
+            Value::u64(v) if TypeId::of::<T>() == TypeId::of::<u64>() => {
                 Some(unsafe { &mut *(v as *mut u64 as *mut T) })
             }
-            AnyValue::u128(v) if TypeId::of::<T>() == TypeId::of::<u128>() => {
+            Value::u128(v) if TypeId::of::<T>() == TypeId::of::<u128>() => {
                 Some(unsafe { &mut *(v as *mut u128 as *mut T) })
             }
-            AnyValue::usize(v) if TypeId::of::<T>() == TypeId::of::<usize>() => {
+            Value::usize(v) if TypeId::of::<T>() == TypeId::of::<usize>() => {
                 Some(unsafe { &mut *(v as *mut usize as *mut T) })
             }
-            AnyValue::bool(v) if TypeId::of::<T>() == TypeId::of::<bool>() => {
+            Value::bool(v) if TypeId::of::<T>() == TypeId::of::<bool>() => {
                 Some(unsafe { &mut *(v as *mut bool as *mut T) })
             }
-            AnyValue::PathBuf(v) if TypeId::of::<T>() == TypeId::of::<PathBuf>() => {
+            Value::PathBuf(v) if TypeId::of::<T>() == TypeId::of::<PathBuf>() => {
                 Some(unsafe { &mut *(v as *mut PathBuf as *mut T) })
             }
-            AnyValue::String(v) if TypeId::of::<T>() == TypeId::of::<String>() => {
+            Value::String(v) if TypeId::of::<T>() == TypeId::of::<String>() => {
                 Some(unsafe { &mut *(v as *mut String as *mut T) })
             }
-            AnyValue::Vec(v) if TypeId::of::<T>() == TypeId::of::<Vec<AnyValue>>() => {
-                Some(unsafe { &mut *(v as *mut Vec<AnyValue> as *mut T) })
+            Value::Vec(v) if TypeId::of::<T>() == TypeId::of::<Vec<Value>>() => {
+                Some(unsafe { &mut *(v as *mut Vec<Value> as *mut T) })
             }
             _ => None,
         }
@@ -275,7 +258,7 @@ impl AnyValue {
     }
 }
 
-impl fmt::Display for AnyValue {
+impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", self)
     }
@@ -288,331 +271,331 @@ impl fmt::Display for AnyValue {
 
 //     #[test]
 //     fn create() {
-//         assert_eq!(AnyValue::new(1i8).unwrap(), AnyValue::i8(1));
-//         assert_eq!(AnyValue::new(1i16).unwrap(), AnyValue::i16(1));
-//         assert_eq!(AnyValue::new(1i32).unwrap(), AnyValue::i32(1));
-//         assert_eq!(AnyValue::new(1i64).unwrap(), AnyValue::i64(1));
-//         assert_eq!(AnyValue::new(1i128).unwrap(), AnyValue::i128(1));
-//         assert_eq!(AnyValue::new(1isize).unwrap(), AnyValue::isize(1));
-//         assert_eq!(AnyValue::new(1u8).unwrap(), AnyValue::u8(1));
-//         assert_eq!(AnyValue::new(1u16).unwrap(), AnyValue::u16(1));
-//         assert_eq!(AnyValue::new(1u32).unwrap(), AnyValue::u32(1));
-//         assert_eq!(AnyValue::new(1u64).unwrap(), AnyValue::u64(1));
-//         assert_eq!(AnyValue::new(1u128).unwrap(), AnyValue::u128(1));
-//         assert_eq!(AnyValue::new(1usize).unwrap(), AnyValue::usize(1));
-//         assert_eq!(AnyValue::new(true).unwrap(), AnyValue::bool(true));
+//         assert_eq!(Value::new(1i8).unwrap(), Value::i8(1));
+//         assert_eq!(Value::new(1i16).unwrap(), Value::i16(1));
+//         assert_eq!(Value::new(1i32).unwrap(), Value::i32(1));
+//         assert_eq!(Value::new(1i64).unwrap(), Value::i64(1));
+//         assert_eq!(Value::new(1i128).unwrap(), Value::i128(1));
+//         assert_eq!(Value::new(1isize).unwrap(), Value::isize(1));
+//         assert_eq!(Value::new(1u8).unwrap(), Value::u8(1));
+//         assert_eq!(Value::new(1u16).unwrap(), Value::u16(1));
+//         assert_eq!(Value::new(1u32).unwrap(), Value::u32(1));
+//         assert_eq!(Value::new(1u64).unwrap(), Value::u64(1));
+//         assert_eq!(Value::new(1u128).unwrap(), Value::u128(1));
+//         assert_eq!(Value::new(1usize).unwrap(), Value::usize(1));
+//         assert_eq!(Value::new(true).unwrap(), Value::bool(true));
 //         assert_eq!(
-//             AnyValue::new(PathBuf::from("test")).unwrap(),
-//             AnyValue::PathBuf(PathBuf::from("test"))
+//             Value::new(PathBuf::from("test")).unwrap(),
+//             Value::PathBuf(PathBuf::from("test"))
 //         );
 //         assert_eq!(
-//             AnyValue::new(String::from("test")).unwrap(),
-//             AnyValue::String(String::from("test"))
+//             Value::new(String::from("test")).unwrap(),
+//             Value::String(String::from("test"))
 //         );
 //         assert_eq!(
-//             AnyValue::new(vec![AnyValue::i8(1)]).unwrap(),
-//             AnyValue::Vec(vec![AnyValue::i8(1)])
+//             Value::new(vec![Value::i8(1)]).unwrap(),
+//             Value::Vec(vec![Value::i8(1)])
 //         );
 //     }
 
 //     #[test]
 //     fn get() {
-//         assert_eq!(AnyValue::new(1i8).unwrap().get::<i8>(), Some(&1));
-//         assert_eq!(AnyValue::new(1i16).unwrap().get::<i16>(), Some(&1));
-//         assert_eq!(AnyValue::new(1i32).unwrap().get::<i32>(), Some(&1));
-//         assert_eq!(AnyValue::new(1i64).unwrap().get::<i64>(), Some(&1));
-//         assert_eq!(AnyValue::new(1i128).unwrap().get::<i128>(), Some(&1));
-//         assert_eq!(AnyValue::new(1isize).unwrap().get::<isize>(), Some(&1));
-//         assert_eq!(AnyValue::new(1u8).unwrap().get::<u8>(), Some(&1));
-//         assert_eq!(AnyValue::new(1u16).unwrap().get::<u16>(), Some(&1));
-//         assert_eq!(AnyValue::new(1u32).unwrap().get::<u32>(), Some(&1));
-//         assert_eq!(AnyValue::new(1u64).unwrap().get::<u64>(), Some(&1));
-//         assert_eq!(AnyValue::new(1u128).unwrap().get::<u128>(), Some(&1));
-//         assert_eq!(AnyValue::new(1usize).unwrap().get::<usize>(), Some(&1));
-//         assert_eq!(AnyValue::new(true).unwrap().get::<bool>(), Some(&true));
+//         assert_eq!(Value::new(1i8).unwrap().get::<i8>(), Some(&1));
+//         assert_eq!(Value::new(1i16).unwrap().get::<i16>(), Some(&1));
+//         assert_eq!(Value::new(1i32).unwrap().get::<i32>(), Some(&1));
+//         assert_eq!(Value::new(1i64).unwrap().get::<i64>(), Some(&1));
+//         assert_eq!(Value::new(1i128).unwrap().get::<i128>(), Some(&1));
+//         assert_eq!(Value::new(1isize).unwrap().get::<isize>(), Some(&1));
+//         assert_eq!(Value::new(1u8).unwrap().get::<u8>(), Some(&1));
+//         assert_eq!(Value::new(1u16).unwrap().get::<u16>(), Some(&1));
+//         assert_eq!(Value::new(1u32).unwrap().get::<u32>(), Some(&1));
+//         assert_eq!(Value::new(1u64).unwrap().get::<u64>(), Some(&1));
+//         assert_eq!(Value::new(1u128).unwrap().get::<u128>(), Some(&1));
+//         assert_eq!(Value::new(1usize).unwrap().get::<usize>(), Some(&1));
+//         assert_eq!(Value::new(true).unwrap().get::<bool>(), Some(&true));
 //         assert_eq!(
-//             AnyValue::new(PathBuf::from("test"))
+//             Value::new(PathBuf::from("test"))
 //                 .unwrap()
 //                 .get::<PathBuf>(),
 //             Some(&PathBuf::from("test"))
 //         );
 //         assert_eq!(
-//             AnyValue::new(String::from("test")).unwrap().get::<String>(),
+//             Value::new(String::from("test")).unwrap().get::<String>(),
 //             Some(&String::from("test"))
 //         );
 //         assert_eq!(
-//             AnyValue::new(vec![AnyValue::i8(1)])
+//             Value::new(vec![Value::i8(1)])
 //                 .unwrap()
-//                 .get::<Vec<AnyValue>>(),
-//             Some(&vec![AnyValue::i8(1)])
+//                 .get::<Vec<Value>>(),
+//             Some(&vec![Value::i8(1)])
 //         );
 //     }
 
 //     #[test]
 //     fn get_mut() {
-//         let mut value = AnyValue::new(1i8).unwrap();
+//         let mut value = Value::new(1i8).unwrap();
 //         if let Some(v) = value.get_mut::<i8>() {
 //             *v = 2;
 //         }
 //         assert_eq!(value.get::<i8>(), Some(&2));
 
-//         let mut value = AnyValue::new(1i16).unwrap();
+//         let mut value = Value::new(1i16).unwrap();
 //         if let Some(v) = value.get_mut::<i16>() {
 //             *v = 2;
 //         }
 //         assert_eq!(value.get::<i16>(), Some(&2));
 
-//         let mut value = AnyValue::new(1i32).unwrap();
+//         let mut value = Value::new(1i32).unwrap();
 //         if let Some(v) = value.get_mut::<i32>() {
 //             *v = 2;
 //         }
 //         assert_eq!(value.get::<i32>(), Some(&2));
 
-//         let mut value = AnyValue::new(1i64).unwrap();
+//         let mut value = Value::new(1i64).unwrap();
 //         if let Some(v) = value.get_mut::<i64>() {
 //             *v = 2;
 //         }
 //         assert_eq!(value.get::<i64>(), Some(&2));
 
-//         let mut value = AnyValue::new(1i128).unwrap();
+//         let mut value = Value::new(1i128).unwrap();
 //         if let Some(v) = value.get_mut::<i128>() {
 //             *v = 2;
 //         }
 //         assert_eq!(value.get::<i128>(), Some(&2));
 
-//         let mut value = AnyValue::new(1isize).unwrap();
+//         let mut value = Value::new(1isize).unwrap();
 //         if let Some(v) = value.get_mut::<isize>() {
 //             *v = 2;
 //         }
 //         assert_eq!(value.get::<isize>(), Some(&2));
 
-//         let mut value = AnyValue::new(1u8).unwrap();
+//         let mut value = Value::new(1u8).unwrap();
 //         if let Some(v) = value.get_mut::<u8>() {
 //             *v = 2;
 //         }
 //         assert_eq!(value.get::<u8>(), Some(&2));
 
-//         let mut value = AnyValue::new(1u16).unwrap();
+//         let mut value = Value::new(1u16).unwrap();
 //         if let Some(v) = value.get_mut::<u16>() {
 //             *v = 2;
 //         }
 //         assert_eq!(value.get::<u16>(), Some(&2));
 
-//         let mut value = AnyValue::new(1u32).unwrap();
+//         let mut value = Value::new(1u32).unwrap();
 //         if let Some(v) = value.get_mut::<u32>() {
 //             *v = 2;
 //         }
 //         assert_eq!(value.get::<u32>(), Some(&2));
 
-//         let mut value = AnyValue::new(1u64).unwrap();
+//         let mut value = Value::new(1u64).unwrap();
 //         if let Some(v) = value.get_mut::<u64>() {
 //             *v = 2;
 //         }
 //         assert_eq!(value.get::<u64>(), Some(&2));
 
-//         let mut value = AnyValue::new(1u128).unwrap();
+//         let mut value = Value::new(1u128).unwrap();
 //         if let Some(v) = value.get_mut::<u128>() {
 //             *v = 2;
 //         }
 //         assert_eq!(value.get::<u128>(), Some(&2));
 
-//         let mut value = AnyValue::new(1usize).unwrap();
+//         let mut value = Value::new(1usize).unwrap();
 //         if let Some(v) = value.get_mut::<usize>() {
 //             *v = 2;
 //         }
 //         assert_eq!(value.get::<usize>(), Some(&2));
 
-//         let mut value = AnyValue::new(true).unwrap();
+//         let mut value = Value::new(true).unwrap();
 //         if let Some(v) = value.get_mut::<bool>() {
 //             *v = false;
 //         }
 //         assert_eq!(value.get::<bool>(), Some(&false));
 
-//         let mut value = AnyValue::new(PathBuf::from("test")).unwrap();
+//         let mut value = Value::new(PathBuf::from("test")).unwrap();
 //         if let Some(v) = value.get_mut::<PathBuf>() {
 //             *v = PathBuf::from("modified");
 //         }
 //         assert_eq!(value.get::<PathBuf>(), Some(&PathBuf::from("modified")));
 
-//         let mut value = AnyValue::new(String::from("test")).unwrap();
+//         let mut value = Value::new(String::from("test")).unwrap();
 //         if let Some(v) = value.get_mut::<String>() {
 //             v.push_str(" modified");
 //         }
 //         assert_eq!(value.get::<String>(), Some(&String::from("test modified")));
 
-//         let mut value = AnyValue::new(vec![AnyValue::i8(1)]).unwrap();
-//         if let Some(v) = value.get_mut::<Vec<AnyValue>>() {
-//             v.push(AnyValue::i8(2));
+//         let mut value = Value::new(vec![Value::i8(1)]).unwrap();
+//         if let Some(v) = value.get_mut::<Vec<Value>>() {
+//             v.push(Value::i8(2));
 //         }
 //         assert_eq!(
-//             value.get::<Vec<AnyValue>>(),
-//             Some(&vec![AnyValue::i8(1), AnyValue::i8(2)])
+//             value.get::<Vec<Value>>(),
+//             Some(&vec![Value::i8(1), Value::i8(2)])
 //         );
 //     }
 
 //     #[test]
 //     fn as_num() {
-//         assert_eq!(AnyValue::i8(1).as_num(), Some(1));
-//         assert_eq!(AnyValue::i16(1).as_num(), Some(1));
-//         assert_eq!(AnyValue::i32(1).as_num(), Some(1));
-//         assert_eq!(AnyValue::i64(1).as_num(), Some(1));
-//         assert_eq!(AnyValue::i128(1).as_num(), Some(1));
-//         assert_eq!(AnyValue::isize(1).as_num(), Some(1));
-//         assert_eq!(AnyValue::u8(1).as_num(), Some(1));
-//         assert_eq!(AnyValue::u16(1).as_num(), Some(1));
-//         assert_eq!(AnyValue::u32(1).as_num(), Some(1));
-//         assert_eq!(AnyValue::u64(1).as_num(), Some(1));
-//         assert_eq!(AnyValue::u128(1).as_num(), Some(1));
-//         assert_eq!(AnyValue::usize(1).as_num(), Some(1));
-//         assert_eq!(AnyValue::String(String::from("123")).as_num(), Some(123));
-//         assert_eq!(AnyValue::String(String::from("abc")).as_num(), None);
-//         assert_eq!(AnyValue::bool(true).as_num(), None);
-//         assert_eq!(AnyValue::PathBuf(PathBuf::from("test")).as_num(), None);
-//         assert_eq!(AnyValue::Vec(vec![AnyValue::i8(1)]).as_num(), None);
+//         assert_eq!(Value::i8(1).as_num(), Some(1));
+//         assert_eq!(Value::i16(1).as_num(), Some(1));
+//         assert_eq!(Value::i32(1).as_num(), Some(1));
+//         assert_eq!(Value::i64(1).as_num(), Some(1));
+//         assert_eq!(Value::i128(1).as_num(), Some(1));
+//         assert_eq!(Value::isize(1).as_num(), Some(1));
+//         assert_eq!(Value::u8(1).as_num(), Some(1));
+//         assert_eq!(Value::u16(1).as_num(), Some(1));
+//         assert_eq!(Value::u32(1).as_num(), Some(1));
+//         assert_eq!(Value::u64(1).as_num(), Some(1));
+//         assert_eq!(Value::u128(1).as_num(), Some(1));
+//         assert_eq!(Value::usize(1).as_num(), Some(1));
+//         assert_eq!(Value::String(String::from("123")).as_num(), Some(123));
+//         assert_eq!(Value::String(String::from("abc")).as_num(), None);
+//         assert_eq!(Value::bool(true).as_num(), None);
+//         assert_eq!(Value::PathBuf(PathBuf::from("test")).as_num(), None);
+//         assert_eq!(Value::Vec(vec![Value::i8(1)]).as_num(), None);
 //     }
 
 //     #[test]
 //     fn as_string() {
-//         assert_eq!(AnyValue::i8(1).as_string(), Some("1".to_string()));
-//         assert_eq!(AnyValue::i16(1).as_string(), Some("1".to_string()));
-//         assert_eq!(AnyValue::i32(1).as_string(), Some("1".to_string()));
-//         assert_eq!(AnyValue::i64(1).as_string(), Some("1".to_string()));
-//         assert_eq!(AnyValue::i128(1).as_string(), Some("1".to_string()));
-//         assert_eq!(AnyValue::isize(1).as_string(), Some("1".to_string()));
-//         assert_eq!(AnyValue::u8(1).as_string(), Some("1".to_string()));
-//         assert_eq!(AnyValue::u16(1).as_string(), Some("1".to_string()));
-//         assert_eq!(AnyValue::u32(1).as_string(), Some("1".to_string()));
-//         assert_eq!(AnyValue::u64(1).as_string(), Some("1".to_string()));
-//         assert_eq!(AnyValue::u128(1).as_string(), Some("1".to_string()));
-//         assert_eq!(AnyValue::usize(1).as_string(), Some("1".to_string()));
-//         assert_eq!(AnyValue::bool(true).as_string(), Some("true".to_string()));
+//         assert_eq!(Value::i8(1).as_string(), Some("1".to_string()));
+//         assert_eq!(Value::i16(1).as_string(), Some("1".to_string()));
+//         assert_eq!(Value::i32(1).as_string(), Some("1".to_string()));
+//         assert_eq!(Value::i64(1).as_string(), Some("1".to_string()));
+//         assert_eq!(Value::i128(1).as_string(), Some("1".to_string()));
+//         assert_eq!(Value::isize(1).as_string(), Some("1".to_string()));
+//         assert_eq!(Value::u8(1).as_string(), Some("1".to_string()));
+//         assert_eq!(Value::u16(1).as_string(), Some("1".to_string()));
+//         assert_eq!(Value::u32(1).as_string(), Some("1".to_string()));
+//         assert_eq!(Value::u64(1).as_string(), Some("1".to_string()));
+//         assert_eq!(Value::u128(1).as_string(), Some("1".to_string()));
+//         assert_eq!(Value::usize(1).as_string(), Some("1".to_string()));
+//         assert_eq!(Value::bool(true).as_string(), Some("true".to_string()));
 //         assert_eq!(
-//             AnyValue::PathBuf(PathBuf::from("test")).as_string(),
+//             Value::PathBuf(PathBuf::from("test")).as_string(),
 //             Some("test".to_string())
 //         );
 //         assert_eq!(
-//             AnyValue::String(String::from("test")).as_string(),
+//             Value::String(String::from("test")).as_string(),
 //             Some("test".to_string())
 //         );
-//         assert_eq!(AnyValue::Vec(vec![AnyValue::i8(1)]).as_string(), None);
+//         assert_eq!(Value::Vec(vec![Value::i8(1)]).as_string(), None);
 //     }
 
 //     #[test]
 //     fn as_bool() {
 //         // Testing integer types
-//         assert_eq!(AnyValue::i8(1).as_bool(), Some(true));
-//         assert_eq!(AnyValue::i8(0).as_bool(), Some(false));
-//         assert_eq!(AnyValue::i16(1).as_bool(), Some(true));
-//         assert_eq!(AnyValue::i16(0).as_bool(), Some(false));
-//         assert_eq!(AnyValue::i32(1).as_bool(), Some(true));
-//         assert_eq!(AnyValue::i32(0).as_bool(), Some(false));
-//         assert_eq!(AnyValue::i64(1).as_bool(), Some(true));
-//         assert_eq!(AnyValue::i64(0).as_bool(), Some(false));
-//         assert_eq!(AnyValue::i128(1).as_bool(), Some(true));
-//         assert_eq!(AnyValue::i128(0).as_bool(), Some(false));
-//         assert_eq!(AnyValue::isize(1).as_bool(), Some(true));
-//         assert_eq!(AnyValue::isize(0).as_bool(), Some(false));
-//         assert_eq!(AnyValue::u8(1).as_bool(), Some(true));
-//         assert_eq!(AnyValue::u8(0).as_bool(), Some(false));
-//         assert_eq!(AnyValue::u16(1).as_bool(), Some(true));
-//         assert_eq!(AnyValue::u16(0).as_bool(), Some(false));
-//         assert_eq!(AnyValue::u32(1).as_bool(), Some(true));
-//         assert_eq!(AnyValue::u32(0).as_bool(), Some(false));
-//         assert_eq!(AnyValue::u64(1).as_bool(), Some(true));
-//         assert_eq!(AnyValue::u64(0).as_bool(), Some(false));
-//         assert_eq!(AnyValue::u128(1).as_bool(), Some(true));
-//         assert_eq!(AnyValue::u128(0).as_bool(), Some(false));
-//         assert_eq!(AnyValue::usize(1).as_bool(), Some(true));
-//         assert_eq!(AnyValue::usize(0).as_bool(), Some(false));
+//         assert_eq!(Value::i8(1).as_bool(), Some(true));
+//         assert_eq!(Value::i8(0).as_bool(), Some(false));
+//         assert_eq!(Value::i16(1).as_bool(), Some(true));
+//         assert_eq!(Value::i16(0).as_bool(), Some(false));
+//         assert_eq!(Value::i32(1).as_bool(), Some(true));
+//         assert_eq!(Value::i32(0).as_bool(), Some(false));
+//         assert_eq!(Value::i64(1).as_bool(), Some(true));
+//         assert_eq!(Value::i64(0).as_bool(), Some(false));
+//         assert_eq!(Value::i128(1).as_bool(), Some(true));
+//         assert_eq!(Value::i128(0).as_bool(), Some(false));
+//         assert_eq!(Value::isize(1).as_bool(), Some(true));
+//         assert_eq!(Value::isize(0).as_bool(), Some(false));
+//         assert_eq!(Value::u8(1).as_bool(), Some(true));
+//         assert_eq!(Value::u8(0).as_bool(), Some(false));
+//         assert_eq!(Value::u16(1).as_bool(), Some(true));
+//         assert_eq!(Value::u16(0).as_bool(), Some(false));
+//         assert_eq!(Value::u32(1).as_bool(), Some(true));
+//         assert_eq!(Value::u32(0).as_bool(), Some(false));
+//         assert_eq!(Value::u64(1).as_bool(), Some(true));
+//         assert_eq!(Value::u64(0).as_bool(), Some(false));
+//         assert_eq!(Value::u128(1).as_bool(), Some(true));
+//         assert_eq!(Value::u128(0).as_bool(), Some(false));
+//         assert_eq!(Value::usize(1).as_bool(), Some(true));
+//         assert_eq!(Value::usize(0).as_bool(), Some(false));
 
 //         // Testing bool type
-//         assert_eq!(AnyValue::bool(true).as_bool(), Some(true));
-//         assert_eq!(AnyValue::bool(false).as_bool(), Some(false));
+//         assert_eq!(Value::bool(true).as_bool(), Some(true));
+//         assert_eq!(Value::bool(false).as_bool(), Some(false));
 
 //         // Testing String type
-//         assert_eq!(AnyValue::String(String::from("true")).as_bool(), Some(true));
+//         assert_eq!(Value::String(String::from("true")).as_bool(), Some(true));
 //         assert_eq!(
-//             AnyValue::String(String::from("false")).as_bool(),
+//             Value::String(String::from("false")).as_bool(),
 //             Some(false)
 //         );
-//         assert_eq!(AnyValue::String(String::from("TRUE")).as_bool(), Some(true));
+//         assert_eq!(Value::String(String::from("TRUE")).as_bool(), Some(true));
 //         assert_eq!(
-//             AnyValue::String(String::from("FALSE")).as_bool(),
+//             Value::String(String::from("FALSE")).as_bool(),
 //             Some(false)
 //         );
-//         assert_eq!(AnyValue::String(String::from("TrUe")).as_bool(), Some(true));
+//         assert_eq!(Value::String(String::from("TrUe")).as_bool(), Some(true));
 //         assert_eq!(
-//             AnyValue::String(String::from("FaLsE")).as_bool(),
+//             Value::String(String::from("FaLsE")).as_bool(),
 //             Some(false)
 //         );
-//         assert_eq!(AnyValue::String(String::from("yes")).as_bool(), Some(false));
-//         assert_eq!(AnyValue::String(String::from("no")).as_bool(), Some(false));
+//         assert_eq!(Value::String(String::from("yes")).as_bool(), Some(false));
+//         assert_eq!(Value::String(String::from("no")).as_bool(), Some(false));
 
 //         // Testing other types should return None
-//         assert_eq!(AnyValue::PathBuf(PathBuf::from("test")).as_bool(), None);
-//         assert_eq!(AnyValue::Vec(vec![AnyValue::i8(1)]).as_bool(), None);
+//         assert_eq!(Value::PathBuf(PathBuf::from("test")).as_bool(), None);
+//         assert_eq!(Value::Vec(vec![Value::i8(1)]).as_bool(), None);
 //     }
 
 //     #[test]
 //     fn as_path_buf() {
 //         assert_eq!(
-//             AnyValue::PathBuf(PathBuf::from("test")).as_path_buf(),
+//             Value::PathBuf(PathBuf::from("test")).as_path_buf(),
 //             Some(PathBuf::from("test"))
 //         );
 //         assert_eq!(
-//             AnyValue::String(String::from("test")).as_path_buf(),
+//             Value::String(String::from("test")).as_path_buf(),
 //             Some(PathBuf::from("test"))
 //         );
-//         assert_eq!(AnyValue::i8(1).as_path_buf(), None);
+//         assert_eq!(Value::i8(1).as_path_buf(), None);
 //     }
 
 //     #[test]
 //     fn as_strings() {
 //         assert_eq!(
-//             AnyValue::Vec(vec![
-//                 AnyValue::String(String::from("test1")),
-//                 AnyValue::String(String::from("test2"))
+//             Value::Vec(vec![
+//                 Value::String(String::from("test1")),
+//                 Value::String(String::from("test2"))
 //             ])
 //             .as_strings(),
 //             Some(vec![String::from("test1"), String::from("test2")])
 //         );
 //         assert_eq!(
-//             AnyValue::Vec(vec![
-//                 AnyValue::String(String::from("test1")),
-//                 AnyValue::i8(1)
+//             Value::Vec(vec![
+//                 Value::String(String::from("test1")),
+//                 Value::i8(1)
 //             ])
 //             .as_strings(),
 //             Some(vec![String::from("test1"), String::from("1")])
 //         );
-//         assert_eq!(AnyValue::i8(1).as_strings(), None);
+//         assert_eq!(Value::i8(1).as_strings(), None);
 //     }
 
 //     #[test]
 //     fn as_path_bufs() {
 //         assert_eq!(
-//             AnyValue::Vec(vec![
-//                 AnyValue::PathBuf(PathBuf::from("test1")),
-//                 AnyValue::PathBuf(PathBuf::from("test2"))
+//             Value::Vec(vec![
+//                 Value::PathBuf(PathBuf::from("test1")),
+//                 Value::PathBuf(PathBuf::from("test2"))
 //             ])
 //             .as_path_bufs(),
 //             Some(vec![PathBuf::from("test1"), PathBuf::from("test2")])
 //         );
 //         assert_eq!(
-//             AnyValue::Vec(vec![
-//                 AnyValue::PathBuf(PathBuf::from("test1")),
-//                 AnyValue::String(String::from("test2"))
+//             Value::Vec(vec![
+//                 Value::PathBuf(PathBuf::from("test1")),
+//                 Value::String(String::from("test2"))
 //             ])
 //             .as_path_bufs(),
 //             Some(vec![PathBuf::from("test1"), PathBuf::from("test2")])
 //         );
 //         assert_eq!(
-//             AnyValue::Vec(vec![
-//                 AnyValue::PathBuf(PathBuf::from("test1")),
-//                 AnyValue::i8(1)
+//             Value::Vec(vec![
+//                 Value::PathBuf(PathBuf::from("test1")),
+//                 Value::i8(1)
 //             ])
 //             .as_path_bufs(),
 //             None
 //         );
-//         assert_eq!(AnyValue::i8(1).as_path_bufs(), None);
+//         assert_eq!(Value::i8(1).as_path_bufs(), None);
 //     }
 // }

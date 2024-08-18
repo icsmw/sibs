@@ -5,7 +5,7 @@ pub mod exertion;
 use crate::{
     cli::error::E,
     elements::Element,
-    inf::{term, AnyValue},
+    inf::{term, Value},
 };
 pub use action::*;
 pub use arg::*;
@@ -61,7 +61,7 @@ impl Arguments {
     pub async fn run<T: Argument + 'static>(
         &self,
         components: &[Element],
-    ) -> Result<Option<AnyValue>, E> {
+    ) -> Result<Option<Value>, E> {
         if let Some(action) = self.actions.get(&T::key()) {
             Ok(Some(action.action(components).await?))
         } else {

@@ -1,7 +1,7 @@
 use crate::{
     elements::FuncArg,
     functions::ExecutorPinnedResult,
-    inf::{operator, tools::get_last_name, AnyValue, Context, Scope},
+    inf::{operator, tools::get_last_name, Value, Context, Scope},
 };
 
 pub fn name() -> String {
@@ -32,7 +32,7 @@ pub fn execute(
             },
         )
         .await?;
-        Ok(AnyValue::empty())
+        Ok(Value::empty())
     })
 }
 

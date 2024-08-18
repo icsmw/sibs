@@ -4,7 +4,7 @@ use crate::{
         error::E,
     },
     elements::Element,
-    inf::{term, AnyValue},
+    inf::{term, Value},
 };
 
 const ARGS: [&str; 2] = ["--help", "-h"];
@@ -143,7 +143,7 @@ impl Action for Help {
                 });
                 term::print(&output);
             }
-            Ok(AnyValue::empty())
+            Ok(Value::empty())
         })
     }
 }

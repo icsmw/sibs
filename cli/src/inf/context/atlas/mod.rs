@@ -7,7 +7,7 @@ mod maps;
 use self::api::Demand;
 use crate::inf::Journal;
 use crate::reader::Sources;
-use crate::{error::LinkedErr, inf::AnyValue};
+use crate::{error::LinkedErr, inf::Value};
 pub use error::*;
 pub use footprints::*;
 pub use map::*;
@@ -105,7 +105,7 @@ impl Atlas {
     /// # Returns
     ///
     /// `Ok(())` in case of footpring has been added
-    pub async fn add_footprint(&self, token: usize, value: &Option<AnyValue>) -> Result<(), E> {
+    pub async fn add_footprint(&self, token: usize, value: &Option<Value>) -> Result<(), E> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(Demand::AddFootprint(
             token,

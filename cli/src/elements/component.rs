@@ -4,8 +4,8 @@ use crate::{
     elements::{ElTarget, Element, Gatekeeper, SimpleString, Task},
     error::LinkedErr,
     inf::{
-        operator, scenario, AnyValue, Context, Execute, ExecutePinnedResult, Formation,
-        FormationCursor, Scope, TokenGetter, TryExecute,
+        operator, scenario, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
+        Scope, TokenGetter, TryExecute, Value,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -186,7 +186,7 @@ impl TryExecute for Component {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [AnyValue],
+        args: &'a [Value],
         cx: Context,
         _sc: Scope,
         token: CancellationToken,
@@ -376,7 +376,7 @@ mod processing {
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
-            AnyValue, Configuration, Context, Journal, Scope,
+            Configuration, Context, Journal, Scope, Value,
         },
         process_string,
         reader::{Dissect, Reader, Sources},
@@ -409,8 +409,8 @@ mod processing {
                             &components,
                             &VALUES[i]
                                 .iter()
-                                .map(|s| AnyValue::String(s.to_string()))
-                                .collect::<Vec<AnyValue>>(),
+                                .map(|s| Value::String(s.to_string()))
+                                .collect::<Vec<Value>>(),
                             cx.clone(),
                             sc.clone(),
                             CancellationToken::new(),

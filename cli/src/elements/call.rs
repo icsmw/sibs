@@ -4,8 +4,8 @@ use crate::{
     elements::{Component, ElTarget, Element, Gatekeeper},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
-        Scope, TokenGetter, TryExecute,
+        operator, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
+        TokenGetter, TryExecute, Value,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -58,7 +58,7 @@ impl TryExecute for Call {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [AnyValue],
+        args: &'a [Value],
         cx: Context,
         sc: Scope,
         token: CancellationToken,

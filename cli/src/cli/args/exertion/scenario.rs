@@ -4,7 +4,7 @@ use crate::{
         error::E,
     },
     elements::Element,
-    inf::AnyValue,
+    inf::Value,
 };
 use std::path::PathBuf;
 
@@ -42,7 +42,7 @@ impl Argument for Scenario {
 
 impl Action for Scenario {
     fn action<'a>(&'a self, _components: &'a [Element]) -> ActionPinnedResult {
-        Box::pin(async move { Ok(AnyValue::PathBuf(self.scenario.clone())) })
+        Box::pin(async move { Ok(Value::PathBuf(self.scenario.clone())) })
     }
     fn key(&self) -> String {
         ARGS[0].to_owned()

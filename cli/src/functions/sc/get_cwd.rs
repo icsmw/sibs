@@ -1,7 +1,7 @@
 use crate::{
     elements::FuncArg,
     functions::ExecutorPinnedResult,
-    inf::{tools::get_name, AnyValue, Context, Scope},
+    inf::{tools::get_name, Value, Context, Scope},
 };
 
 pub fn name() -> String {
@@ -14,5 +14,5 @@ pub fn execute(
     _cx: Context,
     sc: Scope,
 ) -> ExecutorPinnedResult {
-    Box::pin(async move { Ok(AnyValue::PathBuf(sc.get_cwd().await?)) })
+    Box::pin(async move { Ok(Value::PathBuf(sc.get_cwd().await?)) })
 }

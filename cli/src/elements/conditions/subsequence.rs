@@ -4,7 +4,7 @@ use crate::{
     elements::{Cmb, Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
+        Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
         TokenGetter, TryExecute,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
@@ -134,7 +134,7 @@ impl TryExecute for Subsequence {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [AnyValue],
+        args: &'a [Value],
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -157,12 +157,12 @@ impl TryExecute for Subsequence {
                     match cmb {
                         Cmb::And => {
                             if !last_value {
-                                return Ok(Some(AnyValue::bool(false)));
+                                return Ok(Some(Value::bool(false)));
                             }
                         }
                         Cmb::Or => {
                             if last_value {
-                                return Ok(Some(AnyValue::bool(true)));
+                                return Ok(Some(Value::bool(true)));
                             }
                         }
                     }
@@ -172,7 +172,7 @@ impl TryExecute for Subsequence {
                     Err(E::FailToParseValueOfSubsequenceElement)?;
                 }
             }
-            Ok(Some(AnyValue::bool(last_value)))
+            Ok(Some(Value::bool(last_value)))
         })
     }
 }

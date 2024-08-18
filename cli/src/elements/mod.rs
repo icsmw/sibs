@@ -36,7 +36,7 @@ pub use variable::*;
 use crate::{
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
+        operator, Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
         Scope, TokenGetter, TryExecute,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
@@ -776,7 +776,7 @@ impl TryExecute for Element {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [AnyValue],
+        args: &'a [Value],
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -849,7 +849,7 @@ impl TryExecute for Element {
                     let Some(b_res) = res.as_bool() else {
                         return Err(operator::E::InvertingOnNotBool.by(self));
                     };
-                    return Ok(Some(AnyValue::bool(!b_res)));
+                    return Ok(Some(Value::bool(!b_res)));
                 }
             }
             result

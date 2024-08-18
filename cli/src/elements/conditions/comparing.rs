@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
+        operator, Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
         Scope, TokenGetter, TryExecute,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
@@ -136,7 +136,7 @@ impl TryExecute for Comparing {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [AnyValue],
+        args: &'a [Value],
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -163,7 +163,7 @@ impl TryExecute for Comparing {
                 Cmp::LeftBig | Cmp::RightBig => {
                     let left = left.as_num().ok_or(operator::E::FailToGetIntegerValue)?;
                     let right = right.as_num().ok_or(operator::E::FailToGetIntegerValue)?;
-                    AnyValue::bool(
+                    Value::bool(
                         (matches!(self.cmp, Cmp::LeftBig) && left > right)
                             || matches!(self.cmp, Cmp::RightBig) && left < right,
                     )
@@ -171,7 +171,7 @@ impl TryExecute for Comparing {
                 Cmp::LeftBigInc | Cmp::RightBigInc => {
                     let left = left.as_num().ok_or(operator::E::FailToGetIntegerValue)?;
                     let right = right.as_num().ok_or(operator::E::FailToGetIntegerValue)?;
-                    AnyValue::bool(
+                    Value::bool(
                         (matches!(self.cmp, Cmp::LeftBigInc) && left >= right)
                             || matches!(self.cmp, Cmp::RightBigInc) && left <= right,
                     )
@@ -179,7 +179,7 @@ impl TryExecute for Comparing {
                 _ => {
                     let left = left.as_string().ok_or(operator::E::FailToGetStringValue)?;
                     let right = right.as_string().ok_or(operator::E::FailToGetStringValue)?;
-                    AnyValue::bool(
+                    Value::bool(
                         (matches!(self.cmp, Cmp::Equal) && left == right)
                             || (matches!(self.cmp, Cmp::NotEqual) && left != right),
                     )

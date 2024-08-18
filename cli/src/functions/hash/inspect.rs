@@ -2,7 +2,7 @@ use crate::{
     elements::FuncArg,
     error::LinkedErr,
     functions::{ExecutorPinnedResult, E},
-    inf::{tools::get_name, AnyValue, Context, Scope},
+    inf::{tools::get_name, Value, Context, Scope},
 };
 use blake3::Hasher;
 use fshasher::{
@@ -116,7 +116,7 @@ pub fn execute(
             storage.set(&key, &PrevHash { hash })?;
             summary.push(same);
         }
-        Ok(AnyValue::bool(summary.iter().any(|same| !same)))
+        Ok(Value::bool(summary.iter().any(|same| !same)))
     })
 }
 
@@ -128,7 +128,7 @@ mod test {
         inf::{
             operator::{Execute, E},
             tests::*,
-            AnyValue, Configuration, Context, Journal, Scope,
+            Value, Configuration, Context, Journal, Scope,
         },
         process_string,
         reader::{chars, Dissect, Reader, Sources},
@@ -220,8 +220,8 @@ mod test {
                                 &components,
                                 &args
                                     .iter()
-                                    .map(|s| AnyValue::String(s.to_string()))
-                                    .collect::<Vec<AnyValue>>(),
+                                    .map(|s| Value::String(s.to_string()))
+                                    .collect::<Vec<Value>>(),
                                 cx.clone(),
                                 sc.clone(),
                                 CancellationToken::new(),

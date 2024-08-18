@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
     inf::{
-        AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
+        Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
         TokenGetter, TryExecute,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
@@ -54,14 +54,14 @@ impl TryExecute for Breaker {
         &'a self,
         _owner: Option<&'a Component>,
         _components: &'a [Component],
-        _args: &'a [AnyValue],
+        _args: &'a [Value],
         _cx: Context,
         sc: Scope,
         _token: CancellationToken,
     ) -> ExecutePinnedResult {
         Box::pin(async move {
             sc.break_loop().await?;
-            Ok(Some(AnyValue::empty()))
+            Ok(Some(Value::empty()))
         })
     }
 }

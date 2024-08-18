@@ -4,7 +4,7 @@ use crate::{
     elements::{string, Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
+        operator, Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
         Scope, TokenGetter, TryExecute,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
@@ -97,7 +97,7 @@ impl TryExecute for PatternString {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [AnyValue],
+        args: &'a [Value],
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -126,7 +126,7 @@ impl TryExecute for PatternString {
                     );
                 }
             }
-            Ok(Some(AnyValue::String(output)))
+            Ok(Some(Value::String(output)))
         })
     }
 }

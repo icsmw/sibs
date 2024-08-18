@@ -15,7 +15,7 @@ use crate::{
     elements::FuncArg,
     error::LinkedErr,
     functions::Functions,
-    inf::{AnyValue, Journal, Scope, ScopeDomain, Signals},
+    inf::{Journal, Scope, ScopeDomain, Signals, Value},
     reader::Sources,
 };
 use tokio::{
@@ -180,14 +180,14 @@ impl Context {
     ///
     /// # Returns
     ///
-    /// `Ok(AnyValue)` result of executing
+    /// `Ok(Value)` result of executing
     pub async fn execute(
         &self,
         name: &str,
         args: Vec<FuncArg>,
         args_token: usize,
         sc: Scope,
-    ) -> Result<AnyValue, LinkedErr<E>> {
+    ) -> Result<Value, LinkedErr<E>> {
         // TODO: switch to element instead "name"
         self.funcs
             .execute(name, args, args_token, self.clone(), sc)
@@ -195,7 +195,7 @@ impl Context {
             .map_err(|e| LinkedErr::new(e.e.into(), e.token))
     }
 
-    // pub async fn test_func(&self, name: &str, args: Vec<AnyValue>, sc: Scope) -> Result<AnyValue, E> {
+    // pub async fn test_func(&self, name: &str, args: Vec<Value>, sc: Scope) -> Result<Value, E> {
     //     Ok(self.funcs.execute(name, args, self.clone(), sc).await?)
     // }
 }

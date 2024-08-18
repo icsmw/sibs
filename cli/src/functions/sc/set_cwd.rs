@@ -2,7 +2,7 @@ use crate::{
     elements::FuncArg,
     error::LinkedErr,
     functions::{ExecutorPinnedResult, E},
-    inf::{tools::get_name, AnyValue, Context, Scope},
+    inf::{tools::get_name, Value, Context, Scope},
 };
 use std::path::PathBuf;
 
@@ -43,6 +43,6 @@ pub fn execute(
             )));
         }
         sc.set_cwd(path.clone()).await?;
-        Ok(AnyValue::PathBuf(path))
+        Ok(Value::PathBuf(path))
     })
 }

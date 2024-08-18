@@ -7,8 +7,8 @@ use crate::{
     },
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
-        Scope, TokenGetter, TryExecute,
+        operator, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
+        TokenGetter, TryExecute, Value,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -31,11 +31,11 @@ impl Task {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [AnyValue],
+        args: &'a [Value],
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> Result<Vec<AnyValue>, LinkedErr<operator::E>> {
+    ) -> Result<Vec<Value>, LinkedErr<operator::E>> {
         if self.declarations.len() != args.len() {
             Err(operator::E::DismatchTaskArgumentsCount(
                 self.declarations.len(),
@@ -77,7 +77,7 @@ impl Task {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [AnyValue],
+        args: &'a [Value],
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -93,7 +93,7 @@ impl Task {
                     Integer { value: v, token: 0 },
                     Metadata::empty(),
                 ));
-            } else if let AnyValue::bool(v) = arg {
+            } else if let Value::bool(v) = arg {
                 inputs.push(Element::Boolean(
                     Boolean { value: v, token: 0 },
                     Metadata::empty(),
@@ -277,7 +277,7 @@ impl TryExecute for Task {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [AnyValue],
+        args: &'a [Value],
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -465,7 +465,7 @@ mod processing {
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
-            AnyValue, Configuration, Context, Journal, Scope,
+            Configuration, Context, Journal, Scope, Value,
         },
         process_string,
         reader::{chars, Dissect, Reader, Sources},
@@ -494,8 +494,8 @@ mod processing {
                             &[],
                             &VALUES[i]
                                 .iter()
-                                .map(|s| AnyValue::String(s.to_string()))
-                                .collect::<Vec<AnyValue>>(),
+                                .map(|s| Value::String(s.to_string()))
+                                .collect::<Vec<Value>>(),
                             cx.clone(),
                             sc.clone(),
                             CancellationToken::new(),
@@ -534,9 +534,9 @@ mod processing {
                             Some(component),
                             &components,
                             &[
-                                AnyValue::String("test".to_owned()),
-                                AnyValue::String("a".to_owned()),
-                                AnyValue::String("b".to_owned()),
+                                Value::String("test".to_owned()),
+                                Value::String("a".to_owned()),
+                                Value::String("b".to_owned()),
                             ],
                             cx.clone(),
                             sc.clone(),

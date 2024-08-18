@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
+        operator, Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
         Scope, TokenGetter, TryExecute,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
@@ -23,11 +23,11 @@ impl VariableDeclaration {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [AnyValue],
+        args: &'a [Value],
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> Result<AnyValue, LinkedErr<operator::E>> {
+    ) -> Result<Value, LinkedErr<operator::E>> {
         let input = if args.len() != 1 {
             Err(operator::E::InvalidNumberOfArgumentsForDeclaration)?
         } else {
@@ -99,7 +99,7 @@ impl TryExecute for VariableDeclaration {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [AnyValue],
+        args: &'a [Value],
         cx: Context,
         sc: Scope,
         token: CancellationToken,

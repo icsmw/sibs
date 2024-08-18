@@ -2,7 +2,7 @@ use crate::{
     elements::FuncArg,
     error::LinkedErr,
     functions::{ExecutorPinnedResult, E},
-    inf::{tools::get_name, AnyValue, Context, Scope},
+    inf::{tools::get_name, Value, Context, Scope},
 };
 
 pub fn name() -> String {
@@ -30,6 +30,6 @@ pub fn execute(
             ))?)
             .await?
             .map(|v| v.duplicate())
-            .unwrap_or(AnyValue::empty()))
+            .unwrap_or(Value::empty()))
     })
 }

@@ -4,7 +4,7 @@ use crate::{
         error::E,
     },
     elements::Element,
-    inf::AnyValue,
+    inf::Value,
 };
 
 const ARGS: [&str; 1] = ["--trace"];
@@ -35,7 +35,7 @@ impl Argument for Trace {
 
 impl Action for Trace {
     fn action<'a>(&'a self, _components: &'a [Element]) -> ActionPinnedResult {
-        Box::pin(async move { Ok(AnyValue::bool(self.state)) })
+        Box::pin(async move { Ok(Value::bool(self.state)) })
     }
     fn key(&self) -> String {
         ARGS[0].to_owned()

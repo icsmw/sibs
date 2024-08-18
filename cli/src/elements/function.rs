@@ -4,8 +4,8 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
-        Scope, TokenGetter, TryExecute,
+        operator, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
+        TokenGetter, TryExecute, Value,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -13,12 +13,12 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct FuncArg {
-    pub value: AnyValue,
+    pub value: Value,
     pub token: usize,
 }
 
 impl FuncArg {
-    pub fn new(value: AnyValue, token: usize) -> Self {
+    pub fn new(value: Value, token: usize) -> Self {
         Self { value, token }
     }
     pub fn err<T: Clone + fmt::Display>(&self, err: T) -> LinkedErr<T> {
@@ -167,7 +167,7 @@ impl Function {
         &self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [AnyValue],
+        args: &'a [Value],
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -255,7 +255,7 @@ impl TryExecute for Function {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        inputs: &'a [AnyValue],
+        inputs: &'a [Value],
         cx: Context,
         sc: Scope,
         token: CancellationToken,

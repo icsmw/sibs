@@ -1,12 +1,12 @@
-use crate::{cli::error::E, elements::Element, inf::AnyValue};
+use crate::{cli::error::E, elements::Element, inf::Value};
 use std::{fmt::Debug, future::Future, pin::Pin};
 
 pub type ActionPinnedResult<'a> = Pin<Box<dyn Future<Output = ActionResult> + 'a>>;
-pub type ActionResult = Result<AnyValue, E>;
+pub type ActionResult = Result<Value, E>;
 
 pub trait Action: Debug {
     fn action<'a>(&'a self, _components: &'a [Element]) -> ActionPinnedResult {
-        Box::pin(async move { Ok(AnyValue::empty()) })
+        Box::pin(async move { Ok(Value::empty()) })
     }
     fn no_context(&self) -> bool {
         false

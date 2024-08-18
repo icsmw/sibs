@@ -4,7 +4,7 @@ use crate::{
         error::E,
     },
     elements::Element,
-    inf::AnyValue,
+    inf::Value,
 };
 
 const ARGS: [&str; 2] = ["--version", "-v"];
@@ -42,7 +42,7 @@ impl Action for Version {
     fn action<'a>(&'a self, _components: &'a [Element]) -> ActionPinnedResult {
         Box::pin(async move {
             println!("{VERSION}");
-            Ok(AnyValue::empty())
+            Ok(Value::empty())
         })
     }
 }

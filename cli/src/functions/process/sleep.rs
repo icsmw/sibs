@@ -1,7 +1,7 @@
 use crate::{
     elements::FuncArg,
     functions::ExecutorPinnedResult,
-    inf::{operator, tools::get_last_name, AnyValue, Context, Scope},
+    inf::{operator, tools::get_last_name, Value, Context, Scope},
 };
 use tokio::time::{sleep, Duration};
 
@@ -24,6 +24,6 @@ pub fn execute(
                 .ok_or(operator::E::FailToExtractValue)? as u64,
         ))
         .await;
-        Ok(AnyValue::empty())
+        Ok(Value::empty())
     })
 }

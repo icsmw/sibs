@@ -4,7 +4,7 @@ use crate::{
     elements::{Block, Component, ElTarget, Element, VariableName},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
+        operator, Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
         Scope, TokenGetter, TryExecute,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
@@ -99,7 +99,7 @@ impl TryExecute for Each {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [AnyValue],
+        args: &'a [Value],
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -119,13 +119,13 @@ impl TryExecute for Each {
                 .ok_or(operator::E::NoInputForEach)?
                 .as_strings()
                 .ok_or(operator::E::FailConvertInputIntoStringsForEach)?;
-            let mut output: Option<AnyValue> = None;
+            let mut output: Option<Value> = None;
             let (loop_uuid, loop_token) = sc.open_loop().await?;
             for iteration in inputs.iter() {
                 if loop_token.is_cancelled() {
                     break;
                 }
-                sc.set_var(&self.variable.name, AnyValue::String(iteration.to_string()))
+                sc.set_var(&self.variable.name, Value::String(iteration.to_string()))
                     .await?;
                 output = self
                     .block
@@ -141,7 +141,7 @@ impl TryExecute for Each {
             }
             sc.close_loop(loop_uuid).await?;
             Ok(if output.is_none() {
-                Some(AnyValue::empty())
+                Some(Value::empty())
             } else {
                 output
             })

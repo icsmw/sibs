@@ -3,14 +3,14 @@ mod error;
 use crate::{
     elements::Component,
     error::LinkedErr,
-    inf::{AnyValue, Context, Scope},
+    inf::{Context, Scope, Value},
 };
 pub use error::E;
 use std::{future::Future, pin::Pin};
 use tokio_util::sync::CancellationToken;
 
 pub type ExecutePinnedResult<'a> = Pin<Box<dyn Future<Output = ExecuteResult> + 'a + Send>>;
-pub type ExecuteResult = Result<Option<AnyValue>, LinkedErr<E>>;
+pub type ExecuteResult = Result<Option<Value>, LinkedErr<E>>;
 
 pub trait TokenGetter {
     fn token(&self) -> usize;
@@ -20,7 +20,7 @@ pub trait TryExecute {
         &'a self,
         _owner: Option<&'a Component>,
         _components: &'a [Component],
-        _args: &'a [AnyValue],
+        _args: &'a [Value],
         _cx: Context,
         _sc: Scope,
         _token: CancellationToken,
@@ -34,7 +34,7 @@ pub trait Execute {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [AnyValue],
+        args: &'a [Value],
         cx: Context,
         sc: Scope,
         token: CancellationToken,

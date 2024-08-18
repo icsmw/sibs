@@ -5,7 +5,7 @@ use crate::{
     error::LinkedErr,
     inf::{
         journal::{Configuration, Journal},
-        AnyValue, Context, Execute, Scope,
+        Value, Context, Execute, Scope,
     },
     process_file,
     reader::{error::E, Reader, Sources},
@@ -28,7 +28,7 @@ async fn reading() {
                 .execute(
                     None,
                     &[],
-                    &[AnyValue::String(String::from("success"))],
+                    &[Value::String(String::from("success"))],
                     cx,
                     sc,
                     CancellationToken::new()

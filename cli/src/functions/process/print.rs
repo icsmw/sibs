@@ -1,7 +1,7 @@
 use crate::{
     elements::FuncArg,
     functions::ExecutorPinnedResult,
-    inf::{tools::get_last_name, AnyValue, Context, Scope},
+    inf::{tools::get_last_name, Value, Context, Scope},
 };
 
 pub fn name() -> String {
@@ -22,7 +22,7 @@ pub fn execute(
                 println!("{arg:?}");
             }
         });
-        Ok(AnyValue::empty())
+        Ok(Value::empty())
     })
 }
 

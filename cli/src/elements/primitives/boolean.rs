@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
     inf::{
-        AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
+        Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
         TokenGetter, TryExecute,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
@@ -56,12 +56,12 @@ impl TryExecute for Boolean {
         &'a self,
         _owner: Option<&'a Component>,
         _components: &'a [Component],
-        _args: &'a [AnyValue],
+        _args: &'a [Value],
         _cx: Context,
         _sc: Scope,
         _token: CancellationToken,
     ) -> ExecutePinnedResult {
-        Box::pin(async move { Ok(Some(AnyValue::bool(self.value))) })
+        Box::pin(async move { Ok(Some(Value::bool(self.value))) })
     }
 }
 

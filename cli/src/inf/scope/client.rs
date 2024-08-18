@@ -1,4 +1,4 @@
-use crate::inf::{context::E, scope::Demand, AnyValue, OwnedJournal};
+use crate::inf::{context::E, scope::Demand, OwnedJournal, Value};
 use std::{path::PathBuf, sync::Arc};
 use tokio::sync::{mpsc::UnboundedSender, oneshot};
 use tokio_util::sync::CancellationToken;
@@ -26,7 +26,7 @@ impl Scope {
     ///
     /// `Ok(bool)` true - if value replaced; false - if not, or `Err(E)` in case
     /// of any channel related error
-    pub async fn set_var(&self, key: &str, value: AnyValue) -> Result<bool, E> {
+    pub async fn set_var(&self, key: &str, value: Value) -> Result<bool, E> {
         let (tx, rx) = oneshot::channel();
         self.tx
             .send(Demand::SetVariable(self.uuid, key.to_owned(), value, tx))?;
@@ -41,9 +41,9 @@ impl Scope {
     ///
     /// # Returns
     ///
-    /// `Ok(Option<Arc<AnyValue>>)` with variable value (None - if variable isn't set),
+    /// `Ok(Option<Arc<Value>>)` with variable value (None - if variable isn't set),
     /// or `Err(E)` in case of any channel related error
-    pub async fn get_var(&self, key: &str) -> Result<Option<Arc<AnyValue>>, E> {
+    pub async fn get_var(&self, key: &str) -> Result<Option<Arc<Value>>, E> {
         let (tx, rx) = oneshot::channel();
         self.tx
             .send(Demand::GetVariable(self.uuid, key.to_owned(), tx))?;
@@ -61,7 +61,7 @@ impl Scope {
     ///
     /// `Ok(bool)` true - if value replaced; false - if not, or `Err(E)` in case
     /// of any channel related error
-    pub async fn set_global_var(&self, key: &str, value: AnyValue) -> Result<bool, E> {
+    pub async fn set_global_var(&self, key: &str, value: Value) -> Result<bool, E> {
         let (tx, rx) = oneshot::channel();
         self.tx
             .send(Demand::SetGlobalVariable(key.to_owned(), value, tx))?;
@@ -76,9 +76,9 @@ impl Scope {
     ///
     /// # Returns
     ///
-    /// `Ok(Option<Arc<AnyValue>>)` with variable value (None - if variable isn't set),
+    /// `Ok(Option<Arc<Value>>)` with variable value (None - if variable isn't set),
     /// or `Err(E)` in case of any channel related error
-    pub async fn get_global_var(&self, key: &str) -> Result<Option<Arc<AnyValue>>, E> {
+    pub async fn get_global_var(&self, key: &str) -> Result<Option<Arc<Value>>, E> {
         let (tx, rx) = oneshot::channel();
         self.tx
             .send(Demand::GetGlobalVariable(key.to_owned(), tx))?;

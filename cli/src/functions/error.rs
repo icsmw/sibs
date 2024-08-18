@@ -36,7 +36,7 @@ pub enum E {
     #[error("{0}")]
     Store(store::E),
     #[error("{0}")]
-    AnyValue(value::E),
+    Value(value::E),
     #[error("{0}")]
     Other(String),
 }
@@ -108,7 +108,7 @@ impl From<context::E> for E {
 
 impl From<value::E> for E {
     fn from(e: value::E) -> Self {
-        E::AnyValue(e)
+        E::Value(e)
     }
 }
 

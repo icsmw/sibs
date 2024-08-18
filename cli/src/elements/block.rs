@@ -4,8 +4,8 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
-        TokenGetter, TryExecute,
+        Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope, TokenGetter,
+        TryExecute, Value,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -129,13 +129,13 @@ impl TryExecute for Block {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [AnyValue],
+        args: &'a [Value],
         cx: Context,
         sc: Scope,
         token: CancellationToken,
     ) -> ExecutePinnedResult {
         Box::pin(async move {
-            let mut output: Option<AnyValue> = None;
+            let mut output: Option<Value> = None;
             for element in self.elements.iter() {
                 output = element
                     .execute(

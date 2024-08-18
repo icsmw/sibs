@@ -4,7 +4,7 @@ use crate::{
     elements::{Component, ElTarget, Element, VariableName},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
+        operator, Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
         Scope, TokenGetter, TryExecute,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
@@ -107,7 +107,7 @@ impl TryExecute for VariableAssignation {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [AnyValue],
+        args: &'a [Value],
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -123,7 +123,7 @@ impl TryExecute for VariableAssignation {
             } else {
                 sc.set_var(&self.variable.name, value).await?;
             }
-            Ok(Some(AnyValue::empty()))
+            Ok(Some(Value::empty()))
         })
     }
 }

@@ -1,7 +1,7 @@
 use crate::{
     elements::FuncArg,
     functions::ExecutorPinnedResult,
-    inf::{tools::get_name, AnyValue, Context, Scope},
+    inf::{tools::get_name, Value, Context, Scope},
 };
 
 pub fn name() -> String {
@@ -21,6 +21,6 @@ pub fn execute(
                 msg.value.as_string().unwrap_or(format!("{msg:?}")),
             );
         }
-        Ok(AnyValue::empty())
+        Ok(Value::empty())
     })
 }

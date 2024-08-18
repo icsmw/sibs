@@ -10,7 +10,7 @@ use crate::{
         journal::{self, Journal},
         operator::Execute,
         scenario::Scenario,
-        term, AnyValue,
+        term, Value,
     },
     reader::{Reader, Sources},
 };
@@ -122,8 +122,8 @@ pub async fn process(journal: Journal) -> Result<(), E> {
                 &components,
                 &income
                     .iter()
-                    .map(|v| AnyValue::String(v.to_string()))
-                    .collect::<Vec<AnyValue>>(),
+                    .map(|v| Value::String(v.to_string()))
+                    .collect::<Vec<Value>>(),
                 cx.clone(),
                 sc.clone(),
                 cx.aborting.clone(),

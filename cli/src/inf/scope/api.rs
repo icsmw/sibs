@@ -1,4 +1,4 @@
-use crate::inf::{context::E, AnyValue};
+use crate::inf::{context::E, Value};
 use std::{fmt, path::PathBuf, sync::Arc};
 use tokio::sync::oneshot;
 use tokio_util::sync::CancellationToken;
@@ -14,39 +14,35 @@ pub enum Demand {
     /// # Parameters
     ///
     /// * `String` - Key/Name of variable
-    /// * `AnyValue` - Variable value
+    /// * `Value` - Variable value
     ///   be overwritten in anyway.
     /// * `oneshot::Sender<bool>` - Response channel. True - if value replaced; false - if not
-    SetGlobalVariable(String, AnyValue, oneshot::Sender<Result<bool, E>>),
+    SetGlobalVariable(String, Value, oneshot::Sender<Result<bool, E>>),
     /// Getting global variable value
     ///
     /// # Parameters
     ///
     /// * `String` - Key/Name of variable
-    /// * `oneshot::Sender<Option<Arc<AnyValue>>>` - Response channel to return variable value if it's available
-    GetGlobalVariable(String, oneshot::Sender<Result<Option<Arc<AnyValue>>, E>>),
+    /// * `oneshot::Sender<Option<Arc<Value>>>` - Response channel to return variable value if it's available
+    GetGlobalVariable(String, oneshot::Sender<Result<Option<Arc<Value>>, E>>),
     /// Setting variable value
     ///
     /// # Parameters
     ///
     /// * `Uuid` - Uuid of local scope (context of component/task)
     /// * `String` - Key/Name of variable
-    /// * `AnyValue` - Variable value
+    /// * `Value` - Variable value
     ///   be overwritten in anyway.
     /// * `oneshot::Sender<bool>` - Response channel. True - if value replaced; false - if not
-    SetVariable(Uuid, String, AnyValue, oneshot::Sender<Result<bool, E>>),
+    SetVariable(Uuid, String, Value, oneshot::Sender<Result<bool, E>>),
     /// Getting variable value
     ///
     /// # Parameters
     ///
     /// * `Uuid` - Uuid of local scope (context of component/task)
     /// * `String` - Key/Name of variable
-    /// * `oneshot::Sender<Option<Arc<AnyValue>>>` - Response channel to return variable value if it's available
-    GetVariable(
-        Uuid,
-        String,
-        oneshot::Sender<Result<Option<Arc<AnyValue>>, E>>,
-    ),
+    /// * `oneshot::Sender<Option<Arc<Value>>>` - Response channel to return variable value if it's available
+    GetVariable(Uuid, String, oneshot::Sender<Result<Option<Arc<Value>>, E>>),
     ImportVars(Uuid, Uuid, oneshot::Sender<Result<(), E>>),
     /// Getting current working folder for task
     ///

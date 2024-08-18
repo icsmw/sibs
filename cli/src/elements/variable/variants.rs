@@ -4,7 +4,7 @@ use crate::{
     elements::Component,
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
+        operator, Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
         Scope, TokenGetter, TryExecute,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
@@ -13,7 +13,7 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct VariableVariants {
-    pub values: Vec<AnyValue>,
+    pub values: Vec<Value>,
     pub token: usize,
 }
 
@@ -32,7 +32,7 @@ impl Dissect<VariableVariants, VariableVariants> for VariableVariants {}
 
 impl VariableVariants {
     pub fn new(input: String, token: usize) -> Result<Self, LinkedErr<E>> {
-        let mut values: Vec<AnyValue> = Vec::new();
+        let mut values: Vec<Value> = Vec::new();
         for value in input.split('|') {
             let value = value.trim();
             if !value.is_ascii() {
@@ -45,9 +45,9 @@ impl VariableVariants {
                 Err(E::EmptyValue.linked(&token))?;
             }
             if let Ok(num) = value.parse::<isize>() {
-                values.push(AnyValue::isize(num))
+                values.push(Value::isize(num))
             } else {
-                values.push(AnyValue::String(value.to_string()));
+                values.push(Value::String(value.to_string()));
             }
         }
         if values.is_empty() {
@@ -68,7 +68,7 @@ impl TryExecute for VariableVariants {
         &'a self,
         _owner: Option<&'a Component>,
         _components: &'a [Component],
-        args: &'a [AnyValue],
+        args: &'a [Value],
         _cx: Context,
         _sc: Scope,
         _token: CancellationToken,
@@ -171,7 +171,7 @@ mod reading {
 
 #[cfg(test)]
 mod proptest {
-    use crate::{elements::VariableVariants, inf::AnyValue};
+    use crate::{elements::VariableVariants, inf::Value};
     use proptest::prelude::*;
 
     impl Arbitrary for VariableVariants {
@@ -184,13 +184,13 @@ mod proptest {
                     values: values
                         .iter()
                         .map(|v| {
-                            AnyValue::String(if v.is_empty() {
+                            Value::String(if v.is_empty() {
                                 "min".to_owned()
                             } else {
                                 v.to_owned()
                             })
                         })
-                        .collect::<Vec<AnyValue>>(),
+                        .collect::<Vec<Value>>(),
                     token: 0,
                 })
                 .boxed()

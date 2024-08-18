@@ -2,7 +2,7 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, ExecutePinnedResult, ExecuteResult, Formation,
+        operator, Value, Context, Execute, ExecutePinnedResult, ExecuteResult, Formation,
         FormationCursor, Scope, TokenGetter, TryExecute,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
@@ -93,7 +93,7 @@ impl TryExecute for Join {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [AnyValue],
+        args: &'a [Value],
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -101,14 +101,14 @@ impl TryExecute for Join {
         fn clone(
             owner: Option<&Component>,
             components: &[Component],
-            args: &[AnyValue],
+            args: &[Value],
             cx: &Context,
             sc: &Scope,
             token: &CancellationToken,
         ) -> (
             Option<Component>,
             Vec<Component>,
-            Vec<AnyValue>,
+            Vec<Value>,
             Context,
             Scope,
             CancellationToken,
@@ -125,8 +125,8 @@ impl TryExecute for Join {
         async fn wait(
             tasks: &mut [JoinHandle<ExecuteResult>],
             token: CancellationToken,
-        ) -> Result<Vec<Result<AnyValue, LinkedErr<operator::E>>>, TaskError> {
-            let mut results: Vec<Result<AnyValue, LinkedErr<operator::E>>> = Vec::new();
+        ) -> Result<Vec<Result<Value, LinkedErr<operator::E>>>, TaskError> {
+            let mut results: Vec<Result<Value, LinkedErr<operator::E>>> = Vec::new();
             let mut futures = FuturesUnordered::new();
             for task in tasks {
                 futures.push(task);
@@ -134,7 +134,7 @@ impl TryExecute for Join {
             while let Some(result) = futures.next().await {
                 match result {
                     Ok(Ok(result)) => {
-                        results.push(Ok(result.unwrap_or_else(AnyValue::empty)));
+                        results.push(Ok(result.unwrap_or_else(Value::empty)));
                     }
                     Ok(Err(err)) => {
                         if !token.is_cancelled() {
@@ -176,7 +176,7 @@ impl TryExecute for Join {
                 .collect::<Vec<JoinHandle<ExecuteResult>>>();
             match wait(&mut tasks, token).await {
                 Ok(results) => {
-                    let mut output: Vec<AnyValue> = Vec::new();
+                    let mut output: Vec<Value> = Vec::new();
                     for result in results.into_iter() {
                         match result {
                             Ok(value) => {
@@ -187,7 +187,7 @@ impl TryExecute for Join {
                             }
                         };
                     }
-                    Ok(Some(AnyValue::Vec(output)))
+                    Ok(Some(Value::Vec(output)))
                 }
                 Err(err) => Err(err.into()),
             }
@@ -283,7 +283,7 @@ mod processing {
         error::LinkedErr,
         inf::{
             journal::{Configuration, Journal},
-            AnyValue, Context, Execute, Scope,
+            Value, Context, Execute, Scope,
         },
         process_file,
         reader::{error::E, Reader, Sources},
@@ -306,7 +306,7 @@ mod processing {
                     .execute(
                         None,
                         &[],
-                        &[AnyValue::String(String::from("test_a"))],
+                        &[Value::String(String::from("test_a"))],
                         cx.clone(),
                         sc.clone(),
                         CancellationToken::new(),
@@ -314,11 +314,11 @@ mod processing {
                     .await
                     .expect("run is successfull")
                     .expect("join returns vector of results");
-                assert!(results.get::<Vec<AnyValue>>().is_some());
+                assert!(results.get::<Vec<Value>>().is_some());
                 assert_eq!(
                     results
-                        .get::<Vec<AnyValue>>()
-                        .expect("join returns Vec<AnyValue>")
+                        .get::<Vec<Value>>()
+                        .expect("join returns Vec<Value>")
                         .len(),
                     4
                 );
@@ -326,7 +326,7 @@ mod processing {
                     .execute(
                         Some(el),
                         &[],
-                        &[AnyValue::String(String::from("test_b"))],
+                        &[Value::String(String::from("test_b"))],
                         cx,
                         sc,
                         CancellationToken::new(),
@@ -334,11 +334,11 @@ mod processing {
                     .await
                     .expect("run is successfull")
                     .expect("join returns vector of results");
-                assert!(results.get::<Vec<AnyValue>>().is_some());
+                assert!(results.get::<Vec<Value>>().is_some());
                 assert_eq!(
                     results
-                        .get::<Vec<AnyValue>>()
-                        .expect("join returns Vec<AnyValue>")
+                        .get::<Vec<Value>>()
+                        .expect("join returns Vec<Value>")
                         .len(),
                     2
                 );
@@ -364,7 +364,7 @@ mod processing {
                     .execute(
                         Some(el),
                         &[],
-                        &[AnyValue::String(String::from("test_c"))],
+                        &[Value::String(String::from("test_c"))],
                         cx.clone(),
                         sc.clone(),
                         CancellationToken::new()
@@ -375,7 +375,7 @@ mod processing {
                     .execute(
                         Some(el),
                         &[],
-                        &[AnyValue::String(String::from("test_d"))],
+                        &[Value::String(String::from("test_d"))],
                         cx.clone(),
                         sc.clone(),
                         CancellationToken::new()
@@ -386,7 +386,7 @@ mod processing {
                     .execute(
                         Some(el),
                         &[],
-                        &[AnyValue::String(String::from("test_e"))],
+                        &[Value::String(String::from("test_e"))],
                         cx.clone(),
                         sc.clone(),
                         CancellationToken::new()
@@ -397,7 +397,7 @@ mod processing {
                     .execute(
                         Some(el),
                         &[],
-                        &[AnyValue::String(String::from("test_f"))],
+                        &[Value::String(String::from("test_f"))],
                         cx.clone(),
                         sc.clone(),
                         CancellationToken::new()

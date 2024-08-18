@@ -4,8 +4,8 @@ use crate::{
     elements::{Component, ElTarget, Element, Reference},
     error::LinkedErr,
     inf::{
-        operator, AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
-        Scope, TokenGetter, TryExecute,
+        operator, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
+        TokenGetter, TryExecute, Value,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -148,7 +148,7 @@ impl TryExecute for Gatekeeper {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [AnyValue],
+        args: &'a [Value],
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -168,7 +168,7 @@ impl TryExecute for Gatekeeper {
                 .ok_or(operator::E::FailToExtractConditionValue)?
                 .get::<bool>()
                 .ok_or(operator::E::FailToExtractConditionValue)?;
-            Ok(Some(AnyValue::bool(condition)))
+            Ok(Some(Value::bool(condition)))
         })
     }
 }
@@ -278,7 +278,7 @@ mod processing {
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
-            AnyValue, Configuration, Context, Journal, Scope,
+            Configuration, Context, Journal, Scope, Value,
         },
         process_string,
         reader::{chars, Dissect, Reader, Sources},
@@ -312,8 +312,8 @@ mod processing {
                                 &components,
                                 &args
                                     .iter()
-                                    .map(|s| AnyValue::String(s.to_string()))
-                                    .collect::<Vec<AnyValue>>(),
+                                    .map(|s| Value::String(s.to_string()))
+                                    .collect::<Vec<Value>>(),
                                 cx.clone(),
                                 sc.clone(),
                                 CancellationToken::new(),

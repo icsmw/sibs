@@ -4,8 +4,8 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        AnyValue, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
-        TokenGetter, TryExecute,
+        Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope, TokenGetter,
+        TryExecute, Value,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -123,13 +123,13 @@ impl TryExecute for Values {
         &'a self,
         owner: Option<&'a Component>,
         components: &'a [Component],
-        args: &'a [AnyValue],
+        args: &'a [Value],
         cx: Context,
         sc: Scope,
         token: CancellationToken,
     ) -> ExecutePinnedResult {
         Box::pin(async move {
-            let mut values: Vec<AnyValue> = Vec::new();
+            let mut values: Vec<Value> = Vec::new();
             for el in self.elements.iter() {
                 values.push(
                     el.execute(
@@ -141,10 +141,10 @@ impl TryExecute for Values {
                         token.clone(),
                     )
                     .await?
-                    .unwrap_or(AnyValue::empty()),
+                    .unwrap_or(Value::empty()),
                 );
             }
-            Ok(Some(AnyValue::Vec(values)))
+            Ok(Some(Value::Vec(values)))
         })
     }
 }
@@ -243,7 +243,7 @@ mod processing {
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
-            AnyValue, Configuration, Context, Journal, Scope,
+            Configuration, Context, Journal, Scope, Value,
         },
         process_string, read_string,
         reader::{chars, Dissect, Reader, Sources},
@@ -310,7 +310,7 @@ mod processing {
                 }
                 for (name, value) in NESTED_VALUES.iter() {
                     let stored = sc.get_var(name).await?.unwrap();
-                    let values = stored.get::<Vec<AnyValue>>().unwrap();
+                    let values = stored.get::<Vec<Value>>().unwrap();
                     let mut output: Vec<String> = Vec::new();
                     for value in values.iter() {
                         output = [output, value.as_strings().unwrap()].concat();

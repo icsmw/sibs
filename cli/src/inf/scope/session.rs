@@ -1,4 +1,4 @@
-use crate::inf::{AnyValue, Journal, OwnedJournal};
+use crate::inf::{Journal, OwnedJournal, Value};
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
@@ -25,7 +25,7 @@ impl Sessions {
 
 #[derive(Debug)]
 pub struct Session {
-    vars: HashMap<String, Arc<AnyValue>>,
+    vars: HashMap<String, Arc<Value>>,
     cwd: PathBuf,
     loops: Vec<(Uuid, CancellationToken)>,
     journal: OwnedJournal,
@@ -41,19 +41,19 @@ impl Session {
         }
     }
 
-    pub fn set_var(&mut self, key: &str, value: AnyValue) -> bool {
+    pub fn set_var(&mut self, key: &str, value: Value) -> bool {
         self.vars.insert(key.to_string(), Arc::new(value)).is_some()
     }
 
-    pub fn get_var(&self, key: &str) -> Option<Arc<AnyValue>> {
+    pub fn get_var(&self, key: &str) -> Option<Arc<Value>> {
         self.vars.get(key).cloned()
     }
 
-    pub fn get_vars(&self) -> &HashMap<String, Arc<AnyValue>> {
+    pub fn get_vars(&self) -> &HashMap<String, Arc<Value>> {
         &self.vars
     }
 
-    pub fn import_vars(&mut self, vars: HashMap<String, Arc<AnyValue>>) {
+    pub fn import_vars(&mut self, vars: HashMap<String, Arc<Value>>) {
         for (key, value) in vars.into_iter() {
             if self.vars.contains_key(&key) {
                 self.journal.warn(format!(

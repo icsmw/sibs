@@ -33,7 +33,7 @@ pub enum E {
     #[error("Fail to execute.\n{0}")]
     OperatorError(operator::E),
     #[error("{0}")]
-    AnyValue(value::E),
+    Value(value::E),
     #[error("{0}")]
     Other(String),
 }
@@ -45,7 +45,7 @@ impl From<String> for E {
 }
 impl From<value::E> for E {
     fn from(e: value::E) -> Self {
-        E::AnyValue(e)
+        E::Value(e)
     }
 }
 impl From<reader::error::E> for E {
