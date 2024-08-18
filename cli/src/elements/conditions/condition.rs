@@ -85,7 +85,7 @@ impl TryExecute for Condition {
         token: CancellationToken,
     ) -> ExecutePinnedResult {
         Box::pin(async move {
-            Ok(Some(AnyValue::new(
+            Ok(Some(AnyValue::bool(
                 *self
                     .subsequence
                     .execute(owner, components, args, cx, sc, token)
@@ -93,7 +93,7 @@ impl TryExecute for Condition {
                     .ok_or(E::NoValueFromSubsequence)?
                     .get::<bool>()
                     .ok_or(E::NoBoolValueFromSubsequence)?,
-            )?))
+            )))
         })
     }
 }

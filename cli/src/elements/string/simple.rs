@@ -57,7 +57,7 @@ impl TryExecute for SimpleString {
         _sc: Scope,
         _token: CancellationToken,
     ) -> ExecutePinnedResult {
-        Box::pin(async move { Ok(Some(AnyValue::new(self.value.to_string())?)) })
+        Box::pin(async move { Ok(Some(AnyValue::String(self.value.to_string()))) })
     }
 }
 

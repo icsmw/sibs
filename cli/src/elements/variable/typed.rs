@@ -103,10 +103,10 @@ impl TryExecute for VariableType {
             };
             Ok(Some(match &self.var_type {
                 Types::String => {
-                    AnyValue::new(value.as_string().ok_or(operator::E::ParseStringError(
+                    AnyValue::String(value.as_string().ok_or(operator::E::ParseStringError(
                         Types::String.to_string(),
                         "Value isn't String".to_string(),
-                    ))?)?
+                    ))?)
                 }
                 Types::Number => {
                     AnyValue::isize(value.as_num().ok_or(operator::E::ParseStringError(

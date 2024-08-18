@@ -144,7 +144,7 @@ impl TryExecute for Values {
                     .unwrap_or(AnyValue::empty()),
                 );
             }
-            Ok(Some(AnyValue::new(values)?))
+            Ok(Some(AnyValue::Vec(values)))
         })
     }
 }

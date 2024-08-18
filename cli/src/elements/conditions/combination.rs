@@ -84,7 +84,7 @@ impl TryExecute for Combination {
         _sc: Scope,
         _token: CancellationToken,
     ) -> ExecutePinnedResult {
-        Box::pin(async move { Ok(Some(AnyValue::new(self.cmb.clone())?)) })
+        Box::pin(async move { Ok(Some(AnyValue::Cmb(self.cmb.clone()))) })
     }
 }
 

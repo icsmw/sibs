@@ -14,5 +14,5 @@ pub fn execute(
     _cx: Context,
     sc: Scope,
 ) -> ExecutorPinnedResult {
-    Box::pin(async move { Ok(AnyValue::new(sc.get_global_cwd().await?)?) })
+    Box::pin(async move { Ok(AnyValue::PathBuf(sc.get_global_cwd().await?)) })
 }

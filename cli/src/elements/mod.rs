@@ -849,7 +849,7 @@ impl TryExecute for Element {
                     let Some(b_res) = res.as_bool() else {
                         return Err(operator::E::InvertingOnNotBool.by(self));
                     };
-                    return Ok(Some(AnyValue::new(!b_res)?));
+                    return Ok(Some(AnyValue::bool(!b_res)));
                 }
             }
             result

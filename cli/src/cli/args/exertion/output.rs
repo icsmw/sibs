@@ -42,7 +42,7 @@ impl Argument for Output {
 
 impl Action for Output {
     fn action<'a>(&'a self, _components: &'a [Element]) -> ActionPinnedResult {
-        Box::pin(async move { Ok(AnyValue::new(self.output.clone())?) })
+        Box::pin(async move { Ok(AnyValue::Output(self.output.clone())) })
     }
     fn key(&self) -> String {
         ARGS[0].to_owned()

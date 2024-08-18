@@ -125,7 +125,7 @@ impl TryExecute for Each {
                 if loop_token.is_cancelled() {
                     break;
                 }
-                sc.set_var(&self.variable.name, AnyValue::new(iteration.to_string())?)
+                sc.set_var(&self.variable.name, AnyValue::String(iteration.to_string()))
                     .await?;
                 output = self
                     .block

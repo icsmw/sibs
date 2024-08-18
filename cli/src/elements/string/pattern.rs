@@ -126,7 +126,7 @@ impl TryExecute for PatternString {
                     );
                 }
             }
-            Ok(Some(AnyValue::new(output)?))
+            Ok(Some(AnyValue::String(output)))
         })
     }
 }

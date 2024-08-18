@@ -40,7 +40,7 @@ pub fn import(args: TokenStream, input: TokenStream) -> TokenStream {
                     return Err(crate::error::LinkedErr::new(E::InvalidArgumentsCount(#args_required.to_string(), args.len().to_string()), Some(args_token)))?;
                 }
                 #item_fn;
-                Ok(AnyValue::new(#fn_name(#(#arguments)*)?)?)
+                Ok(#fn_name(#(#arguments)*)?)
             })
         }
         store.insert(

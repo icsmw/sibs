@@ -187,7 +187,7 @@ impl TryExecute for Join {
                             }
                         };
                     }
-                    Ok(Some(AnyValue::new(output)?))
+                    Ok(Some(AnyValue::Vec(output)))
                 }
                 Err(err) => Err(err.into()),
             }

@@ -157,12 +157,12 @@ impl TryExecute for Subsequence {
                     match cmb {
                         Cmb::And => {
                             if !last_value {
-                                return Ok(Some(AnyValue::new(false)?));
+                                return Ok(Some(AnyValue::bool(false)));
                             }
                         }
                         Cmb::Or => {
                             if last_value {
-                                return Ok(Some(AnyValue::new(true)?));
+                                return Ok(Some(AnyValue::bool(true)));
                             }
                         }
                     }
@@ -172,7 +172,7 @@ impl TryExecute for Subsequence {
                     Err(E::FailToParseValueOfSubsequenceElement)?;
                 }
             }
-            Ok(Some(AnyValue::new(last_value)?))
+            Ok(Some(AnyValue::bool(last_value)))
         })
     }
 }

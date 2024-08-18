@@ -43,6 +43,6 @@ pub fn execute(
             )));
         }
         sc.set_cwd(path.clone()).await?;
-        Ok(AnyValue::new(path)?)
+        Ok(AnyValue::PathBuf(path))
     })
 }
