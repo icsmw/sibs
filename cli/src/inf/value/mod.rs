@@ -28,6 +28,30 @@ pub enum Value {
     Vec(Vec<Value>),
 }
 
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[allow(non_camel_case_types)]
+pub enum ValueRef {
+    Empty,
+    Output,
+    Cmb,
+    i8,
+    i16,
+    i32,
+    i64,
+    i128,
+    isize,
+    u8,
+    u16,
+    u32,
+    u64,
+    u128,
+    usize,
+    bool,
+    PathBuf,
+    String,
+    Vec,
+}
+
 impl Value {
     pub fn empty() -> Self {
         Self::Empty(())

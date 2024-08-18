@@ -63,3 +63,7 @@ pub trait Execute {
         })
     }
 }
+
+pub trait ExpectedValueType {
+    fn expected(&self) -> Value;
+}
