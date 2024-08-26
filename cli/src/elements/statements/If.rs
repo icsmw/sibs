@@ -4,8 +4,8 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
-        Scope, TokenGetter, TryExecute,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
+        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -13,7 +13,9 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub enum Thread {
+    // (Subsequence, Block)
     If(Element, Element),
+    // Block
     Else(Element),
 }
 
@@ -22,6 +24,19 @@ impl TokenGetter for Thread {
         match self {
             Self::If(el, _) => el.token(),
             Self::Else(block) => block.token(),
+        }
+    }
+}
+
+impl ExpectedValueType for Thread {
+    fn expected<'a>(
+        &'a self,
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+    ) -> ValueTypeResult {
+        match self {
+            Self::If(_, block) => block.expected(owner, components),
+            Self::Else(block) => block.expected(owner, components),
         }
     }
 }
@@ -180,6 +195,26 @@ impl Formation for If {
 impl TokenGetter for If {
     fn token(&self) -> usize {
         self.token
+    }
+}
+
+impl ExpectedValueType for If {
+    fn expected<'a>(
+        &'a self,
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+    ) -> ValueTypeResult {
+        let mut refs: Option<ValueRef> = None;
+        for value_ref in self.threads.iter() {
+            if let Some(prev) = refs.as_ref() {
+                if prev != &value_ref.expected(owner, components)? {
+                    return Err(operator::E::ReturnsDifferentTypes.by(self));
+                }
+            } else {
+                refs = Some(value_ref.expected(owner, components)?);
+            }
+        }
+        Ok(refs.unwrap_or(ValueRef::Empty))
     }
 }
 

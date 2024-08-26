@@ -4,8 +4,8 @@ use crate::{
     elements::{Cmb, Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
-        TokenGetter, TryExecute,
+        Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation, FormationCursor,
+        Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -126,6 +126,16 @@ impl Formation for Subsequence {
 impl TokenGetter for Subsequence {
     fn token(&self) -> usize {
         self.token
+    }
+}
+
+impl ExpectedValueType for Subsequence {
+    fn expected<'a>(
+        &'a self,
+        _owner: Option<&'a Component>,
+        _components: &'a [Component],
+    ) -> ValueTypeResult {
+        Ok(ValueRef::bool)
     }
 }
 

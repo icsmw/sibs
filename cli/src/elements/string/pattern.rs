@@ -4,8 +4,8 @@ use crate::{
     elements::{string, Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
-        Scope, TokenGetter, TryExecute,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
+        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -89,6 +89,16 @@ impl Formation for PatternString {
 impl TokenGetter for PatternString {
     fn token(&self) -> usize {
         self.token
+    }
+}
+
+impl ExpectedValueType for PatternString {
+    fn expected<'a>(
+        &'a self,
+        _owner: Option<&'a Component>,
+        _components: &'a [Component],
+    ) -> ValueTypeResult {
+        Ok(ValueRef::String)
     }
 }
 

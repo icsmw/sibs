@@ -4,8 +4,8 @@ use crate::{
     elements::{Block, Component, ElTarget, Element, VariableName},
     error::LinkedErr,
     inf::{
-        operator, Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
-        Scope, TokenGetter, TryExecute,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
+        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -14,7 +14,7 @@ use std::fmt;
 pub struct Each {
     pub variable: VariableName,
     pub input: Box<Element>,
-    pub block: Block,
+    pub block: Box<Element>,
     pub token: usize,
 }
 
@@ -49,17 +49,13 @@ impl TryDissect<Each> for Each {
             } else {
                 return Err(E::NoLoopInitialization.linked(&reader.token()?.id));
             };
-            let block = if let Some(Element::Block(block, _)) =
-                Element::include(reader, &[ElTarget::Block])?
-            {
-                block
-            } else {
+            let Some(block) = Element::include(reader, &[ElTarget::Block])? else {
                 Err(E::NoGroup.by_reader(reader))?
             };
             Ok(Some(Each {
                 input,
                 variable,
-                block,
+                block: Box::new(block),
                 token: close(reader),
             }))
         } else {
@@ -91,6 +87,16 @@ impl Formation for Each {
 impl TokenGetter for Each {
     fn token(&self) -> usize {
         self.token
+    }
+}
+
+impl ExpectedValueType for Each {
+    fn expected<'a>(
+        &'a self,
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+    ) -> ValueTypeResult {
+        self.block.expected(owner, components)
     }
 }
 
@@ -198,7 +204,7 @@ mod reading {
                     );
                     assert_eq!(
                         trim_carets(&entity.block.to_string()),
-                        trim_carets(&reader.get_fragment(&entity.block.token)?.lined),
+                        trim_carets(&reader.get_fragment(&entity.block.token())?.lined),
                     );
                     assert_eq!(
                         trim_carets(&entity.variable.to_string()),
@@ -295,7 +301,7 @@ mod processing {
 mod proptest {
 
     use crate::{
-        elements::{task::Task, Block, Each, ElTarget, Element, VariableName},
+        elements::{task::Task, Each, ElTarget, Element, VariableName},
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
@@ -309,12 +315,12 @@ mod proptest {
 
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             (
-                Block::arbitrary_with(deep),
+                Element::arbitrary_with((vec![ElTarget::Block], deep)),
                 VariableName::arbitrary(),
                 Element::arbitrary_with((vec![ElTarget::VariableName], deep)),
             )
                 .prop_map(|(block, variable, input)| Each {
-                    block,
+                    block: Box::new(block),
                     variable,
                     input: Box::new(input),
                     token: 0,

@@ -4,8 +4,8 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
-        TokenGetter, TryExecute, Value,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
+        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -96,6 +96,16 @@ impl Formation for Optional {
 impl TokenGetter for Optional {
     fn token(&self) -> usize {
         self.token
+    }
+}
+
+impl ExpectedValueType for Optional {
+    fn expected<'a>(
+        &'a self,
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+    ) -> ValueTypeResult {
+        self.action.expected(owner, components)
     }
 }
 

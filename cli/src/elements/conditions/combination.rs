@@ -4,8 +4,8 @@ use crate::{
     elements::Component,
     error::LinkedErr,
     inf::{
-        Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
-        TokenGetter, TryExecute,
+        Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation, FormationCursor,
+        Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -71,6 +71,16 @@ impl Formation for Combination {
 impl TokenGetter for Combination {
     fn token(&self) -> usize {
         self.token
+    }
+}
+
+impl ExpectedValueType for Combination {
+    fn expected<'a>(
+        &'a self,
+        _owner: Option<&'a Component>,
+        _components: &'a [Component],
+    ) -> ValueTypeResult {
+        Ok(ValueRef::Empty)
     }
 }
 

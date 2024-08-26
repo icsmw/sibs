@@ -4,8 +4,8 @@ use crate::{
     elements::{ElTarget, Element, Gatekeeper, SimpleString, Task},
     error::LinkedErr,
     inf::{
-        operator, scenario, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
-        Scope, TokenGetter, TryExecute, Value,
+        operator, scenario, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
+        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -20,6 +20,9 @@ pub struct Component {
 }
 
 impl Component {
+    pub fn get_name(&self) -> String {
+        self.name.value.to_owned()
+    }
     pub fn get_task(&self, name: &str) -> Option<(&Task, Vec<&Element>)> {
         let mut gatekeepers = Vec::new();
         for el in self.elements.iter() {
@@ -178,6 +181,16 @@ impl Formation for Component {
 impl TokenGetter for Component {
     fn token(&self) -> usize {
         self.token
+    }
+}
+
+impl ExpectedValueType for Component {
+    fn expected<'a>(
+        &'a self,
+        _owner: Option<&'a Component>,
+        _components: &'a [Component],
+    ) -> ValueTypeResult {
+        Ok(ValueRef::Empty)
     }
 }
 

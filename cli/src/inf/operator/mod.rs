@@ -3,7 +3,7 @@ mod error;
 use crate::{
     elements::Component,
     error::LinkedErr,
-    inf::{Context, Scope, Value},
+    inf::{Context, Scope, Value, ValueRef},
 };
 pub use error::E;
 use std::{future::Future, pin::Pin};
@@ -11,10 +11,20 @@ use tokio_util::sync::CancellationToken;
 
 pub type ExecutePinnedResult<'a> = Pin<Box<dyn Future<Output = ExecuteResult> + 'a + Send>>;
 pub type ExecuteResult = Result<Option<Value>, LinkedErr<E>>;
+pub type ValueTypeResult = Result<ValueRef, LinkedErr<E>>;
 
 pub trait TokenGetter {
     fn token(&self) -> usize;
 }
+
+pub trait ExpectedValueType {
+    fn expected<'a>(
+        &'a self,
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+    ) -> ValueTypeResult;
+}
+
 pub trait TryExecute {
     fn try_execute<'a>(
         &'a self,
@@ -40,7 +50,7 @@ pub trait Execute {
         token: CancellationToken,
     ) -> ExecutePinnedResult
     where
-        Self: TryExecute + TokenGetter + Sync,
+        Self: TryExecute + TokenGetter + ExpectedValueType + Sync,
     {
         Box::pin(async move {
             if cx.is_aborting() {
@@ -62,8 +72,4 @@ pub trait Execute {
             result
         })
     }
-}
-
-pub trait ExpectedValueType {
-    fn expected(&self) -> Value;
 }

@@ -4,8 +4,8 @@ use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
     inf::{
-        Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
-        TokenGetter, TryExecute,
+        Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation, FormationCursor,
+        Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
     },
     reader::{Dissect, Reader, TryDissect, E},
 };
@@ -50,6 +50,16 @@ impl Formation for Integer {
 impl TokenGetter for Integer {
     fn token(&self) -> usize {
         self.token
+    }
+}
+
+impl ExpectedValueType for Integer {
+    fn expected<'a>(
+        &'a self,
+        _owner: Option<&'a Component>,
+        _components: &'a [Component],
+    ) -> ValueTypeResult {
+        Ok(ValueRef::isize)
     }
 }
 

@@ -4,8 +4,8 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
-        Scope, TokenGetter, TryExecute,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
+        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -91,6 +91,16 @@ impl Dissect<VariableDeclaration, VariableDeclaration> for VariableDeclaration {
 impl TokenGetter for VariableDeclaration {
     fn token(&self) -> usize {
         self.token
+    }
+}
+
+impl ExpectedValueType for VariableDeclaration {
+    fn expected<'a>(
+        &'a self,
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+    ) -> ValueTypeResult {
+        self.declaration.expected(owner, components)
     }
 }
 

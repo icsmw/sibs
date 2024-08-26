@@ -4,8 +4,8 @@ use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
     inf::{
-        operator, Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
-        Scope, TokenGetter, TryExecute,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
+        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -53,11 +53,24 @@ impl VariableName {
             Ok(Self { name, token })
         }
     }
+    pub fn get_name(&self) -> String {
+        self.name.clone()
+    }
 }
 
 impl TokenGetter for VariableName {
     fn token(&self) -> usize {
         self.token
+    }
+}
+
+impl ExpectedValueType for VariableName {
+    fn expected<'a>(
+        &'a self,
+        _owner: Option<&'a Component>,
+        _components: &'a [Component],
+    ) -> ValueTypeResult {
+        Ok(ValueRef::Any)
     }
 }
 

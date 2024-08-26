@@ -4,8 +4,8 @@ use crate::{
     elements::{Component, ElTarget, Element, Gatekeeper},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
-        TokenGetter, TryExecute, Value,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
+        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -141,6 +141,39 @@ impl Formation for Reference {
 impl TokenGetter for Reference {
     fn token(&self) -> usize {
         self.token
+    }
+}
+
+impl ExpectedValueType for Reference {
+    fn expected<'a>(
+        &'a self,
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+    ) -> ValueTypeResult {
+        let master = owner.ok_or(operator::E::NoOwnerComponent.by(self))?;
+        let (master, task_name) = if self.path.len() == 1 {
+            (master, &self.path[0])
+        } else if self.path.len() == 2 {
+            let master = if self.path[0] == SELF {
+                master
+            } else {
+                components
+                    .iter()
+                    .find(|c| c.name.to_string() == self.path[0])
+                    .ok_or(operator::E::NotFoundComponent(self.path[0].to_owned()).by(self))?
+            };
+            (master, &self.path[1])
+        } else {
+            return Err(operator::E::InvalidPartsInReference.by(self));
+        };
+        let (task, _) = master
+            .get_task(task_name)
+            .ok_or(operator::E::TaskNotExists(
+                task_name.to_owned(),
+                master.get_name(),
+                master.get_tasks_names(),
+            ))?;
+        task.expected(owner, components)
     }
 }
 

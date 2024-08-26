@@ -4,8 +4,8 @@ use crate::{
     elements::{Component, ElTarget, Element, Reference},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
-        TokenGetter, TryExecute, Value,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
+        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -140,6 +140,16 @@ impl Formation for Gatekeeper {
 impl TokenGetter for Gatekeeper {
     fn token(&self) -> usize {
         self.token
+    }
+}
+
+impl ExpectedValueType for Gatekeeper {
+    fn expected<'a>(
+        &'a self,
+        _owner: Option<&'a Component>,
+        _components: &'a [Component],
+    ) -> ValueTypeResult {
+        Ok(ValueRef::bool)
     }
 }
 

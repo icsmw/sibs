@@ -22,6 +22,10 @@ pub enum E {
     NotAllArguamentsHasReturn,
     #[error("Spawned process exit with error")]
     SpawnedProcessExitWithError,
+    #[error("Different parts/threads returns different types")]
+    ReturnsDifferentTypes,
+    #[error("Element doesn't have return type")]
+    NoReturnType,
     #[error("{0}")]
     TrackerError(tracker::E),
     #[error("Join error: {0}")]

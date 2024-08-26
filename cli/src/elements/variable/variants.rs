@@ -4,8 +4,8 @@ use crate::{
     elements::Component,
     error::LinkedErr,
     inf::{
-        operator, Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
-        Scope, TokenGetter, TryExecute,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
+        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -60,6 +60,17 @@ impl VariableVariants {
 impl TokenGetter for VariableVariants {
     fn token(&self) -> usize {
         self.token
+    }
+}
+
+impl ExpectedValueType for VariableVariants {
+    fn expected<'a>(
+        &'a self,
+        _owner: Option<&'a Component>,
+        _components: &'a [Component],
+    ) -> ValueTypeResult {
+        // TODO: needs implementation
+        Ok(ValueRef::String)
     }
 }
 

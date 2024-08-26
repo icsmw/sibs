@@ -4,8 +4,8 @@ use crate::{
     elements::{Component, ElTarget, Element, VariableName},
     error::LinkedErr,
     inf::{
-        operator, Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
-        Scope, TokenGetter, TryExecute,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
+        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -99,6 +99,16 @@ impl Formation for VariableAssignation {
 impl TokenGetter for VariableAssignation {
     fn token(&self) -> usize {
         self.token
+    }
+}
+
+impl ExpectedValueType for VariableAssignation {
+    fn expected<'a>(
+        &'a self,
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+    ) -> ValueTypeResult {
+        self.assignation.expected(owner, components)
     }
 }
 

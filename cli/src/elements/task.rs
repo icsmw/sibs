@@ -7,8 +7,8 @@ use crate::{
     },
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
-        TokenGetter, TryExecute, Value,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
+        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -133,6 +133,7 @@ impl TryDissect<Task> for Task {
         else {
             return Ok(None);
         };
+        reader.variables.drop();
         let (name, name_token) = (name.trim().to_string(), reader.token()?.id);
         if stopped_on == chars::OPEN_BRACKET {
             reader.move_to().next();
@@ -269,6 +270,16 @@ impl Formation for Task {
 impl TokenGetter for Task {
     fn token(&self) -> usize {
         self.token
+    }
+}
+
+impl ExpectedValueType for Task {
+    fn expected<'a>(
+        &'a self,
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+    ) -> ValueTypeResult {
+        self.block.expected(owner, components)
     }
 }
 

@@ -2,8 +2,9 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Value, Context, Execute, ExecutePinnedResult, ExecuteResult, Formation,
-        FormationCursor, Scope, TokenGetter, TryExecute,
+        operator, Context, Execute, ExecutePinnedResult, ExecuteResult, ExpectedValueType,
+        Formation, FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef,
+        ValueTypeResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -85,6 +86,16 @@ impl From<TaskError> for LinkedErr<operator::E> {
 impl TokenGetter for Join {
     fn token(&self) -> usize {
         self.token
+    }
+}
+
+impl ExpectedValueType for Join {
+    fn expected<'a>(
+        &'a self,
+        _owner: Option<&'a Component>,
+        _components: &'a [Component],
+    ) -> ValueTypeResult {
+        Ok(ValueRef::Empty)
     }
 }
 
@@ -283,7 +294,7 @@ mod processing {
         error::LinkedErr,
         inf::{
             journal::{Configuration, Journal},
-            Value, Context, Execute, Scope,
+            Context, Execute, Scope, Value,
         },
         process_file,
         reader::{error::E, Reader, Sources},

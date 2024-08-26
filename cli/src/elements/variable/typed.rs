@@ -4,8 +4,8 @@ use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
     inf::{
-        operator, Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
-        Scope, TokenGetter, TryExecute,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
+        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -82,6 +82,20 @@ impl VariableType {
 impl TokenGetter for VariableType {
     fn token(&self) -> usize {
         self.token
+    }
+}
+
+impl ExpectedValueType for VariableType {
+    fn expected<'a>(
+        &'a self,
+        _owner: Option<&'a Component>,
+        _components: &'a [Component],
+    ) -> ValueTypeResult {
+        Ok(match self.var_type {
+            Types::String => ValueRef::String,
+            Types::Bool => ValueRef::bool,
+            Types::Number => ValueRef::isize,
+        })
     }
 }
 

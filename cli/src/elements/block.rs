@@ -4,8 +4,8 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope, TokenGetter,
-        TryExecute, Value,
+        Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation, FormationCursor,
+        Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -121,6 +121,19 @@ impl Formation for Block {
 impl TokenGetter for Block {
     fn token(&self) -> usize {
         self.token
+    }
+}
+
+impl ExpectedValueType for Block {
+    fn expected<'a>(
+        &'a self,
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+    ) -> ValueTypeResult {
+        self.elements
+            .last()
+            .map(|el| el.expected(owner, components))
+            .unwrap_or(Ok(ValueRef::Empty))
     }
 }
 

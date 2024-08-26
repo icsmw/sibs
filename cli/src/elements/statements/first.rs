@@ -4,8 +4,8 @@ use crate::{
     elements::{Block, Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
-        TokenGetter, TryExecute,
+        Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation, FormationCursor,
+        Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -13,7 +13,7 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct First {
-    pub block: Block,
+    pub block: Box<Element>,
     pub token: usize,
 }
 
@@ -21,16 +21,14 @@ impl TryDissect<First> for First {
     fn try_dissect(reader: &mut Reader) -> Result<Option<First>, LinkedErr<E>> {
         let close = reader.open_token(ElTarget::First);
         if reader.move_to().word(&[words::FIRST]).is_some() {
-            let mut block = if let Some(Element::Block(block, _)) =
-                Element::include(reader, &[ElTarget::Block])?
-            {
-                block
-            } else {
+            let Some(mut block) = Element::include(reader, &[ElTarget::Block])? else {
                 return Err(E::NoFIRSTStatementBody.by_reader(reader));
             };
-            block.set_owner(ElTarget::First);
+            if let Element::Block(block, _) = &mut block {
+                block.set_owner(ElTarget::First);
+            }
             Ok(Some(First {
-                block,
+                block: Box::new(block),
                 token: close(reader),
             }))
         } else {
@@ -64,6 +62,16 @@ impl TokenGetter for First {
     }
 }
 
+impl ExpectedValueType for First {
+    fn expected<'a>(
+        &'a self,
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+    ) -> ValueTypeResult {
+        self.block.expected(owner, components)
+    }
+}
+
 impl TryExecute for First {
     fn try_execute<'a>(
         &'a self,
@@ -89,7 +97,7 @@ mod reading {
     use crate::{
         elements::First,
         error::LinkedErr,
-        inf::{tests::*, Configuration},
+        inf::{tests::*, Configuration, TokenGetter},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -131,7 +139,7 @@ mod reading {
                     );
                     assert_eq!(
                         trim_carets(&entity.block.to_string()),
-                        trim_carets(&reader.get_fragment(&entity.block.token)?.lined),
+                        trim_carets(&reader.get_fragment(&entity.block.token())?.lined),
                     );
                     count += 1;
                 }
@@ -217,7 +225,7 @@ mod processing {
 mod proptest {
 
     use crate::{
-        elements::{Block, First, Task},
+        elements::{ElTarget, Element, First, Task},
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
@@ -230,8 +238,11 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
-            Block::arbitrary_with(deep)
-                .prop_map(|block| First { block, token: 0 })
+            Element::arbitrary_with((vec![ElTarget::Block], deep))
+                .prop_map(|block| First {
+                    block: Box::new(block),
+                    token: 0,
+                })
                 .boxed()
         }
     }

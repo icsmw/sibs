@@ -4,8 +4,8 @@ use crate::{
     elements::{string, Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, spawner, Value, Context, Execute, ExecutePinnedResult, Formation,
-        FormationCursor, Scope, TokenGetter, TryExecute,
+        operator, spawner, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
+        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -87,6 +87,16 @@ impl Formation for Command {
 impl TokenGetter for Command {
     fn token(&self) -> usize {
         self.token
+    }
+}
+
+impl ExpectedValueType for Command {
+    fn expected<'a>(
+        &'a self,
+        _owner: Option<&'a Component>,
+        _components: &'a [Component],
+    ) -> ValueTypeResult {
+        Ok(ValueRef::Empty)
     }
 }
 

@@ -4,8 +4,8 @@ use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
     inf::{
-        Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor, Scope,
-        TokenGetter, TryExecute,
+        Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation, FormationCursor,
+        Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -49,6 +49,16 @@ impl TokenGetter for Breaker {
     }
 }
 
+impl ExpectedValueType for Breaker {
+    fn expected<'a>(
+        &'a self,
+        _owner: Option<&'a Component>,
+        _components: &'a [Component],
+    ) -> ValueTypeResult {
+        Ok(ValueRef::Empty)
+    }
+}
+
 impl TryExecute for Breaker {
     fn try_execute<'a>(
         &'a self,
@@ -73,7 +83,7 @@ mod reading {
     use crate::{
         elements::Each,
         error::LinkedErr,
-        inf::{tests::*, Configuration},
+        inf::{tests::*, Configuration, TokenGetter},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -115,7 +125,7 @@ mod reading {
                     );
                     assert_eq!(
                         trim_carets(&entity.block.to_string()),
-                        trim_carets(&reader.get_fragment(&entity.block.token)?.lined),
+                        trim_carets(&reader.get_fragment(&entity.block.token())?.lined),
                     );
                     count += 1;
                 }

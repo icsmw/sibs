@@ -36,8 +36,8 @@ pub use variable::*;
 use crate::{
     error::LinkedErr,
     inf::{
-        operator, Value, Context, Execute, ExecutePinnedResult, Formation, FormationCursor,
-        Scope, TokenGetter, TryExecute,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
+        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -767,6 +767,47 @@ impl TokenGetter for Element {
             Self::Call(v, _) => v.token(),
             Self::Meta(v) => v.token,
             Self::Comment(v) => v.token,
+        }
+    }
+}
+
+impl ExpectedValueType for Element {
+    fn expected<'a>(
+        &'a self,
+        owner: Option<&'a Component>,
+        components: &'a [Component],
+    ) -> ValueTypeResult {
+        match self {
+            Self::Function(v, _) => v.expected(owner, components),
+            Self::If(v, _) => v.expected(owner, components),
+            Self::Breaker(v, _) => v.expected(owner, components),
+            Self::Each(v, _) => v.expected(owner, components),
+            Self::First(v, _) => v.expected(owner, components),
+            Self::Join(v, _) => v.expected(owner, components),
+            Self::VariableAssignation(v, _) => v.expected(owner, components),
+            Self::Comparing(v, _) => v.expected(owner, components),
+            Self::Combination(v, _) => v.expected(owner, components),
+            Self::Condition(v, _) => v.expected(owner, components),
+            Self::Subsequence(v, _) => v.expected(owner, components),
+            Self::Optional(v, _) => v.expected(owner, components),
+            Self::Gatekeeper(v, _) => v.expected(owner, components),
+            Self::Reference(v, _) => v.expected(owner, components),
+            Self::PatternString(v, _) => v.expected(owner, components),
+            Self::VariableName(v, _) => v.expected(owner, components),
+            Self::Values(v, _) => v.expected(owner, components),
+            Self::Block(v, _) => v.expected(owner, components),
+            Self::Command(v, _) => v.expected(owner, components),
+            Self::Task(v, _) => v.expected(owner, components),
+            Self::Component(v, _) => v.expected(owner, components),
+            Self::Integer(v, _) => v.expected(owner, components),
+            Self::Boolean(v, _) => v.expected(owner, components),
+            Self::VariableDeclaration(v, _) => v.expected(owner, components),
+            Self::VariableVariants(v, _) => v.expected(owner, components),
+            Self::VariableType(v, _) => v.expected(owner, components),
+            Self::SimpleString(v, _) => v.expected(owner, components),
+            Self::Call(v, _) => v.expected(owner, components),
+            Self::Meta(..) => Err(operator::E::NoReturnType.by(self)),
+            Self::Comment(..) => Err(operator::E::NoReturnType.by(self)),
         }
     }
 }
