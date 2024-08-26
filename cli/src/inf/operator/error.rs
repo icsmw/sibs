@@ -14,6 +14,12 @@ pub enum E {
     NoneStringTaskArgumentForReference,
     #[error("Gatekeeper doesn't return value")]
     NoValueFromGatekeeper,
+    #[error("Cannot extract variable name")]
+    NoVariableName,
+    #[error("Variable \"{0}\" isn't declared")]
+    VariableIsNotDeclared(String),
+    #[error("Variable \"{0}\" doesn't have owner")]
+    NoOwnerForVariable(String),
     #[error("Gatekeeper doesn't return bool value")]
     NoBoolValueFromGatekeeper,
     #[error("TryExecute method isn't supported")]
@@ -96,6 +102,10 @@ pub enum E {
     TaskNotFound(String, String),
     #[error("Fail to parse string to {{{0}}}: {1}")]
     ParseStringError(String, String),
+    #[error("No active component during variables mapping")]
+    NoActiveComponent,
+    #[error("Variable \"${0}\" defined/declared multiple times")]
+    MultipleDeclaration(String),
     #[error("{0}")]
     AtlasError(atlas::E),
     #[error("{0}")]

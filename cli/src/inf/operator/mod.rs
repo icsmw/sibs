@@ -1,4 +1,5 @@
 mod error;
+pub mod variables;
 
 use crate::{
     elements::Component,
@@ -8,6 +9,7 @@ use crate::{
 pub use error::E;
 use std::{future::Future, pin::Pin};
 use tokio_util::sync::CancellationToken;
+pub use variables::*;
 
 pub type ExecutePinnedResult<'a> = Pin<Box<dyn Future<Output = ExecuteResult> + 'a + Send>>;
 pub type ExecuteResult = Result<Option<Value>, LinkedErr<E>>;
@@ -18,11 +20,15 @@ pub trait TokenGetter {
 }
 
 pub trait ExpectedValueType {
-    fn expected<'a>(
+    fn linking<'a>(
         &'a self,
-        owner: Option<&'a Component>,
+        variables: &mut GlobalVariablesMap,
+        owner: &'a Component,
         components: &'a [Component],
-    ) -> ValueTypeResult;
+    ) -> Result<(), LinkedErr<E>>;
+
+    fn expected<'a>(&'a self, owner: &'a Component, components: &'a [Component])
+        -> ValueTypeResult;
 }
 
 pub trait TryExecute {

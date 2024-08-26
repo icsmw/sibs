@@ -4,8 +4,9 @@ use crate::{
     elements::{Block, Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation, FormationCursor,
-        Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
+        FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value, ValueRef,
+        ValueTypeResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -63,9 +64,18 @@ impl TokenGetter for First {
 }
 
 impl ExpectedValueType for First {
+    fn linking<'a>(
+        &'a self,
+        variables: &mut GlobalVariablesMap,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        self.block.linking(variables, owner, components)
+    }
+
     fn expected<'a>(
         &'a self,
-        owner: Option<&'a Component>,
+        owner: &'a Component,
         components: &'a [Component],
     ) -> ValueTypeResult {
         self.block.expected(owner, components)

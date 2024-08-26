@@ -5,7 +5,8 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
-        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
+        FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value, ValueRef,
+        ValueTypeResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -145,17 +146,27 @@ impl TokenGetter for Reference {
 }
 
 impl ExpectedValueType for Reference {
+    fn linking<'a>(
+        &'a self,
+        variables: &mut GlobalVariablesMap,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        for el in self.inputs.iter() {
+            el.linking(variables, owner, components)?
+        }
+        Ok(())
+    }
     fn expected<'a>(
         &'a self,
-        owner: Option<&'a Component>,
+        owner: &'a Component,
         components: &'a [Component],
     ) -> ValueTypeResult {
-        let master = owner.ok_or(operator::E::NoOwnerComponent.by(self))?;
         let (master, task_name) = if self.path.len() == 1 {
-            (master, &self.path[0])
+            (owner, &self.path[0])
         } else if self.path.len() == 2 {
             let master = if self.path[0] == SELF {
-                master
+                owner
             } else {
                 components
                     .iter()

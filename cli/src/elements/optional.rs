@@ -5,7 +5,8 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
-        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
+        FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value, ValueRef,
+        ValueTypeResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -100,9 +101,18 @@ impl TokenGetter for Optional {
 }
 
 impl ExpectedValueType for Optional {
+    fn linking<'a>(
+        &'a self,
+        variables: &mut GlobalVariablesMap,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        self.condition.linking(variables, owner, components)?;
+        self.action.linking(variables, owner, components)
+    }
     fn expected<'a>(
         &'a self,
-        owner: Option<&'a Component>,
+        owner: &'a Component,
         components: &'a [Component],
     ) -> ValueTypeResult {
         self.action.expected(owner, components)

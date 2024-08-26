@@ -4,8 +4,9 @@ use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
     inf::{
-        Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation, FormationCursor,
-        Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
+        FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value, ValueRef,
+        ValueTypeResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -52,9 +53,17 @@ impl TokenGetter for Boolean {
 }
 
 impl ExpectedValueType for Boolean {
+    fn linking<'a>(
+        &'a self,
+        _variables: &mut GlobalVariablesMap,
+        _owner: &'a Component,
+        _components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        Ok(())
+    }
     fn expected<'a>(
         &'a self,
-        _owner: Option<&'a Component>,
+        _owner: &'a Component,
         _components: &'a [Component],
     ) -> ValueTypeResult {
         Ok(ValueRef::bool)

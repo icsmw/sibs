@@ -5,14 +5,15 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
-        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
+        FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value, ValueRef,
+        ValueTypeResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 #[derive(Debug, Clone)]
 pub struct Each {
-    pub variable: VariableName,
+    pub variable: Box<Element>,
     pub input: Box<Element>,
     pub block: Box<Element>,
     pub token: usize,
@@ -28,7 +29,7 @@ impl TryDissect<Each> for Each {
                 .is_some()
             {
                 let mut inner = reader.token()?.bound;
-                let variable = if let Some(Element::VariableName(variable, _)) =
+                let variable = if let Some(variable) =
                     Element::include(&mut inner, &[ElTarget::VariableName])?
                 {
                     if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
@@ -54,7 +55,7 @@ impl TryDissect<Each> for Each {
             };
             Ok(Some(Each {
                 input,
-                variable,
+                variable: Box::new(variable),
                 block: Box::new(block),
                 token: close(reader),
             }))
@@ -91,9 +92,20 @@ impl TokenGetter for Each {
 }
 
 impl ExpectedValueType for Each {
+    fn linking<'a>(
+        &'a self,
+        variables: &mut GlobalVariablesMap,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        self.input.linking(variables, owner, components)?;
+        self.block.linking(variables, owner, components)?;
+        self.variable.linking(variables, owner, components)?;
+        Ok(())
+    }
     fn expected<'a>(
         &'a self,
-        owner: Option<&'a Component>,
+        owner: &'a Component,
         components: &'a [Component],
     ) -> ValueTypeResult {
         self.block.expected(owner, components)
@@ -127,11 +139,14 @@ impl TryExecute for Each {
                 .ok_or(operator::E::FailConvertInputIntoStringsForEach)?;
             let mut output: Option<Value> = None;
             let (loop_uuid, loop_token) = sc.open_loop().await?;
+            let Element::VariableName(variable, _) = self.variable.as_ref() else {
+                return Err(operator::E::NoVariableName.by(self.variable.as_ref()));
+            };
             for iteration in inputs.iter() {
                 if loop_token.is_cancelled() {
                     break;
                 }
-                sc.set_var(&self.variable.name, Value::String(iteration.to_string()))
+                sc.set_var(&variable.name, Value::String(iteration.to_string()))
                     .await?;
                 output = self
                     .block
@@ -208,7 +223,7 @@ mod reading {
                     );
                     assert_eq!(
                         trim_carets(&entity.variable.to_string()),
-                        trim_carets(&reader.get_fragment(&entity.variable.token)?.lined),
+                        trim_carets(&reader.get_fragment(&entity.variable.token())?.lined),
                     );
                     assert_eq!(
                         trim_carets(&entity.input.to_string()),
@@ -316,12 +331,12 @@ mod proptest {
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             (
                 Element::arbitrary_with((vec![ElTarget::Block], deep)),
-                VariableName::arbitrary(),
+                Element::arbitrary_with((vec![ElTarget::VariableName], deep)),
                 Element::arbitrary_with((vec![ElTarget::VariableName], deep)),
             )
                 .prop_map(|(block, variable, input)| Each {
                     block: Box::new(block),
-                    variable,
+                    variable: Box::new(variable),
                     input: Box::new(input),
                     token: 0,
                 })

@@ -71,8 +71,6 @@ pub enum E {
     NoBoolValueFromSubsequence,
     #[error("No component name")]
     EmptyComponentName,
-    #[error("Variable \"${0}\" defined/declared multiple times")]
-    MultipleDeclaration(String),
     #[error("Fail to read conditions")]
     FailToReadConditions,
     #[error("This type of argument cannot be used in references")]

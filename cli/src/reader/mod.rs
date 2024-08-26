@@ -4,7 +4,6 @@ mod extentions;
 pub mod sources;
 #[cfg(test)]
 pub mod tests;
-pub mod variables;
 pub mod words;
 
 use crate::{
@@ -20,7 +19,6 @@ pub use error::E;
 use extentions::*;
 pub use sources::*;
 use std::{cell::RefCell, future::Future, path::PathBuf, pin::Pin, rc::Rc};
-pub use variables::*;
 
 pub trait TryDissect<T> {
     fn try_dissect(reader: &mut Reader) -> Result<Option<T>, LinkedErr<E>>;
@@ -50,7 +48,6 @@ pub struct Token {
 #[derive(Debug)]
 pub struct Reader {
     pub content: String,
-    pub variables: Variables,
     pos: usize,
     chars: &'static [&'static char],
     map: Rc<RefCell<Map>>,
@@ -115,7 +112,6 @@ impl Reader {
         let map = src.add_from_str(content)?;
         Ok(Self {
             content: content.to_owned(),
-            variables: Variables::default(),
             pos: 0,
             chars: &[],
             offset: 0,
@@ -129,7 +125,6 @@ impl Reader {
         let content = map.borrow().content.clone();
         Ok(Self {
             content,
-            variables: Variables::default(),
             pos: 0,
             chars: &[],
             offset: 0,
@@ -141,7 +136,6 @@ impl Reader {
     fn inherit(&self, content: String, offset: usize) -> Self {
         Self {
             content,
-            variables: Variables::default(),
             pos: 0,
             chars: &[],
             offset,

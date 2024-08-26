@@ -5,7 +5,8 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
-        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
+        FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value, ValueRef,
+        ValueTypeResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -132,9 +133,19 @@ impl TokenGetter for Comparing {
 }
 
 impl ExpectedValueType for Comparing {
+    fn linking<'a>(
+        &'a self,
+        variables: &mut GlobalVariablesMap,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        self.left.linking(variables, owner, components)?;
+        self.right.linking(variables, owner, components)?;
+        Ok(())
+    }
     fn expected<'a>(
         &'a self,
-        _owner: Option<&'a Component>,
+        _owner: &'a Component,
         _components: &'a [Component],
     ) -> ValueTypeResult {
         Ok(ValueRef::bool)

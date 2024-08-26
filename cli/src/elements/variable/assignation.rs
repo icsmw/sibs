@@ -5,7 +5,8 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
-        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
+        FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value, ValueRef,
+        ValueTypeResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -13,7 +14,7 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct VariableAssignation {
-    pub variable: VariableName,
+    pub variable: Box<Element>,
     pub global: bool,
     pub assignation: Box<Element>,
     pub token: usize,
@@ -23,9 +24,7 @@ impl TryDissect<VariableAssignation> for VariableAssignation {
     fn try_dissect(reader: &mut Reader) -> Result<Option<VariableAssignation>, LinkedErr<E>> {
         let close = reader.open_token(ElTarget::VariableAssignation);
         let global = reader.move_to().word(&[words::GLOBAL_VAR]).is_some();
-        if let Some(Element::VariableName(variable, _)) =
-            Element::include(reader, &[ElTarget::VariableName])?
-        {
+        if let Some(variable) = Element::include(reader, &[ElTarget::VariableName])? {
             let rest = reader.rest().trim();
             if rest.starts_with(words::DO_ON)
                 || rest.starts_with(words::CMP_TRUE)
@@ -53,7 +52,7 @@ impl TryDissect<VariableAssignation> for VariableAssignation {
             )?
             .ok_or(E::FailToParseRightSideOfAssignation.by_reader(reader))?;
             Ok(Some(VariableAssignation {
-                variable,
+                variable: Box::new(variable),
                 global,
                 assignation: Box::new(assignation),
                 token: close(reader),
@@ -103,9 +102,27 @@ impl TokenGetter for VariableAssignation {
 }
 
 impl ExpectedValueType for VariableAssignation {
+    fn linking<'a>(
+        &'a self,
+        variables: &mut GlobalVariablesMap,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        let Element::VariableName(el, _) = self.variable.as_ref() else {
+            return Err(operator::E::NoVariableName.by(self));
+        };
+        variables
+            .set(
+                &owner.uuid,
+                el.get_name(),
+                self.assignation.expected(owner, components)?,
+            )
+            .map_err(|e| LinkedErr::new(e, Some(self.token)))?;
+        Ok(())
+    }
     fn expected<'a>(
         &'a self,
-        owner: Option<&'a Component>,
+        owner: &'a Component,
         components: &'a [Component],
     ) -> ValueTypeResult {
         self.assignation.expected(owner, components)
@@ -123,15 +140,18 @@ impl TryExecute for VariableAssignation {
         token: CancellationToken,
     ) -> ExecutePinnedResult {
         Box::pin(async move {
-            let assignation = &self.assignation;
-            let value = assignation
+            let Element::VariableName(variable, _) = self.variable.as_ref() else {
+                return Err(operator::E::NoVariableName.by(self.variable.as_ref()));
+            };
+            let value = self
+                .assignation
                 .execute(owner, components, args, cx, sc.clone(), token)
                 .await?
-                .ok_or(operator::E::NoValueToAssign(self.variable.name.clone()))?;
+                .ok_or(operator::E::NoValueToAssign(variable.name.clone()))?;
             if self.global {
-                sc.set_global_var(&self.variable.name, value).await?;
+                sc.set_global_var(&variable.name, value).await?;
             } else {
-                sc.set_var(&self.variable.name, value).await?;
+                sc.set_var(&variable.name, value).await?;
             }
             Ok(Some(Value::empty()))
         })
@@ -191,7 +211,7 @@ mod reading {
                     );
                     assert_eq!(
                         trim_carets(&entity.variable.to_string()),
-                        trim_carets(&reader.get_fragment(&entity.variable.token)?.content),
+                        trim_carets(&reader.get_fragment(&entity.variable.token())?.content),
                         "Line: {}",
                         count + 1
                     );
@@ -347,13 +367,13 @@ mod proptest {
                     },
                     deep,
                 )),
-                VariableName::arbitrary(),
+                Element::arbitrary_with((vec![ElTarget::VariableName], deep)),
                 prop_oneof![Just(true), Just(false),].boxed(),
             )
                 .prop_map(move |(assignation, variable, global)| VariableAssignation {
                     assignation: Box::new(assignation),
                     global,
-                    variable,
+                    variable: Box::new(variable),
                     token: 0,
                 })
                 .boxed()

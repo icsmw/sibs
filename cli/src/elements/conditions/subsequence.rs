@@ -4,8 +4,9 @@ use crate::{
     elements::{Cmb, Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation, FormationCursor,
-        Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
+        FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value, ValueRef,
+        ValueTypeResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -130,9 +131,20 @@ impl TokenGetter for Subsequence {
 }
 
 impl ExpectedValueType for Subsequence {
+    fn linking<'a>(
+        &'a self,
+        variables: &mut GlobalVariablesMap,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        for el in self.subsequence.iter() {
+            el.linking(variables, owner, components)?;
+        }
+        Ok(())
+    }
     fn expected<'a>(
         &'a self,
-        _owner: Option<&'a Component>,
+        _owner: &'a Component,
         _components: &'a [Component],
     ) -> ValueTypeResult {
         Ok(ValueRef::bool)

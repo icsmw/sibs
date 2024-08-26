@@ -3,8 +3,8 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExecuteResult, ExpectedValueType,
-        Formation, FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef,
-        ValueTypeResult,
+        Formation, FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value,
+        ValueRef, ValueTypeResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -90,9 +90,18 @@ impl TokenGetter for Join {
 }
 
 impl ExpectedValueType for Join {
+    fn linking<'a>(
+        &'a self,
+        variables: &mut GlobalVariablesMap,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        self.elements.linking(variables, owner, components)
+    }
+
     fn expected<'a>(
         &'a self,
-        _owner: Option<&'a Component>,
+        _owner: &'a Component,
         _components: &'a [Component],
     ) -> ValueTypeResult {
         Ok(ValueRef::Empty)

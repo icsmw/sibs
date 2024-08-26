@@ -37,7 +37,8 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
-        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
+        FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value, ValueRef,
+        ValueTypeResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -772,9 +773,48 @@ impl TokenGetter for Element {
 }
 
 impl ExpectedValueType for Element {
+    fn linking<'a>(
+        &'a self,
+        variables: &mut GlobalVariablesMap,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        match self {
+            Self::Function(v, _) => v.linking(variables, owner, components),
+            Self::If(v, _) => v.linking(variables, owner, components),
+            Self::Breaker(v, _) => v.linking(variables, owner, components),
+            Self::Each(v, _) => v.linking(variables, owner, components),
+            Self::First(v, _) => v.linking(variables, owner, components),
+            Self::Join(v, _) => v.linking(variables, owner, components),
+            Self::VariableAssignation(v, _) => v.linking(variables, owner, components),
+            Self::Comparing(v, _) => v.linking(variables, owner, components),
+            Self::Combination(v, _) => v.linking(variables, owner, components),
+            Self::Condition(v, _) => v.linking(variables, owner, components),
+            Self::Subsequence(v, _) => v.linking(variables, owner, components),
+            Self::Optional(v, _) => v.linking(variables, owner, components),
+            Self::Gatekeeper(v, _) => v.linking(variables, owner, components),
+            Self::Reference(v, _) => v.linking(variables, owner, components),
+            Self::PatternString(v, _) => v.linking(variables, owner, components),
+            Self::VariableName(v, _) => v.linking(variables, owner, components),
+            Self::Values(v, _) => v.linking(variables, owner, components),
+            Self::Block(v, _) => v.linking(variables, owner, components),
+            Self::Command(v, _) => v.linking(variables, owner, components),
+            Self::Task(v, _) => v.linking(variables, owner, components),
+            Self::Component(v, _) => v.linking(variables, owner, components),
+            Self::Integer(v, _) => v.linking(variables, owner, components),
+            Self::Boolean(v, _) => v.linking(variables, owner, components),
+            Self::VariableDeclaration(v, _) => v.linking(variables, owner, components),
+            Self::VariableVariants(v, _) => v.linking(variables, owner, components),
+            Self::VariableType(v, _) => v.linking(variables, owner, components),
+            Self::SimpleString(v, _) => v.linking(variables, owner, components),
+            Self::Call(v, _) => v.linking(variables, owner, components),
+            Self::Meta(..) => Err(operator::E::NoReturnType.by(self)),
+            Self::Comment(..) => Err(operator::E::NoReturnType.by(self)),
+        }
+    }
     fn expected<'a>(
         &'a self,
-        owner: Option<&'a Component>,
+        owner: &'a Component,
         components: &'a [Component],
     ) -> ValueTypeResult {
         match self {

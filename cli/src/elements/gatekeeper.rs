@@ -5,7 +5,8 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
-        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
+        FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value, ValueRef,
+        ValueTypeResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -144,9 +145,18 @@ impl TokenGetter for Gatekeeper {
 }
 
 impl ExpectedValueType for Gatekeeper {
+    fn linking<'a>(
+        &'a self,
+        _variables: &mut GlobalVariablesMap,
+        _owner: &'a Component,
+        _components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        Ok(())
+    }
+
     fn expected<'a>(
         &'a self,
-        _owner: Option<&'a Component>,
+        _owner: &'a Component,
         _components: &'a [Component],
     ) -> ValueTypeResult {
         Ok(ValueRef::bool)

@@ -1,15 +1,16 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
     elements::{ElTarget, Element, Gatekeeper, SimpleString, Task},
     error::LinkedErr,
     inf::{
         operator, scenario, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
-        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
+        FormationCursor, GlobalVariablesMap, LocalVariablesMap, Scope, TokenGetter, TryExecute,
+        Value, ValueRef, ValueTypeResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
 use std::{fmt, path::PathBuf};
+use tokio_util::sync::CancellationToken;
+use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct Component {
@@ -17,6 +18,8 @@ pub struct Component {
     pub name: SimpleString,
     pub elements: Vec<Element>,
     pub token: usize,
+    pub uuid: Uuid,
+    pub variables: LocalVariablesMap,
 }
 
 impl Component {
@@ -120,6 +123,8 @@ impl TryDissect<Component> for Component {
             return Err(E::UnrecognizedCode(rest).linked(&inner_token_id));
         }
         Ok(Some(Component {
+            uuid: Uuid::new_v4(),
+            variables: LocalVariablesMap::default(),
             name: SimpleString {
                 value: name,
                 token: name_token,
@@ -185,9 +190,20 @@ impl TokenGetter for Component {
 }
 
 impl ExpectedValueType for Component {
+    fn linking<'a>(
+        &'a self,
+        variables: &mut GlobalVariablesMap,
+        _: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        for el in self.elements.iter() {
+            el.linking(variables, self, components)?;
+        }
+        Ok(())
+    }
     fn expected<'a>(
         &'a self,
-        _owner: Option<&'a Component>,
+        _owner: &'a Component,
         _components: &'a [Component],
     ) -> ValueTypeResult {
         Ok(ValueRef::Empty)
@@ -207,8 +223,7 @@ impl TryExecute for Component {
         Box::pin(async move {
             let task = args
                 .first()
-                .map(|task| task.as_string())
-                .flatten()
+                .and_then(|task| task.as_string())
                 .ok_or_else(|| {
                     operator::E::NoTaskForComponent(self.name.to_string(), self.get_tasks_names())
                 })?;
@@ -445,8 +460,12 @@ mod processing {
 mod proptest {
     use std::path::PathBuf;
 
-    use crate::elements::{Component, ElTarget, Element, SimpleString};
+    use crate::{
+        elements::{Component, ElTarget, Element, SimpleString},
+        inf::LocalVariablesMap,
+    };
     use proptest::prelude::*;
+    use uuid::Uuid;
 
     impl Arbitrary for Component {
         type Parameters = usize;
@@ -463,6 +482,8 @@ mod proptest {
                 ),
             )
                 .prop_map(|(name, tasks, meta, funcs)| Component {
+                    uuid: Uuid::new_v4(),
+                    variables: LocalVariablesMap::default(),
                     elements: [meta, funcs, tasks].concat(),
                     name: SimpleString {
                         value: name,

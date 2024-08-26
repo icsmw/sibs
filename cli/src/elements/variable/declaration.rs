@@ -5,7 +5,8 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
-        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
+        FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value,
+        ValueTypeResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -95,9 +96,27 @@ impl TokenGetter for VariableDeclaration {
 }
 
 impl ExpectedValueType for VariableDeclaration {
+    fn linking<'a>(
+        &'a self,
+        variables: &mut GlobalVariablesMap,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        let Element::VariableName(el, _) = self.variable.as_ref() else {
+            return Err(operator::E::NoVariableName.by(self));
+        };
+        variables
+            .set(
+                &owner.uuid,
+                el.get_name(),
+                self.declaration.expected(owner, components)?,
+            )
+            .map_err(|e| LinkedErr::new(e, Some(self.token)))?;
+        Ok(())
+    }
     fn expected<'a>(
         &'a self,
-        owner: Option<&'a Component>,
+        owner: &'a Component,
         components: &'a [Component],
     ) -> ValueTypeResult {
         self.declaration.expected(owner, components)

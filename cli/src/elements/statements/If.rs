@@ -5,7 +5,8 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
-        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
+        FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value, ValueRef,
+        ValueTypeResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -29,9 +30,27 @@ impl TokenGetter for Thread {
 }
 
 impl ExpectedValueType for Thread {
+    fn linking<'a>(
+        &'a self,
+        variables: &mut GlobalVariablesMap,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        match self {
+            Self::If(sub, bl) => {
+                sub.linking(variables, owner, components)?;
+                bl.linking(variables, owner, components)?;
+            }
+            Self::Else(bl) => {
+                bl.linking(variables, owner, components)?;
+            }
+        }
+        Ok(())
+    }
+
     fn expected<'a>(
         &'a self,
-        owner: Option<&'a Component>,
+        owner: &'a Component,
         components: &'a [Component],
     ) -> ValueTypeResult {
         match self {
@@ -199,9 +218,21 @@ impl TokenGetter for If {
 }
 
 impl ExpectedValueType for If {
+    fn linking<'a>(
+        &'a self,
+        variables: &mut GlobalVariablesMap,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        for thr in self.threads.iter() {
+            thr.linking(variables, owner, components)?;
+        }
+        Ok(())
+    }
+
     fn expected<'a>(
         &'a self,
-        owner: Option<&'a Component>,
+        owner: &'a Component,
         components: &'a [Component],
     ) -> ValueTypeResult {
         let mut refs: Option<ValueRef> = None;

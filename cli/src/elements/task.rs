@@ -8,7 +8,8 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
-        FormationCursor, Scope, TokenGetter, TryExecute, Value, ValueRef, ValueTypeResult,
+        FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value, ValueRef,
+        ValueTypeResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -16,6 +17,7 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct Task {
+    // TODO: replace SimpleString with Element
     pub name: SimpleString,
     pub declarations: Vec<Element>,
     pub dependencies: Vec<Element>,
@@ -133,7 +135,6 @@ impl TryDissect<Task> for Task {
         else {
             return Ok(None);
         };
-        reader.variables.drop();
         let (name, name_token) = (name.trim().to_string(), reader.token()?.id);
         if stopped_on == chars::OPEN_BRACKET {
             reader.move_to().next();
@@ -274,9 +275,24 @@ impl TokenGetter for Task {
 }
 
 impl ExpectedValueType for Task {
+    fn linking<'a>(
+        &'a self,
+        variables: &mut GlobalVariablesMap,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        for el in self.dependencies.iter() {
+            el.linking(variables, owner, components)?;
+        }
+        for el in self.declarations.iter() {
+            el.linking(variables, owner, components)?;
+        }
+        self.block.linking(variables, owner, components)
+    }
+
     fn expected<'a>(
         &'a self,
-        owner: Option<&'a Component>,
+        owner: &'a Component,
         components: &'a [Component],
     ) -> ValueTypeResult {
         self.block.expected(owner, components)
