@@ -38,51 +38,90 @@ impl GlobalVariablesMap {
         if map.contains(name.as_ref()) {
             return Err(E::MultipleDeclaration(name.as_ref().to_string()));
         }
-        map.set(name.as_ref().to_string(), ty)?;
+        map.set(name, ty)?;
         Ok(())
     }
-    pub fn get<S: AsRef<str>>(&self, owner: &Uuid, name: S) -> Result<ValueRef, E> {
-        let map = self
-            .map
-            .get(owner)
-            .ok_or(E::NoOwnerForVariable(name.as_ref().to_string()))?;
-        map.get(name.as_ref())
+    pub fn withdraw(&mut self, owner: &Uuid) -> Result<LocalVariablesMap, E> {
+        self.map.remove(owner).ok_or(E::ComponentNotFound(*owner))
     }
 }
 
-// #[cfg(test)]
-// mod processing {
-//     use crate::{
-//         elements::Component,
-//         error::LinkedErr,
-//         inf::{
-//             operator::{ExpectedValueType, E},
-//             Configuration, Context, Journal, Scope,
-//         },
-//         process_string,
-//         reader::{Dissect, Reader, Sources},
-//     };
+#[cfg(test)]
+mod processing {
+    use crate::{
+        elements::Component,
+        error::LinkedErr,
+        inf::{
+            operator::{ExpectedValueType, E},
+            Configuration, Context, GlobalVariablesMap, Journal, Scope,
+        },
+        process_string,
+        reader::{Dissect, Reader, Sources},
+    };
 
-//     #[tokio::test]
-//     async fn reading() {
-//         process_string!(
-//             &Configuration::logs(false),
-//             &include_str!("../../tests/verification/success.sibs"),
-//             |reader: &mut Reader, src: &mut Sources| {
-//                 let mut components: Vec<Component> = Vec::new();
-//                 while let Some(task) = src.report_err_if(Component::dissect(reader))? {
-//                     components.push(task);
-//                 }
-//                 Ok::<Vec<Component>, LinkedErr<E>>(components)
-//             },
-//             |mut components: Vec<Component>, _cx: Context, _sc: Scope, _: Journal| async move {
-//                 for (i, mut component) in components.iter_mut().enumerate() {
-//                     component
-//                         .linking(&mut component, &components)
-//                         .expect("component returns some value");
-//                 }
-//                 Ok::<(), LinkedErr<E>>(())
-//             }
-//         );
-//     }
-// }
+    #[tokio::test]
+    async fn success() {
+        process_string!(
+            &Configuration::logs(false),
+            &include_str!("../../tests/verification/success.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
+                let mut components: Vec<Component> = Vec::new();
+                while let Some(task) = src.report_err_if(Component::dissect(reader))? {
+                    components.push(task);
+                }
+                Ok::<Vec<Component>, LinkedErr<E>>(components)
+            },
+            |mut components: Vec<Component>, _cx: Context, _sc: Scope, _: Journal| async move {
+                let mut variables = GlobalVariablesMap::default();
+                for component in components.iter() {
+                    component
+                        .linking(&mut variables, component, &components)
+                        .expect("linking variables is done");
+                }
+                println!("\n\n{variables:?}\n\n");
+                for component in components.iter_mut() {
+                    component
+                        .link(&mut variables)
+                        .expect("component returns some value");
+                }
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
+    }
+
+    // #[tokio::test]
+    // async fn fail() {
+    //     process_string!(
+    //         &Configuration::logs(false),
+    //         &include_str!("../../tests/verification/fail.sibs"),
+    //         |reader: &mut Reader, src: &mut Sources| {
+    //             let mut components: Vec<Component> = Vec::new();
+    //             while let Some(task) = src.report_err_if(Component::dissect(reader))? {
+    //                 components.push(task);
+    //             }
+    //             Ok::<Vec<Component>, LinkedErr<E>>(components)
+    //         },
+    //         |mut components: Vec<Component>, _cx: Context, _sc: Scope, _: Journal| async move {
+    //             let mut variables = GlobalVariablesMap::default();
+    //             for component in components.iter() {
+    //                 component
+    //                     .linking(&mut variables, component, &components)
+    //                     .expect("linking variables is done");
+    //             }
+    //             println!("\n\n{variables:?}\n\n");
+    //             for component in components.iter_mut() {
+    //                 component
+    //                     .link(&mut variables)
+    //                     .expect("component returns some value");
+    //             }
+    //             for component in components.iter() {
+    //                 component
+    //                     .expected(component, &components)
+    //                     .expect("linking variables is done");
+    //             }
+
+    //             Ok::<(), LinkedErr<E>>(())
+    //         }
+    //     );
+    // }
+}

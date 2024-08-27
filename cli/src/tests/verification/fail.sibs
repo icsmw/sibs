@@ -2,7 +2,7 @@
     @test($a: a | b) {
         $b = 1234;
         $c = true;
-        if $a == "a" {
+        if $a == "a" && $b == true && $c == 1234 {
             "true";
         } else {
             "false";
@@ -10,7 +10,7 @@
     };
 #(b)
     @test($a: {string}, $b: a | b, $c: {string}) {
-        if $a == "a" && $b == "b" && $c == "c" {
+        if $a == 1 && $b == true && $c == false {
             "true";
         } else {
             "false";
@@ -18,9 +18,9 @@
     };
 #(c)
     @test($a: {string}, $b: a | b, $c: {string}) {
-        :b:test("a", "b", "c");
+        :b:test(1, true, false);
     };
 #(d)
     @test($a: {string}, $b: a | b, $c: {string}) {
-        :a:test("a");
+        :a:test(true);
     };

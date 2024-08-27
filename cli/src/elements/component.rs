@@ -23,6 +23,10 @@ pub struct Component {
 }
 
 impl Component {
+    pub fn link(&mut self, variables: &mut GlobalVariablesMap) -> Result<(), operator::E> {
+        self.variables = variables.withdraw(&self.uuid)?;
+        Ok(())
+    }
     pub fn get_name(&self) -> String {
         self.name.value.to_owned()
     }

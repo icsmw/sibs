@@ -5,6 +5,7 @@ use crate::{
     reader,
 };
 use thiserror::Error;
+use uuid::Uuid;
 
 #[derive(Error, Debug, Clone)]
 pub enum E {
@@ -20,6 +21,8 @@ pub enum E {
     VariableIsNotDeclared(String),
     #[error("Variable \"{0}\" doesn't have owner")]
     NoOwnerForVariable(String),
+    #[error("Component \"{0}\" not found")]
+    ComponentNotFound(Uuid),
     #[error("Gatekeeper doesn't return bool value")]
     NoBoolValueFromGatekeeper,
     #[error("TryExecute method isn't supported")]
