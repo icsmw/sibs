@@ -773,6 +773,44 @@ impl TokenGetter for Element {
 }
 
 impl ExpectedValueType for Element {
+    fn varification<'a>(
+        &'a self,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        match self {
+            Self::Function(v, _) => v.varification(owner, components),
+            Self::If(v, _) => v.varification(owner, components),
+            Self::Breaker(v, _) => v.varification(owner, components),
+            Self::Each(v, _) => v.varification(owner, components),
+            Self::First(v, _) => v.varification(owner, components),
+            Self::Join(v, _) => v.varification(owner, components),
+            Self::VariableAssignation(v, _) => v.varification(owner, components),
+            Self::Comparing(v, _) => v.varification(owner, components),
+            Self::Combination(v, _) => v.varification(owner, components),
+            Self::Condition(v, _) => v.varification(owner, components),
+            Self::Subsequence(v, _) => v.varification(owner, components),
+            Self::Optional(v, _) => v.varification(owner, components),
+            Self::Gatekeeper(v, _) => v.varification(owner, components),
+            Self::Reference(v, _) => v.varification(owner, components),
+            Self::PatternString(v, _) => v.varification(owner, components),
+            Self::VariableName(v, _) => v.varification(owner, components),
+            Self::Values(v, _) => v.varification(owner, components),
+            Self::Block(v, _) => v.varification(owner, components),
+            Self::Command(v, _) => v.varification(owner, components),
+            Self::Task(v, _) => v.varification(owner, components),
+            Self::Component(v, _) => v.varification(owner, components),
+            Self::Integer(v, _) => v.varification(owner, components),
+            Self::Boolean(v, _) => v.varification(owner, components),
+            Self::VariableDeclaration(v, _) => v.varification(owner, components),
+            Self::VariableVariants(v, _) => v.varification(owner, components),
+            Self::VariableType(v, _) => v.varification(owner, components),
+            Self::SimpleString(v, _) => v.varification(owner, components),
+            Self::Call(v, _) => v.varification(owner, components),
+            Self::Meta(..) => Err(operator::E::NoReturnType.by(self)),
+            Self::Comment(..) => Err(operator::E::NoReturnType.by(self)),
+        }
+    }
     fn linking<'a>(
         &'a self,
         variables: &mut GlobalVariablesMap,

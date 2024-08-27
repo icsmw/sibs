@@ -78,50 +78,59 @@ mod processing {
                         .linking(&mut variables, component, &components)
                         .expect("linking variables is done");
                 }
-                println!("\n\n{variables:?}\n\n");
                 for component in components.iter_mut() {
-                    component
-                        .link(&mut variables)
-                        .expect("component returns some value");
+                    component.link(&mut variables).expect("component linked");
                 }
+                for component in components.iter() {
+                    component
+                        .varification(component, &components)
+                        .expect("component varified");
+                }
+                assert_eq!(components.len(), 4);
                 Ok::<(), LinkedErr<E>>(())
             }
         );
     }
 
-    // #[tokio::test]
-    // async fn fail() {
-    //     process_string!(
-    //         &Configuration::logs(false),
-    //         &include_str!("../../tests/verification/fail.sibs"),
-    //         |reader: &mut Reader, src: &mut Sources| {
-    //             let mut components: Vec<Component> = Vec::new();
-    //             while let Some(task) = src.report_err_if(Component::dissect(reader))? {
-    //                 components.push(task);
-    //             }
-    //             Ok::<Vec<Component>, LinkedErr<E>>(components)
-    //         },
-    //         |mut components: Vec<Component>, _cx: Context, _sc: Scope, _: Journal| async move {
-    //             let mut variables = GlobalVariablesMap::default();
-    //             for component in components.iter() {
-    //                 component
-    //                     .linking(&mut variables, component, &components)
-    //                     .expect("linking variables is done");
-    //             }
-    //             println!("\n\n{variables:?}\n\n");
-    //             for component in components.iter_mut() {
-    //                 component
-    //                     .link(&mut variables)
-    //                     .expect("component returns some value");
-    //             }
-    //             for component in components.iter() {
-    //                 component
-    //                     .expected(component, &components)
-    //                     .expect("linking variables is done");
-    //             }
-
-    //             Ok::<(), LinkedErr<E>>(())
-    //         }
-    //     );
-    // }
+    #[tokio::test]
+    async fn fail() {
+        process_string!(
+            &Configuration::logs(false),
+            &include_str!("../../tests/verification/fail.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
+                let mut components: Vec<Component> = Vec::new();
+                while let Some(task) = src.report_err_if(Component::dissect(reader))? {
+                    components.push(task);
+                }
+                Ok::<Vec<Component>, LinkedErr<E>>(components)
+            },
+            |mut components: Vec<Component>, cx: Context, _sc: Scope, _: Journal| async move {
+                let mut variables = GlobalVariablesMap::default();
+                for component in components.iter() {
+                    component
+                        .linking(&mut variables, component, &components)
+                        .expect("linking variables is done");
+                }
+                for component in components.iter_mut() {
+                    component
+                        .link(&mut variables)
+                        .expect("linking variables is done");
+                }
+                for component in components.iter() {
+                    component
+                        .expected(component, &components)
+                        .expect("linking variables is done");
+                }
+                for component in components.iter() {
+                    let result = component.varification(component, &components);
+                    if let Err(err) = result.as_ref() {
+                        cx.atlas.report_err(err).await.expect("report created");
+                    }
+                    assert!(result.is_err());
+                }
+                assert_eq!(components.len(), 4);
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
+    }
 }

@@ -30,6 +30,23 @@ impl TokenGetter for Thread {
 }
 
 impl ExpectedValueType for Thread {
+    fn varification<'a>(
+        &'a self,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        match self {
+            Self::If(sub, bl) => {
+                sub.varification(owner, components)?;
+                bl.varification(owner, components)?;
+            }
+            Self::Else(bl) => {
+                bl.varification(owner, components)?;
+            }
+        };
+        Ok(())
+    }
+
     fn linking<'a>(
         &'a self,
         variables: &mut GlobalVariablesMap,
@@ -218,6 +235,17 @@ impl TokenGetter for If {
 }
 
 impl ExpectedValueType for If {
+    fn varification<'a>(
+        &'a self,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        for thr in self.threads.iter() {
+            thr.varification(owner, components)?;
+        }
+        Ok(())
+    }
+
     fn linking<'a>(
         &'a self,
         variables: &mut GlobalVariablesMap,

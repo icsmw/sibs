@@ -4,30 +4,6 @@ use crate::{elements::Cmb, inf::journal::Output};
 pub use error::E;
 use std::{any::TypeId, fmt, path::PathBuf};
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
-#[allow(non_camel_case_types)]
-pub enum Value {
-    Empty(()),
-    Output(Output),
-    Cmb(Cmb),
-    i8(i8),
-    i16(i16),
-    i32(i32),
-    i64(i64),
-    i128(i128),
-    isize(isize),
-    u8(u8),
-    u16(u16),
-    u32(u32),
-    u64(u64),
-    u128(u128),
-    usize(usize),
-    bool(bool),
-    PathBuf(PathBuf),
-    String(String),
-    Vec(Vec<Value>),
-}
-
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
 #[allow(non_camel_case_types)]
 pub enum ValueRef {
@@ -53,6 +29,72 @@ pub enum ValueRef {
     PathBuf,
     String,
     Vec,
+    // (Vec<ARGUMENT_TY>, BLOCK_TY)
+    Task(Vec<ValueRef>, Box<ValueRef>),
+}
+
+impl fmt::Display for ValueRef {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{:?}",
+            match self {
+                Self::Inner => "Inner".to_owned(),
+                Self::Any => "Any".to_owned(),
+                Self::Empty => "Empty".to_owned(),
+                Self::Output => "Output".to_owned(),
+                Self::Cmb => "Cmb".to_owned(),
+                Self::i8 => "i8".to_owned(),
+                Self::i16 => "i16".to_owned(),
+                Self::i32 => "i32".to_owned(),
+                Self::i64 => "i64".to_owned(),
+                Self::i128 => "i128".to_owned(),
+                Self::isize => "isize".to_owned(),
+                Self::u8 => "u8".to_owned(),
+                Self::u16 => "u16".to_owned(),
+                Self::u32 => "u32".to_owned(),
+                Self::u64 => "u64".to_owned(),
+                Self::u128 => "u128".to_owned(),
+                Self::usize => "usize".to_owned(),
+                Self::bool => "bool".to_owned(),
+                Self::PathBuf => "PathBuf".to_owned(),
+                Self::String => "String".to_owned(),
+                Self::Vec => "Vec".to_owned(),
+                Self::Task(args, block) => format!(
+                    "ARGS: {}; OUT: {}",
+                    args.iter()
+                        .map(|a| a.to_string())
+                        .collect::<Vec<String>>()
+                        .join("."),
+                    block
+                ),
+            }
+        )
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[allow(non_camel_case_types)]
+pub enum Value {
+    Empty(()),
+    Output(Output),
+    Cmb(Cmb),
+    i8(i8),
+    i16(i16),
+    i32(i32),
+    i64(i64),
+    i128(i128),
+    isize(isize),
+    u8(u8),
+    u16(u16),
+    u32(u32),
+    u64(u64),
+    u128(u128),
+    usize(usize),
+    bool(bool),
+    PathBuf(PathBuf),
+    String(String),
+    Vec(Vec<Value>),
 }
 
 impl Value {

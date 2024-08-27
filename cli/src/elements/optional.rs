@@ -101,6 +101,14 @@ impl TokenGetter for Optional {
 }
 
 impl ExpectedValueType for Optional {
+    fn varification<'a>(
+        &'a self,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        self.condition.varification(owner, components)?;
+        self.action.varification(owner, components)
+    }
     fn linking<'a>(
         &'a self,
         variables: &mut GlobalVariablesMap,

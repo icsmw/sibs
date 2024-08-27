@@ -126,6 +126,16 @@ impl TokenGetter for Block {
 }
 
 impl ExpectedValueType for Block {
+    fn varification<'a>(
+        &'a self,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        for el in self.elements.iter() {
+            el.varification(owner, components)?;
+        }
+        Ok(())
+    }
     fn linking<'a>(
         &'a self,
         variables: &mut GlobalVariablesMap,

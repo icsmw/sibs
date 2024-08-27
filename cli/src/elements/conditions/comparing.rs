@@ -133,6 +133,20 @@ impl TokenGetter for Comparing {
 }
 
 impl ExpectedValueType for Comparing {
+    fn varification<'a>(
+        &'a self,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        let left = self.left.expected(owner, components)?;
+        let right = self.right.expected(owner, components)?;
+        if left != right {
+            Err(operator::E::DismatchTypes(left, right).by(self))
+        } else {
+            Ok(())
+        }
+    }
+
     fn linking<'a>(
         &'a self,
         variables: &mut GlobalVariablesMap,

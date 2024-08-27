@@ -1,7 +1,7 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{Component, ElTarget, Element, Gatekeeper},
+    elements::{Component, ElTarget, Element, Gatekeeper, Task},
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
@@ -22,6 +22,38 @@ pub struct Reference {
     pub path: Vec<String>,
     pub inputs: Vec<Element>,
     pub token: usize,
+}
+
+impl Reference {
+    fn get_linked_task<'a>(
+        &'a self,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<&Task, LinkedErr<operator::E>> {
+        let (master, task_name) = if self.path.len() == 1 {
+            (owner, &self.path[0])
+        } else if self.path.len() == 2 {
+            let master = if self.path[0] == SELF {
+                owner
+            } else {
+                components
+                    .iter()
+                    .find(|c| c.name.to_string() == self.path[0])
+                    .ok_or(operator::E::NotFoundComponent(self.path[0].to_owned()).by(self))?
+            };
+            (master, &self.path[1])
+        } else {
+            return Err(operator::E::InvalidPartsInReference.by(self));
+        };
+        let (task, _) = master
+            .get_task(task_name)
+            .ok_or(operator::E::TaskNotExists(
+                task_name.to_owned(),
+                master.get_name(),
+                master.get_tasks_names(),
+            ))?;
+        Ok(task)
+    }
 }
 
 impl PartialEq for Reference {
@@ -146,6 +178,39 @@ impl TokenGetter for Reference {
 }
 
 impl ExpectedValueType for Reference {
+    fn varification<'a>(
+        &'a self,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        for el in self.inputs.iter() {
+            el.varification(owner, components)?
+        }
+        let task = self.get_linked_task(owner, components)?;
+        let ValueRef::Task(args, _) = task.expected(owner, components)? else {
+            return Err(operator::E::InvalidValueRef(format!(
+                "task \"{}\" has invalid expected output",
+                task.get_name()
+            ))
+            .by(self));
+        };
+        if args.len() != self.inputs.len() {
+            return Err(operator::E::InvalidValueRef(format!(
+                "arguments count for task \"{}\" dismatch with reference inputs",
+                task.get_name()
+            ))
+            .by(self));
+        }
+        for (i, el) in self.inputs.iter().enumerate() {
+            el.varification(owner, components)?;
+            let left = el.expected(owner, components)?;
+            let right = &args[i];
+            if &left != right {
+                return Err(operator::E::DismatchTypes(left, right.clone()).by(self));
+            }
+        }
+        Ok(())
+    }
     fn linking<'a>(
         &'a self,
         variables: &mut GlobalVariablesMap,
@@ -162,29 +227,8 @@ impl ExpectedValueType for Reference {
         owner: &'a Component,
         components: &'a [Component],
     ) -> ValueTypeResult {
-        let (master, task_name) = if self.path.len() == 1 {
-            (owner, &self.path[0])
-        } else if self.path.len() == 2 {
-            let master = if self.path[0] == SELF {
-                owner
-            } else {
-                components
-                    .iter()
-                    .find(|c| c.name.to_string() == self.path[0])
-                    .ok_or(operator::E::NotFoundComponent(self.path[0].to_owned()).by(self))?
-            };
-            (master, &self.path[1])
-        } else {
-            return Err(operator::E::InvalidPartsInReference.by(self));
-        };
-        let (task, _) = master
-            .get_task(task_name)
-            .ok_or(operator::E::TaskNotExists(
-                task_name.to_owned(),
-                master.get_name(),
-                master.get_tasks_names(),
-            ))?;
-        task.expected(owner, components)
+        self.get_linked_task(owner, components)?
+            .expected(owner, components)
     }
 }
 

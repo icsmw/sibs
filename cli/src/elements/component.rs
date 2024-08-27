@@ -194,6 +194,16 @@ impl TokenGetter for Component {
 }
 
 impl ExpectedValueType for Component {
+    fn varification<'a>(
+        &'a self,
+        _owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        for el in self.elements.iter() {
+            el.varification(self, components)?;
+        }
+        Ok(())
+    }
     fn linking<'a>(
         &'a self,
         variables: &mut GlobalVariablesMap,

@@ -1,7 +1,10 @@
 use crate::{
     error::LinkedErr,
     functions,
-    inf::{context, context::atlas, scenario, spawner, tracker, value, TokenGetter},
+    inf::{
+        context::{self, atlas},
+        scenario, spawner, tracker, value, TokenGetter, ValueRef,
+    },
     reader,
 };
 use thiserror::Error;
@@ -21,6 +24,8 @@ pub enum E {
     VariableIsNotDeclared(String),
     #[error("Variable \"{0}\" doesn't have owner")]
     NoOwnerForVariable(String),
+    #[error("Type dismatch: {0} and {1}")]
+    DismatchTypes(ValueRef, ValueRef),
     #[error("Component \"{0}\" not found")]
     ComponentNotFound(Uuid),
     #[error("Gatekeeper doesn't return bool value")]
@@ -109,6 +114,8 @@ pub enum E {
     NoActiveComponent,
     #[error("Variable \"${0}\" defined/declared multiple times")]
     MultipleDeclaration(String),
+    #[error("Invalid value ref: {0}")]
+    InvalidValueRef(String),
     #[error("{0}")]
     AtlasError(atlas::E),
     #[error("{0}")]

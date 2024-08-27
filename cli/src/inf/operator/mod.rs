@@ -27,6 +27,12 @@ pub trait ExpectedValueType {
         components: &'a [Component],
     ) -> Result<(), LinkedErr<E>>;
 
+    fn varification<'a>(
+        &'a self,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<E>>;
+
     fn expected<'a>(&'a self, owner: &'a Component, components: &'a [Component])
         -> ValueTypeResult;
 }

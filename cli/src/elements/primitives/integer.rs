@@ -55,6 +55,14 @@ impl TokenGetter for Integer {
 }
 
 impl ExpectedValueType for Integer {
+    fn varification<'a>(
+        &'a self,
+        _owner: &'a Component,
+        _components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        Ok(())
+    }
+
     fn linking<'a>(
         &'a self,
         _variables: &mut GlobalVariablesMap,

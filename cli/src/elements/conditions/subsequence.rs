@@ -54,7 +54,6 @@ impl TryDissect<Subsequence> for Subsequence {
             || reader.next().is_word(&[
                 words::IF,
                 words::ELSE,
-                // &format!("{}", chars::SEMICOLON),
                 &format!("{}", chars::OPEN_CURLY_BRACE),
             ])
         {
@@ -131,6 +130,17 @@ impl TokenGetter for Subsequence {
 }
 
 impl ExpectedValueType for Subsequence {
+    fn varification<'a>(
+        &'a self,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        for el in self.subsequence.iter() {
+            el.varification(owner, components)?;
+        }
+        Ok(())
+    }
+
     fn linking<'a>(
         &'a self,
         variables: &mut GlobalVariablesMap,

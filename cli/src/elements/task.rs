@@ -275,6 +275,19 @@ impl TokenGetter for Task {
 }
 
 impl ExpectedValueType for Task {
+    fn varification<'a>(
+        &'a self,
+        owner: &'a Component,
+        components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        for el in self.dependencies.iter() {
+            el.varification(owner, components)?;
+        }
+        for el in self.declarations.iter() {
+            el.varification(owner, components)?;
+        }
+        self.block.varification(owner, components)
+    }
     fn linking<'a>(
         &'a self,
         variables: &mut GlobalVariablesMap,
@@ -295,7 +308,14 @@ impl ExpectedValueType for Task {
         owner: &'a Component,
         components: &'a [Component],
     ) -> ValueTypeResult {
-        self.block.expected(owner, components)
+        let mut args: Vec<ValueRef> = Vec::new();
+        for el in self.declarations.iter() {
+            args.push(el.expected(owner, components)?);
+        }
+        Ok(ValueRef::Task(
+            args,
+            Box::new(self.block.expected(owner, components)?),
+        ))
     }
 }
 

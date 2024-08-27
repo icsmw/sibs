@@ -96,6 +96,13 @@ impl TokenGetter for VariableDeclaration {
 }
 
 impl ExpectedValueType for VariableDeclaration {
+    fn varification<'a>(
+        &'a self,
+        _owner: &'a Component,
+        _components: &'a [Component],
+    ) -> Result<(), LinkedErr<operator::E>> {
+        Ok(())
+    }
     fn linking<'a>(
         &'a self,
         variables: &mut GlobalVariablesMap,
