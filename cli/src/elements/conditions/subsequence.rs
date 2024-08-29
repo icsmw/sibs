@@ -4,9 +4,9 @@ use crate::{
     elements::{Cmb, Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
-        FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value, ValueRef,
-        ValueTypeResult,
+        Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
+        FormationCursor, GlobalVariablesMap, LinkingResult, Scope, TokenGetter, TryExecute, Value,
+        ValueRef, VerificationResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -134,30 +134,37 @@ impl ExpectedValueType for Subsequence {
         &'a self,
         owner: &'a Component,
         components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        for el in self.subsequence.iter() {
-            el.varification(owner, components)?;
-        }
-        Ok(())
+        cx: &'a Context,
+    ) -> VerificationResult {
+        Box::pin(async move {
+            for el in self.subsequence.iter() {
+                el.varification(owner, components, cx).await?;
+            }
+            Ok(())
+        })
     }
 
     fn linking<'a>(
         &'a self,
-        variables: &mut GlobalVariablesMap,
+        variables: &'a mut GlobalVariablesMap,
         owner: &'a Component,
         components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        for el in self.subsequence.iter() {
-            el.linking(variables, owner, components)?;
-        }
-        Ok(())
+        cx: &'a Context,
+    ) -> LinkingResult {
+        Box::pin(async move {
+            for el in self.subsequence.iter() {
+                el.linking(variables, owner, components, cx).await?;
+            }
+            Ok(())
+        })
     }
     fn expected<'a>(
         &'a self,
         _owner: &'a Component,
         _components: &'a [Component],
-    ) -> ValueTypeResult {
-        Ok(ValueRef::bool)
+        _cx: &'a Context,
+    ) -> ExpectedResult {
+        Box::pin(async move { Ok(ValueRef::bool) })
     }
 }
 

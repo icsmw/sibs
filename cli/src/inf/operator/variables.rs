@@ -71,11 +71,12 @@ mod processing {
                 }
                 Ok::<Vec<Component>, LinkedErr<E>>(components)
             },
-            |mut components: Vec<Component>, _cx: Context, _sc: Scope, _: Journal| async move {
+            |mut components: Vec<Component>, cx: Context, _sc: Scope, _: Journal| async move {
                 let mut variables = GlobalVariablesMap::default();
                 for component in components.iter() {
                     component
-                        .linking(&mut variables, component, &components)
+                        .linking(&mut variables, component, &components, &cx)
+                        .await
                         .expect("linking variables is done");
                 }
                 for component in components.iter_mut() {
@@ -83,7 +84,8 @@ mod processing {
                 }
                 for component in components.iter() {
                     component
-                        .varification(component, &components)
+                        .varification(component, &components, &cx)
+                        .await
                         .expect("component varified");
                 }
                 assert_eq!(components.len(), 4);
@@ -108,7 +110,8 @@ mod processing {
                 let mut variables = GlobalVariablesMap::default();
                 for component in components.iter() {
                     component
-                        .linking(&mut variables, component, &components)
+                        .linking(&mut variables, component, &components, &cx)
+                        .await
                         .expect("linking variables is done");
                 }
                 for component in components.iter_mut() {
@@ -118,11 +121,12 @@ mod processing {
                 }
                 for component in components.iter() {
                     component
-                        .expected(component, &components)
+                        .expected(component, &components, &cx)
+                        .await
                         .expect("linking variables is done");
                 }
                 for component in components.iter() {
-                    let result = component.varification(component, &components);
+                    let result = component.varification(component, &components, &cx).await;
                     if let Err(err) = result.as_ref() {
                         cx.atlas.report_err(err).await.expect("report created");
                     }

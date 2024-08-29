@@ -4,9 +4,9 @@ use crate::{
     elements::{Component, ElTarget},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
-        FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value, ValueRef,
-        ValueTypeResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
+        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, Scope, TokenGetter,
+        TryExecute, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -91,26 +91,31 @@ impl ExpectedValueType for VariableType {
         &'a self,
         _owner: &'a Component,
         _components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        Ok(())
+        _cx: &'a Context,
+    ) -> VerificationResult {
+        Box::pin(async move { Ok(()) })
     }
     fn linking<'a>(
         &'a self,
-        _variables: &mut GlobalVariablesMap,
+        _variables: &'a mut GlobalVariablesMap,
         _owner: &'a Component,
         _components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        Ok(())
+        _cx: &'a Context,
+    ) -> LinkingResult {
+        Box::pin(async move { Ok(()) })
     }
     fn expected<'a>(
         &'a self,
         _owner: &'a Component,
         _components: &'a [Component],
-    ) -> ValueTypeResult {
-        Ok(match self.var_type {
-            Types::String => ValueRef::String,
-            Types::Bool => ValueRef::bool,
-            Types::Number => ValueRef::isize,
+        _cx: &'a Context,
+    ) -> ExpectedResult {
+        Box::pin(async move {
+            Ok(match self.var_type {
+                Types::String => ValueRef::String,
+                Types::Bool => ValueRef::bool,
+                Types::Number => ValueRef::isize,
+            })
         })
     }
 }

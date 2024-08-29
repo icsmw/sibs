@@ -5,16 +5,31 @@ mod verb;
 mod warn;
 
 use crate::{
-    functions::{ExecutorFn, E},
-    inf::Store,
+    functions::{ExecutorFnDescription, E},
+    inf::{Store, ValueRef},
 };
 
-pub fn register(store: &mut Store<ExecutorFn>) -> Result<(), E> {
-    store.insert(debug::name(), debug::execute)?;
-    store.insert(err::name(), err::execute)?;
-    store.insert(warn::name(), warn::execute)?;
-    store.insert(info::name(), info::execute)?;
-    store.insert(verb::name(), verb::execute)?;
+pub fn register(store: &mut Store<ExecutorFnDescription>) -> Result<(), E> {
+    store.insert(
+        debug::name(),
+        ExecutorFnDescription::new(debug::execute, vec![ValueRef::String], ValueRef::Empty),
+    )?;
+    store.insert(
+        err::name(),
+        ExecutorFnDescription::new(err::execute, vec![ValueRef::String], ValueRef::Empty),
+    )?;
+    store.insert(
+        warn::name(),
+        ExecutorFnDescription::new(warn::execute, vec![ValueRef::String], ValueRef::Empty),
+    )?;
+    store.insert(
+        info::name(),
+        ExecutorFnDescription::new(info::execute, vec![ValueRef::String], ValueRef::Empty),
+    )?;
+    store.insert(
+        verb::name(),
+        ExecutorFnDescription::new(verb::execute, vec![ValueRef::String], ValueRef::Empty),
+    )?;
     Ok(())
 }
 

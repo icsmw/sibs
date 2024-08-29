@@ -4,9 +4,9 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
-        FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value, ValueRef,
-        ValueTypeResult,
+        Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
+        FormationCursor, GlobalVariablesMap, LinkingResult, Scope, TokenGetter, TryExecute, Value,
+        ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -59,23 +59,26 @@ impl ExpectedValueType for Call {
         &'a self,
         _owner: &'a Component,
         _components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        Ok(())
+        _cx: &'a Context,
+    ) -> VerificationResult {
+        Box::pin(async move { Ok(()) })
     }
     fn linking<'a>(
         &'a self,
-        _variables: &mut GlobalVariablesMap,
+        _variables: &'a mut GlobalVariablesMap,
         _owner: &'a Component,
         _components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        Ok(())
+        _cx: &'a Context,
+    ) -> LinkingResult {
+        Box::pin(async move { Ok(()) })
     }
     fn expected<'a>(
         &'a self,
         _owner: &'a Component,
         _components: &'a [Component],
-    ) -> ValueTypeResult {
-        Ok(ValueRef::Any)
+        _cx: &'a Context,
+    ) -> ExpectedResult {
+        Box::pin(async move { Ok(ValueRef::Any) })
     }
 }
 impl TryExecute for Call {

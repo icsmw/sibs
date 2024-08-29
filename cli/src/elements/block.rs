@@ -4,9 +4,9 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
-        FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value, ValueRef,
-        ValueTypeResult,
+        Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
+        FormationCursor, GlobalVariablesMap, LinkingResult, Scope, TokenGetter, TryExecute, Value,
+        ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -130,33 +130,42 @@ impl ExpectedValueType for Block {
         &'a self,
         owner: &'a Component,
         components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        for el in self.elements.iter() {
-            el.varification(owner, components)?;
-        }
-        Ok(())
+        cx: &'a Context,
+    ) -> VerificationResult {
+        Box::pin(async move {
+            for el in self.elements.iter() {
+                el.varification(owner, components, cx).await?;
+            }
+            Ok(())
+        })
     }
     fn linking<'a>(
         &'a self,
-        variables: &mut GlobalVariablesMap,
+        variables: &'a mut GlobalVariablesMap,
         owner: &'a Component,
         components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        for el in self.elements.iter() {
-            el.linking(variables, owner, components)?;
-        }
-        Ok(())
+        cx: &'a Context,
+    ) -> LinkingResult {
+        Box::pin(async move {
+            for el in self.elements.iter() {
+                el.linking(variables, owner, components, cx).await?;
+            }
+            Ok(())
+        })
     }
 
     fn expected<'a>(
         &'a self,
         owner: &'a Component,
         components: &'a [Component],
-    ) -> ValueTypeResult {
-        self.elements
-            .last()
-            .map(|el| el.expected(owner, components))
-            .unwrap_or(Ok(ValueRef::Empty))
+        cx: &'a Context,
+    ) -> ExpectedResult {
+        Box::pin(async move {
+            let Some(el) = self.elements.last() else {
+                return Ok(ValueRef::Empty);
+            };
+            el.expected(owner, components, cx).await
+        })
     }
 }
 

@@ -1,19 +1,22 @@
 use std::sync::Arc;
 
-use crate::functions::{ExecutorFn, E};
+use crate::functions::{ExecutorFnDescription, E};
 use tokio::sync::oneshot;
 
 /// Represents API of tast's context. Because each task has own context and
 /// multiple tasks could be runned concurrency, communication goes via channels.
 pub enum Demand {
-    /// Execute function
+    /// Get function description
     ///
     /// # Parameters
     ///
     /// * `String` - Name of function
-    /// * `oneshot::Sender<Result<Arc<ExecutorFn>, E>>` - Response channel with reference
+    /// * `oneshot::Sender<Result<Arc<ExecutorFnDescription>, E>>` - Response channel with reference
     ///   to function's executor
-    Execute(String, oneshot::Sender<Result<Arc<ExecutorFn>, E>>),
+    GetFunctionDescription(
+        String,
+        oneshot::Sender<Result<Arc<ExecutorFnDescription>, E>>,
+    ),
     /// Emit shutdown of events loop
     Destroy,
 }

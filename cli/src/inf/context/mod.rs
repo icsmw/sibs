@@ -4,7 +4,7 @@ pub mod scenario;
 pub mod tracker;
 
 use bstorage::Storage;
-use std::process;
+use std::{process, sync::Arc};
 
 pub use atlas::*;
 pub use error::E;
@@ -14,7 +14,7 @@ pub use tracker::*;
 use crate::{
     elements::FuncArg,
     error::LinkedErr,
-    functions::Functions,
+    functions::{ExecutorFnDescription, Functions},
     inf::{Journal, Scope, ScopeDomain, Signals, Value},
     reader::Sources,
 };
@@ -194,8 +194,13 @@ impl Context {
             .await
             .map_err(|e| LinkedErr::new(e.e.into(), e.token))
     }
-
-    // pub async fn test_func(&self, name: &str, args: Vec<Value>, sc: Scope) -> Result<Value, E> {
-    //     Ok(self.funcs.execute(name, args, self.clone(), sc).await?)
-    // }
+    pub async fn get_func_desc(
+        &self,
+        name: &str,
+    ) -> Result<Arc<ExecutorFnDescription>, LinkedErr<E>> {
+        self.funcs
+            .get_func_desc(name)
+            .await
+            .map_err(|e| LinkedErr::new(e.e.into(), e.token))
+    }
 }

@@ -13,6 +13,7 @@ pub enum ValueRef {
     Empty,
     Output,
     Cmb,
+    Numeric,
     i8,
     i16,
     i32,
@@ -28,7 +29,10 @@ pub enum ValueRef {
     bool,
     PathBuf,
     String,
-    Vec,
+    Vec(Box<ValueRef>),
+    OneOf(Vec<ValueRef>),
+    Optional(Box<ValueRef>),
+    Repeated(Box<ValueRef>),
     // (Vec<ARGUMENT_TY>, BLOCK_TY)
     Task(Vec<ValueRef>, Box<ValueRef>),
 }
@@ -44,6 +48,7 @@ impl fmt::Display for ValueRef {
                 Self::Empty => "Empty".to_owned(),
                 Self::Output => "Output".to_owned(),
                 Self::Cmb => "Cmb".to_owned(),
+                Self::Numeric => "Numeric".to_owned(),
                 Self::i8 => "i8".to_owned(),
                 Self::i16 => "i16".to_owned(),
                 Self::i32 => "i32".to_owned(),
@@ -59,13 +64,23 @@ impl fmt::Display for ValueRef {
                 Self::bool => "bool".to_owned(),
                 Self::PathBuf => "PathBuf".to_owned(),
                 Self::String => "String".to_owned(),
-                Self::Vec => "Vec".to_owned(),
-                Self::Task(args, block) => format!(
-                    "ARGS: {}; OUT: {}",
-                    args.iter()
+                Self::OneOf(variants) => format!(
+                    "OneOf<{}>",
+                    variants
+                        .iter()
                         .map(|a| a.to_string())
                         .collect::<Vec<String>>()
                         .join("."),
+                ),
+                Self::Optional(ty) => format!("Optional<{ty}>",),
+                Self::Repeated(ty) => format!("Repeated<{ty}>",),
+                Self::Vec(ty) => format!("Vec<{ty}>",),
+                Self::Task(args, block) => format!(
+                    "Task<<{}>; <{}>>",
+                    args.iter()
+                        .map(|a| a.to_string())
+                        .collect::<Vec<String>>()
+                        .join(";"),
                     block
                 ),
             }

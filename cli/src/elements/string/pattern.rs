@@ -4,9 +4,9 @@ use crate::{
     elements::{string, Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
-        FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value, ValueRef,
-        ValueTypeResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
+        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, Scope, TokenGetter,
+        TryExecute, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -98,28 +98,33 @@ impl ExpectedValueType for PatternString {
         &'a self,
         _owner: &'a Component,
         _components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        Ok(())
+        _cx: &'a Context,
+    ) -> VerificationResult {
+        Box::pin(async move { Ok(()) })
     }
 
     fn linking<'a>(
         &'a self,
-        variables: &mut GlobalVariablesMap,
+        variables: &'a mut GlobalVariablesMap,
         owner: &'a Component,
         components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        for el in self.elements.iter() {
-            el.linking(variables, owner, components)?;
-        }
-        Ok(())
+        cx: &'a Context,
+    ) -> LinkingResult {
+        Box::pin(async move {
+            for el in self.elements.iter() {
+                el.linking(variables, owner, components, cx).await?;
+            }
+            Ok(())
+        })
     }
 
     fn expected<'a>(
         &'a self,
         _owner: &'a Component,
         _components: &'a [Component],
-    ) -> ValueTypeResult {
-        Ok(ValueRef::String)
+        _cx: &'a Context,
+    ) -> ExpectedResult {
+        Box::pin(async move { Ok(ValueRef::String) })
     }
 }
 

@@ -2,9 +2,9 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExecuteResult, ExpectedValueType,
-        Formation, FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value,
-        ValueRef, ValueTypeResult,
+        operator, Context, Execute, ExecutePinnedResult, ExecuteResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, GlobalVariablesMap, LinkingResult, Scope,
+        TokenGetter, TryExecute, Value, ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -94,25 +94,32 @@ impl ExpectedValueType for Join {
         &'a self,
         _owner: &'a Component,
         _components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        Ok(())
+        _cx: &'a Context,
+    ) -> VerificationResult {
+        Box::pin(async move { Ok(()) })
     }
 
     fn linking<'a>(
         &'a self,
-        variables: &mut GlobalVariablesMap,
+        variables: &'a mut GlobalVariablesMap,
         owner: &'a Component,
         components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        self.elements.linking(variables, owner, components)
+        cx: &'a Context,
+    ) -> LinkingResult {
+        Box::pin(async move {
+            self.elements
+                .linking(variables, owner, components, cx)
+                .await
+        })
     }
 
     fn expected<'a>(
         &'a self,
         _owner: &'a Component,
         _components: &'a [Component],
-    ) -> ValueTypeResult {
-        Ok(ValueRef::Empty)
+        _cx: &'a Context,
+    ) -> ExpectedResult {
+        Box::pin(async move { Ok(ValueRef::Empty) })
     }
 }
 

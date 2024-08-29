@@ -4,14 +4,44 @@ mod print;
 mod sleep;
 
 use crate::{
-    functions::{ExecutorFn, E},
-    inf::Store,
+    functions::{ExecutorFnDescription, E},
+    inf::{Store, ValueRef},
 };
 
-pub fn register(store: &mut Store<ExecutorFn>) -> Result<(), E> {
-    store.insert(abort::name(), abort::execute)?;
-    store.insert(exit::name(), exit::execute)?;
-    store.insert(print::name(), print::execute)?;
-    store.insert(sleep::name(), sleep::execute)?;
+pub fn register(store: &mut Store<ExecutorFnDescription>) -> Result<(), E> {
+    store.insert(
+        abort::name(),
+        ExecutorFnDescription::new(
+            abort::execute,
+            vec![
+                ValueRef::Optional(Box::new(ValueRef::Numeric)),
+                ValueRef::Optional(Box::new(ValueRef::String)),
+            ],
+            ValueRef::Empty,
+        ),
+    )?;
+    store.insert(
+        exit::name(),
+        ExecutorFnDescription::new(
+            exit::execute,
+            vec![
+                ValueRef::Optional(Box::new(ValueRef::Numeric)),
+                ValueRef::Optional(Box::new(ValueRef::String)),
+            ],
+            ValueRef::Empty,
+        ),
+    )?;
+    store.insert(
+        print::name(),
+        ExecutorFnDescription::new(
+            print::execute,
+            vec![ValueRef::Repeated(Box::new(ValueRef::Any))],
+            ValueRef::Empty,
+        ),
+    )?;
+    store.insert(
+        sleep::name(),
+        ExecutorFnDescription::new(sleep::execute, vec![ValueRef::Numeric], ValueRef::Empty),
+    )?;
     Ok(())
 }

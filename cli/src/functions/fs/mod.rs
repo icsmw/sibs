@@ -1,12 +1,12 @@
 use crate::{
     elements::FuncArg,
-    functions::{ExecutorFn, ExecutorPinnedResult, TryAnyTo, E},
-    inf::{Context, Scope, Store, Value},
+    functions::{ExecutorFnDescription, ExecutorPinnedResult, TryAnyTo, E},
+    inf::{Context, Scope, Store, Value, ValueRef},
 };
 use importer::import;
 use std::path::PathBuf;
 
-pub fn register(store: &mut Store<ExecutorFn>) -> Result<(), E> {
+pub fn register(store: &mut Store<ExecutorFnDescription>) -> Result<(), E> {
     #[import(fs)]
     fn create_dir(path: PathBuf) -> Result<(), E> {
         Ok(std::fs::create_dir(path)?)

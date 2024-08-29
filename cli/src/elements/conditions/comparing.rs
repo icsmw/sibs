@@ -4,9 +4,9 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
-        FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value, ValueRef,
-        ValueTypeResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
+        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, Scope, TokenGetter,
+        TryExecute, Value, ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -137,32 +137,39 @@ impl ExpectedValueType for Comparing {
         &'a self,
         owner: &'a Component,
         components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        let left = self.left.expected(owner, components)?;
-        let right = self.right.expected(owner, components)?;
-        if left != right {
-            Err(operator::E::DismatchTypes(left, right).by(self))
-        } else {
-            Ok(())
-        }
+        cx: &'a Context,
+    ) -> VerificationResult {
+        Box::pin(async move {
+            let left = self.left.expected(owner, components, cx).await?;
+            let right = self.right.expected(owner, components, cx).await?;
+            if left != right {
+                Err(operator::E::DismatchTypes(left, right).by(self))
+            } else {
+                Ok(())
+            }
+        })
     }
 
     fn linking<'a>(
         &'a self,
-        variables: &mut GlobalVariablesMap,
+        variables: &'a mut GlobalVariablesMap,
         owner: &'a Component,
         components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        self.left.linking(variables, owner, components)?;
-        self.right.linking(variables, owner, components)?;
-        Ok(())
+        cx: &'a Context,
+    ) -> LinkingResult {
+        Box::pin(async move {
+            self.left.linking(variables, owner, components, cx).await?;
+            self.right.linking(variables, owner, components, cx).await?;
+            Ok(())
+        })
     }
     fn expected<'a>(
         &'a self,
         _owner: &'a Component,
         _components: &'a [Component],
-    ) -> ValueTypeResult {
-        Ok(ValueRef::bool)
+        _cx: &'a Context,
+    ) -> ExpectedResult {
+        Box::pin(async move { Ok(ValueRef::bool) })
     }
 }
 

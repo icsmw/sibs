@@ -4,9 +4,9 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
-        FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value, ValueRef,
-        ValueTypeResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
+        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, Scope, TokenGetter,
+        TryExecute, Value, ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -34,46 +34,55 @@ impl ExpectedValueType for Thread {
         &'a self,
         owner: &'a Component,
         components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        match self {
-            Self::If(sub, bl) => {
-                sub.varification(owner, components)?;
-                bl.varification(owner, components)?;
-            }
-            Self::Else(bl) => {
-                bl.varification(owner, components)?;
-            }
-        };
-        Ok(())
+        cx: &'a Context,
+    ) -> VerificationResult {
+        Box::pin(async move {
+            match self {
+                Self::If(sub, bl) => {
+                    sub.varification(owner, components, cx).await?;
+                    bl.varification(owner, components, cx).await?;
+                }
+                Self::Else(bl) => {
+                    bl.varification(owner, components, cx).await?;
+                }
+            };
+            Ok(())
+        })
     }
 
     fn linking<'a>(
         &'a self,
-        variables: &mut GlobalVariablesMap,
+        variables: &'a mut GlobalVariablesMap,
         owner: &'a Component,
         components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        match self {
-            Self::If(sub, bl) => {
-                sub.linking(variables, owner, components)?;
-                bl.linking(variables, owner, components)?;
+        cx: &'a Context,
+    ) -> LinkingResult {
+        Box::pin(async move {
+            match self {
+                Self::If(sub, bl) => {
+                    sub.linking(variables, owner, components, cx).await?;
+                    bl.linking(variables, owner, components, cx).await?;
+                }
+                Self::Else(bl) => {
+                    bl.linking(variables, owner, components, cx).await?;
+                }
             }
-            Self::Else(bl) => {
-                bl.linking(variables, owner, components)?;
-            }
-        }
-        Ok(())
+            Ok(())
+        })
     }
 
     fn expected<'a>(
         &'a self,
         owner: &'a Component,
         components: &'a [Component],
-    ) -> ValueTypeResult {
-        match self {
-            Self::If(_, block) => block.expected(owner, components),
-            Self::Else(block) => block.expected(owner, components),
-        }
+        cx: &'a Context,
+    ) -> ExpectedResult {
+        Box::pin(async move {
+            match self {
+                Self::If(_, block) => block.expected(owner, components, cx).await,
+                Self::Else(block) => block.expected(owner, components, cx).await,
+            }
+        })
     }
 }
 
@@ -239,41 +248,50 @@ impl ExpectedValueType for If {
         &'a self,
         owner: &'a Component,
         components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        for thr in self.threads.iter() {
-            thr.varification(owner, components)?;
-        }
-        Ok(())
+        cx: &'a Context,
+    ) -> VerificationResult {
+        Box::pin(async move {
+            for thr in self.threads.iter() {
+                thr.varification(owner, components, cx).await?;
+            }
+            Ok(())
+        })
     }
 
     fn linking<'a>(
         &'a self,
-        variables: &mut GlobalVariablesMap,
+        variables: &'a mut GlobalVariablesMap,
         owner: &'a Component,
         components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        for thr in self.threads.iter() {
-            thr.linking(variables, owner, components)?;
-        }
-        Ok(())
+        cx: &'a Context,
+    ) -> LinkingResult {
+        Box::pin(async move {
+            for thr in self.threads.iter() {
+                thr.linking(variables, owner, components, cx).await?;
+            }
+            Ok(())
+        })
     }
 
     fn expected<'a>(
         &'a self,
         owner: &'a Component,
         components: &'a [Component],
-    ) -> ValueTypeResult {
-        let mut refs: Option<ValueRef> = None;
-        for value_ref in self.threads.iter() {
-            if let Some(prev) = refs.as_ref() {
-                if prev != &value_ref.expected(owner, components)? {
-                    return Err(operator::E::ReturnsDifferentTypes.by(self));
+        cx: &'a Context,
+    ) -> ExpectedResult {
+        Box::pin(async move {
+            let mut refs: Option<ValueRef> = None;
+            for value_ref in self.threads.iter() {
+                if let Some(prev) = refs.as_ref() {
+                    if prev != &value_ref.expected(owner, components, cx).await? {
+                        return Err(operator::E::ReturnsDifferentTypes.by(self));
+                    }
+                } else {
+                    refs = Some(value_ref.expected(owner, components, cx).await?);
                 }
-            } else {
-                refs = Some(value_ref.expected(owner, components)?);
             }
-        }
-        Ok(refs.unwrap_or(ValueRef::Empty))
+            Ok(refs.unwrap_or(ValueRef::Empty))
+        })
     }
 }
 

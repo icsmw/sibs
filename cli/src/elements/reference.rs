@@ -4,9 +4,9 @@ use crate::{
     elements::{Component, ElTarget, Element, Gatekeeper, Task},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
-        FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value, ValueRef,
-        ValueTypeResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
+        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, Scope, TokenGetter,
+        TryExecute, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -182,53 +182,63 @@ impl ExpectedValueType for Reference {
         &'a self,
         owner: &'a Component,
         components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        for el in self.inputs.iter() {
-            el.varification(owner, components)?
-        }
-        let task = self.get_linked_task(owner, components)?;
-        let ValueRef::Task(args, _) = task.expected(owner, components)? else {
-            return Err(operator::E::InvalidValueRef(format!(
-                "task \"{}\" has invalid expected output",
-                task.get_name()
-            ))
-            .by(self));
-        };
-        if args.len() != self.inputs.len() {
-            return Err(operator::E::InvalidValueRef(format!(
-                "arguments count for task \"{}\" dismatch with reference inputs",
-                task.get_name()
-            ))
-            .by(self));
-        }
-        for (i, el) in self.inputs.iter().enumerate() {
-            el.varification(owner, components)?;
-            let left = el.expected(owner, components)?;
-            let right = &args[i];
-            if &left != right {
-                return Err(operator::E::DismatchTypes(left, right.clone()).by(self));
+        cx: &'a Context,
+    ) -> VerificationResult {
+        Box::pin(async move {
+            for el in self.inputs.iter() {
+                el.varification(owner, components, cx).await?
             }
-        }
-        Ok(())
+            let task = self.get_linked_task(owner, components)?;
+            let ValueRef::Task(args, _) = task.expected(owner, components, cx).await? else {
+                return Err(operator::E::InvalidValueRef(format!(
+                    "task \"{}\" has invalid expected output",
+                    task.get_name()
+                ))
+                .by(self));
+            };
+            if args.len() != self.inputs.len() {
+                return Err(operator::E::InvalidValueRef(format!(
+                    "arguments count for task \"{}\" dismatch with reference inputs",
+                    task.get_name()
+                ))
+                .by(self));
+            }
+            for (i, el) in self.inputs.iter().enumerate() {
+                el.varification(owner, components, cx).await?;
+                let left = el.expected(owner, components, cx).await?;
+                let right = &args[i];
+                if &left != right {
+                    return Err(operator::E::DismatchTypes(left, right.clone()).by(self));
+                }
+            }
+            Ok(())
+        })
     }
     fn linking<'a>(
         &'a self,
-        variables: &mut GlobalVariablesMap,
+        variables: &'a mut GlobalVariablesMap,
         owner: &'a Component,
         components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        for el in self.inputs.iter() {
-            el.linking(variables, owner, components)?
-        }
-        Ok(())
+        cx: &'a Context,
+    ) -> LinkingResult {
+        Box::pin(async move {
+            for el in self.inputs.iter() {
+                el.linking(variables, owner, components, cx).await?
+            }
+            Ok(())
+        })
     }
     fn expected<'a>(
         &'a self,
         owner: &'a Component,
         components: &'a [Component],
-    ) -> ValueTypeResult {
-        self.get_linked_task(owner, components)?
-            .expected(owner, components)
+        cx: &'a Context,
+    ) -> ExpectedResult {
+        Box::pin(async move {
+            self.get_linked_task(owner, components)?
+                .expected(owner, components, cx)
+                .await
+        })
     }
 }
 

@@ -2,9 +2,9 @@ use crate::{
     elements::{ElTarget, Element, Gatekeeper, SimpleString, Task},
     error::LinkedErr,
     inf::{
-        operator, scenario, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
-        FormationCursor, GlobalVariablesMap, LocalVariablesMap, Scope, TokenGetter, TryExecute,
-        Value, ValueRef, ValueTypeResult,
+        operator, scenario, Context, Execute, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, GlobalVariablesMap, LinkingResult,
+        LocalVariablesMap, Scope, TokenGetter, TryExecute, Value, ValueRef, VerificationResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -198,29 +198,36 @@ impl ExpectedValueType for Component {
         &'a self,
         _owner: &'a Component,
         components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        for el in self.elements.iter() {
-            el.varification(self, components)?;
-        }
-        Ok(())
+        cx: &'a Context,
+    ) -> VerificationResult {
+        Box::pin(async move {
+            for el in self.elements.iter() {
+                el.varification(self, components, cx).await?;
+            }
+            Ok(())
+        })
     }
     fn linking<'a>(
         &'a self,
-        variables: &mut GlobalVariablesMap,
+        variables: &'a mut GlobalVariablesMap,
         _: &'a Component,
         components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        for el in self.elements.iter() {
-            el.linking(variables, self, components)?;
-        }
-        Ok(())
+        cx: &'a Context,
+    ) -> LinkingResult {
+        Box::pin(async move {
+            for el in self.elements.iter() {
+                el.linking(variables, self, components, cx).await?;
+            }
+            Ok(())
+        })
     }
     fn expected<'a>(
         &'a self,
         _owner: &'a Component,
         _components: &'a [Component],
-    ) -> ValueTypeResult {
-        Ok(ValueRef::Empty)
+        _cx: &'a Context,
+    ) -> ExpectedResult {
+        Box::pin(async move { Ok(ValueRef::Empty) })
     }
 }
 

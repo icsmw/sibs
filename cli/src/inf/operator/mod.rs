@@ -13,7 +13,11 @@ pub use variables::*;
 
 pub type ExecutePinnedResult<'a> = Pin<Box<dyn Future<Output = ExecuteResult> + 'a + Send>>;
 pub type ExecuteResult = Result<Option<Value>, LinkedErr<E>>;
-pub type ValueTypeResult = Result<ValueRef, LinkedErr<E>>;
+pub type LinkingResult<'a> = Pin<Box<dyn Future<Output = Result<(), LinkedErr<E>>> + 'a + Send>>;
+pub type VerificationResult<'a> =
+    Pin<Box<dyn Future<Output = Result<(), LinkedErr<E>>> + 'a + Send>>;
+pub type ExpectedResult<'a> =
+    Pin<Box<dyn Future<Output = Result<ValueRef, LinkedErr<E>>> + 'a + Send>>;
 
 pub trait TokenGetter {
     fn token(&self) -> usize;
@@ -22,19 +26,25 @@ pub trait TokenGetter {
 pub trait ExpectedValueType {
     fn linking<'a>(
         &'a self,
-        variables: &mut GlobalVariablesMap,
+        variables: &'a mut GlobalVariablesMap,
         owner: &'a Component,
         components: &'a [Component],
-    ) -> Result<(), LinkedErr<E>>;
+        cx: &'a Context,
+    ) -> LinkingResult;
 
     fn varification<'a>(
         &'a self,
         owner: &'a Component,
         components: &'a [Component],
-    ) -> Result<(), LinkedErr<E>>;
+        cx: &'a Context,
+    ) -> VerificationResult;
 
-    fn expected<'a>(&'a self, owner: &'a Component, components: &'a [Component])
-        -> ValueTypeResult;
+    fn expected<'a>(
+        &'a self,
+        owner: &'a Component,
+        components: &'a [Component],
+        cx: &'a Context,
+    ) -> ExpectedResult;
 }
 
 pub trait TryExecute {

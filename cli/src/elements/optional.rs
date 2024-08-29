@@ -4,9 +4,9 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedValueType, Formation,
-        FormationCursor, GlobalVariablesMap, Scope, TokenGetter, TryExecute, Value, ValueRef,
-        ValueTypeResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
+        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, Scope, TokenGetter,
+        TryExecute, Value, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -105,25 +105,34 @@ impl ExpectedValueType for Optional {
         &'a self,
         owner: &'a Component,
         components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        self.condition.varification(owner, components)?;
-        self.action.varification(owner, components)
+        cx: &'a Context,
+    ) -> VerificationResult {
+        Box::pin(async move {
+            self.condition.varification(owner, components, cx).await?;
+            self.action.varification(owner, components, cx).await
+        })
     }
     fn linking<'a>(
         &'a self,
-        variables: &mut GlobalVariablesMap,
+        variables: &'a mut GlobalVariablesMap,
         owner: &'a Component,
         components: &'a [Component],
-    ) -> Result<(), LinkedErr<operator::E>> {
-        self.condition.linking(variables, owner, components)?;
-        self.action.linking(variables, owner, components)
+        cx: &'a Context,
+    ) -> LinkingResult {
+        Box::pin(async move {
+            self.condition
+                .linking(variables, owner, components, cx)
+                .await?;
+            self.action.linking(variables, owner, components, cx).await
+        })
     }
     fn expected<'a>(
         &'a self,
         owner: &'a Component,
         components: &'a [Component],
-    ) -> ValueTypeResult {
-        self.action.expected(owner, components)
+        cx: &'a Context,
+    ) -> ExpectedResult {
+        Box::pin(async move { self.action.expected(owner, components, cx).await })
     }
 }
 

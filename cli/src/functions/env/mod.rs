@@ -2,23 +2,25 @@ use std::path::PathBuf;
 
 use crate::{
     elements::FuncArg,
-    functions::{ExecutorFn, ExecutorPinnedResult, TryAnyTo, E},
-    inf::{Context, Scope, Store, Value},
+    functions::{ExecutorFnDescription, ExecutorPinnedResult, TryAnyTo, E},
+    inf::{Context, Scope, Store, Value, ValueRef},
 };
 use importer::import;
 
-pub fn register(store: &mut Store<ExecutorFn>) -> Result<(), E> {
+pub fn register(store: &mut Store<ExecutorFnDescription>) -> Result<(), E> {
     #[import(env)]
     fn var(key: String) -> Result<String, E> {
         Ok(std::env::var(key).unwrap_or_default())
     }
     #[import(env)]
     fn set_var(key: String, value: String) -> Result<(), E> {
-        Ok(std::env::set_var(key, value))
+        std::env::set_var(key, value);
+        Ok(())
     }
     #[import(env)]
     fn remove_var(key: String) -> Result<(), E> {
-        Ok(std::env::remove_var(key))
+        std::env::remove_var(key);
+        Ok(())
     }
     #[import(env)]
     fn temp_dir() -> Result<PathBuf, E> {

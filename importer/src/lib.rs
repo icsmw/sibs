@@ -1,10 +1,13 @@
 mod opt;
+mod refs;
 use opt::Opt;
-use proc_macro::TokenStream;
+use proc_macro as pm;
+use proc_macro2 as pm2;
 use quote::{format_ident, quote};
+use refs::get_value_ref;
 use std::borrow::Borrow;
 use syn::{
-    parse_macro_input, GenericArgument, ItemFn, PathArguments, ReturnType, Signature, Type,
+    parse_macro_input, GenericArgument, Ident, ItemFn, PathArguments, ReturnType, Signature, Type,
     TypePath, TypeTuple,
 };
 
@@ -32,21 +35,25 @@ fn get_result_type(sig: &Signature) -> Option<(&Type, &Type)> {
     Some((type_ok, type_err))
 }
 #[proc_macro_attribute]
-pub fn import(args: TokenStream, input: TokenStream) -> TokenStream {
+pub fn import(args: pm::TokenStream, input: pm::TokenStream) -> pm::TokenStream {
     let opt: Opt = parse_macro_input!(args as Opt);
     let item_fn = parse_macro_input!(input as ItemFn);
     let fn_name = &item_fn.sig.ident;
     let args = &item_fn.sig.inputs;
     let args_required: usize = args.len();
-    let mut arguments: Vec<proc_macro2::TokenStream> = Vec::new();
+    let mut arguments: Vec<pm2::TokenStream> = Vec::new();
+    let mut declarations: Vec<pm2::TokenStream> = Vec::new();
     for (i, arg) in args.iter().enumerate() {
         if let syn::FnArg::Typed(pat_type) = arg {
             match pat_type.ty.borrow() {
-                Type::Array(_) | Type::Path(_) => arguments.push(quote! {
-                    args[#i].value.try_to()?,
-                }),
+                Type::Path(_) => {
+                    arguments.push(quote! {
+                        args[#i].value.try_to()?,
+                    });
+                    declarations.push(get_value_ref(&pat_type.ty));
+                }
                 _ => {
-                    panic!("Only Type::Array and Type::Path are supported");
+                    panic!("Only Type::Path are supported");
                 }
             }
         } else {
@@ -62,16 +69,26 @@ pub fn import(args: TokenStream, input: TokenStream) -> TokenStream {
     } else {
         format!("{}::{fn_name}", opt.ns)
     };
-    let output = if matches!(type_ok, Type::Tuple(TypeTuple { elems, .. }) if elems.is_empty()) {
-        quote! {
-            Ok(Value::Empty(#fn_name(#(#arguments)*)?))
-        }
+    let (output, output_declaration) = if matches!(type_ok, Type::Tuple(TypeTuple { elems, .. }) if elems.is_empty())
+    {
+        (
+            quote! {
+                Ok(Value::Empty(#fn_name(#(#arguments)*)?))
+            },
+            quote! {
+                ValueRef::Empty
+            },
+        )
     } else {
-        quote! {
-            Ok(Value::#type_ok(#fn_name(#(#arguments)*)?))
-        }
+        (
+            quote! {
+                Ok(Value::#type_ok(#fn_name(#(#arguments)*)?))
+            },
+            get_value_ref(type_ok),
+        )
     };
-    TokenStream::from(quote! {
+
+    pm::TokenStream::from(quote! {
         fn #func_name(args: Vec<FuncArg>, args_token: usize, cx: Context, sc: Scope) -> ExecutorPinnedResult {
             Box::pin(async move {
                 if args.len() != #args_required {
@@ -81,9 +98,14 @@ pub fn import(args: TokenStream, input: TokenStream) -> TokenStream {
                 #output
             })
         }
+        let desc = ExecutorFnDescription::new(
+            #func_name,
+            vec![#(#declarations,)*],
+            #output_declaration
+        );
         store.insert(
             #reference,
-            #func_name,
+            desc,
         )?;
     })
 }
