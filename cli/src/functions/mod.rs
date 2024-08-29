@@ -58,6 +58,12 @@ impl ExecutorFnDescription {
         let exec = self.executor;
         exec(args, token, cx, sc)
     }
+    pub fn output(&self) -> ValueRef {
+        self.output.clone()
+    }
+    pub fn args(&self) -> &[ValueRef] {
+        &self.args
+    }
 }
 pub trait TryAnyTo<T> {
     fn try_to(&self) -> Result<T, E>;

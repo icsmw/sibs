@@ -262,6 +262,26 @@ impl ExpectedValueType for Function {
             for el in self.args.iter() {
                 el.varification(owner, components, cx).await?;
             }
+            let desc = cx.get_func_desc(&self.name).await?;
+            if desc.args().len() != self.args.len() {
+                return Err(operator::E::FunctionsArgsNumberNotMatch(
+                    self.name.to_owned(),
+                    desc.args().len(),
+                    self.args.len(),
+                )
+                .by(self));
+            }
+            for (n, expected) in desc.args().iter().enumerate() {
+                let actual = &self.args[n].expected(owner, components, cx).await?;
+                if expected != actual {
+                    return Err(operator::E::FunctionsArgNotMatchType(
+                        self.name.to_owned(),
+                        expected.to_owned(),
+                        actual.to_owned(),
+                    )
+                    .by(&self.args[n]));
+                }
+            }
             Ok(())
         })
     }
@@ -282,11 +302,11 @@ impl ExpectedValueType for Function {
     }
     fn expected<'a>(
         &'a self,
-        owner: &'a Component,
-        components: &'a [Component],
+        _owner: &'a Component,
+        _components: &'a [Component],
         cx: &'a Context,
     ) -> ExpectedResult {
-        Box::pin(async move { Ok(ValueRef::Any) })
+        Box::pin(async move { Ok(cx.get_func_desc(&self.name).await?.output()) })
     }
 }
 
