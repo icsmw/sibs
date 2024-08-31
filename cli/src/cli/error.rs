@@ -1,7 +1,7 @@
 use crate::{
     error,
     error::LinkedErr,
-    inf::{context, operator, scenario, value},
+    inf::{context, operator, scenario},
     reader,
 };
 use thiserror::Error;
@@ -33,19 +33,12 @@ pub enum E {
     #[error("Fail to execute.\n{0}")]
     OperatorError(operator::E),
     #[error("{0}")]
-    Value(value::E),
-    #[error("{0}")]
     Other(String),
 }
 
 impl From<String> for E {
     fn from(e: String) -> Self {
         E::Other(e)
-    }
-}
-impl From<value::E> for E {
-    fn from(e: value::E) -> Self {
-        E::Value(e)
     }
 }
 impl From<reader::error::E> for E {

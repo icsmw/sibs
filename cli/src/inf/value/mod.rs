@@ -1,9 +1,7 @@
 mod convertor;
-mod error;
 #[cfg(test)]
 mod test;
 use crate::{elements::Cmb, inf::journal::Output};
-pub use error::E;
 use std::{any::TypeId, fmt, path::PathBuf};
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
@@ -124,6 +122,37 @@ impl ValueRef {
             Self::Repeated(left) => **left == *right,
             Self::Task(..) => false,
         }
+    }
+}
+
+pub trait HasOptional {
+    fn has_optional(&self) -> bool;
+}
+
+impl HasOptional for Vec<ValueRef> {
+    fn has_optional(&self) -> bool {
+        self.iter().any(|el| matches!(el, ValueRef::Optional(..)))
+    }
+}
+impl HasOptional for &[ValueRef] {
+    fn has_optional(&self) -> bool {
+        self.iter().any(|el| matches!(el, ValueRef::Optional(..)))
+    }
+}
+
+pub trait HasRepeated {
+    fn has_repeated(&self) -> bool;
+}
+
+impl HasRepeated for Vec<ValueRef> {
+    fn has_repeated(&self) -> bool {
+        self.iter().any(|el| matches!(el, ValueRef::Repeated(..)))
+    }
+}
+
+impl HasRepeated for &[ValueRef] {
+    fn has_repeated(&self) -> bool {
+        self.iter().any(|el| matches!(el, ValueRef::Repeated(..)))
     }
 }
 

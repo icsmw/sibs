@@ -5,8 +5,8 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, Scope, TokenGetter,
-        TryExecute, Value, ValueRef, VerificationResult,
+        Formation, FormationCursor, GlobalVariablesMap, HasOptional, HasRepeated, LinkingResult,
+        Scope, TokenGetter, TryExecute, Value, ValueRef, VerificationResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -263,25 +263,79 @@ impl ExpectedValueType for Function {
                 el.varification(owner, components, cx).await?;
             }
             let desc = cx.get_func_desc(&self.name).await?;
-            if desc.args().len() != self.args.len() {
-                return Err(operator::E::FunctionsArgsNumberNotMatch(
-                    self.name.to_owned(),
-                    desc.args().len(),
-                    self.args.len(),
-                )
-                .by(self));
+            let args = desc.args();
+            if args.has_optional() && args.has_repeated() {
+                return Err(operator::E::RepeatedAndOptionalTypes(self.name.to_owned()).by(self));
             }
-            for (n, expected) in desc.args().iter().enumerate() {
-                let actual = &self.args[n].expected(owner, components, cx).await?;
-                println!(">>>>>>>>>>>>>>>>>>>>>>> CHECKING: {actual} to {expected}");
-                if !expected.is_compatible(actual) {
-                    println!(">>>>>>>>>>>>>>>>>>>>>>> CHECKING FAIL");
-                    return Err(operator::E::FunctionsArgNotMatchType(
+            if args.has_optional() {
+                if args.len() < self.args.len() {
+                    return Err(operator::E::FunctionsArgsNumberNotMatch(
                         self.name.to_owned(),
-                        expected.to_owned(),
-                        actual.to_owned(),
+                        args.len(),
+                        self.args.len(),
                     )
-                    .by(&self.args[n]));
+                    .by(self));
+                }
+                for (n, expected) in args.iter().enumerate() {
+                    let actual = &self.args[n].expected(owner, components, cx).await?;
+                    if !expected.is_compatible(actual) {
+                        return Err(operator::E::FunctionsArgNotMatchType(
+                            self.name.to_owned(),
+                            expected.to_owned(),
+                            actual.to_owned(),
+                        )
+                        .by(&self.args[n]));
+                    }
+                }
+            } else if args.has_repeated() {
+                if args.len() > self.args.len() {
+                    return Err(operator::E::FunctionsArgsNumberNotMatch(
+                        self.name.to_owned(),
+                        args.len(),
+                        self.args.len(),
+                    )
+                    .by(self));
+                }
+                let Some(ValueRef::Repeated(repeated)) = args.last() else {
+                    return Err(operator::E::InvalidRepeatedType(self.name.to_owned()).by(self));
+                };
+                for (n, el) in self.args.iter().enumerate() {
+                    let actual = el.expected(owner, components, cx).await?;
+                    if n < args.len() - 1 && !args[n].is_compatible(&actual) {
+                        return Err(operator::E::FunctionsArgNotMatchType(
+                            self.name.to_owned(),
+                            args[n].to_owned(),
+                            actual.to_owned(),
+                        )
+                        .by(&self.args[n]));
+                    } else if repeated.is_compatible(&actual) {
+                        return Err(operator::E::FunctionsArgNotMatchType(
+                            self.name.to_owned(),
+                            *repeated.clone(),
+                            actual.to_owned(),
+                        )
+                        .by(&self.args[n]));
+                    }
+                }
+            } else {
+                if args.len() != self.args.len() {
+                    return Err(operator::E::FunctionsArgsNumberNotMatch(
+                        self.name.to_owned(),
+                        args.len(),
+                        self.args.len(),
+                    )
+                    .by(self));
+                }
+                for (n, expected) in args.iter().enumerate() {
+                    let actual = &self.args[n].expected(owner, components, cx).await?;
+                    if !expected.is_compatible(actual) {
+                        return Err(operator::E::FunctionsArgNotMatchType(
+                            self.name.to_owned(),
+                            expected.to_owned(),
+                            actual.to_owned(),
+                        )
+                        .by(&self.args[n]));
+                    }
                 }
             }
             Ok(())

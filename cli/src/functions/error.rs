@@ -1,6 +1,6 @@
 use crate::{
     error::LinkedErr,
-    inf::{context, operator, store, value},
+    inf::{context, operator, store},
 };
 use thiserror::Error;
 use tokio::sync::{mpsc, oneshot};
@@ -36,19 +36,11 @@ pub enum E {
     #[error("{0}")]
     Store(store::E),
     #[error("{0}")]
-    Value(value::E),
-    #[error("{0}")]
     Other(String),
 }
 
 impl From<context::E> for LinkedErr<E> {
     fn from(err: context::E) -> Self {
-        LinkedErr::unlinked(err.into())
-    }
-}
-
-impl From<value::E> for LinkedErr<E> {
-    fn from(err: value::E) -> Self {
         LinkedErr::unlinked(err.into())
     }
 }
@@ -103,12 +95,6 @@ impl From<store::E> for E {
 impl From<context::E> for E {
     fn from(e: context::E) -> Self {
         E::Context(e.to_string())
-    }
-}
-
-impl From<value::E> for E {
-    fn from(e: value::E) -> Self {
-        E::Value(e)
     }
 }
 

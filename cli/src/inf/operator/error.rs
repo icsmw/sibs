@@ -3,7 +3,7 @@ use crate::{
     functions,
     inf::{
         context::{self, atlas},
-        scenario, spawner, tracker, value, TokenGetter, ValueRef,
+        scenario, spawner, tracker, TokenGetter, ValueRef,
     },
     reader,
 };
@@ -22,8 +22,6 @@ pub enum E {
     NoVariableName,
     #[error("Variable \"{0}\" isn't declared")]
     VariableIsNotDeclared(String),
-    #[error("Variable \"{0}\" doesn't have owner")]
-    NoOwnerForVariable(String),
     #[error("Type dismatch: {0} and {1}")]
     DismatchTypes(ValueRef, ValueRef),
     #[error("Component \"{0}\" not found")]
@@ -110,12 +108,14 @@ pub enum E {
     TaskNotFound(String, String),
     #[error("Fail to parse string to {{{0}}}: {1}")]
     ParseStringError(String, String),
-    #[error("No active component during variables mapping")]
-    NoActiveComponent,
     #[error("Function \"{0}\" required {1} arguments; gotten {2} arguments")]
     FunctionsArgsNumberNotMatch(String, usize, usize),
     #[error("Function \"{0}\": argument type doesn't match: {1}; gotten: {2}")]
     FunctionsArgNotMatchType(String, ValueRef, ValueRef),
+    #[error("Function \"{0}\" uses Repeated type not as last argument")]
+    InvalidRepeatedType(String),
+    #[error("Function \"{0}\" uses Repeated and Optional types together")]
+    RepeatedAndOptionalTypes(String),
     #[error("Variable \"${0}\" defined/declared multiple times")]
     MultipleDeclaration(String),
     #[error("Invalid value ref: {0}")]
@@ -124,8 +124,6 @@ pub enum E {
     AtlasError(atlas::E),
     #[error("{0}")]
     ScenarioError(scenario::E),
-    #[error("{0}")]
-    ValueError(value::E),
 }
 
 impl E {
@@ -140,18 +138,6 @@ impl E {
 impl From<tracker::E> for E {
     fn from(e: tracker::E) -> Self {
         Self::TrackerError(e)
-    }
-}
-
-impl From<value::E> for E {
-    fn from(e: value::E) -> Self {
-        Self::ValueError(e)
-    }
-}
-
-impl From<value::E> for LinkedErr<E> {
-    fn from(e: value::E) -> Self {
-        LinkedErr::unlinked(E::ValueError(e))
     }
 }
 

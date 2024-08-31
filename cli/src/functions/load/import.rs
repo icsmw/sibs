@@ -12,7 +12,7 @@ pub enum Error {
 
 impl From<Error> for E {
     fn from(e: Error) -> Self {
-        E::FunctionExecuting(format!("{NAME}"), e.to_string())
+        E::FunctionExecuting(NAME.to_string(), e.to_string())
     }
 }
 
