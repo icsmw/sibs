@@ -113,7 +113,7 @@ impl ValueRef {
                 )
             }
             Self::OneOf(left) => left.contains(right),
-            Self::Optional(left) => **left == *right,
+            Self::Optional(left) => left.is_compatible(right),
             Self::Vec(left) => {
                 if let Self::Vec(right) = right {
                     left.is_compatible(right)
