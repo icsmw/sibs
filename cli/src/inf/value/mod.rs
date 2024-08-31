@@ -116,7 +116,7 @@ impl ValueRef {
             Self::Optional(left) => **left == *right,
             Self::Vec(left) => {
                 if let Self::Vec(right) = right {
-                    left == right
+                    left.is_compatible(right)
                 } else {
                     false
                 }
