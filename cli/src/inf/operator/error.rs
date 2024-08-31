@@ -114,7 +114,7 @@ pub enum E {
     NoActiveComponent,
     #[error("Function \"{0}\" required {1} arguments; gotten {2} arguments")]
     FunctionsArgsNumberNotMatch(String, usize, usize),
-    #[error("Function \"{0}\": argument type doesn't match: {0}; gotten: {1}")]
+    #[error("Function \"{0}\": argument type doesn't match: {1}; gotten: {2}")]
     FunctionsArgNotMatchType(String, ValueRef, ValueRef),
     #[error("Variable \"${0}\" defined/declared multiple times")]
     MultipleDeclaration(String),

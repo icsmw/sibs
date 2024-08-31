@@ -78,7 +78,7 @@ impl ExpectedValueType for Call {
         _components: &'a [Component],
         _cx: &'a Context,
     ) -> ExpectedResult {
-        Box::pin(async move { Ok(ValueRef::Any) })
+        Box::pin(async move { Ok(ValueRef::Empty) })
     }
 }
 impl TryExecute for Call {

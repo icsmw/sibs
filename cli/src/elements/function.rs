@@ -273,7 +273,9 @@ impl ExpectedValueType for Function {
             }
             for (n, expected) in desc.args().iter().enumerate() {
                 let actual = &self.args[n].expected(owner, components, cx).await?;
-                if expected != actual {
+                println!(">>>>>>>>>>>>>>>>>>>>>>> CHECKING: {actual} to {expected}");
+                if !expected.is_compatible(actual) {
+                    println!(">>>>>>>>>>>>>>>>>>>>>>> CHECKING FAIL");
                     return Err(operator::E::FunctionsArgNotMatchType(
                         self.name.to_owned(),
                         expected.to_owned(),

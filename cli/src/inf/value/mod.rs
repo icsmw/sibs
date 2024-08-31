@@ -1,18 +1,16 @@
 mod convertor;
 mod error;
+#[cfg(test)]
+mod test;
 use crate::{elements::Cmb, inf::journal::Output};
 pub use error::E;
 use std::{any::TypeId, fmt, path::PathBuf};
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
+#[cfg_attr(test, derive(strum_macros::EnumIter))]
 #[allow(non_camel_case_types)]
 pub enum ValueRef {
-    // Special type to redirect to inside element. For example block, which returns result of last element inside
-    Inner,
-    Any,
     Empty,
-    Output,
-    Cmb,
     Numeric,
     i8,
     i16,
@@ -37,17 +35,105 @@ pub enum ValueRef {
     Task(Vec<ValueRef>, Box<ValueRef>),
 }
 
+#[cfg(test)]
+impl Default for ValueRef {
+    fn default() -> Self {
+        ValueRef::Empty
+    }
+}
+
+impl ValueRef {
+    pub fn is_simple(&self) -> bool {
+        match self {
+            Self::u8
+            | Self::u16
+            | Self::u32
+            | Self::u64
+            | Self::u128
+            | Self::usize
+            | Self::i8
+            | Self::i16
+            | Self::i32
+            | Self::i64
+            | Self::i128
+            | Self::isize
+            | Self::PathBuf
+            | Self::String
+            | Self::bool
+            | Self::Numeric
+            | Self::Empty => true,
+
+            Self::OneOf(..)
+            | Self::Optional(..)
+            | Self::Repeated(..)
+            | Self::Task(..)
+            | Self::Vec(..) => false,
+        }
+    }
+    pub fn is_compatible(&self, other: &ValueRef) -> bool {
+        let mut left = self;
+        let mut right = other;
+        if (left.is_simple() && !right.is_simple()) || matches!(other, ValueRef::Numeric) {
+            right = self;
+            left = other;
+        }
+        match left {
+            Self::String
+            | Self::bool
+            | Self::PathBuf
+            | Self::Empty
+            | Self::u8
+            | Self::u16
+            | Self::u32
+            | Self::u64
+            | Self::u128
+            | Self::usize
+            | Self::i8
+            | Self::i16
+            | Self::i32
+            | Self::i64
+            | Self::i128
+            | Self::isize => left == right,
+            Self::Numeric => {
+                matches!(
+                    right,
+                    &ValueRef::u8
+                        | &ValueRef::u16
+                        | &ValueRef::u32
+                        | &ValueRef::u64
+                        | &ValueRef::u128
+                        | &ValueRef::usize
+                        | &ValueRef::i8
+                        | &ValueRef::i16
+                        | &ValueRef::i32
+                        | &ValueRef::i64
+                        | &ValueRef::i128
+                        | &ValueRef::isize
+                        | &ValueRef::Numeric
+                )
+            }
+            Self::OneOf(left) => left.contains(right),
+            Self::Optional(left) => **left == *right,
+            Self::Vec(left) => {
+                if let Self::Vec(right) = right {
+                    left == right
+                } else {
+                    false
+                }
+            }
+            Self::Repeated(left) => **left == *right,
+            Self::Task(..) => false,
+        }
+    }
+}
+
 impl fmt::Display for ValueRef {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
             "{:?}",
             match self {
-                Self::Inner => "Inner".to_owned(),
-                Self::Any => "Any".to_owned(),
                 Self::Empty => "Empty".to_owned(),
-                Self::Output => "Output".to_owned(),
-                Self::Cmb => "Cmb".to_owned(),
                 Self::Numeric => "Numeric".to_owned(),
                 Self::i8 => "i8".to_owned(),
                 Self::i16 => "i16".to_owned(),
@@ -345,160 +431,5 @@ impl Value {
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", self)
-    }
-}
-
-#[cfg(test)]
-mod test {
-
-    use super::*;
-
-    #[test]
-    fn as_num() {
-        assert_eq!(Value::i8(1).as_num(), Some(1));
-        assert_eq!(Value::i16(1).as_num(), Some(1));
-        assert_eq!(Value::i32(1).as_num(), Some(1));
-        assert_eq!(Value::i64(1).as_num(), Some(1));
-        assert_eq!(Value::i128(1).as_num(), Some(1));
-        assert_eq!(Value::isize(1).as_num(), Some(1));
-        assert_eq!(Value::u8(1).as_num(), Some(1));
-        assert_eq!(Value::u16(1).as_num(), Some(1));
-        assert_eq!(Value::u32(1).as_num(), Some(1));
-        assert_eq!(Value::u64(1).as_num(), Some(1));
-        assert_eq!(Value::u128(1).as_num(), Some(1));
-        assert_eq!(Value::usize(1).as_num(), Some(1));
-        assert_eq!(Value::String(String::from("123")).as_num(), Some(123));
-        assert_eq!(Value::String(String::from("abc")).as_num(), None);
-        assert_eq!(Value::bool(true).as_num(), None);
-        assert_eq!(Value::PathBuf(PathBuf::from("test")).as_num(), None);
-        assert_eq!(Value::Vec(vec![Value::i8(1)]).as_num(), None);
-    }
-
-    #[test]
-    fn as_string() {
-        assert_eq!(Value::i8(1).as_string(), Some("1".to_string()));
-        assert_eq!(Value::i16(1).as_string(), Some("1".to_string()));
-        assert_eq!(Value::i32(1).as_string(), Some("1".to_string()));
-        assert_eq!(Value::i64(1).as_string(), Some("1".to_string()));
-        assert_eq!(Value::i128(1).as_string(), Some("1".to_string()));
-        assert_eq!(Value::isize(1).as_string(), Some("1".to_string()));
-        assert_eq!(Value::u8(1).as_string(), Some("1".to_string()));
-        assert_eq!(Value::u16(1).as_string(), Some("1".to_string()));
-        assert_eq!(Value::u32(1).as_string(), Some("1".to_string()));
-        assert_eq!(Value::u64(1).as_string(), Some("1".to_string()));
-        assert_eq!(Value::u128(1).as_string(), Some("1".to_string()));
-        assert_eq!(Value::usize(1).as_string(), Some("1".to_string()));
-        assert_eq!(Value::bool(true).as_string(), Some("true".to_string()));
-        assert_eq!(
-            Value::PathBuf(PathBuf::from("test")).as_string(),
-            Some("test".to_string())
-        );
-        assert_eq!(
-            Value::String(String::from("test")).as_string(),
-            Some("test".to_string())
-        );
-        assert_eq!(Value::Vec(vec![Value::i8(1)]).as_string(), None);
-    }
-
-    #[test]
-    fn as_bool() {
-        // Testing integer types
-        assert_eq!(Value::i8(1).as_bool(), Some(true));
-        assert_eq!(Value::i8(0).as_bool(), Some(false));
-        assert_eq!(Value::i16(1).as_bool(), Some(true));
-        assert_eq!(Value::i16(0).as_bool(), Some(false));
-        assert_eq!(Value::i32(1).as_bool(), Some(true));
-        assert_eq!(Value::i32(0).as_bool(), Some(false));
-        assert_eq!(Value::i64(1).as_bool(), Some(true));
-        assert_eq!(Value::i64(0).as_bool(), Some(false));
-        assert_eq!(Value::i128(1).as_bool(), Some(true));
-        assert_eq!(Value::i128(0).as_bool(), Some(false));
-        assert_eq!(Value::isize(1).as_bool(), Some(true));
-        assert_eq!(Value::isize(0).as_bool(), Some(false));
-        assert_eq!(Value::u8(1).as_bool(), Some(true));
-        assert_eq!(Value::u8(0).as_bool(), Some(false));
-        assert_eq!(Value::u16(1).as_bool(), Some(true));
-        assert_eq!(Value::u16(0).as_bool(), Some(false));
-        assert_eq!(Value::u32(1).as_bool(), Some(true));
-        assert_eq!(Value::u32(0).as_bool(), Some(false));
-        assert_eq!(Value::u64(1).as_bool(), Some(true));
-        assert_eq!(Value::u64(0).as_bool(), Some(false));
-        assert_eq!(Value::u128(1).as_bool(), Some(true));
-        assert_eq!(Value::u128(0).as_bool(), Some(false));
-        assert_eq!(Value::usize(1).as_bool(), Some(true));
-        assert_eq!(Value::usize(0).as_bool(), Some(false));
-
-        // Testing bool type
-        assert_eq!(Value::bool(true).as_bool(), Some(true));
-        assert_eq!(Value::bool(false).as_bool(), Some(false));
-
-        // Testing String type
-        assert_eq!(Value::String(String::from("true")).as_bool(), Some(true));
-        assert_eq!(Value::String(String::from("false")).as_bool(), Some(false));
-        assert_eq!(Value::String(String::from("TRUE")).as_bool(), Some(true));
-        assert_eq!(Value::String(String::from("FALSE")).as_bool(), Some(false));
-        assert_eq!(Value::String(String::from("TrUe")).as_bool(), Some(true));
-        assert_eq!(Value::String(String::from("FaLsE")).as_bool(), Some(false));
-        assert_eq!(Value::String(String::from("yes")).as_bool(), Some(false));
-        assert_eq!(Value::String(String::from("no")).as_bool(), Some(false));
-
-        // Testing other types should return None
-        assert_eq!(Value::PathBuf(PathBuf::from("test")).as_bool(), None);
-        assert_eq!(Value::Vec(vec![Value::i8(1)]).as_bool(), None);
-    }
-
-    #[test]
-    fn as_path_buf() {
-        assert_eq!(
-            Value::PathBuf(PathBuf::from("test")).as_path_buf(),
-            Some(PathBuf::from("test"))
-        );
-        assert_eq!(
-            Value::String(String::from("test")).as_path_buf(),
-            Some(PathBuf::from("test"))
-        );
-        assert_eq!(Value::i8(1).as_path_buf(), None);
-    }
-
-    #[test]
-    fn as_strings() {
-        assert_eq!(
-            Value::Vec(vec![
-                Value::String(String::from("test1")),
-                Value::String(String::from("test2"))
-            ])
-            .as_strings(),
-            Some(vec![String::from("test1"), String::from("test2")])
-        );
-        assert_eq!(
-            Value::Vec(vec![Value::String(String::from("test1")), Value::i8(1)]).as_strings(),
-            Some(vec![String::from("test1"), String::from("1")])
-        );
-        assert_eq!(Value::i8(1).as_strings(), None);
-    }
-
-    #[test]
-    fn as_path_bufs() {
-        assert_eq!(
-            Value::Vec(vec![
-                Value::PathBuf(PathBuf::from("test1")),
-                Value::PathBuf(PathBuf::from("test2"))
-            ])
-            .as_path_bufs(),
-            Some(vec![PathBuf::from("test1"), PathBuf::from("test2")])
-        );
-        assert_eq!(
-            Value::Vec(vec![
-                Value::PathBuf(PathBuf::from("test1")),
-                Value::String(String::from("test2"))
-            ])
-            .as_path_bufs(),
-            Some(vec![PathBuf::from("test1"), PathBuf::from("test2")])
-        );
-        assert_eq!(
-            Value::Vec(vec![Value::PathBuf(PathBuf::from("test1")), Value::i8(1)]).as_path_bufs(),
-            None
-        );
-        assert_eq!(Value::i8(1).as_path_bufs(), None);
     }
 }

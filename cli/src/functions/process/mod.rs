@@ -35,7 +35,7 @@ pub fn register(store: &mut Store<ExecutorFnDescription>) -> Result<(), E> {
         print::name(),
         ExecutorFnDescription::new(
             print::execute,
-            vec![ValueRef::Repeated(Box::new(ValueRef::Any))],
+            vec![ValueRef::Repeated(Box::new(ValueRef::Empty))],
             ValueRef::Empty,
         ),
     )?;

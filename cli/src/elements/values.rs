@@ -145,7 +145,7 @@ impl ExpectedValueType for Values {
     ) -> ExpectedResult {
         Box::pin(async move {
             // TODO: extract inner type
-            Ok(ValueRef::Any)
+            Ok(ValueRef::Empty)
         })
     }
 }

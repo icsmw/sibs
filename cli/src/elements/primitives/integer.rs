@@ -79,7 +79,22 @@ impl ExpectedValueType for Integer {
         _components: &'a [Component],
         _cx: &'a Context,
     ) -> ExpectedResult {
-        Box::pin(async move { Ok(ValueRef::isize) })
+        Box::pin(async move {
+            Ok(ValueRef::OneOf(vec![
+                ValueRef::u8,
+                ValueRef::u16,
+                ValueRef::u32,
+                ValueRef::u64,
+                ValueRef::u128,
+                ValueRef::usize,
+                ValueRef::i8,
+                ValueRef::i16,
+                ValueRef::i32,
+                ValueRef::i64,
+                ValueRef::i128,
+                ValueRef::isize,
+            ]))
+        })
     }
 }
 
