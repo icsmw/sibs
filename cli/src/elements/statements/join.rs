@@ -484,14 +484,15 @@ mod proptest {
 
     fn reading(join: Join) {
         get_rt().block_on(async {
-            let origin = format!("test {{\n{join};\n}};");
+            let origin = format!("@test {{\n{join};\n}};");
             read_string!(
                 &Configuration::logs(false),
                 &origin,
                 |reader: &mut Reader, src: &mut Sources| {
-                    while let Some(task) = src.report_err_if(Task::dissect(reader))? {
-                        assert_eq!(format!("{task};"), origin);
-                    }
+                    let task = src
+                        .report_err_if(Task::dissect(reader))?
+                        .expect("Task read");
+                    assert_eq!(format!("{task};"), origin);
                     Ok::<(), LinkedErr<E>>(())
                 }
             );

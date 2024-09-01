@@ -269,14 +269,15 @@ mod proptest {
 
     fn reading(first: First) {
         get_rt().block_on(async {
-            let origin = format!("test {{\n{first};\n}};");
+            let origin = format!("@test {{\n{first};\n}};");
             read_string!(
                 &Configuration::logs(false),
                 &origin,
                 |reader: &mut Reader, src: &mut Sources| {
-                    while let Some(task) = src.report_err_if(Task::dissect(reader))? {
-                        assert_eq!(format!("{task};"), origin);
-                    }
+                    let task = src
+                        .report_err_if(Task::dissect(reader))?
+                        .expect("Task read");
+                    assert_eq!(format!("{task};"), origin);
                     Ok::<(), LinkedErr<E>>(())
                 }
             );
