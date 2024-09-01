@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use crate::functions::{ExecutorFnDescription, E};
 use tokio::sync::oneshot;
@@ -19,4 +19,6 @@ pub enum Demand {
     ),
     /// Emit shutdown of events loop
     Destroy,
+    #[cfg(test)]
+    GetAll(oneshot::Sender<HashMap<String, Arc<ExecutorFnDescription>>>),
 }

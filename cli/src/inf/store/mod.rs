@@ -22,8 +22,11 @@ impl<T> Store<T> {
         self.executors.insert(name, Arc::new(executor));
         Ok(())
     }
-
     pub fn get(&self, name: &str) -> Option<Arc<T>> {
         self.executors.get(name).cloned()
+    }
+    #[cfg(test)]
+    pub fn all(&self) -> HashMap<String, Arc<T>> {
+        self.executors.clone()
     }
 }

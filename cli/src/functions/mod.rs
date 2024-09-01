@@ -19,6 +19,8 @@ use crate::{
 };
 use api::*;
 pub use error::E;
+#[cfg(test)]
+use std::collections::HashMap;
 use std::{future::Future, pin::Pin, sync::Arc};
 use tokio::{
     spawn,
@@ -116,6 +118,12 @@ impl Functions {
                             journal.err(format!("Fail send function's execute: {name}"));
                         }
                     }
+                    #[cfg(test)]
+                    Demand::GetAll(tx) => {
+                        if tx.send(store.all()).is_err() {
+                            journal.err("Fail send all functions descriptions");
+                        }
+                    }
                     Demand::Destroy => {
                         break;
                     }
@@ -162,4 +170,31 @@ impl Functions {
             .send(Demand::GetFunctionDescription(name.to_owned(), tx))?;
         Ok(rx.await??)
     }
+    #[cfg(test)]
+    pub async fn get_all(
+        &self,
+    ) -> Result<HashMap<String, Arc<ExecutorFnDescription>>, LinkedErr<E>> {
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(Demand::GetAll(tx))?;
+        Ok(rx.await?)
+    }
 }
+
+// TODO: add like proptest for function's verification
+// #[cfg(test)]
+// mod tests {
+//     use crate::{
+//         elements::Function, inf::{Configuration, Context, Journal, Scenario}, reader::Sources
+//     };
+
+//     #[tokio::test]
+//     async fn verifications() {
+//         let journal = Journal::unwrapped(Configuration::logs(false));
+//         let scenario = Scenario::dummy();
+//         let src = Sources::new(&journal);
+//         let cx = Context::init(scenario, &src, &journal).expect("Context is created");
+//         let all = cx.funcs.get_all().await.expect("Get all functions");
+//         all.iter().for_each(|(name, desc)| {
+//         });
+//     }
+// }
