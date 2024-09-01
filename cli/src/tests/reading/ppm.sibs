@@ -1,0 +1,7 @@
+check("something").is_ok();
+check("something").as_string();
+do_smth().as_number();
+do_smth().as_number().and().next();
+do_smth().as_numbers()[1];
+do_smth().as_numbers()[$var];
+do_smth().as_numbers()[get_index()];

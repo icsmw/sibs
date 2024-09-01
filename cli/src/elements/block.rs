@@ -53,7 +53,7 @@ impl TryDissect<Block> for Block {
                     ElTarget::VariableType,
                     ElTarget::SimpleString,
                     ElTarget::Gatekeeper,
-                    ElTarget::Call,
+                    ElTarget::Ppm,
                 ],
             )? {
                 if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {

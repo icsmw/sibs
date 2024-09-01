@@ -91,6 +91,8 @@ pub enum E {
     InvalidReference(String),
     #[error("No call function after \".\"")]
     NoCallFunction,
+    #[error("No accessor to element: \"[???]\"")]
+    NoElementAccessor,
     #[error("No loop variable each($var)")]
     NoLoopVariable,
     #[error("No loop variable declaration; expecting: each($var)")]

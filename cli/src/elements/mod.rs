@@ -1,5 +1,4 @@
 mod block;
-mod call;
 mod comment;
 mod component;
 mod conditions;
@@ -7,6 +6,7 @@ mod function;
 mod gatekeeper;
 mod meta;
 mod optional;
+mod ppm;
 mod primitives;
 mod reference;
 mod statements;
@@ -16,7 +16,6 @@ mod values;
 mod variable;
 
 pub use block::*;
-pub use call::*;
 pub use comment::*;
 pub use component::*;
 pub use conditions::*;
@@ -24,6 +23,7 @@ pub use function::*;
 pub use gatekeeper::*;
 pub use meta::*;
 pub use optional::*;
+pub use ppm::*;
 pub use primitives::*;
 pub use reference::*;
 pub use statements::{breaker::*, each::*, first::*, join::Join, If::*};
@@ -74,7 +74,7 @@ pub enum ElTarget {
     VariableVariants,
     VariableType,
     SimpleString,
-    Call,
+    Ppm,
     #[allow(unused)]
     Comment,
 }
@@ -113,7 +113,7 @@ impl fmt::Display for ElTarget {
                 Self::VariableVariants => "VariableVariants",
                 Self::VariableType => "VariableType",
                 Self::SimpleString => "SimpleString",
-                Self::Call => "Call",
+                Self::Ppm => "Ppm",
                 Self::Comment => "Comment",
             },
         )
@@ -125,7 +125,7 @@ pub struct Metadata {
     // Element: Comment | Meta
     pub comments: Vec<Comment>,
     pub meta: Vec<Meta>,
-    pub call: Option<Box<Element>>,
+    pub ppm: Option<Box<Element>>,
     pub tolerance: bool,
     pub inverting: bool,
 }
@@ -135,7 +135,7 @@ impl Metadata {
         Metadata {
             comments: Vec::new(),
             meta: Vec::new(),
-            call: None,
+            ppm: None,
             tolerance: false,
             inverting: false,
         }
@@ -150,8 +150,8 @@ impl Metadata {
     pub fn meta_as_lines(&self) -> Vec<&str> {
         self.meta.iter().flat_map(|el| el.as_lines()).collect()
     }
-    pub fn set_call(&mut self, el: Element) {
-        self.call = Some(Box::new(el));
+    pub fn set_ppm(&mut self, el: Element) {
+        self.ppm = Some(Box::new(el));
     }
 }
 
@@ -225,7 +225,7 @@ pub enum Element {
     VariableVariants(VariableVariants, Metadata),
     VariableType(VariableType, Metadata),
     SimpleString(SimpleString, Metadata),
-    Call(Call, Metadata),
+    Ppm(Ppm, Metadata),
     Meta(Meta),
     Comment(Comment),
 }
@@ -241,10 +241,10 @@ impl Element {
             md
         }
         fn next(reader: &mut Reader, mut el: Element) -> Result<Option<Element>, LinkedErr<E>> {
-            let Some(call) = Element::include(reader, &[ElTarget::Call])? else {
+            let Some(ppm) = Element::include(reader, &[ElTarget::Ppm])? else {
                 return Ok(Some(el));
             };
-            el.get_mut_metadata().set_call(call);
+            el.get_mut_metadata().set_ppm(ppm);
             Ok(Some(el))
         }
         let mut comments: Vec<Comment> = Vec::new();
@@ -263,7 +263,7 @@ impl Element {
         let md = Metadata {
             comments,
             meta,
-            call: None,
+            ppm: None,
             tolerance: false,
             inverting: if targets.contains(&ElTarget::Function) {
                 reader.move_to().char(&[&chars::EXCLAMATION]).is_some()
@@ -276,9 +276,9 @@ impl Element {
                 return next(reader, Element::Breaker(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Call) {
-            if let Some(el) = Call::dissect(reader)? {
-                return next(reader, Element::Call(el, md));
+        if includes == targets.contains(&ElTarget::Ppm) {
+            if let Some(el) = Ppm::dissect(reader)? {
+                return next(reader, Element::Ppm(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::Combination) {
@@ -464,7 +464,7 @@ impl Element {
             Self::VariableVariants(_, md) => md,
             Self::VariableType(_, md) => md,
             Self::SimpleString(_, md) => md,
-            Self::Call(_, md) => md,
+            Self::Ppm(_, md) => md,
             Self::Comment(_) | Self::Meta(_) => {
                 panic!("Comment doesn't have metadata");
             }
@@ -500,7 +500,7 @@ impl Element {
             Self::VariableVariants(_, md) => md,
             Self::VariableType(_, md) => md,
             Self::SimpleString(_, md) => md,
-            Self::Call(_, md) => md,
+            Self::Ppm(_, md) => md,
             Self::Comment(_) | Self::Meta(_) => {
                 panic!("Comment doesn't have metadata");
             }
@@ -538,7 +538,7 @@ impl Element {
             Self::VariableVariants(..) => ElTarget::VariableVariants,
             Self::VariableType(..) => ElTarget::VariableType,
             Self::SimpleString(..) => ElTarget::SimpleString,
-            Self::Call(..) => ElTarget::Call,
+            Self::Ppm(..) => ElTarget::Ppm,
             Self::Comment(..) => ElTarget::Comment,
         }
     }
@@ -573,7 +573,7 @@ impl Element {
             Self::VariableVariants(v, _) => v.to_string(),
             Self::VariableType(v, _) => v.to_string(),
             Self::SimpleString(v, _) => v.to_string(),
-            Self::Call(v, _) => v.to_string(),
+            Self::Ppm(v, _) => v.to_string(),
             Self::Comment(v) => v.to_string(),
             Self::Meta(v) => v.to_string(),
         }
@@ -598,8 +598,8 @@ impl fmt::Display for Element {
                 } else {
                     String::new()
                 },
-                if let Some(call) = md.call.as_ref() {
-                    format!("{}{}", chars::DOT, call)
+                if let Some(call) = md.ppm.as_ref() {
+                    call.to_string()
                 } else {
                     String::new()
                 }
@@ -636,7 +636,7 @@ impl fmt::Display for Element {
                 Self::VariableVariants(v, md) => as_string(v, md),
                 Self::VariableType(v, md) => as_string(v, md),
                 Self::SimpleString(v, md) => as_string(v, md),
-                Self::Call(v, md) => as_string(v, md),
+                Self::Ppm(v, md) => as_string(v, md),
                 Self::Comment(v) => v.to_string(),
                 Self::Meta(v) => v.to_string(),
             }
@@ -674,7 +674,7 @@ impl Formation for Element {
             Self::VariableVariants(v, _) => v.elements_count(),
             Self::VariableType(v, _) => v.elements_count(),
             Self::SimpleString(v, _) => v.elements_count(),
-            Self::Call(v, _) => v.elements_count(),
+            Self::Ppm(v, _) => v.elements_count(),
             Self::Meta(v) => v.elements_count(),
             Self::Comment(v) => v.elements_count(),
         }
@@ -685,7 +685,7 @@ impl Formation for Element {
             A: Formation,
         {
             format!(
-                "{}{}{}{}",
+                "{}{}{}{}{}",
                 md.format(cursor),
                 if md.inverting {
                     chars::EXCLAMATION.to_string()
@@ -695,6 +695,11 @@ impl Formation for Element {
                 el.format(cursor),
                 if md.tolerance {
                     chars::QUESTION.to_string()
+                } else {
+                    String::new()
+                },
+                if let Some(call) = md.ppm.as_ref() {
+                    call.to_string()
                 } else {
                     String::new()
                 }
@@ -728,7 +733,7 @@ impl Formation for Element {
             Self::VariableVariants(v, m) => format_el(v, m, cursor),
             Self::VariableType(v, m) => format_el(v, m, cursor),
             Self::SimpleString(v, m) => format_el(v, m, cursor),
-            Self::Call(v, m) => format_el(v, m, cursor),
+            Self::Ppm(v, m) => format_el(v, m, cursor),
             Self::Meta(v) => v.format(cursor),
             Self::Comment(v) => v.format(cursor),
         }
@@ -765,7 +770,7 @@ impl TokenGetter for Element {
             Self::VariableVariants(v, _) => v.token,
             Self::VariableType(v, _) => v.token,
             Self::SimpleString(v, _) => v.token(),
-            Self::Call(v, _) => v.token(),
+            Self::Ppm(v, _) => v.token(),
             Self::Meta(v) => v.token,
             Self::Comment(v) => v.token,
         }
@@ -808,7 +813,7 @@ impl ExpectedValueType for Element {
                 Self::VariableVariants(v, _) => v.varification(owner, components, cx).await,
                 Self::VariableType(v, _) => v.varification(owner, components, cx).await,
                 Self::SimpleString(v, _) => v.varification(owner, components, cx).await,
-                Self::Call(v, _) => v.varification(owner, components, cx).await,
+                Self::Ppm(v, _) => v.varification(owner, components, cx).await,
                 Self::Meta(..) => Err(operator::E::NoReturnType.by(self)),
                 Self::Comment(..) => Err(operator::E::NoReturnType.by(self)),
             }
@@ -854,7 +859,7 @@ impl ExpectedValueType for Element {
                 Self::VariableVariants(v, _) => v.linking(variables, owner, components, cx).await,
                 Self::VariableType(v, _) => v.linking(variables, owner, components, cx).await,
                 Self::SimpleString(v, _) => v.linking(variables, owner, components, cx).await,
-                Self::Call(v, _) => v.linking(variables, owner, components, cx).await,
+                Self::Ppm(v, _) => v.linking(variables, owner, components, cx).await,
                 Self::Meta(..) => Err(operator::E::NoReturnType.by(self)),
                 Self::Comment(..) => Err(operator::E::NoReturnType.by(self)),
             }
@@ -895,7 +900,7 @@ impl ExpectedValueType for Element {
                 Self::VariableVariants(v, _) => v.expected(owner, components, cx).await,
                 Self::VariableType(v, _) => v.expected(owner, components, cx).await,
                 Self::SimpleString(v, _) => v.expected(owner, components, cx).await,
-                Self::Call(v, _) => v.expected(owner, components, cx).await,
+                Self::Ppm(v, _) => v.expected(owner, components, cx).await,
                 Self::Meta(..) => Err(operator::E::NoReturnType.by(self)),
                 Self::Comment(..) => Err(operator::E::NoReturnType.by(self)),
             }
@@ -966,7 +971,7 @@ impl TryExecute for Element {
                 Self::SimpleString(v, _) => {
                     v.try_execute(owner, components, args, cx, sc, token).await
                 }
-                Self::Call(v, _) => v.try_execute(owner, components, args, cx, sc, token).await,
+                Self::Ppm(v, _) => v.try_execute(owner, components, args, cx, sc, token).await,
                 Self::Comment(_) => Ok(None),
             };
             if let (true, Err(err)) = (self.get_metadata().tolerance, result.as_ref()) {
@@ -1045,10 +1050,10 @@ mod processing {
 mod proptest {
     use crate::{
         elements::{
-            Block, Boolean, Breaker, Call, Combination, Command, Comment, Comparing, Component,
+            Block, Boolean, Breaker, Combination, Command, Comment, Comparing, Component,
             Condition, Each, ElTarget, Element, First, Function, Gatekeeper, If, Integer, Join,
-            Meta, Metadata, Optional, PatternString, Reference, SimpleString, Subsequence, Task,
-            Values, VariableAssignation, VariableDeclaration, VariableName, VariableType,
+            Meta, Metadata, Optional, PatternString, Ppm, Reference, SimpleString, Subsequence,
+            Task, Values, VariableAssignation, VariableDeclaration, VariableName, VariableType,
             VariableVariants,
         },
         error::LinkedErr,
@@ -1067,7 +1072,7 @@ mod proptest {
                 .prop_map(|tolerance| Metadata {
                     comments: Vec::new(),
                     meta: Vec::new(),
-                    call: None,
+                    ppm: None,
                     tolerance,
                     inverting: false,
                 })

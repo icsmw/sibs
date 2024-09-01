@@ -13,48 +13,88 @@ use crate::{
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub struct Call {
-    pub token: usize,
-    pub func: Box<Element>,
+pub enum PpmCall {
+    Function(Box<Element>),
+    VectorElementAccessor(Box<Element>),
 }
 
-impl TryDissect<Call> for Call {
+impl fmt::Display for PpmCall {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Function(el) => format!(".{el}"),
+                Self::VectorElementAccessor(n) => format!("[{n}]"),
+            }
+        )
+    }
+}
+
+/// PPM - Post-processing Method
+#[derive(Debug, Clone)]
+pub struct Ppm {
+    pub token: usize,
+    pub call: PpmCall,
+}
+
+impl TryDissect<Ppm> for Ppm {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::Call);
-        if reader.move_to().char(&[&chars::DOT]).is_none() {
+        let close = reader.open_token(ElTarget::Ppm);
+        let call = if reader.move_to().char(&[&chars::DOT]).is_some() {
+            let Some(el) = Element::include(reader, &[ElTarget::Function])? else {
+                return Err(E::NoCallFunction.linked(&close(reader)));
+            };
+            PpmCall::Function(Box::new(el))
+        } else if reader
+            .group()
+            .between(&chars::OPEN_SQ_BRACKET, &chars::CLOSE_SQ_BRACKET)
+            .is_some()
+        {
+            let mut inner = reader.token()?.bound;
+            let Some(el) = Element::include(
+                &mut inner,
+                &[
+                    ElTarget::Integer,
+                    ElTarget::Function,
+                    ElTarget::VariableName,
+                ],
+            )?
+            else {
+                return Err(E::NoElementAccessor.linked(&close(reader)));
+            };
+            PpmCall::VectorElementAccessor(Box::new(el))
+        } else {
             return Ok(None);
-        }
-        let Some(el) = Element::include(reader, &[ElTarget::Function])? else {
-            return Err(E::NoCallFunction.linked(&close(reader)));
         };
-        Ok(Some(Call {
+        Ok(Some(Ppm {
             token: close(reader),
-            func: Box::new(el),
+            call,
         }))
     }
 }
 
-impl Dissect<Call, Call> for Call {}
+impl Dissect<Ppm, Ppm> for Ppm {}
 
-impl fmt::Display for Call {
+impl fmt::Display for Ppm {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.func)
+        write!(f, "{}", self.call)
     }
 }
 
-impl Formation for Call {
+impl Formation for Ppm {
     fn format(&self, cursor: &mut FormationCursor) -> String {
         format!("{}{}", cursor.offset_as_string_if(&[ElTarget::Block]), self)
     }
 }
 
-impl TokenGetter for Call {
+impl TokenGetter for Ppm {
     fn token(&self) -> usize {
         self.token
     }
 }
 
-impl ExpectedValueType for Call {
+impl ExpectedValueType for Ppm {
     fn varification<'a>(
         &'a self,
         _owner: &'a Component,
@@ -81,7 +121,7 @@ impl ExpectedValueType for Call {
         Box::pin(async move { Ok(ValueRef::Empty) })
     }
 }
-impl TryExecute for Call {
+impl TryExecute for Ppm {
     fn try_execute<'a>(
         &'a self,
         owner: Option<&'a Component>,
@@ -95,7 +135,7 @@ impl TryExecute for Call {
     }
 }
 
-impl Execute for Call {}
+impl Execute for Ppm {}
 
 #[cfg(test)]
 mod reading {
@@ -110,11 +150,11 @@ mod reading {
 
     #[tokio::test]
     async fn reading() {
-        let content = include_str!("../tests/reading/calls.sibs");
+        let content = include_str!("../tests/reading/ppm.sibs");
         let len = content.split('\n').count();
         read_string!(
             &Configuration::logs(false),
-            &include_str!("../tests/reading/calls.sibs"),
+            &include_str!("../tests/reading/ppm.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
                 while let Some(el) =
@@ -138,11 +178,11 @@ mod reading {
 
     #[tokio::test]
     async fn tokens() {
-        let content = include_str!("../tests/reading/calls.sibs");
+        let content = include_str!("../tests/reading/ppm.sibs");
         let len = content.split('\n').count();
         read_string!(
             &Configuration::logs(false),
-            &include_str!("../tests/reading/calls.sibs"),
+            &include_str!("../tests/reading/ppm.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
                 while let Some(el) =
@@ -155,10 +195,10 @@ mod reading {
                                 trim_carets(&format!("{el}")),
                                 reader.get_fragment(&el.token())?.content
                             );
-                            let call = md.call.as_ref().expect("Call function should be present");
+                            let ppm = md.ppm.as_ref().expect("Ppm function should be present");
                             assert_eq!(
-                                trim_carets(&format!(".{call}")),
-                                reader.get_fragment(&call.token())?.content
+                                trim_carets(&format!("{ppm}")),
+                                reader.get_fragment(&ppm.token())?.content
                             );
                         }
                         _ => {
@@ -173,30 +213,4 @@ mod reading {
             }
         );
     }
-
-    // #[tokio::test]
-    // async fn error() {
-    //     let samples = include_str!("../tests/error/function.sibs");
-    //     let samples = samples.split('\n').collect::<Vec<&str>>();
-    //     let mut count = 0;
-    //     let cfg = Configuration::logs(false);
-    //     for sample in samples.iter() {
-    //         count += read_string!(&cfg, sample, |reader: &mut Reader, _: &mut Sources| {
-    //             let func = Function::dissect(reader);
-    //             if func.is_ok() {
-    //                 let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-    //                 assert!(
-    //                     !reader.rest().trim().is_empty(),
-    //                     "Line {}: func: {:?}",
-    //                     count + 1,
-    //                     func
-    //                 );
-    //             } else {
-    //                 assert!(func.is_err(), "Line {}: func: {:?}", count + 1, func);
-    //             }
-    //             Ok::<usize, LinkedErr<E>>(1)
-    //         });
-    //     }
-    //     assert_eq!(count, samples.len());
-    // }
 }
