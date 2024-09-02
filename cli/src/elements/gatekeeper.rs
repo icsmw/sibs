@@ -1,7 +1,7 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{Component, ElTarget, Element, Reference},
+    elements::{ElTarget, Element, Reference},
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
@@ -67,7 +67,6 @@ impl Gatekeeper {
                     token.clone(),
                 )
                 .await?
-                .ok_or(operator::E::NoValueFromGatekeeper)?
                 .as_bool()
                 .ok_or(operator::E::NoBoolValueFromGatekeeper)?
             {
@@ -199,10 +198,9 @@ impl TryExecute for Gatekeeper {
                     token.clone(),
                 )
                 .await?
-                .ok_or(operator::E::FailToExtractConditionValue)?
                 .get::<bool>()
                 .ok_or(operator::E::FailToExtractConditionValue)?;
-            Ok(Some(Value::bool(condition)))
+            Ok(Value::bool(condition))
         })
     }
 }
@@ -306,20 +304,32 @@ mod processing {
     use tokio_util::sync::CancellationToken;
 
     use crate::{
-        elements::{Component, ElTarget, Element},
+        elements::{ElTarget, Element},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
             Configuration, Context, Journal, Scope, Value,
         },
         process_string,
-        reader::{chars, Dissect, Reader, Sources},
+        reader::{Reader, Sources},
     };
-    const CASES: &[&[(&[&str], Option<bool>)]] = &[
-        &[(&["test", "a"], None), (&["test", "b"], Some(true))],
-        &[(&["test", "a"], None), (&["test", "b"], None)],
-        &[(&["test", "a"], None), (&["test", "b"], None)],
-        &[(&["test", "a"], None), (&["test", "b"], Some(true))],
+    const CASES: &[&[(&[&str], Value)]] = &[
+        &[
+            (&["test", "a"], Value::Empty(())),
+            (&["test", "b"], Value::bool(true)),
+        ],
+        &[
+            (&["test", "a"], Value::Empty(())),
+            (&["test", "b"], Value::Empty(())),
+        ],
+        &[
+            (&["test", "a"], Value::Empty(())),
+            (&["test", "b"], Value::Empty(())),
+        ],
+        &[
+            (&["test", "a"], Value::Empty(())),
+            (&["test", "b"], Value::bool(true)),
+        ],
     ];
     #[tokio::test]
     async fn reading() {
@@ -354,7 +364,7 @@ mod processing {
                             )
                             .await
                             .expect("Component is executed");
-                        assert_eq!(result.is_some(), expected_result.is_some());
+                        assert_eq!(result, *expected_result);
                     }
                 }
                 Ok::<(), LinkedErr<E>>(())

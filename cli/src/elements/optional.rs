@@ -1,7 +1,7 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{Component, ElTarget, Element},
+    elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
@@ -160,11 +160,10 @@ impl TryExecute for Optional {
                     token.clone(),
                 )
                 .await?
-                .ok_or(operator::E::FailToExtractConditionValue)?
                 .get::<bool>()
                 .ok_or(operator::E::FailToExtractConditionValue)?;
             if !condition {
-                Ok(None)
+                Ok(Value::empty())
             } else {
                 self.action
                     .execute(owner, components, args, prev, cx, sc, token)
@@ -315,8 +314,7 @@ mod processing {
                             sc.clone(),
                             CancellationToken::new(),
                         )
-                        .await?
-                        .expect("Task returns some value");
+                        .await?;
                     assert_eq!(
                         result.as_string().expect("Task returns string value"),
                         "true".to_owned()

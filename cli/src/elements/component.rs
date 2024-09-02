@@ -297,7 +297,7 @@ impl TryExecute for Component {
                     .execute(owner, components, &args[1..], prev, cx, sc.clone(), token)
                     .await
             } else {
-                Ok(None)
+                Ok(Value::Empty(()))
             };
             sc.destroy().await?;
             result
@@ -470,8 +470,7 @@ mod processing {
                             sc.clone(),
                             CancellationToken::new(),
                         )
-                        .await?
-                        .expect("component returns some value");
+                        .await?;
                     assert_eq!(
                         result.as_string().expect("Task returns string value"),
                         "true".to_owned()

@@ -1,7 +1,7 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{Component, ElTarget, Element},
+    elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
@@ -196,14 +196,12 @@ impl TryExecute for Comparing {
                     sc.clone(),
                     token.clone(),
                 )
-                .await?
-                .ok_or(operator::E::NoResultFromLeftOnComparing)?;
+                .await?;
             let right = self
                 .right
                 .execute(owner, components, args, prev, cx, sc, token)
-                .await?
-                .ok_or(operator::E::NoResultFromRightOnComparing)?;
-            Ok(Some(match self.cmp {
+                .await?;
+            Ok(match self.cmp {
                 Cmp::LeftBig | Cmp::RightBig => {
                     let left = left.as_num().ok_or(operator::E::FailToGetIntegerValue)?;
                     let right = right.as_num().ok_or(operator::E::FailToGetIntegerValue)?;
@@ -228,11 +226,10 @@ impl TryExecute for Comparing {
                             || (matches!(self.cmp, Cmp::NotEqual) && left != right),
                     )
                 }
-            }))
+            })
         })
     }
 }
-
 
 #[cfg(test)]
 mod reading {

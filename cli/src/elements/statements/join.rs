@@ -173,7 +173,7 @@ impl TryExecute for Join {
             while let Some(result) = futures.next().await {
                 match result {
                     Ok(Ok(result)) => {
-                        results.push(Ok(result.unwrap_or_else(Value::empty)));
+                        results.push(Ok(result));
                     }
                     Ok(Err(err)) => {
                         if !token.is_cancelled() {
@@ -191,7 +191,7 @@ impl TryExecute for Join {
         }
         Box::pin(async move {
             let Element::Values(values, _) = self.elements.as_ref() else {
-                return Ok(None);
+                return Ok(Value::empty());
             };
             let mut tasks = values
                 .elements
@@ -227,7 +227,7 @@ impl TryExecute for Join {
                             }
                         };
                     }
-                    Ok(Some(Value::Vec(output)))
+                    Ok(Value::Vec(output))
                 }
                 Err(err) => Err(err.into()),
             }
@@ -351,8 +351,7 @@ mod processing {
                         CancellationToken::new(),
                     )
                     .await
-                    .expect("run is successfull")
-                    .expect("join returns vector of results");
+                    .expect("run is successfull");
                 assert!(results.get::<Vec<Value>>().is_some());
                 assert_eq!(
                     results
@@ -372,8 +371,7 @@ mod processing {
                         CancellationToken::new(),
                     )
                     .await
-                    .expect("run is successfull")
-                    .expect("join returns vector of results");
+                    .expect("run is successfull");
                 assert!(results.get::<Vec<Value>>().is_some());
                 assert_eq!(
                     results

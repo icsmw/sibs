@@ -12,7 +12,7 @@ use tokio_util::sync::CancellationToken;
 pub use variables::*;
 
 pub type ExecutePinnedResult<'a> = Pin<Box<dyn Future<Output = ExecuteResult> + 'a + Send>>;
-pub type ExecuteResult = Result<Option<Value>, LinkedErr<E>>;
+pub type ExecuteResult = Result<Value, LinkedErr<E>>;
 pub type LinkingResult<'a> = Pin<Box<dyn Future<Output = Result<(), LinkedErr<E>>> + 'a + Send>>;
 pub type VerificationResult<'a> =
     Pin<Box<dyn Future<Output = Result<(), LinkedErr<E>>> + 'a + Send>>;
@@ -81,7 +81,7 @@ pub trait Execute {
         Box::pin(async move {
             if cx.is_aborting() {
                 cx.journal.warn("runner", "skipping, because aborting");
-                return Ok(None);
+                return Ok(Value::empty());
             }
             cx.atlas.set_map_position(self.token()).await?;
             let result = self

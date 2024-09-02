@@ -828,7 +828,7 @@ impl ExpectedValueType for Element {
                 Self::Block(v, _) => v.varification(owner, components, cx).await,
                 Self::Command(v, _) => v.varification(owner, components, cx).await,
                 Self::Task(v, _) => v.varification(owner, components, cx).await,
-                Self::Component(v, _) => v.varification(&self, components, cx).await,
+                Self::Component(v, _) => v.varification(self, components, cx).await,
                 Self::Integer(v, _) => v.varification(owner, components, cx).await,
                 Self::Boolean(v, _) => v.varification(owner, components, cx).await,
                 Self::VariableDeclaration(v, _) => v.varification(owner, components, cx).await,
@@ -872,7 +872,7 @@ impl ExpectedValueType for Element {
                 Self::Block(v, _) => v.linking(variables, owner, components, cx).await,
                 Self::Command(v, _) => v.linking(variables, owner, components, cx).await,
                 Self::Task(v, _) => v.linking(variables, owner, components, cx).await,
-                Self::Component(v, _) => v.linking(variables, &self, components, cx).await,
+                Self::Component(v, _) => v.linking(variables, self, components, cx).await,
                 Self::Integer(v, _) => v.linking(variables, owner, components, cx).await,
                 Self::Boolean(v, _) => v.linking(variables, owner, components, cx).await,
                 Self::VariableDeclaration(v, _) => {
@@ -1036,7 +1036,7 @@ impl TryExecute for Element {
                     v.try_execute(owner, components, args, prev, cx, sc, token)
                         .await
                 }
-                Self::Meta(..) => Ok(None),
+                Self::Meta(..) => Ok(Value::empty()),
                 Self::VariableDeclaration(v, _) => {
                     v.try_execute(owner, components, args, prev, cx, sc, token)
                         .await
@@ -1057,24 +1057,25 @@ impl TryExecute for Element {
                     v.try_execute(owner, components, args, prev, cx, sc, token)
                         .await
                 }
-                Self::Comment(_) => Ok(None),
+                Self::Comment(_) => Ok(Value::empty()),
             };
             if let (true, Err(err)) = (self.get_metadata().tolerance, result.as_ref()) {
                 journal.as_tolerant(&err.uuid);
-                return Ok(None);
+                return Ok(Value::empty());
             }
-            if let (Ok(res), Element::Function(_, md)) = (result.as_ref(), self) {
-                if md.inverting && res.is_none() {
-                    return Err(operator::E::InvertingOnEmptyReturn.by(self));
-                }
-                if let (true, Some(res)) = (md.inverting, res) {
-                    let Some(b_res) = res.as_bool() else {
-                        return Err(operator::E::InvertingOnNotBool.by(self));
-                    };
-                    return Ok(Some(Value::bool(!b_res)));
-                }
-            }
-            result
+            let output = result?;
+            Ok(
+                if self.get_metadata().inverting && matches!(self, Element::Function(..)) {
+                    Value::bool(
+                        !output
+                            .not_empty_or(operator::E::InvertingOnEmptyReturn.by(self))?
+                            .as_bool()
+                            .ok_or(operator::E::InvertingOnNotBool.by(self))?,
+                    )
+                } else {
+                    output
+                },
+            )
         })
     }
 }
@@ -1117,18 +1118,16 @@ mod processing {
             },
             |elements: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for el in elements.iter() {
-                    assert!(el
-                        .execute(
-                            None,
-                            &[],
-                            &[],
-                            &None,
-                            cx.clone(),
-                            sc.clone(),
-                            CancellationToken::new()
-                        )
-                        .await?
-                        .is_none());
+                    el.execute(
+                        None,
+                        &[],
+                        &[],
+                        &None,
+                        cx.clone(),
+                        sc.clone(),
+                        CancellationToken::new(),
+                    )
+                    .await?;
                 }
                 Ok::<(), LinkedErr<E>>(())
             }
@@ -1142,8 +1141,8 @@ mod proptest {
         elements::{
             Block, Boolean, Breaker, Combination, Command, Comment, Comparing, Component,
             Condition, Each, ElTarget, Element, First, Function, Gatekeeper, If, Integer, Join,
-            Meta, Metadata, Optional, PatternString, Ppm, Reference, SimpleString, Subsequence,
-            Task, Values, VariableAssignation, VariableDeclaration, VariableName, VariableType,
+            Meta, Metadata, Optional, PatternString, Reference, SimpleString, Subsequence, Task,
+            Values, VariableAssignation, VariableDeclaration, VariableName, VariableType,
             VariableVariants,
         },
         error::LinkedErr,

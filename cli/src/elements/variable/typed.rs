@@ -137,7 +137,7 @@ impl TryExecute for VariableType {
             } else {
                 args[0].to_owned()
             };
-            Ok(Some(match &self.var_type {
+            Ok(match &self.var_type {
                 Types::String => {
                     Value::String(value.as_string().ok_or(operator::E::ParseStringError(
                         Types::String.to_string(),
@@ -156,7 +156,7 @@ impl TryExecute for VariableType {
                         "Value isn't bool".to_string(),
                     ))?)
                 }
-            }))
+            })
         })
     }
 }

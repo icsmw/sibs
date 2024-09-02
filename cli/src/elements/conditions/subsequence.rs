@@ -1,7 +1,7 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{Cmb, Component, ElTarget, Element},
+    elements::{Cmb, ElTarget, Element},
     error::LinkedErr,
     inf::{
         Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
@@ -192,18 +192,17 @@ impl TryExecute for Subsequence {
                         sc.clone(),
                         token.clone(),
                     )
-                    .await?
-                    .ok_or(E::NoValueFromSubsequenceElement)?;
+                    .await?;
                 if let Some(cmb) = value.get::<Cmb>() {
                     match cmb {
                         Cmb::And => {
                             if !last_value {
-                                return Ok(Some(Value::bool(false)));
+                                return Ok(Value::bool(false));
                             }
                         }
                         Cmb::Or => {
                             if last_value {
-                                return Ok(Some(Value::bool(true)));
+                                return Ok(Value::bool(true));
                             }
                         }
                     }
@@ -213,11 +212,10 @@ impl TryExecute for Subsequence {
                     Err(E::FailToParseValueOfSubsequenceElement)?;
                 }
             }
-            Ok(Some(Value::bool(last_value)))
+            Ok(Value::bool(last_value))
         })
     }
 }
-
 
 #[cfg(test)]
 mod reading {

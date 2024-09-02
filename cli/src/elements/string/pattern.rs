@@ -1,7 +1,7 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{string, Component, ElTarget, Element},
+    elements::{string, ElTarget, Element},
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
@@ -158,17 +158,15 @@ impl TryExecute for PatternString {
                                 token.clone()
                             )
                             .await?
-                            .ok_or(operator::E::FailToExtractValue)?
                             .as_string()
                             .ok_or(operator::E::FailToGetValueAsString)?
                     );
                 }
             }
-            Ok(Some(Value::String(output)))
+            Ok(Value::String(output))
         })
     }
 }
-
 
 #[cfg(test)]
 mod reading {

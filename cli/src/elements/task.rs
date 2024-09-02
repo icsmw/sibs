@@ -2,8 +2,7 @@ use tokio_util::sync::CancellationToken;
 
 use crate::{
     elements::{
-        Boolean, Component, ElTarget, Element, Integer, Metadata, PatternString, Reference,
-        SimpleString,
+        Boolean, ElTarget, Element, Integer, Metadata, PatternString, Reference, SimpleString,
     },
     error::LinkedErr,
     inf::{
@@ -561,8 +560,7 @@ mod processing {
                             sc.clone(),
                             CancellationToken::new(),
                         )
-                        .await?
-                        .expect("Task returns some value");
+                        .await?;
                     assert_eq!(
                         result.as_string().expect("Task returns string value"),
                         "true".to_owned()
@@ -606,8 +604,7 @@ mod processing {
                             sc.clone(),
                             CancellationToken::new(),
                         )
-                        .await?
-                        .expect("component returns some value");
+                        .await?;
                     assert_eq!(
                         result.as_string().expect("Task returns string value"),
                         "true".to_owned()

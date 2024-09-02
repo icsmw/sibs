@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub enum Status {
-    Success(Option<String>),
+    Success(String),
     Error(String),
 }
 
@@ -18,13 +18,7 @@ impl fmt::Display for Status {
             f,
             "{}",
             match self {
-                Self::Success(result) => term::styled(format!(
-                    "[color:green]{}[/color]",
-                    result
-                        .as_ref()
-                        .map(|r| r.to_string())
-                        .unwrap_or("None".to_owned())
-                )),
+                Self::Success(result) => term::styled(format!("[color:green]{}[/color]", result)),
                 Self::Error(err) => term::styled(format!("[color:red]error[/color]: {err}")),
             }
         )

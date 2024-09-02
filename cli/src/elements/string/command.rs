@@ -1,7 +1,7 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{string, Component, ElTarget, Element},
+    elements::{string, ElTarget, Element},
     error::LinkedErr,
     inf::{
         operator, spawner, Context, Execute, ExecutePinnedResult, ExpectedResult,
@@ -148,14 +148,13 @@ impl TryExecute for Command {
                             .execute(
                                 owner,
                                 components,
-                                &args,
+                                args,
                                 prev,
                                 cx.clone(),
                                 sc.clone(),
                                 token.clone(),
                             )
                             .await?
-                            .ok_or(operator::E::FailToExtractValue.by(self))?
                             .as_string()
                             .ok_or(operator::E::FailToGetValueAsString.by(self))?,
                     );
@@ -165,11 +164,11 @@ impl TryExecute for Command {
             match spawner::run(token, &command, &cwd, cx).await {
                 Ok(None) => {
                     // Err(operator::E::SpawnedProcessCancelledError.by(self))
-                    Ok(None)
+                    Ok(Value::Empty(()))
                 }
                 Ok(Some(status)) => {
                     if status.success() {
-                        Ok(Some(Value::empty()))
+                        Ok(Value::Empty(()))
                     } else {
                         Err(operator::E::SpawnedProcessExitWithError.by(self))
                     }
@@ -179,7 +178,6 @@ impl TryExecute for Command {
         })
     }
 }
-
 
 #[cfg(test)]
 mod reading {

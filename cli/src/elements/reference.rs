@@ -294,27 +294,26 @@ impl TryExecute for Reference {
             let task = task_el.as_task()?;
             let mut args: Vec<Value> = Vec::new();
             for input in self.inputs.iter() {
-                args.push(
-                    input
-                        .execute(
-                            owner,
-                            components,
-                            inputs,
-                            prev,
-                            cx.clone(),
-                            sc.clone(),
-                            token.clone(),
-                        )
-                        .await?
-                        .ok_or(operator::E::FailToGetAnyValueAsTaskArg.by(self))?,
-                );
+                let output = input
+                    .execute(
+                        owner,
+                        components,
+                        inputs,
+                        prev,
+                        cx.clone(),
+                        sc.clone(),
+                        token.clone(),
+                    )
+                    .await?
+                    .not_empty_or(operator::E::FailToGetAnyValueAsTaskArg.by(self))?;
+                args.push(output);
             }
             let task_ref = task
                 .as_reference(
                     owner,
                     components,
                     &args,
-                    &prev,
+                    prev,
                     cx.clone(),
                     sc.clone(),
                     token.clone(),
@@ -342,7 +341,7 @@ impl TryExecute for Reference {
                     .execute(owner, components, &args, prev, cx, scope.clone(), token)
                     .await
             } else {
-                Ok(None)
+                Ok(Value::empty())
             };
             scope.destroy().await?;
             result

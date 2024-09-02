@@ -228,6 +228,17 @@ pub enum Value {
 }
 
 impl Value {
+    pub fn not_empty_or<E>(self, err: E) -> Result<Value, E> {
+        if self.is_empty() {
+            Err(err)
+        } else {
+            Ok(self)
+        }
+    }
+    pub fn is_empty(&self) -> bool {
+        matches!(self, Value::Empty(..))
+    }
+
     pub fn empty() -> Self {
         Self::Empty(())
     }

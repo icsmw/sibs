@@ -1,7 +1,7 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{Component, ElTarget, Element},
+    elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
         Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
@@ -181,7 +181,7 @@ impl TryExecute for Block {
         token: CancellationToken,
     ) -> ExecutePinnedResult {
         Box::pin(async move {
-            let mut output: Option<Value> = None;
+            let mut output = Value::empty();
             for element in self.elements.iter() {
                 output = element
                     .execute(
@@ -194,7 +194,7 @@ impl TryExecute for Block {
                         token.clone(),
                     )
                     .await?;
-                if let (Some(ElTarget::First), true) = (self.owner.as_ref(), output.is_some()) {
+                if let (Some(ElTarget::First), false) = (self.owner.as_ref(), output.is_empty()) {
                     return Ok(output);
                 }
             }

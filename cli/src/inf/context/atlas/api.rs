@@ -10,9 +10,9 @@ pub enum Demand {
     /// # Parameters
     ///
     /// * `usize` - Token
-    /// * `Option<String>` - String representation of value; None if value isn't set
+    /// * `String` - String representation of value; None if value isn't set
     /// * `oneshot::Sender<()>` - Response channel
-    AddFootprint(usize, Option<String>, oneshot::Sender<Result<(), E>>),
+    AddFootprint(usize, String, oneshot::Sender<Result<(), E>>),
     /// Add error report into trace
     ///
     /// # Parameters

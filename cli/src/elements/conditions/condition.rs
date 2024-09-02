@@ -1,7 +1,7 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{Component, ElTarget, Element},
+    elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
         Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
@@ -120,19 +120,17 @@ impl TryExecute for Condition {
         token: CancellationToken,
     ) -> ExecutePinnedResult {
         Box::pin(async move {
-            Ok(Some(Value::bool(
+            Ok(Value::bool(
                 *self
                     .subsequence
                     .execute(owner, components, args, prev, cx, sc, token)
                     .await?
-                    .ok_or(E::NoValueFromSubsequence)?
                     .get::<bool>()
                     .ok_or(E::NoBoolValueFromSubsequence)?,
-            )))
+            ))
         })
     }
 }
-
 
 #[cfg(test)]
 mod proptest {

@@ -1,7 +1,7 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{Component, ElTarget, Element},
+    elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
@@ -111,7 +111,6 @@ impl TryExecute for Thread {
                             token.clone(),
                         )
                         .await?
-                        .ok_or(operator::E::NoResultFromProviso)?
                         .get::<bool>()
                         .ok_or(operator::E::NoBoolResultFromProviso)?
                     {
@@ -119,7 +118,7 @@ impl TryExecute for Thread {
                             .execute(owner, components, args, prev, cx, sc, token)
                             .await
                     } else {
-                        Ok(None)
+                        Ok(Value::empty())
                     }
                 }
                 Self::Else(block) => {
@@ -314,7 +313,7 @@ impl TryExecute for If {
     ) -> ExecutePinnedResult {
         Box::pin(async move {
             for thread in self.threads.iter() {
-                if let Some(output) = thread
+                let output = thread
                     .try_execute(
                         owner,
                         components,
@@ -324,12 +323,12 @@ impl TryExecute for If {
                         sc.clone(),
                         token.clone(),
                     )
-                    .await?
-                {
-                    return Ok(Some(output));
+                    .await?;
+                if !output.is_empty() {
+                    return Ok(output);
                 }
             }
-            Ok(None)
+            Ok(Value::empty())
         })
     }
 }
@@ -478,8 +477,7 @@ mod processing {
                             sc.clone(),
                             CancellationToken::new(),
                         )
-                        .await?
-                        .expect("if returns some value");
+                        .await?;
                     assert_eq!(
                         result.as_string().expect("if returns string value"),
                         "true".to_owned(),

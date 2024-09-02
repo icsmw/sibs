@@ -109,7 +109,7 @@ impl TryExecute for Integer {
         _sc: Scope,
         _token: CancellationToken,
     ) -> ExecutePinnedResult {
-        Box::pin(async move { Ok(Some(Value::isize(self.value))) })
+        Box::pin(async move { Ok(Value::isize(self.value)) })
     }
 }
 

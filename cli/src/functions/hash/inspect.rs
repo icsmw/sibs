@@ -135,28 +135,28 @@ mod test {
     };
     use tokio_util::sync::CancellationToken;
 
-    type CaseExpectation<'a> = (&'a [&'a str], bool, Option<bool>);
+    type CaseExpectation<'a> = (&'a [&'a str], bool, Value);
     const CASES: &[&[CaseExpectation]] = &[
         &[
-            (&["test_a", "a"], false, Some(true)),
-            (&["test_a", "a"], false, None),
-            (&["test_a", "a"], true, Some(true)),
-            (&["test_a", "b"], false, Some(true)),
-            (&["test_a", "b"], false, Some(true)),
+            (&["test_a", "a"], false, Value::bool(true)),
+            (&["test_a", "a"], false, Value::Empty(())),
+            (&["test_a", "a"], true, Value::bool(true)),
+            (&["test_a", "b"], false, Value::bool(true)),
+            (&["test_a", "b"], false, Value::bool(true)),
         ],
         &[
-            (&["test_b", "a"], true, Some(true)),
-            (&["test_b", "a"], false, None),
-            (&["test_b", "b"], false, None),
-            (&["test_b", "a"], true, Some(true)),
-            (&["test_b", "b"], true, Some(true)),
+            (&["test_b", "a"], true, Value::bool(true)),
+            (&["test_b", "a"], false, Value::Empty(())),
+            (&["test_b", "b"], false, Value::Empty(())),
+            (&["test_b", "a"], true, Value::bool(true)),
+            (&["test_b", "b"], true, Value::bool(true)),
         ],
         &[
-            (&["test_c", "a"], true, Some(true)),
-            (&["test_c", "a"], false, None),
-            (&["test_c", "b"], false, None),
-            (&["test_c", "a"], true, Some(true)),
-            (&["test_c", "b"], true, Some(true)),
+            (&["test_c", "a"], true, Value::bool(true)),
+            (&["test_c", "a"], false, Value::Empty(())),
+            (&["test_c", "b"], false, Value::Empty(())),
+            (&["test_c", "a"], true, Value::bool(true)),
+            (&["test_c", "b"], true, Value::bool(true)),
         ],
     ];
     const TEST: &str = r#"
@@ -229,7 +229,7 @@ mod test {
                                 CancellationToken::new(),
                             )
                             .await?;
-                        assert_eq!(result.is_some(), expected_result.is_some());
+                        assert_eq!(result, *expected_result);
                     }
                 }
                 for usecase in usecases.iter_mut() {

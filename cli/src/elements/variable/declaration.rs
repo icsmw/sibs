@@ -47,7 +47,9 @@ impl VariableDeclaration {
                 token.clone(),
             )
             .await?
-            .ok_or(operator::E::NoValueToDeclareTaskArgument.linked(&self.declaration.token()))
+            .not_empty_or(
+                operator::E::NoValueToDeclareTaskArgument.linked(&self.declaration.token()),
+            )
     }
 }
 
@@ -145,7 +147,7 @@ impl TryExecute for VariableDeclaration {
                     .await?,
             )
             .await?;
-            Ok(None)
+            Ok(Value::empty())
         })
     }
 }

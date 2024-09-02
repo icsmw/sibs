@@ -113,7 +113,7 @@ impl TryExecute for VariableVariants {
                 args[0].to_owned()
             };
             if self.values.contains(&value) {
-                Ok(Some(value))
+                Ok(value)
             } else {
                 Err(operator::E::NotDeclaredValueAsArgument(
                     value.to_string(),

@@ -112,12 +112,11 @@ impl TryExecute for VariableName {
         _token: CancellationToken,
     ) -> ExecutePinnedResult {
         Box::pin(async move {
-            Ok(Some(
-                sc.get_var(&self.name)
-                    .await?
-                    .ok_or(operator::E::VariableIsNotAssigned(self.name.to_owned()))?
-                    .duplicate(),
-            ))
+            Ok(sc
+                .get_var(&self.name)
+                .await?
+                .ok_or(operator::E::VariableIsNotAssigned(self.name.to_owned()))?
+                .duplicate())
         })
     }
 }

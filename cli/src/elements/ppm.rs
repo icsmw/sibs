@@ -1,7 +1,7 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{Component, ElTarget, Element},
+    elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
@@ -143,7 +143,6 @@ impl TryExecute for Ppm {
                     let n = el
                         .execute(owner, components, args, prev, cx, sc, token)
                         .await?
-                        .ok_or(operator::E::FailToExtractAccessorIndex.by(&**el))?
                         .as_num()
                         .ok_or(operator::E::FailToExtractAccessorIndex.by(&**el))?;
                     if n < 0 {
@@ -151,7 +150,7 @@ impl TryExecute for Ppm {
                     }
                     let n = n as usize;
                     // TODO: prev value
-                    None
+                    Value::empty()
                 }
             })
         })

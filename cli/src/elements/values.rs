@@ -1,7 +1,7 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{Component, ElTarget, Element},
+    elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
         Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
@@ -174,11 +174,10 @@ impl TryExecute for Values {
                         sc.clone(),
                         token.clone(),
                     )
-                    .await?
-                    .unwrap_or(Value::empty()),
+                    .await?,
                 );
             }
-            Ok(Some(Value::Vec(values)))
+            Ok(Value::Vec(values))
         })
     }
 }
@@ -271,14 +270,14 @@ mod processing {
     use tokio_util::sync::CancellationToken;
 
     use crate::{
-        elements::{Component, ElTarget, Element},
+        elements::{ElTarget, Element},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
             Configuration, Context, Journal, Scope, Value,
         },
         process_string, read_string,
-        reader::{chars, Dissect, Reader, Sources},
+        reader::{chars, Reader, Sources},
     };
 
     const VALUES: &[(&str, &str)] = &[
@@ -321,18 +320,16 @@ mod processing {
             },
             |tasks: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
-                    assert!(task
-                        .execute(
-                            components.first(),
-                            &components,
-                            &[],
-                            &None,
-                            cx.clone(),
-                            sc.clone(),
-                            CancellationToken::new()
-                        )
-                        .await?
-                        .is_some());
+                    task.execute(
+                        components.first(),
+                        &components,
+                        &[],
+                        &None,
+                        cx.clone(),
+                        sc.clone(),
+                        CancellationToken::new(),
+                    )
+                    .await?;
                 }
                 for (name, value) in VALUES.iter() {
                     assert_eq!(

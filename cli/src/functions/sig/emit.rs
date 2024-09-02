@@ -75,8 +75,7 @@ mod test {
                         CancellationToken::new(),
                     )
                     .await
-                    .expect("run is successfull")
-                    .expect("join returns vector of results");
+                    .expect("run is successfull");
                 assert!(results.get::<Vec<Value>>().is_some());
                 assert_eq!(
                     results

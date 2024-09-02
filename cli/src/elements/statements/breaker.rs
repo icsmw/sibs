@@ -91,7 +91,7 @@ impl TryExecute for Breaker {
     ) -> ExecutePinnedResult {
         Box::pin(async move {
             sc.break_loop().await?;
-            Ok(Some(Value::empty()))
+            Ok(Value::empty())
         })
     }
 }
@@ -188,18 +188,16 @@ mod processing {
             },
             |tasks: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
-                    assert!(task
-                        .execute(
-                            None,
-                            &[],
-                            &[],
-                            &None,
-                            cx.clone(),
-                            sc.clone(),
-                            CancellationToken::new()
-                        )
-                        .await?
-                        .is_some());
+                    task.execute(
+                        None,
+                        &[],
+                        &[],
+                        &None,
+                        cx.clone(),
+                        sc.clone(),
+                        CancellationToken::new(),
+                    )
+                    .await?;
                 }
                 for (name, value) in VALUES.iter() {
                     assert_eq!(

@@ -9,7 +9,7 @@ use crate::{
 
 pub const TRACE_DEFAILT_DEEP: usize = 5;
 
-type FootprintRef = (usize, Option<String>);
+type FootprintRef = (usize, String);
 
 #[derive(Debug)]
 pub struct Footprints {
@@ -26,7 +26,7 @@ impl Footprints {
             deep: deep.unwrap_or(TRACE_DEFAILT_DEEP),
         }
     }
-    pub fn add(&mut self, token: &usize, value: Option<String>) {
+    pub fn add(&mut self, token: &usize, value: String) {
         if self.deep != 0 {
             self.footprints.push((*token, value));
             if self.footprints.len() > self.deep && !self.footprints.is_empty() {

@@ -92,7 +92,7 @@ impl TryExecute for Boolean {
         _sc: Scope,
         _token: CancellationToken,
     ) -> ExecutePinnedResult {
-        Box::pin(async move { Ok(Some(Value::bool(self.value))) })
+        Box::pin(async move { Ok(Value::bool(self.value)) })
     }
 }
 

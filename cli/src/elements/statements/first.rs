@@ -1,7 +1,7 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{Component, ElTarget, Element},
+    elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
         Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
@@ -110,7 +110,6 @@ impl TryExecute for First {
         })
     }
 }
-
 
 #[cfg(test)]
 mod reading {
@@ -231,8 +230,7 @@ mod processing {
                             sc.clone(),
                             CancellationToken::new(),
                         )
-                        .await?
-                        .expect("Task returns some value");
+                        .await?;
                     assert_eq!(
                         result.as_string().expect("Task returns string value"),
                         "true".to_owned()

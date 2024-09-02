@@ -161,13 +161,13 @@ impl TryExecute for VariableAssignation {
                 .assignation
                 .execute(owner, components, args, prev, cx, sc.clone(), token)
                 .await?
-                .ok_or(operator::E::NoValueToAssign(variable.name.clone()))?;
+                .not_empty_or(operator::E::NoValueToAssign(variable.name.clone()))?;
             if self.global {
                 sc.set_global_var(&variable.name, value).await?;
             } else {
                 sc.set_var(&variable.name, value).await?;
             }
-            Ok(Some(Value::empty()))
+            Ok(Value::empty())
         })
     }
 }
@@ -304,18 +304,16 @@ mod processing {
             },
             |tasks: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
-                    assert!(task
-                        .execute(
-                            None,
-                            &[],
-                            &[],
-                            &None,
-                            cx.clone(),
-                            sc.clone(),
-                            CancellationToken::new()
-                        )
-                        .await?
-                        .is_some());
+                    task.execute(
+                        None,
+                        &[],
+                        &[],
+                        &None,
+                        cx.clone(),
+                        sc.clone(),
+                        CancellationToken::new(),
+                    )
+                    .await?;
                 }
                 for (name, value, global) in VALUES.iter() {
                     assert_eq!(

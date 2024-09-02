@@ -1,7 +1,7 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{Component, ElTarget, Element},
+    elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
@@ -164,6 +164,7 @@ impl Function {
         self.token = token;
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn get_processed_args<'a>(
         &self,
         owner: Option<&'a Element>,
@@ -186,8 +187,7 @@ impl Function {
                     sc.clone(),
                     token.clone(),
                 )
-                .await?
-                .ok_or(operator::E::NotAllArguamentsHasReturn)?,
+                .await?,
                 arg.token(),
             ))
         }
@@ -391,9 +391,7 @@ impl TryExecute for Function {
                     token.clone(),
                 )
                 .await?;
-            Ok(Some(
-                cx.execute(&self.name, args, self.args_token, sc).await?,
-            ))
+            Ok(cx.execute(&self.name, args, self.args_token, sc).await?)
         })
     }
 }
@@ -497,14 +495,14 @@ mod processing {
     use tokio_util::sync::CancellationToken;
 
     use crate::{
-        elements::{ElTarget, Element, Task},
+        elements::{ElTarget, Element},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
             Configuration, Context, Journal, Scope,
         },
         process_string,
-        reader::{chars, Dissect, Reader, Sources},
+        reader::{chars, Reader, Sources},
     };
 
     #[tokio::test]
@@ -534,8 +532,8 @@ mod processing {
                             sc.clone(),
                             CancellationToken::new(),
                         )
-                        .await?
-                        .expect("Task returns some value");
+                        .await?;
+                    println!(">>>>>>>>>>>>>>>>>: {result}");
                     assert_eq!(
                         result.as_string().expect("Task returns string value"),
                         "true".to_owned()

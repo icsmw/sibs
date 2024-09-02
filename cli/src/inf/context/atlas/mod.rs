@@ -105,13 +105,10 @@ impl Atlas {
     /// # Returns
     ///
     /// `Ok(())` in case of footpring has been added
-    pub async fn add_footprint(&self, token: usize, value: &Option<Value>) -> Result<(), E> {
+    pub async fn add_footprint(&self, token: usize, value: &Value) -> Result<(), E> {
         let (tx, rx) = oneshot::channel();
-        self.tx.send(Demand::AddFootprint(
-            token,
-            value.as_ref().map(|v| v.to_string()),
-            tx,
-        ))?;
+        self.tx
+            .send(Demand::AddFootprint(token, value.to_string(), tx))?;
         let _ = rx.await?;
         Ok(())
     }

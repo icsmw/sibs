@@ -120,7 +120,6 @@ mod test {
                         assert_eq!(
                             result
                                 .expect("run of task is success")
-                                .expect("test returns some value")
                                 .as_string()
                                 .expect("test returns string value"),
                             "true".to_owned()

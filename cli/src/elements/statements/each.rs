@@ -1,7 +1,7 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{Component, ElTarget, Element},
+    elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
@@ -151,10 +151,9 @@ impl TryExecute for Each {
                     token.clone(),
                 )
                 .await?
-                .ok_or(operator::E::NoInputForEach)?
                 .as_strings()
                 .ok_or(operator::E::FailConvertInputIntoStringsForEach)?;
-            let mut output: Option<Value> = None;
+            let mut output: Value = Value::empty();
             let (loop_uuid, loop_token) = sc.open_loop().await?;
             let Element::VariableName(variable, _) = self.variable.as_ref() else {
                 return Err(operator::E::NoVariableName.by(self.variable.as_ref()));
@@ -179,15 +178,10 @@ impl TryExecute for Each {
                     .await?;
             }
             sc.close_loop(loop_uuid).await?;
-            Ok(if output.is_none() {
-                Some(Value::empty())
-            } else {
-                output
-            })
+            Ok(output)
         })
     }
 }
-
 
 #[cfg(test)]
 mod reading {
@@ -307,18 +301,16 @@ mod processing {
             },
             |tasks: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
-                    assert!(task
-                        .execute(
-                            None,
-                            &[],
-                            &[],
-                            &None,
-                            cx.clone(),
-                            sc.clone(),
-                            CancellationToken::new()
-                        )
-                        .await?
-                        .is_some());
+                    task.execute(
+                        None,
+                        &[],
+                        &[],
+                        &None,
+                        cx.clone(),
+                        sc.clone(),
+                        CancellationToken::new(),
+                    )
+                    .await?;
                 }
                 for (name, value) in VALUES.iter() {
                     assert_eq!(
@@ -336,7 +328,7 @@ mod processing {
 mod proptest {
 
     use crate::{
-        elements::{task::Task, Each, ElTarget, Element, VariableName},
+        elements::{task::Task, Each, ElTarget, Element},
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
