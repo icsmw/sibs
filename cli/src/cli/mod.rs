@@ -4,7 +4,7 @@ pub mod error;
 mod tests;
 
 use crate::{
-    elements::{Component, Element},
+    elements::Element,
     inf::{
         context::Context,
         journal::{self, Journal},
@@ -96,23 +96,20 @@ pub async fn process(journal: Journal) -> Result<(), E> {
     }
     let components = elements
         .into_iter()
-        .filter_map(|el| {
-            if let Element::Component(c, _) = el {
-                Some(c)
-            } else {
-                None
-            }
-        })
-        .collect::<Vec<Component>>();
+        .filter(|el| matches!(el, Element::Component(..)))
+        .collect::<Vec<Element>>();
     let result = if let Some(component) = if components.is_empty() {
         None
     } else {
         Some(income.remove(0))
     } {
-        let Some(component) = components
-            .iter()
-            .find(|comp| comp.name.to_string() == component)
-        else {
+        let Some(component) = components.iter().find(|comp| {
+            if let Ok(comp) = comp.as_component() {
+                comp.name.to_string() == component
+            } else {
+                false
+            }
+        }) else {
             return Err(E::ComponentNotExists(component.to_string()));
         };
         let sc = cx.scope.create("root", None).await?;
@@ -124,6 +121,7 @@ pub async fn process(journal: Journal) -> Result<(), E> {
                     .iter()
                     .map(|v| Value::String(v.to_string()))
                     .collect::<Vec<Value>>(),
+                &None,
                 cx.clone(),
                 sc.clone(),
                 cx.aborting.clone(),

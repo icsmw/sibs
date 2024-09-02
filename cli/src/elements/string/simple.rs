@@ -1,10 +1,10 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{Component, ElTarget},
+    elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
+        Context, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
         FormationCursor, GlobalVariablesMap, LinkingResult, Scope, TokenGetter, TryExecute, Value,
         ValueRef, VerificationResult,
     },
@@ -51,8 +51,8 @@ impl TokenGetter for SimpleString {
 impl ExpectedValueType for SimpleString {
     fn varification<'a>(
         &'a self,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move { Ok(()) })
@@ -61,16 +61,16 @@ impl ExpectedValueType for SimpleString {
     fn linking<'a>(
         &'a self,
         _variables: &'a mut GlobalVariablesMap,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move { Ok(()) })
     }
     fn expected<'a>(
         &'a self,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move { Ok(ValueRef::String) })
@@ -80,9 +80,10 @@ impl ExpectedValueType for SimpleString {
 impl TryExecute for SimpleString {
     fn try_execute<'a>(
         &'a self,
-        _owner: Option<&'a Component>,
-        _components: &'a [Component],
+        _owner: Option<&'a Element>,
+        _components: &'a [Element],
         _args: &'a [Value],
+        _prev: &'a Option<Value>,
         _cx: Context,
         _sc: Scope,
         _token: CancellationToken,
@@ -90,8 +91,6 @@ impl TryExecute for SimpleString {
         Box::pin(async move { Ok(Some(Value::String(self.value.to_string()))) })
     }
 }
-
-impl Execute for SimpleString {}
 
 #[cfg(test)]
 mod proptest {

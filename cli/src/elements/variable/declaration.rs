@@ -1,7 +1,7 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{Component, ElTarget, Element},
+    elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
@@ -20,11 +20,13 @@ pub struct VariableDeclaration {
 }
 
 impl VariableDeclaration {
+    #[allow(clippy::too_many_arguments)]
     pub async fn get_val<'a>(
         &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
+        owner: Option<&'a Element>,
+        components: &'a [Element],
         args: &'a [Value],
+        prev: &'a Option<Value>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -34,32 +36,18 @@ impl VariableDeclaration {
         } else {
             args[0].to_owned()
         };
-        let mut output = if let Element::VariableType(el, _) = self.declaration.as_ref() {
-            Some(
-                el.execute(
-                    owner,
-                    components,
-                    &[input.clone()],
-                    cx.clone(),
-                    sc.clone(),
-                    token.clone(),
-                )
-                .await?,
+        self.declaration
+            .execute(
+                owner,
+                components,
+                &[input.clone()],
+                prev,
+                cx.clone(),
+                sc.clone(),
+                token.clone(),
             )
-        } else {
-            None
-        };
-        output = if let Element::VariableVariants(el, _) = self.declaration.as_ref() {
-            Some(
-                el.execute(owner, components, &[input], cx, sc.clone(), token)
-                    .await?,
-            )
-        } else {
-            output
-        };
-        Ok(output
-            .ok_or(operator::E::FailToExtractValue)?
-            .ok_or(operator::E::NoValueToDeclareTaskArgument)?)
+            .await?
+            .ok_or(operator::E::NoValueToDeclareTaskArgument.linked(&self.declaration.token()))
     }
 }
 
@@ -98,8 +86,8 @@ impl TokenGetter for VariableDeclaration {
 impl ExpectedValueType for VariableDeclaration {
     fn varification<'a>(
         &'a self,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move { Ok(()) })
@@ -107,8 +95,8 @@ impl ExpectedValueType for VariableDeclaration {
     fn linking<'a>(
         &'a self,
         variables: &'a mut GlobalVariablesMap,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
@@ -117,7 +105,7 @@ impl ExpectedValueType for VariableDeclaration {
             };
             variables
                 .set(
-                    &owner.uuid,
+                    &owner.as_component()?.uuid,
                     el.get_name(),
                     self.declaration.expected(owner, components, cx).await?,
                 )
@@ -127,8 +115,8 @@ impl ExpectedValueType for VariableDeclaration {
     }
     fn expected<'a>(
         &'a self,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move { self.declaration.expected(owner, components, cx).await })
@@ -138,9 +126,10 @@ impl ExpectedValueType for VariableDeclaration {
 impl TryExecute for VariableDeclaration {
     fn try_execute<'a>(
         &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
+        owner: Option<&'a Element>,
+        components: &'a [Element],
         args: &'a [Value],
+        prev: &'a Option<Value>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -152,7 +141,7 @@ impl TryExecute for VariableDeclaration {
                 } else {
                     Err(operator::E::FailToGetDeclaredVariable)?
                 },
-                self.get_val(owner, components, args, cx, sc.clone(), token)
+                self.get_val(owner, components, args, prev, cx, sc.clone(), token)
                     .await?,
             )
             .await?;
@@ -160,8 +149,6 @@ impl TryExecute for VariableDeclaration {
         })
     }
 }
-
-impl Execute for VariableDeclaration {}
 
 impl fmt::Display for VariableDeclaration {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

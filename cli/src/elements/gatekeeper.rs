@@ -37,8 +37,9 @@ impl Gatekeeper {
     pub async fn skippable<'a>(
         gatekeepers: Vec<&Element>,
         task_ref: &Reference,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
+        owner: Option<&'a Element>,
+        components: &'a [Element],
+        prev: &'a Option<Value>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -46,8 +47,8 @@ impl Gatekeeper {
         if gatekeepers.is_empty() {
             return Ok(false);
         }
-        for gatekeeper in gatekeepers.iter() {
-            let Element::Gatekeeper(gatekeeper, _) = gatekeeper else {
+        for el in gatekeepers.iter() {
+            let Element::Gatekeeper(gatekeeper, _) = el else {
                 continue;
             };
             let refs = gatekeeper.get_refs();
@@ -55,11 +56,12 @@ impl Gatekeeper {
                 return Ok(false);
             }
             // On "true" - task should be done; on "false" - can be skipped.
-            if gatekeeper
+            if el
                 .execute(
                     owner,
                     components,
                     &[],
+                    prev,
                     cx.clone(),
                     sc.clone(),
                     token.clone(),
@@ -147,8 +149,8 @@ impl TokenGetter for Gatekeeper {
 impl ExpectedValueType for Gatekeeper {
     fn varification<'a>(
         &'a self,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move { Ok(()) })
@@ -156,8 +158,8 @@ impl ExpectedValueType for Gatekeeper {
     fn linking<'a>(
         &'a self,
         _variables: &'a mut GlobalVariablesMap,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move { Ok(()) })
@@ -165,8 +167,8 @@ impl ExpectedValueType for Gatekeeper {
 
     fn expected<'a>(
         &'a self,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move { Ok(ValueRef::bool) })
@@ -176,9 +178,10 @@ impl ExpectedValueType for Gatekeeper {
 impl TryExecute for Gatekeeper {
     fn try_execute<'a>(
         &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
+        owner: Option<&'a Element>,
+        components: &'a [Element],
         args: &'a [Value],
+        prev: &'a Option<Value>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -190,6 +193,7 @@ impl TryExecute for Gatekeeper {
                     owner,
                     components,
                     args,
+                    prev,
                     cx.clone(),
                     sc.clone(),
                     token.clone(),
@@ -202,8 +206,6 @@ impl TryExecute for Gatekeeper {
         })
     }
 }
-
-impl Execute for Gatekeeper {}
 
 #[cfg(test)]
 mod reading {
@@ -304,7 +306,7 @@ mod processing {
     use tokio_util::sync::CancellationToken;
 
     use crate::{
-        elements::Component,
+        elements::{Component, ElTarget, Element},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
@@ -325,14 +327,15 @@ mod processing {
             &Configuration::logs(false),
             &include_str!("../tests/processing/gatekeeper.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
-                let mut components: Vec<Component> = Vec::new();
-                while let Some(component) = src.report_err_if(Component::dissect(reader))? {
-                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-                    components.push(component);
+                let mut components: Vec<Element> = Vec::new();
+                while let Some(task) =
+                    src.report_err_if(Element::include(reader, &[ElTarget::Component]))?
+                {
+                    components.push(task);
                 }
-                Ok::<Vec<Component>, LinkedErr<E>>(components)
+                Ok::<Vec<Element>, LinkedErr<E>>(components)
             },
-            |components: Vec<Component>, cx: Context, sc: Scope, _: Journal| async move {
+            |components: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for (n, component) in components.iter().enumerate() {
                     let case = CASES[n];
                     for (args, expected_result) in case.iter() {
@@ -344,6 +347,7 @@ mod processing {
                                     .iter()
                                     .map(|s| Value::String(s.to_string()))
                                     .collect::<Vec<Value>>(),
+                                &None,
                                 cx.clone(),
                                 sc.clone(),
                                 CancellationToken::new(),

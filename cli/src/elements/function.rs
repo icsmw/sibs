@@ -166,9 +166,10 @@ impl Function {
 
     pub async fn get_processed_args<'a>(
         &self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
+        owner: Option<&'a Element>,
+        components: &'a [Element],
         args: &'a [Value],
+        prev: &'a Option<Value>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -180,6 +181,7 @@ impl Function {
                     owner,
                     components,
                     args,
+                    prev,
                     cx.clone(),
                     sc.clone(),
                     token.clone(),
@@ -254,8 +256,8 @@ impl TokenGetter for Function {
 impl ExpectedValueType for Function {
     fn varification<'a>(
         &'a self,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move {
@@ -345,8 +347,8 @@ impl ExpectedValueType for Function {
     fn linking<'a>(
         &'a self,
         variables: &'a mut GlobalVariablesMap,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
@@ -358,8 +360,8 @@ impl ExpectedValueType for Function {
     }
     fn expected<'a>(
         &'a self,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move { Ok(cx.get_func_desc(&self.name).await?.output()) })
@@ -369,9 +371,10 @@ impl ExpectedValueType for Function {
 impl TryExecute for Function {
     fn try_execute<'a>(
         &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
+        owner: Option<&'a Element>,
+        components: &'a [Element],
         inputs: &'a [Value],
+        prev: &'a Option<Value>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -382,6 +385,7 @@ impl TryExecute for Function {
                     owner,
                     components,
                     inputs,
+                    prev,
                     cx.clone(),
                     sc.clone(),
                     token.clone(),
@@ -393,8 +397,6 @@ impl TryExecute for Function {
         })
     }
 }
-
-impl Execute for Function {}
 
 #[cfg(test)]
 mod reading {
@@ -495,7 +497,7 @@ mod processing {
     use tokio_util::sync::CancellationToken;
 
     use crate::{
-        elements::Task,
+        elements::{ElTarget, Element, Task},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
@@ -511,20 +513,23 @@ mod processing {
             &Configuration::logs(false),
             &include_str!("../tests/processing/functions.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
-                let mut tasks: Vec<Task> = Vec::new();
-                while let Some(task) = src.report_err_if(Task::dissect(reader))? {
+                let mut tasks: Vec<Element> = Vec::new();
+                while let Some(task) =
+                    src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
                 }
-                Ok::<Vec<Task>, LinkedErr<E>>(tasks)
+                Ok::<Vec<Element>, LinkedErr<E>>(tasks)
             },
-            |tasks: Vec<Task>, cx: Context, sc: Scope, _: Journal| async move {
+            |tasks: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
                     let result = task
                         .execute(
                             None,
                             &[],
                             &[],
+                            &None,
                             cx.clone(),
                             sc.clone(),
                             CancellationToken::new(),

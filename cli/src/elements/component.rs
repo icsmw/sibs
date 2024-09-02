@@ -30,12 +30,12 @@ impl Component {
     pub fn get_name(&self) -> String {
         self.name.value.to_owned()
     }
-    pub fn get_task(&self, name: &str) -> Option<(&Task, Vec<&Element>)> {
+    pub fn get_task(&self, name: &str) -> Option<(&Element, Vec<&Element>)> {
         let mut gatekeepers = Vec::new();
         for el in self.elements.iter() {
-            if let Element::Task(task, _) = el {
+            if let Element::Task(task, _) = &el {
                 if task.get_name() == name {
-                    return Some((task, gatekeepers));
+                    return Some((el, gatekeepers));
                 } else {
                     gatekeepers.clear();
                 }
@@ -196,13 +196,13 @@ impl TokenGetter for Component {
 impl ExpectedValueType for Component {
     fn varification<'a>(
         &'a self,
-        _owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move {
             for el in self.elements.iter() {
-                el.varification(self, components, cx).await?;
+                el.varification(owner, components, cx).await?;
             }
             Ok(())
         })
@@ -210,21 +210,21 @@ impl ExpectedValueType for Component {
     fn linking<'a>(
         &'a self,
         variables: &'a mut GlobalVariablesMap,
-        _: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
             for el in self.elements.iter() {
-                el.linking(variables, self, components, cx).await?;
+                el.linking(variables, owner, components, cx).await?;
             }
             Ok(())
         })
     }
     fn expected<'a>(
         &'a self,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move { Ok(ValueRef::Empty) })
@@ -234,9 +234,10 @@ impl ExpectedValueType for Component {
 impl TryExecute for Component {
     fn try_execute<'a>(
         &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
+        owner: Option<&'a Element>,
+        components: &'a [Element],
         args: &'a [Value],
+        prev: &'a Option<Value>,
         cx: Context,
         _sc: Scope,
         token: CancellationToken,
@@ -248,13 +249,14 @@ impl TryExecute for Component {
                 .ok_or_else(|| {
                     operator::E::NoTaskForComponent(self.name.to_string(), self.get_tasks_names())
                 })?;
-            let (task, gatekeepers) = self.get_task(&task).ok_or_else(|| {
+            let (task_el, gatekeepers) = self.get_task(&task).ok_or_else(|| {
                 operator::E::TaskNotExists(
                     self.name.to_string(),
                     task.to_owned(),
                     self.get_tasks_names(),
                 )
             })?;
+            let task = task_el.as_task()?;
             let sc = cx
                 .scope
                 .create(
@@ -267,6 +269,7 @@ impl TryExecute for Component {
                     owner,
                     components,
                     &args[1..],
+                    prev,
                     cx.clone(),
                     sc.clone(),
                     token.clone(),
@@ -277,6 +280,7 @@ impl TryExecute for Component {
                 &task_ref,
                 owner,
                 components,
+                prev,
                 cx.clone(),
                 sc.clone(),
                 token.clone(),
@@ -289,7 +293,8 @@ impl TryExecute for Component {
                 );
             }
             let result = if !skippable {
-                task.execute(owner, components, &args[1..], cx, sc.clone(), token)
+                task_el
+                    .execute(owner, components, &args[1..], prev, cx, sc.clone(), token)
                     .await
             } else {
                 Ok(None)
@@ -299,8 +304,6 @@ impl TryExecute for Component {
         })
     }
 }
-
-impl Execute for Component {}
 
 #[cfg(test)]
 mod reading {
@@ -421,14 +424,14 @@ mod processing {
     use tokio_util::sync::CancellationToken;
 
     use crate::{
-        elements::Component,
+        elements::{ElTarget, Element},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
             Configuration, Context, Journal, Scope, Value,
         },
         process_string,
-        reader::{Dissect, Reader, Sources},
+        reader::{Reader, Sources},
     };
 
     const VALUES: &[&[&str]] = &[
@@ -444,13 +447,15 @@ mod processing {
             &Configuration::logs(false),
             &include_str!("../tests/processing/component.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
-                let mut components: Vec<Component> = Vec::new();
-                while let Some(task) = src.report_err_if(Component::dissect(reader))? {
+                let mut components: Vec<Element> = Vec::new();
+                while let Some(task) =
+                    src.report_err_if(Element::include(reader, &[ElTarget::Component]))?
+                {
                     components.push(task);
                 }
-                Ok::<Vec<Component>, LinkedErr<E>>(components)
+                Ok::<Vec<Element>, LinkedErr<E>>(components)
             },
-            |components: Vec<Component>, cx: Context, sc: Scope, _: Journal| async move {
+            |components: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for (i, component) in components.iter().enumerate() {
                     let result = component
                         .execute(
@@ -460,6 +465,7 @@ mod processing {
                                 .iter()
                                 .map(|s| Value::String(s.to_string()))
                                 .collect::<Vec<Value>>(),
+                            &None,
                             cx.clone(),
                             sc.clone(),
                             CancellationToken::new(),

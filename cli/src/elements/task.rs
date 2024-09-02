@@ -29,11 +29,13 @@ impl Task {
     pub fn get_name(&self) -> &str {
         &self.name.value
     }
+    #[allow(clippy::too_many_arguments)]
     pub async fn get_args_values<'a>(
         &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
+        owner: Option<&'a Element>,
+        components: &'a [Element],
         args: &'a [Value],
+        prev: &'a Option<Value>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -63,6 +65,7 @@ impl Task {
                             owner,
                             components,
                             &[args[i].to_owned()],
+                            prev,
                             cx.clone(),
                             sc.clone(),
                             token.clone(),
@@ -75,18 +78,21 @@ impl Task {
         }
         Ok(values)
     }
+
+    #[allow(clippy::too_many_arguments)]
     pub async fn as_reference<'a>(
         &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
+        owner: Option<&'a Element>,
+        components: &'a [Element],
         args: &'a [Value],
+        prev: &'a Option<Value>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,
     ) -> Result<Reference, LinkedErr<operator::E>> {
         let mut inputs = Vec::new();
         for arg in self
-            .get_args_values(owner, components, args, cx, sc, token)
+            .get_args_values(owner, components, args, prev, cx, sc, token)
             .await?
             .into_iter()
         {
@@ -277,8 +283,8 @@ impl TokenGetter for Task {
 impl ExpectedValueType for Task {
     fn varification<'a>(
         &'a self,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move {
@@ -294,8 +300,8 @@ impl ExpectedValueType for Task {
     fn linking<'a>(
         &'a self,
         variables: &'a mut GlobalVariablesMap,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
@@ -311,8 +317,8 @@ impl ExpectedValueType for Task {
 
     fn expected<'a>(
         &'a self,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move {
@@ -331,9 +337,10 @@ impl ExpectedValueType for Task {
 impl TryExecute for Task {
     fn try_execute<'a>(
         &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
+        owner: Option<&'a Element>,
+        components: &'a [Element],
         args: &'a [Value],
+        prev: &'a Option<Value>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -356,20 +363,16 @@ impl TryExecute for Task {
                 .by(self))?;
             }
             for (i, el) in self.declarations.iter().enumerate() {
-                if let Element::VariableDeclaration(declaration, _) = el {
-                    declaration
-                        .execute(
-                            owner,
-                            components,
-                            &[args[i].to_owned()],
-                            cx.clone(),
-                            sc.clone(),
-                            token.clone(),
-                        )
-                        .await?;
-                } else {
-                    return Err(operator::E::InvalidVariableDeclaration.by(self));
-                }
+                el.execute(
+                    owner,
+                    components,
+                    &[args[i].to_owned()],
+                    prev,
+                    cx.clone(),
+                    sc.clone(),
+                    token.clone(),
+                )
+                .await?;
             }
             for dependency in self.dependencies.iter() {
                 dependency
@@ -377,6 +380,7 @@ impl TryExecute for Task {
                         owner,
                         components,
                         &[],
+                        prev,
                         cx.clone(),
                         sc.clone(),
                         token.clone(),
@@ -384,13 +388,11 @@ impl TryExecute for Task {
                     .await?;
             }
             self.block
-                .execute(owner, components, args, cx, sc, token)
+                .execute(owner, components, args, prev, cx, sc, token)
                 .await
         })
     }
 }
-
-impl Execute for Task {}
 
 #[cfg(test)]
 mod reading {
@@ -517,14 +519,14 @@ mod processing {
     use tokio_util::sync::CancellationToken;
 
     use crate::{
-        elements::{Component, Task},
+        elements::{ElTarget, Element},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
             Configuration, Context, Journal, Scope, Value,
         },
         process_string,
-        reader::{chars, Dissect, Reader, Sources},
+        reader::{chars, Reader, Sources},
     };
 
     const VALUES: &[&[&str]] = &[&["a"], &["a", "b"], &["a"], &["a", "b"], &["a", "b", "c"]];
@@ -535,14 +537,16 @@ mod processing {
             &Configuration::logs(false),
             &include_str!("../tests/processing/tasks.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
-                let mut tasks: Vec<Task> = Vec::new();
-                while let Some(task) = src.report_err_if(Task::dissect(reader))? {
+                let mut tasks: Vec<Element> = Vec::new();
+                while let Some(task) =
+                    src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
                 }
-                Ok::<Vec<Task>, LinkedErr<E>>(tasks)
+                Ok::<Vec<Element>, LinkedErr<E>>(tasks)
             },
-            |tasks: Vec<Task>, cx: Context, sc: Scope, _: Journal| async move {
+            |tasks: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for (i, task) in tasks.iter().enumerate() {
                     let result = task
                         .execute(
@@ -552,6 +556,7 @@ mod processing {
                                 .iter()
                                 .map(|s| Value::String(s.to_string()))
                                 .collect::<Vec<Value>>(),
+                            &None,
                             cx.clone(),
                             sc.clone(),
                             CancellationToken::new(),
@@ -574,15 +579,17 @@ mod processing {
             &Configuration::logs(false),
             &include_str!("../tests/processing/deps.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
-                let mut components: Vec<Component> = Vec::new();
-                while let Some(comp) = src.report_err_if(Component::dissect(reader))? {
-                    components.push(comp);
+                let mut components: Vec<Element> = Vec::new();
+                while let Some(task) =
+                    src.report_err_if(Element::include(reader, &[ElTarget::Component]))?
+                {
+                    components.push(task);
                 }
-                Ok::<Vec<Component>, LinkedErr<E>>(components)
+                Ok::<Vec<Element>, LinkedErr<E>>(components)
             },
-            |components: Vec<Component>, cx: Context, sc: Scope, _: Journal| async move {
+            |components: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for component in components.iter() {
-                    if !component.name.value.ends_with("_run") {
+                    if !component.as_component()?.name.value.ends_with("_run") {
                         continue;
                     }
                     let result = component
@@ -594,6 +601,7 @@ mod processing {
                                 Value::String("a".to_owned()),
                                 Value::String("b".to_owned()),
                             ],
+                            &None,
                             cx.clone(),
                             sc.clone(),
                             CancellationToken::new(),

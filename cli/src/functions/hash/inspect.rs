@@ -2,7 +2,7 @@ use crate::{
     elements::FuncArg,
     error::LinkedErr,
     functions::{ExecutorPinnedResult, E},
-    inf::{tools::get_name, Value, Context, Scope},
+    inf::{tools::get_name, Context, Scope, Value},
 };
 use blake3::Hasher;
 use fshasher::{
@@ -123,15 +123,15 @@ pub fn execute(
 #[cfg(test)]
 mod test {
     use crate::{
-        elements::Component,
+        elements::{ElTarget, Element},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
             tests::*,
-            Value, Configuration, Context, Journal, Scope,
+            Configuration, Context, Journal, Scope, Value,
         },
         process_string,
-        reader::{chars, Dissect, Reader, Sources},
+        reader::{Reader, Sources},
     };
     use tokio_util::sync::CancellationToken;
 
@@ -198,14 +198,15 @@ mod test {
             &Configuration::logs(false),
             &content,
             |reader: &mut Reader, src: &mut Sources| {
-                let mut components: Vec<Component> = Vec::new();
-                while let Some(component) = src.report_err_if(Component::dissect(reader))? {
-                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-                    components.push(component);
+                let mut components: Vec<Element> = Vec::new();
+                while let Some(task) =
+                    src.report_err_if(Element::include(reader, &[ElTarget::Component]))?
+                {
+                    components.push(task);
                 }
-                Ok::<Vec<Component>, LinkedErr<E>>(components)
+                Ok::<Vec<Element>, LinkedErr<E>>(components)
             },
-            |components: Vec<Component>, cx: Context, sc: Scope, _journal: Journal| async move {
+            |components: Vec<Element>, cx: Context, sc: Scope, _journal: Journal| async move {
                 for (n, component) in components.iter().enumerate() {
                     let case = CASES[n];
                     for (args, needs_changes, expected_result) in case {
@@ -222,6 +223,7 @@ mod test {
                                     .iter()
                                     .map(|s| Value::String(s.to_string()))
                                     .collect::<Vec<Value>>(),
+                                &None,
                                 cx.clone(),
                                 sc.clone(),
                                 CancellationToken::new(),

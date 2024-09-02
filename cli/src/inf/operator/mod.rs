@@ -2,12 +2,12 @@ mod error;
 pub mod variables;
 
 use crate::{
-    elements::Component,
+    elements::{Component, Element, Metadata},
     error::LinkedErr,
     inf::{Context, Scope, Value, ValueRef},
 };
 pub use error::E;
-use std::{future::Future, pin::Pin};
+use std::{fmt::Debug, future::Future, pin::Pin};
 use tokio_util::sync::CancellationToken;
 pub use variables::*;
 
@@ -27,32 +27,34 @@ pub trait ExpectedValueType {
     fn linking<'a>(
         &'a self,
         variables: &'a mut GlobalVariablesMap,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> LinkingResult;
 
     fn varification<'a>(
         &'a self,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> VerificationResult;
 
     fn expected<'a>(
         &'a self,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> ExpectedResult;
 }
 
 pub trait TryExecute {
+    #[allow(clippy::too_many_arguments)]
     fn try_execute<'a>(
         &'a self,
-        _owner: Option<&'a Component>,
-        _components: &'a [Component],
+        _owner: Option<&'a Element>,
+        _components: &'a [Element],
         _args: &'a [Value],
+        _prev: &'a Option<Value>,
         _cx: Context,
         _sc: Scope,
         _token: CancellationToken,
@@ -62,17 +64,19 @@ pub trait TryExecute {
 }
 
 pub trait Execute {
+    #[allow(clippy::too_many_arguments)]
     fn execute<'a>(
         &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
+        owner: Option<&'a Element>,
+        components: &'a [Element],
         args: &'a [Value],
+        prev: &'a Option<Value>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,
     ) -> ExecutePinnedResult
     where
-        Self: TryExecute + TokenGetter + ExpectedValueType + Sync,
+        Self: TryExecute + TokenGetter + ExpectedValueType + Debug + Sync,
     {
         Box::pin(async move {
             if cx.is_aborting() {
@@ -81,11 +85,14 @@ pub trait Execute {
             }
             cx.atlas.set_map_position(self.token()).await?;
             let result = self
-                .try_execute(owner, components, args, cx.clone(), sc, token)
+                .try_execute(owner, components, args, prev, cx.clone(), sc, token)
                 .await;
             match result.as_ref() {
                 Ok(value) => {
                     cx.atlas.add_footprint(self.token(), value).await?;
+                    if let Some(ppm) = self.get_metadata()?.ppm.as_ref() {
+                        //
+                    }
                 }
                 Err(err) => {
                     cx.atlas.report_err(&err.link_if(&self.token())).await?;
@@ -93,5 +100,11 @@ pub trait Execute {
             }
             result
         })
+    }
+    fn get_metadata(&self) -> Result<&Metadata, LinkedErr<E>>
+    where
+        Self: TokenGetter + Debug + Sync,
+    {
+        Err(E::AttemptToGetMetadataOutOfElement(format!("{self:?}")).linked(&self.token()))
     }
 }

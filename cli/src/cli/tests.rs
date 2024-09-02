@@ -5,7 +5,7 @@ use crate::{
     error::LinkedErr,
     inf::{
         journal::{Configuration, Journal},
-        Value, Context, Execute, Scope,
+        Context, Execute, Scope, Value,
     },
     process_file,
     reader::{error::E, Reader, Sources},
@@ -21,7 +21,7 @@ async fn reading() {
         &target,
         |elements: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
             assert_eq!(elements.len(), 1);
-            let Some(Element::Component(el, _md)) = elements.first() else {
+            let Some(el) = elements.first() else {
                 panic!("Component isn't found");
             };
             assert!(el
@@ -29,6 +29,7 @@ async fn reading() {
                     None,
                     &[],
                     &[Value::String(String::from("success"))],
+                    &None,
                     cx,
                     sc,
                     CancellationToken::new()

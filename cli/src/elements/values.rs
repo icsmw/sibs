@@ -122,8 +122,8 @@ impl TokenGetter for Values {
 impl ExpectedValueType for Values {
     fn varification<'a>(
         &'a self,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move { Ok(()) })
@@ -131,16 +131,16 @@ impl ExpectedValueType for Values {
     fn linking<'a>(
         &'a self,
         _variables: &'a mut GlobalVariablesMap,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move { Ok(()) })
     }
     fn expected<'a>(
         &'a self,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move {
@@ -153,9 +153,10 @@ impl ExpectedValueType for Values {
 impl TryExecute for Values {
     fn try_execute<'a>(
         &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
+        owner: Option<&'a Element>,
+        components: &'a [Element],
         args: &'a [Value],
+        prev: &'a Option<Value>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -168,6 +169,7 @@ impl TryExecute for Values {
                         owner,
                         components,
                         args,
+                        prev,
                         cx.clone(),
                         sc.clone(),
                         token.clone(),
@@ -180,8 +182,6 @@ impl TryExecute for Values {
         })
     }
 }
-
-impl Execute for Values {}
 
 #[cfg(test)]
 mod reading {
@@ -271,7 +271,7 @@ mod processing {
     use tokio_util::sync::CancellationToken;
 
     use crate::{
-        elements::{Component, Task},
+        elements::{Component, ElTarget, Element},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
@@ -293,35 +293,40 @@ mod processing {
 
     #[tokio::test]
     async fn reading() {
-        let components: Vec<Component> = read_string!(
+        let components: Vec<Element> = read_string!(
             &Configuration::logs(false),
             &include_str!("../tests/processing/values_components.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
-                let mut components: Vec<Component> = Vec::new();
-                while let Some(component) = src.report_err_if(Component::dissect(reader))? {
-                    components.push(component);
+                let mut components: Vec<Element> = Vec::new();
+                while let Some(task) =
+                    src.report_err_if(Element::include(reader, &[ElTarget::Component]))?
+                {
+                    components.push(task);
                 }
-                Ok::<Vec<Component>, LinkedErr<E>>(components)
+                Ok::<Vec<Element>, LinkedErr<E>>(components)
             }
         );
         process_string!(
             &Configuration::logs(false),
             &include_str!("../tests/processing/values.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
-                let mut tasks: Vec<Task> = Vec::new();
-                while let Some(task) = src.report_err_if(Task::dissect(reader))? {
+                let mut tasks: Vec<Element> = Vec::new();
+                while let Some(task) =
+                    src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
                 }
-                Ok::<Vec<Task>, LinkedErr<E>>(tasks)
+                Ok::<Vec<Element>, LinkedErr<E>>(tasks)
             },
-            |tasks: Vec<Task>, cx: Context, sc: Scope, _: Journal| async move {
+            |tasks: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
                     assert!(task
                         .execute(
                             components.first(),
                             &components,
                             &[],
+                            &None,
                             cx.clone(),
                             sc.clone(),
                             CancellationToken::new()

@@ -2,7 +2,7 @@ use crate::{
     elements::FuncArg,
     error::LinkedErr,
     functions::{ExecutorPinnedResult, E},
-    inf::{tools::get_name, Value, Context, Scope},
+    inf::{tools::get_name, Context, Scope, Value},
 };
 
 pub fn name() -> String {
@@ -45,7 +45,7 @@ mod test {
         error::LinkedErr,
         inf::{
             journal::{Configuration, Journal},
-            Value, Context, Execute, Scope,
+            Context, Execute, Scope, Value,
         },
         process_file,
         reader::{error::E, Reader, Sources},
@@ -61,7 +61,7 @@ mod test {
             &target,
             |elements: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 assert_eq!(elements.len(), 1);
-                let Some(Element::Component(el, _md)) = elements.first() else {
+                let Some(el) = elements.first() else {
                     panic!("Component isn't found");
                 };
                 let results = el
@@ -69,6 +69,7 @@ mod test {
                         Some(el),
                         &[],
                         &[Value::String(String::from("run"))],
+                        &None,
                         cx.clone(),
                         sc.clone(),
                         CancellationToken::new(),

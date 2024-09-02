@@ -49,14 +49,14 @@ impl GlobalVariablesMap {
 #[cfg(test)]
 mod processing {
     use crate::{
-        elements::Component,
+        elements::{ElTarget, Element},
         error::LinkedErr,
         inf::{
             operator::{ExpectedValueType, E},
             Configuration, Context, GlobalVariablesMap, Journal, Scope,
         },
         process_string,
-        reader::{Dissect, Reader, Sources},
+        reader::{Reader, Sources},
     };
 
     #[tokio::test]
@@ -65,13 +65,15 @@ mod processing {
             &Configuration::logs(false),
             &include_str!("../../tests/verification/success.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
-                let mut components: Vec<Component> = Vec::new();
-                while let Some(task) = src.report_err_if(Component::dissect(reader))? {
+                let mut components: Vec<Element> = Vec::new();
+                while let Some(task) =
+                    src.report_err_if(Element::include(reader, &[ElTarget::Component]))?
+                {
                     components.push(task);
                 }
-                Ok::<Vec<Component>, LinkedErr<E>>(components)
+                Ok::<Vec<Element>, LinkedErr<E>>(components)
             },
-            |mut components: Vec<Component>, cx: Context, _sc: Scope, _: Journal| async move {
+            |mut components: Vec<Element>, cx: Context, _sc: Scope, _: Journal| async move {
                 let mut variables = GlobalVariablesMap::default();
                 for component in components.iter() {
                     component
@@ -80,7 +82,10 @@ mod processing {
                         .expect("linking variables is done");
                 }
                 for component in components.iter_mut() {
-                    component.link(&mut variables).expect("component linked");
+                    component
+                        .as_mut_component()?
+                        .link(&mut variables)
+                        .expect("component linked");
                 }
                 for component in components.iter() {
                     component
@@ -100,13 +105,15 @@ mod processing {
             &Configuration::logs(false),
             &include_str!("../../tests/verification/fail.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
-                let mut components: Vec<Component> = Vec::new();
-                while let Some(task) = src.report_err_if(Component::dissect(reader))? {
+                let mut components: Vec<Element> = Vec::new();
+                while let Some(task) =
+                    src.report_err_if(Element::include(reader, &[ElTarget::Component]))?
+                {
                     components.push(task);
                 }
-                Ok::<Vec<Component>, LinkedErr<E>>(components)
+                Ok::<Vec<Element>, LinkedErr<E>>(components)
             },
-            |mut components: Vec<Component>, cx: Context, _sc: Scope, _: Journal| async move {
+            |mut components: Vec<Element>, cx: Context, _sc: Scope, _: Journal| async move {
                 let mut variables = GlobalVariablesMap::default();
                 for component in components.iter() {
                     component
@@ -116,6 +123,7 @@ mod processing {
                 }
                 for component in components.iter_mut() {
                     component
+                        .as_mut_component()?
                         .link(&mut variables)
                         .expect("linking variables is done");
                 }

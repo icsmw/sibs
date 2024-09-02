@@ -103,8 +103,8 @@ impl TokenGetter for Optional {
 impl ExpectedValueType for Optional {
     fn varification<'a>(
         &'a self,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move {
@@ -115,8 +115,8 @@ impl ExpectedValueType for Optional {
     fn linking<'a>(
         &'a self,
         variables: &'a mut GlobalVariablesMap,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
@@ -128,8 +128,8 @@ impl ExpectedValueType for Optional {
     }
     fn expected<'a>(
         &'a self,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move { self.action.expected(owner, components, cx).await })
@@ -139,9 +139,10 @@ impl ExpectedValueType for Optional {
 impl TryExecute for Optional {
     fn try_execute<'a>(
         &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
+        owner: Option<&'a Element>,
+        components: &'a [Element],
         args: &'a [Value],
+        prev: &'a Option<Value>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -153,6 +154,7 @@ impl TryExecute for Optional {
                     owner,
                     components,
                     args,
+                    prev,
                     cx.clone(),
                     sc.clone(),
                     token.clone(),
@@ -165,14 +167,12 @@ impl TryExecute for Optional {
                 Ok(None)
             } else {
                 self.action
-                    .execute(owner, components, args, cx, sc, token)
+                    .execute(owner, components, args, prev, cx, sc, token)
                     .await
             }
         })
     }
 }
-
-impl Execute for Optional {}
 
 #[cfg(test)]
 mod reading {
@@ -278,14 +278,14 @@ mod processing {
     use tokio_util::sync::CancellationToken;
 
     use crate::{
-        elements::Task,
+        elements::{ElTarget, Element},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
             Configuration, Context, Journal, Scope,
         },
         process_string,
-        reader::{chars, Dissect, Reader, Sources},
+        reader::{chars, Reader, Sources},
     };
 
     #[tokio::test]
@@ -294,20 +294,23 @@ mod processing {
             &Configuration::logs(false),
             &include_str!("../tests/processing/optional.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
-                let mut tasks: Vec<Task> = Vec::new();
-                while let Some(task) = src.report_err_if(Task::dissect(reader))? {
+                let mut tasks: Vec<Element> = Vec::new();
+                while let Some(task) =
+                    src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
                 }
-                Ok::<Vec<Task>, LinkedErr<E>>(tasks)
+                Ok::<Vec<Element>, LinkedErr<E>>(tasks)
             },
-            |tasks: Vec<Task>, cx: Context, sc: Scope, _: Journal| async move {
+            |tasks: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
                     let result = task
                         .execute(
                             None,
                             &[],
                             &[],
+                            &None,
                             cx.clone(),
                             sc.clone(),
                             CancellationToken::new(),

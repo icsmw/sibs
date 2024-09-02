@@ -56,6 +56,10 @@ pub enum E {
     TaskNotExists(String, String, Vec<String>),
     #[error("Fail to extract value")]
     FailToExtractValue,
+    #[error("Fail to extract accessor index")]
+    FailToExtractAccessorIndex,
+    #[error("Accessor index has negative value: {0}")]
+    NegativeAccessorIndex(isize),
     #[error("Fail to get expected argument")]
     NoExpectedArgument,
     #[error("Fail to get declared variable")]
@@ -92,10 +96,16 @@ pub enum E {
     NoInputForEach,
     #[error("Fail to convert input for each statements into vector of strings")]
     FailConvertInputIntoStringsForEach,
+    #[error("Attempt to get access to Metadata out of Element's scope: {0}")]
+    AttemptToGetMetadataOutOfElement(String),
     #[error("Declared {0} argument(s) ([{1}]); passed {2} argument(s) ([{3}])")]
     DismatchTaskArgumentsCount(usize, String, usize, String),
     #[error("Fail to get value for declaration task's argument")]
     NoValueToDeclareTaskArgument,
+    #[error("Element isn't Task; element type: {0}")]
+    ElementIsNotTask(String),
+    #[error("Element isn't Component; element type: {0}")]
+    ElementIsNotComponent(String),
     #[error("Value \"{0}\" doesn't match to allowed: {1}")]
     NotDeclaredValueAsArgument(String, String),
     #[error("Reference has invalid number of parts")]
@@ -129,6 +139,9 @@ pub enum E {
 impl E {
     pub fn by(self, operator: &dyn TokenGetter) -> LinkedErr<E> {
         LinkedErr::new(self, Some(operator.token()))
+    }
+    pub fn linked(self, token: &usize) -> LinkedErr<E> {
+        LinkedErr::new(self, Some(*token))
     }
     pub fn unlinked(self) -> LinkedErr<E> {
         LinkedErr::new(self, None)

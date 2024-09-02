@@ -135,8 +135,8 @@ impl TokenGetter for Comparing {
 impl ExpectedValueType for Comparing {
     fn varification<'a>(
         &'a self,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move {
@@ -153,8 +153,8 @@ impl ExpectedValueType for Comparing {
     fn linking<'a>(
         &'a self,
         variables: &'a mut GlobalVariablesMap,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
@@ -165,8 +165,8 @@ impl ExpectedValueType for Comparing {
     }
     fn expected<'a>(
         &'a self,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move { Ok(ValueRef::bool) })
@@ -176,9 +176,10 @@ impl ExpectedValueType for Comparing {
 impl TryExecute for Comparing {
     fn try_execute<'a>(
         &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
+        owner: Option<&'a Element>,
+        components: &'a [Element],
         args: &'a [Value],
+        prev: &'a Option<Value>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -190,6 +191,7 @@ impl TryExecute for Comparing {
                     owner,
                     components,
                     args,
+                    prev,
                     cx.clone(),
                     sc.clone(),
                     token.clone(),
@@ -198,7 +200,7 @@ impl TryExecute for Comparing {
                 .ok_or(operator::E::NoResultFromLeftOnComparing)?;
             let right = self
                 .right
-                .execute(owner, components, args, cx, sc, token)
+                .execute(owner, components, args, prev, cx, sc, token)
                 .await?
                 .ok_or(operator::E::NoResultFromRightOnComparing)?;
             Ok(Some(match self.cmp {
@@ -231,7 +233,6 @@ impl TryExecute for Comparing {
     }
 }
 
-impl Execute for Comparing {}
 
 #[cfg(test)]
 mod reading {

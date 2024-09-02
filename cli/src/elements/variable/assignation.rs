@@ -1,7 +1,7 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{Component, ElTarget, Element},
+    elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
@@ -104,8 +104,8 @@ impl TokenGetter for VariableAssignation {
 impl ExpectedValueType for VariableAssignation {
     fn varification<'a>(
         &'a self,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move { Ok(()) })
@@ -114,8 +114,8 @@ impl ExpectedValueType for VariableAssignation {
     fn linking<'a>(
         &'a self,
         variables: &'a mut GlobalVariablesMap,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
@@ -124,7 +124,7 @@ impl ExpectedValueType for VariableAssignation {
             };
             variables
                 .set(
-                    &owner.uuid,
+                    &owner.as_component()?.uuid,
                     el.get_name(),
                     self.assignation.expected(owner, components, cx).await?,
                 )
@@ -134,8 +134,8 @@ impl ExpectedValueType for VariableAssignation {
     }
     fn expected<'a>(
         &'a self,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move { self.assignation.expected(owner, components, cx).await })
@@ -145,9 +145,10 @@ impl ExpectedValueType for VariableAssignation {
 impl TryExecute for VariableAssignation {
     fn try_execute<'a>(
         &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
+        owner: Option<&'a Element>,
+        components: &'a [Element],
         args: &'a [Value],
+        prev: &'a Option<Value>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -158,7 +159,7 @@ impl TryExecute for VariableAssignation {
             };
             let value = self
                 .assignation
-                .execute(owner, components, args, cx, sc.clone(), token)
+                .execute(owner, components, args, prev, cx, sc.clone(), token)
                 .await?
                 .ok_or(operator::E::NoValueToAssign(variable.name.clone()))?;
             if self.global {
@@ -170,8 +171,6 @@ impl TryExecute for VariableAssignation {
         })
     }
 }
-
-impl Execute for VariableAssignation {}
 
 #[cfg(test)]
 mod reading {
@@ -268,14 +267,14 @@ mod processing {
     use tokio_util::sync::CancellationToken;
 
     use crate::{
-        elements::Task,
+        elements::{ElTarget, Element},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
             Configuration, Context, Journal, Scope,
         },
         process_string,
-        reader::{chars, Dissect, Reader, Sources},
+        reader::{chars, Reader, Sources},
     };
 
     const VALUES: &[(&str, &str, bool)] = &[
@@ -294,20 +293,23 @@ mod processing {
             &Configuration::logs(false),
             &include_str!("../../tests/processing/variable_assignation.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
-                let mut tasks: Vec<Task> = Vec::new();
-                while let Some(task) = src.report_err_if(Task::dissect(reader))? {
+                let mut tasks: Vec<Element> = Vec::new();
+                while let Some(task) =
+                    src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
                 }
-                Ok::<Vec<Task>, LinkedErr<E>>(tasks)
+                Ok::<Vec<Element>, LinkedErr<E>>(tasks)
             },
-            |tasks: Vec<Task>, cx: Context, sc: Scope, _: Journal| async move {
+            |tasks: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
                     assert!(task
                         .execute(
                             None,
                             &[],
                             &[],
+                            &None,
                             cx.clone(),
                             sc.clone(),
                             CancellationToken::new()
@@ -337,7 +339,7 @@ mod processing {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        elements::{ElTarget, Element, Task, VariableAssignation, VariableName},
+        elements::{ElTarget, Element, Task, VariableAssignation},
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,

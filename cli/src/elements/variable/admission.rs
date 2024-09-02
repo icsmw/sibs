@@ -1,12 +1,12 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{Component, ElTarget},
+    elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, Scope, TokenGetter,
-        TryExecute, Value, VerificationResult,
+        operator, Context, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
+        FormationCursor, GlobalVariablesMap, LinkingResult, Scope, TokenGetter, TryExecute, Value,
+        VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -68,8 +68,8 @@ impl TokenGetter for VariableName {
 impl ExpectedValueType for VariableName {
     fn varification<'a>(
         &'a self,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move { Ok(()) })
@@ -78,20 +78,21 @@ impl ExpectedValueType for VariableName {
     fn linking<'a>(
         &'a self,
         _variables: &'a mut GlobalVariablesMap,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move { Ok(()) })
     }
     fn expected<'a>(
         &'a self,
-        owner: &'a Component,
-        _components: &'a [Component],
+        owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move {
             owner
+                .as_component()?
                 .variables
                 .get(&self.name)
                 .map_err(|e| LinkedErr::new(e, Some(self.token())))
@@ -102,9 +103,10 @@ impl ExpectedValueType for VariableName {
 impl TryExecute for VariableName {
     fn try_execute<'a>(
         &'a self,
-        _: Option<&'a Component>,
-        _: &'a [Component],
+        _: Option<&'a Element>,
+        _: &'a [Element],
         _: &'a [Value],
+        _: &'a Option<Value>,
         _: Context,
         sc: Scope,
         _token: CancellationToken,
@@ -119,8 +121,6 @@ impl TryExecute for VariableName {
         })
     }
 }
-
-impl Execute for VariableName {}
 
 impl fmt::Display for VariableName {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -4,9 +4,9 @@ use crate::{
     elements::{Component, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
-        FormationCursor, GlobalVariablesMap, LinkingResult, Scope, TokenGetter, TryExecute, Value,
-        ValueRef, VerificationResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
+        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, Scope, TokenGetter,
+        TryExecute, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -97,8 +97,8 @@ impl TokenGetter for Ppm {
 impl ExpectedValueType for Ppm {
     fn varification<'a>(
         &'a self,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move { Ok(()) })
@@ -106,36 +106,57 @@ impl ExpectedValueType for Ppm {
     fn linking<'a>(
         &'a self,
         _variables: &'a mut GlobalVariablesMap,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move { Ok(()) })
     }
     fn expected<'a>(
         &'a self,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move { Ok(ValueRef::Empty) })
     }
 }
+
 impl TryExecute for Ppm {
     fn try_execute<'a>(
         &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
+        owner: Option<&'a Element>,
+        components: &'a [Element],
         args: &'a [Value],
+        prev: &'a Option<Value>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,
     ) -> ExecutePinnedResult {
-        Box::pin(async move { Ok(None) })
+        Box::pin(async move {
+            Ok(match &self.call {
+                PpmCall::Function(func) => {
+                    func.execute(owner, components, args, prev, cx, sc, token)
+                        .await?
+                }
+                PpmCall::VectorElementAccessor(el) => {
+                    let n = el
+                        .execute(owner, components, args, prev, cx, sc, token)
+                        .await?
+                        .ok_or(operator::E::FailToExtractAccessorIndex.by(&**el))?
+                        .as_num()
+                        .ok_or(operator::E::FailToExtractAccessorIndex.by(&**el))?;
+                    if n < 0 {
+                        return Err(operator::E::NegativeAccessorIndex(n).by(&**el));
+                    }
+                    let n = n as usize;
+                    // TODO: prev value
+                    None
+                }
+            })
+        })
     }
 }
-
-impl Execute for Ppm {}
 
 #[cfg(test)]
 mod reading {

@@ -94,8 +94,8 @@ impl TokenGetter for Command {
 impl ExpectedValueType for Command {
     fn varification<'a>(
         &'a self,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move { Ok(()) })
@@ -104,8 +104,8 @@ impl ExpectedValueType for Command {
     fn linking<'a>(
         &'a self,
         variables: &'a mut GlobalVariablesMap,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
@@ -118,8 +118,8 @@ impl ExpectedValueType for Command {
 
     fn expected<'a>(
         &'a self,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move { Ok(ValueRef::Empty) })
@@ -129,9 +129,10 @@ impl ExpectedValueType for Command {
 impl TryExecute for Command {
     fn try_execute<'a>(
         &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
+        owner: Option<&'a Element>,
+        components: &'a [Element],
         args: &'a [Value],
+        prev: &'a Option<Value>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -148,6 +149,7 @@ impl TryExecute for Command {
                                 owner,
                                 components,
                                 &args,
+                                prev,
                                 cx.clone(),
                                 sc.clone(),
                                 token.clone(),
@@ -178,7 +180,6 @@ impl TryExecute for Command {
     }
 }
 
-impl Execute for Command {}
 
 #[cfg(test)]
 mod reading {

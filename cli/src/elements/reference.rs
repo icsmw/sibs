@@ -1,7 +1,7 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{Component, ElTarget, Element, Gatekeeper, Task},
+    elements::{ElTarget, Element, Gatekeeper},
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
@@ -27,24 +27,31 @@ pub struct Reference {
 impl Reference {
     fn get_linked_task<'a>(
         &'a self,
-        owner: &'a Component,
-        components: &'a [Component],
-    ) -> Result<&Task, LinkedErr<operator::E>> {
+        owner: &'a Element,
+        components: &'a [Element],
+    ) -> Result<&Element, LinkedErr<operator::E>> {
         let (master, task_name) = if self.path.len() == 1 {
-            (owner, &self.path[0])
+            (owner.as_component()?, &self.path[0])
         } else if self.path.len() == 2 {
             let master = if self.path[0] == SELF {
                 owner
             } else {
                 components
                     .iter()
-                    .find(|c| c.name.to_string() == self.path[0])
+                    .find(|c| {
+                        if let Ok(c) = c.as_component() {
+                            c.name.to_string() == self.path[0]
+                        } else {
+                            false
+                        }
+                    })
                     .ok_or(operator::E::NotFoundComponent(self.path[0].to_owned()).by(self))?
             };
-            (master, &self.path[1])
+            (master.as_component()?, &self.path[1])
         } else {
             return Err(operator::E::InvalidPartsInReference.by(self));
         };
+
         let (task, _) = master
             .get_task(task_name)
             .ok_or(operator::E::TaskNotExists(
@@ -180,26 +187,27 @@ impl TokenGetter for Reference {
 impl ExpectedValueType for Reference {
     fn varification<'a>(
         &'a self,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move {
             for el in self.inputs.iter() {
                 el.varification(owner, components, cx).await?
             }
-            let task = self.get_linked_task(owner, components)?;
-            let ValueRef::Task(args, _) = task.expected(owner, components, cx).await? else {
+            let task_el = self.get_linked_task(owner, components)?;
+            let task_ref = task_el.as_task()?;
+            let ValueRef::Task(args, _) = task_el.expected(owner, components, cx).await? else {
                 return Err(operator::E::InvalidValueRef(format!(
                     "task \"{}\" has invalid expected output",
-                    task.get_name()
+                    task_ref.get_name()
                 ))
                 .by(self));
             };
             if args.len() != self.inputs.len() {
                 return Err(operator::E::InvalidValueRef(format!(
                     "arguments count for task \"{}\" dismatch with reference inputs",
-                    task.get_name()
+                    task_ref.get_name()
                 ))
                 .by(self));
             }
@@ -217,8 +225,8 @@ impl ExpectedValueType for Reference {
     fn linking<'a>(
         &'a self,
         variables: &'a mut GlobalVariablesMap,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
@@ -230,8 +238,8 @@ impl ExpectedValueType for Reference {
     }
     fn expected<'a>(
         &'a self,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move {
@@ -245,9 +253,10 @@ impl ExpectedValueType for Reference {
 impl TryExecute for Reference {
     fn try_execute<'a>(
         &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
+        owner: Option<&'a Element>,
+        components: &'a [Element],
         inputs: &'a [Value],
+        prev: &'a Option<Value>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -255,17 +264,23 @@ impl TryExecute for Reference {
         Box::pin(async move {
             let target = owner.ok_or(operator::E::NoOwnerComponent.by(self))?;
             let (parent, task) = if self.path.len() == 1 {
-                (target, &self.path[0])
+                (target.as_component()?, &self.path[0])
             } else if self.path.len() == 2 {
                 let parent = if self.path[0] == SELF {
                     target
                 } else {
                     components
                         .iter()
-                        .find(|c| c.name.to_string() == self.path[0])
+                        .find(|c| {
+                            if let Ok(c) = c.as_component() {
+                                c.name.to_string() == self.path[0]
+                            } else {
+                                false
+                            }
+                        })
                         .ok_or(operator::E::NotFoundComponent(self.path[0].to_owned()).by(self))?
                 };
-                (parent, &self.path[1])
+                (parent.as_component()?, &self.path[1])
             } else {
                 return Err(operator::E::InvalidPartsInReference.by(self));
             };
@@ -273,9 +288,10 @@ impl TryExecute for Reference {
                 .scope
                 .create(format!("{}:{task}", parent.name), parent.get_cwd(&cx)?)
                 .await?;
-            let (task, gatekeepers) = parent.get_task(task).ok_or(
+            let (task_el, gatekeepers) = parent.get_task(task).ok_or(
                 operator::E::TaskNotFound(task.to_owned(), parent.name.to_string()).by(self),
             )?;
+            let task = task_el.as_task()?;
             let mut args: Vec<Value> = Vec::new();
             for input in self.inputs.iter() {
                 args.push(
@@ -284,6 +300,7 @@ impl TryExecute for Reference {
                             owner,
                             components,
                             inputs,
+                            prev,
                             cx.clone(),
                             sc.clone(),
                             token.clone(),
@@ -297,6 +314,7 @@ impl TryExecute for Reference {
                     owner,
                     components,
                     &args,
+                    &prev,
                     cx.clone(),
                     sc.clone(),
                     token.clone(),
@@ -307,6 +325,7 @@ impl TryExecute for Reference {
                 &task_ref,
                 owner,
                 components,
+                prev,
                 cx.clone(),
                 scope.clone(),
                 token.clone(),
@@ -319,7 +338,8 @@ impl TryExecute for Reference {
                 );
             }
             let result = if !skippable {
-                task.execute(owner, components, &args, cx, scope.clone(), token)
+                task_el
+                    .execute(owner, components, &args, prev, cx, scope.clone(), token)
                     .await
             } else {
                 Ok(None)
@@ -329,8 +349,6 @@ impl TryExecute for Reference {
         })
     }
 }
-
-impl Execute for Reference {}
 
 #[cfg(test)]
 mod reading {

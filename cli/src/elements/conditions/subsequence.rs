@@ -132,8 +132,8 @@ impl TokenGetter for Subsequence {
 impl ExpectedValueType for Subsequence {
     fn varification<'a>(
         &'a self,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move {
@@ -147,8 +147,8 @@ impl ExpectedValueType for Subsequence {
     fn linking<'a>(
         &'a self,
         variables: &'a mut GlobalVariablesMap,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
@@ -160,8 +160,8 @@ impl ExpectedValueType for Subsequence {
     }
     fn expected<'a>(
         &'a self,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move { Ok(ValueRef::bool) })
@@ -171,9 +171,10 @@ impl ExpectedValueType for Subsequence {
 impl TryExecute for Subsequence {
     fn try_execute<'a>(
         &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
+        owner: Option<&'a Element>,
+        components: &'a [Element],
         args: &'a [Value],
+        prev: &'a Option<Value>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -186,6 +187,7 @@ impl TryExecute for Subsequence {
                         owner,
                         components,
                         args,
+                        prev,
                         cx.clone(),
                         sc.clone(),
                         token.clone(),
@@ -216,7 +218,6 @@ impl TryExecute for Subsequence {
     }
 }
 
-impl Execute for Subsequence {}
 
 #[cfg(test)]
 mod reading {

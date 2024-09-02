@@ -1,10 +1,10 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{Component, ElTarget},
+    elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
+        Context, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
         FormationCursor, GlobalVariablesMap, LinkingResult, Scope, TokenGetter, TryExecute, Value,
         ValueRef, VerificationResult,
     },
@@ -53,8 +53,8 @@ impl TokenGetter for Breaker {
 impl ExpectedValueType for Breaker {
     fn varification<'a>(
         &'a self,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move { Ok(()) })
@@ -62,16 +62,16 @@ impl ExpectedValueType for Breaker {
     fn linking<'a>(
         &'a self,
         _variables: &'a mut GlobalVariablesMap,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move { Ok(()) })
     }
     fn expected<'a>(
         &'a self,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move { Ok(ValueRef::Empty) })
@@ -81,9 +81,10 @@ impl ExpectedValueType for Breaker {
 impl TryExecute for Breaker {
     fn try_execute<'a>(
         &'a self,
-        _owner: Option<&'a Component>,
-        _components: &'a [Component],
+        _owner: Option<&'a Element>,
+        _components: &'a [Element],
         _args: &'a [Value],
+        _prev: &'a Option<Value>,
         _cx: Context,
         sc: Scope,
         _token: CancellationToken,
@@ -94,8 +95,6 @@ impl TryExecute for Breaker {
         })
     }
 }
-
-impl Execute for Breaker {}
 
 #[cfg(test)]
 mod reading {
@@ -161,14 +160,14 @@ mod processing {
     use tokio_util::sync::CancellationToken;
 
     use crate::{
-        elements::Task,
+        elements::{ElTarget, Element},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
             Configuration, Context, Journal, Scope,
         },
         process_string,
-        reader::{chars, Dissect, Reader, Sources},
+        reader::{chars, Reader, Sources},
     };
     const VALUES: &[(&str, &str)] = &[("a", "two"), ("b", "one"), ("c", "one")];
 
@@ -178,20 +177,23 @@ mod processing {
             &Configuration::logs(false),
             &include_str!("../../tests/processing/break.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
-                let mut tasks: Vec<Task> = Vec::new();
-                while let Some(task) = src.report_err_if(Task::dissect(reader))? {
+                let mut tasks: Vec<Element> = Vec::new();
+                while let Some(task) =
+                    src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
                 }
-                Ok::<Vec<Task>, LinkedErr<E>>(tasks)
+                Ok::<Vec<Element>, LinkedErr<E>>(tasks)
             },
-            |tasks: Vec<Task>, cx: Context, sc: Scope, _: Journal| async move {
+            |tasks: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
                     assert!(task
                         .execute(
                             None,
                             &[],
                             &[],
+                            &None,
                             cx.clone(),
                             sc.clone(),
                             CancellationToken::new()

@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Component, ElTarget, Element},
+    elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExecuteResult, ExpectedResult,
@@ -92,8 +92,8 @@ impl TokenGetter for Join {
 impl ExpectedValueType for Join {
     fn varification<'a>(
         &'a self,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move { Ok(()) })
@@ -102,8 +102,8 @@ impl ExpectedValueType for Join {
     fn linking<'a>(
         &'a self,
         variables: &'a mut GlobalVariablesMap,
-        owner: &'a Component,
-        components: &'a [Component],
+        owner: &'a Element,
+        components: &'a [Element],
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
@@ -115,8 +115,8 @@ impl ExpectedValueType for Join {
 
     fn expected<'a>(
         &'a self,
-        _owner: &'a Component,
-        _components: &'a [Component],
+        _owner: &'a Element,
+        _components: &'a [Element],
         _cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move { Ok(ValueRef::Empty) })
@@ -126,24 +126,27 @@ impl ExpectedValueType for Join {
 impl TryExecute for Join {
     fn try_execute<'a>(
         &'a self,
-        owner: Option<&'a Component>,
-        components: &'a [Component],
+        owner: Option<&'a Element>,
+        components: &'a [Element],
         args: &'a [Value],
+        prev: &'a Option<Value>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,
     ) -> ExecutePinnedResult {
         fn clone(
-            owner: Option<&Component>,
-            components: &[Component],
+            owner: Option<&Element>,
+            components: &[Element],
             args: &[Value],
+            prev: &Option<Value>,
             cx: &Context,
             sc: &Scope,
             token: &CancellationToken,
         ) -> (
-            Option<Component>,
-            Vec<Component>,
+            Option<Element>,
+            Vec<Element>,
             Vec<Value>,
+            Option<Value>,
             Context,
             Scope,
             CancellationToken,
@@ -152,6 +155,7 @@ impl TryExecute for Join {
                 owner.cloned().clone(),
                 components.to_vec(),
                 args.to_vec(),
+                prev.clone(),
                 cx.clone(),
                 sc.clone(),
                 token.clone(),
@@ -194,16 +198,17 @@ impl TryExecute for Join {
                 .iter()
                 .cloned()
                 .map(|el| {
-                    let params = clone(owner, components, args, &cx, &sc, &token);
+                    let params = clone(owner, components, args, prev, &cx, &sc, &token);
                     spawn(async move {
                         // inside exclude will be create clone
                         el.execute(
                             params.0.as_ref(),
                             &params.1,
                             &params.2,
-                            params.3,
+                            &params.3,
                             params.4,
                             params.5,
+                            params.6,
                         )
                         .await
                     })
@@ -229,8 +234,6 @@ impl TryExecute for Join {
         })
     }
 }
-
-impl Execute for Join {}
 
 #[cfg(test)]
 mod reading {
@@ -334,7 +337,7 @@ mod processing {
             &target,
             |elements: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 assert_eq!(elements.len(), 1);
-                let Some(Element::Component(el, _md)) = elements.first() else {
+                let Some(el) = elements.first() else {
                     panic!("Component isn't found");
                 };
                 let results = el
@@ -342,6 +345,7 @@ mod processing {
                         None,
                         &[],
                         &[Value::String(String::from("test_a"))],
+                        &None,
                         cx.clone(),
                         sc.clone(),
                         CancellationToken::new(),
@@ -362,6 +366,7 @@ mod processing {
                         Some(el),
                         &[],
                         &[Value::String(String::from("test_b"))],
+                        &None,
                         cx,
                         sc,
                         CancellationToken::new(),
@@ -392,7 +397,7 @@ mod processing {
             &target,
             |elements: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 assert_eq!(elements.len(), 1);
-                let Some(Element::Component(el, _md)) = elements.first() else {
+                let Some(el) = elements.first() else {
                     panic!("Component isn't found");
                 };
                 assert!(el
@@ -400,6 +405,7 @@ mod processing {
                         Some(el),
                         &[],
                         &[Value::String(String::from("test_c"))],
+                        &None,
                         cx.clone(),
                         sc.clone(),
                         CancellationToken::new()
@@ -411,6 +417,7 @@ mod processing {
                         Some(el),
                         &[],
                         &[Value::String(String::from("test_d"))],
+                        &None,
                         cx.clone(),
                         sc.clone(),
                         CancellationToken::new()
@@ -422,6 +429,7 @@ mod processing {
                         Some(el),
                         &[],
                         &[Value::String(String::from("test_e"))],
+                        &None,
                         cx.clone(),
                         sc.clone(),
                         CancellationToken::new()
@@ -433,6 +441,7 @@ mod processing {
                         Some(el),
                         &[],
                         &[Value::String(String::from("test_f"))],
+                        &None,
                         cx.clone(),
                         sc.clone(),
                         CancellationToken::new()
