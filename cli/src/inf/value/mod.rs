@@ -474,8 +474,8 @@ impl fmt::Display for Value {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PrevValue {
-    token: usize,
-    value: Value,
+    pub token: usize,
+    pub value: Value,
 }

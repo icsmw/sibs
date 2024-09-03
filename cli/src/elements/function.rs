@@ -6,7 +6,7 @@ use crate::{
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
         Formation, FormationCursor, GlobalVariablesMap, HasOptional, HasRepeated, LinkingResult,
-        Scope, TokenGetter, TryExecute, Value, ValueRef, VerificationResult,
+        PrevValue, Scope, TokenGetter, TryExecute, Value, ValueRef, VerificationResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -166,7 +166,7 @@ impl Function {
         owner: Option<&'a Element>,
         components: &'a [Element],
         args: &'a [Value],
-        prev: &'a Option<Value>,
+        prev: &'a Option<PrevValue>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -187,9 +187,8 @@ impl Function {
                 arg.token(),
             ))
         }
-        if let Some(value) = prev {
-            // TODO: should be read token from prev value
-            values.insert(0, FuncArg::new(value.duplicate(), 0))
+        if let Some(prev) = prev {
+            values.insert(0, FuncArg::new(prev.value.duplicate(), prev.token))
         }
         Ok(values)
     }
@@ -374,7 +373,7 @@ impl TryExecute for Function {
         owner: Option<&'a Element>,
         components: &'a [Element],
         inputs: &'a [Value],
-        prev: &'a Option<Value>,
+        prev: &'a Option<PrevValue>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,

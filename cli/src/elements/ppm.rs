@@ -5,8 +5,8 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, Scope, TokenGetter,
-        TryExecute, Value, ValueRef, VerificationResult,
+        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue, Scope,
+        TokenGetter, TryExecute, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -128,13 +128,13 @@ impl TryExecute for Ppm {
         owner: Option<&'a Element>,
         components: &'a [Element],
         args: &'a [Value],
-        prev: &'a Option<Value>,
+        prev: &'a Option<PrevValue>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,
     ) -> ExecutePinnedResult {
         Box::pin(async move {
-            let Some(value) = prev else {
+            let Some(prev_value) = prev else {
                 return Err(operator::E::CallPPMWithoutPrevValue.linked(&self.token));
             };
             Ok(match &self.call {
@@ -152,7 +152,7 @@ impl TryExecute for Ppm {
                         return Err(operator::E::NegativeAccessorIndex(n).by(&**el));
                     }
                     let n = n as usize;
-                    match value {
+                    match &prev_value.value {
                         Value::String(v) => Value::String(
                             v.chars()
                                 .nth(n)
@@ -166,8 +166,10 @@ impl TryExecute for Ppm {
                             .get(n)
                             .map(|v| v.duplicate())
                             .ok_or(operator::E::OutOfBounds(v.len(), n).linked(&self.token))?,
-                        _ => Err(operator::E::AccessByIndexNotSupported(value.to_string())
-                            .linked(&self.token))?,
+                        _ => Err(operator::E::AccessByIndexNotSupported(
+                            prev_value.value.to_string(),
+                        )
+                        .linked(&self.token))?,
                     }
                 }
             })

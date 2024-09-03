@@ -37,8 +37,8 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, Scope, TokenGetter,
-        TryExecute, Value, VerificationResult,
+        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue, Scope,
+        TokenGetter, TryExecute, Value, VerificationResult,
     },
     reader::{chars, Dissect, Reader, E},
 };
@@ -936,7 +936,7 @@ impl TryExecute for Element {
         owner: Option<&'a Element>,
         components: &'a [Element],
         args: &'a [Value],
-        prev: &'a Option<Value>,
+        prev: &'a Option<PrevValue>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,

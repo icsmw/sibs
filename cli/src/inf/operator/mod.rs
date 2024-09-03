@@ -4,7 +4,7 @@ pub mod variables;
 use crate::{
     elements::{Element, Metadata},
     error::LinkedErr,
-    inf::{Context, Scope, Value, ValueRef},
+    inf::{Context, PrevValue, Scope, Value, ValueRef},
 };
 pub use error::E;
 use std::{fmt::Debug, future::Future, pin::Pin};
@@ -54,7 +54,7 @@ pub trait TryExecute {
         _owner: Option<&'a Element>,
         _components: &'a [Element],
         _args: &'a [Value],
-        _prev: &'a Option<Value>,
+        _prev: &'a Option<PrevValue>,
         _cx: Context,
         _sc: Scope,
         _token: CancellationToken,
@@ -70,7 +70,7 @@ pub trait Execute {
         owner: Option<&'a Element>,
         components: &'a [Element],
         args: &'a [Value],
-        prev: &'a Option<Value>,
+        prev: &'a Option<PrevValue>,
         cx: Context,
         sc: Scope,
         token: CancellationToken,
@@ -103,7 +103,10 @@ pub trait Execute {
                             owner,
                             components,
                             args,
-                            &Some(value),
+                            &Some(PrevValue {
+                                value,
+                                token: self.token(),
+                            }),
                             cx.clone(),
                             sc.clone(),
                             token.clone(),

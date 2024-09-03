@@ -4,7 +4,8 @@ use crate::{
     inf::{
         operator, scenario, Context, Execute, ExecutePinnedResult, ExpectedResult,
         ExpectedValueType, Formation, FormationCursor, GlobalVariablesMap, LinkingResult,
-        LocalVariablesMap, Scope, TokenGetter, TryExecute, Value, ValueRef, VerificationResult,
+        LocalVariablesMap, PrevValue, Scope, TokenGetter, TryExecute, Value, ValueRef,
+        VerificationResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -237,7 +238,7 @@ impl TryExecute for Component {
         owner: Option<&'a Element>,
         components: &'a [Element],
         args: &'a [Value],
-        prev: &'a Option<Value>,
+        prev: &'a Option<PrevValue>,
         cx: Context,
         _sc: Scope,
         token: CancellationToken,

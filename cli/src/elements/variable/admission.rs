@@ -5,8 +5,8 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, Context, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
-        FormationCursor, GlobalVariablesMap, LinkingResult, Scope, TokenGetter, TryExecute, Value,
-        VerificationResult,
+        FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue, Scope, TokenGetter,
+        TryExecute, Value, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -106,7 +106,7 @@ impl TryExecute for VariableName {
         _: Option<&'a Element>,
         _: &'a [Element],
         _: &'a [Value],
-        _: &'a Option<Value>,
+        _: &'a Option<PrevValue>,
         _: Context,
         sc: Scope,
         _token: CancellationToken,
