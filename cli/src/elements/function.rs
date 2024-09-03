@@ -160,10 +160,6 @@ impl Function {
         })
     }
 
-    pub fn set_token(&mut self, token: usize) {
-        self.token = token;
-    }
-
     #[allow(clippy::too_many_arguments)]
     pub async fn get_processed_args<'a>(
         &self,
@@ -190,6 +186,10 @@ impl Function {
                 .await?,
                 arg.token(),
             ))
+        }
+        if let Some(value) = prev {
+            // TODO: should be read token from prev value
+            values.insert(0, FuncArg::new(value.duplicate(), 0))
         }
         Ok(values)
     }

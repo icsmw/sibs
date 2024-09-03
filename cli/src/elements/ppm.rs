@@ -134,6 +134,9 @@ impl TryExecute for Ppm {
         token: CancellationToken,
     ) -> ExecutePinnedResult {
         Box::pin(async move {
+            let Some(value) = prev else {
+                return Err(operator::E::CallPPMWithoutPrevValue.linked(&self.token));
+            };
             Ok(match &self.call {
                 PpmCall::Function(func) => {
                     func.execute(owner, components, args, prev, cx, sc, token)
@@ -149,8 +152,23 @@ impl TryExecute for Ppm {
                         return Err(operator::E::NegativeAccessorIndex(n).by(&**el));
                     }
                     let n = n as usize;
-                    // TODO: prev value
-                    Value::empty()
+                    match value {
+                        Value::String(v) => Value::String(
+                            v.chars()
+                                .nth(n)
+                                .ok_or(
+                                    operator::E::OutOfBounds(v.chars().count(), n)
+                                        .linked(&self.token),
+                                )?
+                                .to_string(),
+                        ),
+                        Value::Vec(v) => v
+                            .get(n)
+                            .map(|v| v.duplicate())
+                            .ok_or(operator::E::OutOfBounds(v.len(), n).linked(&self.token))?,
+                        _ => Err(operator::E::AccessByIndexNotSupported(value.to_string())
+                            .linked(&self.token))?,
+                    }
                 }
             })
         })

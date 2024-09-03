@@ -130,6 +130,12 @@ pub enum E {
     MultipleDeclaration(String),
     #[error("Invalid value ref: {0}")]
     InvalidValueRef(String),
+    #[error("Attempt to call PPM without prev value")]
+    CallPPMWithoutPrevValue,
+    #[error("Requested element out of bounds; length of source {0}; requested index {1}")]
+    OutOfBounds(usize, usize),
+    #[error("Access by index isn't supported for: {0}")]
+    AccessByIndexNotSupported(String),
     #[error("{0}")]
     AtlasError(atlas::E),
     #[error("{0}")]

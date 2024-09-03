@@ -2,7 +2,7 @@ mod error;
 pub mod variables;
 
 use crate::{
-    elements::{Component, Element, Metadata},
+    elements::{Element, Metadata},
     error::LinkedErr,
     inf::{Context, Scope, Value, ValueRef},
 };
@@ -85,20 +85,39 @@ pub trait Execute {
             }
             cx.atlas.set_map_position(self.token()).await?;
             let result = self
-                .try_execute(owner, components, args, prev, cx.clone(), sc, token)
+                .try_execute(
+                    owner,
+                    components,
+                    args,
+                    prev,
+                    cx.clone(),
+                    sc.clone(),
+                    token.clone(),
+                )
                 .await;
-            match result.as_ref() {
+            match result {
                 Ok(value) => {
-                    cx.atlas.add_footprint(self.token(), value).await?;
-                    if let Some(ppm) = self.get_metadata()?.ppm.as_ref() {
-                        //
-                    }
+                    cx.atlas.add_footprint(self.token(), &value).await?;
+                    Ok(if let Some(ppm) = self.get_metadata()?.ppm.as_ref() {
+                        ppm.execute(
+                            owner,
+                            components,
+                            args,
+                            &Some(value),
+                            cx.clone(),
+                            sc.clone(),
+                            token.clone(),
+                        )
+                        .await?
+                    } else {
+                        value
+                    })
                 }
                 Err(err) => {
                     cx.atlas.report_err(&err.link_if(&self.token())).await?;
+                    Err(err)
                 }
             }
-            result
         })
     }
     fn get_metadata(&self) -> Result<&Metadata, LinkedErr<E>>

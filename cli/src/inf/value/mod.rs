@@ -473,3 +473,9 @@ impl fmt::Display for Value {
         write!(f, "{:?}", self)
     }
 }
+
+#[derive(Debug)]
+pub struct PrevValue {
+    token: usize,
+    value: Value,
+}
