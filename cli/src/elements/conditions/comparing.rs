@@ -5,8 +5,8 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, Formation,
-        FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
+        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -153,19 +153,14 @@ impl TryExpectedValueType for Comparing {
 
     fn try_linking<'a>(
         &'a self,
-        variables: &'a mut GlobalVariablesMap,
         owner: &'a Element,
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
-            self.left
-                .try_linking(variables, owner, components, prev, cx)
-                .await?;
-            self.right
-                .try_linking(variables, owner, components, prev, cx)
-                .await?;
+            self.left.try_linking(owner, components, prev, cx).await?;
+            self.right.try_linking(owner, components, prev, cx).await?;
             Ok(())
         })
     }

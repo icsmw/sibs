@@ -5,8 +5,8 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, Formation,
-        FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
+        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -53,7 +53,6 @@ impl TryExpectedValueType for Thread {
 
     fn try_linking<'a>(
         &'a self,
-        variables: &'a mut GlobalVariablesMap,
         owner: &'a Element,
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
@@ -62,11 +61,11 @@ impl TryExpectedValueType for Thread {
         Box::pin(async move {
             match self {
                 Self::If(sub, bl) => {
-                    sub.try_linking(variables, owner, components, prev, cx).await?;
-                    bl.try_linking(variables, owner, components, prev, cx).await?;
+                    sub.try_linking(owner, components, prev, cx).await?;
+                    bl.try_linking(owner, components, prev, cx).await?;
                 }
                 Self::Else(bl) => {
-                    bl.try_linking(variables, owner, components, prev, cx).await?;
+                    bl.try_linking(owner, components, prev, cx).await?;
                 }
             }
             Ok(())
@@ -269,7 +268,6 @@ impl TryExpectedValueType for If {
 
     fn try_linking<'a>(
         &'a self,
-        variables: &'a mut GlobalVariablesMap,
         owner: &'a Element,
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
@@ -277,7 +275,7 @@ impl TryExpectedValueType for If {
     ) -> LinkingResult {
         Box::pin(async move {
             for thr in self.threads.iter() {
-                thr.try_linking(variables, owner, components, prev, cx).await?;
+                thr.try_linking(owner, components, prev, cx).await?;
             }
             Ok(())
         })

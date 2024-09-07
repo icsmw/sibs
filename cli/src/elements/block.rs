@@ -5,8 +5,8 @@ use crate::{
     error::LinkedErr,
     inf::{
         Context, Execute, ExecutePinnedResult, ExpectedResult, Formation, FormationCursor,
-        GlobalVariablesMap, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
-        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter, TryExecute,
+        TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -142,7 +142,6 @@ impl TryExpectedValueType for Block {
     }
     fn try_linking<'a>(
         &'a self,
-        variables: &'a mut GlobalVariablesMap,
         owner: &'a Element,
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
@@ -150,7 +149,7 @@ impl TryExpectedValueType for Block {
     ) -> LinkingResult {
         Box::pin(async move {
             for el in self.elements.iter() {
-                el.try_linking(variables, owner, components, prev, cx).await?;
+                el.try_linking(owner, components, prev, cx).await?;
             }
             Ok(())
         })

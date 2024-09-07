@@ -5,8 +5,8 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, Formation,
-        FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
+        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -157,7 +157,6 @@ impl TryExpectedValueType for Gatekeeper {
     }
     fn try_linking<'a>(
         &'a self,
-        _variables: &'a mut GlobalVariablesMap,
         _owner: &'a Element,
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,

@@ -4,9 +4,9 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        Context, ExecutePinnedResult, ExpectedResult, Formation, FormationCursor,
-        GlobalVariablesMap, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
-        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        Context, ExecutePinnedResult, ExpectedResult, Formation, FormationCursor, LinkingResult,
+        PrevValue, PrevValueExpectation, Scope, TokenGetter, TryExecute, TryExpectedValueType,
+        Value, ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -62,7 +62,6 @@ impl TryExpectedValueType for Breaker {
     }
     fn try_linking<'a>(
         &'a self,
-        _variables: &'a mut GlobalVariablesMap,
         _owner: &'a Element,
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,

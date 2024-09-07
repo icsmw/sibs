@@ -37,9 +37,8 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue,
-        PrevValueExpectation, Scope, TokenGetter, TryExecute, TryExpectedValueType, Value,
-        VerificationResult,
+        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
+        TokenGetter, TryExecute, TryExpectedValueType, Value, VerificationResult,
     },
     reader::{chars, Dissect, Reader, E},
 };
@@ -851,7 +850,6 @@ impl TryExpectedValueType for Element {
     }
     fn try_linking<'a>(
         &'a self,
-        variables: &'a mut GlobalVariablesMap,
         owner: &'a Element,
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
@@ -859,60 +857,34 @@ impl TryExpectedValueType for Element {
     ) -> LinkingResult {
         Box::pin(async move {
             match self {
-                Self::Function(v, _) => v.try_linking(variables, owner, components, prev, cx).await,
-                Self::If(v, _) => v.try_linking(variables, owner, components, prev, cx).await,
-                Self::Breaker(v, _) => v.try_linking(variables, owner, components, prev, cx).await,
-                Self::Each(v, _) => v.try_linking(variables, owner, components, prev, cx).await,
-                Self::First(v, _) => v.try_linking(variables, owner, components, prev, cx).await,
-                Self::Join(v, _) => v.try_linking(variables, owner, components, prev, cx).await,
-                Self::VariableAssignation(v, _) => {
-                    v.try_linking(variables, owner, components, prev, cx).await
-                }
-                Self::Comparing(v, _) => {
-                    v.try_linking(variables, owner, components, prev, cx).await
-                }
-                Self::Combination(v, _) => {
-                    v.try_linking(variables, owner, components, prev, cx).await
-                }
-                Self::Condition(v, _) => {
-                    v.try_linking(variables, owner, components, prev, cx).await
-                }
-                Self::Subsequence(v, _) => {
-                    v.try_linking(variables, owner, components, prev, cx).await
-                }
-                Self::Optional(v, _) => v.try_linking(variables, owner, components, prev, cx).await,
-                Self::Gatekeeper(v, _) => {
-                    v.try_linking(variables, owner, components, prev, cx).await
-                }
-                Self::Reference(v, _) => {
-                    v.try_linking(variables, owner, components, prev, cx).await
-                }
-                Self::PatternString(v, _) => {
-                    v.try_linking(variables, owner, components, prev, cx).await
-                }
-                Self::VariableName(v, _) => {
-                    v.try_linking(variables, owner, components, prev, cx).await
-                }
-                Self::Values(v, _) => v.try_linking(variables, owner, components, prev, cx).await,
-                Self::Block(v, _) => v.try_linking(variables, owner, components, prev, cx).await,
-                Self::Command(v, _) => v.try_linking(variables, owner, components, prev, cx).await,
-                Self::Task(v, _) => v.try_linking(variables, owner, components, prev, cx).await,
-                Self::Component(v, _) => v.try_linking(variables, self, components, prev, cx).await,
-                Self::Integer(v, _) => v.try_linking(variables, owner, components, prev, cx).await,
-                Self::Boolean(v, _) => v.try_linking(variables, owner, components, prev, cx).await,
-                Self::VariableDeclaration(v, _) => {
-                    v.try_linking(variables, owner, components, prev, cx).await
-                }
-                Self::VariableVariants(v, _) => {
-                    v.try_linking(variables, owner, components, prev, cx).await
-                }
-                Self::VariableType(v, _) => {
-                    v.try_linking(variables, owner, components, prev, cx).await
-                }
-                Self::SimpleString(v, _) => {
-                    v.try_linking(variables, owner, components, prev, cx).await
-                }
-                Self::Ppm(v, _) => v.try_linking(variables, owner, components, prev, cx).await,
+                Self::Function(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::If(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::Breaker(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::Each(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::First(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::Join(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::VariableAssignation(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::Comparing(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::Combination(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::Condition(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::Subsequence(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::Optional(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::Gatekeeper(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::Reference(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::PatternString(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::VariableName(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::Values(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::Block(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::Command(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::Task(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::Component(v, _) => v.try_linking(self, components, prev, cx).await,
+                Self::Integer(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::Boolean(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::VariableDeclaration(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::VariableVariants(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::VariableType(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::SimpleString(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::Ppm(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::Meta(..) => Err(operator::E::NoReturnType.by(self)),
                 Self::Comment(..) => Err(operator::E::NoReturnType.by(self)),
             }

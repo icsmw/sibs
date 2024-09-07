@@ -48,7 +48,7 @@ pub struct Tracker {
 }
 
 impl Tracker {
-    pub fn init(journal: Journal) -> Self {
+    pub fn init(journal: &Journal) -> Self {
         let (tx, mut rx): (UnboundedSender<Demand>, UnboundedReceiver<Demand>) =
             unbounded_channel();
         let state = CancellationToken::new();
@@ -58,8 +58,9 @@ impl Tracker {
         };
         let own = journal.owned(String::from("Tracker"), None);
         let self_ref = instance.clone();
+        let mut progress: Progress = Progress::new(journal.cfg.as_ref().clone());
+        let journal = journal.clone();
         spawn(async move {
-            let mut progress: Progress = Progress::new(journal.cfg.as_ref().clone());
             let mut jobs: HashMap<usize, (Uuid, String)> = HashMap::new();
             while let Some(tick) = rx.recv().await {
                 match tick {

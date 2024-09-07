@@ -24,3 +24,10 @@
     @test($a: {string}, $b: a | b, $c: {string}) {
         :a:test("a");
     };
+#(ppm1)
+    @test() {
+        $strings = ("one", "two", "three");
+        $string = $strings[0];
+        :a:test($string);
+        :a:test($strings[0]);
+    };

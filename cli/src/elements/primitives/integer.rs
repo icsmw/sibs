@@ -4,9 +4,9 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        Context, ExecutePinnedResult, ExpectedResult, TryExpectedValueType, Formation,
-        FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, Value, ValueRef, VerificationResult,
+        Context, ExecutePinnedResult, ExpectedResult, Formation, FormationCursor, LinkingResult,
+        PrevValue, PrevValueExpectation, Scope, TokenGetter, TryExecute, TryExpectedValueType,
+        Value, ValueRef, VerificationResult,
     },
     reader::{Dissect, Reader, TryDissect, E},
 };
@@ -67,7 +67,6 @@ impl TryExpectedValueType for Integer {
 
     fn try_linking<'a>(
         &'a self,
-        _variables: &'a mut GlobalVariablesMap,
         _owner: &'a Element,
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,

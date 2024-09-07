@@ -4,9 +4,9 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, ExecutePinnedResult, ExpectedResult, TryExpectedValueType, Formation,
-        FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, Value, VerificationResult,
+        operator, Context, ExecutePinnedResult, ExpectedResult, Formation, FormationCursor,
+        LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter, TryExecute,
+        TryExpectedValueType, Value, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -31,6 +31,8 @@ impl TryDissect<VariableName> for VariableName {
                     &chars::EQUAL,
                     &chars::SEMICOLON,
                     &chars::COMMA,
+                    &chars::OPEN_SQ_BRACKET,
+                    &chars::DOT,
                 ])
                 .map(|(content, _char)| content)
                 .unwrap_or_else(|| reader.move_to().end());
@@ -78,7 +80,6 @@ impl TryExpectedValueType for VariableName {
 
     fn try_linking<'a>(
         &'a self,
-        _variables: &'a mut GlobalVariablesMap,
         _owner: &'a Element,
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
@@ -91,13 +92,12 @@ impl TryExpectedValueType for VariableName {
         owner: &'a Element,
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
-        _cx: &'a Context,
+        cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move {
-            owner
-                .as_component()?
-                .variables
-                .get(&self.name)
+            cx.variables
+                .get(&owner.as_component()?.uuid, &self.name)
+                .await
                 .map_err(|e| LinkedErr::new(e, Some(self.token())))
         })
     }

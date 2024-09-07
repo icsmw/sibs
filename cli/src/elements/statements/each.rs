@@ -4,9 +4,9 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, TryExpectedValueType,
-        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue,
-        PrevValueExpectation, Scope, TokenGetter, TryExecute, Value, VerificationResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, Formation,
+        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
+        TryExecute, TryExpectedValueType, Value, VerificationResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -104,21 +104,16 @@ impl TryExpectedValueType for Each {
 
     fn try_linking<'a>(
         &'a self,
-        variables: &'a mut GlobalVariablesMap,
         owner: &'a Element,
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
-            self.input
-                .try_linking(variables, owner, components, prev, cx)
-                .await?;
-            self.block
-                .try_linking(variables, owner, components, prev, cx)
-                .await?;
+            self.input.try_linking(owner, components, prev, cx).await?;
+            self.block.try_linking(owner, components, prev, cx).await?;
             self.variable
-                .try_linking(variables, owner, components, prev, cx)
+                .try_linking(owner, components, prev, cx)
                 .await?;
             Ok(())
         })

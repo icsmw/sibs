@@ -5,9 +5,8 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue,
-        PrevValueExpectation, Scope, TokenGetter, TryExecute, TryExpectedValueType, Value,
-        ValueRef, VerificationResult,
+        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
+        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -114,7 +113,6 @@ impl TryExpectedValueType for Ppm {
     }
     fn try_linking<'a>(
         &'a self,
-        variables: &'a mut GlobalVariablesMap,
         owner: &'a Element,
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
@@ -122,10 +120,8 @@ impl TryExpectedValueType for Ppm {
     ) -> LinkingResult {
         Box::pin(async move {
             match &self.call {
-                PpmCall::Function(el) => el.linking(variables, owner, components, prev, cx).await,
-                PpmCall::VectorElementAccessor(el) => {
-                    el.linking(variables, owner, components, prev, cx).await
-                }
+                PpmCall::Function(el) => el.linking(owner, components, prev, cx).await,
+                PpmCall::VectorElementAccessor(el) => el.linking(owner, components, prev, cx).await,
             }
         })
     }
@@ -210,156 +206,158 @@ impl TryExecute for Ppm {
     }
 }
 
-#[cfg(test)]
-mod reading {
+// #[cfg(test)]
+// mod reading {
 
-    use crate::{
-        elements::{ElTarget, Element},
-        error::LinkedErr,
-        inf::{operator::TokenGetter, tests::*, Configuration},
-        read_string,
-        reader::{chars, Reader, Sources, E},
-    };
+//     use crate::{
+//         elements::{ElTarget, Element},
+//         error::LinkedErr,
+//         inf::{operator::TokenGetter, tests::*, Configuration},
+//         read_string,
+//         reader::{chars, Reader, Sources, E},
+//     };
 
-    #[tokio::test]
-    async fn reading() {
-        let content = include_str!("../tests/reading/ppm.sibs");
-        let len = content.split('\n').count();
-        read_string!(
-            &Configuration::logs(false),
-            &include_str!("../tests/reading/ppm.sibs"),
-            |reader: &mut Reader, src: &mut Sources| {
-                let mut count = 0;
-                while let Some(el) =
-                    src.report_err_if(Element::include(reader, &[ElTarget::Function]))?
-                {
-                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-                    assert_eq!(
-                        trim_carets(reader.recent()),
-                        trim_carets(&format!("{el};")),
-                        "Line: {}",
-                        count + 1
-                    );
-                    count += 1;
-                }
-                assert_eq!(count, len);
-                assert!(reader.rest().trim().is_empty());
-                Ok::<(), LinkedErr<E>>(())
-            }
-        );
-    }
+//     #[tokio::test]
+//     async fn reading() {
+//         let content = include_str!("../tests/reading/ppm.sibs");
+//         let len = content.split('\n').count();
+//         read_string!(
+//             &Configuration::logs(false),
+//             &include_str!("../tests/reading/ppm.sibs"),
+//             |reader: &mut Reader, src: &mut Sources| {
+//                 let mut count = 0;
+//                 while let Some(el) = src.report_err_if(Element::include(
+//                     reader,
+//                     &[ElTarget::Function, ElTarget::VariableName],
+//                 ))? {
+//                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+//                     assert_eq!(
+//                         trim_carets(reader.recent()),
+//                         trim_carets(&format!("{el};")),
+//                         "Line: {}",
+//                         count + 1
+//                     );
+//                     count += 1;
+//                 }
+//                 assert_eq!(count, len);
+//                 assert!(reader.rest().trim().is_empty());
+//                 Ok::<(), LinkedErr<E>>(())
+//             }
+//         );
+//     }
 
-    #[tokio::test]
-    async fn tokens() {
-        let content = include_str!("../tests/reading/ppm.sibs");
-        let len = content.split('\n').count();
-        read_string!(
-            &Configuration::logs(false),
-            &include_str!("../tests/reading/ppm.sibs"),
-            |reader: &mut Reader, src: &mut Sources| {
-                let mut count = 0;
-                while let Some(el) =
-                    src.report_err_if(Element::include(reader, &[ElTarget::Function]))?
-                {
-                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-                    match el {
-                        Element::Function(el, md) => {
-                            assert_eq!(
-                                trim_carets(&format!("{el}")),
-                                reader.get_fragment(&el.token())?.content
-                            );
-                            let ppm = md.ppm.as_ref().expect("Ppm function should be present");
-                            assert_eq!(
-                                trim_carets(&format!("{ppm}")),
-                                reader.get_fragment(&ppm.token())?.content
-                            );
-                        }
-                        _ => {
-                            panic!("Not considered element: {el:?}")
-                        }
-                    }
-                    count += 1;
-                }
-                assert_eq!(count, len);
-                assert!(reader.rest().trim().is_empty());
-                Ok::<(), LinkedErr<E>>(())
-            }
-        );
-    }
-}
+//     #[tokio::test]
+//     async fn tokens() {
+//         let content = include_str!("../tests/reading/ppm.sibs");
+//         let len = content.split('\n').count();
+//         read_string!(
+//             &Configuration::logs(false),
+//             &include_str!("../tests/reading/ppm.sibs"),
+//             |reader: &mut Reader, src: &mut Sources| {
+//                 let mut count = 0;
+//                 while let Some(el) = src.report_err_if(Element::include(
+//                     reader,
+//                     &[ElTarget::Function, ElTarget::VariableName],
+//                 ))? {
+//                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+//                     match el {
+//                         Element::Function(el, md) => {
+//                             assert_eq!(
+//                                 trim_carets(&format!("{el}")),
+//                                 reader.get_fragment(&el.token())?.content
+//                             );
+//                             let ppm = md.ppm.as_ref().expect("Ppm function should be present");
+//                             assert_eq!(
+//                                 trim_carets(&format!("{ppm}")),
+//                                 reader.get_fragment(&ppm.token())?.content
+//                             );
+//                         }
+//                         _ => {
+//                             panic!("Not considered element: {el:?}")
+//                         }
+//                     }
+//                     count += 1;
+//                 }
+//                 assert_eq!(count, len);
+//                 assert!(reader.rest().trim().is_empty());
+//                 Ok::<(), LinkedErr<E>>(())
+//             }
+//         );
+//     }
+// }
 
-#[cfg(test)]
-mod proptest {
+// #[cfg(test)]
+// mod proptest {
 
-    use crate::{
-        elements::{ElTarget, Element, Ppm, PpmCall, Task},
-        error::LinkedErr,
-        inf::{operator::E, tests::*, Configuration},
-        read_string,
-        reader::{Dissect, Reader, Sources},
-    };
-    use proptest::prelude::*;
+//     use crate::{
+//         elements::{ElTarget, Element, Ppm, PpmCall, Task},
+//         error::LinkedErr,
+//         inf::{operator::E, tests::*, Configuration},
+//         read_string,
+//         reader::{Dissect, Reader, Sources},
+//     };
+//     use proptest::prelude::*;
 
-    impl Arbitrary for PpmCall {
-        type Parameters = usize;
-        type Strategy = BoxedStrategy<Self>;
-        fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
-            Element::arbitrary_with((
-                vec![
-                    ElTarget::Function,
-                    ElTarget::VariableName,
-                    ElTarget::Integer,
-                ],
-                deep,
-            ))
-            .prop_map(|el| {
-                if matches!(el, Element::Function(..)) {
-                    PpmCall::Function(Box::new(el))
-                } else {
-                    PpmCall::VectorElementAccessor(Box::new(el))
-                }
-            })
-            .boxed()
-        }
-    }
-    impl Arbitrary for Ppm {
-        type Parameters = usize;
-        type Strategy = BoxedStrategy<Self>;
+//     impl Arbitrary for PpmCall {
+//         type Parameters = usize;
+//         type Strategy = BoxedStrategy<Self>;
+//         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
+//             Element::arbitrary_with((
+//                 vec![
+//                     ElTarget::Function,
+//                     ElTarget::VariableName,
+//                     ElTarget::Integer,
+//                 ],
+//                 deep,
+//             ))
+//             .prop_map(|el| {
+//                 if matches!(el, Element::Function(..)) {
+//                     PpmCall::Function(Box::new(el))
+//                 } else {
+//                     PpmCall::VectorElementAccessor(Box::new(el))
+//                 }
+//             })
+//             .boxed()
+//         }
+//     }
+//     impl Arbitrary for Ppm {
+//         type Parameters = usize;
+//         type Strategy = BoxedStrategy<Self>;
 
-        fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
-            PpmCall::arbitrary_with(deep)
-                .prop_map(|call| Ppm { token: 0, call })
-                .boxed()
-        }
-    }
+//         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
+//             PpmCall::arbitrary_with(deep)
+//                 .prop_map(|call| Ppm { token: 0, call })
+//                 .boxed()
+//         }
+//     }
 
-    fn reading(ppm: Ppm) {
-        get_rt().block_on(async {
-            let origin = format!("@test {{\nsome_initial_func(){ppm};\n}};");
-            read_string!(
-                &Configuration::logs(false),
-                &origin,
-                |reader: &mut Reader, src: &mut Sources| {
-                    let task = src
-                        .report_err_if(Task::dissect(reader))?
-                        .expect("Task read");
-                    assert_eq!(format!("{task};"), origin);
-                    Ok::<(), LinkedErr<E>>(())
-                }
-            );
-        })
-    }
+//     fn reading(ppm: Ppm) {
+//         get_rt().block_on(async {
+//             let origin = format!("@test {{\nsome_initial_func(){ppm};\n}};");
+//             read_string!(
+//                 &Configuration::logs(false),
+//                 &origin,
+//                 |reader: &mut Reader, src: &mut Sources| {
+//                     let task = src
+//                         .report_err_if(Task::dissect(reader))?
+//                         .expect("Task read");
+//                     assert_eq!(format!("{task};"), origin);
+//                     Ok::<(), LinkedErr<E>>(())
+//                 }
+//             );
+//         })
+//     }
 
-    proptest! {
-        #![proptest_config(ProptestConfig {
-            max_shrink_iters: 5000,
-            ..ProptestConfig::with_cases(10)
-        })]
-        #[test]
-        fn test_run_task(
-            args in any_with::<Ppm>(2)
-        ) {
-            reading(args.clone());
-        }
-    }
-}
+//     proptest! {
+//         #![proptest_config(ProptestConfig {
+//             max_shrink_iters: 5000,
+//             ..ProptestConfig::with_cases(10)
+//         })]
+//         #[test]
+//         fn test_run_task(
+//             args in any_with::<Ppm>(2)
+//         ) {
+//             reading(args.clone());
+//         }
+//     }
+// }

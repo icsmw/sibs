@@ -4,9 +4,9 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, TryExpectedValueType,
-        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue,
-        PrevValueExpectation, Scope, TokenGetter, TryExecute, Value, VerificationResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, Formation,
+        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
+        TryExecute, TryExpectedValueType, Value, VerificationResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -114,7 +114,6 @@ impl TryExpectedValueType for VariableAssignation {
 
     fn try_linking<'a>(
         &'a self,
-        variables: &'a mut GlobalVariablesMap,
         owner: &'a Element,
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
@@ -124,7 +123,7 @@ impl TryExpectedValueType for VariableAssignation {
             let Element::VariableName(el, _) = self.variable.as_ref() else {
                 return Err(operator::E::NoVariableName.by(self));
             };
-            variables
+            cx.variables
                 .set(
                     &owner.as_component()?.uuid,
                     el.get_name(),
@@ -132,6 +131,7 @@ impl TryExpectedValueType for VariableAssignation {
                         .try_expected(owner, components, prev, cx)
                         .await?,
                 )
+                .await
                 .map_err(|e| LinkedErr::new(e, Some(self.token)))?;
             Ok(())
         })
@@ -143,7 +143,11 @@ impl TryExpectedValueType for VariableAssignation {
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> ExpectedResult {
-        Box::pin(async move { self.assignation.try_expected(owner, components, prev, cx).await })
+        Box::pin(async move {
+            self.assignation
+                .try_expected(owner, components, prev, cx)
+                .await
+        })
     }
 }
 

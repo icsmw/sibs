@@ -3,9 +3,8 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, scenario, Context, Execute, ExecutePinnedResult, ExpectedResult, Formation,
-        FormationCursor, GlobalVariablesMap, LinkingResult, LocalVariablesMap, PrevValue,
-        PrevValueExpectation, Scope, TokenGetter, TryExecute, TryExpectedValueType, Value,
-        ValueRef, VerificationResult,
+        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
+        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -20,14 +19,9 @@ pub struct Component {
     pub elements: Vec<Element>,
     pub token: usize,
     pub uuid: Uuid,
-    pub variables: LocalVariablesMap,
 }
 
 impl Component {
-    pub fn link(&mut self, variables: &mut GlobalVariablesMap) -> Result<(), operator::E> {
-        self.variables = variables.withdraw(&self.uuid)?;
-        Ok(())
-    }
     pub fn get_name(&self) -> String {
         self.name.value.to_owned()
     }
@@ -129,7 +123,6 @@ impl TryDissect<Component> for Component {
         }
         Ok(Some(Component {
             uuid: Uuid::new_v4(),
-            variables: LocalVariablesMap::default(),
             name: SimpleString {
                 value: name,
                 token: name_token,
@@ -211,7 +204,6 @@ impl TryExpectedValueType for Component {
     }
     fn try_linking<'a>(
         &'a self,
-        variables: &'a mut GlobalVariablesMap,
         owner: &'a Element,
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
@@ -219,7 +211,7 @@ impl TryExpectedValueType for Component {
     ) -> LinkingResult {
         Box::pin(async move {
             for el in self.elements.iter() {
-                el.try_linking(variables, owner, components, prev, cx).await?;
+                el.try_linking(owner, components, prev, cx).await?;
             }
             Ok(())
         })
@@ -490,10 +482,7 @@ mod processing {
 mod proptest {
     use std::path::PathBuf;
 
-    use crate::{
-        elements::{Component, ElTarget, Element, SimpleString},
-        inf::LocalVariablesMap,
-    };
+    use crate::elements::{Component, ElTarget, Element, SimpleString};
     use proptest::prelude::*;
     use uuid::Uuid;
 
@@ -513,7 +502,6 @@ mod proptest {
             )
                 .prop_map(|(name, tasks, meta, funcs)| Component {
                     uuid: Uuid::new_v4(),
-                    variables: LocalVariablesMap::default(),
                     elements: [meta, funcs, tasks].concat(),
                     name: SimpleString {
                         value: name,

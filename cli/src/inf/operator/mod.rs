@@ -1,17 +1,13 @@
 mod error;
-pub mod variables;
 
 use crate::{
     elements::{Element, Metadata},
     error::LinkedErr,
-    inf::{Context, PrevValue, Scope, Value, ValueRef},
+    inf::{Context, PrevValue, PrevValueExpectation, Scope, Value, ValueRef},
 };
 pub use error::E;
 use std::{fmt::Debug, future::Future, pin::Pin};
 use tokio_util::sync::CancellationToken;
-pub use variables::*;
-
-use super::PrevValueExpectation;
 
 pub type ExecutePinnedResult<'a> = Pin<Box<dyn Future<Output = ExecuteResult> + 'a + Send>>;
 pub type ExecuteResult = Result<Value, LinkedErr<E>>;
@@ -28,7 +24,6 @@ pub trait TokenGetter {
 pub trait TryExpectedValueType {
     fn try_linking<'a>(
         &'a self,
-        variables: &'a mut GlobalVariablesMap,
         owner: &'a Element,
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
@@ -55,7 +50,6 @@ pub trait TryExpectedValueType {
 pub trait ExpectedValueType {
     fn linking<'a>(
         &'a self,
-        variables: &'a mut GlobalVariablesMap,
         owner: &'a Element,
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
@@ -68,7 +62,6 @@ pub trait ExpectedValueType {
             if let Some(ppm) = self.get_metadata()?.ppm.as_ref() {
                 let value = self.try_expected(owner, components, prev, cx).await?;
                 ppm.linking(
-                    variables,
                     owner,
                     components,
                     &Some(PrevValueExpectation {
@@ -79,8 +72,7 @@ pub trait ExpectedValueType {
                 )
                 .await?;
             }
-            self.try_linking(variables, owner, components, prev, cx)
-                .await
+            self.try_linking(owner, components, prev, cx).await
         })
     }
 

@@ -8,20 +8,23 @@ use crate::{
     reader,
 };
 use thiserror::Error;
+use tokio::sync::oneshot;
 use uuid::Uuid;
 
 #[derive(Error, Debug, Clone)]
 pub enum E {
+    #[error("Channel error: {0}")]
+    Channel(String),
     #[error("Invalid variable declaration")]
     InvalidVariableDeclaration,
     #[error("Attempt to create reference from none string arguments")]
     NoneStringTaskArgumentForReference,
-    #[error("Gatekeeper doesn't return value")]
-    NoValueFromGatekeeper,
     #[error("Cannot extract variable name")]
     NoVariableName,
     #[error("Variable \"{0}\" isn't declared")]
     VariableIsNotDeclared(String),
+    #[error("Component {0} hasn't been found")]
+    UnknownComponent(Uuid),
     #[error("Type dismatch: {0} and {1}")]
     DismatchTypes(ValueRef, ValueRef),
     #[error("Component \"{0}\" not found")]
@@ -140,6 +143,14 @@ pub enum E {
     AtlasError(atlas::E),
     #[error("{0}")]
     ScenarioError(scenario::E),
+    #[error("Fail to recv channel message: {0}")]
+    Recv(String),
+}
+
+impl From<oneshot::error::RecvError> for E {
+    fn from(value: oneshot::error::RecvError) -> Self {
+        E::Recv(value.to_string())
+    }
 }
 
 impl E {

@@ -2,14 +2,10 @@ pub mod atlas;
 pub mod error;
 pub mod scenario;
 pub mod tracker;
+pub mod variables;
 
 use bstorage::Storage;
 use std::{process, sync::Arc};
-
-pub use atlas::*;
-pub use error::E;
-pub use scenario::*;
-pub use tracker::*;
 
 use crate::{
     elements::FuncArg,
@@ -18,11 +14,16 @@ use crate::{
     inf::{Journal, Scope, ScopeDomain, Signals, Value},
     reader::Sources,
 };
+pub use atlas::*;
+pub use error::E;
+pub use scenario::*;
 use tokio::{
     spawn,
     sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
 };
 use tokio_util::sync::CancellationToken;
+pub use tracker::*;
+pub use variables::*;
 
 const SIBS_FOLDER: &str = ".sibs";
 
@@ -58,6 +59,7 @@ pub struct Context {
     pub aborting: CancellationToken,
     pub scope: ScopeDomain,
     pub signals: Signals,
+    pub variables: VariablesMeta,
     tx: UnboundedSender<ExitCode>,
     state: CancellationToken,
 }
@@ -65,10 +67,11 @@ pub struct Context {
 impl Context {
     pub fn init(scenario: Scenario, src: &Sources, journal: &Journal) -> Result<Self, E> {
         let state = CancellationToken::new();
-        let tracker = Tracker::init(journal.clone());
+        let tracker = Tracker::init(journal);
         let atlas = Atlas::init(src, journal);
         let funcs = Functions::init(journal)?;
         let scope = ScopeDomain::init(&scenario.path, journal);
+        let variables = VariablesMeta::init(journal);
         let signals = Signals::init(journal);
         let (tx, mut rx): (UnboundedSender<ExitCode>, UnboundedReceiver<ExitCode>) =
             unbounded_channel();
@@ -81,6 +84,7 @@ impl Context {
             state: state.clone(),
             scope: scope.clone(),
             signals: signals.clone(),
+            variables: variables.clone(),
             aborting: CancellationToken::new(),
             tx,
         };
@@ -94,6 +98,7 @@ impl Context {
                     let _ = journal.err_if("functions", funcs.destroy().await);
                     let _ = journal.err_if("scope", scope.destroy().await);
                     let _ = journal.err_if("signals", signals.destroy().await);
+                    let _ = journal.err_if("variables", variables.destroy().await);
                 })
             };
             let mut exit_code = ExitCode::Regular;
