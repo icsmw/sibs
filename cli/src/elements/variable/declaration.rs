@@ -4,9 +4,9 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue, Scope,
-        TokenGetter, TryExecute, Value, VerificationResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, TryExpectedValueType,
+        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue,
+        PrevValueExpectation, Scope, TokenGetter, TryExecute, Value, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -85,20 +85,22 @@ impl TokenGetter for VariableDeclaration {
     }
 }
 
-impl ExpectedValueType for VariableDeclaration {
-    fn varification<'a>(
+impl TryExpectedValueType for VariableDeclaration {
+    fn try_varification<'a>(
         &'a self,
         _owner: &'a Element,
         _components: &'a [Element],
+        _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move { Ok(()) })
     }
-    fn linking<'a>(
+    fn try_linking<'a>(
         &'a self,
         variables: &'a mut GlobalVariablesMap,
         owner: &'a Element,
         components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
@@ -109,19 +111,22 @@ impl ExpectedValueType for VariableDeclaration {
                 .set(
                     &owner.as_component()?.uuid,
                     el.get_name(),
-                    self.declaration.expected(owner, components, cx).await?,
+                    self.declaration
+                        .try_expected(owner, components, prev, cx)
+                        .await?,
                 )
                 .map_err(|e| LinkedErr::new(e, Some(self.token)))?;
             Ok(())
         })
     }
-    fn expected<'a>(
+    fn try_expected<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> ExpectedResult {
-        Box::pin(async move { self.declaration.expected(owner, components, cx).await })
+        Box::pin(async move { self.declaration.try_expected(owner, components, prev, cx).await })
     }
 }
 

@@ -4,9 +4,9 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue, Scope,
-        TokenGetter, TryExecute, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, Formation,
+        FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue, PrevValueExpectation, Scope,
+        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -29,58 +29,61 @@ impl TokenGetter for Thread {
     }
 }
 
-impl ExpectedValueType for Thread {
-    fn varification<'a>(
+impl TryExpectedValueType for Thread {
+    fn try_varification<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move {
             match self {
                 Self::If(sub, bl) => {
-                    sub.varification(owner, components, cx).await?;
-                    bl.varification(owner, components, cx).await?;
+                    sub.try_varification(owner, components, prev, cx).await?;
+                    bl.try_varification(owner, components, prev, cx).await?;
                 }
                 Self::Else(bl) => {
-                    bl.varification(owner, components, cx).await?;
+                    bl.try_varification(owner, components, prev, cx).await?;
                 }
             };
             Ok(())
         })
     }
 
-    fn linking<'a>(
+    fn try_linking<'a>(
         &'a self,
         variables: &'a mut GlobalVariablesMap,
         owner: &'a Element,
         components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
             match self {
                 Self::If(sub, bl) => {
-                    sub.linking(variables, owner, components, cx).await?;
-                    bl.linking(variables, owner, components, cx).await?;
+                    sub.try_linking(variables, owner, components, prev, cx).await?;
+                    bl.try_linking(variables, owner, components, prev, cx).await?;
                 }
                 Self::Else(bl) => {
-                    bl.linking(variables, owner, components, cx).await?;
+                    bl.try_linking(variables, owner, components, prev, cx).await?;
                 }
             }
             Ok(())
         })
     }
 
-    fn expected<'a>(
+    fn try_expected<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move {
             match self {
-                Self::If(_, block) => block.expected(owner, components, cx).await,
-                Self::Else(block) => block.expected(owner, components, cx).await,
+                Self::If(_, block) => block.try_expected(owner, components, prev, cx).await,
+                Self::Else(block) => block.try_expected(owner, components, prev, cx).await,
             }
         })
     }
@@ -248,51 +251,54 @@ impl TokenGetter for If {
     }
 }
 
-impl ExpectedValueType for If {
-    fn varification<'a>(
+impl TryExpectedValueType for If {
+    fn try_varification<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move {
             for thr in self.threads.iter() {
-                thr.varification(owner, components, cx).await?;
+                thr.try_varification(owner, components, prev, cx).await?;
             }
             Ok(())
         })
     }
 
-    fn linking<'a>(
+    fn try_linking<'a>(
         &'a self,
         variables: &'a mut GlobalVariablesMap,
         owner: &'a Element,
         components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
             for thr in self.threads.iter() {
-                thr.linking(variables, owner, components, cx).await?;
+                thr.try_linking(variables, owner, components, prev, cx).await?;
             }
             Ok(())
         })
     }
 
-    fn expected<'a>(
+    fn try_expected<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move {
             let mut refs: Option<ValueRef> = None;
             for value_ref in self.threads.iter() {
-                if let Some(prev) = refs.as_ref() {
-                    if prev != &value_ref.expected(owner, components, cx).await? {
+                if let Some(prev_value) = refs.as_ref() {
+                    if prev_value != &value_ref.try_expected(owner, components, prev, cx).await? {
                         return Err(operator::E::ReturnsDifferentTypes.by(self));
                     }
                 } else {
-                    refs = Some(value_ref.expected(owner, components, cx).await?);
+                    refs = Some(value_ref.try_expected(owner, components, prev, cx).await?);
                 }
             }
             Ok(refs.unwrap_or(ValueRef::Empty))

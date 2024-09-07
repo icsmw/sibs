@@ -4,9 +4,9 @@ use crate::{
     elements::{ElTarget, Element, Gatekeeper},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue, Scope,
-        TokenGetter, TryExecute, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, Formation,
+        FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue, PrevValueExpectation, Scope,
+        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -184,20 +184,22 @@ impl TokenGetter for Reference {
     }
 }
 
-impl ExpectedValueType for Reference {
-    fn varification<'a>(
+impl TryExpectedValueType for Reference {
+    fn try_varification<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move {
             for el in self.inputs.iter() {
-                el.varification(owner, components, cx).await?
+                el.try_varification(owner, components, prev, cx).await?
             }
             let task_el = self.get_linked_task(owner, components)?;
             let task_ref = task_el.as_task()?;
-            let ValueRef::Task(args, _) = task_el.expected(owner, components, cx).await? else {
+            let ValueRef::Task(args, _) = task_el.try_expected(owner, components, prev, cx).await?
+            else {
                 return Err(operator::E::InvalidValueRef(format!(
                     "task \"{}\" has invalid expected output",
                     task_ref.get_name()
@@ -212,8 +214,8 @@ impl ExpectedValueType for Reference {
                 .by(self));
             }
             for (i, el) in self.inputs.iter().enumerate() {
-                el.varification(owner, components, cx).await?;
-                let left = el.expected(owner, components, cx).await?;
+                el.try_varification(owner, components, prev, cx).await?;
+                let left = el.try_expected(owner, components, prev, cx).await?;
                 let right = &args[i];
                 if &left != right {
                     return Err(operator::E::DismatchTypes(left, right.clone()).by(self));
@@ -222,29 +224,31 @@ impl ExpectedValueType for Reference {
             Ok(())
         })
     }
-    fn linking<'a>(
+    fn try_linking<'a>(
         &'a self,
         variables: &'a mut GlobalVariablesMap,
         owner: &'a Element,
         components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
             for el in self.inputs.iter() {
-                el.linking(variables, owner, components, cx).await?
+                el.try_linking(variables, owner, components, prev, cx).await?
             }
             Ok(())
         })
     }
-    fn expected<'a>(
+    fn try_expected<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move {
             self.get_linked_task(owner, components)?
-                .expected(owner, components, cx)
+                .try_expected(owner, components, prev, cx)
                 .await
         })
     }

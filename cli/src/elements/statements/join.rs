@@ -2,9 +2,9 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExecuteResult, ExpectedResult,
-        ExpectedValueType, Formation, FormationCursor, GlobalVariablesMap, LinkingResult,
-        PrevValue, Scope, TokenGetter, TryExecute, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecutePinnedResult, ExecuteResult, ExpectedResult, Formation,
+        FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue, PrevValueExpectation, Scope,
+        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -89,34 +89,37 @@ impl TokenGetter for Join {
     }
 }
 
-impl ExpectedValueType for Join {
-    fn varification<'a>(
+impl TryExpectedValueType for Join {
+    fn try_varification<'a>(
         &'a self,
         _owner: &'a Element,
         _components: &'a [Element],
+        _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move { Ok(()) })
     }
 
-    fn linking<'a>(
+    fn try_linking<'a>(
         &'a self,
         variables: &'a mut GlobalVariablesMap,
         owner: &'a Element,
         components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
             self.elements
-                .linking(variables, owner, components, cx)
+                .try_linking(variables, owner, components, prev, cx)
                 .await
         })
     }
 
-    fn expected<'a>(
+    fn try_expected<'a>(
         &'a self,
         _owner: &'a Element,
         _components: &'a [Element],
+        _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move { Ok(ValueRef::Empty) })

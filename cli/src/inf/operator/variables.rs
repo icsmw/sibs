@@ -52,7 +52,7 @@ mod processing {
         elements::{ElTarget, Element},
         error::LinkedErr,
         inf::{
-            operator::{ExpectedValueType, E},
+            operator::{TryExpectedValueType, E},
             Configuration, Context, GlobalVariablesMap, Journal, Scope,
         },
         process_string,
@@ -77,7 +77,7 @@ mod processing {
                 let mut variables = GlobalVariablesMap::default();
                 for component in components.iter() {
                     component
-                        .linking(&mut variables, component, &components, &cx)
+                        .try_linking(&mut variables, component, &components, &None, &cx)
                         .await
                         .expect("linking variables is done");
                 }
@@ -89,7 +89,7 @@ mod processing {
                 }
                 for component in components.iter() {
                     component
-                        .varification(component, &components, &cx)
+                        .try_varification(component, &components, &None, &cx)
                         .await
                         .expect("component varified");
                 }
@@ -117,7 +117,7 @@ mod processing {
                 let mut variables = GlobalVariablesMap::default();
                 for component in components.iter() {
                     component
-                        .linking(&mut variables, component, &components, &cx)
+                        .try_linking(&mut variables, component, &components, &None, &cx)
                         .await
                         .expect("linking variables is done");
                 }
@@ -129,12 +129,14 @@ mod processing {
                 }
                 for component in components.iter() {
                     component
-                        .expected(component, &components, &cx)
+                        .try_expected(component, &components, &None, &cx)
                         .await
                         .expect("linking variables is done");
                 }
                 for component in components.iter() {
-                    let result = component.varification(component, &components, &cx).await;
+                    let result = component
+                        .try_varification(component, &components, &None, &cx)
+                        .await;
                     if let Err(err) = result.as_ref() {
                         cx.atlas.report_err(err).await.expect("report created");
                     }

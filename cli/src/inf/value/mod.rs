@@ -479,3 +479,9 @@ pub struct PrevValue {
     pub token: usize,
     pub value: Value,
 }
+
+#[derive(Debug, Clone)]
+pub struct PrevValueExpectation {
+    pub token: usize,
+    pub value: ValueRef,
+}

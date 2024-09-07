@@ -4,9 +4,9 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue, Scope,
-        TokenGetter, TryExecute, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, Formation,
+        FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue, PrevValueExpectation, Scope,
+        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -132,16 +132,17 @@ impl TokenGetter for Comparing {
     }
 }
 
-impl ExpectedValueType for Comparing {
-    fn varification<'a>(
+impl TryExpectedValueType for Comparing {
+    fn try_varification<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move {
-            let left = self.left.expected(owner, components, cx).await?;
-            let right = self.right.expected(owner, components, cx).await?;
+            let left = self.left.try_expected(owner, components, prev, cx).await?;
+            let right = self.right.try_expected(owner, components, prev, cx).await?;
             if left != right {
                 Err(operator::E::DismatchTypes(left, right).by(self))
             } else {
@@ -150,23 +151,29 @@ impl ExpectedValueType for Comparing {
         })
     }
 
-    fn linking<'a>(
+    fn try_linking<'a>(
         &'a self,
         variables: &'a mut GlobalVariablesMap,
         owner: &'a Element,
         components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
-            self.left.linking(variables, owner, components, cx).await?;
-            self.right.linking(variables, owner, components, cx).await?;
+            self.left
+                .try_linking(variables, owner, components, prev, cx)
+                .await?;
+            self.right
+                .try_linking(variables, owner, components, prev, cx)
+                .await?;
             Ok(())
         })
     }
-    fn expected<'a>(
+    fn try_expected<'a>(
         &'a self,
         _owner: &'a Element,
         _components: &'a [Element],
+        _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move { Ok(ValueRef::bool) })

@@ -5,8 +5,9 @@ use crate::{
     error::LinkedErr,
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue, Scope,
-        TokenGetter, TryExecute, Value, ValueRef, VerificationResult,
+        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue,
+        PrevValueExpectation, Scope, TokenGetter, TryExecute, TryExpectedValueType, Value,
+        ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -94,31 +95,63 @@ impl TokenGetter for Ppm {
     }
 }
 
-impl ExpectedValueType for Ppm {
-    fn varification<'a>(
+impl TryExpectedValueType for Ppm {
+    fn try_varification<'a>(
         &'a self,
-        _owner: &'a Element,
-        _components: &'a [Element],
-        _cx: &'a Context,
+        owner: &'a Element,
+        components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
+        cx: &'a Context,
     ) -> VerificationResult {
-        Box::pin(async move { Ok(()) })
+        Box::pin(async move {
+            match &self.call {
+                PpmCall::Function(el) => el.varification(owner, components, prev, cx).await,
+                PpmCall::VectorElementAccessor(el) => {
+                    el.varification(owner, components, prev, cx).await
+                }
+            }
+        })
     }
-    fn linking<'a>(
+    fn try_linking<'a>(
         &'a self,
-        _variables: &'a mut GlobalVariablesMap,
-        _owner: &'a Element,
-        _components: &'a [Element],
-        _cx: &'a Context,
+        variables: &'a mut GlobalVariablesMap,
+        owner: &'a Element,
+        components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
+        cx: &'a Context,
     ) -> LinkingResult {
-        Box::pin(async move { Ok(()) })
+        Box::pin(async move {
+            match &self.call {
+                PpmCall::Function(el) => el.linking(variables, owner, components, prev, cx).await,
+                PpmCall::VectorElementAccessor(el) => {
+                    el.linking(variables, owner, components, prev, cx).await
+                }
+            }
+        })
     }
-    fn expected<'a>(
+    fn try_expected<'a>(
         &'a self,
-        _owner: &'a Element,
-        _components: &'a [Element],
-        _cx: &'a Context,
+        owner: &'a Element,
+        components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
+        cx: &'a Context,
     ) -> ExpectedResult {
-        Box::pin(async move { Ok(ValueRef::Empty) })
+        Box::pin(async move {
+            let Some(prev_value) = prev else {
+                return Err(operator::E::CallPPMWithoutPrevValue.linked(&self.token));
+            };
+            Ok(match &self.call {
+                PpmCall::Function(func) => func.expected(owner, components, prev, cx).await?,
+                PpmCall::VectorElementAccessor(_el) => match &prev_value.value {
+                    ValueRef::String => ValueRef::String,
+                    ValueRef::Vec(v) => *v.clone(),
+                    _ => Err(
+                        operator::E::AccessByIndexNotSupported(prev_value.value.to_string())
+                            .linked(&self.token),
+                    )?,
+                },
+            })
+        })
     }
 }
 

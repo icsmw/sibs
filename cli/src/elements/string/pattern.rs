@@ -4,9 +4,9 @@ use crate::{
     elements::{string, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue, Scope,
-        TokenGetter, TryExecute, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, TryExpectedValueType,
+        Formation, FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue,
+        PrevValueExpectation, Scope, TokenGetter, TryExecute, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -93,35 +93,38 @@ impl TokenGetter for PatternString {
     }
 }
 
-impl ExpectedValueType for PatternString {
-    fn varification<'a>(
+impl TryExpectedValueType for PatternString {
+    fn try_varification<'a>(
         &'a self,
         _owner: &'a Element,
         _components: &'a [Element],
+        _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move { Ok(()) })
     }
 
-    fn linking<'a>(
+    fn try_linking<'a>(
         &'a self,
         variables: &'a mut GlobalVariablesMap,
         owner: &'a Element,
         components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
             for el in self.elements.iter() {
-                el.linking(variables, owner, components, cx).await?;
+                el.try_linking(variables, owner, components, prev, cx).await?;
             }
             Ok(())
         })
     }
 
-    fn expected<'a>(
+    fn try_expected<'a>(
         &'a self,
         _owner: &'a Element,
         _components: &'a [Element],
+        _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move { Ok(ValueRef::String) })

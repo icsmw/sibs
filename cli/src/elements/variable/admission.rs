@@ -4,9 +4,9 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
-        FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue, Scope, TokenGetter,
-        TryExecute, Value, VerificationResult,
+        operator, Context, ExecutePinnedResult, ExpectedResult, TryExpectedValueType, Formation,
+        FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue, PrevValueExpectation, Scope,
+        TokenGetter, TryExecute, Value, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -65,29 +65,32 @@ impl TokenGetter for VariableName {
     }
 }
 
-impl ExpectedValueType for VariableName {
-    fn varification<'a>(
+impl TryExpectedValueType for VariableName {
+    fn try_varification<'a>(
         &'a self,
         _owner: &'a Element,
         _components: &'a [Element],
+        _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move { Ok(()) })
     }
 
-    fn linking<'a>(
+    fn try_linking<'a>(
         &'a self,
         _variables: &'a mut GlobalVariablesMap,
         _owner: &'a Element,
         _components: &'a [Element],
+        _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move { Ok(()) })
     }
-    fn expected<'a>(
+    fn try_expected<'a>(
         &'a self,
         owner: &'a Element,
         _components: &'a [Element],
+        _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move {

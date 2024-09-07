@@ -4,9 +4,9 @@ use crate::{
     elements::{Cmb, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
-        FormationCursor, GlobalVariablesMap, LinkingResult, PrevValue, Scope, TokenGetter,
-        TryExecute, Value, ValueRef, VerificationResult,
+        Context, Execute, ExecutePinnedResult, ExpectedResult, Formation, FormationCursor,
+        GlobalVariablesMap, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
+        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -129,39 +129,42 @@ impl TokenGetter for Subsequence {
     }
 }
 
-impl ExpectedValueType for Subsequence {
-    fn varification<'a>(
+impl TryExpectedValueType for Subsequence {
+    fn try_varification<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move {
             for el in self.subsequence.iter() {
-                el.varification(owner, components, cx).await?;
+                el.try_varification(owner, components, prev, cx).await?;
             }
             Ok(())
         })
     }
 
-    fn linking<'a>(
+    fn try_linking<'a>(
         &'a self,
         variables: &'a mut GlobalVariablesMap,
         owner: &'a Element,
         components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
             for el in self.subsequence.iter() {
-                el.linking(variables, owner, components, cx).await?;
+                el.try_linking(variables, owner, components, prev, cx).await?;
             }
             Ok(())
         })
     }
-    fn expected<'a>(
+    fn try_expected<'a>(
         &'a self,
         _owner: &'a Element,
         _components: &'a [Element],
+        _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
     ) -> ExpectedResult {
         Box::pin(async move { Ok(ValueRef::bool) })

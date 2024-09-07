@@ -11,6 +11,8 @@ use std::{fmt::Debug, future::Future, pin::Pin};
 use tokio_util::sync::CancellationToken;
 pub use variables::*;
 
+use super::PrevValueExpectation;
+
 pub type ExecutePinnedResult<'a> = Pin<Box<dyn Future<Output = ExecuteResult> + 'a + Send>>;
 pub type ExecuteResult = Result<Value, LinkedErr<E>>;
 pub type LinkingResult<'a> = Pin<Box<dyn Future<Output = Result<(), LinkedErr<E>>> + 'a + Send>>;
@@ -23,28 +25,121 @@ pub trait TokenGetter {
     fn token(&self) -> usize;
 }
 
+pub trait TryExpectedValueType {
+    fn try_linking<'a>(
+        &'a self,
+        variables: &'a mut GlobalVariablesMap,
+        owner: &'a Element,
+        components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
+        cx: &'a Context,
+    ) -> LinkingResult;
+
+    fn try_varification<'a>(
+        &'a self,
+        owner: &'a Element,
+        components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
+        cx: &'a Context,
+    ) -> VerificationResult;
+
+    fn try_expected<'a>(
+        &'a self,
+        owner: &'a Element,
+        components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
+        cx: &'a Context,
+    ) -> ExpectedResult;
+}
+
 pub trait ExpectedValueType {
     fn linking<'a>(
         &'a self,
         variables: &'a mut GlobalVariablesMap,
         owner: &'a Element,
         components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult;
+    ) -> LinkingResult
+    where
+        Self: TryExpectedValueType + Execute + TokenGetter + Debug + Sync,
+    {
+        Box::pin(async move {
+            if let Some(ppm) = self.get_metadata()?.ppm.as_ref() {
+                let value = self.try_expected(owner, components, prev, cx).await?;
+                ppm.linking(
+                    variables,
+                    owner,
+                    components,
+                    &Some(PrevValueExpectation {
+                        token: self.token(),
+                        value,
+                    }),
+                    cx,
+                )
+                .await?;
+            }
+            self.try_linking(variables, owner, components, prev, cx)
+                .await
+        })
+    }
 
     fn varification<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult;
+    ) -> VerificationResult
+    where
+        Self: TryExpectedValueType + Execute + TokenGetter + Debug + Sync,
+    {
+        Box::pin(async move {
+            if let Some(ppm) = self.get_metadata()?.ppm.as_ref() {
+                let value = self.try_expected(owner, components, prev, cx).await?;
+                ppm.varification(
+                    owner,
+                    components,
+                    &Some(PrevValueExpectation {
+                        token: self.token(),
+                        value,
+                    }),
+                    cx,
+                )
+                .await?;
+            }
+            self.try_varification(owner, components, prev, cx).await
+        })
+    }
 
     fn expected<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> ExpectedResult;
+    ) -> ExpectedResult
+    where
+        Self: TryExpectedValueType + ExpectedValueType + Execute + TokenGetter + Debug + Sync,
+    {
+        Box::pin(async move {
+            let value = self.try_expected(owner, components, prev, cx).await?;
+            Ok(if let Some(ppm) = self.get_metadata()?.ppm.as_ref() {
+                ppm.expected(
+                    owner,
+                    components,
+                    &Some(PrevValueExpectation {
+                        token: self.token(),
+                        value,
+                    }),
+                    cx,
+                )
+                .await?
+            } else {
+                value
+            })
+        })
+    }
 }
 
 pub trait TryExecute {
@@ -76,7 +171,7 @@ pub trait Execute {
         token: CancellationToken,
     ) -> ExecutePinnedResult
     where
-        Self: TryExecute + TokenGetter + ExpectedValueType + Debug + Sync,
+        Self: TryExecute + TokenGetter + TryExpectedValueType + Debug + Sync,
     {
         Box::pin(async move {
             if cx.is_aborting() {
