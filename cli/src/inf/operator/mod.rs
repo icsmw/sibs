@@ -146,16 +146,14 @@ pub trait TryExecute {
     #[allow(clippy::too_many_arguments)]
     fn try_execute<'a>(
         &'a self,
-        _owner: Option<&'a Element>,
-        _components: &'a [Element],
-        _args: &'a [Value],
-        _prev: &'a Option<PrevValue>,
-        _cx: Context,
-        _sc: Scope,
-        _token: CancellationToken,
-    ) -> ExecutePinnedResult {
-        Box::pin(async { Err(E::NotSupported.unlinked()) })
-    }
+        owner: Option<&'a Element>,
+        components: &'a [Element],
+        args: &'a [Value],
+        prev: &'a Option<PrevValue>,
+        cx: Context,
+        sc: Scope,
+        token: CancellationToken,
+    ) -> ExecutePinnedResult;
 }
 
 pub trait Execute {
