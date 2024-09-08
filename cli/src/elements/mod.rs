@@ -1,4 +1,6 @@
+mod accessor;
 mod block;
+mod call;
 mod comment;
 mod component;
 mod conditions;
@@ -15,7 +17,9 @@ mod task;
 mod values;
 mod variable;
 
+pub use accessor::*;
 pub use block::*;
+pub use call::*;
 pub use comment::*;
 pub use component::*;
 pub use conditions::*;
@@ -46,6 +50,8 @@ use std::fmt::{self, Display};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
 pub enum ElTarget {
+    Call,
+    Accessor,
     Function,
     If,
     Each,
@@ -85,6 +91,8 @@ impl fmt::Display for ElTarget {
             f,
             "{}",
             match self {
+                Self::Call => "Call",
+                Self::Accessor => "Accessor",
                 Self::Function => "Function",
                 Self::If => "If",
                 Self::Each => "Each",
@@ -198,6 +206,8 @@ impl Formation for Metadata {
 
 #[derive(Debug, Clone)]
 pub enum Element {
+    Call(Call, Metadata),
+    Accessor(Accessor, Metadata),
     Function(Function, Metadata),
     If(If, Metadata),
     Breaker(Breaker, Metadata),
@@ -279,6 +289,16 @@ impl Element {
         if includes == targets.contains(&ElTarget::Ppm) {
             if let Some(el) = Ppm::dissect(reader)? {
                 return next(reader, Element::Ppm(el, md));
+            }
+        }
+        if includes == targets.contains(&ElTarget::Accessor) {
+            if let Some(el) = Accessor::dissect(reader)? {
+                return next(reader, Element::Accessor(el, md));
+            }
+        }
+        if includes == targets.contains(&ElTarget::Call) {
+            if let Some(el) = Call::dissect(reader)? {
+                return next(reader, Element::Call(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::Combination) {
@@ -437,6 +457,8 @@ impl Element {
 
     pub fn get_metadata(&self) -> &Metadata {
         match self {
+            Self::Call(_, md) => md,
+            Self::Accessor(_, md) => md,
             Self::Function(_, md) => md,
             Self::If(_, md) => md,
             Self::Breaker(_, md) => md,
@@ -473,6 +495,8 @@ impl Element {
 
     pub fn get_mut_metadata(&mut self) -> &mut Metadata {
         match self {
+            Self::Call(_, md) => md,
+            Self::Accessor(_, md) => md,
             Self::Function(_, md) => md,
             Self::If(_, md) => md,
             Self::Breaker(_, md) => md,
@@ -532,6 +556,8 @@ impl Element {
     #[cfg(test)]
     pub fn el_target(&self) -> ElTarget {
         match self {
+            Self::Call(..) => ElTarget::Call,
+            Self::Accessor(..) => ElTarget::Accessor,
             Self::Function(..) => ElTarget::Function,
             Self::If(..) => ElTarget::If,
             Self::Breaker(..) => ElTarget::Breaker,
@@ -568,6 +594,8 @@ impl Element {
     #[cfg(test)]
     pub fn inner_to_string(&self) -> String {
         match self {
+            Self::Call(v, _) => v.to_string(),
+            Self::Accessor(v, _) => v.to_string(),
             Self::Function(v, _) => v.to_string(),
             Self::If(v, _) => v.to_string(),
             Self::Each(v, _) => v.to_string(),
@@ -631,6 +659,8 @@ impl fmt::Display for Element {
             f,
             "{}",
             match self {
+                Self::Call(v, md) => as_string(v, md),
+                Self::Accessor(v, md) => as_string(v, md),
                 Self::Function(v, md) => as_string(v, md),
                 Self::If(v, md) => as_string(v, md),
                 Self::Breaker(v, md) => as_string(v, md),
@@ -669,6 +699,8 @@ impl fmt::Display for Element {
 impl Formation for Element {
     fn elements_count(&self) -> usize {
         match self {
+            Self::Call(v, _) => v.elements_count(),
+            Self::Accessor(v, _) => v.elements_count(),
             Self::Function(v, _) => v.elements_count(),
             Self::If(v, _) => v.elements_count(),
             Self::Breaker(v, _) => v.elements_count(),
@@ -728,6 +760,8 @@ impl Formation for Element {
             )
         }
         match self {
+            Self::Call(v, m) => format_el(v, m, cursor),
+            Self::Accessor(v, m) => format_el(v, m, cursor),
             Self::Function(v, m) => format_el(v, m, cursor),
             Self::If(v, m) => format_el(v, m, cursor),
             Self::Breaker(v, m) => format_el(v, m, cursor),
@@ -765,6 +799,8 @@ impl Formation for Element {
 impl TokenGetter for Element {
     fn token(&self) -> usize {
         match self {
+            Self::Call(v, _) => v.token(),
+            Self::Accessor(v, _) => v.token(),
             Self::Function(v, _) => v.token(),
             Self::If(v, _) => v.token(),
             Self::Breaker(v, _) => v.token(),
@@ -809,6 +845,8 @@ impl TryExpectedValueType for Element {
     ) -> VerificationResult {
         Box::pin(async move {
             match self {
+                Self::Call(v, _) => v.try_varification(owner, components, prev, cx).await,
+                Self::Accessor(v, _) => v.try_varification(owner, components, prev, cx).await,
                 Self::Function(v, _) => v.try_varification(owner, components, prev, cx).await,
                 Self::If(v, _) => v.try_varification(owner, components, prev, cx).await,
                 Self::Breaker(v, _) => v.try_varification(owner, components, prev, cx).await,
@@ -857,6 +895,8 @@ impl TryExpectedValueType for Element {
     ) -> LinkingResult {
         Box::pin(async move {
             match self {
+                Self::Call(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::Accessor(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::Function(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::If(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::Breaker(v, _) => v.try_linking(owner, components, prev, cx).await,
@@ -899,6 +939,8 @@ impl TryExpectedValueType for Element {
     ) -> ExpectedResult {
         Box::pin(async move {
             match self {
+                Self::Call(v, _) => v.try_expected(owner, components, prev, cx).await,
+                Self::Accessor(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::Function(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::If(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::Breaker(v, _) => v.try_expected(owner, components, prev, cx).await,
@@ -954,6 +996,14 @@ impl TryExecute for Element {
         Box::pin(async move {
             let journal = cx.journal.clone();
             let result = match self {
+                Self::Call(v, _) => {
+                    v.try_execute(owner, components, args, prev, cx, sc, token)
+                        .await
+                }
+                Self::Accessor(v, _) => {
+                    v.try_execute(owner, components, args, prev, cx, sc, token)
+                        .await
+                }
                 Self::Function(v, _) => {
                     v.try_execute(owner, components, args, prev, cx, sc, token)
                         .await
@@ -1149,11 +1199,11 @@ mod processing {
 mod proptest {
     use crate::{
         elements::{
-            Block, Boolean, Breaker, Combination, Command, Comment, Comparing, Component,
-            Condition, Each, ElTarget, Element, First, Function, Gatekeeper, If, Integer, Join,
-            Meta, Metadata, Optional, PatternString, Reference, SimpleString, Subsequence, Task,
-            Values, VariableAssignation, VariableDeclaration, VariableName, VariableType,
-            VariableVariants,
+            Accessor, Block, Boolean, Breaker, Call, Combination, Command, Comment, Comparing,
+            Component, Condition, Each, ElTarget, Element, First, Function, Gatekeeper, If,
+            Integer, Join, Meta, Metadata, Optional, PatternString, Ppm, Reference, SimpleString,
+            Subsequence, Task, Values, VariableAssignation, VariableDeclaration, VariableName,
+            VariableType, VariableVariants,
         },
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
@@ -1181,6 +1231,27 @@ mod proptest {
 
     fn generate(targets: &[ElTarget], deep: usize) -> Vec<BoxedStrategy<Element>> {
         let mut collected = Vec::new();
+        if targets.contains(&ElTarget::Call) {
+            collected.push(
+                Call::arbitrary()
+                    .prop_map(|el| Element::Call(el, Metadata::default()))
+                    .boxed(),
+            );
+        }
+        if targets.contains(&ElTarget::Accessor) {
+            collected.push(
+                Accessor::arbitrary()
+                    .prop_map(|el| Element::Accessor(el, Metadata::default()))
+                    .boxed(),
+            );
+        }
+        if targets.contains(&ElTarget::Ppm) {
+            collected.push(
+                Ppm::arbitrary()
+                    .prop_map(|el| Element::Ppm(el, Metadata::default()))
+                    .boxed(),
+            );
+        }
         if targets.contains(&ElTarget::Combination) {
             collected.push(
                 Combination::arbitrary()

@@ -541,7 +541,6 @@ mod processing {
                             CancellationToken::new(),
                         )
                         .await?;
-                    println!(">>>>>>>>>>>>>>>>>: {result}");
                     assert_eq!(
                         result.as_string().expect("Task returns string value"),
                         "true".to_owned()
