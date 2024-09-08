@@ -173,7 +173,7 @@ mod processing {
                     }
                     assert!(result.is_err());
                 }
-                assert_eq!(components.len(), 5);
+                assert_eq!(components.len(), 6);
                 Ok::<(), LinkedErr<E>>(())
             }
         );

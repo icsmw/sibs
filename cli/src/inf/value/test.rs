@@ -677,6 +677,12 @@ fn vec() {
         let left = ValueRef::Vec(Box::new(left_inner.clone()));
         for right_inner in ValueRef::iter() {
             let right = ValueRef::Vec(Box::new(right_inner.clone()));
+            if left.is_compatible(&right) != left_inner.is_compatible(&right_inner) {
+                println!("LEFT: {left:?}");
+                println!("RIGHT: {right:?}");
+                println!("LEFT INNER: {left_inner:?}");
+                println!("RIGHT INNER: {right_inner:?}");
+            }
             assert_eq!(
                 left.is_compatible(&right),
                 left_inner.is_compatible(&right_inner)

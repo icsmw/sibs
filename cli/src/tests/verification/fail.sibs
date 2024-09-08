@@ -30,3 +30,9 @@
         $value = $values[0];
         :a:test($value);
     };
+#(ppm2)
+    @test() {
+        $values = (1, 2, 3);
+        $value = $values[0];
+        :a:test($value);
+    };

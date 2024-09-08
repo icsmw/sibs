@@ -67,7 +67,11 @@ impl ValueRef {
     pub fn is_compatible(&self, other: &ValueRef) -> bool {
         let mut left = self;
         let mut right = other;
-        if (left.is_simple() && !right.is_simple()) || matches!(other, ValueRef::Numeric) {
+        if let (ValueRef::Vec(a), ValueRef::Vec(b)) = (left, right) {
+            return a.is_compatible(b);
+        } else if !left.is_simple() && !right.is_simple() {
+            return left == right;
+        } else if (left.is_simple() && !right.is_simple()) || matches!(other, ValueRef::Numeric) {
             right = self;
             left = other;
         }
