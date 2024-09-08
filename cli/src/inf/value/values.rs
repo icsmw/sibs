@@ -105,64 +105,6 @@ impl Value {
         }
     }
 
-    #[allow(unused)]
-    pub fn get_mut<T: 'static>(&mut self) -> Option<&mut T> {
-        match self {
-            Value::Cmb(v) if TypeId::of::<T>() == TypeId::of::<Cmb>() => {
-                Some(unsafe { &mut *(v as *mut Cmb as *mut T) })
-            }
-            Value::i8(v) if TypeId::of::<T>() == TypeId::of::<i8>() => {
-                Some(unsafe { &mut *(v as *mut i8 as *mut T) })
-            }
-            Value::i16(v) if TypeId::of::<T>() == TypeId::of::<i16>() => {
-                Some(unsafe { &mut *(v as *mut i16 as *mut T) })
-            }
-            Value::i32(v) if TypeId::of::<T>() == TypeId::of::<i32>() => {
-                Some(unsafe { &mut *(v as *mut i32 as *mut T) })
-            }
-            Value::i64(v) if TypeId::of::<T>() == TypeId::of::<i64>() => {
-                Some(unsafe { &mut *(v as *mut i64 as *mut T) })
-            }
-            Value::i128(v) if TypeId::of::<T>() == TypeId::of::<i128>() => {
-                Some(unsafe { &mut *(v as *mut i128 as *mut T) })
-            }
-            Value::isize(v) if TypeId::of::<T>() == TypeId::of::<isize>() => {
-                Some(unsafe { &mut *(v as *mut isize as *mut T) })
-            }
-            Value::u8(v) if TypeId::of::<T>() == TypeId::of::<u8>() => {
-                Some(unsafe { &mut *(v as *mut u8 as *mut T) })
-            }
-            Value::u16(v) if TypeId::of::<T>() == TypeId::of::<u16>() => {
-                Some(unsafe { &mut *(v as *mut u16 as *mut T) })
-            }
-            Value::u32(v) if TypeId::of::<T>() == TypeId::of::<u32>() => {
-                Some(unsafe { &mut *(v as *mut u32 as *mut T) })
-            }
-            Value::u64(v) if TypeId::of::<T>() == TypeId::of::<u64>() => {
-                Some(unsafe { &mut *(v as *mut u64 as *mut T) })
-            }
-            Value::u128(v) if TypeId::of::<T>() == TypeId::of::<u128>() => {
-                Some(unsafe { &mut *(v as *mut u128 as *mut T) })
-            }
-            Value::usize(v) if TypeId::of::<T>() == TypeId::of::<usize>() => {
-                Some(unsafe { &mut *(v as *mut usize as *mut T) })
-            }
-            Value::bool(v) if TypeId::of::<T>() == TypeId::of::<bool>() => {
-                Some(unsafe { &mut *(v as *mut bool as *mut T) })
-            }
-            Value::PathBuf(v) if TypeId::of::<T>() == TypeId::of::<PathBuf>() => {
-                Some(unsafe { &mut *(v as *mut PathBuf as *mut T) })
-            }
-            Value::String(v) if TypeId::of::<T>() == TypeId::of::<String>() => {
-                Some(unsafe { &mut *(v as *mut String as *mut T) })
-            }
-            Value::Vec(v) if TypeId::of::<T>() == TypeId::of::<Vec<Value>>() => {
-                Some(unsafe { &mut *(v as *mut Vec<Value> as *mut T) })
-            }
-            _ => None,
-        }
-    }
-
     pub fn as_num(&self) -> Option<isize> {
         match self {
             Self::i8(v) => Some(*v as isize),

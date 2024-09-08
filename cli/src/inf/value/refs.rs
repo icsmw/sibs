@@ -1,9 +1,10 @@
 use std::fmt;
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Default)]
 #[cfg_attr(test, derive(strum_macros::EnumIter))]
 #[allow(non_camel_case_types)]
 pub enum ValueRef {
+    #[default]
     Empty,
     Numeric,
     i8,
@@ -27,13 +28,6 @@ pub enum ValueRef {
     Repeated(Box<ValueRef>),
     // (Vec<ARGUMENT_TY>, BLOCK_TY)
     Task(Vec<ValueRef>, Box<ValueRef>),
-}
-
-#[cfg(test)]
-impl Default for ValueRef {
-    fn default() -> Self {
-        ValueRef::Empty
-    }
 }
 
 impl ValueRef {
