@@ -9,7 +9,7 @@ use api::*;
 use tokio::{
     spawn,
     sync::{
-        mpsc::{error::SendError, unbounded_channel, UnboundedReceiver, UnboundedSender},
+        mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
         oneshot,
     },
 };
@@ -55,12 +55,6 @@ impl VariablesMeta {
         instance
     }
 
-    fn send<T>(result: Result<(), SendError<T>>) {
-        if let Err(e) = result {
-            panic!("Fail to communicate with tracker: {e}");
-        }
-    }
-
     pub async fn set<S: AsRef<str>>(
         &self,
         owner: &Uuid,
@@ -93,5 +87,95 @@ impl VariablesMeta {
             .map_err(|e| E::Channel(format!("Fail to send destroy command: {e}")))?;
         self.state.cancelled().await;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod processing {
+    use crate::{
+        elements::{ElTarget, Element},
+        error::LinkedErr,
+        inf::{operator::E, Configuration, Context, ExpectedValueType, Journal, Scope},
+        process_string,
+        reader::{Reader, Sources},
+    };
+
+    #[tokio::test]
+    async fn success() {
+        process_string!(
+            &Configuration::logs(false),
+            &include_str!("../../../tests/verification/success.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
+                let mut components: Vec<Element> = Vec::new();
+                while let Some(task) =
+                    src.report_err_if(Element::include(reader, &[ElTarget::Component]))?
+                {
+                    components.push(task);
+                }
+                Ok::<Vec<Element>, LinkedErr<E>>(components)
+            },
+            |components: Vec<Element>, cx: Context, _sc: Scope, _journal: Journal| async move {
+                for component in components.iter() {
+                    let result = component.linking(component, &components, &None, &cx).await;
+                    if let Err(err) = result.as_ref() {
+                        cx.atlas.report_err(err).await.expect("report created");
+                    }
+                    assert!(result.is_ok());
+                }
+                for component in components.iter() {
+                    let result = component
+                        .varification(component, &components, &None, &cx)
+                        .await;
+                    if let Err(err) = result.as_ref() {
+                        cx.atlas.report_err(err).await.expect("report created");
+                    }
+                    assert!(result.is_ok());
+                }
+                assert_eq!(components.len(), 5);
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn fail() {
+        process_string!(
+            &Configuration::logs(false),
+            &include_str!("../../../tests/verification/fail.sibs"),
+            |reader: &mut Reader, src: &mut Sources| {
+                let mut components: Vec<Element> = Vec::new();
+                while let Some(task) =
+                    src.report_err_if(Element::include(reader, &[ElTarget::Component]))?
+                {
+                    components.push(task);
+                }
+                Ok::<Vec<Element>, LinkedErr<E>>(components)
+            },
+            |components: Vec<Element>, cx: Context, _sc: Scope, _: Journal| async move {
+                for component in components.iter() {
+                    component
+                        .linking(component, &components, &None, &cx)
+                        .await
+                        .expect("linking variables is done");
+                }
+                for component in components.iter() {
+                    component
+                        .expected(component, &components, &None, &cx)
+                        .await
+                        .expect("linking variables is done");
+                }
+                for component in components.iter() {
+                    let result = component
+                        .varification(component, &components, &None, &cx)
+                        .await;
+                    if let Err(err) = result.as_ref() {
+                        cx.atlas.report_err(err).await.expect("report created");
+                    }
+                    assert!(result.is_err());
+                }
+                assert_eq!(components.len(), 5);
+                Ok::<(), LinkedErr<E>>(())
+            }
+        );
     }
 }

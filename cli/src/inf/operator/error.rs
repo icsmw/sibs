@@ -137,6 +137,10 @@ pub enum E {
     CallPPMWithoutPrevValue,
     #[error("Requested element out of bounds; length of source {0}; requested index {1}")]
     OutOfBounds(usize, usize),
+    #[error("Elements in vector have different type; prev = {0}; next = {1}")]
+    DismatchTypesInVector(String, String),
+    #[error("Empty vector on initialization")]
+    EmptyVector,
     #[error("Access by index isn't supported for: {0}")]
     AccessByIndexNotSupported(String),
     #[error("{0}")]

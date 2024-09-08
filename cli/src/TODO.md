@@ -46,3 +46,19 @@ true != false doesn't work
 
 - features:
 -- detect type of project behind each component (nodejs, rust, ruby etc)
+
+
+
+- add test for this fails:
+    #(ppm2)
+        @test() {
+            $values = (true, "false", true);
+        };
+    #(ppm3)
+        @test() {
+            $values = (true, 1, true);
+        };
+    #(ppm4)
+        @test() {
+            $values = ();
+        };

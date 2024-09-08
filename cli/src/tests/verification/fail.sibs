@@ -24,3 +24,9 @@
     @test($a: {string}, $b: a | b, $c: {string}) {
         :a:test(true);
     };
+#(ppm1)
+    @test() {
+        $values = (true, false, true);
+        $value = $values[0];
+        :a:test($value);
+    };
