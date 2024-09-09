@@ -71,7 +71,7 @@ mod test {
             let logs = temp_dir().join(format!("{}.log", Uuid::new_v4()));
             process_string!(
                 &Configuration::to_file(logs.clone()),
-                &format!("test[{test}]"),
+                &format!("@test{{{test}}}"),
                 |reader: &mut Reader, src: &mut Sources| {
                     let mut tasks: Vec<Element> = Vec::new();
                     while let Some(task) =
@@ -83,6 +83,7 @@ mod test {
                     Ok::<Vec<Element>, LinkedErr<E>>(tasks)
                 },
                 |tasks: Vec<Element>, cx: Context, sc: Scope, journal: Journal| async move {
+                    assert!(!tasks.is_empty());
                     for task in tasks.iter() {
                         let result = task
                             .execute(

@@ -136,7 +136,7 @@ mod test {
     };
 
     const TESTS: &[&str] = &[
-        r#"$tmp_path = env::temp_dir(); $file_name = "test.txt"; $file = fs::path_join(($tmp_path; $file_name)); if $file == "__temp_file__" ["true";] else ["false";];"#,
+        r#"$tmp_path = env::temp_dir(); $file_name = "test.txt"; $file = fs::path_join(($tmp_path, $file_name)); if $file == "__temp_file__" {"true";} else {"false";};"#,
         // r#"$file = fs::path_join(env::temp_dir(); "test.txt"); if $file == "__temp_file__" ["true";] else ["false";];"#,
     ];
 
@@ -157,7 +157,7 @@ mod test {
         for test in TESTS.iter() {
             process_string!(
                 &Configuration::logs(false),
-                &apply_hooks(format!("test[{test}]"), hooks),
+                &apply_hooks(format!("@test{{{test}}}"), hooks),
                 |reader: &mut Reader, src: &mut Sources| {
                     let mut tasks: Vec<Element> = Vec::new();
                     while let Some(task) =
@@ -169,6 +169,7 @@ mod test {
                     Ok::<Vec<Element>, LinkedErr<E>>(tasks)
                 },
                 |tasks: Vec<Element>, cx: Context, sc: Scope, journal: Journal| async move {
+                    assert!(!tasks.is_empty());
                     for task in tasks.iter() {
                         let result = task
                             .execute(
