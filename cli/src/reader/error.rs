@@ -61,10 +61,6 @@ pub enum E {
     EmptyBlock,
     #[error("File {0} already has a map")]
     FileAlreadyHasMap(PathBuf),
-    #[error("Subsequence doesn't return value")]
-    NoValueFromSubsequence,
-    #[error("Subsequence's element doesn't return value")]
-    NoValueFromSubsequenceElement,
     #[error("Fail to parse subsequence's element value")]
     FailToParseValueOfSubsequenceElement,
     #[error("Subsequence doesn't return bool value")]

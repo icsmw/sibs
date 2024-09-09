@@ -7,7 +7,7 @@ use quote::{format_ident, quote};
 use refs::get_value_ref;
 use std::borrow::Borrow;
 use syn::{
-    parse_macro_input, GenericArgument, Ident, ItemFn, PathArguments, ReturnType, Signature, Type,
+    parse_macro_input, GenericArgument, ItemFn, PathArguments, ReturnType, Signature, Type,
     TypePath, TypeTuple,
 };
 

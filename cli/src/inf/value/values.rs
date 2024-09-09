@@ -1,4 +1,7 @@
-use crate::{elements::Cmb, inf::journal::Output};
+use crate::{
+    elements::Cmb,
+    inf::{journal::Output, operator, ValueRef},
+};
 use std::{any::TypeId, fmt, path::PathBuf};
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
@@ -26,6 +29,33 @@ pub enum Value {
 }
 
 impl Value {
+    pub fn as_ref(&self) -> Result<ValueRef, operator::E> {
+        Ok(match self {
+            Self::Empty(..) => ValueRef::Empty,
+            Self::Output(..) => ValueRef::Empty, // <== TODO: Replace with some kind of ValueRef::Inner
+            Self::Cmb(..) => ValueRef::Empty, // <== TODO: Replace with some kind of ValueRef::Inner
+            Self::i8(..) => ValueRef::i8,
+            Self::i16(..) => ValueRef::i16,
+            Self::i32(..) => ValueRef::i32,
+            Self::i64(..) => ValueRef::i64,
+            Self::i128(..) => ValueRef::i128,
+            Self::isize(..) => ValueRef::isize,
+            Self::u8(..) => ValueRef::u8,
+            Self::u16(..) => ValueRef::u16,
+            Self::u32(..) => ValueRef::u32,
+            Self::u64(..) => ValueRef::u64,
+            Self::u128(..) => ValueRef::u128,
+            Self::usize(..) => ValueRef::usize,
+            Self::bool(..) => ValueRef::bool,
+            Self::PathBuf(..) => ValueRef::PathBuf,
+            Self::String(..) => ValueRef::String,
+            Self::Vec(v) => ValueRef::Vec(Box::new(
+                v.first()
+                    .and_then(|v| v.as_ref().ok())
+                    .ok_or(operator::E::EmptyVector)?,
+            )),
+        })
+    }
     pub fn not_empty_or<E>(self, err: E) -> Result<Value, E> {
         if self.is_empty() {
             Err(err)

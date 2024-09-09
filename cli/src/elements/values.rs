@@ -6,7 +6,7 @@ use crate::{
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
         Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        TokenGetter, TryExecute, TryExpectedValueType, Value, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };

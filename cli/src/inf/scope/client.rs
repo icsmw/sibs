@@ -85,18 +85,6 @@ impl Scope {
         rx.await?
     }
 
-    /// Import all variables from given scope. Post warn logs if some variable would
-    /// be overwriten because exists on destination scope
-    ///
-    /// # Arguments
-    ///
-    /// * `src` - source scope to import variables from
-    pub async fn import_vars(&self, src: &Scope) -> Result<(), E> {
-        let (tx, rx) = oneshot::channel();
-        self.tx.send(Demand::ImportVars(self.uuid, src.uuid, tx))?;
-        rx.await?
-    }
-
     /// Setting cwd (current working folder)
     ///
     /// # Arguments

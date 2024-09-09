@@ -49,21 +49,6 @@ impl Session {
         self.vars.get(key).cloned()
     }
 
-    pub fn get_vars(&self) -> &HashMap<String, Arc<Value>> {
-        &self.vars
-    }
-
-    pub fn import_vars(&mut self, vars: HashMap<String, Arc<Value>>) {
-        for (key, value) in vars.into_iter() {
-            if self.vars.contains_key(&key) {
-                self.journal.warn(format!(
-                    "Variable \"{key}\" will be overwritten with new value"
-                ));
-            }
-            self.vars.insert(key, value);
-        }
-    }
-
     pub fn set_cwd(&mut self, cwd: PathBuf) {
         self.journal.info(format!("set CWD to: {}", cwd.display()));
         self.cwd = cwd;

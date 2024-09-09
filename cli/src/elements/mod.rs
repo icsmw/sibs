@@ -546,13 +546,6 @@ impl Element {
             Err(operator::E::ElementIsNotComponent(format!("{self:?}")).linked(&self.token()))
         }
     }
-    pub fn as_mut_component(&mut self) -> Result<&mut Component, LinkedErr<operator::E>> {
-        if let Element::Component(component, _) = self {
-            Ok(component)
-        } else {
-            Err(operator::E::ElementIsNotComponent(format!("{self:?}")).linked(&self.token()))
-        }
-    }
     #[cfg(test)]
     pub fn el_target(&self) -> ElTarget {
         match self {

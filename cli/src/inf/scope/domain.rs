@@ -83,18 +83,6 @@ impl ScopeDomain {
                                 .unwrap_or(Err(E::NoScopeSession(session))),
                         )
                         .is_err(),
-                    Demand::ImportVars(dest, src, tx) => {
-                        let vars = sessions.get(&src).map(|session| session.get_vars().clone());
-                        tx.send(
-                            if let (Some(session), Some(vars)) = (sessions.get(&dest), vars) {
-                                session.import_vars(vars);
-                                Ok(())
-                            } else {
-                                Err(E::NoScopeSession(dest))
-                            },
-                        )
-                        .is_err()
-                    }
                     Demand::SetCwd(session, path, tx) => tx
                         .send(
                             sessions

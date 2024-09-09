@@ -19,8 +19,7 @@ use crate::{
 };
 use api::*;
 pub use error::E;
-#[cfg(test)]
-use std::collections::HashMap;
+
 use std::{future::Future, pin::Pin, sync::Arc};
 use tokio::{
     spawn,
@@ -106,22 +105,45 @@ impl Functions {
         spawn(async move {
             while let Some(demand) = rx.recv().await {
                 match demand {
-                    Demand::GetFunctionDescription(name, tx) => {
-                        let Some(desc) = store.get(&name) else {
-                            if tx.send(Err(E::FunctionNotExists(name))).is_err() {
+                    Demand::GetFunctionDescription(name, ty, tx) => {
+                        if let Some(desc) = store.get(&name) {
+                            if tx.send(Ok(desc)).is_err() {
+                                journal.err(format!("Fail send function's execute: {name}"));
+                            }
+                        } else if let Some(ty) = ty {
+                            let mut candidate = None;
+                            let mut multiple = false;
+                            for (full_name, desc) in store.all().iter() {
+                                if let (true, Some(first_arg_ty)) = (
+                                    name == full_name.split("::").last().unwrap_or(full_name),
+                                    desc.args.first(),
+                                ) {
+                                    if first_arg_ty.is_compatible(&ty) {
+                                        if candidate.is_some() {
+                                            multiple = true;
+                                            break;
+                                        } else {
+                                            candidate = Some(desc.clone());
+                                        }
+                                    }
+                                }
+                            }
+                            if multiple {
+                                continue;
+                            }
+                            if tx
+                                .send(if multiple {
+                                    Err(E::MultipleFunctionHasBeenFound(name.to_owned()))
+                                } else {
+                                    candidate.ok_or(E::FunctionNotExists(name))
+                                })
+                                .is_err()
+                            {
                                 journal
                                     .err("Fail send response for GetFunctionDescription command");
                             }
-                            continue;
-                        };
-                        if tx.send(Ok(desc)).is_err() {
-                            journal.err(format!("Fail send function's execute: {name}"));
-                        }
-                    }
-                    #[cfg(test)]
-                    Demand::GetAll(tx) => {
-                        if tx.send(store.all()).is_err() {
-                            journal.err("Fail send all functions descriptions");
+                        } else if tx.send(Err(E::FunctionNotExists(name))).is_err() {
+                            journal.err("Fail send response for GetFunctionDescription command");
                         }
                     }
                     Demand::Destroy => {
@@ -153,30 +175,31 @@ impl Functions {
         name: &str,
         args: Vec<FuncArg>,
         args_token: usize,
+        ty: Option<Value>,
         cx: Context,
         sc: Scope,
     ) -> Result<Value, LinkedErr<E>> {
         let (tx, rx) = oneshot::channel();
-        self.tx
-            .send(Demand::GetFunctionDescription(name.to_owned(), tx))?;
+        self.tx.send(Demand::GetFunctionDescription(
+            name.to_owned(),
+            if let Some(v) = ty {
+                Some(v.as_ref()?)
+            } else {
+                None
+            },
+            tx,
+        ))?;
         rx.await??.exec(args, args_token, cx, sc).await
     }
     pub async fn get_func_desc(
         &self,
         name: &str,
+        ty: Option<ValueRef>,
     ) -> Result<Arc<ExecutorFnDescription>, LinkedErr<E>> {
         let (tx, rx) = oneshot::channel();
         self.tx
-            .send(Demand::GetFunctionDescription(name.to_owned(), tx))?;
+            .send(Demand::GetFunctionDescription(name.to_owned(), ty, tx))?;
         Ok(rx.await??)
-    }
-    #[cfg(test)]
-    pub async fn get_all(
-        &self,
-    ) -> Result<HashMap<String, Arc<ExecutorFnDescription>>, LinkedErr<E>> {
-        let (tx, rx) = oneshot::channel();
-        self.tx.send(Demand::GetAll(tx))?;
-        Ok(rx.await?)
     }
 }
 

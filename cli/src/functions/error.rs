@@ -27,6 +27,8 @@ pub enum E {
     VarError(String),
     #[error("Function \"{0}\" not exists")]
     FunctionNotExists(String),
+    #[error("For \"{0}\" has been found multiple functions")]
+    MultipleFunctionHasBeenFound(String),
     #[error("Fail to receive channel message: {0}")]
     RecvError(String),
     #[error("Fail to send channel message: {0}")]

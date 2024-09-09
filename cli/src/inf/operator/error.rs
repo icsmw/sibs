@@ -27,14 +27,8 @@ pub enum E {
     UnknownComponent(Uuid),
     #[error("Type dismatch: {0} and {1}")]
     DismatchTypes(ValueRef, ValueRef),
-    #[error("Component \"{0}\" not found")]
-    ComponentNotFound(Uuid),
     #[error("Gatekeeper doesn't return bool value")]
     NoBoolValueFromGatekeeper,
-    #[error("TryExecute method isn't supported")]
-    NotSupported,
-    #[error("Function's argument doesn't have return value")]
-    NotAllArguamentsHasReturn,
     #[error("Spawned process exit with error")]
     SpawnedProcessExitWithError,
     #[error("Different parts/threads returns different types")]
@@ -85,18 +79,10 @@ pub enum E {
     FailToGetAnyValueAsTaskArg,
     #[error("If=proviso doesn't return bool result")]
     NoBoolResultFromProviso,
-    #[error("Left side of comparing statement doesn't return result")]
-    NoResultFromLeftOnComparing,
-    #[error("Right side of comparing statement doesn't return result")]
-    NoResultFromRightOnComparing,
-    #[error("If=proviso doesn't return any result")]
-    NoResultFromProviso,
     #[error("Variable \"{0}\" isn't assigned")]
     VariableIsNotAssigned(String),
     #[error("Fail assign variable \"{0}\"; no value")]
     NoValueToAssign(String),
-    #[error("Fail to get input for each statements")]
-    NoInputForEach,
     #[error("Fail to convert input for each statements into vector of strings")]
     FailConvertInputIntoStringsForEach,
     #[error("Attempt to get access to Metadata out of Element's scope: {0}")]

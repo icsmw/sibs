@@ -25,6 +25,8 @@ use tokio_util::sync::CancellationToken;
 pub use tracker::*;
 pub use variables::*;
 
+use super::ValueRef;
+
 const SIBS_FOLDER: &str = ".sibs";
 
 /// Defines a way to close application
@@ -191,20 +193,22 @@ impl Context {
         name: &str,
         args: Vec<FuncArg>,
         args_token: usize,
+        ty: Option<Value>,
         sc: Scope,
     ) -> Result<Value, LinkedErr<E>> {
         // TODO: switch to element instead "name"
         self.funcs
-            .execute(name, args, args_token, self.clone(), sc)
+            .execute(name, args, args_token, ty, self.clone(), sc)
             .await
             .map_err(|e| LinkedErr::new(e.e.into(), e.token))
     }
     pub async fn get_func_desc(
         &self,
         name: &str,
+        ty: Option<ValueRef>,
     ) -> Result<Arc<ExecutorFnDescription>, LinkedErr<E>> {
         self.funcs
-            .get_func_desc(name)
+            .get_func_desc(name, ty)
             .await
             .map_err(|e| LinkedErr::new(e.e.into(), e.token))
     }

@@ -43,7 +43,6 @@ pub enum Demand {
     /// * `String` - Key/Name of variable
     /// * `oneshot::Sender<Option<Arc<Value>>>` - Response channel to return variable value if it's available
     GetVariable(Uuid, String, oneshot::Sender<Result<Option<Arc<Value>>, E>>),
-    ImportVars(Uuid, Uuid, oneshot::Sender<Result<(), E>>),
     /// Getting current working folder for task
     ///
     /// # Parameters
@@ -103,7 +102,6 @@ impl fmt::Display for Demand {
                 Self::SetGlobalVariable(..) => "SetGlobalVariable",
                 Self::GetGlobalVariable(..) => "GetGlobalVariable",
                 Self::RemoveSession(..) => "RemoveSession",
-                Self::ImportVars(..) => "ImportVars",
                 Self::AddSession(..) => "AddSession",
                 Self::SetVariable(..) => "SetVariable",
                 Self::SetCwd(..) => "SetCwd",

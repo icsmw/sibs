@@ -4,9 +4,10 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, Formation,
-        FormationCursor, HasOptional, HasRepeated, LinkingResult, PrevValue, PrevValueExpectation,
-        Scope, TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
+        Formation, FormationCursor, HasOptional, HasRepeated, LinkingResult, PrevValue,
+        PrevValueExpectation, Scope, TokenGetter, TryExecute, TryExpectedValueType, Value,
+        ValueRef, VerificationResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -214,26 +215,26 @@ impl Formation for Function {
         self.args.len()
     }
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        fn formated(func: &Function, cursor: &mut FormationCursor) -> String {
-            format!(
-                "{}({}{}",
-                func.name,
-                func.args
-                    .iter()
-                    .map(|arg| format!(
-                        "\n{}{}",
-                        cursor.right().offset_as_string(),
-                        arg.format(&mut cursor.reown(Some(ElTarget::Function)).right())
-                    ))
-                    .collect::<Vec<String>>()
-                    .join(", "),
-                if func.args.is_empty() {
-                    ")".to_string()
-                } else {
-                    format!("\n{})", cursor.offset_as_string_if(&[ElTarget::Block]))
-                }
-            )
-        }
+        // fn formated(func: &Function, cursor: &mut FormationCursor) -> String {
+        //     format!(
+        //         "{}({}{}",
+        //         func.name,
+        //         func.args
+        //             .iter()
+        //             .map(|arg| format!(
+        //                 "\n{}{}",
+        //                 cursor.right().offset_as_string(),
+        //                 arg.format(&mut cursor.reown(Some(ElTarget::Function)).right())
+        //             ))
+        //             .collect::<Vec<String>>()
+        //             .join(", "),
+        //         if func.args.is_empty() {
+        //             ")".to_string()
+        //         } else {
+        //             format!("\n{})", cursor.offset_as_string_if(&[ElTarget::Block]))
+        //         }
+        //     )
+        // }
         let output = format!(
             "{}{}",
             cursor.offset_as_string_if(&[ElTarget::Block, ElTarget::Component]),
@@ -262,16 +263,15 @@ impl TryExpectedValueType for Function {
     ) -> VerificationResult {
         Box::pin(async move {
             for el in self.args.iter() {
-                el.try_varification(owner, components, prev, cx).await?;
+                el.varification(owner, components, prev, cx).await?;
             }
-            let desc = cx.get_func_desc(&self.name).await?;
+            let desc = cx
+                .get_func_desc(&self.name, prev.as_ref().map(|v| v.value.clone()).clone())
+                .await?;
             let ex_args = desc.args();
             let mut ac_args = Vec::new();
             for el in self.args.iter() {
-                ac_args.push((
-                    el.try_expected(owner, components, prev, cx).await?,
-                    el.token(),
-                ));
+                ac_args.push((el.expected(owner, components, prev, cx).await?, el.token()));
             }
             if let Some(prev) = prev {
                 ac_args.insert(0, (prev.value.clone(), prev.token));
@@ -360,7 +360,7 @@ impl TryExpectedValueType for Function {
     ) -> LinkingResult {
         Box::pin(async move {
             for el in self.args.iter() {
-                el.try_linking(owner, components, prev, cx).await?;
+                el.linking(owner, components, prev, cx).await?;
             }
             Ok(())
         })
@@ -369,10 +369,15 @@ impl TryExpectedValueType for Function {
         &'a self,
         _owner: &'a Element,
         _components: &'a [Element],
-        _prev: &'a Option<PrevValueExpectation>,
+        prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> ExpectedResult {
-        Box::pin(async move { Ok(cx.get_func_desc(&self.name).await?.output()) })
+        Box::pin(async move {
+            Ok(cx
+                .get_func_desc(&self.name, prev.as_ref().map(|v| v.value.clone()).clone())
+                .await?
+                .output())
+        })
     }
 }
 
@@ -399,7 +404,15 @@ impl TryExecute for Function {
                     token.clone(),
                 )
                 .await?;
-            Ok(cx.execute(&self.name, args, self.args_token, sc).await?)
+            Ok(cx
+                .execute(
+                    &self.name,
+                    args,
+                    self.args_token,
+                    prev.as_ref().map(|v| v.value.clone()).clone(),
+                    sc,
+                )
+                .await?)
         })
     }
 }
