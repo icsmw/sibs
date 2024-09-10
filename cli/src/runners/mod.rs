@@ -14,6 +14,86 @@ where
     process::exit(1);
 }
 
+#[cfg(test)]
+pub async fn process_block<S: AsRef<str>, T>(block: S, expectation: T)
+where
+    T: 'static + PartialEq + std::fmt::Debug,
+{
+    use crate::{
+        elements::{ElTarget, Element},
+        error::LinkedErr,
+        inf::{
+            journal::Journal,
+            operator::{Execute, E},
+            Configuration, Context, Scope,
+        },
+        process_string,
+        reader::{chars, Reader, Sources},
+    };
+    use tokio_util::sync::CancellationToken;
+
+    let task = format!("@test(){{{}}}", block.as_ref());
+    process_string!(
+        &Configuration::logs(false),
+        &task,
+        |reader: &mut Reader, src: &mut Sources| {
+            let mut tasks: Vec<Element> = Vec::new();
+            while let Some(task) = src.report_err_if(Element::include(reader, &[ElTarget::Task]))? {
+                let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                tasks.push(task);
+            }
+            if tasks.is_empty() {
+                eprintln!("Fail read task from:\n{task}\n");
+            }
+            assert!(!tasks.is_empty());
+            Ok::<Vec<Element>, LinkedErr<E>>(tasks)
+        },
+        |tasks: Vec<Element>, cx: Context, sc: Scope, _journal: Journal| async move {
+            for task in tasks.iter() {
+                let result = task
+                    .execute(
+                        None,
+                        &[],
+                        &[],
+                        &None,
+                        cx.clone(),
+                        sc.clone(),
+                        CancellationToken::new(),
+                    )
+                    .await;
+
+                if let Err(err) = result.as_ref() {
+                    cx.atlas
+                        .report_err(err)
+                        .await
+                        .expect("Error report has been created");
+                }
+                assert_eq!(
+                    result
+                        .expect("run of task is success")
+                        .get::<T>()
+                        .expect("test returns bool value"),
+                    &expectation
+                );
+            }
+            Ok::<(), LinkedErr<E>>(())
+        }
+    );
+}
+
+#[cfg(test)]
+#[macro_export]
+macro_rules! test_block {
+    ($fn_name:ident, $content:literal, $expectation:literal) => {
+        paste::item! {
+            #[tokio::test]
+            async fn [< test_ $fn_name >] () {
+                $crate::runners::process_block($content, $expectation).await;
+            }
+        }
+    };
+}
+
 #[macro_export]
 macro_rules! read_string {
     ($cfg:expr, $content:expr, $reading:expr) => {{

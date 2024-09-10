@@ -64,23 +64,11 @@ pub fn register(store: &mut Store<ExecutorFnDescription>) -> Result<(), E> {
 }
 
 #[cfg(test)]
-mod test {
-    use journal::Journal;
-    use tokio_util::sync::CancellationToken;
+mod tests {
+    use crate::test_block;
 
-    use crate::{
-        elements::{ElTarget, Element},
-        error::LinkedErr,
-        inf::{
-            journal,
-            operator::{Execute, E},
-            Configuration, Context, Scope,
-        },
-        process_string,
-        reader::{chars, Reader, Sources},
-    };
-
-    const TESTS: &[&str] = &[
+    test_block!(
+        repeat,
         r#"
             if "R".repeat(5) == "RRRRR" {
                 true;
@@ -88,6 +76,11 @@ mod test {
                 false;
             };
         "#,
+        true
+    );
+
+    test_block!(
+        to_ascii_lowercase,
         r#"
             if "R".to_ascii_lowercase() == "r" {
                 true;
@@ -95,6 +88,11 @@ mod test {
                 false;
             };
         "#,
+        true
+    );
+
+    test_block!(
+        to_ascii_uppercase,
         r#"
             if "r".to_ascii_uppercase() == "R" {
                 true;
@@ -102,6 +100,11 @@ mod test {
                 false;
             };
         "#,
+        true
+    );
+
+    test_block!(
+        to_lowercase,
         r#"
             if "R".to_lowercase() == "r" {
                 true;
@@ -109,6 +112,11 @@ mod test {
                 false;
             };
         "#,
+        true
+    );
+
+    test_block!(
+        to_uppercase,
         r#"
             if "r".to_uppercase() == "R" {
                 true;
@@ -116,6 +124,11 @@ mod test {
                 false;
             };
         "#,
+        true
+    );
+
+    test_block!(
+        sub,
         r#"
             $a = "Hello World!";
             $b = $a.sub(0, 5);
@@ -126,6 +139,11 @@ mod test {
                 false;
             };
         "#,
+        true
+    );
+
+    test_block!(
+        split_off,
         r#"
             if "Hello, World!".split_off(7) == "World!" {
                 true;
@@ -133,6 +151,11 @@ mod test {
                 false;
             };
         "#,
+        true
+    );
+
+    test_block!(
+        trim,
         r#"
             if "   word   ".trim() == "word" {
                 true;
@@ -140,6 +163,11 @@ mod test {
                 false;
             };
         "#,
+        true
+    );
+
+    test_block!(
+        trim_end,
         r#"
             if "   word   ".trim_end() == "   word" {
                 true;
@@ -147,6 +175,11 @@ mod test {
                 false;
             };
         "#,
+        true
+    );
+
+    test_block!(
+        trim_start,
         r#"
             if "   word   ".trim_start() == "word   " {
                 true;
@@ -154,53 +187,6 @@ mod test {
                 false;
             };
         "#,
-    ];
-
-    #[tokio::test]
-    async fn reading() {
-        for test in TESTS.iter() {
-            process_string!(
-                &Configuration::logs(false),
-                &format!("@test(){{{test}}}"),
-                |reader: &mut Reader, src: &mut Sources| {
-                    let mut tasks: Vec<Element> = Vec::new();
-                    while let Some(task) =
-                        src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
-                    {
-                        let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-                        tasks.push(task);
-                    }
-                    Ok::<Vec<Element>, LinkedErr<E>>(tasks)
-                },
-                |tasks: Vec<Element>, cx: Context, sc: Scope, _journal: Journal| async move {
-                    assert!(!tasks.is_empty());
-                    for task in tasks.iter() {
-                        let result = task
-                            .execute(
-                                None,
-                                &[],
-                                &[],
-                                &None,
-                                cx.clone(),
-                                sc.clone(),
-                                CancellationToken::new(),
-                            )
-                            .await;
-
-                        if let Err(err) = result.as_ref() {
-                            cx.atlas
-                                .report_err(err)
-                                .await
-                                .expect("Error report has been created");
-                        }
-                        assert!(result
-                            .expect("run of task is success")
-                            .as_bool()
-                            .expect("test returns bool value"));
-                    }
-                    Ok::<(), LinkedErr<E>>(())
-                }
-            );
-        }
-    }
+        true
+    );
 }
