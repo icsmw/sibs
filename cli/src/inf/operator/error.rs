@@ -43,6 +43,8 @@ pub enum E {
     SpawningError(spawner::E),
     #[error("{0}")]
     ContextError(context::E),
+    #[error("Expecting numeric value")]
+    ExpectedNumericValue,
     #[error("{0}")]
     ExecutorError(functions::E),
     #[error("{0}")]
@@ -121,6 +123,8 @@ pub enum E {
     InvalidValueRef(String),
     #[error("Attempt to call PPM without prev value")]
     CallPPMWithoutPrevValue,
+    #[error("Accessor can be used with Values and String only; current: {0}")]
+    NotSupportedTypeByAccessor(ValueRef),
     #[error("Requested element out of bounds; length of source {0}; requested index {1}")]
     OutOfBounds(usize, usize),
     #[error("Elements in vector have different type; prev = {0}; next = {1}")]

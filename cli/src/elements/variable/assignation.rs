@@ -4,9 +4,9 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, Formation,
-        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
-        TryExecute, TryExpectedValueType, Value, VerificationResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
+        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
+        TokenGetter, TryExecute, TryExpectedValueType, Value, VerificationResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -128,7 +128,7 @@ impl TryExpectedValueType for VariableAssignation {
                     &owner.as_component()?.uuid,
                     el.get_name(),
                     self.assignation
-                        .try_expected(owner, components, prev, cx)
+                        .expected(owner, components, prev, cx)
                         .await?,
                 )
                 .await
@@ -143,11 +143,7 @@ impl TryExpectedValueType for VariableAssignation {
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> ExpectedResult {
-        Box::pin(async move {
-            self.assignation
-                .try_expected(owner, components, prev, cx)
-                .await
-        })
+        Box::pin(async move { self.assignation.expected(owner, components, prev, cx).await })
     }
 }
 

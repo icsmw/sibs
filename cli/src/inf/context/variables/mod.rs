@@ -153,10 +153,11 @@ mod processing {
             },
             |components: Vec<Element>, cx: Context, _sc: Scope, _: Journal| async move {
                 for component in components.iter() {
-                    component
-                        .linking(component, &components, &None, &cx)
-                        .await
-                        .expect("linking variables is done");
+                    let result = component.linking(component, &components, &None, &cx).await;
+                    if let Err(err) = result.as_ref() {
+                        cx.atlas.report_err(err).await.expect("report created");
+                    }
+                    result.expect("linking variables is done");
                 }
                 for component in components.iter() {
                     component

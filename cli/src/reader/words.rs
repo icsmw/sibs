@@ -20,6 +20,9 @@ pub const COMP: &str = "#(";
 pub const TRUE: &str = "true";
 pub const FALSE: &str = "false";
 pub const GLOBAL_VAR: &str = "global";
+pub const RANGE: &str = "..";
+pub const FOR: &str = "for";
+pub const IN: &str = "in";
 
 pub fn is_reserved<S: AsRef<str>>(s: S) -> bool {
     [
@@ -45,6 +48,9 @@ pub fn is_reserved<S: AsRef<str>>(s: S) -> bool {
         TRUE,
         FALSE,
         GLOBAL_VAR,
+        RANGE,
+        FOR,
+        IN,
     ]
     .contains(&s.as_ref())
 }

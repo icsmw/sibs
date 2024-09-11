@@ -2,9 +2,10 @@ use crate::{
     elements::{ElTarget, Element, Gatekeeper, SimpleString, Task},
     error::LinkedErr,
     inf::{
-        operator, scenario, Context, Execute, ExecutePinnedResult, ExpectedResult, Formation,
-        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
-        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, scenario, Context, Execute, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValue,
+        PrevValueExpectation, Scope, TokenGetter, TryExecute, TryExpectedValueType, Value,
+        ValueRef, VerificationResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -197,7 +198,7 @@ impl TryExpectedValueType for Component {
     ) -> VerificationResult {
         Box::pin(async move {
             for el in self.elements.iter() {
-                el.try_varification(owner, components, prev, cx).await?;
+                el.varification(owner, components, prev, cx).await?;
             }
             Ok(())
         })
@@ -211,7 +212,7 @@ impl TryExpectedValueType for Component {
     ) -> LinkingResult {
         Box::pin(async move {
             for el in self.elements.iter() {
-                el.try_linking(owner, components, prev, cx).await?;
+                el.linking(owner, components, prev, cx).await?;
             }
             Ok(())
         })

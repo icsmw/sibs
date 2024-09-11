@@ -4,9 +4,7 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        Context, Execute, ExecutePinnedResult, ExpectedResult, Formation, FormationCursor,
-        LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter, TryExecute,
-        TryExpectedValueType, Value, ValueRef, VerificationResult,
+        Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -95,7 +93,7 @@ impl TryExpectedValueType for Condition {
     ) -> LinkingResult {
         Box::pin(async move {
             self.subsequence
-                .try_linking(owner, components, prev, cx)
+                .linking(owner, components, prev, cx)
                 .await
         })
     }

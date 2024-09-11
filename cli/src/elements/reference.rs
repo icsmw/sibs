@@ -4,9 +4,9 @@ use crate::{
     elements::{ElTarget, Element, Gatekeeper},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, Formation,
-        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
-        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
+        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
+        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -194,11 +194,11 @@ impl TryExpectedValueType for Reference {
     ) -> VerificationResult {
         Box::pin(async move {
             for el in self.inputs.iter() {
-                el.try_varification(owner, components, prev, cx).await?
+                el.varification(owner, components, prev, cx).await?
             }
             let task_el = self.get_linked_task(owner, components)?;
             let task_ref = task_el.as_task()?;
-            let ValueRef::Task(args, _) = task_el.try_expected(owner, components, prev, cx).await?
+            let ValueRef::Task(args, _) = task_el.expected(owner, components, prev, cx).await?
             else {
                 return Err(operator::E::InvalidValueRef(format!(
                     "task \"{}\" has invalid expected output",
@@ -214,10 +214,10 @@ impl TryExpectedValueType for Reference {
                 .by(self));
             }
             for (i, el) in self.inputs.iter().enumerate() {
-                el.try_varification(owner, components, prev, cx).await?;
-                let left = el.try_expected(owner, components, prev, cx).await?;
+                el.varification(owner, components, prev, cx).await?;
+                let left = el.expected(owner, components, prev, cx).await?;
                 let right = &args[i];
-                if &left != right {
+                if !left.is_compatible(right) {
                     return Err(operator::E::DismatchTypes(left, right.clone()).by(self));
                 }
             }
@@ -233,7 +233,7 @@ impl TryExpectedValueType for Reference {
     ) -> LinkingResult {
         Box::pin(async move {
             for el in self.inputs.iter() {
-                el.try_linking(owner, components, prev, cx).await?
+                el.linking(owner, components, prev, cx).await?
             }
             Ok(())
         })
@@ -247,7 +247,7 @@ impl TryExpectedValueType for Reference {
     ) -> ExpectedResult {
         Box::pin(async move {
             self.get_linked_task(owner, components)?
-                .try_expected(owner, components, prev, cx)
+                .expected(owner, components, prev, cx)
                 .await
         })
     }

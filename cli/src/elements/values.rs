@@ -6,7 +6,7 @@ use crate::{
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
         Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, VerificationResult,
+        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -162,7 +162,7 @@ impl TryExpectedValueType for Values {
                 }
             }
 
-            Ok(ty.ok_or(operator::E::EmptyVector)?)
+            Ok(ValueRef::Vec(Box::new(ty.ok_or(operator::E::EmptyVector)?)))
         })
     }
 }

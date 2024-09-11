@@ -4,9 +4,9 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, Formation,
-        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
-        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
+        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
+        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -141,8 +141,8 @@ impl TryExpectedValueType for Comparing {
         cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move {
-            let left = self.left.try_expected(owner, components, prev, cx).await?;
-            let right = self.right.try_expected(owner, components, prev, cx).await?;
+            let left = self.left.expected(owner, components, prev, cx).await?;
+            let right = self.right.expected(owner, components, prev, cx).await?;
             if left != right {
                 Err(operator::E::DismatchTypes(left, right).by(self))
             } else {
@@ -159,8 +159,8 @@ impl TryExpectedValueType for Comparing {
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
-            self.left.try_linking(owner, components, prev, cx).await?;
-            self.right.try_linking(owner, components, prev, cx).await?;
+            self.left.linking(owner, components, prev, cx).await?;
+            self.right.linking(owner, components, prev, cx).await?;
             Ok(())
         })
     }

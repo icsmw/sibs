@@ -4,9 +4,9 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        Context, Execute, ExecutePinnedResult, ExpectedResult, Formation, FormationCursor,
-        LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter, TryExecute,
-        TryExpectedValueType, Value, ValueRef, VerificationResult,
+        Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
+        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
+        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -56,6 +56,7 @@ impl TryDissect<Block> for Block {
                     ElTarget::Ppm,
                     ElTarget::Call,
                     ElTarget::Accessor,
+                    ElTarget::Range,
                 ],
             )? {
                 if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
@@ -137,7 +138,7 @@ impl TryExpectedValueType for Block {
     ) -> VerificationResult {
         Box::pin(async move {
             for el in self.elements.iter() {
-                el.try_varification(owner, components, prev, cx).await?;
+                el.varification(owner, components, prev, cx).await?;
             }
             Ok(())
         })
@@ -151,7 +152,7 @@ impl TryExpectedValueType for Block {
     ) -> LinkingResult {
         Box::pin(async move {
             for el in self.elements.iter() {
-                el.try_linking(owner, components, prev, cx).await?;
+                el.linking(owner, components, prev, cx).await?;
             }
             Ok(())
         })
@@ -168,7 +169,7 @@ impl TryExpectedValueType for Block {
             let Some(el) = self.elements.last() else {
                 return Ok(ValueRef::Empty);
             };
-            el.try_expected(owner, components, prev, cx).await
+            el.expected(owner, components, prev, cx).await
         })
     }
 }
@@ -315,6 +316,7 @@ mod proptest {
                             ElTarget::Reference,
                             ElTarget::Boolean,
                             ElTarget::Integer,
+                            ElTarget::For,
                         ]
                     },
                     deep,

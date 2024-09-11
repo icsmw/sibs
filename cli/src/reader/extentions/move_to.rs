@@ -66,6 +66,28 @@ impl<'a> MoveTo<'a> {
             None
         }
     }
+    pub fn word_any(&mut self, words: &[&str]) -> Option<String> {
+        if self.bound.done() {
+            return None;
+        }
+        let content = &self.bound.content[self.bound.pos..].trim();
+        let mut found: Option<String> = None;
+        for word in words.iter() {
+            if content.starts_with(word) {
+                found = Some(word.to_string());
+                break;
+            }
+        }
+        if let Some(found) = found {
+            let from = self.bound.pos;
+            self.any();
+            self.bound.pos += found.len();
+            self.bound.index(None, from, self.bound.pos - from);
+            Some(found)
+        } else {
+            None
+        }
+    }
     pub fn expression(&mut self, words: &[&str]) -> Option<String> {
         if self.bound.done() {
             return None;

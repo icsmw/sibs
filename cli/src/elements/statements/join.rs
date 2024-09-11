@@ -2,9 +2,7 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExecuteResult, ExpectedResult, Formation,
-        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
-        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecutePinnedResult, ExecuteResult, ExpectedResult, ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -107,7 +105,7 @@ impl TryExpectedValueType for Join {
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> LinkingResult {
-        Box::pin(async move { self.elements.try_linking(owner, components, prev, cx).await })
+        Box::pin(async move { self.elements.linking(owner, components, prev, cx).await })
     }
 
     fn try_expected<'a>(

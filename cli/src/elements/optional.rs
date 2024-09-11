@@ -4,9 +4,9 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, Formation,
-        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
-        TryExecute, TryExpectedValueType, Value, VerificationResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
+        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
+        TokenGetter, TryExecute, TryExpectedValueType, Value, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -110,11 +110,9 @@ impl TryExpectedValueType for Optional {
     ) -> VerificationResult {
         Box::pin(async move {
             self.condition
-                .try_varification(owner, components, prev, cx)
+                .varification(owner, components, prev, cx)
                 .await?;
-            self.action
-                .try_varification(owner, components, prev, cx)
-                .await
+            self.action.varification(owner, components, prev, cx).await
         })
     }
     fn try_linking<'a>(
@@ -125,10 +123,8 @@ impl TryExpectedValueType for Optional {
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
-            self.condition
-                .try_linking(owner, components, prev, cx)
-                .await?;
-            self.action.try_linking(owner, components, prev, cx).await
+            self.condition.linking(owner, components, prev, cx).await?;
+            self.action.linking(owner, components, prev, cx).await
         })
     }
     fn try_expected<'a>(

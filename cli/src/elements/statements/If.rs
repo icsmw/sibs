@@ -4,9 +4,9 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, Formation,
-        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
-        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
+        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
+        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -40,11 +40,11 @@ impl TryExpectedValueType for Thread {
         Box::pin(async move {
             match self {
                 Self::If(sub, bl) => {
-                    sub.try_varification(owner, components, prev, cx).await?;
-                    bl.try_varification(owner, components, prev, cx).await?;
+                    sub.varification(owner, components, prev, cx).await?;
+                    bl.varification(owner, components, prev, cx).await?;
                 }
                 Self::Else(bl) => {
-                    bl.try_varification(owner, components, prev, cx).await?;
+                    bl.varification(owner, components, prev, cx).await?;
                 }
             };
             Ok(())
@@ -61,11 +61,11 @@ impl TryExpectedValueType for Thread {
         Box::pin(async move {
             match self {
                 Self::If(sub, bl) => {
-                    sub.try_linking(owner, components, prev, cx).await?;
-                    bl.try_linking(owner, components, prev, cx).await?;
+                    sub.linking(owner, components, prev, cx).await?;
+                    bl.linking(owner, components, prev, cx).await?;
                 }
                 Self::Else(bl) => {
-                    bl.try_linking(owner, components, prev, cx).await?;
+                    bl.linking(owner, components, prev, cx).await?;
                 }
             }
             Ok(())
@@ -81,8 +81,8 @@ impl TryExpectedValueType for Thread {
     ) -> ExpectedResult {
         Box::pin(async move {
             match self {
-                Self::If(_, block) => block.try_expected(owner, components, prev, cx).await,
-                Self::Else(block) => block.try_expected(owner, components, prev, cx).await,
+                Self::If(_, block) => block.expected(owner, components, prev, cx).await,
+                Self::Else(block) => block.expected(owner, components, prev, cx).await,
             }
         })
     }

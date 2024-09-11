@@ -4,9 +4,9 @@ use crate::{
     elements::{Cmb, ElTarget, Element},
     error::LinkedErr,
     inf::{
-        Context, Execute, ExecutePinnedResult, ExpectedResult, Formation, FormationCursor,
-        LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter, TryExecute,
-        TryExpectedValueType, Value, ValueRef, VerificationResult,
+        Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
+        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
+        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -139,7 +139,7 @@ impl TryExpectedValueType for Subsequence {
     ) -> VerificationResult {
         Box::pin(async move {
             for el in self.subsequence.iter() {
-                el.try_varification(owner, components, prev, cx).await?;
+                el.varification(owner, components, prev, cx).await?;
             }
             Ok(())
         })
@@ -154,7 +154,7 @@ impl TryExpectedValueType for Subsequence {
     ) -> LinkingResult {
         Box::pin(async move {
             for el in self.subsequence.iter() {
-                el.try_linking(owner, components, prev, cx).await?;
+                el.linking(owner, components, prev, cx).await?;
             }
             Ok(())
         })

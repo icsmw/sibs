@@ -6,9 +6,9 @@ use crate::{
     },
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, Formation,
-        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
-        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
+        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
+        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -289,14 +289,12 @@ impl TryExpectedValueType for Task {
     ) -> VerificationResult {
         Box::pin(async move {
             for el in self.dependencies.iter() {
-                el.try_varification(owner, components, prev, cx).await?;
+                el.varification(owner, components, prev, cx).await?;
             }
             for el in self.declarations.iter() {
-                el.try_varification(owner, components, prev, cx).await?;
+                el.varification(owner, components, prev, cx).await?;
             }
-            self.block
-                .try_varification(owner, components, prev, cx)
-                .await
+            self.block.varification(owner, components, prev, cx).await
         })
     }
     fn try_linking<'a>(
@@ -308,12 +306,12 @@ impl TryExpectedValueType for Task {
     ) -> LinkingResult {
         Box::pin(async move {
             for el in self.dependencies.iter() {
-                el.try_linking(owner, components, prev, cx).await?;
+                el.linking(owner, components, prev, cx).await?;
             }
             for el in self.declarations.iter() {
-                el.try_linking(owner, components, prev, cx).await?;
+                el.linking(owner, components, prev, cx).await?;
             }
-            self.block.try_linking(owner, components, prev, cx).await
+            self.block.linking(owner, components, prev, cx).await
         })
     }
 
@@ -327,11 +325,11 @@ impl TryExpectedValueType for Task {
         Box::pin(async move {
             let mut args: Vec<ValueRef> = Vec::new();
             for el in self.declarations.iter() {
-                args.push(el.try_expected(owner, components, prev, cx).await?);
+                args.push(el.expected(owner, components, prev, cx).await?);
             }
             Ok(ValueRef::Task(
                 args,
-                Box::new(self.block.try_expected(owner, components, prev, cx).await?),
+                Box::new(self.block.expected(owner, components, prev, cx).await?),
             ))
         })
     }

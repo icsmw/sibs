@@ -4,9 +4,9 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        Context, Execute, ExecutePinnedResult, ExpectedResult, Formation, FormationCursor,
-        LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter, TryExecute,
-        TryExpectedValueType, Value, VerificationResult,
+        Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
+        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
+        TryExecute, TryExpectedValueType, Value, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -66,12 +66,12 @@ impl TokenGetter for First {
 impl TryExpectedValueType for First {
     fn try_varification<'a>(
         &'a self,
-        _owner: &'a Element,
-        _components: &'a [Element],
-        _prev: &'a Option<PrevValueExpectation>,
-        _cx: &'a Context,
+        owner: &'a Element,
+        components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
+        cx: &'a Context,
     ) -> VerificationResult {
-        Box::pin(async move { Ok(()) })
+        Box::pin(async move { self.block.varification(owner, components, prev, cx).await })
     }
     fn try_linking<'a>(
         &'a self,
@@ -80,7 +80,7 @@ impl TryExpectedValueType for First {
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> LinkingResult {
-        Box::pin(async move { self.block.try_linking(owner, components, prev, cx).await })
+        Box::pin(async move { self.block.linking(owner, components, prev, cx).await })
     }
 
     fn try_expected<'a>(
@@ -90,7 +90,7 @@ impl TryExpectedValueType for First {
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> ExpectedResult {
-        Box::pin(async move { self.block.try_expected(owner, components, prev, cx).await })
+        Box::pin(async move { self.block.expected(owner, components, prev, cx).await })
     }
 }
 

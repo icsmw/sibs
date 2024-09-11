@@ -26,7 +26,7 @@
     };
 #(ppm1)
     @test() {
-        $strings = ("one", "two", "three");
+        $strings = ("a", "b", "c");
         $string = $strings[0];
         :a:test($string);
         :a:test($strings[0]);

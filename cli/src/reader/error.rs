@@ -59,6 +59,8 @@ pub enum E {
     FailFindTaskActions,
     #[error("Empty block")]
     EmptyBlock,
+    #[error("No end range value [from..??]")]
+    NoEndRangeBorder,
     #[error("File {0} already has a map")]
     FileAlreadyHasMap(PathBuf),
     #[error("Fail to parse subsequence's element value")]
@@ -97,6 +99,14 @@ pub enum E {
     NoComponentBody,
     #[error("No first statement body")]
     NoFIRSTStatementBody,
+    #[error("No index variable in: for $index in $from..$to {{...}}")]
+    NoIndexInForLoop,
+    #[error("No \"in\" keyword in: for $index in $from..$to {{...}}")]
+    NoINKeywordInForLoop,
+    #[error("No range in: for $index in $from..$to {{...}}")]
+    NoRangeInForLoop,
+    #[error("No body in: for $index in $from..$to {{...}}")]
+    NoBodyInForLoop,
     #[error("No join statement body; join(<ref; ref; ...>)")]
     NoJOINStatementBody,
     #[error("join statement can include only references to tasks; join(<ref; ref; ...>)")]

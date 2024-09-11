@@ -3,4 +3,5 @@ pub mod If;
 pub mod breaker;
 pub mod each;
 pub mod first;
+pub mod r#for;
 pub mod join;
