@@ -71,6 +71,8 @@ pub enum E {
     InvertingOnEmptyReturn,
     #[error("Cannot apply inverting \"!\" on none-bool return")]
     InvertingOnNotBool,
+    #[error("Block element expected")]
+    BlockElementExpected,
     #[error("Fail to get value as string")]
     FailToGetValueAsString,
     #[error("Fail to get string value")]
@@ -99,6 +101,8 @@ pub enum E {
     DismatchTaskArgumentsCount(usize, String, usize, String),
     #[error("Fail to get value for declaration task's argument")]
     NoValueToDeclareTaskArgument,
+    #[error("Attempt to break block, which doesn't have a break-signal")]
+    NoBreakSignalSetupForBlock,
     #[error("Element isn't Task; element type: {0}")]
     ElementIsNotTask(String),
     #[error("Element isn't Component; element type: {0}")]

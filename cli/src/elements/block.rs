@@ -4,9 +4,9 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
-        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
-        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
+        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
+        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -26,6 +26,13 @@ impl Block {
     }
     pub fn set_breaker(&mut self, breaker: CancellationToken) {
         self.breaker = Some(breaker);
+    }
+
+    pub fn get_breaker(&self) -> Result<CancellationToken, LinkedErr<operator::E>> {
+        let Some(breaker) = self.breaker.as_ref() else {
+            return Err(operator::E::NoBreakSignalSetupForBlock.by(self));
+        };
+        Ok(breaker.clone())
     }
 }
 

@@ -50,9 +50,13 @@ impl TryDissect<Each> for Each {
             } else {
                 return Err(E::NoLoopInitialization.linked(&reader.token()?.id));
             };
-            let Some(block) = Element::include(reader, &[ElTarget::Block])? else {
+            let Some(mut block) = Element::include(reader, &[ElTarget::Block])? else {
                 Err(E::NoGroup.by_reader(reader))?
             };
+            if let Element::Block(block, _) = &mut block {
+                block.set_owner(ElTarget::Each);
+                block.set_breaker(CancellationToken::new());
+            }
             Ok(Some(Each {
                 input,
                 variable: Box::new(variable),
@@ -154,7 +158,12 @@ impl TryExecute for Each {
                 .as_strings()
                 .ok_or(operator::E::FailConvertInputIntoStringsForEach)?;
             let mut output: Value = Value::empty();
-            let (loop_uuid, loop_token) = sc.open_loop().await?;
+            let blk_token = if let Element::Block(el, _) = self.block.as_ref() {
+                el.get_breaker()?
+            } else {
+                return Err(operator::E::BlockElementExpected.linked(&self.block.token()));
+            };
+            let (loop_uuid, loop_token) = sc.open_loop(blk_token).await?;
             let Element::VariableName(variable, _) = self.variable.as_ref() else {
                 return Err(operator::E::NoVariableName.by(self.variable.as_ref()));
             };

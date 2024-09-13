@@ -70,9 +70,14 @@ pub enum Demand {
     /// # Parameters
     ///
     /// * `Uuid` - Uuid of local scope (context of component/task)
+    /// * `CancellationToken` - cancellation token on target block
     /// * `oneshot::Sender<(Uuid, CancellationToken)>` - Response channel. Uuid of loop
     ///   and CancellationToken to check a state of loop
-    OpenLoop(Uuid, oneshot::Sender<Result<(Uuid, CancellationToken), E>>),
+    OpenLoop(
+        Uuid,
+        CancellationToken,
+        oneshot::Sender<Result<(Uuid, CancellationToken), E>>,
+    ),
     /// Close loop.
     ///
     /// # Parameters

@@ -1,4 +1,7 @@
-use crate::inf::{context::E, scope::Demand, OwnedJournal, Value};
+use crate::{
+    elements::{Block, Element},
+    inf::{context::E, scope::Demand, OwnedJournal, Value},
+};
 use std::{path::PathBuf, sync::Arc};
 use tokio::sync::{mpsc::UnboundedSender, oneshot};
 use tokio_util::sync::CancellationToken;
@@ -130,9 +133,12 @@ impl Scope {
     ///
     /// `Ok((Uuid, CancellationToken))` Uuid of registred loop and cancellation token
     /// to track state of loop
-    pub async fn open_loop(&self) -> Result<(Uuid, CancellationToken), E> {
+    pub async fn open_loop(
+        &self,
+        block_token: CancellationToken,
+    ) -> Result<(Uuid, CancellationToken), E> {
         let (tx, rx) = oneshot::channel();
-        self.tx.send(Demand::OpenLoop(self.uuid, tx))?;
+        self.tx.send(Demand::OpenLoop(self.uuid, block_token, tx))?;
         rx.await?
     }
 

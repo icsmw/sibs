@@ -102,11 +102,11 @@ impl ScopeDomain {
                                 .unwrap_or(Err(E::NoScopeSession(session))),
                         )
                         .is_err(),
-                    Demand::OpenLoop(session, tx) => tx
+                    Demand::OpenLoop(session, token, tx) => tx
                         .send(
                             sessions
                                 .get(&session)
-                                .map(|session| Ok(session.open_loop()))
+                                .map(|session| Ok(session.open_loop(token)))
                                 .unwrap_or(Err(E::NoScopeSession(session))),
                         )
                         .is_err(),

@@ -42,6 +42,7 @@ impl TryDissect<For> for For {
             };
             if let Element::Block(block, _) = &mut block {
                 block.set_owner(ElTarget::For);
+                block.set_breaker(CancellationToken::new());
             }
             Ok(Some(Self {
                 index: Box::new(index),
@@ -140,10 +141,12 @@ impl TryExecute for For {
                     operator::E::InvalidIndexVariableForStatement.linked(&self.target.token())
                 );
             };
-            let (loop_uuid, loop_token) = sc.open_loop().await?;
-            // if let Element::Block(el, _) = self.block.as_mut() {
-            //     el.set_breaker(loop_token.clone());
-            // }
+            let blk_token = if let Element::Block(el, _) = self.block.as_ref() {
+                el.get_breaker()?
+            } else {
+                return Err(operator::E::BlockElementExpected.linked(&self.block.token()));
+            };
+            let (loop_uuid, loop_token) = sc.open_loop(blk_token).await?;
             match self
                 .target
                 .execute(
@@ -330,7 +333,11 @@ mod processing {
                 };
                 print($n);
             };
-            true;
+            if $n == 5 {
+                true;
+            } else {
+                false;
+            };
         "#,
         true
     );
@@ -344,7 +351,11 @@ mod processing {
                 };
                 print($n);
             };
-            true;
+            if $n == 5 {
+                true;
+            } else {
+                false;
+            };
         "#,
         true
     );

@@ -206,7 +206,7 @@ mod reading {
 
 #[cfg(test)]
 mod proptest {
-    use crate::elements::variable::VariableName;
+    use crate::{elements::variable::VariableName, reader::words};
     use proptest::prelude::*;
 
     impl Arbitrary for VariableName {
@@ -215,6 +215,7 @@ mod proptest {
 
         fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
             "[a-z][a-z0-9]*"
+                .prop_filter("exclude keywords", move |s: &String| !words::is_reserved(s))
                 .prop_map(String::from)
                 .prop_map(|name| VariableName {
                     name: if name.is_empty() {

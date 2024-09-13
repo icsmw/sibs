@@ -437,6 +437,7 @@ mod proptest {
     use crate::{
         elements::{ElTarget, Element, Reference},
         inf::tests::*,
+        reader::words,
     };
     use proptest::prelude::*;
 
@@ -446,25 +447,37 @@ mod proptest {
 
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             if deep > MAX_DEEP {
-                prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 2)
-                    .prop_map(|path| Reference {
-                        path: path
-                            .iter()
-                            .map(|p| {
-                                if p.is_empty() {
-                                    "min".to_owned()
-                                } else {
-                                    p.to_owned()
-                                }
-                            })
-                            .collect::<Vec<String>>(),
-                        inputs: Vec::new(),
-                        token: 0,
-                    })
-                    .boxed()
+                prop::collection::vec(
+                    "[a-z][a-z0-9]*"
+                        .prop_filter("exclude keywords", move |s: &String| !words::is_reserved(s))
+                        .prop_map(String::from),
+                    2,
+                )
+                .prop_map(|path| Reference {
+                    path: path
+                        .iter()
+                        .map(|p| {
+                            if p.is_empty() {
+                                "min".to_owned()
+                            } else {
+                                p.to_owned()
+                            }
+                        })
+                        .collect::<Vec<String>>(),
+                    inputs: Vec::new(),
+                    token: 0,
+                })
+                .boxed()
             } else {
                 (
-                    prop::collection::vec("[a-z][a-z0-9]*".prop_map(String::from), 2),
+                    prop::collection::vec(
+                        "[a-z][a-z0-9]*"
+                            .prop_filter("exclude keywords", move |s: &String| {
+                                !words::is_reserved(s)
+                            })
+                            .prop_map(String::from),
+                        2,
+                    ),
                     prop::collection::vec(
                         Element::arbitrary_with((
                             vec![

@@ -572,7 +572,7 @@ mod proptest {
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
-        reader::{Dissect, Reader, Sources},
+        reader::{words, Dissect, Reader, Sources},
     };
     use proptest::prelude::*;
 
@@ -582,7 +582,9 @@ mod proptest {
 
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             if deep > MAX_DEEP {
-                ("[a-z][a-z0-9_]*".prop_map(String::from),)
+                ("[a-z][a-z0-9_]*"
+                    .prop_filter("exclude keywords", move |s: &String| !words::is_reserved(s))
+                    .prop_map(String::from),)
                     .prop_map(|(name,)| Function {
                         args: Vec::new(),
                         token: 0,
@@ -596,7 +598,9 @@ mod proptest {
                     .boxed()
             } else {
                 (
-                    "[a-z][a-z0-9_]*".prop_map(String::from),
+                    "[a-z][a-z0-9_]*"
+                        .prop_filter("exclude keywords", move |s: &String| !words::is_reserved(s))
+                        .prop_map(String::from),
                     prop::collection::vec(
                         Element::arbitrary_with((
                             vec![

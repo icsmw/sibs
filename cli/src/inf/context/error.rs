@@ -1,4 +1,8 @@
-use crate::{functions, inf::context::scenario, reader};
+use crate::{
+    functions,
+    inf::{context::scenario, operator},
+    reader,
+};
 use thiserror::Error;
 use tokio::sync::{mpsc, oneshot};
 use uuid::Uuid;

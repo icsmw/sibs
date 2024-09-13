@@ -58,8 +58,7 @@ impl Session {
         self.cwd.clone()
     }
 
-    pub fn open_loop(&mut self) -> (Uuid, CancellationToken) {
-        let token = CancellationToken::new();
+    pub fn open_loop(&mut self, token: CancellationToken) -> (Uuid, CancellationToken) {
         let uuid = Uuid::new_v4();
         self.loops.push((uuid, token.clone()));
         (uuid, token)
