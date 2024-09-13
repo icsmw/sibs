@@ -27,6 +27,8 @@ pub enum E {
     UnknownComponent(Uuid),
     #[error("Type dismatch: {0} and {1}")]
     DismatchTypes(ValueRef, ValueRef),
+    #[error("Attempt to do arithmetic operation on not numeric type")]
+    ArithmeticWrongType,
     #[error("Gatekeeper doesn't return bool value")]
     NoBoolValueFromGatekeeper,
     #[error("Spawned process exit with error")]

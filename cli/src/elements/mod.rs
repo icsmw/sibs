@@ -32,8 +32,8 @@ pub use ppm::*;
 pub use primitives::*;
 pub use range::*;
 pub use reference::*;
-pub use statements::{breaker::*, each::*, first::*, join::Join, r#for::*, If::*};
-pub use string::{command::*, pattern::*, simple::*};
+pub use statements::*;
+pub use string::*;
 pub use task::*;
 use tokio_util::sync::CancellationToken;
 pub use values::*;
@@ -61,6 +61,7 @@ pub enum ElTarget {
     First,
     Join,
     VariableAssignation,
+    Compute,
     Optional,
     Gatekeeper,
     Reference,
@@ -128,6 +129,7 @@ impl fmt::Display for ElTarget {
                 Self::Ppm => "Ppm",
                 Self::Range => "Range",
                 Self::For => "For",
+                Self::Compute => "Compute",
                 Self::Comment => "Comment",
             },
         )
@@ -244,6 +246,7 @@ pub enum Element {
     Ppm(Ppm, Metadata),
     Range(Range, Metadata),
     For(For, Metadata),
+    Compute(Compute, Metadata),
     Meta(Meta),
     Comment(Comment),
 }
@@ -289,6 +292,11 @@ impl Element {
                 false
             },
         };
+        if includes == targets.contains(&ElTarget::Compute) {
+            if let Some(el) = Compute::dissect(reader)? {
+                return next(reader, Element::Compute(el, md));
+            }
+        }
         if includes == targets.contains(&ElTarget::For) {
             if let Some(el) = For::dissect(reader)? {
                 return next(reader, Element::For(el, md));
@@ -507,6 +515,7 @@ impl Element {
             Self::Ppm(_, md) => md,
             Self::Range(_, md) => md,
             Self::For(_, md) => md,
+            Self::Compute(_, md) => md,
             Self::Comment(_) | Self::Meta(_) => {
                 panic!("Comment doesn't have metadata");
             }
@@ -547,6 +556,7 @@ impl Element {
             Self::Ppm(_, md) => md,
             Self::Range(_, md) => md,
             Self::For(_, md) => md,
+            Self::Compute(_, md) => md,
             Self::Comment(_) | Self::Meta(_) => {
                 panic!("Comment doesn't have metadata");
             }
@@ -604,6 +614,7 @@ impl Element {
             Self::Ppm(..) => ElTarget::Ppm,
             Self::Range(..) => ElTarget::Range,
             Self::For(..) => ElTarget::For,
+            Self::Compute(..) => ElTarget::Compute,
             Self::Comment(..) => ElTarget::Comment,
         }
     }
@@ -643,6 +654,7 @@ impl Element {
             Self::Ppm(v, _) => v.to_string(),
             Self::Range(v, _) => v.to_string(),
             Self::For(v, _) => v.to_string(),
+            Self::Compute(v, _) => v.to_string(),
             Self::Comment(v) => v.to_string(),
             Self::Meta(v) => v.to_string(),
         }
@@ -710,6 +722,7 @@ impl fmt::Display for Element {
                 Self::Ppm(v, md) => as_string(v, md),
                 Self::Range(v, md) => as_string(v, md),
                 Self::For(v, md) => as_string(v, md),
+                Self::Compute(v, md) => as_string(v, md),
                 Self::Comment(v) => v.to_string(),
                 Self::Meta(v) => v.to_string(),
             }
@@ -752,6 +765,7 @@ impl Formation for Element {
             Self::Ppm(v, _) => v.elements_count(),
             Self::Range(v, _) => v.elements_count(),
             Self::For(v, _) => v.elements_count(),
+            Self::Compute(v, _) => v.elements_count(),
             Self::Meta(v) => v.elements_count(),
             Self::Comment(v) => v.elements_count(),
         }
@@ -815,6 +829,7 @@ impl Formation for Element {
             Self::Ppm(v, m) => format_el(v, m, cursor),
             Self::Range(v, m) => format_el(v, m, cursor),
             Self::For(v, m) => format_el(v, m, cursor),
+            Self::Compute(v, m) => format_el(v, m, cursor),
             Self::Meta(v) => v.format(cursor),
             Self::Comment(v) => v.format(cursor),
         }
@@ -856,6 +871,7 @@ impl TokenGetter for Element {
             Self::Ppm(v, _) => v.token(),
             Self::Range(v, _) => v.token(),
             Self::For(v, _) => v.token(),
+            Self::Compute(v, _) => v.token(),
             Self::Meta(v) => v.token,
             Self::Comment(v) => v.token,
         }
@@ -910,6 +926,7 @@ impl TryExpectedValueType for Element {
                 Self::Ppm(v, _) => v.try_varification(owner, components, prev, cx).await,
                 Self::Range(v, _) => v.try_varification(owner, components, prev, cx).await,
                 Self::For(v, _) => v.try_varification(owner, components, prev, cx).await,
+                Self::Compute(v, _) => v.try_varification(owner, components, prev, cx).await,
                 Self::Meta(..) => Err(operator::E::NoReturnType.by(self)),
                 Self::Comment(..) => Err(operator::E::NoReturnType.by(self)),
             }
@@ -956,6 +973,7 @@ impl TryExpectedValueType for Element {
                 Self::Ppm(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::Range(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::For(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::Compute(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::Meta(..) => Err(operator::E::NoReturnType.by(self)),
                 Self::Comment(..) => Err(operator::E::NoReturnType.by(self)),
             }
@@ -1006,6 +1024,7 @@ impl TryExpectedValueType for Element {
                 Self::Ppm(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::Range(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::For(v, _) => v.try_expected(owner, components, prev, cx).await,
+                Self::Compute(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::Meta(..) => Err(operator::E::NoReturnType.by(self)),
                 Self::Comment(..) => Err(operator::E::NoReturnType.by(self)),
             }
@@ -1029,6 +1048,10 @@ impl TryExecute for Element {
         Box::pin(async move {
             let journal = cx.journal.clone();
             let result = match self {
+                Self::Compute(v, _) => {
+                    v.try_execute(owner, components, args, prev, cx, sc, token)
+                        .await
+                }
                 Self::For(v, _) => {
                     v.try_execute(owner, components, args, prev, cx, sc, token)
                         .await
@@ -1241,10 +1264,10 @@ mod proptest {
     use crate::{
         elements::{
             Accessor, Block, Boolean, Breaker, Call, Combination, Command, Comment, Comparing,
-            Component, Condition, Each, ElTarget, Element, First, For, Function, Gatekeeper, If,
-            Integer, Join, Meta, Metadata, Optional, PatternString, Ppm, Range, Reference,
-            SimpleString, Subsequence, Task, Values, VariableAssignation, VariableDeclaration,
-            VariableName, VariableType, VariableVariants,
+            Component, Compute, Condition, Each, ElTarget, Element, First, For, Function,
+            Gatekeeper, If, Integer, Join, Meta, Metadata, Optional, PatternString, Ppm, Range,
+            Reference, SimpleString, Subsequence, Task, Values, VariableAssignation,
+            VariableDeclaration, VariableName, VariableType, VariableVariants,
         },
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
@@ -1304,6 +1327,13 @@ mod proptest {
             collected.push(
                 Combination::arbitrary()
                     .prop_map(|el| Element::Combination(el, Metadata::default()))
+                    .boxed(),
+            );
+        }
+        if targets.contains(&ElTarget::Compute) {
+            collected.push(
+                Compute::arbitrary_with(deep + 1)
+                    .prop_map(|el| Element::Compute(el, Metadata::default()))
                     .boxed(),
             );
         }

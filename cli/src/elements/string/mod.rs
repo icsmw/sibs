@@ -2,8 +2,12 @@ pub mod command;
 pub mod pattern;
 pub mod simple;
 
+pub use command::*;
+pub use pattern::*;
+pub use simple::*;
+
 use crate::{
-    elements::{ElTarget, Element, Metadata, SimpleString},
+    elements::{ElTarget, Element, Metadata},
     error::LinkedErr,
     reader::{chars, Reader, E},
 };

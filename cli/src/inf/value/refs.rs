@@ -58,6 +58,24 @@ impl ValueRef {
             | Self::Vec(..) => false,
         }
     }
+    pub fn is_numeric(&self) -> bool {
+        match self {
+            Self::u8
+            | Self::u16
+            | Self::u32
+            | Self::u64
+            | Self::u128
+            | Self::usize
+            | Self::i8
+            | Self::i16
+            | Self::i32
+            | Self::i64
+            | Self::i128
+            | Self::isize => true,
+            Self::OneOf(v) => !v.iter().any(|v| !v.is_numeric()),
+            _ => false,
+        }
+    }
     pub fn is_compatible(&self, other: &ValueRef) -> bool {
         let mut left = self;
         let mut right = other;

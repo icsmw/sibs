@@ -48,6 +48,7 @@ impl TryDissect<VariableAssignation> for VariableAssignation {
                     ElTarget::Integer,
                     ElTarget::Boolean,
                     ElTarget::Reference,
+                    ElTarget::Compute,
                 ],
             )?
             .ok_or(E::FailToParseRightSideOfAssignation.by_reader(reader))?;
@@ -204,7 +205,7 @@ mod reading {
                     );
                     count += 1;
                 }
-                assert_eq!(count, 112);
+                assert_eq!(count, 113);
                 assert!(reader.rest().trim().is_empty());
                 Ok::<(), LinkedErr<E>>(())
             }
@@ -242,7 +243,7 @@ mod reading {
                     );
                     count += 1;
                 }
-                assert_eq!(count, 112);
+                assert_eq!(count, 113);
                 assert!(reader.rest().trim().is_empty());
                 Ok::<(), LinkedErr<E>>(())
             }
@@ -381,6 +382,7 @@ mod proptest {
                             ElTarget::Integer,
                             ElTarget::Boolean,
                             ElTarget::Reference,
+                            ElTarget::Compute,
                         ]
                     },
                     deep,

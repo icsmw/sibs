@@ -1,3 +1,4 @@
+$v = -111 / $var;
 $dev = envvar(DEV_MODE);
 $file = "release{$version}-win.zip";
 $file = "release{$version}-{env::is_os()}.zip";

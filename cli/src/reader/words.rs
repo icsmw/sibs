@@ -23,6 +23,12 @@ pub const GLOBAL_VAR: &str = "global";
 pub const RANGE: &str = "..";
 pub const FOR: &str = "for";
 pub const IN: &str = "in";
+pub const INC: &str = "+";
+pub const DEC: &str = "-";
+pub const INC_BY: &str = "+=";
+pub const DEC_BY: &str = "-=";
+pub const DIV: &str = "/";
+pub const MLT: &str = "*";
 
 pub fn is_reserved<S: AsRef<str>>(s: S) -> bool {
     [
@@ -51,6 +57,12 @@ pub fn is_reserved<S: AsRef<str>>(s: S) -> bool {
         RANGE,
         FOR,
         IN,
+        INC,
+        DEC,
+        DIV,
+        MLT,
+        INC_BY,
+        DEC_BY,
     ]
     .contains(&s.as_ref())
 }

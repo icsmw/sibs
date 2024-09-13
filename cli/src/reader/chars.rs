@@ -21,6 +21,10 @@ pub const COMMA: char = ',';
 pub const UNDERSCORE: char = '_';
 pub const DASH: char = '-';
 pub const DOT: char = '.';
+pub const INC: char = '+';
+pub const DEC: char = '-';
+pub const DIV: char = '/';
+pub const MLT: char = '*';
 
 pub fn has_reserved(str: &str) -> bool {
     let reserved = [&COMMA, &SEMICOLON, &COLON];

@@ -11,6 +11,10 @@ use thiserror::Error;
 
 #[derive(Error, Debug, Clone)]
 pub enum E {
+    #[error("No right side after operator: = <left> [+-*/] <right>")]
+    NoRightSideAfterOperator,
+    #[error("Unknown operator: {0}")]
+    UnknownOperator(String),
     #[error("Fail to detect parent folder for: {0}")]
     NoCurrentWorkingFolder(PathBuf),
     #[error("Fail to find a token {0}")]

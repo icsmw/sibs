@@ -68,6 +68,7 @@ impl TryDissect<Block> for Block {
                     ElTarget::Call,
                     ElTarget::Accessor,
                     ElTarget::Range,
+                    ElTarget::Compute,
                 ],
             )? {
                 if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
