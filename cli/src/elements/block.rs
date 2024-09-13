@@ -16,12 +16,16 @@ use std::fmt;
 pub struct Block {
     pub elements: Vec<Element>,
     pub owner: Option<ElTarget>,
+    pub breaker: Option<CancellationToken>,
     pub token: usize,
 }
 
 impl Block {
     pub fn set_owner(&mut self, owner: ElTarget) {
         self.owner = Some(owner);
+    }
+    pub fn set_breaker(&mut self, breaker: CancellationToken) {
+        self.breaker = Some(breaker);
     }
 }
 
@@ -76,6 +80,7 @@ impl TryDissect<Block> for Block {
                     Ok(Some(Block {
                         elements,
                         owner: None,
+                        breaker: None,
                         token: close(reader),
                     }))
                 };
@@ -188,6 +193,11 @@ impl TryExecute for Block {
         Box::pin(async move {
             let mut output = Value::empty();
             for element in self.elements.iter() {
+                if let Some(breaker) = self.breaker.as_ref() {
+                    if breaker.is_cancelled() {
+                        return Ok(output);
+                    }
+                }
                 output = element
                     .execute(
                         owner,
@@ -326,6 +336,7 @@ mod proptest {
             .prop_map(|elements| Block {
                 elements,
                 owner: None,
+                breaker: None,
                 token: 0,
             })
             .boxed()

@@ -146,7 +146,7 @@ impl TryExecute for Range {
                 .await?
                 .as_num()
                 .ok_or(operator::E::ExpectedNumericValue.linked(&self.to.token()))?;
-            Ok(Value::Vec(vec![Value::isize(from), Value::isize(to)]))
+            Ok(Value::Range(vec![Value::isize(from), Value::isize(to)]))
         })
     }
 }

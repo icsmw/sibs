@@ -4,9 +4,9 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
-        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
-        TryExecute, TryExpectedValueType, Value, VerificationResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
+        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
+        TokenGetter, TryExecute, TryExpectedValueType, Value, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -135,9 +135,85 @@ impl TryExecute for For {
         token: CancellationToken,
     ) -> ExecutePinnedResult {
         Box::pin(async move {
-            self.block
-                .execute(owner, components, args, prev, cx, sc, token)
-                .await
+            let Element::VariableName(variable, _) = self.index.as_ref() else {
+                return Err(
+                    operator::E::InvalidIndexVariableForStatement.linked(&self.target.token())
+                );
+            };
+            let (loop_uuid, loop_token) = sc.open_loop().await?;
+            // if let Element::Block(el, _) = self.block.as_mut() {
+            //     el.set_breaker(loop_token.clone());
+            // }
+            match self
+                .target
+                .execute(
+                    owner,
+                    components,
+                    args,
+                    prev,
+                    cx.clone(),
+                    sc.clone(),
+                    token.clone(),
+                )
+                .await?
+            {
+                Value::Range(v) => {
+                    if v.len() != 2 {
+                        return Err(
+                            operator::E::InvalidRangeForStatement.linked(&self.target.token())
+                        );
+                    }
+                    let mut from = *v[0].get::<isize>().ok_or(
+                        operator::E::InvalidRangeForStatement.linked(&self.target.token()),
+                    )?;
+                    let to = *v[1].get::<isize>().ok_or(
+                        operator::E::InvalidRangeForStatement.linked(&self.target.token()),
+                    )?;
+                    let increase = from < to;
+                    while from != to {
+                        if loop_token.is_cancelled() {
+                            break;
+                        }
+                        sc.set_var(&variable.get_name(), Value::isize(from)).await?;
+                        self.block
+                            .execute(
+                                owner,
+                                components,
+                                args,
+                                prev,
+                                cx.clone(),
+                                sc.clone(),
+                                token.clone(),
+                            )
+                            .await?;
+                        from += if increase { 1 } else { -1 };
+                    }
+                    sc.close_loop(loop_uuid).await?;
+                    Ok(Value::Empty(()))
+                }
+                Value::Vec(els) => {
+                    for el in els.iter() {
+                        if loop_token.is_cancelled() {
+                            break;
+                        }
+                        sc.set_var(&variable.get_name(), el.duplicate()).await?;
+                        self.block
+                            .execute(
+                                owner,
+                                components,
+                                args,
+                                prev,
+                                cx.clone(),
+                                sc.clone(),
+                                token.clone(),
+                            )
+                            .await?;
+                    }
+                    sc.close_loop(loop_uuid).await?;
+                    Ok(Value::Empty(()))
+                }
+                _ => Err(operator::E::InvalidTargetForStatement.linked(&self.target.token())),
+            }
         })
     }
 }
@@ -219,6 +295,83 @@ mod reading {
     // }
 }
 
+#[cfg(test)]
+mod processing {
+    use crate::test_block;
+
+    test_block!(
+        increase_index,
+        r#"
+            for $n in 0..10 {
+                print($n);
+            };
+            true;
+        "#,
+        true
+    );
+
+    test_block!(
+        reduce_index,
+        r#"
+            for $n in 10..0 {
+                print($n);
+            };
+            true;
+        "#,
+        true
+    );
+
+    test_block!(
+        increase_index_break,
+        r#"
+            for $n in 0..10 {
+                if $n == 5 {
+                    break;
+                };
+                print($n);
+            };
+            true;
+        "#,
+        true
+    );
+
+    test_block!(
+        reduce_index_break,
+        r#"
+            for $n in 10..0 {
+                if $n == 5 {
+                    break;
+                };
+                print($n);
+            };
+            true;
+        "#,
+        true
+    );
+
+    test_block!(
+        iteration,
+        r#"
+            for $el in ("one", "two", "three") {
+                print($el);
+            };
+            true;
+        "#,
+        true
+    );
+
+    test_block!(
+        iteration_from_var,
+        r#"
+            $els = ("one", "two", "three");
+            for $el in $els {
+                print($el);
+            };
+            true;
+        "#,
+        true
+    );
+}
 // #[cfg(test)]
 // mod processing {
 //     use tokio_util::sync::CancellationToken;

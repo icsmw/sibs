@@ -87,6 +87,12 @@ pub enum E {
     NoValueToAssign(String),
     #[error("Fail to convert input for each statements into vector of strings")]
     FailConvertInputIntoStringsForEach,
+    #[error("Invalid target for \"for\" statement")]
+    InvalidTargetForStatement,
+    #[error("Invalid range for \"for\" statement")]
+    InvalidRangeForStatement,
+    #[error("Invalid index variable for \"for\" statement")]
+    InvalidIndexVariableForStatement,
     #[error("Attempt to get access to Metadata out of Element's scope: {0}")]
     AttemptToGetMetadataOutOfElement(String),
     #[error("Declared {0} argument(s) ([{1}]); passed {2} argument(s) ([{3}])")]

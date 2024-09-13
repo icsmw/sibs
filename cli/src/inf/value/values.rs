@@ -9,6 +9,7 @@ use std::{any::TypeId, fmt, path::PathBuf};
 pub enum Value {
     Empty(()),
     Output(Output),
+    Range(Vec<Value>),
     Cmb(Cmb),
     i8(i8),
     i16(i16),
@@ -34,6 +35,7 @@ impl Value {
             Self::Empty(..) => ValueRef::Empty,
             Self::Output(..) => ValueRef::Empty, // <== TODO: Replace with some kind of ValueRef::Inner
             Self::Cmb(..) => ValueRef::Empty, // <== TODO: Replace with some kind of ValueRef::Inner
+            Self::Range(..) => ValueRef::Vec(Box::new(ValueRef::isize)),
             Self::i8(..) => ValueRef::i8,
             Self::i16(..) => ValueRef::i16,
             Self::i32(..) => ValueRef::i32,
@@ -82,6 +84,9 @@ impl Value {
             }
             Value::Cmb(v) if TypeId::of::<T>() == TypeId::of::<Cmb>() => {
                 Some(unsafe { &*(v as *const Cmb as *const T) })
+            }
+            Value::Range(v) if TypeId::of::<T>() == TypeId::of::<Vec<Value>>() => {
+                Some(unsafe { &*(v as *const Vec<Value> as *const T) })
             }
             Value::i8(v) if TypeId::of::<T>() == TypeId::of::<i8>() => {
                 Some(unsafe { &*(v as *const i8 as *const T) })
