@@ -71,14 +71,14 @@ impl TokenGetter for Accessor {
 }
 
 impl TryExpectedValueType for Accessor {
-    fn try_varification<'a>(
+    fn try_verification<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> VerificationResult {
-        Box::pin(async move { self.index.varification(owner, components, prev, cx).await })
+        Box::pin(async move { self.index.verification(owner, components, prev, cx).await })
     }
 
     fn try_linking<'a>(

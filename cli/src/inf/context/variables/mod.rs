@@ -124,7 +124,7 @@ mod processing {
                 }
                 for component in components.iter() {
                     let result = component
-                        .varification(component, &components, &None, &cx)
+                        .verification(component, &components, &None, &cx)
                         .await;
                     if let Err(err) = result.as_ref() {
                         cx.atlas.report_err(err).await.expect("report created");
@@ -167,7 +167,7 @@ mod processing {
                 }
                 for component in components.iter() {
                     let result = component
-                        .varification(component, &components, &None, &cx)
+                        .verification(component, &components, &None, &cx)
                         .await;
                     if let Err(err) = result.as_ref() {
                         cx.atlas.report_err(err).await.expect("report created");

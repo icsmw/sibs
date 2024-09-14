@@ -55,7 +55,7 @@ impl TokenGetter for Integer {
 }
 
 impl TryExpectedValueType for Integer {
-    fn try_varification<'a>(
+    fn try_verification<'a>(
         &'a self,
         _owner: &'a Element,
         _components: &'a [Element],

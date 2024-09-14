@@ -189,7 +189,7 @@ impl TokenGetter for Component {
 }
 
 impl TryExpectedValueType for Component {
-    fn try_varification<'a>(
+    fn try_verification<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
@@ -198,7 +198,7 @@ impl TryExpectedValueType for Component {
     ) -> VerificationResult {
         Box::pin(async move {
             for el in self.elements.iter() {
-                el.varification(owner, components, prev, cx).await?;
+                el.verification(owner, components, prev, cx).await?;
             }
             Ok(())
         })

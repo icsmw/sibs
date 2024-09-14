@@ -30,7 +30,7 @@ impl TokenGetter for Thread {
 }
 
 impl TryExpectedValueType for Thread {
-    fn try_varification<'a>(
+    fn try_verification<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
@@ -40,11 +40,11 @@ impl TryExpectedValueType for Thread {
         Box::pin(async move {
             match self {
                 Self::If(sub, bl) => {
-                    sub.varification(owner, components, prev, cx).await?;
-                    bl.varification(owner, components, prev, cx).await?;
+                    sub.verification(owner, components, prev, cx).await?;
+                    bl.verification(owner, components, prev, cx).await?;
                 }
                 Self::Else(bl) => {
-                    bl.varification(owner, components, prev, cx).await?;
+                    bl.verification(owner, components, prev, cx).await?;
                 }
             };
             Ok(())
@@ -251,7 +251,7 @@ impl TokenGetter for If {
 }
 
 impl TryExpectedValueType for If {
-    fn try_varification<'a>(
+    fn try_verification<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
@@ -260,7 +260,7 @@ impl TryExpectedValueType for If {
     ) -> VerificationResult {
         Box::pin(async move {
             for thr in self.threads.iter() {
-                thr.try_varification(owner, components, prev, cx).await?;
+                thr.try_verification(owner, components, prev, cx).await?;
             }
             Ok(())
         })

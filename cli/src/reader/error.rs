@@ -63,6 +63,8 @@ pub enum E {
     FailFindTaskActions,
     #[error("Empty block")]
     EmptyBlock,
+    #[error("No error message definition")]
+    NoErrorMessageDefinition,
     #[error("No end range value [from..??]")]
     NoEndRangeBorder,
     #[error("File {0} already has a map")]
@@ -113,6 +115,8 @@ pub enum E {
     NoBodyInForLoop,
     #[error("No join statement body; join(<ref; ref; ...>)")]
     NoJOINStatementBody,
+    #[error("\"return\" statement required output value or semicolon")]
+    MissedReturnOutputOrMissedSemicolon,
     #[error("join statement can include only references to tasks; join(<ref; ref; ...>)")]
     NotReferenceInJOIN,
     #[error("Group [...] is expecting")]

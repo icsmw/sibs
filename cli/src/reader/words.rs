@@ -4,6 +4,8 @@ pub const AND: &str = "&&";
 pub const ELSE: &str = "else";
 pub const FIRST: &str = "first";
 pub const BREAK: &str = "break";
+pub const RETURN: &str = "return";
+pub const ERROR: &str = "Error";
 pub const JOIN: &str = "join";
 pub const EACH: &str = "each";
 pub const CMP_TRUE: &str = "==";
@@ -63,6 +65,7 @@ pub fn is_reserved<S: AsRef<str>>(s: S) -> bool {
         MLT,
         INC_BY,
         DEC_BY,
+        RETURN,
     ]
     .contains(&s.as_ref())
 }

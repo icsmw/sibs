@@ -84,7 +84,7 @@ impl TokenGetter for For {
 }
 
 impl TryExpectedValueType for For {
-    fn try_varification<'a>(
+    fn try_verification<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
@@ -92,11 +92,11 @@ impl TryExpectedValueType for For {
         cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move {
-            self.index.varification(owner, components, prev, cx).await?;
+            self.index.verification(owner, components, prev, cx).await?;
             self.target
-                .varification(owner, components, prev, cx)
+                .verification(owner, components, prev, cx)
                 .await?;
-            self.block.varification(owner, components, prev, cx).await
+            self.block.verification(owner, components, prev, cx).await
         })
     }
     fn try_linking<'a>(

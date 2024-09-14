@@ -130,7 +130,7 @@ impl TokenGetter for Subsequence {
 }
 
 impl TryExpectedValueType for Subsequence {
-    fn try_varification<'a>(
+    fn try_verification<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
@@ -139,7 +139,7 @@ impl TryExpectedValueType for Subsequence {
     ) -> VerificationResult {
         Box::pin(async move {
             for el in self.subsequence.iter() {
-                el.varification(owner, components, prev, cx).await?;
+                el.verification(owner, components, prev, cx).await?;
             }
             Ok(())
         })

@@ -69,6 +69,7 @@ impl TryDissect<Block> for Block {
                     ElTarget::Accessor,
                     ElTarget::Range,
                     ElTarget::Compute,
+                    ElTarget::Error,
                 ],
             )? {
                 if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
@@ -142,7 +143,7 @@ impl TokenGetter for Block {
 }
 
 impl TryExpectedValueType for Block {
-    fn try_varification<'a>(
+    fn try_verification<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
@@ -151,7 +152,7 @@ impl TryExpectedValueType for Block {
     ) -> VerificationResult {
         Box::pin(async move {
             for el in self.elements.iter() {
-                el.varification(owner, components, prev, cx).await?;
+                el.verification(owner, components, prev, cx).await?;
             }
             Ok(())
         })

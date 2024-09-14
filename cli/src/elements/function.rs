@@ -254,7 +254,7 @@ impl TokenGetter for Function {
 }
 
 impl TryExpectedValueType for Function {
-    fn try_varification<'a>(
+    fn try_verification<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
@@ -263,7 +263,7 @@ impl TryExpectedValueType for Function {
     ) -> VerificationResult {
         Box::pin(async move {
             for el in self.args.iter() {
-                el.varification(owner, components, prev, cx).await?;
+                el.verification(owner, components, prev, cx).await?;
             }
             let desc = cx
                 .get_func_desc(&self.name, prev.as_ref().map(|v| v.value.clone()).clone())

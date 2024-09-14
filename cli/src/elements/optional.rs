@@ -101,7 +101,7 @@ impl TokenGetter for Optional {
 }
 
 impl TryExpectedValueType for Optional {
-    fn try_varification<'a>(
+    fn try_verification<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
@@ -110,9 +110,9 @@ impl TryExpectedValueType for Optional {
     ) -> VerificationResult {
         Box::pin(async move {
             self.condition
-                .varification(owner, components, prev, cx)
+                .verification(owner, components, prev, cx)
                 .await?;
-            self.action.varification(owner, components, prev, cx).await
+            self.action.verification(owner, components, prev, cx).await
         })
     }
     fn try_linking<'a>(

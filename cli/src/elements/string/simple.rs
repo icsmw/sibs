@@ -49,7 +49,7 @@ impl TokenGetter for SimpleString {
 }
 
 impl TryExpectedValueType for SimpleString {
-    fn try_varification<'a>(
+    fn try_verification<'a>(
         &'a self,
         _owner: &'a Element,
         _components: &'a [Element],

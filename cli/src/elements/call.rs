@@ -60,14 +60,14 @@ impl TokenGetter for Call {
 }
 
 impl TryExpectedValueType for Call {
-    fn try_varification<'a>(
+    fn try_verification<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> VerificationResult {
-        Box::pin(async move { self.func.varification(owner, components, prev, cx).await })
+        Box::pin(async move { self.func.verification(owner, components, prev, cx).await })
     }
 
     fn try_linking<'a>(

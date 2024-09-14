@@ -34,13 +34,17 @@ impl Dissect<Breaker, Breaker> for Breaker {}
 
 impl fmt::Display for Breaker {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "break")
+        write!(f, "{}", words::BREAK)
     }
 }
 
 impl Formation for Breaker {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        format!("{}break", cursor.offset_as_string_if(&[ElTarget::Block]),)
+        format!(
+            "{}{}",
+            cursor.offset_as_string_if(&[ElTarget::Block]),
+            words::BREAK
+        )
     }
 }
 
@@ -51,7 +55,7 @@ impl TokenGetter for Breaker {
 }
 
 impl TryExpectedValueType for Breaker {
-    fn try_varification<'a>(
+    fn try_verification<'a>(
         &'a self,
         _owner: &'a Element,
         _components: &'a [Element],

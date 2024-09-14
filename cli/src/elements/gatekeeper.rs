@@ -146,7 +146,7 @@ impl TokenGetter for Gatekeeper {
 }
 
 impl TryExpectedValueType for Gatekeeper {
-    fn try_varification<'a>(
+    fn try_verification<'a>(
         &'a self,
         _owner: &'a Element,
         _components: &'a [Element],

@@ -30,7 +30,7 @@ pub trait TryExpectedValueType {
         cx: &'a Context,
     ) -> LinkingResult;
 
-    fn try_varification<'a>(
+    fn try_verification<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
@@ -76,7 +76,7 @@ pub trait ExpectedValueType {
         })
     }
 
-    fn varification<'a>(
+    fn verification<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
@@ -89,7 +89,7 @@ pub trait ExpectedValueType {
         Box::pin(async move {
             if let Some(ppm) = self.get_metadata()?.ppm.as_ref() {
                 let value = self.expected(owner, components, prev, cx).await?;
-                ppm.varification(
+                ppm.verification(
                     owner,
                     components,
                     &Some(PrevValueExpectation {
@@ -100,7 +100,7 @@ pub trait ExpectedValueType {
                 )
                 .await?;
             }
-            self.try_varification(owner, components, prev, cx).await
+            self.try_verification(owner, components, prev, cx).await
         })
     }
 

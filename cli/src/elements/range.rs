@@ -62,7 +62,7 @@ impl TokenGetter for Range {
 }
 
 impl TryExpectedValueType for Range {
-    fn try_varification<'a>(
+    fn try_verification<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
@@ -86,8 +86,8 @@ impl TryExpectedValueType for Range {
             {
                 return Err(operator::E::ExpectedNumericValue.linked(&self.to.token()));
             }
-            self.from.varification(owner, components, prev, cx).await?;
-            self.to.varification(owner, components, prev, cx).await
+            self.from.verification(owner, components, prev, cx).await?;
+            self.to.verification(owner, components, prev, cx).await
         })
     }
 

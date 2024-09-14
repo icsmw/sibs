@@ -86,6 +86,8 @@ pub enum ElTarget {
     Ppm,
     Range,
     For,
+    Return,
+    Error,
     #[allow(unused)]
     Comment,
 }
@@ -129,6 +131,8 @@ impl fmt::Display for ElTarget {
                 Self::Ppm => "Ppm",
                 Self::Range => "Range",
                 Self::For => "For",
+                Self::Return => "Return",
+                Self::Error => "Error",
                 Self::Compute => "Compute",
                 Self::Comment => "Comment",
             },
@@ -247,6 +251,8 @@ pub enum Element {
     Range(Range, Metadata),
     For(For, Metadata),
     Compute(Compute, Metadata),
+    Return(Return, Metadata),
+    Error(Error, Metadata),
     Meta(Meta),
     Comment(Comment),
 }
@@ -292,6 +298,16 @@ impl Element {
                 false
             },
         };
+        if includes == targets.contains(&ElTarget::Return) {
+            if let Some(el) = Return::dissect(reader)? {
+                return next(reader, Element::Return(el, md));
+            }
+        }
+        if includes == targets.contains(&ElTarget::Error) {
+            if let Some(el) = Error::dissect(reader)? {
+                return next(reader, Element::Error(el, md));
+            }
+        }
         if includes == targets.contains(&ElTarget::Compute) {
             if let Some(el) = Compute::dissect(reader)? {
                 return next(reader, Element::Compute(el, md));
@@ -516,6 +532,8 @@ impl Element {
             Self::Range(_, md) => md,
             Self::For(_, md) => md,
             Self::Compute(_, md) => md,
+            Self::Return(_, md) => md,
+            Self::Error(_, md) => md,
             Self::Comment(_) | Self::Meta(_) => {
                 panic!("Comment doesn't have metadata");
             }
@@ -557,6 +575,8 @@ impl Element {
             Self::Range(_, md) => md,
             Self::For(_, md) => md,
             Self::Compute(_, md) => md,
+            Self::Return(_, md) => md,
+            Self::Error(_, md) => md,
             Self::Comment(_) | Self::Meta(_) => {
                 panic!("Comment doesn't have metadata");
             }
@@ -615,6 +635,8 @@ impl Element {
             Self::Range(..) => ElTarget::Range,
             Self::For(..) => ElTarget::For,
             Self::Compute(..) => ElTarget::Compute,
+            Self::Return(..) => ElTarget::Return,
+            Self::Error(..) => ElTarget::Error,
             Self::Comment(..) => ElTarget::Comment,
         }
     }
@@ -655,6 +677,8 @@ impl Element {
             Self::Range(v, _) => v.to_string(),
             Self::For(v, _) => v.to_string(),
             Self::Compute(v, _) => v.to_string(),
+            Self::Return(v, _) => v.to_string(),
+            Self::Error(v, _) => v.to_string(),
             Self::Comment(v) => v.to_string(),
             Self::Meta(v) => v.to_string(),
         }
@@ -723,6 +747,8 @@ impl fmt::Display for Element {
                 Self::Range(v, md) => as_string(v, md),
                 Self::For(v, md) => as_string(v, md),
                 Self::Compute(v, md) => as_string(v, md),
+                Self::Return(v, md) => as_string(v, md),
+                Self::Error(v, md) => as_string(v, md),
                 Self::Comment(v) => v.to_string(),
                 Self::Meta(v) => v.to_string(),
             }
@@ -766,6 +792,8 @@ impl Formation for Element {
             Self::Range(v, _) => v.elements_count(),
             Self::For(v, _) => v.elements_count(),
             Self::Compute(v, _) => v.elements_count(),
+            Self::Return(v, _) => v.elements_count(),
+            Self::Error(v, _) => v.elements_count(),
             Self::Meta(v) => v.elements_count(),
             Self::Comment(v) => v.elements_count(),
         }
@@ -830,6 +858,8 @@ impl Formation for Element {
             Self::Range(v, m) => format_el(v, m, cursor),
             Self::For(v, m) => format_el(v, m, cursor),
             Self::Compute(v, m) => format_el(v, m, cursor),
+            Self::Return(v, m) => format_el(v, m, cursor),
+            Self::Error(v, m) => format_el(v, m, cursor),
             Self::Meta(v) => v.format(cursor),
             Self::Comment(v) => v.format(cursor),
         }
@@ -872,6 +902,8 @@ impl TokenGetter for Element {
             Self::Range(v, _) => v.token(),
             Self::For(v, _) => v.token(),
             Self::Compute(v, _) => v.token(),
+            Self::Return(v, _) => v.token(),
+            Self::Error(v, _) => v.token(),
             Self::Meta(v) => v.token,
             Self::Comment(v) => v.token,
         }
@@ -879,7 +911,7 @@ impl TokenGetter for Element {
 }
 
 impl TryExpectedValueType for Element {
-    fn try_varification<'a>(
+    fn try_verification<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
@@ -888,45 +920,47 @@ impl TryExpectedValueType for Element {
     ) -> VerificationResult {
         Box::pin(async move {
             match self {
-                Self::Call(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::Accessor(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::Function(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::If(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::Breaker(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::Each(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::First(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::Join(v, _) => v.try_varification(owner, components, prev, cx).await,
+                Self::Call(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Accessor(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Function(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::If(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Breaker(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Each(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::First(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Join(v, _) => v.try_verification(owner, components, prev, cx).await,
                 Self::VariableAssignation(v, _) => {
-                    v.try_varification(owner, components, prev, cx).await
+                    v.try_verification(owner, components, prev, cx).await
                 }
-                Self::Comparing(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::Combination(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::Condition(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::Subsequence(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::Optional(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::Gatekeeper(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::Reference(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::PatternString(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::VariableName(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::Values(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::Block(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::Command(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::Task(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::Component(v, _) => v.try_varification(self, components, prev, cx).await,
-                Self::Integer(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::Boolean(v, _) => v.try_varification(owner, components, prev, cx).await,
+                Self::Comparing(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Combination(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Condition(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Subsequence(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Optional(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Gatekeeper(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Reference(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::PatternString(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::VariableName(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Values(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Block(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Command(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Task(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Component(v, _) => v.try_verification(self, components, prev, cx).await,
+                Self::Integer(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Boolean(v, _) => v.try_verification(owner, components, prev, cx).await,
                 Self::VariableDeclaration(v, _) => {
-                    v.try_varification(owner, components, prev, cx).await
+                    v.try_verification(owner, components, prev, cx).await
                 }
                 Self::VariableVariants(v, _) => {
-                    v.try_varification(owner, components, prev, cx).await
+                    v.try_verification(owner, components, prev, cx).await
                 }
-                Self::VariableType(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::SimpleString(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::Ppm(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::Range(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::For(v, _) => v.try_varification(owner, components, prev, cx).await,
-                Self::Compute(v, _) => v.try_varification(owner, components, prev, cx).await,
+                Self::VariableType(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::SimpleString(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Ppm(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Range(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::For(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Compute(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Return(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Error(v, _) => v.try_verification(owner, components, prev, cx).await,
                 Self::Meta(..) => Err(operator::E::NoReturnType.by(self)),
                 Self::Comment(..) => Err(operator::E::NoReturnType.by(self)),
             }
@@ -974,6 +1008,8 @@ impl TryExpectedValueType for Element {
                 Self::Range(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::For(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::Compute(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::Return(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::Error(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::Meta(..) => Err(operator::E::NoReturnType.by(self)),
                 Self::Comment(..) => Err(operator::E::NoReturnType.by(self)),
             }
@@ -1025,6 +1061,8 @@ impl TryExpectedValueType for Element {
                 Self::Range(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::For(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::Compute(v, _) => v.try_expected(owner, components, prev, cx).await,
+                Self::Return(v, _) => v.try_expected(owner, components, prev, cx).await,
+                Self::Error(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::Meta(..) => Err(operator::E::NoReturnType.by(self)),
                 Self::Comment(..) => Err(operator::E::NoReturnType.by(self)),
             }
@@ -1048,6 +1086,14 @@ impl TryExecute for Element {
         Box::pin(async move {
             let journal = cx.journal.clone();
             let result = match self {
+                Self::Return(v, _) => {
+                    v.try_execute(owner, components, args, prev, cx, sc, token)
+                        .await
+                }
+                Self::Error(v, _) => {
+                    v.try_execute(owner, components, args, prev, cx, sc, token)
+                        .await
+                }
                 Self::Compute(v, _) => {
                     v.try_execute(owner, components, args, prev, cx, sc, token)
                         .await
@@ -1264,9 +1310,9 @@ mod proptest {
     use crate::{
         elements::{
             Accessor, Block, Boolean, Breaker, Call, Combination, Command, Comment, Comparing,
-            Component, Compute, Condition, Each, ElTarget, Element, First, For, Function,
+            Component, Compute, Condition, Each, ElTarget, Element, Error, First, For, Function,
             Gatekeeper, If, Integer, Join, Meta, Metadata, Optional, PatternString, Ppm, Range,
-            Reference, SimpleString, Subsequence, Task, Values, VariableAssignation,
+            Reference, Return, SimpleString, Subsequence, Task, Values, VariableAssignation,
             VariableDeclaration, VariableName, VariableType, VariableVariants,
         },
         error::LinkedErr,
@@ -1327,6 +1373,20 @@ mod proptest {
             collected.push(
                 Combination::arbitrary()
                     .prop_map(|el| Element::Combination(el, Metadata::default()))
+                    .boxed(),
+            );
+        }
+        if targets.contains(&ElTarget::Error) {
+            collected.push(
+                Error::arbitrary_with(deep + 1)
+                    .prop_map(|el| Element::Error(el, Metadata::default()))
+                    .boxed(),
+            );
+        }
+        if targets.contains(&ElTarget::Return) {
+            collected.push(
+                Return::arbitrary_with(deep + 1)
+                    .prop_map(|el| Element::Return(el, Metadata::default()))
                     .boxed(),
             );
         }

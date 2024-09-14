@@ -126,7 +126,7 @@ impl TokenGetter for Compute {
 }
 
 impl TryExpectedValueType for Compute {
-    fn try_varification<'a>(
+    fn try_verification<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
@@ -272,9 +272,9 @@ mod proptest {
         }
     }
 
-    fn reading(assignation: Compute) {
+    fn reading(compute: Compute) {
         get_rt().block_on(async {
-            let origin = format!("@test {{\n$var = {assignation};\n}};");
+            let origin = format!("@test {{\n$var = {compute};\n}};");
             read_string!(
                 &Configuration::logs(false),
                 &origin,

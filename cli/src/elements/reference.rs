@@ -185,7 +185,7 @@ impl TokenGetter for Reference {
 }
 
 impl TryExpectedValueType for Reference {
-    fn try_varification<'a>(
+    fn try_verification<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
@@ -194,7 +194,7 @@ impl TryExpectedValueType for Reference {
     ) -> VerificationResult {
         Box::pin(async move {
             for el in self.inputs.iter() {
-                el.varification(owner, components, prev, cx).await?
+                el.verification(owner, components, prev, cx).await?
             }
             let task_el = self.get_linked_task(owner, components)?;
             let task_ref = task_el.as_task()?;
@@ -214,7 +214,7 @@ impl TryExpectedValueType for Reference {
                 .by(self));
             }
             for (i, el) in self.inputs.iter().enumerate() {
-                el.varification(owner, components, prev, cx).await?;
+                el.verification(owner, components, prev, cx).await?;
                 let left = el.expected(owner, components, prev, cx).await?;
                 let right = &args[i];
                 if !left.is_compatible(right) {

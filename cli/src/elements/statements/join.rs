@@ -2,7 +2,10 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExecuteResult, ExpectedResult, ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult
+        operator, Context, Execute, ExecutePinnedResult, ExecuteResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValue,
+        PrevValueExpectation, Scope, TokenGetter, TryExecute, TryExpectedValueType, Value,
+        ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -88,7 +91,7 @@ impl TokenGetter for Join {
 }
 
 impl TryExpectedValueType for Join {
-    fn try_varification<'a>(
+    fn try_verification<'a>(
         &'a self,
         _owner: &'a Element,
         _components: &'a [Element],

@@ -133,7 +133,7 @@ impl TokenGetter for Comparing {
 }
 
 impl TryExpectedValueType for Comparing {
-    fn try_varification<'a>(
+    fn try_verification<'a>(
         &'a self,
         owner: &'a Element,
         components: &'a [Element],

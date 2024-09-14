@@ -96,7 +96,7 @@ impl TokenGetter for Each {
 }
 
 impl TryExpectedValueType for Each {
-    fn try_varification<'a>(
+    fn try_verification<'a>(
         &'a self,
         _owner: &'a Element,
         _components: &'a [Element],

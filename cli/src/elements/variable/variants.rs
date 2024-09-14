@@ -65,7 +65,7 @@ impl TokenGetter for VariableVariants {
 }
 
 impl TryExpectedValueType for VariableVariants {
-    fn try_varification<'a>(
+    fn try_verification<'a>(
         &'a self,
         _owner: &'a Element,
         _components: &'a [Element],
