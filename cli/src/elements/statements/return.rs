@@ -165,7 +165,7 @@ impl TryExecute for Return {
 
 #[cfg(test)]
 mod processing {
-    use crate::test_block;
+    use crate::{inf::Value, runners::process_block, test_block};
 
     test_block!(
         returning,
@@ -228,6 +228,19 @@ mod processing {
             true;
         "#,
         5isize
+    );
+
+    test_block!(
+        returning_from_loop_error,
+        r#"
+            for $n in 0..10 {
+                if $n == 5 {
+                    return Error "test";
+                };
+            };
+            true;
+        "#,
+        Value::Error(String::from("test"))
     );
 }
 

@@ -17,7 +17,7 @@ where
 #[cfg(test)]
 pub async fn process_block<S: AsRef<str>, T>(block: S, expectation: T)
 where
-    T: 'static + PartialEq + std::fmt::Debug,
+    T: 'static + Clone + PartialEq + std::fmt::Debug,
 {
     use crate::{
         elements::{ElTarget, Element},
@@ -25,7 +25,7 @@ where
         inf::{
             journal::Journal,
             operator::{Execute, E},
-            Configuration, Context, Scope,
+            Configuration, Context, Scope, Value,
         },
         process_string,
         reader::{chars, Reader, Sources},
@@ -68,13 +68,16 @@ where
                         .await
                         .expect("Error report has been created");
                 }
-                assert_eq!(
-                    result
-                        .expect("run of task is success")
-                        .get::<T>()
-                        .expect("test returns correct value"),
-                    &expectation
-                );
+                let result = result.expect("run of task is success");
+                let expectation_as_any = Box::new(expectation.clone()) as Box<dyn Any>;
+                if let Ok(expectation) = expectation_as_any.downcast::<Value>() {
+                    assert_eq!(result, *expectation);
+                } else {
+                    assert_eq!(
+                        result.get::<T>().expect("test returns correct value"),
+                        &expectation
+                    );
+                }
             }
             Ok::<(), LinkedErr<E>>(())
         }
@@ -84,7 +87,7 @@ where
 #[cfg(test)]
 #[macro_export]
 macro_rules! test_block {
-    ($fn_name:ident, $content:literal, $expectation:literal) => {
+    ($fn_name:ident, $content:literal, $expectation:expr) => {
         paste::item! {
             #[tokio::test]
             async fn [< test_ $fn_name >] () {
