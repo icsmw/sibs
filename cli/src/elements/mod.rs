@@ -88,6 +88,7 @@ pub enum ElTarget {
     For,
     Return,
     Error,
+    Incrementer,
     #[allow(unused)]
     Comment,
 }
@@ -134,6 +135,7 @@ impl fmt::Display for ElTarget {
                 Self::Return => "Return",
                 Self::Error => "Error",
                 Self::Compute => "Compute",
+                Self::Incrementer => "Incrementer",
                 Self::Comment => "Comment",
             },
         )
@@ -253,6 +255,7 @@ pub enum Element {
     Compute(Compute, Metadata),
     Return(Return, Metadata),
     Error(Error, Metadata),
+    Incrementer(Incrementer, Metadata),
     Meta(Meta),
     Comment(Comment),
 }
@@ -399,6 +402,11 @@ impl Element {
                 return next(reader, Element::Boolean(el, md));
             }
         }
+        if includes == targets.contains(&ElTarget::Incrementer) {
+            if let Some(el) = Incrementer::dissect(reader)? {
+                return next(reader, Element::Incrementer(el, md));
+            }
+        }
         if includes == targets.contains(&ElTarget::VariableAssignation) {
             if let Some(el) = VariableAssignation::dissect(reader)? {
                 return next(reader, Element::VariableAssignation(el, md));
@@ -534,6 +542,7 @@ impl Element {
             Self::Compute(_, md) => md,
             Self::Return(_, md) => md,
             Self::Error(_, md) => md,
+            Self::Incrementer(_, md) => md,
             Self::Comment(_) | Self::Meta(_) => {
                 panic!("Comment doesn't have metadata");
             }
@@ -577,6 +586,7 @@ impl Element {
             Self::Compute(_, md) => md,
             Self::Return(_, md) => md,
             Self::Error(_, md) => md,
+            Self::Incrementer(_, md) => md,
             Self::Comment(_) | Self::Meta(_) => {
                 panic!("Comment doesn't have metadata");
             }
@@ -637,6 +647,7 @@ impl Element {
             Self::Compute(..) => ElTarget::Compute,
             Self::Return(..) => ElTarget::Return,
             Self::Error(..) => ElTarget::Error,
+            Self::Incrementer(..) => ElTarget::Incrementer,
             Self::Comment(..) => ElTarget::Comment,
         }
     }
@@ -679,6 +690,7 @@ impl Element {
             Self::Compute(v, _) => v.to_string(),
             Self::Return(v, _) => v.to_string(),
             Self::Error(v, _) => v.to_string(),
+            Self::Incrementer(v, _) => v.to_string(),
             Self::Comment(v) => v.to_string(),
             Self::Meta(v) => v.to_string(),
         }
@@ -749,6 +761,7 @@ impl fmt::Display for Element {
                 Self::Compute(v, md) => as_string(v, md),
                 Self::Return(v, md) => as_string(v, md),
                 Self::Error(v, md) => as_string(v, md),
+                Self::Incrementer(v, md) => as_string(v, md),
                 Self::Comment(v) => v.to_string(),
                 Self::Meta(v) => v.to_string(),
             }
@@ -794,6 +807,7 @@ impl Formation for Element {
             Self::Compute(v, _) => v.elements_count(),
             Self::Return(v, _) => v.elements_count(),
             Self::Error(v, _) => v.elements_count(),
+            Self::Incrementer(v, _) => v.elements_count(),
             Self::Meta(v) => v.elements_count(),
             Self::Comment(v) => v.elements_count(),
         }
@@ -860,6 +874,7 @@ impl Formation for Element {
             Self::Compute(v, m) => format_el(v, m, cursor),
             Self::Return(v, m) => format_el(v, m, cursor),
             Self::Error(v, m) => format_el(v, m, cursor),
+            Self::Incrementer(v, m) => format_el(v, m, cursor),
             Self::Meta(v) => v.format(cursor),
             Self::Comment(v) => v.format(cursor),
         }
@@ -904,6 +919,7 @@ impl TokenGetter for Element {
             Self::Compute(v, _) => v.token(),
             Self::Return(v, _) => v.token(),
             Self::Error(v, _) => v.token(),
+            Self::Incrementer(v, _) => v.token(),
             Self::Meta(v) => v.token,
             Self::Comment(v) => v.token,
         }
@@ -961,6 +977,7 @@ impl TryExpectedValueType for Element {
                 Self::Compute(v, _) => v.try_verification(owner, components, prev, cx).await,
                 Self::Return(v, _) => v.try_verification(owner, components, prev, cx).await,
                 Self::Error(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Incrementer(v, _) => v.try_verification(owner, components, prev, cx).await,
                 Self::Meta(..) => Err(operator::E::NoReturnType.by(self)),
                 Self::Comment(..) => Err(operator::E::NoReturnType.by(self)),
             }
@@ -1010,6 +1027,7 @@ impl TryExpectedValueType for Element {
                 Self::Compute(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::Return(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::Error(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::Incrementer(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::Meta(..) => Err(operator::E::NoReturnType.by(self)),
                 Self::Comment(..) => Err(operator::E::NoReturnType.by(self)),
             }
@@ -1063,6 +1081,7 @@ impl TryExpectedValueType for Element {
                 Self::Compute(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::Return(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::Error(v, _) => v.try_expected(owner, components, prev, cx).await,
+                Self::Incrementer(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::Meta(..) => Err(operator::E::NoReturnType.by(self)),
                 Self::Comment(..) => Err(operator::E::NoReturnType.by(self)),
             }
@@ -1086,6 +1105,10 @@ impl TryExecute for Element {
         Box::pin(async move {
             let journal = cx.journal.clone();
             let result = match self {
+                Self::Incrementer(v, _) => {
+                    v.try_execute(owner, components, args, prev, cx, sc, token)
+                        .await
+                }
                 Self::Return(v, _) => {
                     v.try_execute(owner, components, args, prev, cx, sc, token)
                         .await
@@ -1311,9 +1334,9 @@ mod proptest {
         elements::{
             Accessor, Block, Boolean, Breaker, Call, Combination, Command, Comment, Comparing,
             Component, Compute, Condition, Each, ElTarget, Element, Error, First, For, Function,
-            Gatekeeper, If, Integer, Join, Meta, Metadata, Optional, PatternString, Ppm, Range,
-            Reference, Return, SimpleString, Subsequence, Task, Values, VariableAssignation,
-            VariableDeclaration, VariableName, VariableType, VariableVariants,
+            Gatekeeper, If, Incrementer, Integer, Join, Meta, Metadata, Optional, PatternString,
+            Ppm, Range, Reference, Return, SimpleString, Subsequence, Task, Values,
+            VariableAssignation, VariableDeclaration, VariableName, VariableType, VariableVariants,
         },
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
@@ -1373,6 +1396,13 @@ mod proptest {
             collected.push(
                 Combination::arbitrary()
                     .prop_map(|el| Element::Combination(el, Metadata::default()))
+                    .boxed(),
+            );
+        }
+        if targets.contains(&ElTarget::Incrementer) {
+            collected.push(
+                Incrementer::arbitrary_with(deep + 1)
+                    .prop_map(|el| Element::Incrementer(el, Metadata::default()))
                     .boxed(),
             );
         }

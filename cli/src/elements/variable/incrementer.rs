@@ -8,7 +8,7 @@ use crate::{
         Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
         TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
-    reader::{chars, Dissect, Reader, TryDissect, E},
+    reader::{words, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 
@@ -16,8 +16,6 @@ use std::fmt;
 pub enum Operator {
     Inc,
     Dec,
-    Div,
-    Mlt,
 }
 
 impl fmt::Display for Operator {
@@ -26,52 +24,34 @@ impl fmt::Display for Operator {
             f,
             "{}",
             match self {
-                Self::Dec => "-",
-                Self::Div => "/",
-                Self::Inc => "+",
-                Self::Mlt => "*",
+                Self::Dec => words::DEC_BY,
+                Self::Inc => words::INC_BY,
             }
         )
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct Compute {
-    pub left: Box<Element>,
+pub struct Incrementer {
+    pub variable: Box<Element>,
     pub operator: Operator,
     pub right: Box<Element>,
     pub token: usize,
 }
 
-impl TryDissect<Compute> for Compute {
-    fn try_dissect(reader: &mut Reader) -> Result<Option<Compute>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::Compute);
-        let Some(left) = Element::include(
-            reader,
-            &[
-                ElTarget::VariableName,
-                ElTarget::Function,
-                ElTarget::If,
-                ElTarget::Block,
-                ElTarget::Integer,
-            ],
-        )?
-        else {
+impl TryDissect<Incrementer> for Incrementer {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<Incrementer>, LinkedErr<E>> {
+        let close = reader.open_token(ElTarget::Incrementer);
+        let Some(variable) = Element::include(reader, &[ElTarget::VariableName])? else {
             return Ok(None);
         };
         reader.move_to().any();
-        let Some(operator) =
-            reader
-                .move_to()
-                .char(&[&chars::INC, &chars::DEC, &chars::DIV, &chars::MLT])
-        else {
+        let Some(operator) = reader.move_to().word_any(&[words::INC_BY, words::DEC_BY]) else {
             return Ok(None);
         };
-        let operator = match operator {
-            chars::INC => Operator::Inc,
-            chars::DEC => Operator::Dec,
-            chars::DIV => Operator::Div,
-            chars::MLT => Operator::Mlt,
+        let operator = match operator.as_str() {
+            words::INC_BY => Operator::Inc,
+            words::DEC_BY => Operator::Dec,
             _ => {
                 return Err(E::UnknownOperator(operator.to_string()).by_reader(reader));
             }
@@ -90,7 +70,7 @@ impl TryDissect<Compute> for Compute {
             return Err(E::NoRightSideAfterOperator.by_reader(reader));
         };
         Ok(Some(Self {
-            left: Box::new(left),
+            variable: Box::new(variable),
             operator,
             right: Box::new(right),
             token: close(reader),
@@ -98,34 +78,34 @@ impl TryDissect<Compute> for Compute {
     }
 }
 
-impl Dissect<Compute, Compute> for Compute {}
+impl Dissect<Incrementer, Incrementer> for Incrementer {}
 
-impl fmt::Display for Compute {
+impl fmt::Display for Incrementer {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} {} {}", self.left, self.operator, self.right)
+        write!(f, "{} {} {}", self.variable, self.operator, self.right)
     }
 }
 
-impl Formation for Compute {
+impl Formation for Incrementer {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        let mut inner = cursor.reown(Some(ElTarget::Compute));
+        let mut inner = cursor.reown(Some(ElTarget::Incrementer));
         format!(
             "{}{} {} {}",
             cursor.offset_as_string_if(&[ElTarget::Block]),
-            self.left.format(&mut inner),
+            self.variable.format(&mut inner),
             self.operator,
             self.right.format(&mut inner)
         )
     }
 }
 
-impl TokenGetter for Compute {
+impl TokenGetter for Incrementer {
     fn token(&self) -> usize {
         self.token
     }
 }
 
-impl TryExpectedValueType for Compute {
+impl TryExpectedValueType for Incrementer {
     fn try_verification<'a>(
         &'a self,
         owner: &'a Element,
@@ -134,11 +114,13 @@ impl TryExpectedValueType for Compute {
         cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move {
-            self.left.verification(owner, components, prev, cx).await?;
+            self.variable
+                .verification(owner, components, prev, cx)
+                .await?;
             self.right.verification(owner, components, prev, cx).await?;
-            let left = self.left.expected(owner, components, prev, cx).await?;
+            let variable = self.variable.expected(owner, components, prev, cx).await?;
             let right = self.right.expected(owner, components, prev, cx).await?;
-            if !left.is_numeric() || !right.is_numeric() {
+            if !variable.is_numeric() || !right.is_numeric() {
                 Err(operator::E::ArithmeticWrongType.linked(&self.token))
             } else {
                 Ok(())
@@ -153,7 +135,7 @@ impl TryExpectedValueType for Compute {
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
-            self.left.linking(owner, components, prev, cx).await?;
+            self.variable.linking(owner, components, prev, cx).await?;
             self.right.linking(owner, components, prev, cx).await
         })
     }
@@ -168,7 +150,7 @@ impl TryExpectedValueType for Compute {
     }
 }
 
-impl TryExecute for Compute {
+impl TryExecute for Incrementer {
     fn try_execute<'a>(
         &'a self,
         owner: Option<&'a Element>,
@@ -180,8 +162,13 @@ impl TryExecute for Compute {
         token: CancellationToken,
     ) -> ExecutePinnedResult {
         Box::pin(async move {
-            let left = self
-                .left
+            let name = if let Element::VariableName(el, _) = &*self.variable {
+                el.get_name()
+            } else {
+                return Err(operator::E::NoVariableName.linked(&self.variable.token()));
+            };
+            let variable = self
+                .variable
                 .execute(
                     owner,
                     components,
@@ -193,7 +180,7 @@ impl TryExecute for Compute {
                 )
                 .await?
                 .as_num()
-                .ok_or(operator::E::ArithmeticWrongType.by(&*self.left))?;
+                .ok_or(operator::E::ArithmeticWrongType.by(&*self.variable))?;
             let right = self
                 .right
                 .execute(
@@ -208,12 +195,12 @@ impl TryExecute for Compute {
                 .await?
                 .as_num()
                 .ok_or(operator::E::ArithmeticWrongType.by(&*self.right))?;
-            Ok(match self.operator {
-                Operator::Inc => Value::isize(left + right),
-                Operator::Dec => Value::isize(left - right),
-                Operator::Div => Value::isize(left / right),
-                Operator::Mlt => Value::isize(left * right),
-            })
+            let changed = Value::isize(match self.operator {
+                Operator::Inc => variable + right,
+                Operator::Dec => variable - right,
+            });
+            sc.set_var(&name, changed.duplicate()).await?;
+            Ok(changed)
         })
     }
 }
@@ -221,7 +208,7 @@ impl TryExecute for Compute {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        elements::{Compute, ElTarget, Element, Operator, Task},
+        elements::{incrementer::Operator, ElTarget, Element, Incrementer, Task},
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
@@ -229,12 +216,13 @@ mod proptest {
     };
     use proptest::prelude::*;
 
-    impl Arbitrary for Compute {
+    impl Arbitrary for Incrementer {
         type Parameters = usize;
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             (
+                Element::arbitrary_with((vec![ElTarget::VariableName], deep)),
                 Element::arbitrary_with((
                     if deep > MAX_DEEP {
                         vec![ElTarget::VariableName, ElTarget::Integer]
@@ -247,28 +235,10 @@ mod proptest {
                     },
                     deep,
                 )),
-                Element::arbitrary_with((
-                    if deep > MAX_DEEP {
-                        vec![ElTarget::VariableName, ElTarget::Integer]
-                    } else {
-                        vec![
-                            ElTarget::Function,
-                            ElTarget::VariableName,
-                            ElTarget::Integer,
-                        ]
-                    },
-                    deep,
-                )),
-                prop_oneof![
-                    Just(Operator::Div),
-                    Just(Operator::Inc),
-                    Just(Operator::Dec),
-                    Just(Operator::Mlt)
-                ]
-                .boxed(),
+                prop_oneof![Just(Operator::Inc), Just(Operator::Dec),].boxed(),
             )
-                .prop_map(move |(left, right, operator)| Compute {
-                    left: Box::new(left),
+                .prop_map(move |(variable, right, operator)| Incrementer {
+                    variable: Box::new(variable),
                     operator,
                     right: Box::new(right),
                     token: 0,
@@ -277,9 +247,9 @@ mod proptest {
         }
     }
 
-    fn reading(compute: Compute) {
+    fn reading(incrementer: Incrementer) {
         get_rt().block_on(async {
-            let origin = format!("@test {{\n$var = {compute};\n}};");
+            let origin = format!("@test {{\n{incrementer};\n}};");
             read_string!(
                 &Configuration::logs(false),
                 &origin,
@@ -301,7 +271,7 @@ mod proptest {
         })]
         #[test]
         fn test_run_task(
-            args in any_with::<Compute>(0)
+            args in any_with::<Incrementer>(0)
         ) {
             reading(args.clone());
         }

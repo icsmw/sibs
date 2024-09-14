@@ -343,6 +343,40 @@ mod processing {
     );
 
     test_block!(
+        reduce_index_and_incrementer,
+        r#"
+            $i = 10;
+            for $n in 10..0 {
+                print($n);
+                $i -= 1;
+            };
+            if $i == 0 {
+                true;
+            } else {
+                false;
+            };
+        "#,
+        true
+    );
+
+    test_block!(
+        increase_index_and_incrementer,
+        r#"
+            $i = 0;
+            for $n in 0..10 {
+                print($n);
+                $i += 1;
+            };
+            if $i == 10 {
+                true;
+            } else {
+                false;
+            };
+        "#,
+        true
+    );
+
+    test_block!(
         reduce_index_break,
         r#"
             for $n in 10..0 {
