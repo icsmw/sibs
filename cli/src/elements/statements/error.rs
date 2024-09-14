@@ -4,9 +4,9 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        Context, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
-        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
-        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
+        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
+        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -66,7 +66,19 @@ impl TryExpectedValueType for Error {
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
     ) -> VerificationResult {
-        Box::pin(async move { self.output.verification(owner, components, prev, cx).await })
+        Box::pin(async move {
+            self.output
+                .verification(owner, components, prev, cx)
+                .await?;
+            if matches!(
+                self.output.expected(owner, components, prev, cx).await?,
+                ValueRef::String
+            ) {
+                Ok(())
+            } else {
+                Err(operator::E::NotStringInError.linked(&self.output.token()))
+            }
+        })
     }
     fn try_linking<'a>(
         &'a self,
@@ -84,22 +96,30 @@ impl TryExpectedValueType for Error {
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
     ) -> ExpectedResult {
-        Box::pin(async move { Ok(ValueRef::Empty) })
+        Box::pin(async move { Ok(ValueRef::Error) })
     }
 }
 
 impl TryExecute for Error {
     fn try_execute<'a>(
         &'a self,
-        _owner: Option<&'a Element>,
-        _components: &'a [Element],
-        _args: &'a [Value],
-        _prev: &'a Option<PrevValue>,
-        _cx: Context,
+        owner: Option<&'a Element>,
+        components: &'a [Element],
+        args: &'a [Value],
+        prev: &'a Option<PrevValue>,
+        cx: Context,
         sc: Scope,
-        _token: CancellationToken,
+        token: CancellationToken,
     ) -> ExecutePinnedResult {
-        Box::pin(async move { todo!("not implemented") })
+        Box::pin(async move {
+            Ok(Value::Error(
+                self.output
+                    .execute(owner, components, args, prev, cx, sc, token)
+                    .await?
+                    .as_string()
+                    .ok_or(operator::E::NotStringInError.linked(&self.output.token()))?,
+            ))
+        })
     }
 }
 
@@ -114,7 +134,6 @@ mod proptest {
         reader::{Dissect, Reader, Sources},
     };
     use proptest::prelude::*;
-    use tokio_util::sync::CancellationToken;
 
     impl Arbitrary for Error {
         type Parameters = usize;
@@ -134,7 +153,6 @@ mod proptest {
             let ret = Return {
                 token: 0,
                 output: Some(Box::new(Element::Error(err, Metadata::empty()))),
-                signal: CancellationToken::new(),
             };
             let origin = format!("@test {{\n{ret};\n}};");
             read_string!(

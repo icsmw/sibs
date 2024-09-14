@@ -27,7 +27,6 @@ impl Block {
     pub fn set_breaker(&mut self, breaker: CancellationToken) {
         self.breaker = Some(breaker);
     }
-
     pub fn get_breaker(&self) -> Result<CancellationToken, LinkedErr<operator::E>> {
         let Some(breaker) = self.breaker.as_ref() else {
             return Err(operator::E::NoBreakSignalSetupForBlock.by(self));
@@ -206,6 +205,9 @@ impl TryExecute for Block {
                     if breaker.is_cancelled() {
                         return Ok(output);
                     }
+                }
+                if let Some(retreat) = sc.get_retreat().await? {
+                    return Ok(retreat);
                 }
                 output = element
                     .execute(

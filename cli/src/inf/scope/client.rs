@@ -12,11 +12,17 @@ pub struct Scope {
     tx: UnboundedSender<Demand>,
     uuid: Uuid,
     pub journal: OwnedJournal,
+    pub retreat: CancellationToken,
 }
 
 impl Scope {
     pub fn new(tx: UnboundedSender<Demand>, uuid: Uuid, journal: OwnedJournal) -> Self {
-        Self { tx, uuid, journal }
+        Self {
+            tx,
+            uuid,
+            journal,
+            retreat: CancellationToken::new(),
+        }
     }
     /// Setting variable value
     ///
@@ -163,6 +169,24 @@ impl Scope {
         let (tx, rx) = oneshot::channel();
         self.tx.send(Demand::BreakLoop(self.uuid, tx))?;
         rx.await?
+    }
+
+    pub async fn resolve(&self, value: Value) -> Result<(), E> {
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(Demand::Resolve(value, tx))?;
+        rx.await?
+    }
+
+    pub async fn is_resolved(&self) -> Result<bool, E> {
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(Demand::IsResolved(tx))?;
+        Ok(rx.await?)
+    }
+
+    pub async fn get_retreat(&self) -> Result<Option<Value>, E> {
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(Demand::GetRetreat(tx))?;
+        Ok(rx.await?)
     }
 
     pub async fn destroy(&self) -> Result<(), E> {

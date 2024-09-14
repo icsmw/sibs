@@ -388,9 +388,11 @@ impl TryExecute for Task {
                     )
                     .await?;
             }
-            self.block
-                .execute(owner, components, args, prev, cx, sc, token)
-                .await
+            let result = self
+                .block
+                .execute(owner, components, args, prev, cx, sc.clone(), token)
+                .await?;
+            Ok(sc.get_retreat().await?.unwrap_or(result))
         })
     }
 }

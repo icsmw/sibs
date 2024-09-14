@@ -1,7 +1,7 @@
 use crate::inf::{
     context::E,
     scope::{Demand, Scope, Session, Sessions},
-    Journal,
+    Journal, Value,
 };
 use std::path::{Path, PathBuf};
 use tokio::{
@@ -36,6 +36,7 @@ impl ScopeDomain {
         spawn(async move {
             let mut sessions = Sessions::default();
             let mut globals = Session::new("globals", root.clone(), &journal);
+            let mut retreat: Option<Value> = None;
             while let Some(demand) = rx.recv().await {
                 let requested = demand.to_string();
                 if matches!(demand, Demand::Destroy) {
@@ -129,7 +130,17 @@ impl ScopeDomain {
                                 .unwrap_or(Err(E::NoScopeSession(session))),
                         )
                         .is_err(),
-                    _ => true,
+                    Demand::Resolve(value, tx) => {
+                        if retreat.is_some() {
+                            tx.send(Err(E::AlreadyResolved)).is_err()
+                        } else {
+                            retreat = Some(value);
+                            tx.send(Ok(())).is_err()
+                        }
+                    }
+                    Demand::GetRetreat(tx) => tx.send(retreat.clone()).is_err(),
+                    Demand::IsResolved(tx) => tx.send(retreat.is_some()).is_err(),
+                    Demand::Destroy => true,
                 } {
                     own_journal.err(format!("Fail to send response for \"{requested}\""));
                     break;

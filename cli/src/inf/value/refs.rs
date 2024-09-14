@@ -28,6 +28,7 @@ pub enum ValueRef {
     Repeated(Box<ValueRef>),
     // (Vec<ARGUMENT_TY>, BLOCK_TY)
     Task(Vec<ValueRef>, Box<ValueRef>),
+    Error,
 }
 
 impl ValueRef {
@@ -55,7 +56,8 @@ impl ValueRef {
             | Self::Optional(..)
             | Self::Repeated(..)
             | Self::Task(..)
-            | Self::Vec(..) => false,
+            | Self::Vec(..)
+            | Self::Error => false,
         }
     }
     pub fn is_numeric(&self) -> bool {
@@ -132,7 +134,7 @@ impl ValueRef {
                 }
             }
             Self::Repeated(left) => **left == *right,
-            Self::Task(..) => false,
+            Self::Task(..) | Self::Error => false,
         }
     }
 }
@@ -210,6 +212,7 @@ impl fmt::Display for ValueRef {
                         .join(";"),
                     block
                 ),
+                Self::Error => "Error".to_owned(),
             }
         )
     }

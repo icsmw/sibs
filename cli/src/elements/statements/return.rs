@@ -4,7 +4,7 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        Context, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
+        Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
         FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
         TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
@@ -16,7 +16,6 @@ use std::fmt;
 pub struct Return {
     pub token: usize,
     pub output: Option<Box<Element>>,
-    pub signal: CancellationToken,
 }
 
 impl TryDissect<Return> for Return {
@@ -52,7 +51,6 @@ impl TryDissect<Return> for Return {
         Ok(Some(Return {
             token: close(reader),
             output,
-            signal: CancellationToken::new(),
         }))
     }
 }
@@ -144,16 +142,93 @@ impl TryExpectedValueType for Return {
 impl TryExecute for Return {
     fn try_execute<'a>(
         &'a self,
-        _owner: Option<&'a Element>,
-        _components: &'a [Element],
-        _args: &'a [Value],
-        _prev: &'a Option<PrevValue>,
-        _cx: Context,
-        _sc: Scope,
-        _token: CancellationToken,
+        owner: Option<&'a Element>,
+        components: &'a [Element],
+        args: &'a [Value],
+        prev: &'a Option<PrevValue>,
+        cx: Context,
+        sc: Scope,
+        token: CancellationToken,
     ) -> ExecutePinnedResult {
-        Box::pin(async move { todo!("not implemented") })
+        Box::pin(async move {
+            sc.resolve(if let Some(el) = self.output.as_ref() {
+                el.execute(owner, components, args, prev, cx, sc.clone(), token)
+                    .await?
+            } else {
+                Value::Empty(())
+            })
+            .await?;
+            Ok(Value::Empty(()))
+        })
     }
+}
+
+#[cfg(test)]
+mod processing {
+    use crate::test_block;
+
+    test_block!(
+        returning,
+        r#"
+            return 5;
+        "#,
+        5isize
+    );
+
+    test_block!(
+        returning_from_block,
+        r#"
+            $a = 13;
+            return 5;
+            13;
+        "#,
+        5isize
+    );
+
+    test_block!(
+        returning_from_nested_block,
+        r#"
+            $a = 13;
+            if $a == 13 {
+                return 5;
+            } else {
+                false;
+            };
+            true;
+        "#,
+        5isize
+    );
+
+    test_block!(
+        returning_from_mt_nested_block,
+        r#"
+            $a = 13;
+            if $a == 13 {
+                if $a == 13 {
+                    return 5;
+                } else {
+                    false;
+                };
+            } else {
+                false;
+            };
+            true;
+        "#,
+        5isize
+    );
+
+    test_block!(
+        returning_from_loop,
+        r#"
+            for $n in 0..10 {
+                if $n == 5 {
+                    return 5;
+                };
+            };
+            true;
+        "#,
+        5isize
+    );
 }
 
 #[cfg(test)]
@@ -167,7 +242,6 @@ mod proptest {
         reader::{Dissect, Reader, Sources},
     };
     use proptest::prelude::*;
-    use tokio_util::sync::CancellationToken;
 
     impl Arbitrary for Return {
         type Parameters = usize;
@@ -198,7 +272,6 @@ mod proptest {
             ))
             .prop_map(|output| Return {
                 output: Some(Box::new(output)),
-                signal: CancellationToken::new(),
                 token: 0,
             })
             .boxed()

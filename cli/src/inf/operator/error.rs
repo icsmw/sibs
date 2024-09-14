@@ -29,6 +29,8 @@ pub enum E {
     DismatchTypes(ValueRef, ValueRef),
     #[error("Attempt to do arithmetic operation on not numeric type")]
     ArithmeticWrongType,
+    #[error("Error message should have type <String>")]
+    NotStringInError,
     #[error("Gatekeeper doesn't return bool value")]
     NoBoolValueFromGatekeeper,
     #[error("Spawned process exit with error")]

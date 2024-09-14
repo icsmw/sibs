@@ -8,7 +8,7 @@ use crate::{
         Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
         TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
-    reader::{chars, words, Dissect, Reader, TryDissect, E},
+    reader::{chars, Dissect, Reader, TryDissect, E},
 };
 use std::fmt;
 

@@ -25,6 +25,8 @@ pub enum E {
     SendError(String),
     #[error("{0}")]
     Storage(String),
+    #[error("Task already resolved")]
+    AlreadyResolved,
 }
 
 impl From<bstorage::E> for E {

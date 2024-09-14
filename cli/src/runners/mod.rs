@@ -72,7 +72,7 @@ where
                     result
                         .expect("run of task is success")
                         .get::<T>()
-                        .expect("test returns bool value"),
+                        .expect("test returns correct value"),
                     &expectation
                 );
             }

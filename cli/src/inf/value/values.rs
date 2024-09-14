@@ -27,6 +27,7 @@ pub enum Value {
     PathBuf(PathBuf),
     String(String),
     Vec(Vec<Value>),
+    Error(String),
 }
 
 impl Value {
@@ -56,6 +57,7 @@ impl Value {
                     .and_then(|v| v.as_ref().ok())
                     .ok_or(operator::E::EmptyVector)?,
             )),
+            Self::Error(..) => ValueRef::Error,
         })
     }
     pub fn not_empty_or<E>(self, err: E) -> Result<Value, E> {
@@ -135,6 +137,12 @@ impl Value {
             }
             Value::Vec(v) if TypeId::of::<T>() == TypeId::of::<Vec<Value>>() => {
                 Some(unsafe { &*(v as *const Vec<Value> as *const T) })
+            }
+            Value::Error(v) if TypeId::of::<T>() == TypeId::of::<String>() => {
+                Some(unsafe { &*(v as *const String as *const T) })
+            }
+            Value::Empty(v) if TypeId::of::<T>() == TypeId::of::<()>() => {
+                Some(unsafe { &*(v as *const () as *const T) })
             }
             _ => None,
         }

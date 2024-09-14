@@ -9,6 +9,9 @@ use uuid::Uuid;
 pub enum Demand {
     AddSession(String, Option<PathBuf>, oneshot::Sender<Uuid>),
     RemoveSession(Uuid, oneshot::Sender<()>),
+    Resolve(Value, oneshot::Sender<Result<(), E>>),
+    IsResolved(oneshot::Sender<bool>),
+    GetRetreat(oneshot::Sender<Option<Value>>),
     /// Setting global variable value
     ///
     /// # Parameters
@@ -117,6 +120,9 @@ impl fmt::Display for Demand {
                 Self::GetGlobalCwd(..) => "GetGlobalCwd",
                 Self::GetVariable(..) => "GetVariable",
                 Self::OpenLoop(..) => "OpenLoop",
+                Self::Resolve(..) => "Resolve",
+                Self::IsResolved(..) => "IsResolved",
+                Self::GetRetreat(..) => "GetRetreat",
             }
         )
     }
