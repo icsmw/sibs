@@ -20,6 +20,7 @@ semicollon and the end on "true".
 - tracking time of some tasks gives a chart with performance changes (benchmarks)
 - "?" as tolerance should be moved to Element layer
 - "global" variables (declared with keyword global) doesn't consider in compute and incrementer
+- prevent recursion on reference in a same task
 
 NO Errors:
 `create-user --name={$user_name} --role={if $is_admin == "true" ["admin";]  ["user";]}`

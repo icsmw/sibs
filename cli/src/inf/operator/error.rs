@@ -29,6 +29,8 @@ pub enum E {
     DismatchTypes(ValueRef, ValueRef),
     #[error("Attempt to do arithmetic operation on not numeric type")]
     ArithmeticWrongType,
+    #[error("loop {{ ... }} made maximun iterations: {}", u64::MAX)]
+    MaxIterations,
     #[error("Error message should have type <String>")]
     NotStringInError,
     #[error("Gatekeeper doesn't return bool value")]
@@ -85,6 +87,8 @@ pub enum E {
     FailToGetIntegerValue,
     #[error("Fail to get any value for task's argument")]
     FailToGetAnyValueAsTaskArg,
+    #[error("Condition returns not <bool> type")]
+    ConditionReturnsNotBool,
     #[error("If=proviso doesn't return bool result")]
     NoBoolResultFromProviso,
     #[error("Variable \"{0}\" isn't assigned")]

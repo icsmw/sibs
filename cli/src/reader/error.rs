@@ -105,6 +105,8 @@ pub enum E {
     NoComponentBody,
     #[error("No first statement body")]
     NoFIRSTStatementBody,
+    #[error("No condition in: while <condition> {{...}}")]
+    NoConditionInWhile,
     #[error("No index variable in: for $index in $from..$to {{...}}")]
     NoIndexInForLoop,
     #[error("No \"in\" keyword in: for $index in $from..$to {{...}}")]

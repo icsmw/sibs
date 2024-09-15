@@ -24,6 +24,8 @@ pub const FALSE: &str = "false";
 pub const GLOBAL_VAR: &str = "global";
 pub const RANGE: &str = "..";
 pub const FOR: &str = "for";
+pub const LOOP: &str = "loop";
+pub const WHILE: &str = "while";
 pub const IN: &str = "in";
 pub const INC: &str = "+";
 pub const DEC: &str = "-";
@@ -66,6 +68,9 @@ pub fn is_reserved<S: AsRef<str>>(s: S) -> bool {
         INC_BY,
         DEC_BY,
         RETURN,
+        LOOP,
+        WHILE,
+        ERROR,
     ]
     .contains(&s.as_ref())
 }

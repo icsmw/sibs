@@ -6,7 +6,7 @@ use crate::{
     inf::{
         operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
         Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, VerificationResult,
+        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -60,7 +60,14 @@ impl Dissect<For, For> for For {}
 
 impl fmt::Display for For {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "for {} in {} {}", self.index, self.target, self.block)
+        write!(
+            f,
+            "{} {} in {} {}",
+            words::FOR,
+            self.index,
+            self.target,
+            self.block
+        )
     }
 }
 
@@ -68,8 +75,9 @@ impl Formation for For {
     fn format(&self, cursor: &mut FormationCursor) -> String {
         let mut inner = cursor.reown(Some(ElTarget::For));
         format!(
-            "{}for {} in {} {}",
+            "{}{} {} in {} {}",
             cursor.offset_as_string_if(&[ElTarget::Block]),
+            words::FOR,
             self.index,
             self.target,
             self.block.format(&mut inner)
@@ -115,12 +123,12 @@ impl TryExpectedValueType for For {
 
     fn try_expected<'a>(
         &'a self,
-        owner: &'a Element,
-        components: &'a [Element],
-        prev: &'a Option<PrevValueExpectation>,
-        cx: &'a Context,
+        _owner: &'a Element,
+        _components: &'a [Element],
+        _prev: &'a Option<PrevValueExpectation>,
+        _cx: &'a Context,
     ) -> ExpectedResult {
-        Box::pin(async move { self.block.expected(owner, components, prev, cx).await })
+        Box::pin(async move { Ok(ValueRef::Empty) })
     }
 }
 
@@ -173,6 +181,7 @@ impl TryExecute for For {
                         operator::E::InvalidRangeForStatement.linked(&self.target.token()),
                     )?;
                     let increase = from < to;
+                    sc.set_var(&variable.get_name(), Value::isize(from)).await?;
                     while from != to {
                         if loop_token.is_cancelled() {
                             break;
@@ -278,29 +287,22 @@ mod reading {
             }
         );
     }
-
-    // #[tokio::test]
-    // async fn error() {
-    //     let samples = include_str!("../../tests/error/first.sibs");
-    //     let samples = samples.split('\n').collect::<Vec<&str>>();
-    //     let mut count = 0;
-    //     for sample in samples.iter() {
-    //         count += read_string!(
-    //             &Configuration::logs(false),
-    //             sample,
-    //             |reader: &mut Reader, _: &mut Sources| {
-    //                 assert!(For::dissect(reader).is_err());
-    //                 Ok::<usize, LinkedErr<E>>(1)
-    //             }
-    //         );
-    //     }
-    //     assert_eq!(count, samples.len());
-    // }
 }
 
 #[cfg(test)]
 mod processing {
     use crate::test_block;
+
+    test_block!(
+        no_steps,
+        r#"
+            for $n in 0..0 {
+                print($n);
+            };
+            $n;
+        "#,
+        0isize
+    );
 
     test_block!(
         increase_index,
@@ -417,59 +419,6 @@ mod processing {
         true
     );
 }
-// #[cfg(test)]
-// mod processing {
-//     use tokio_util::sync::CancellationToken;
-
-//     use crate::{
-//         elements::{ElTarget, Element},
-//         error::LinkedErr,
-//         inf::{
-//             operator::{Execute, E},
-//             Configuration, Context, Journal, Scope,
-//         },
-//         process_string,
-//         reader::{chars, Reader, Sources},
-//     };
-
-//     #[tokio::test]
-//     async fn reading() {
-//         process_string!(
-//             &Configuration::logs(false),
-//             &include_str!("../../tests/processing/first.sibs"),
-//             |reader: &mut Reader, src: &mut Sources| {
-//                 let mut tasks: Vec<Element> = Vec::new();
-//                 while let Some(task) =
-//                     src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
-//                 {
-//                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-//                     tasks.push(task);
-//                 }
-//                 Ok::<Vec<Element>, LinkedErr<E>>(tasks)
-//             },
-//             |tasks: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
-//                 for task in tasks.iter() {
-//                     let result = task
-//                         .execute(
-//                             None,
-//                             &[],
-//                             &[],
-//                             &None,
-//                             cx.clone(),
-//                             sc.clone(),
-//                             CancellationToken::new(),
-//                         )
-//                         .await?;
-//                     assert_eq!(
-//                         result.as_string().expect("Task returns string value"),
-//                         "true".to_owned()
-//                     );
-//                 }
-//                 Ok::<(), LinkedErr<E>>(())
-//             }
-//         );
-//     }
-// }
 
 #[cfg(test)]
 mod proptest {

@@ -5,7 +5,9 @@ pub mod first;
 pub mod r#for;
 pub mod r#if;
 pub mod join;
+pub mod r#loop;
 pub mod r#return;
+pub mod r#while;
 
 pub use breaker::*;
 pub use each::*;
@@ -14,4 +16,6 @@ pub use first::*;
 pub use join::*;
 pub use r#for::*;
 pub use r#if::*;
+pub use r#loop::*;
 pub use r#return::*;
+pub use r#while::*;
