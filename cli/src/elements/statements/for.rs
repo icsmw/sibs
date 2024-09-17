@@ -115,6 +115,12 @@ impl TryExpectedValueType for For {
         cx: &'a Context,
     ) -> LinkingResult {
         Box::pin(async move {
+            if let Element::VariableName(el, _) = &*self.index {
+                cx.variables
+                    .set(&owner.as_component()?.uuid, el.get_name(), ValueRef::usize)
+                    .await
+                    .map_err(|e| LinkedErr::new(e, Some(self.token)))?;
+            }
             self.index.linking(owner, components, prev, cx).await?;
             self.target.linking(owner, components, prev, cx).await?;
             self.block.linking(owner, components, prev, cx).await

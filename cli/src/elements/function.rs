@@ -95,6 +95,7 @@ impl TryDissect<Function> for Function {
             if let Some(el) = Element::include(
                 &mut inner,
                 &[
+                    ElTarget::Closure,
                     ElTarget::Values,
                     ElTarget::Function,
                     ElTarget::If,
@@ -108,22 +109,22 @@ impl TryDissect<Function> for Function {
                 ],
             )? {
                 if inner.move_to().char(&[&chars::COMMA]).is_none() && !inner.is_empty() {
-                    Err(E::MissedSemicolon.by_reader(&inner))?;
+                    Err(E::MissedComma.by_reader(&inner))?;
                 }
                 elements.push(el);
             } else if let Some((content, _)) = inner.until().char(&[&chars::COMMA]) {
                 if content.trim().is_empty() {
-                    Err(E::NoContentBeforeSemicolon.by_reader(&inner))?;
+                    Err(E::NoContentBeforeComma.by_reader(&inner))?;
                 }
                 elements.push(
                     Element::include(&mut inner.token()?.bound, &[ElTarget::SimpleString])?
-                        .ok_or(E::NoContentBeforeSemicolon.by_reader(&inner))?,
+                        .ok_or(E::NoContentBeforeComma.by_reader(&inner))?,
                 );
                 let _ = inner.move_to().char(&[&chars::COMMA]);
             } else if !inner.is_empty() {
                 elements.push(
                     Element::include(&mut inner, &[ElTarget::SimpleString])?
-                        .ok_or(E::NoContentBeforeSemicolon.by_reader(&inner))?,
+                        .ok_or(E::NoContentBeforeComma.by_reader(&inner))?,
                 );
             }
         }

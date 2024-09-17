@@ -29,6 +29,9 @@ pub enum ValueRef {
     // (Vec<ARGUMENT_TY>, BLOCK_TY)
     Task(Vec<ValueRef>, Box<ValueRef>),
     Error,
+    Closure,
+    // Reference to type of input.
+    Incoming,
 }
 
 impl ValueRef {
@@ -57,7 +60,9 @@ impl ValueRef {
             | Self::Repeated(..)
             | Self::Task(..)
             | Self::Vec(..)
-            | Self::Error => false,
+            | Self::Error
+            | Self::Closure
+            | Self::Incoming => false,
         }
     }
     pub fn is_numeric(&self) -> bool {
@@ -134,7 +139,7 @@ impl ValueRef {
                 }
             }
             Self::Repeated(left) => **left == *right,
-            Self::Task(..) | Self::Error => false,
+            Self::Task(..) | Self::Error | Self::Closure | Self::Incoming => false,
         }
     }
 }
@@ -213,6 +218,8 @@ impl fmt::Display for ValueRef {
                     block
                 ),
                 Self::Error => "Error".to_owned(),
+                Self::Closure => "Closure".to_owned(),
+                Self::Incoming => "Incoming".to_owned(),
             }
         )
     }

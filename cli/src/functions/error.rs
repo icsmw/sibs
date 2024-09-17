@@ -1,6 +1,6 @@
 use crate::{
     error::LinkedErr,
-    inf::{context, operator, store},
+    inf::{context, operator, store, TokenGetter},
 };
 use thiserror::Error;
 use tokio::sync::{mpsc, oneshot};
@@ -19,6 +19,12 @@ pub enum E {
     InvalidFunctionArg(String),
     #[error("Invalid arguments length; required: {0}; gotten: {1}")]
     InvalidArgumentsCount(String, String),
+    #[error("Invalid closure arguments count; required: {0}; gotten: {1}")]
+    InvalidClosureArgumentsCount(usize, usize),
+    #[error("Closure's variable \"{0}\" is used outside of closure")]
+    ClosureVariableIsUsed(String),
+    #[error("Fail to extract bool value from closure output")]
+    FailToExtractBoolValueFromClosure,
     #[error("IO error: {0}")]
     IO(String),
     #[error("SystemTimeError error: {0}")]
@@ -39,6 +45,18 @@ pub enum E {
     Store(store::E),
     #[error("{0}")]
     Other(String),
+}
+
+impl E {
+    pub fn by(self, operator: &dyn TokenGetter) -> LinkedErr<E> {
+        LinkedErr::new(self, Some(operator.token()))
+    }
+    pub fn linked(self, token: &usize) -> LinkedErr<E> {
+        LinkedErr::new(self, Some(*token))
+    }
+    pub fn unlinked(self) -> LinkedErr<E> {
+        LinkedErr::new(self, None)
+    }
 }
 
 impl From<context::E> for LinkedErr<E> {
@@ -103,6 +121,12 @@ impl From<context::E> for E {
 impl From<operator::E> for E {
     fn from(e: operator::E) -> Self {
         E::TryExecute(e.to_string())
+    }
+}
+
+impl From<LinkedErr<operator::E>> for LinkedErr<E> {
+    fn from(err: LinkedErr<operator::E>) -> Self {
+        LinkedErr::new(err.e.into(), err.token)
     }
 }
 

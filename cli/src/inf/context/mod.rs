@@ -1,10 +1,12 @@
 pub mod atlas;
+pub mod closures;
 pub mod error;
 pub mod scenario;
 pub mod tracker;
 pub mod variables;
 
 use bstorage::Storage;
+use closures::Closures;
 use std::{process, sync::Arc};
 
 use crate::{
@@ -62,6 +64,7 @@ pub struct Context {
     pub scope: ScopeDomain,
     pub signals: Signals,
     pub variables: VariablesMeta,
+    pub closures: Closures,
     tx: UnboundedSender<ExitCode>,
     state: CancellationToken,
 }
@@ -74,6 +77,7 @@ impl Context {
         let funcs = Functions::init(journal)?;
         let scope = ScopeDomain::init(&scenario.path, journal);
         let variables = VariablesMeta::init(journal);
+        let closures = Closures::init(journal);
         let signals = Signals::init(journal);
         let (tx, mut rx): (UnboundedSender<ExitCode>, UnboundedReceiver<ExitCode>) =
             unbounded_channel();
@@ -87,6 +91,7 @@ impl Context {
             scope: scope.clone(),
             signals: signals.clone(),
             variables: variables.clone(),
+            closures: closures.clone(),
             aborting: CancellationToken::new(),
             tx,
         };
@@ -101,6 +106,7 @@ impl Context {
                     let _ = journal.err_if("scope", scope.destroy().await);
                     let _ = journal.err_if("signals", signals.destroy().await);
                     let _ = journal.err_if("variables", variables.destroy().await);
+                    let _ = journal.err_if("closures", closures.destroy().await);
                 })
             };
             let mut exit_code = ExitCode::Regular;

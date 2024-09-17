@@ -25,59 +25,73 @@ where
         inf::{
             journal::Journal,
             operator::{Execute, E},
-            Configuration, Context, Scope, Value,
+            Configuration, Context, ExpectedValueType, Scope, Value,
         },
         process_string,
-        reader::{chars, Reader, Sources},
+        reader::{Reader, Sources},
     };
     use tokio_util::sync::CancellationToken;
 
-    let task = format!("@test(){{{}}}", block.as_ref());
+    let task = format!("#(app: ./app) @test(){{{}}}", block.as_ref());
     process_string!(
         &Configuration::logs(false),
         &task,
         |reader: &mut Reader, src: &mut Sources| {
-            let mut tasks: Vec<Element> = Vec::new();
-            while let Some(task) = src.report_err_if(Element::include(reader, &[ElTarget::Task]))? {
-                let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-                tasks.push(task);
-            }
-            if tasks.is_empty() {
-                eprintln!("Fail read task from:\n{task}\n");
-            }
-            assert!(!tasks.is_empty());
-            Ok::<Vec<Element>, LinkedErr<E>>(tasks)
+            let Some(component) =
+                src.report_err_if(Element::include(reader, &[ElTarget::Component]))?
+            else {
+                panic!("Fait to read component from:\n{task}\n");
+            };
+            Ok::<Element, LinkedErr<E>>(component)
         },
-        |tasks: Vec<Element>, cx: Context, sc: Scope, _journal: Journal| async move {
-            for task in tasks.iter() {
-                let result = task
-                    .execute(
-                        None,
-                        &[],
-                        &[],
-                        &None,
-                        cx.clone(),
-                        sc.clone(),
-                        CancellationToken::new(),
-                    )
-                    .await;
+        |component: Element, cx: Context, sc: Scope, _journal: Journal| async move {
+            let (task, _) = (&component)
+                .as_component()?
+                .get_task("test")
+                .expect("Task \"test\" has been found");
+            let result = task.linking(&component, &[], &None, &cx).await;
+            if let Err(err) = result.as_ref() {
+                cx.atlas
+                    .report_err(err)
+                    .await
+                    .expect("Error report has been created");
+            }
+            assert!(result.is_ok());
+            let result = task.verification(&component, &[], &None, &cx).await;
+            if let Err(err) = result.as_ref() {
+                cx.atlas
+                    .report_err(err)
+                    .await
+                    .expect("Error report has been created");
+            }
+            assert!(result.is_ok());
+            let result = task
+                .execute(
+                    Some(&component),
+                    &[],
+                    &[],
+                    &None,
+                    cx.clone(),
+                    sc.clone(),
+                    CancellationToken::new(),
+                )
+                .await;
 
-                if let Err(err) = result.as_ref() {
-                    cx.atlas
-                        .report_err(err)
-                        .await
-                        .expect("Error report has been created");
-                }
-                let result = result.expect("run of task is success");
-                let expectation_as_any = Box::new(expectation.clone()) as Box<dyn Any>;
-                if let Ok(expectation) = expectation_as_any.downcast::<Value>() {
-                    assert_eq!(result, *expectation);
-                } else {
-                    assert_eq!(
-                        result.get::<T>().expect("test returns correct value"),
-                        &expectation
-                    );
-                }
+            if let Err(err) = result.as_ref() {
+                cx.atlas
+                    .report_err(err)
+                    .await
+                    .expect("Error report has been created");
+            }
+            let result = result.expect("run of task is success");
+            let expectation_as_any = Box::new(expectation.clone()) as Box<dyn Any>;
+            if let Ok(expectation) = expectation_as_any.downcast::<Value>() {
+                assert_eq!(result, *expectation);
+            } else {
+                assert_eq!(
+                    result.get::<T>().expect("test returns correct value"),
+                    &expectation
+                );
             }
             Ok::<(), LinkedErr<E>>(())
         }

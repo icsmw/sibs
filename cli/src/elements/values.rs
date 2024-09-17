@@ -161,7 +161,6 @@ impl TryExpectedValueType for Values {
                     ty = Some(el.expected(owner, components, prev, cx).await?)
                 }
             }
-
             Ok(ValueRef::Vec(Box::new(ty.ok_or(operator::E::EmptyVector)?)))
         })
     }

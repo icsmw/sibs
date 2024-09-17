@@ -143,7 +143,7 @@ impl TryExpectedValueType for Comparing {
         Box::pin(async move {
             let left = self.left.expected(owner, components, prev, cx).await?;
             let right = self.right.expected(owner, components, prev, cx).await?;
-            if left != right {
+            if !left.is_compatible(&right) {
                 Err(operator::E::DismatchTypes(left, right).by(self))
             } else {
                 Ok(())

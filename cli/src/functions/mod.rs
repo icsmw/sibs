@@ -11,6 +11,7 @@ pub mod sc;
 pub mod sig;
 pub mod str;
 pub mod test;
+pub mod vec;
 
 use crate::{
     elements::FuncArg,
@@ -81,6 +82,7 @@ pub fn register(store: &mut Store<ExecutorFnDescription>) -> Result<(), E> {
     sig::register(store)?;
     hash::register(store)?;
     test::register(store)?;
+    vec::register(store)?;
     Ok(())
 }
 

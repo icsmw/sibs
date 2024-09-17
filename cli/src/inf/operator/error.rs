@@ -27,8 +27,14 @@ pub enum E {
     UnknownComponent(Uuid),
     #[error("Type dismatch: {0} and {1}")]
     DismatchTypes(ValueRef, ValueRef),
+    #[error("Closure isn't bound with an owner")]
+    ClosureIsNotBoundWithOwner,
     #[error("Attempt to do arithmetic operation on not numeric type")]
     ArithmeticWrongType,
+    #[error("Fail to find closure {0}")]
+    FailToFindClosure(Uuid),
+    #[error("Closure {0} already saved")]
+    ClosureAlreadySaved(Uuid),
     #[error("loop {{ ... }} made maximun iterations: {}", u64::MAX)]
     MaxIterations,
     #[error("Error message should have type <String>")]
@@ -115,6 +121,8 @@ pub enum E {
     ElementIsNotTask(String),
     #[error("Element isn't Component; element type: {0}")]
     ElementIsNotComponent(String),
+    #[error("Element isn't Ppm; element type: {0}")]
+    ElementIsNotPpm(String),
     #[error("Value \"{0}\" doesn't match to allowed: {1}")]
     NotDeclaredValueAsArgument(String, String),
     #[error("Reference has invalid number of parts")]

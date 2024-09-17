@@ -1,3 +1,5 @@
+use uuid::Uuid;
+
 use crate::{
     elements::Cmb,
     inf::{journal::Output, operator, ValueRef},
@@ -28,6 +30,7 @@ pub enum Value {
     String(String),
     Vec(Vec<Value>),
     Error(String),
+    Closure(Uuid),
 }
 
 impl Value {
@@ -58,6 +61,7 @@ impl Value {
                     .ok_or(operator::E::EmptyVector)?,
             )),
             Self::Error(..) => ValueRef::Error,
+            Self::Closure(..) => ValueRef::Closure,
         })
     }
     pub fn not_empty_or<E>(self, err: E) -> Result<Value, E> {

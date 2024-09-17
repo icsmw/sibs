@@ -19,6 +19,12 @@ pub struct Ppm {
     pub el: Box<Element>,
 }
 
+impl Ppm {
+    pub fn is_call(&self) -> bool {
+        matches!(*self.el, Element::Call(..))
+    }
+}
+
 impl TryDissect<Ppm> for Ppm {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
         let close = reader.open_token(ElTarget::Ppm);

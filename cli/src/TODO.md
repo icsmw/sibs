@@ -11,16 +11,17 @@
 - a way to run tasks in parallel: `sibs * --lint` will run lint task for all components, which has it
 - invalid UTF from command
 - implement Cancellation on @exit function
-- feature: signals and waiter... stop at some point of script until signal -> will allow sync parallel tasks
 - missed commands/functions:
 -- try / catch / check err
-- add anti-deadlock
 - Error MissedSemicolon doesn't give error report with error location. Canbe tested with signal.sibs. Remove 
 semicollon and the end on "true".
 - tracking time of some tasks gives a chart with performance changes (benchmarks)
-- "?" as tolerance should be moved to Element layer
 - "global" variables (declared with keyword global) doesn't consider in compute and incrementer
 - prevent recursion on reference in a same task
+- $str = "{$str}new" - doesn't work
+
+
+
 
 NO Errors:
 `create-user --name={$user_name} --role={if $is_admin == "true" ["admin";]  ["user";]}`

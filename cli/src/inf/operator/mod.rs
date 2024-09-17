@@ -115,18 +115,23 @@ pub trait ExpectedValueType {
         Self: TryExpectedValueType + ExpectedValueType + Execute + TokenGetter + Debug + Sync,
     {
         Box::pin(async move {
+            // self.try_expected(owner, components, prev, cx).await
             let value = self.try_expected(owner, components, prev, cx).await?;
-            Ok(if let Some(ppm) = self.get_metadata()?.ppm.as_ref() {
-                ppm.expected(
-                    owner,
-                    components,
-                    &Some(PrevValueExpectation {
-                        token: self.token(),
-                        value,
-                    }),
-                    cx,
-                )
-                .await?
+            Ok(if let Some(el) = self.get_metadata()?.ppm.as_ref() {
+                if !el.as_ppm()?.is_call() {
+                    el.expected(
+                        owner,
+                        components,
+                        &Some(PrevValueExpectation {
+                            token: self.token(),
+                            value,
+                        }),
+                        cx,
+                    )
+                    .await?
+                } else {
+                    value
+                }
             } else {
                 value
             })

@@ -45,6 +45,8 @@ pub enum E {
     IntegerParsingError(String),
     #[error("No content before semicolon")]
     NoContentBeforeSemicolon,
+    #[error("No content before comma")]
+    NoContentBeforeComma,
     #[error("Using reserved chars")]
     UsingReservedChars,
     #[error("Missed semicolon")]
@@ -63,6 +65,8 @@ pub enum E {
     FailFindTaskActions,
     #[error("Empty block")]
     EmptyBlock,
+    #[error("Closure already bound with an owner")]
+    ClosureAlreadyHasOwner,
     #[error("No error message definition")]
     NoErrorMessageDefinition,
     #[error("No end range value [from..??]")]
@@ -79,6 +83,8 @@ pub enum E {
     FailToReadConditions,
     #[error("This type of argument cannot be used in references")]
     InvalidArgumentForReference,
+    #[error("Invalid argument of closure")]
+    InvalidClosureArgument,
     #[error("Function import has invalid arguments")]
     ImportFunctionInvalidArgs,
     #[error("Fail to recognize code: \"{0}\"")]

@@ -69,6 +69,7 @@ impl TryDissect<Block> for Block {
                     ElTarget::Range,
                     ElTarget::Compute,
                     ElTarget::Error,
+                    ElTarget::Closure,
                 ],
             )? {
                 if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
