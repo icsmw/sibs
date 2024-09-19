@@ -23,6 +23,8 @@ pub enum E {
     InvalidClosureArgumentsCount(usize, usize),
     #[error("Closure's variable \"{0}\" is used outside of closure")]
     ClosureVariableIsUsed(String),
+    #[error("Income value type can be used only with Vec")]
+    InvalidIncomeValueType,
     #[error("Fail to extract bool value from closure output")]
     FailToExtractBoolValueFromClosure,
     #[error("IO error: {0}")]

@@ -60,8 +60,15 @@ impl ExecutorFnDescription {
         let exec = self.executor;
         exec(args, token, cx, sc)
     }
-    pub fn output(&self) -> ValueRef {
-        self.output.clone()
+    pub fn output(&self) -> Result<ValueRef, E> {
+        Ok(if matches!(self.output, ValueRef::Incoming) {
+            let Some(ValueRef::Vec(ty)) = self.args.first() else {
+                return Err(E::InvalidIncomeValueType)?;
+            };
+            ValueRef::Vec(ty.clone())
+        } else {
+            self.output.clone()
+        })
     }
     pub fn args(&self) -> &[ValueRef] {
         &self.args

@@ -105,12 +105,19 @@ impl TokenGetter for VariableAssignation {
 impl TryExpectedValueType for VariableAssignation {
     fn try_verification<'a>(
         &'a self,
-        _owner: &'a Element,
-        _components: &'a [Element],
-        _prev: &'a Option<PrevValueExpectation>,
-        _cx: &'a Context,
+        owner: &'a Element,
+        components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
+        cx: &'a Context,
     ) -> VerificationResult {
-        Box::pin(async move { Ok(()) })
+        Box::pin(async move {
+            self.variable
+                .verification(owner, components, prev, cx)
+                .await?;
+            self.assignation
+                .verification(owner, components, prev, cx)
+                .await
+        })
     }
 
     fn try_linking<'a>(
@@ -124,6 +131,10 @@ impl TryExpectedValueType for VariableAssignation {
             let Element::VariableName(el, _) = self.variable.as_ref() else {
                 return Err(operator::E::NoVariableName.by(self));
             };
+            self.variable.linking(owner, components, prev, cx).await?;
+            self.assignation
+                .linking(owner, components, prev, cx)
+                .await?;
             cx.variables
                 .set(
                     &owner.as_component()?.uuid,

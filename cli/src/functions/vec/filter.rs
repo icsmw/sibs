@@ -66,3 +66,44 @@ pub fn execute(
         Ok(Value::Vec(output))
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::test_block;
+
+    test_block!(
+        iteration,
+        r#"
+            $els = ("one", "two", "three");
+            $count = 0;
+            $els.vec::filter(($n, $el) {
+                if $el != "two" {
+                    $count += 1;
+                    true;
+                } else {
+                    false;
+                };
+            });
+            $count;
+        "#,
+        2isize
+    );
+
+    test_block!(
+        iteration_short_name,
+        r#"
+            $els = ("one", "two", "three");
+            $count = 0;
+            $els.vec::filter(($n, $el) {
+                if $el != "two" {
+                    $count += 1;
+                    true;
+                } else {
+                    false;
+                };
+            });
+            $count;
+        "#,
+        2isize
+    );
+}

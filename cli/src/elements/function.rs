@@ -377,7 +377,7 @@ impl TryExpectedValueType for Function {
             Ok(cx
                 .get_func_desc(&self.name, prev.as_ref().map(|v| v.value.clone()).clone())
                 .await?
-                .output())
+                .output()?)
         })
     }
 }
