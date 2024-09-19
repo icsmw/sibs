@@ -1,5 +1,5 @@
-mod each;
 mod filter;
+mod for_each;
 mod map;
 
 use crate::{
@@ -36,9 +36,9 @@ pub fn register(store: &mut Store<ExecutorFnDescription>) -> Result<(), E> {
         ),
     )?;
     store.insert(
-        each::name(),
+        for_each::name(),
         ExecutorFnDescription::new(
-            each::execute,
+            for_each::execute,
             vec![
                 ValueRef::Vec(Box::new(ValueRef::OneOf(vec![
                     ValueRef::String,

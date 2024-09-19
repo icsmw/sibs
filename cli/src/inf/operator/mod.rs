@@ -60,13 +60,12 @@ pub trait ExpectedValueType {
     {
         Box::pin(async move {
             if let Some(ppm) = self.get_metadata()?.ppm.as_ref() {
-                let value = self.expected(owner, components, prev, cx).await?;
                 ppm.linking(
                     owner,
                     components,
                     &Some(PrevValueExpectation {
                         token: self.token(),
-                        value,
+                        value: self.try_expected(owner, components, prev, cx).await?,
                     }),
                     cx,
                 )
@@ -88,20 +87,16 @@ pub trait ExpectedValueType {
     {
         Box::pin(async move {
             if let Some(el) = self.get_metadata()?.ppm.as_ref() {
-                let value = self.expected(owner, components, prev, cx).await?;
-                // println!(">>>>>>>>>>>>>>>>>> 000 self: {self:?}");
-                // println!(">>>>>>>>>>>>>>>>>> 000 self expected: {value:?}");
-                // el.verification(
-                //     owner,
-                //     components,
-                //     &Some(PrevValueExpectation {
-                //         token: self.token(),
-                //         value,
-                //     }),
-                //     cx,
-                // )
-                // .await?;
-                // println!(">>>>>>>>>>>>>>>>>> 000 done");
+                el.verification(
+                    owner,
+                    components,
+                    &Some(PrevValueExpectation {
+                        token: self.token(),
+                        value: self.try_expected(owner, components, prev, cx).await?,
+                    }),
+                    cx,
+                )
+                .await?;
             }
             self.try_verification(owner, components, prev, cx).await
         })

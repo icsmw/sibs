@@ -71,7 +71,22 @@ mod tests {
             $els = ("one", "two", "three");
             $count = 0;
             $str = "";
-            $els.vec::each(($n, $el) {
+            $els.vec::for_each(($n, $el) {
+                $count += 1;
+                print("{$n}: {$el}");
+            });
+            $count;
+        "#,
+        3isize
+    );
+
+    test_block!(
+        iteration_short_name,
+        r#"
+            $els = ("one", "two", "three");
+            $count = 0;
+            $str = "";
+            $els.for_each(($n, $el) {
                 $count += 1;
                 print("{$n}: {$el}");
             });
