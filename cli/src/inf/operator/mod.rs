@@ -87,18 +87,21 @@ pub trait ExpectedValueType {
         Self: TryExpectedValueType + Execute + TokenGetter + Debug + Sync,
     {
         Box::pin(async move {
-            if let Some(ppm) = self.get_metadata()?.ppm.as_ref() {
+            if let Some(el) = self.get_metadata()?.ppm.as_ref() {
                 let value = self.expected(owner, components, prev, cx).await?;
-                ppm.verification(
-                    owner,
-                    components,
-                    &Some(PrevValueExpectation {
-                        token: self.token(),
-                        value,
-                    }),
-                    cx,
-                )
-                .await?;
+                // println!(">>>>>>>>>>>>>>>>>> 000 self: {self:?}");
+                // println!(">>>>>>>>>>>>>>>>>> 000 self expected: {value:?}");
+                // el.verification(
+                //     owner,
+                //     components,
+                //     &Some(PrevValueExpectation {
+                //         token: self.token(),
+                //         value,
+                //     }),
+                //     cx,
+                // )
+                // .await?;
+                // println!(">>>>>>>>>>>>>>>>>> 000 done");
             }
             self.try_verification(owner, components, prev, cx).await
         })
@@ -115,23 +118,18 @@ pub trait ExpectedValueType {
         Self: TryExpectedValueType + ExpectedValueType + Execute + TokenGetter + Debug + Sync,
     {
         Box::pin(async move {
-            // self.try_expected(owner, components, prev, cx).await
             let value = self.try_expected(owner, components, prev, cx).await?;
             Ok(if let Some(el) = self.get_metadata()?.ppm.as_ref() {
-                if !el.as_ppm()?.is_call() {
-                    el.expected(
-                        owner,
-                        components,
-                        &Some(PrevValueExpectation {
-                            token: self.token(),
-                            value,
-                        }),
-                        cx,
-                    )
-                    .await?
-                } else {
-                    value
-                }
+                el.expected(
+                    owner,
+                    components,
+                    &Some(PrevValueExpectation {
+                        token: self.token(),
+                        value,
+                    }),
+                    cx,
+                )
+                .await?
             } else {
                 value
             })

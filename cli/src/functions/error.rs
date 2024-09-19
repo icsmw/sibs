@@ -51,12 +51,6 @@ impl E {
     pub fn by(self, operator: &dyn TokenGetter) -> LinkedErr<E> {
         LinkedErr::new(self, Some(operator.token()))
     }
-    pub fn linked(self, token: &usize) -> LinkedErr<E> {
-        LinkedErr::new(self, Some(*token))
-    }
-    pub fn unlinked(self) -> LinkedErr<E> {
-        LinkedErr::new(self, None)
-    }
 }
 
 impl From<context::E> for LinkedErr<E> {

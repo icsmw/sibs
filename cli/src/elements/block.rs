@@ -63,7 +63,6 @@ impl TryDissect<Block> for Block {
                     ElTarget::VariableType,
                     ElTarget::SimpleString,
                     ElTarget::Gatekeeper,
-                    ElTarget::Ppm,
                     ElTarget::Call,
                     ElTarget::Accessor,
                     ElTarget::Range,

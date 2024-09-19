@@ -9,7 +9,6 @@ mod function;
 mod gatekeeper;
 mod meta;
 mod optional;
-mod ppm;
 mod primitives;
 mod range;
 mod reference;
@@ -30,7 +29,6 @@ pub use function::*;
 pub use gatekeeper::*;
 pub use meta::*;
 pub use optional::*;
-pub use ppm::*;
 pub use primitives::*;
 pub use range::*;
 pub use reference::*;
@@ -85,7 +83,6 @@ pub enum ElTarget {
     VariableVariants,
     VariableType,
     SimpleString,
-    Ppm,
     Range,
     For,
     Return,
@@ -134,7 +131,6 @@ impl fmt::Display for ElTarget {
                 Self::VariableVariants => "VariableVariants",
                 Self::VariableType => "VariableType",
                 Self::SimpleString => "SimpleString",
-                Self::Ppm => "Ppm",
                 Self::Range => "Range",
                 Self::For => "For",
                 Self::Return => "Return",
@@ -257,7 +253,6 @@ pub enum Element {
     VariableVariants(VariableVariants, Metadata),
     VariableType(VariableType, Metadata),
     SimpleString(SimpleString, Metadata),
-    Ppm(Ppm, Metadata),
     Range(Range, Metadata),
     For(For, Metadata),
     Compute(Compute, Metadata),
@@ -282,7 +277,7 @@ impl Element {
             md
         }
         fn next(reader: &mut Reader, mut el: Element) -> Result<Option<Element>, LinkedErr<E>> {
-            let Some(ppm) = Element::include(reader, &[ElTarget::Ppm])? else {
+            let Some(ppm) = Element::include(reader, &[ElTarget::Call, ElTarget::Accessor])? else {
                 return Ok(Some(el));
             };
             el.get_mut_metadata().set_ppm(ppm);
@@ -355,11 +350,6 @@ impl Element {
         if includes == targets.contains(&ElTarget::Breaker) {
             if let Some(el) = Breaker::dissect(reader)? {
                 return next(reader, Element::Breaker(el, md));
-            }
-        }
-        if includes == targets.contains(&ElTarget::Ppm) {
-            if let Some(el) = Ppm::dissect(reader)? {
-                return next(reader, Element::Ppm(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::Accessor) {
@@ -562,7 +552,6 @@ impl Element {
             Self::VariableVariants(_, md) => md,
             Self::VariableType(_, md) => md,
             Self::SimpleString(_, md) => md,
-            Self::Ppm(_, md) => md,
             Self::Range(_, md) => md,
             Self::For(_, md) => md,
             Self::Compute(_, md) => md,
@@ -609,7 +598,6 @@ impl Element {
             Self::VariableVariants(_, md) => md,
             Self::VariableType(_, md) => md,
             Self::SimpleString(_, md) => md,
-            Self::Ppm(_, md) => md,
             Self::Range(_, md) => md,
             Self::For(_, md) => md,
             Self::Compute(_, md) => md,
@@ -641,13 +629,6 @@ impl Element {
         }
     }
 
-    pub fn as_ppm(&self) -> Result<&Ppm, LinkedErr<operator::E>> {
-        if let Element::Ppm(ppm, _) = self {
-            Ok(ppm)
-        } else {
-            Err(operator::E::ElementIsNotPpm(format!("{self:?}")).linked(&self.token()))
-        }
-    }
     #[cfg(test)]
     pub fn el_target(&self) -> ElTarget {
         match self {
@@ -681,7 +662,6 @@ impl Element {
             Self::VariableVariants(..) => ElTarget::VariableVariants,
             Self::VariableType(..) => ElTarget::VariableType,
             Self::SimpleString(..) => ElTarget::SimpleString,
-            Self::Ppm(..) => ElTarget::Ppm,
             Self::Range(..) => ElTarget::Range,
             Self::For(..) => ElTarget::For,
             Self::Compute(..) => ElTarget::Compute,
@@ -727,7 +707,6 @@ impl Element {
             Self::VariableVariants(v, _) => v.to_string(),
             Self::VariableType(v, _) => v.to_string(),
             Self::SimpleString(v, _) => v.to_string(),
-            Self::Ppm(v, _) => v.to_string(),
             Self::Range(v, _) => v.to_string(),
             Self::For(v, _) => v.to_string(),
             Self::Compute(v, _) => v.to_string(),
@@ -801,7 +780,6 @@ impl fmt::Display for Element {
                 Self::VariableVariants(v, md) => as_string(v, md),
                 Self::VariableType(v, md) => as_string(v, md),
                 Self::SimpleString(v, md) => as_string(v, md),
-                Self::Ppm(v, md) => as_string(v, md),
                 Self::Range(v, md) => as_string(v, md),
                 Self::For(v, md) => as_string(v, md),
                 Self::Compute(v, md) => as_string(v, md),
@@ -850,7 +828,6 @@ impl Formation for Element {
             Self::VariableVariants(v, _) => v.elements_count(),
             Self::VariableType(v, _) => v.elements_count(),
             Self::SimpleString(v, _) => v.elements_count(),
-            Self::Ppm(v, _) => v.elements_count(),
             Self::Range(v, _) => v.elements_count(),
             Self::For(v, _) => v.elements_count(),
             Self::Compute(v, _) => v.elements_count(),
@@ -920,7 +897,6 @@ impl Formation for Element {
             Self::VariableVariants(v, m) => format_el(v, m, cursor),
             Self::VariableType(v, m) => format_el(v, m, cursor),
             Self::SimpleString(v, m) => format_el(v, m, cursor),
-            Self::Ppm(v, m) => format_el(v, m, cursor),
             Self::Range(v, m) => format_el(v, m, cursor),
             Self::For(v, m) => format_el(v, m, cursor),
             Self::Compute(v, m) => format_el(v, m, cursor),
@@ -968,7 +944,6 @@ impl TokenGetter for Element {
             Self::VariableVariants(v, _) => v.token,
             Self::VariableType(v, _) => v.token,
             Self::SimpleString(v, _) => v.token(),
-            Self::Ppm(v, _) => v.token(),
             Self::Range(v, _) => v.token(),
             Self::For(v, _) => v.token(),
             Self::Compute(v, _) => v.token(),
@@ -1029,7 +1004,6 @@ impl TryExpectedValueType for Element {
                 }
                 Self::VariableType(v, _) => v.try_verification(owner, components, prev, cx).await,
                 Self::SimpleString(v, _) => v.try_verification(owner, components, prev, cx).await,
-                Self::Ppm(v, _) => v.try_verification(owner, components, prev, cx).await,
                 Self::Range(v, _) => v.try_verification(owner, components, prev, cx).await,
                 Self::For(v, _) => v.try_verification(owner, components, prev, cx).await,
                 Self::Compute(v, _) => v.try_verification(owner, components, prev, cx).await,
@@ -1082,7 +1056,6 @@ impl TryExpectedValueType for Element {
                 Self::VariableVariants(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::VariableType(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::SimpleString(v, _) => v.try_linking(owner, components, prev, cx).await,
-                Self::Ppm(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::Range(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::For(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::Compute(v, _) => v.try_linking(owner, components, prev, cx).await,
@@ -1139,7 +1112,6 @@ impl TryExpectedValueType for Element {
                 Self::VariableVariants(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::VariableType(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::SimpleString(v, _) => v.try_expected(owner, components, prev, cx).await,
-                Self::Ppm(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::Range(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::For(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::Compute(v, _) => v.try_expected(owner, components, prev, cx).await,
@@ -1325,10 +1297,6 @@ impl TryExecute for Element {
                     v.try_execute(owner, components, args, prev, cx, sc, token)
                         .await
                 }
-                Self::Ppm(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
                 Self::Comment(_) => Ok(Value::empty()),
             };
             if let (true, Err(err)) = (self.get_metadata().tolerance, result.as_ref()) {
@@ -1414,7 +1382,7 @@ mod proptest {
             Accessor, Block, Boolean, Breaker, Call, Closure, Combination, Command, Comment,
             Comparing, Component, Compute, Condition, Each, ElTarget, Element, Error, First, For,
             Function, Gatekeeper, If, Incrementer, Integer, Join, Loop, Meta, Metadata, Optional,
-            PatternString, Ppm, Range, Reference, Return, SimpleString, Subsequence, Task, Values,
+            PatternString, Range, Reference, Return, SimpleString, Subsequence, Task, Values,
             VariableAssignation, VariableDeclaration, VariableName, VariableType, VariableVariants,
             While,
         },
@@ -1462,13 +1430,6 @@ mod proptest {
             collected.push(
                 Accessor::arbitrary()
                     .prop_map(|el| Element::Accessor(el, Metadata::default()))
-                    .boxed(),
-            );
-        }
-        if targets.contains(&ElTarget::Ppm) {
-            collected.push(
-                Ppm::arbitrary()
-                    .prop_map(|el| Element::Ppm(el, Metadata::default()))
                     .boxed(),
             );
         }
@@ -1767,6 +1728,196 @@ mod proptest {
             args in any_with::<Element>((vec![ElTarget::Function], 0))
         ) {
             reading(args.clone());
+        }
+    }
+}
+
+#[cfg(test)]
+mod ppm {
+
+    #[cfg(test)]
+    mod reading {
+
+        use crate::{
+            elements::{ElTarget, Element},
+            error::LinkedErr,
+            inf::{operator::TokenGetter, tests::*, Configuration},
+            read_string,
+            reader::{chars, Reader, Sources, E},
+        };
+
+        #[tokio::test]
+        async fn reading() {
+            let content = include_str!("../tests/reading/ppm.sibs");
+            let len = content.split('\n').count();
+            read_string!(
+                &Configuration::logs(false),
+                &include_str!("../tests/reading/ppm.sibs"),
+                |reader: &mut Reader, src: &mut Sources| {
+                    let mut count = 0;
+                    while let Some(el) = src.report_err_if(Element::include(
+                        reader,
+                        &[ElTarget::Function, ElTarget::VariableName],
+                    ))? {
+                        let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                        assert_eq!(
+                            trim_carets(reader.recent()),
+                            trim_carets(&format!("{el};")),
+                            "Line: {}",
+                            count + 1
+                        );
+                        count += 1;
+                    }
+                    assert_eq!(count, len);
+                    assert!(reader.rest().trim().is_empty());
+                    Ok::<(), LinkedErr<E>>(())
+                }
+            );
+        }
+
+        #[tokio::test]
+        async fn tokens() {
+            let content = include_str!("../tests/reading/ppm.sibs");
+            let len = content.split('\n').count();
+            fn check_ppm_token(reader: &Reader, ppm: &Element) {
+                match ppm {
+                    Element::Call(el, md) => {
+                        assert_eq!(
+                            trim_carets(&format!("{el}")),
+                            reader
+                                .get_fragment(&el.token())
+                                .expect("Read a fragment")
+                                .content
+                        );
+                        if let Some(ppm) = md.ppm.as_ref() {
+                            check_ppm_token(reader, ppm);
+                        }
+                    }
+                    Element::Accessor(el, md) => {
+                        assert_eq!(
+                            trim_carets(&format!("{el}")),
+                            reader
+                                .get_fragment(&el.token())
+                                .expect("Read a fragment")
+                                .content
+                        );
+                        if let Some(ppm) = md.ppm.as_ref() {
+                            check_ppm_token(reader, ppm);
+                        }
+                    }
+                    _ => {
+                        panic!("Not Ppm element: {ppm:?}")
+                    }
+                }
+            }
+            read_string!(
+                &Configuration::logs(false),
+                &include_str!("../tests/reading/ppm.sibs"),
+                |reader: &mut Reader, src: &mut Sources| {
+                    let mut count = 0;
+                    while let Some(el) = src.report_err_if(Element::include(
+                        reader,
+                        &[ElTarget::Function, ElTarget::VariableName],
+                    ))? {
+                        let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                        match el {
+                            Element::Function(el, md) => {
+                                assert_eq!(
+                                    trim_carets(&format!("{el}")),
+                                    reader.get_fragment(&el.token())?.content
+                                );
+                                check_ppm_token(
+                                    reader,
+                                    md.ppm.as_ref().expect("Ppm element should be present"),
+                                );
+                            }
+                            Element::VariableName(el, md) => {
+                                assert_eq!(
+                                    trim_carets(&format!("{el}")),
+                                    reader.get_fragment(&el.token())?.content
+                                );
+                                check_ppm_token(
+                                    reader,
+                                    md.ppm.as_ref().expect("Ppm element should be present"),
+                                );
+                            }
+                            _ => {
+                                panic!("Not considered element: {el:?}")
+                            }
+                        }
+                        count += 1;
+                    }
+                    assert_eq!(count, len);
+                    assert!(reader.rest().trim().is_empty());
+                    Ok::<(), LinkedErr<E>>(())
+                }
+            );
+        }
+    }
+
+    #[cfg(test)]
+    mod proptest {
+
+        use crate::{
+            elements::{Accessor, Call, Task},
+            error::LinkedErr,
+            inf::{operator::E, tests::*, Configuration},
+            read_string,
+            reader::{Dissect, Reader, Sources},
+        };
+        use proptest::prelude::*;
+
+        fn reading_call(call: Call) {
+            get_rt().block_on(async {
+                let origin = format!("@test {{\nsome_initial_func(){call};\n}};");
+                read_string!(
+                    &Configuration::logs(false),
+                    &origin,
+                    |reader: &mut Reader, src: &mut Sources| {
+                        let task = src
+                            .report_err_if(Task::dissect(reader))?
+                            .expect("Task read");
+                        assert_eq!(format!("{task};"), origin);
+                        Ok::<(), LinkedErr<E>>(())
+                    }
+                );
+            })
+        }
+
+        fn reading_accessor(acs: Accessor) {
+            get_rt().block_on(async {
+                let origin = format!("@test {{\nsome_initial_func(){acs};\n}};");
+                read_string!(
+                    &Configuration::logs(false),
+                    &origin,
+                    |reader: &mut Reader, src: &mut Sources| {
+                        let task = src
+                            .report_err_if(Task::dissect(reader))?
+                            .expect("Task read");
+                        assert_eq!(format!("{task};"), origin);
+                        Ok::<(), LinkedErr<E>>(())
+                    }
+                );
+            })
+        }
+
+        proptest! {
+            #![proptest_config(ProptestConfig {
+                max_shrink_iters: 5000,
+                ..ProptestConfig::with_cases(10)
+            })]
+            #[test]
+            fn test_run_calls(
+                args in any_with::<Call>(0)
+            ) {
+                reading_call(args.clone());
+            }
+            #[test]
+            fn test_run_accessors(
+                args in any_with::<Accessor>(0)
+            ) {
+                reading_accessor(args.clone());
+            }
         }
     }
 }

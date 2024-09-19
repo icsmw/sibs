@@ -45,7 +45,7 @@ where
             Ok::<Element, LinkedErr<E>>(component)
         },
         |component: Element, cx: Context, sc: Scope, _journal: Journal| async move {
-            let (task, _) = (&component)
+            let (task, _) = component
                 .as_component()?
                 .get_task("test")
                 .expect("Task \"test\" has been found");

@@ -16,7 +16,6 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct Closure {
-    pub owner: Option<String>,
     pub args: Vec<Element>,
     pub block: Box<Element>,
     pub token: usize,
@@ -24,14 +23,6 @@ pub struct Closure {
 }
 
 impl Closure {
-    pub fn set_owner(&mut self, owner: String) -> Result<(), LinkedErr<E>> {
-        if self.owner.is_some() {
-            Err(E::ClosureAlreadyHasOwner.linked(&self.token))
-        } else {
-            self.owner = Some(owner);
-            Ok(())
-        }
-    }
     pub fn get_vars_names(&self) -> Vec<String> {
         self.args
             .iter()
@@ -85,7 +76,6 @@ impl TryDissect<Closure> for Closure {
             }
         }
         Ok(Some(Self {
-            owner: None,
             token: close(reader),
             block: Box::new(block),
             args,
@@ -189,13 +179,13 @@ impl TryExpectedValueType for Closure {
 impl TryExecute for Closure {
     fn try_execute<'a>(
         &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        inputs: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
+        _owner: Option<&'a Element>,
+        _components: &'a [Element],
+        _inputs: &'a [Value],
+        _prev: &'a Option<PrevValue>,
+        _cx: Context,
+        _sc: Scope,
+        _token: CancellationToken,
     ) -> ExecutePinnedResult {
         Box::pin(async move {
             Ok(Value::Closure(self.uuid))
@@ -225,24 +215,9 @@ impl TryExecute for Closure {
     }
 }
 
-fn test(t: impl Fn(u8) -> u8) -> u8 {
-    t(2) + 1
-}
-
-fn test2() {
-    let b = 76;
-    test(move |a: u8| -> u8 { a + b });
-}
-
 #[cfg(test)]
 mod proptest {
-    use crate::{
-        elements::{Closure, ElTarget, Element, Task},
-        error::LinkedErr,
-        inf::{operator::E, tests::*, Configuration},
-        read_string,
-        reader::{Dissect, Reader, Sources},
-    };
+    use crate::elements::{Closure, ElTarget, Element};
     use proptest::prelude::*;
     use uuid::Uuid;
 
@@ -259,7 +234,6 @@ mod proptest {
                 ),
             )
                 .prop_map(|(block, args)| Closure {
-                    owner: None,
                     args,
                     token: 0,
                     block: Box::new(block),

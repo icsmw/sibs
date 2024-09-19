@@ -73,13 +73,10 @@ mod tests {
             $str = "";
             $els.vec::each(($n, $el) {
                 $count += 1;
+                print("{$n}: {$el}");
             });
-            if $count == 3 {
-                true;
-            } else {
-                false;
-            };
+            $count;
         "#,
-        true
+        3isize
     );
 }
