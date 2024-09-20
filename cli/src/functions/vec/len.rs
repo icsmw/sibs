@@ -67,17 +67,9 @@ mod tests {
         r#"
             $els = ("one", "two", "three");
             $filtered = $els.filter(($n, $el) {
-                if $el != "two" {
-                    true;
-                } else {
-                    false;
-                };
+                $el != "two";
             });
-            if $filtered.len() == 2 && $filtered[0] == "one" && $filtered[1] == "three" {
-                true;
-            } else {
-                false;
-            };
+            $filtered.len() == 2 && $filtered[0] == "one" && $filtered[1] == "three";
         "#,
         true
     );

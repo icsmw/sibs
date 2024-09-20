@@ -75,35 +75,23 @@ mod tests {
         iteration,
         r#"
             $els = ("one", "two", "three");
-            $count = 0;
-            $els.vec::filter(($n, $el) {
-                if $el != "two" {
-                    $count += 1;
-                    true;
-                } else {
-                    false;
-                };
+            $filtered = $els.vec::filter(($n, $el) {
+                $el != "two";
             });
-            $count;
+            $filtered.vec::len();
         "#,
-        2isize
+        2usize
     );
 
     test_block!(
         iteration_short_name,
         r#"
             $els = ("one", "two", "three");
-            $count = 0;
-            $els.vec::filter(($n, $el) {
-                if $el != "two" {
-                    $count += 1;
-                    true;
-                } else {
-                    false;
-                };
+            $filtered = $els.filter(($n, $el) {
+                $el != "two";
             });
-            $count;
+            $filtered.len();
         "#,
-        2isize
+        2usize
     );
 }

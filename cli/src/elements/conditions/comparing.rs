@@ -221,6 +221,7 @@ impl TryExecute for Comparing {
                     )
                 }
                 _ => {
+                    // TODO: do not convert to string
                     let left = left.as_string().ok_or(operator::E::FailToGetStringValue)?;
                     let right = right.as_string().ok_or(operator::E::FailToGetStringValue)?;
                     Value::bool(

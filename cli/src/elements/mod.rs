@@ -91,6 +91,7 @@ pub enum ElTarget {
     Loop,
     While,
     Closure,
+    Conclusion,
     #[allow(unused)]
     Comment,
 }
@@ -140,6 +141,7 @@ impl fmt::Display for ElTarget {
                 Self::Loop => "Loop",
                 Self::While => "While",
                 Self::Closure => "Closure",
+                Self::Conclusion => "Conclusion",
                 Self::Comment => "Comment",
             },
         )
@@ -262,6 +264,7 @@ pub enum Element {
     Loop(Loop, Metadata),
     While(While, Metadata),
     Closure(Closure, Metadata),
+    Conclusion(Conclusion, Metadata),
     Meta(Meta),
     Comment(Comment),
 }
@@ -428,11 +431,6 @@ impl Element {
                 return next(reader, Element::VariableAssignation(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::VariableName) {
-            if let Some(el) = VariableName::dissect(reader)? {
-                return next(reader, Element::VariableName(el, md));
-            }
-        }
         if includes == targets.contains(&ElTarget::Each) {
             if let Some(el) = Each::dissect(reader)? {
                 return next(reader, Element::Each(el, md));
@@ -472,6 +470,16 @@ impl Element {
         if includes == targets.contains(&ElTarget::Values) {
             if let Some(el) = Values::dissect(reader)? {
                 return next(reader, Element::Values(el, md));
+            }
+        }
+        if includes == targets.contains(&ElTarget::Conclusion) {
+            if let Some(el) = Conclusion::dissect(reader)? {
+                return next(reader, Element::Conclusion(el, md));
+            }
+        }
+        if includes == targets.contains(&ElTarget::VariableName) {
+            if let Some(el) = VariableName::dissect(reader)? {
+                return next(reader, Element::VariableName(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::Component) {
@@ -561,6 +569,7 @@ impl Element {
             Self::Loop(_, md) => md,
             Self::While(_, md) => md,
             Self::Closure(_, md) => md,
+            Self::Conclusion(_, md) => md,
             Self::Comment(_) | Self::Meta(_) => {
                 panic!("Comment doesn't have metadata");
             }
@@ -607,6 +616,7 @@ impl Element {
             Self::Loop(_, md) => md,
             Self::While(_, md) => md,
             Self::Closure(_, md) => md,
+            Self::Conclusion(_, md) => md,
             Self::Comment(_) | Self::Meta(_) => {
                 panic!("Comment doesn't have metadata");
             }
@@ -671,6 +681,7 @@ impl Element {
             Self::Loop(..) => ElTarget::Loop,
             Self::While(..) => ElTarget::While,
             Self::Closure(..) => ElTarget::Closure,
+            Self::Conclusion(..) => ElTarget::Conclusion,
             Self::Comment(..) => ElTarget::Comment,
         }
     }
@@ -716,6 +727,7 @@ impl Element {
             Self::Loop(v, _) => v.to_string(),
             Self::While(v, _) => v.to_string(),
             Self::Closure(v, _) => v.to_string(),
+            Self::Conclusion(v, _) => v.to_string(),
             Self::Comment(v) => v.to_string(),
             Self::Meta(v) => v.to_string(),
         }
@@ -789,6 +801,7 @@ impl fmt::Display for Element {
                 Self::Loop(v, md) => as_string(v, md),
                 Self::While(v, md) => as_string(v, md),
                 Self::Closure(v, md) => as_string(v, md),
+                Self::Conclusion(v, md) => as_string(v, md),
                 Self::Comment(v) => v.to_string(),
                 Self::Meta(v) => v.to_string(),
             }
@@ -837,6 +850,7 @@ impl Formation for Element {
             Self::Loop(v, _) => v.elements_count(),
             Self::While(v, _) => v.elements_count(),
             Self::Closure(v, _) => v.elements_count(),
+            Self::Conclusion(v, _) => v.elements_count(),
             Self::Meta(v) => v.elements_count(),
             Self::Comment(v) => v.elements_count(),
         }
@@ -906,6 +920,7 @@ impl Formation for Element {
             Self::Loop(v, m) => format_el(v, m, cursor),
             Self::While(v, m) => format_el(v, m, cursor),
             Self::Closure(v, m) => format_el(v, m, cursor),
+            Self::Conclusion(v, m) => format_el(v, m, cursor),
             Self::Meta(v) => v.format(cursor),
             Self::Comment(v) => v.format(cursor),
         }
@@ -953,6 +968,7 @@ impl TokenGetter for Element {
             Self::Loop(v, _) => v.token(),
             Self::While(v, _) => v.token(),
             Self::Closure(v, _) => v.token(),
+            Self::Conclusion(v, _) => v.token(),
             Self::Meta(v) => v.token,
             Self::Comment(v) => v.token,
         }
@@ -1013,6 +1029,7 @@ impl TryExpectedValueType for Element {
                 Self::Loop(v, _) => v.try_verification(owner, components, prev, cx).await,
                 Self::While(v, _) => v.try_verification(owner, components, prev, cx).await,
                 Self::Closure(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::Conclusion(v, _) => v.try_verification(owner, components, prev, cx).await,
                 Self::Meta(..) => Err(operator::E::NoReturnType.by(self)),
                 Self::Comment(..) => Err(operator::E::NoReturnType.by(self)),
             }
@@ -1065,6 +1082,7 @@ impl TryExpectedValueType for Element {
                 Self::Loop(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::While(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::Closure(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::Conclusion(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::Meta(..) => Err(operator::E::NoReturnType.by(self)),
                 Self::Comment(..) => Err(operator::E::NoReturnType.by(self)),
             }
@@ -1121,6 +1139,7 @@ impl TryExpectedValueType for Element {
                 Self::Loop(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::While(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::Closure(v, _) => v.try_expected(owner, components, prev, cx).await,
+                Self::Conclusion(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::Meta(..) => Err(operator::E::NoReturnType.by(self)),
                 Self::Comment(..) => Err(operator::E::NoReturnType.by(self)),
             }
@@ -1144,6 +1163,10 @@ impl TryExecute for Element {
         Box::pin(async move {
             let journal = cx.journal.clone();
             let result = match self {
+                Self::Conclusion(v, _) => {
+                    v.try_execute(owner, components, args, prev, cx, sc, token)
+                        .await
+                }
                 Self::Closure(v, _) => {
                     v.try_execute(owner, components, args, prev, cx, sc, token)
                         .await
@@ -1380,11 +1403,11 @@ mod proptest {
     use crate::{
         elements::{
             Accessor, Block, Boolean, Breaker, Call, Closure, Combination, Command, Comment,
-            Comparing, Component, Compute, Condition, Each, ElTarget, Element, Error, First, For,
-            Function, Gatekeeper, If, Incrementer, Integer, Join, Loop, Meta, Metadata, Optional,
-            PatternString, Range, Reference, Return, SimpleString, Subsequence, Task, Values,
-            VariableAssignation, VariableDeclaration, VariableName, VariableType, VariableVariants,
-            While,
+            Comparing, Component, Compute, Conclusion, Condition, Each, ElTarget, Element, Error,
+            First, For, Function, Gatekeeper, If, Incrementer, Integer, Join, Loop, Meta, Metadata,
+            Optional, PatternString, Range, Reference, Return, SimpleString, Subsequence, Task,
+            Values, VariableAssignation, VariableDeclaration, VariableName, VariableType,
+            VariableVariants, While,
         },
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
@@ -1437,6 +1460,13 @@ mod proptest {
             collected.push(
                 Combination::arbitrary()
                     .prop_map(|el| Element::Combination(el, Metadata::default()))
+                    .boxed(),
+            );
+        }
+        if targets.contains(&ElTarget::Conclusion) {
+            collected.push(
+                Conclusion::arbitrary_with(deep + 1)
+                    .prop_map(|el| Element::Conclusion(el, Metadata::default()))
                     .boxed(),
             );
         }

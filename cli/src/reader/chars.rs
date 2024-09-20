@@ -25,6 +25,8 @@ pub const INC: char = '+';
 pub const DEC: char = '-';
 pub const DIV: char = '/';
 pub const MLT: char = '*';
+pub const CMP_RBIG: char = '<';
+pub const CMP_LBIG: char = '>';
 
 pub fn has_reserved(str: &str) -> bool {
     let reserved = [&COMMA, &SEMICOLON, &COLON];

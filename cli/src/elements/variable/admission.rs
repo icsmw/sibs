@@ -35,6 +35,9 @@ impl TryDissect<VariableName> for VariableName {
                     &chars::DOT,
                     &chars::INC,
                     &chars::DEC,
+                    &chars::EXCLAMATION,
+                    &chars::CMP_LBIG,
+                    &chars::CMP_RBIG,
                 ])
                 .map(|(content, _char)| content)
                 .unwrap_or_else(|| reader.move_to().end());
