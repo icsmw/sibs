@@ -46,7 +46,7 @@ impl TryDissect<Conclusion> for Conclusion {
                 token: close(reader),
             }))
         } else {
-            Err(E::FailToReadConditions.linked(&close(reader)))
+            Ok(None)
         }
     }
 }

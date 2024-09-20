@@ -56,6 +56,8 @@ pub enum ElTarget {
     Accessor,
     Function,
     If,
+    IfCondition,
+    IfSubsequence,
     Each,
     Breaker,
     First,
@@ -106,6 +108,8 @@ impl fmt::Display for ElTarget {
                 Self::Accessor => "Accessor",
                 Self::Function => "Function",
                 Self::If => "If",
+                Self::IfCondition => "IfCondition",
+                Self::IfSubsequence => "IfSubsequence",
                 Self::Each => "Each",
                 Self::Breaker => "Breaker",
                 Self::First => "First",
@@ -230,6 +234,8 @@ pub enum Element {
     Accessor(Accessor, Metadata),
     Function(Function, Metadata),
     If(If, Metadata),
+    IfCondition(IfCondition, Metadata),
+    IfSubsequence(IfSubsequence, Metadata),
     Breaker(Breaker, Metadata),
     Each(Each, Metadata),
     First(First, Metadata),
@@ -365,6 +371,16 @@ impl Element {
                 return next(reader, Element::Call(el, md));
             }
         }
+        if includes == targets.contains(&ElTarget::Optional) {
+            if let Some(el) = Optional::dissect(reader)? {
+                return next(reader, Element::Optional(el, md));
+            }
+        }
+        if includes == targets.contains(&ElTarget::Conclusion) {
+            if let Some(el) = Conclusion::dissect(reader)? {
+                return next(reader, Element::Conclusion(el, md));
+            }
+        }
         if includes == targets.contains(&ElTarget::Combination) {
             if let Some(el) = Combination::dissect(reader)? {
                 return next(reader, Element::Combination(el, md));
@@ -396,9 +412,14 @@ impl Element {
                 return next(reader, Element::If(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Optional) {
-            if let Some(el) = Optional::dissect(reader)? {
-                return next(reader, Element::Optional(el, md));
+        if includes == targets.contains(&ElTarget::IfSubsequence) {
+            if let Some(el) = IfSubsequence::dissect(reader)? {
+                return next(reader, Element::IfSubsequence(el, md));
+            }
+        }
+        if includes == targets.contains(&ElTarget::IfCondition) {
+            if let Some(el) = IfCondition::dissect(reader)? {
+                return next(reader, Element::IfCondition(el, md));
             }
         }
         if includes == targets.contains(&ElTarget::Gatekeeper) {
@@ -472,11 +493,6 @@ impl Element {
                 return next(reader, Element::Values(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Conclusion) {
-            if let Some(el) = Conclusion::dissect(reader)? {
-                return next(reader, Element::Conclusion(el, md));
-            }
-        }
         if includes == targets.contains(&ElTarget::VariableName) {
             if let Some(el) = VariableName::dissect(reader)? {
                 return next(reader, Element::VariableName(el, md));
@@ -535,6 +551,8 @@ impl Element {
             Self::Accessor(_, md) => md,
             Self::Function(_, md) => md,
             Self::If(_, md) => md,
+            Self::IfCondition(_, md) => md,
+            Self::IfSubsequence(_, md) => md,
             Self::Breaker(_, md) => md,
             Self::Each(_, md) => md,
             Self::First(_, md) => md,
@@ -582,6 +600,8 @@ impl Element {
             Self::Accessor(_, md) => md,
             Self::Function(_, md) => md,
             Self::If(_, md) => md,
+            Self::IfCondition(_, md) => md,
+            Self::IfSubsequence(_, md) => md,
             Self::Breaker(_, md) => md,
             Self::Each(_, md) => md,
             Self::First(_, md) => md,
@@ -646,6 +666,8 @@ impl Element {
             Self::Accessor(..) => ElTarget::Accessor,
             Self::Function(..) => ElTarget::Function,
             Self::If(..) => ElTarget::If,
+            Self::IfCondition(..) => ElTarget::IfCondition,
+            Self::IfSubsequence(..) => ElTarget::IfSubsequence,
             Self::Breaker(..) => ElTarget::Breaker,
             Self::Each(..) => ElTarget::Each,
             Self::First(..) => ElTarget::First,
@@ -693,6 +715,8 @@ impl Element {
             Self::Accessor(v, _) => v.to_string(),
             Self::Function(v, _) => v.to_string(),
             Self::If(v, _) => v.to_string(),
+            Self::IfCondition(v, _) => v.to_string(),
+            Self::IfSubsequence(v, _) => v.to_string(),
             Self::Each(v, _) => v.to_string(),
             Self::Breaker(v, _) => v.to_string(),
             Self::First(v, _) => v.to_string(),
@@ -767,6 +791,8 @@ impl fmt::Display for Element {
                 Self::Accessor(v, md) => as_string(v, md),
                 Self::Function(v, md) => as_string(v, md),
                 Self::If(v, md) => as_string(v, md),
+                Self::IfCondition(v, md) => as_string(v, md),
+                Self::IfSubsequence(v, md) => as_string(v, md),
                 Self::Breaker(v, md) => as_string(v, md),
                 Self::Each(v, md) => as_string(v, md),
                 Self::First(v, md) => as_string(v, md),
@@ -816,6 +842,8 @@ impl Formation for Element {
             Self::Accessor(v, _) => v.elements_count(),
             Self::Function(v, _) => v.elements_count(),
             Self::If(v, _) => v.elements_count(),
+            Self::IfCondition(v, _) => v.elements_count(),
+            Self::IfSubsequence(v, _) => v.elements_count(),
             Self::Breaker(v, _) => v.elements_count(),
             Self::Each(v, _) => v.elements_count(),
             Self::First(v, _) => v.elements_count(),
@@ -886,6 +914,8 @@ impl Formation for Element {
             Self::Accessor(v, m) => format_el(v, m, cursor),
             Self::Function(v, m) => format_el(v, m, cursor),
             Self::If(v, m) => format_el(v, m, cursor),
+            Self::IfCondition(v, m) => format_el(v, m, cursor),
+            Self::IfSubsequence(v, m) => format_el(v, m, cursor),
             Self::Breaker(v, m) => format_el(v, m, cursor),
             Self::Each(v, m) => format_el(v, m, cursor),
             Self::First(v, m) => format_el(v, m, cursor),
@@ -934,6 +964,8 @@ impl TokenGetter for Element {
             Self::Accessor(v, _) => v.token(),
             Self::Function(v, _) => v.token(),
             Self::If(v, _) => v.token(),
+            Self::IfCondition(v, _) => v.token(),
+            Self::IfSubsequence(v, _) => v.token(),
             Self::Breaker(v, _) => v.token(),
             Self::Each(v, _) => v.token(),
             Self::First(v, _) => v.token(),
@@ -989,6 +1021,8 @@ impl TryExpectedValueType for Element {
                 Self::Accessor(v, _) => v.try_verification(owner, components, prev, cx).await,
                 Self::Function(v, _) => v.try_verification(owner, components, prev, cx).await,
                 Self::If(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::IfCondition(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::IfSubsequence(v, _) => v.try_verification(owner, components, prev, cx).await,
                 Self::Breaker(v, _) => v.try_verification(owner, components, prev, cx).await,
                 Self::Each(v, _) => v.try_verification(owner, components, prev, cx).await,
                 Self::First(v, _) => v.try_verification(owner, components, prev, cx).await,
@@ -1048,6 +1082,8 @@ impl TryExpectedValueType for Element {
                 Self::Accessor(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::Function(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::If(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::IfCondition(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::IfSubsequence(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::Breaker(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::Each(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::First(v, _) => v.try_linking(owner, components, prev, cx).await,
@@ -1101,6 +1137,8 @@ impl TryExpectedValueType for Element {
                 Self::Accessor(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::Function(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::If(v, _) => v.try_expected(owner, components, prev, cx).await,
+                Self::IfCondition(v, _) => v.try_expected(owner, components, prev, cx).await,
+                Self::IfSubsequence(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::Breaker(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::Each(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::First(v, _) => v.try_expected(owner, components, prev, cx).await,
@@ -1216,6 +1254,14 @@ impl TryExecute for Element {
                         .await
                 }
                 Self::If(v, _) => {
+                    v.try_execute(owner, components, args, prev, cx, sc, token)
+                        .await
+                }
+                Self::IfCondition(v, _) => {
+                    v.try_execute(owner, components, args, prev, cx, sc, token)
+                        .await
+                }
+                Self::IfSubsequence(v, _) => {
                     v.try_execute(owner, components, args, prev, cx, sc, token)
                         .await
                 }
@@ -1404,10 +1450,10 @@ mod proptest {
         elements::{
             Accessor, Block, Boolean, Breaker, Call, Closure, Combination, Command, Comment,
             Comparing, Component, Compute, Conclusion, Condition, Each, ElTarget, Element, Error,
-            First, For, Function, Gatekeeper, If, Incrementer, Integer, Join, Loop, Meta, Metadata,
-            Optional, PatternString, Range, Reference, Return, SimpleString, Subsequence, Task,
-            Values, VariableAssignation, VariableDeclaration, VariableName, VariableType,
-            VariableVariants, While,
+            First, For, Function, Gatekeeper, If, IfCondition, IfSubsequence, Incrementer, Integer,
+            Join, Loop, Meta, Metadata, Optional, PatternString, Range, Reference, Return,
+            SimpleString, Subsequence, Task, Values, VariableAssignation, VariableDeclaration,
+            VariableName, VariableType, VariableVariants, While,
         },
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
@@ -1627,6 +1673,20 @@ mod proptest {
             collected.push(
                 If::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::If(el, Metadata::default()))
+                    .boxed(),
+            );
+        }
+        if targets.contains(&ElTarget::IfCondition) {
+            collected.push(
+                IfCondition::arbitrary_with(deep + 1)
+                    .prop_map(|el| Element::IfCondition(el, Metadata::default()))
+                    .boxed(),
+            );
+        }
+        if targets.contains(&ElTarget::IfSubsequence) {
+            collected.push(
+                IfSubsequence::arbitrary_with(deep + 1)
+                    .prop_map(|el| Element::IfSubsequence(el, Metadata::default()))
                     .boxed(),
             );
         }

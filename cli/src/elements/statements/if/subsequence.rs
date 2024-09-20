@@ -13,22 +13,31 @@ use crate::{
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub struct Subsequence {
+pub struct IfSubsequence {
     pub subsequence: Vec<Element>,
     pub token: usize,
 }
 
-impl TryDissect<Subsequence> for Subsequence {
-    fn try_dissect(reader: &mut Reader) -> Result<Option<Subsequence>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::Subsequence);
+impl TryDissect<IfSubsequence> for IfSubsequence {
+    fn try_dissect(reader: &mut Reader) -> Result<Option<IfSubsequence>, LinkedErr<E>> {
+        let close = reader.open_token(ElTarget::IfSubsequence);
         let mut subsequence: Vec<Element> = Vec::new();
         while !reader.rest().trim().is_empty() {
             if subsequence.is_empty()
                 || matches!(subsequence.last(), Some(Element::Combination(..)))
             {
-                if let Some(el) =
-                    Element::include(reader, &[ElTarget::Comparing, ElTarget::Condition])?
-                {
+                if let Some(el) = Element::include(
+                    reader,
+                    &[
+                        ElTarget::Boolean,
+                        ElTarget::Command,
+                        ElTarget::Comparing,
+                        ElTarget::Function,
+                        ElTarget::VariableName,
+                        ElTarget::Reference,
+                        ElTarget::IfCondition,
+                    ],
+                )? {
                     subsequence.push(el);
                 } else {
                     break;
@@ -48,19 +57,19 @@ impl TryDissect<Subsequence> for Subsequence {
                 &format!("{}", chars::OPEN_CURLY_BRACE),
             ])
         {
-            Ok(Some(Subsequence {
+            Ok(Some(IfSubsequence {
                 subsequence,
                 token: close(reader),
             }))
         } else {
-            Ok(None)
+            Err(E::FailToReadConditions.linked(&close(reader)))
         }
     }
 }
 
-impl Dissect<Subsequence, Subsequence> for Subsequence {}
+impl Dissect<IfSubsequence, IfSubsequence> for IfSubsequence {}
 
-impl fmt::Display for Subsequence {
+impl fmt::Display for IfSubsequence {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
@@ -74,7 +83,7 @@ impl fmt::Display for Subsequence {
     }
 }
 
-impl Formation for Subsequence {
+impl Formation for IfSubsequence {
     fn elements_count(&self) -> usize {
         self.subsequence.iter().map(|s| s.elements_count()).sum()
     }
@@ -82,7 +91,7 @@ impl Formation for Subsequence {
         if self.elements_count() > cursor.max_elements()
             || self.to_string().len() > cursor.max_len()
         {
-            let mut inner = cursor.reown(Some(ElTarget::Subsequence));
+            let mut inner = cursor.reown(Some(ElTarget::IfSubsequence));
             self.subsequence
                 .chunks(2)
                 .enumerate()
@@ -114,13 +123,13 @@ impl Formation for Subsequence {
     }
 }
 
-impl TokenGetter for Subsequence {
+impl TokenGetter for IfSubsequence {
     fn token(&self) -> usize {
         self.token
     }
 }
 
-impl TryExpectedValueType for Subsequence {
+impl TryExpectedValueType for IfSubsequence {
     fn try_verification<'a>(
         &'a self,
         owner: &'a Element,
@@ -161,7 +170,7 @@ impl TryExpectedValueType for Subsequence {
     }
 }
 
-impl TryExecute for Subsequence {
+impl TryExecute for IfSubsequence {
     fn try_execute<'a>(
         &'a self,
         owner: Option<&'a Element>,
@@ -210,88 +219,88 @@ impl TryExecute for Subsequence {
     }
 }
 
-// #[cfg(test)]
-// mod reading {
-//     use crate::{
-//         elements::Subsequence,
-//         error::LinkedErr,
-//         inf::{tests::*, Configuration, TokenGetter},
-//         read_string,
-//         reader::{Dissect, Reader, Sources, E},
-//     };
+#[cfg(test)]
+mod reading {
+    use crate::{
+        elements::IfSubsequence,
+        error::LinkedErr,
+        inf::{tests::*, Configuration, TokenGetter},
+        read_string,
+        reader::{Dissect, Reader, Sources, E},
+    };
 
-//     #[tokio::test]
-//     async fn reading() {
-//         let content = include_str!("../../tests/reading/subsequence.sibs")
-//             .split('\n')
-//             .map(|s| s.to_string())
-//             .collect::<Vec<String>>();
-//         let mut count = 0;
-//         for str in content.iter() {
-//             count += read_string!(
-//                 &Configuration::logs(false),
-//                 str,
-//                 |reader: &mut Reader, src: &mut Sources| {
-//                     let entity = src.report_err_if(Subsequence::dissect(reader))?;
-//                     assert!(entity.is_some(), "Line: {}", count + 1);
-//                     let entity = entity.unwrap();
-//                     assert_eq!(
-//                         trim_carets(str),
-//                         trim_carets(&format!("{entity}")),
-//                         "Line: {}",
-//                         count + 1
-//                     );
-//                     Ok::<usize, LinkedErr<E>>(1)
-//                 }
-//             );
-//         }
-//         assert_eq!(count, content.len());
-//     }
+    #[tokio::test]
+    async fn reading() {
+        let content = include_str!("../../../tests/reading/subsequence.sibs")
+            .split('\n')
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>();
+        let mut count = 0;
+        for str in content.iter() {
+            count += read_string!(
+                &Configuration::logs(false),
+                str,
+                |reader: &mut Reader, src: &mut Sources| {
+                    let entity = src.report_err_if(IfSubsequence::dissect(reader))?;
+                    assert!(entity.is_some(), "Line: {}", count + 1);
+                    let entity = entity.unwrap();
+                    assert_eq!(
+                        trim_carets(str),
+                        trim_carets(&format!("{entity}")),
+                        "Line: {}",
+                        count + 1
+                    );
+                    Ok::<usize, LinkedErr<E>>(1)
+                }
+            );
+        }
+        assert_eq!(count, content.len());
+    }
 
-//     #[tokio::test]
-//     async fn tokens() {
-//         let content = include_str!("../../tests/reading/subsequence.sibs")
-//             .split('\n')
-//             .map(|s| s.to_string())
-//             .collect::<Vec<String>>();
-//         for (count, str) in content.iter().enumerate() {
-//             read_string!(
-//                 &Configuration::logs(false),
-//                 str,
-//                 |reader: &mut Reader, src: &mut Sources| {
-//                     let entity = src.report_err_if(Subsequence::dissect(reader))?;
-//                     assert!(entity.is_some(), "Line: {}", count + 1);
-//                     let entity = entity.unwrap();
-//                     assert_eq!(
-//                         trim_carets(&format!("{entity}")),
-//                         trim_carets(&reader.get_fragment(&entity.token)?.lined),
-//                         "Line: {}",
-//                         count + 1
-//                     );
-//                     for el in entity.subsequence.iter() {
-//                         assert_eq!(
-//                             trim_carets(&format!("{el}")),
-//                             trim_carets(&reader.get_fragment(&el.token())?.lined),
-//                             "Line: {}",
-//                             count + 1
-//                         );
-//                     }
-//                     Ok::<(), LinkedErr<E>>(())
-//                 }
-//             );
-//         }
-//     }
-// }
+    #[tokio::test]
+    async fn tokens() {
+        let content = include_str!("../../../tests/reading/subsequence.sibs")
+            .split('\n')
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>();
+        for (count, str) in content.iter().enumerate() {
+            read_string!(
+                &Configuration::logs(false),
+                str,
+                |reader: &mut Reader, src: &mut Sources| {
+                    let entity = src.report_err_if(IfSubsequence::dissect(reader))?;
+                    assert!(entity.is_some(), "Line: {}", count + 1);
+                    let entity = entity.unwrap();
+                    assert_eq!(
+                        trim_carets(&format!("{entity}")),
+                        trim_carets(&reader.get_fragment(&entity.token)?.lined),
+                        "Line: {}",
+                        count + 1
+                    );
+                    for el in entity.subsequence.iter() {
+                        assert_eq!(
+                            trim_carets(&format!("{el}")),
+                            trim_carets(&reader.get_fragment(&el.token())?.lined),
+                            "Line: {}",
+                            count + 1
+                        );
+                    }
+                    Ok::<(), LinkedErr<E>>(())
+                }
+            );
+        }
+    }
+}
 
 #[cfg(test)]
 mod proptest {
     use crate::{
-        elements::{ElTarget, Element, Subsequence},
+        elements::{ElTarget, Element, IfSubsequence},
         inf::tests::MAX_DEEP,
     };
     use proptest::prelude::*;
 
-    impl Arbitrary for Subsequence {
+    impl Arbitrary for IfSubsequence {
         type Parameters = usize;
         type Strategy = BoxedStrategy<Self>;
 
@@ -300,9 +309,23 @@ mod proptest {
                 prop::collection::vec(
                     Element::arbitrary_with((
                         if deep > MAX_DEEP {
-                            vec![ElTarget::Comparing]
+                            vec![
+                                ElTarget::Boolean,
+                                ElTarget::Comparing,
+                                ElTarget::Function,
+                                ElTarget::VariableName,
+                                ElTarget::Reference,
+                            ]
                         } else {
-                            vec![ElTarget::Comparing, ElTarget::Condition]
+                            vec![
+                                ElTarget::Boolean,
+                                ElTarget::Command,
+                                ElTarget::Comparing,
+                                ElTarget::Function,
+                                ElTarget::VariableName,
+                                ElTarget::Reference,
+                                ElTarget::IfCondition,
+                            ]
                         },
                         deep,
                     )),
@@ -320,7 +343,7 @@ mod proptest {
                         result.push(combinations.pop().unwrap());
                     }
                     let _ = result.pop();
-                    Subsequence {
+                    IfSubsequence {
                         subsequence: result,
                         token: 0,
                     }

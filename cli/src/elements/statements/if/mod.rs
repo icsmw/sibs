@@ -1,3 +1,9 @@
+pub mod condition;
+pub mod subsequence;
+
+pub use condition::*;
+pub use subsequence::*;
+
 use tokio_util::sync::CancellationToken;
 
 use crate::{
@@ -14,7 +20,7 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub enum Thread {
-    // (Subsequence, Block)
+    // (IfSubsequence, Block)
     If(Element, Element),
     // Block
     Else(Element),
@@ -183,7 +189,7 @@ impl TryDissect<If> for If {
         while !reader.rest().trim().is_empty() {
             if reader.move_to().word(&[words::IF]).is_some() {
                 let conditions =
-                    Element::include(reader, &[ElTarget::Subsequence, ElTarget::Condition])?
+                    Element::include(reader, &[ElTarget::IfSubsequence, ElTarget::IfCondition])?
                         .ok_or(E::NoConditionForIfStatement.by_reader(reader))?;
                 let block = Element::include(reader, &[ElTarget::Block])?
                     .ok_or(E::NoBlockForIfStatement.by_reader(reader))?;
@@ -349,7 +355,7 @@ mod reading {
 
     #[tokio::test]
     async fn reading() {
-        let content = include_str!("../../tests/reading/if.sibs");
+        let content = include_str!("../../../tests/reading/if.sibs");
         read_string!(
             &Configuration::logs(false),
             &content,
@@ -374,7 +380,7 @@ mod reading {
 
     #[tokio::test]
     async fn tokens() {
-        let content = include_str!("../../tests/reading/if.sibs");
+        let content = include_str!("../../../tests/reading/if.sibs");
         read_string!(
             &Configuration::logs(false),
             &content,
@@ -419,7 +425,7 @@ mod reading {
 
     #[tokio::test]
     async fn error() {
-        let samples = include_str!("../../tests/error/if.sibs");
+        let samples = include_str!("../../../tests/error/if.sibs");
         let samples = samples.split('\n').collect::<Vec<&str>>();
         let mut count = 0;
         for sample in samples.iter() {
@@ -453,12 +459,12 @@ mod processing {
 
     #[tokio::test]
     async fn reading() {
-        let tasks_count = include_str!("../../tests/processing/if.sibs")
+        let tasks_count = include_str!("../../../tests/processing/if.sibs")
             .match_indices(chars::AT)
             .count();
         process_string!(
             &Configuration::logs(false),
-            &include_str!("../../tests/processing/if.sibs"),
+            &include_str!("../../../tests/processing/if.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Element> = Vec::new();
                 while let Some(task) =
@@ -516,7 +522,7 @@ mod proptest {
             if target == 0 {
                 (
                     Element::arbitrary_with((
-                        vec![ElTarget::Subsequence, ElTarget::Condition],
+                        vec![ElTarget::IfSubsequence, ElTarget::IfCondition],
                         deep,
                     )),
                     Element::arbitrary_with((vec![ElTarget::Block], deep)),

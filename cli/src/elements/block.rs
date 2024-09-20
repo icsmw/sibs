@@ -70,11 +70,12 @@ impl TryDissect<Block> for Block {
                     ElTarget::Compute,
                     ElTarget::Error,
                     ElTarget::Closure,
+                    ElTarget::IfCondition,
+                    ElTarget::IfSubsequence,
                 ],
             )? {
                 if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
                     return if let Some((content, _)) = inner.until().char(&[&chars::SEMICOLON]) {
-                        println!(">>>>>>>>>>>>>>>>>>>>>: {el:?}");
                         Err(E::UnrecognizedCode(content).by_reader(&inner))
                     } else {
                         Err(E::MissedSemicolon.by_reader(&inner))
@@ -342,7 +343,7 @@ mod proptest {
                             ElTarget::For,
                             ElTarget::Loop,
                             ElTarget::While,
-                            // ElTarget::Conclusion,
+                            ElTarget::Conclusion,
                             ElTarget::VariableName,
                             ElTarget::Values,
                         ]
