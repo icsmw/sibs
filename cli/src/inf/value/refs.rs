@@ -142,11 +142,102 @@ impl ValueRef {
             Self::Task(..) | Self::Error | Self::Closure | Self::Incoming => false,
         }
     }
-    pub fn is_incoming(&self) -> bool {
+
+    pub fn get_origin(&self) -> Option<&ValueRef> {
         match self {
+            Self::Vec(ty) => ty.get_origin(),
+            Self::Optional(ty) => ty.get_origin(),
+            Self::Repeated(ty) => ty.get_origin(),
+            Self::OneOf(tys) => {
+                if tys.iter().any(|ty| ty.get_origin().is_none()) {
+                    None
+                } else {
+                    Some(self)
+                }
+            }
+            Self::Incoming => None,
+            Self::Task(..)
+            | Self::Numeric
+            | Self::Error
+            | Self::Empty
+            | Self::Closure
+            | Self::String
+            | Self::bool
+            | Self::PathBuf
+            | Self::u8
+            | Self::u16
+            | Self::u32
+            | Self::u64
+            | Self::u128
+            | Self::usize
+            | Self::i8
+            | Self::i16
+            | Self::i32
+            | Self::i64
+            | Self::i128
+            | Self::isize => Some(self),
+        }
+    }
+    pub fn into_origin(&self, origin: &ValueRef) -> Option<ValueRef> {
+        match self {
+            Self::Vec(ty) => ty.into_origin(origin).map(|ty| ValueRef::Vec(Box::new(ty))),
+            Self::Optional(ty) => ty
+                .into_origin(origin)
+                .map(|ty| ValueRef::Optional(Box::new(ty))),
+            Self::Repeated(ty) => ty
+                .into_origin(origin)
+                .map(|ty| ValueRef::Repeated(Box::new(ty))),
+            Self::Incoming => origin.get_origin().cloned(),
+            Self::OneOf(..)
+            | Self::Task(..)
+            | Self::Numeric
+            | Self::Error
+            | Self::Empty
+            | Self::Closure
+            | Self::String
+            | Self::bool
+            | Self::PathBuf
+            | Self::u8
+            | Self::u16
+            | Self::u32
+            | Self::u64
+            | Self::u128
+            | Self::usize
+            | Self::i8
+            | Self::i16
+            | Self::i32
+            | Self::i64
+            | Self::i128
+            | Self::isize => Some(self.clone()),
+        }
+    }
+    pub fn has_incoming(&self) -> bool {
+        match self {
+            Self::Vec(ty) => ty.has_incoming(),
+            Self::Optional(ty) => ty.has_incoming(),
+            Self::Repeated(ty) => ty.has_incoming(),
             Self::Incoming => true,
-            Self::Vec(ty) => ty.is_incoming(),
-            _ => false,
+            Self::OneOf(..)
+            | Self::Task(..)
+            | Self::Numeric
+            | Self::Error
+            | Self::Empty
+            | Self::Closure
+            | Self::String
+            | Self::bool
+            | Self::PathBuf
+            | Self::u8
+            | Self::u16
+            | Self::u32
+            | Self::u64
+            | Self::u128
+            | Self::usize
+            | Self::i8
+            | Self::i16
+            | Self::i32
+            | Self::i64
+            | Self::i128
+            | Self::isize => false,
         }
     }
 }

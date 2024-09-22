@@ -61,20 +61,10 @@ impl ExecutorFnDescription {
         exec(args, token, cx, sc)
     }
     pub fn output(&self) -> Result<ValueRef, E> {
-        Ok(if matches!(self.output, ValueRef::Incoming) {
-            let Some(ValueRef::Vec(ty)) = self.args.first() else {
-                return Err(E::InvalidIncomeValueType)?;
-            };
-            ValueRef::Vec(ty.clone())
-        } else if let ValueRef::Vec(ty) = &self.output {
-            if matches!(ty.as_ref(), ValueRef::Incoming) {
-                let Some(ValueRef::Vec(ty)) = self.args.first() else {
-                    return Err(E::InvalidIncomeValueType)?;
-                };
-                ValueRef::Vec(ty.clone())
-            } else {
-                self.output.clone()
-            }
+        Ok(if self.output.has_incoming() {
+            self.output
+                .into_origin(self.args.first().ok_or(E::InvalidIncomeValueType)?)
+                .ok_or(E::InvalidIncomeValueType)?
         } else {
             self.output.clone()
         })

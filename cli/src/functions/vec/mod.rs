@@ -87,7 +87,7 @@ pub fn register(store: &mut Store<ExecutorFnDescription>) -> Result<(), E> {
                 ]))),
                 ValueRef::Closure,
             ],
-            ValueRef::Incoming,
+            ValueRef::Vec(Box::new(ValueRef::Incoming)),
         ),
     )?;
     store.insert(
