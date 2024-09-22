@@ -66,6 +66,15 @@ impl ExecutorFnDescription {
                 return Err(E::InvalidIncomeValueType)?;
             };
             ValueRef::Vec(ty.clone())
+        } else if let ValueRef::Vec(ty) = &self.output {
+            if matches!(ty.as_ref(), ValueRef::Incoming) {
+                let Some(ValueRef::Vec(ty)) = self.args.first() else {
+                    return Err(E::InvalidIncomeValueType)?;
+                };
+                ValueRef::Vec(ty.clone())
+            } else {
+                self.output.clone()
+            }
         } else {
             self.output.clone()
         })

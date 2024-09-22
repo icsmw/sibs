@@ -33,7 +33,7 @@ pub fn register(store: &mut Store<ExecutorFnDescription>) -> Result<(), E> {
                 ]))),
                 ValueRef::Closure,
             ],
-            ValueRef::Vec(Box::new(ValueRef::Closure)),
+            ValueRef::Vec(Box::new(ValueRef::Incoming)),
         ),
     )?;
     store.insert(

@@ -63,3 +63,32 @@ pub fn execute(
         Ok(Value::Vec(output))
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::test_block;
+
+    test_block!(
+        iteration,
+        r#"
+            $els = ("one", "two", "three");
+            $mapped = $els.vec::map(($n, $el) {
+                "{$el}_";
+            });
+            $mapped[0] == "one_" && $mapped[1] == "two_" && $mapped[2] == "three_";
+        "#,
+        true
+    );
+
+    test_block!(
+        iteration_short_name,
+        r#"
+            $els = ("one", "two", "three");
+            $mapped = $els.map(($n, $el) {
+                "{$el}_";
+            });
+            $mapped[0] == "one_" && $mapped[1] == "two_" && $mapped[2] == "three_";
+        "#,
+        true
+    );
+}

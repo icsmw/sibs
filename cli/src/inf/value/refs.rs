@@ -142,6 +142,13 @@ impl ValueRef {
             Self::Task(..) | Self::Error | Self::Closure | Self::Incoming => false,
         }
     }
+    pub fn is_incoming(&self) -> bool {
+        match self {
+            Self::Incoming => true,
+            Self::Vec(ty) => ty.is_incoming(),
+            _ => false,
+        }
+    }
 }
 
 pub trait HasOptional {

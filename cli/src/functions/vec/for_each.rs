@@ -88,10 +88,11 @@ mod tests {
             $str = "";
             $els.for_each(($n, $el) {
                 $count += 1;
+                $str = "{$str}{$el}";
                 print("{$n}: {$el}");
             });
-            $count;
+            $count == 3 && $str == "onetwothree";
         "#,
-        3isize
+        true
     );
 }

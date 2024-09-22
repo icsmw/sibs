@@ -59,7 +59,18 @@ pub fn register(store: &mut Store<ExecutorFnDescription>) -> Result<(), E> {
     fn trim_start(target: String) -> Result<String, E> {
         Ok(target.trim_start().to_string())
     }
-
+    #[import(str)]
+    fn is_empty(target: String) -> Result<bool, E> {
+        Ok(target.is_empty())
+    }
+    #[import(str)]
+    fn len(target: String) -> Result<usize, E> {
+        Ok(target.len())
+    }
+    #[import(str)]
+    fn is_trimmed_empty(target: String) -> Result<bool, E> {
+        Ok(target.trim().is_empty())
+    }
     Ok(())
 }
 
@@ -75,6 +86,14 @@ mod tests {
             } else {
                 false;
             };
+        "#,
+        true
+    );
+
+    test_block!(
+        repeat_short,
+        r#"
+            "R".repeat(5) == "RRRRR";
         "#,
         true
     );
@@ -186,6 +205,30 @@ mod tests {
             } else {
                 false;
             };
+        "#,
+        true
+    );
+
+    test_block!(
+        len,
+        r#"
+            "12345".len() == 5;
+        "#,
+        true
+    );
+
+    test_block!(
+        is_empty,
+        r#"
+            "".is_empty();
+        "#,
+        true
+    );
+
+    test_block!(
+        is_trimmed_empty,
+        r#"
+            "   ".is_trimmed_empty();
         "#,
         true
     );
