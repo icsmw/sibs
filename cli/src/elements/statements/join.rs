@@ -93,12 +93,16 @@ impl TokenGetter for Join {
 impl TryExpectedValueType for Join {
     fn try_verification<'a>(
         &'a self,
-        _owner: &'a Element,
-        _components: &'a [Element],
-        _prev: &'a Option<PrevValueExpectation>,
-        _cx: &'a Context,
+        owner: &'a Element,
+        components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
+        cx: &'a Context,
     ) -> VerificationResult {
-        Box::pin(async move { Ok(()) })
+        Box::pin(async move {
+            self.elements
+                .verification(owner, components, prev, cx)
+                .await
+        })
     }
 
     fn try_linking<'a>(
@@ -118,7 +122,7 @@ impl TryExpectedValueType for Join {
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
     ) -> ExpectedResult {
-        Box::pin(async move { Ok(ValueRef::Empty) })
+        Box::pin(async move { Ok(ValueRef::Vec(Box::new(ValueRef::SpawnStatus))) })
     }
 }
 
@@ -179,7 +183,6 @@ impl TryExecute for Join {
                             token.cancel();
                         }
                         results.push(Err(err));
-                        // return Err(TaskError::TryExecute(err));
                     }
                     Err(err) => {
                         return Err(TaskError::Join(err));
@@ -311,6 +314,24 @@ mod reading {
     }
 }
 
+// #[cfg(test)]
+// mod tests {
+//     use crate::test_block;
+
+//     test_block!(
+//         iteration,
+//         r#"
+//             $status = join (
+//                 `./exit 0 100 1000 10`,
+//                 `./exit 0 200 1000 10`,
+//                 `./exit 1 300 1000 10`,
+//                 `./exit 0 400 1000 10`,
+//             );
+//             $status.is_any_fail();
+//         "#,
+//         true
+//     );
+// }
 #[cfg(test)]
 mod processing {
     use tokio_util::sync::CancellationToken;
@@ -397,54 +418,22 @@ mod processing {
                 let Some(el) = elements.first() else {
                     panic!("Component isn't found");
                 };
-                assert!(el
-                    .execute(
-                        Some(el),
-                        &[],
-                        &[Value::String(String::from("test_c"))],
-                        &None,
-                        cx.clone(),
-                        sc.clone(),
-                        CancellationToken::new()
-                    )
-                    .await
-                    .is_err());
-                assert!(el
-                    .execute(
-                        Some(el),
-                        &[],
-                        &[Value::String(String::from("test_d"))],
-                        &None,
-                        cx.clone(),
-                        sc.clone(),
-                        CancellationToken::new()
-                    )
-                    .await
-                    .is_err());
-                assert!(el
-                    .execute(
-                        Some(el),
-                        &[],
-                        &[Value::String(String::from("test_e"))],
-                        &None,
-                        cx.clone(),
-                        sc.clone(),
-                        CancellationToken::new()
-                    )
-                    .await
-                    .is_err());
-                assert!(el
-                    .execute(
-                        Some(el),
-                        &[],
-                        &[Value::String(String::from("test_f"))],
-                        &None,
-                        cx.clone(),
-                        sc.clone(),
-                        CancellationToken::new()
-                    )
-                    .await
-                    .is_err());
+                for task in &["test_c", "test_d", "test_e", "test_f", "test_g", "test_j"] {
+                    assert!(el
+                        .execute(
+                            Some(el),
+                            &[],
+                            &[Value::String(task.to_string())],
+                            &None,
+                            cx.clone(),
+                            sc.clone(),
+                            CancellationToken::new(),
+                        )
+                        .await
+                        .expect("task is done successfuly")
+                        .as_bool()
+                        .expect("return value is bool"));
+                }
                 Ok::<(), LinkedErr<E>>(())
             }
         );

@@ -85,6 +85,7 @@ impl TryDissect<Reference> for Reference {
             &chars::OPEN_BRACKET,
             &chars::SEMICOLON,
             &chars::COMMA,
+            &chars::DOT,
         ]) {
             if content.trim().is_empty() {
                 Err(E::EmptyPathToReference.by_reader(reader))?

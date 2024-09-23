@@ -30,6 +30,8 @@ pub enum ValueRef {
     Task(Vec<ValueRef>, Box<ValueRef>),
     Error,
     Closure,
+    Output,
+    SpawnStatus,
     // Reference to type of input.
     Incoming,
 }
@@ -62,6 +64,8 @@ impl ValueRef {
             | Self::Vec(..)
             | Self::Error
             | Self::Closure
+            | Self::Output
+            | Self::SpawnStatus
             | Self::Incoming => false,
         }
     }
@@ -96,6 +100,8 @@ impl ValueRef {
         }
         match left {
             Self::String
+            | Self::SpawnStatus
+            | Self::Output
             | Self::bool
             | Self::PathBuf
             | Self::Empty
@@ -156,7 +162,9 @@ impl ValueRef {
                 }
             }
             Self::Incoming => None,
-            Self::Task(..)
+            Self::SpawnStatus
+            | Self::Output
+            | Self::Task(..)
             | Self::Numeric
             | Self::Error
             | Self::Empty
@@ -188,7 +196,9 @@ impl ValueRef {
                 .into_origin(origin)
                 .map(|ty| ValueRef::Repeated(Box::new(ty))),
             Self::Incoming => origin.get_origin().cloned(),
-            Self::OneOf(..)
+            Self::SpawnStatus
+            | Self::Output
+            | Self::OneOf(..)
             | Self::Task(..)
             | Self::Numeric
             | Self::Error
@@ -217,7 +227,9 @@ impl ValueRef {
             Self::Optional(ty) => ty.has_incoming(),
             Self::Repeated(ty) => ty.has_incoming(),
             Self::Incoming => true,
-            Self::OneOf(..)
+            Self::SpawnStatus
+            | Self::Output
+            | Self::OneOf(..)
             | Self::Task(..)
             | Self::Numeric
             | Self::Error
@@ -296,6 +308,8 @@ impl fmt::Display for ValueRef {
                 Self::bool => "bool".to_owned(),
                 Self::PathBuf => "PathBuf".to_owned(),
                 Self::String => "String".to_owned(),
+                Self::Output => "Output".to_owned(),
+                Self::SpawnStatus => "SpawnStatus".to_owned(),
                 Self::OneOf(variants) => format!(
                     "OneOf<{}>",
                     variants

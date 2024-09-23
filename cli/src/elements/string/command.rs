@@ -95,12 +95,17 @@ impl TokenGetter for Command {
 impl TryExpectedValueType for Command {
     fn try_verification<'a>(
         &'a self,
-        _owner: &'a Element,
-        _components: &'a [Element],
-        _prev: &'a Option<PrevValueExpectation>,
-        _cx: &'a Context,
+        owner: &'a Element,
+        components: &'a [Element],
+        prev: &'a Option<PrevValueExpectation>,
+        cx: &'a Context,
     ) -> VerificationResult {
-        Box::pin(async move { Ok(()) })
+        Box::pin(async move {
+            for el in self.elements.iter() {
+                el.verification(owner, components, prev, cx).await?;
+            }
+            Ok(())
+        })
     }
 
     fn try_linking<'a>(
@@ -125,7 +130,7 @@ impl TryExpectedValueType for Command {
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
     ) -> ExpectedResult {
-        Box::pin(async move { Ok(ValueRef::Empty) })
+        Box::pin(async move { Ok(ValueRef::SpawnStatus) })
     }
 }
 
@@ -164,20 +169,9 @@ impl TryExecute for Command {
                 }
             }
             let cwd = sc.get_cwd().await?.clone();
-            match spawner::run(token, &command, &cwd, cx).await {
-                Ok(None) => {
-                    // Err(operator::E::SpawnedProcessCancelledError.by(self))
-                    Ok(Value::Empty(()))
-                }
-                Ok(Some(status)) => {
-                    if status.success() {
-                        Ok(Value::Empty(()))
-                    } else {
-                        Err(operator::E::SpawnedProcessExitWithError.by(self))
-                    }
-                }
-                Err(e) => Err(e)?,
-            }
+            Ok(Value::SpawnStatus(
+                spawner::run(token, &command, &cwd, cx).await?,
+            ))
         })
     }
 }
@@ -253,6 +247,21 @@ mod reading {
             }
         );
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::test_block;
+
+    test_block!(
+        iteration,
+        r#"
+            print(sc::get_cwd());
+            $status = `/storage/projects/private/sibs/target/debug/exit 0 100 1000 10`;
+            $status.is_success();
+        "#,
+        true
+    );
 }
 
 #[cfg(test)]

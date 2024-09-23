@@ -1,4 +1,5 @@
 mod error;
+mod status;
 
 use crate::inf::{tracker::Job, Context};
 use std::{
@@ -17,6 +18,7 @@ use tokio_util::{
 };
 
 pub use error::E;
+pub use status::*;
 
 #[cfg(windows)]
 fn spawn(command: &str, cwd: &PathBuf) -> Result<Child, E> {
@@ -45,7 +47,10 @@ fn spawn(command: &str, cwd: &PathBuf) -> Result<Child, E> {
         .stdin(Stdio::piped())
         .kill_on_drop(true)
         .spawn()
-        .map_err(|e| E::Setup(e.to_string()))
+        .map_err(|e| {
+            println!(">>>>>>>>>>>>>>>>> Ooops: {:?}", std::env::current_dir());
+            E::Setup(e.to_string())
+        })
 }
 
 fn parse_command(command: &str) -> (&str, Vec<&str>) {
@@ -58,27 +63,27 @@ pub async fn run(
     command: &str,
     cwd: &PathBuf,
     cx: Context,
-) -> Result<Option<ExitStatus>, E> {
-    fn post_logs(line: Result<String, LinesCodecError>, job: &Job) -> String {
+) -> Result<SpawnStatus, E> {
+    fn post_logs(line: Result<String, LinesCodecError>, job: &Job) -> Option<String> {
         match line {
             Ok(line) => {
                 job.output(line.trim_end());
                 job.progress(None);
-                line
+                Some(line)
             }
             Err(err) => {
                 job.err(format!("Error during decoding command output: {err}",));
-                String::new()
+                None
             }
         }
     }
-    fn chk_status(exit_status: ExitStatus, job: &Job) -> Option<ExitStatus> {
-        if exit_status.success() {
+    fn chk_status(status: ExitStatus, job: &Job) -> ExitStatus {
+        if status.success() {
             job.success();
         } else {
             job.fail();
         }
-        Some(exit_status)
+        status
     }
     let job = cx
         .tracker
@@ -102,17 +107,19 @@ pub async fn run(
             .ok_or_else(|| E::Setup(String::from("Fail to get stderr handle")))?,
         LinesCodec::default(),
     );
-    select! {
+    let mut stdout_collected: Vec<String> = Vec::new();
+    let mut stderr_collected: Vec<String> = Vec::new();
+    let status = select! {
         res = async {
             join!(
                 async {
                     while let Some(line) = stdout.next().await {
-                        post_logs(line, &job);
+                        post_logs(line, &job).map(|l| stdout_collected.push(l));
                     }
                 },
                 async {
                     while let Some(line) = stderr.next().await {
-                        post_logs(line, &job);
+                        post_logs(line, &job).map(|l| stderr_collected.push(l));
                     }
                 }
             );
@@ -120,17 +127,17 @@ pub async fn run(
             .map(|status| chk_status(status, &job))
             .map_err(|e| {
                 job.fail();
-                E::Executing(command.to_string(), e.to_string())
+                e.to_string()
             })
         } => {
-            res
+            SpawnStatus::from_res(res)
         }
         _ = async {
             token.cancelled().await;
         } => {
             match child.try_wait() {
                 Ok(Some(status)) => {
-                    Ok(chk_status(status, &job))
+                    SpawnStatus::from_status(chk_status(status, &job))
                 }
                 Ok(None) => {
                     if let Err(err) = child.kill().await {
@@ -139,13 +146,14 @@ pub async fn run(
                         job.output("process has been killed");
                     }
                     job.cancelled();
-                    Ok(None)
+                    SpawnStatus { cancelled: true, ..Default::default()}
                 }
                 Err(err) => {
                     job.fail();
-                    Err(E::Executing(command.to_string(), err.to_string()))
+                    SpawnStatus { cancelled: true, error: Some(err.to_string()), ..Default::default()}
                 }
             }
         }
-    }
+    };
+    Ok(status.stdout(stdout_collected).stderr(stderr_collected))
 }

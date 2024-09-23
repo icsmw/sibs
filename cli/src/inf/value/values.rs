@@ -2,7 +2,7 @@ use uuid::Uuid;
 
 use crate::{
     elements::Cmb,
-    inf::{journal::Output, operator, ValueRef},
+    inf::{journal::Output, operator, spawner::SpawnStatus, ValueRef},
 };
 use std::{any::TypeId, fmt, path::PathBuf};
 
@@ -11,6 +11,7 @@ use std::{any::TypeId, fmt, path::PathBuf};
 pub enum Value {
     Empty(()),
     Output(Output),
+    SpawnStatus(SpawnStatus),
     Range(Vec<Value>),
     Cmb(Cmb),
     i8(i8),
@@ -37,7 +38,8 @@ impl Value {
     pub fn as_ref(&self) -> Result<ValueRef, operator::E> {
         Ok(match self {
             Self::Empty(..) => ValueRef::Empty,
-            Self::Output(..) => ValueRef::Empty, // <== TODO: Replace with some kind of ValueRef::Inner
+            Self::Output(..) => ValueRef::Output,
+            Self::SpawnStatus(..) => ValueRef::SpawnStatus,
             Self::Cmb(..) => ValueRef::Empty, // <== TODO: Replace with some kind of ValueRef::Inner
             Self::Range(..) => ValueRef::Vec(Box::new(ValueRef::isize)),
             Self::i8(..) => ValueRef::i8,

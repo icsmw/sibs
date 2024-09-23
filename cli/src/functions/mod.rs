@@ -9,6 +9,7 @@ pub mod logs;
 pub mod process;
 pub mod sc;
 pub mod sig;
+pub mod status;
 pub mod str;
 pub mod test;
 pub mod vec;
@@ -89,6 +90,7 @@ pub fn register(store: &mut Store<ExecutorFnDescription>) -> Result<(), E> {
     hash::register(store)?;
     test::register(store)?;
     vec::register(store)?;
+    status::register(store)?;
     Ok(())
 }
 

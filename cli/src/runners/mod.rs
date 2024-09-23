@@ -32,7 +32,7 @@ where
     };
     use tokio_util::sync::CancellationToken;
 
-    let task = format!("#(app: ./app) @test(){{{}}}", block.as_ref());
+    let task = format!("#(app: ./) @test(){{{}}}", block.as_ref());
     process_string!(
         &Configuration::logs(false),
         &task,

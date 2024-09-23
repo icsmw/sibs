@@ -49,6 +49,7 @@ impl TryDissect<VariableAssignation> for VariableAssignation {
                     ElTarget::Boolean,
                     ElTarget::Reference,
                     ElTarget::Compute,
+                    ElTarget::Join,
                 ],
             )?
             .ok_or(E::FailToParseRightSideOfAssignation.by_reader(reader))?;

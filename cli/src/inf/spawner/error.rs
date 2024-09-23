@@ -5,7 +5,7 @@ use thiserror::Error;
 pub enum E {
     #[error("IO error: {0}")]
     IO(String),
-    #[error("Fail to setup command")]
+    #[error("Fail to setup command: {0}")]
     Setup(String),
     #[error("Error on executing \"{0}\": {1}")]
     Executing(String, String),
