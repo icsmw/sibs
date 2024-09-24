@@ -47,10 +47,7 @@ fn spawn(command: &str, cwd: &PathBuf) -> Result<Child, E> {
         .stdin(Stdio::piped())
         .kill_on_drop(true)
         .spawn()
-        .map_err(|e| {
-            println!(">>>>>>>>>>>>>>>>> Ooops: {:?}", std::env::current_dir());
-            E::Setup(e.to_string())
-        })
+        .map_err(|e| E::Setup(e.to_string()))
 }
 
 fn parse_command(command: &str) -> (&str, Vec<&str>) {

@@ -27,7 +27,7 @@ impl Scenario {
     #[cfg(test)]
     pub fn dummy() -> Self {
         Self {
-            path: std::env::temp_dir(),
+            path: PathBuf::from(env!("CARGO_MANIFEST_DIR")),
             filename: PathBuf::from("dummy.sibs"),
         }
     }

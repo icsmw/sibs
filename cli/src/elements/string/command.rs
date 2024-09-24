@@ -254,11 +254,19 @@ mod tests {
     use crate::test_block;
 
     test_block!(
-        iteration,
+        success,
         r#"
-            print(sc::get_cwd());
-            $status = `/storage/projects/private/sibs/target/debug/exit 0 100 1000 10`;
+            $status = `./target/debug/exit 0 100 200 10`;
             $status.is_success();
+        "#,
+        true
+    );
+
+    test_block!(
+        fail,
+        r#"
+            $status = `./target/debug/exit 1 100 200 10`;
+            $status.is_fail();
         "#,
         true
     );

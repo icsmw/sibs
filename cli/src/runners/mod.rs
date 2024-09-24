@@ -32,7 +32,7 @@ where
     };
     use tokio_util::sync::CancellationToken;
 
-    let task = format!("#(app: ./) @test(){{{}}}", block.as_ref());
+    let task = format!("#(app: ../) @test(){{{}}}", block.as_ref());
     process_string!(
         &Configuration::logs(false),
         &task,
@@ -45,11 +45,7 @@ where
             Ok::<Element, LinkedErr<E>>(component)
         },
         |component: Element, cx: Context, sc: Scope, _journal: Journal| async move {
-            let (task, _) = component
-                .as_component()?
-                .get_task("test")
-                .expect("Task \"test\" has been found");
-            let result = task.linking(&component, &[], &None, &cx).await;
+            let result = component.linking(&component, &[], &None, &cx).await;
             if let Err(err) = result.as_ref() {
                 cx.atlas
                     .report_err(err)
@@ -57,7 +53,7 @@ where
                     .expect("Error report has been created");
             }
             assert!(result.is_ok());
-            let result = task.verification(&component, &[], &None, &cx).await;
+            let result = component.verification(&component, &[], &None, &cx).await;
             if let Err(err) = result.as_ref() {
                 cx.atlas
                     .report_err(err)
@@ -65,18 +61,17 @@ where
                     .expect("Error report has been created");
             }
             assert!(result.is_ok());
-            let result = task
+            let result = component
                 .execute(
                     Some(&component),
                     &[],
-                    &[],
+                    &[Value::String("test".to_owned())],
                     &None,
                     cx.clone(),
                     sc.clone(),
                     CancellationToken::new(),
                 )
                 .await;
-
             if let Err(err) = result.as_ref() {
                 cx.atlas
                     .report_err(err)
