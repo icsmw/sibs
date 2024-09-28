@@ -659,6 +659,14 @@ impl Element {
         }
     }
 
+    pub fn drop_ppm(&mut self, reader: &mut Reader) -> Result<(), E> {
+        let meta = self.get_mut_metadata();
+        if let Some(ppm) = &meta.ppm {
+            reader.drop_to(ppm.token())?;
+        }
+        Ok(())
+    }
+
     #[cfg(test)]
     pub fn el_target(&self) -> ElTarget {
         match self {

@@ -49,26 +49,55 @@ mod tests {
     use crate::test_block;
 
     test_block!(
-        iteration,
+        expanded_one,
         r#"
-            $els = ("one", "two", "three");
-            $filtered = $els.vec::filter(($n, $el) {
-                $el != "two";
-            });
-            $filtered.vec::len();
+            $status = join (
+                `./target/debug/exit 0 100 1000 10`,
+                `./target/debug/exit 0 200 1000 10`,
+                `./target/debug/exit 1 300 1000 10`,
+                `./target/debug/exit 0 400 1000 10`,
+            );
+            $status.is_any_fail();
         "#,
-        2usize
+        true
     );
 
     test_block!(
-        iteration_short_name,
+        expanded_two,
         r#"
-            $els = ("one", "two", "three");
-            $filtered = $els.filter(($n, $el) {
-                $el != "two";
-            });
-            $filtered.len();
+            $status = join (
+                `./target/debug/exit 0 100 1000 10`,
+                `./target/debug/exit 1 200 1000 10`,
+                `./target/debug/exit 1 300 1000 10`,
+                `./target/debug/exit 0 400 1000 10`,
+            );
+            $status.is_any_fail();
         "#,
-        2usize
+        true
+    );
+    test_block!(
+        short_three,
+        r#"
+            join (
+                `./target/debug/exit 1 100 1000 10`,
+                `./target/debug/exit 1 200 1000 10`,
+                `./target/debug/exit 1 300 1000 10`,
+                `./target/debug/exit 0 400 1000 10`,
+            ).is_any_fail();
+        "#,
+        true
+    );
+
+    test_block!(
+        short_all,
+        r#"
+            join (
+                `./target/debug/exit 1 100 1000 10`,
+                `./target/debug/exit 1 200 1000 10`,
+                `./target/debug/exit 1 300 1000 10`,
+                `./target/debug/exit 1 400 1000 10`,
+            ).is_any_fail();
+        "#,
+        true
     );
 }

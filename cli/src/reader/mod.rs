@@ -78,6 +78,14 @@ impl Reader {
             .await
         })
     }
+    pub fn drop_to(&mut self, token: usize) -> Result<(), E> {
+        let fr = self.map.borrow().get_fragment(&token)?;
+        (fr.from > self.offset)
+            .then_some(())
+            .ok_or(E::InvalidTokenPosition(fr.from, self.offset))?;
+        self.pos = fr.from - self.offset;
+        Ok(())
+    }
     #[cfg(test)]
     pub fn read_string<'a>(
         content: &'a str,

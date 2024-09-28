@@ -33,31 +33,24 @@ pub fn execute(
     })
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use crate::test_block;
+#[cfg(test)]
+mod tests {
+    use crate::test_block;
 
-//     test_block!(
-//         iteration,
-//         r#"
-//             $els = ("one", "two", "three");
-//             $filtered = $els.vec::filter(($n, $el) {
-//                 $el != "two";
-//             });
-//             $filtered.vec::len();
-//         "#,
-//         2usize
-//     );
+    test_block!(
+        expanded,
+        r#"
+            $status = `./target/debug/exit 1 100 200 10`;
+            $status.is_fail();
+        "#,
+        true
+    );
 
-//     test_block!(
-//         iteration_short_name,
-//         r#"
-//             $els = ("one", "two", "three");
-//             $filtered = $els.filter(($n, $el) {
-//                 $el != "two";
-//             });
-//             $filtered.len();
-//         "#,
-//         2usize
-//     );
-// }
+    test_block!(
+        short,
+        r#"
+            `./target/debug/exit 1 100 200 10`.is_fail();
+        "#,
+        true
+    );
+}

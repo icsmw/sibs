@@ -43,8 +43,10 @@ impl TryDissect<Join> for Join {
                     Err(E::NotReferenceInJOIN.linked(&el.token()))?;
                 }
             }
+            let mut elements = Element::Values(elements, md);
+            elements.drop_ppm(reader)?;
             Ok(Some(Join {
-                elements: Box::new(Element::Values(elements, md)),
+                elements: Box::new(elements),
                 token: close(reader),
             }))
         } else {

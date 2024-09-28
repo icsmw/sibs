@@ -65,6 +65,8 @@ pub enum E {
     FailFindTaskActions,
     #[error("Empty block")]
     EmptyBlock,
+    #[error("Invalid token position; from={0}; offset={1}")]
+    InvalidTokenPosition(usize, usize),
     #[error("Closure already bound with an owner")]
     ClosureAlreadyHasOwner,
     #[error("No error message definition")]

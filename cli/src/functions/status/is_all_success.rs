@@ -43,32 +43,78 @@ pub fn execute(
         Ok(Value::bool(true))
     })
 }
-
 #[cfg(test)]
 mod tests {
     use crate::test_block;
 
     test_block!(
-        iteration,
+        expanded,
         r#"
-            $els = ("one", "two", "three");
-            $filtered = $els.vec::filter(($n, $el) {
-                $el != "two";
-            });
-            $filtered.vec::len();
+            $status = join (
+                `./target/debug/exit 0 100 1000 10`,
+                `./target/debug/exit 0 200 1000 10`,
+                `./target/debug/exit 0 300 1000 10`,
+                `./target/debug/exit 0 400 1000 10`,
+            );
+            $status.is_all_success();
         "#,
-        2usize
+        true
     );
 
     test_block!(
-        iteration_short_name,
+        short,
         r#"
-            $els = ("one", "two", "three");
-            $filtered = $els.filter(($n, $el) {
-                $el != "two";
-            });
-            $filtered.len();
+            join (
+                `./target/debug/exit 0 100 1000 10`,
+                `./target/debug/exit 0 200 1000 10`,
+                `./target/debug/exit 0 300 1000 10`,
+                `./target/debug/exit 0 400 1000 10`,
+            ).is_all_success();
         "#,
-        2usize
+        true
+    );
+
+    test_block!(
+        short_nested,
+        r#"
+            $a = true;
+            if $a == true {
+                $b = join (
+                    `./target/debug/exit 0 100 1000 10`,
+                    `./target/debug/exit 0 200 1000 10`,
+                    `./target/debug/exit 0 300 1000 10`,
+                    `./target/debug/exit 0 400 1000 10`,
+                ).is_all_success();
+            };
+            $b;
+        "#,
+        true
+    );
+
+    test_block!(
+        short_mt_nested,
+        r#"
+            $a = true;
+            if $a == true {
+                if $a == true {
+                    if $a == true {
+                        if $a == true {
+                            if $a == true {
+                                if $a == true {
+                                    $b = join (
+                                        `./target/debug/exit 0 100 1000 10`,
+                                        `./target/debug/exit 0 200 1000 10`,
+                                        `./target/debug/exit 0 300 1000 10`,
+                                        `./target/debug/exit 0 400 1000 10`,
+                                    ).is_all_success();
+                                };
+                            };
+                        };
+                    };
+                };
+            };
+            $b;
+        "#,
+        true
     );
 }

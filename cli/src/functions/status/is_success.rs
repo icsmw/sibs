@@ -38,26 +38,19 @@ mod tests {
     use crate::test_block;
 
     test_block!(
-        iteration,
+        expanded,
         r#"
-            $els = ("one", "two", "three");
-            $filtered = $els.vec::filter(($n, $el) {
-                $el != "two";
-            });
-            $filtered.vec::len();
+            $status = `./target/debug/exit 0 100 200 10`;
+            $status.is_success();
         "#,
-        2usize
+        true
     );
 
     test_block!(
-        iteration_short_name,
+        short,
         r#"
-            $els = ("one", "two", "three");
-            $filtered = $els.filter(($n, $el) {
-                $el != "two";
-            });
-            $filtered.len();
+            `./target/debug/exit 0 100 200 10`.is_success();
         "#,
-        2usize
+        true
     );
 }
