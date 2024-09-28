@@ -53,4 +53,38 @@ mod tests {
         "#,
         true
     );
+
+    test_block!(
+        short_condition,
+        r#"
+            $a = true;
+            if $a {
+                `./target/debug/exit 0 100 200 10`.is_success();
+            };
+        "#,
+        true
+    );
+
+    test_block!(
+        short_condition_in,
+        r#"
+            if `./target/debug/exit 0 100 200 10`.is_success() {
+                true;
+            };
+        "#,
+        true
+    );
+
+    test_block!(
+        short_condition_mt,
+        r#"
+            $a = true;
+            if $a {
+                `./target/debug/exit 0 100 200 10`.is_success();
+            } else {
+                `./target/debug/exit 0 100 200 10`.is_success();
+            };
+        "#,
+        true
+    );
 }

@@ -316,24 +316,6 @@ mod reading {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use crate::test_block;
-
-//     test_block!(
-//         iteration,
-//         r#"
-//             $status = join (
-//                 `./exit 0 100 1000 10`,
-//                 `./exit 0 200 1000 10`,
-//                 `./exit 1 300 1000 10`,
-//                 `./exit 0 400 1000 10`,
-//             );
-//             $status.is_any_fail();
-//         "#,
-//         true
-//     );
-// }
 #[cfg(test)]
 mod processing {
     use tokio_util::sync::CancellationToken;
