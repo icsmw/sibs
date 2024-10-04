@@ -37,7 +37,7 @@ impl Argument for LogFile {
 }
 
 impl Action for LogFile {
-    fn action<'a>(&'a self, _components: &'a [Element]) -> ActionPinnedResult {
+    fn action<'a>(&'a self, _components: &'a [Element]) -> ActionPinnedResult<'a> {
         Box::pin(async move { Ok(Value::PathBuf(PathBuf::from(&self.filename))) })
     }
     fn key(&self) -> String {

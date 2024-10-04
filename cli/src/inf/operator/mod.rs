@@ -28,7 +28,7 @@ pub trait TryExpectedValueType {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult;
+    ) -> LinkingResult<'a>;
 
     fn try_verification<'a>(
         &'a self,
@@ -36,7 +36,7 @@ pub trait TryExpectedValueType {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult;
+    ) -> VerificationResult<'a>;
 
     fn try_expected<'a>(
         &'a self,
@@ -44,7 +44,7 @@ pub trait TryExpectedValueType {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> ExpectedResult;
+    ) -> ExpectedResult<'a>;
 }
 
 pub trait ExpectedValueType {
@@ -54,7 +54,7 @@ pub trait ExpectedValueType {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult
+    ) -> LinkingResult<'a>
     where
         Self: TryExpectedValueType + Execute + TokenGetter + Debug + Sync,
     {
@@ -81,7 +81,7 @@ pub trait ExpectedValueType {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult
+    ) -> VerificationResult<'a>
     where
         Self: TryExpectedValueType + Execute + TokenGetter + Debug + Sync,
     {
@@ -108,7 +108,7 @@ pub trait ExpectedValueType {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> ExpectedResult
+    ) -> ExpectedResult<'a>
     where
         Self: TryExpectedValueType + ExpectedValueType + Execute + TokenGetter + Debug + Sync,
     {
@@ -143,7 +143,7 @@ pub trait TryExecute {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult;
+    ) -> ExecutePinnedResult<'a>;
 }
 
 pub trait Execute {
@@ -157,7 +157,7 @@ pub trait Execute {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult
+    ) -> ExecutePinnedResult<'a>
     where
         Self: TryExecute + TokenGetter + TryExpectedValueType + Debug + Sync,
     {

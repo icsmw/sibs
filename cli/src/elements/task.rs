@@ -286,7 +286,7 @@ impl TryExpectedValueType for Task {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move {
             for el in self.dependencies.iter() {
                 el.verification(owner, components, prev, cx).await?;
@@ -303,7 +303,7 @@ impl TryExpectedValueType for Task {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move {
             for el in self.dependencies.iter() {
                 el.linking(owner, components, prev, cx).await?;
@@ -321,7 +321,7 @@ impl TryExpectedValueType for Task {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move {
             let mut args: Vec<ValueRef> = Vec::new();
             for el in self.declarations.iter() {
@@ -345,7 +345,7 @@ impl TryExecute for Task {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             if self.declarations.len() != args.len() {
                 Err(operator::E::DismatchTaskArgumentsCount(

@@ -130,7 +130,7 @@ impl TryExpectedValueType for Closure {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move {
             // let parent = self
             //     .owner
@@ -154,7 +154,7 @@ impl TryExpectedValueType for Closure {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move {
             for el in self.args.iter() {
                 el.linking(owner, components, prev, cx).await?;
@@ -170,7 +170,7 @@ impl TryExpectedValueType for Closure {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move { Ok(ValueRef::Closure) })
     }
 }
@@ -185,7 +185,7 @@ impl TryExecute for Closure {
         _cx: Context,
         _sc: Scope,
         _token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             Ok(Value::Closure(self.uuid))
             // let blk = self.block.clone();

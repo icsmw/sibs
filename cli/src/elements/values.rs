@@ -126,7 +126,7 @@ impl TryExpectedValueType for Values {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move { Ok(()) })
     }
     fn try_linking<'a>(
@@ -135,7 +135,7 @@ impl TryExpectedValueType for Values {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move { Ok(()) })
     }
     fn try_expected<'a>(
@@ -144,7 +144,7 @@ impl TryExpectedValueType for Values {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move {
             let mut ty: Option<_> = None;
             for el in self.elements.iter() {
@@ -176,7 +176,7 @@ impl TryExecute for Values {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let mut values: Vec<Value> = Vec::new();
             for el in self.elements.iter() {

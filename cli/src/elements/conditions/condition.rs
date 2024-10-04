@@ -4,7 +4,9 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult
+        Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
+        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
+        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -80,7 +82,7 @@ impl TryExpectedValueType for Condition {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move { Ok(()) })
     }
 
@@ -90,12 +92,8 @@ impl TryExpectedValueType for Condition {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
-        Box::pin(async move {
-            self.subsequence
-                .linking(owner, components, prev, cx)
-                .await
-        })
+    ) -> LinkingResult<'a> {
+        Box::pin(async move { self.subsequence.linking(owner, components, prev, cx).await })
     }
     fn try_expected<'a>(
         &'a self,
@@ -103,7 +101,7 @@ impl TryExpectedValueType for Condition {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move { Ok(ValueRef::bool) })
     }
 }
@@ -118,7 +116,7 @@ impl TryExecute for Condition {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             Ok(Value::bool(
                 *self

@@ -98,7 +98,7 @@ impl TryExpectedValueType for For {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move {
             self.index.verification(owner, components, prev, cx).await?;
             self.target
@@ -113,7 +113,7 @@ impl TryExpectedValueType for For {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move {
             if let Element::VariableName(el, _) = &*self.index {
                 cx.variables
@@ -133,7 +133,7 @@ impl TryExpectedValueType for For {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move { Ok(ValueRef::Empty) })
     }
 }
@@ -148,7 +148,7 @@ impl TryExecute for For {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let Element::VariableName(variable, _) = self.index.as_ref() else {
                 return Err(

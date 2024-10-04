@@ -1039,7 +1039,7 @@ impl TryExpectedValueType for Element {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move {
             match self {
                 Self::Call(v, _) => v.try_verification(owner, components, prev, cx).await,
@@ -1100,7 +1100,7 @@ impl TryExpectedValueType for Element {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move {
             match self {
                 Self::Call(v, _) => v.try_linking(owner, components, prev, cx).await,
@@ -1155,7 +1155,7 @@ impl TryExpectedValueType for Element {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move {
             match self {
                 Self::Call(v, _) => v.try_expected(owner, components, prev, cx).await,
@@ -1222,7 +1222,7 @@ impl TryExecute for Element {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let journal = cx.journal.clone();
             let result = match self {

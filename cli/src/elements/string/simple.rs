@@ -55,7 +55,7 @@ impl TryExpectedValueType for SimpleString {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move { Ok(()) })
     }
 
@@ -65,7 +65,7 @@ impl TryExpectedValueType for SimpleString {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move { Ok(()) })
     }
     fn try_expected<'a>(
@@ -74,7 +74,7 @@ impl TryExpectedValueType for SimpleString {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move { Ok(ValueRef::String) })
     }
 }
@@ -89,7 +89,7 @@ impl TryExecute for SimpleString {
         _cx: Context,
         _sc: Scope,
         _token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move { Ok(Value::String(self.value.to_string())) })
     }
 }

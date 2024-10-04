@@ -38,7 +38,7 @@ impl Action for Help {
     fn key(&self) -> String {
         ARGS[0].to_owned()
     }
-    fn action<'a>(&'a self, components: &'a [Element]) -> ActionPinnedResult {
+    fn action<'a>(&'a self, components: &'a [Element]) -> ActionPinnedResult<'a> {
         Box::pin(async move {
             if let Some(component) = self.component.as_ref() {
                 if let Some((el, md)) = components.iter().find_map(|el| {

@@ -78,7 +78,7 @@ impl TryExpectedValueType for While {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move {
             self.condition
                 .verification(owner, components, prev, cx)
@@ -92,7 +92,7 @@ impl TryExpectedValueType for While {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move {
             self.condition.linking(owner, components, prev, cx).await?;
             self.block.linking(owner, components, prev, cx).await
@@ -105,7 +105,7 @@ impl TryExpectedValueType for While {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move { Ok(ValueRef::Empty) })
     }
 }
@@ -120,7 +120,7 @@ impl TryExecute for While {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let blk_token = if let Element::Block(el, _) = self.block.as_ref() {
                 el.get_breaker()?

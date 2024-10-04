@@ -61,7 +61,7 @@ impl TryExpectedValueType for Integer {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move { Ok(()) })
     }
 
@@ -71,7 +71,7 @@ impl TryExpectedValueType for Integer {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move { Ok(()) })
     }
     fn try_expected<'a>(
@@ -80,7 +80,7 @@ impl TryExpectedValueType for Integer {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move {
             Ok(ValueRef::OneOf(vec![
                 ValueRef::u8,
@@ -110,7 +110,7 @@ impl TryExecute for Integer {
         _cx: Context,
         _sc: Scope,
         _token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move { Ok(Value::isize(self.value)) })
     }
 }

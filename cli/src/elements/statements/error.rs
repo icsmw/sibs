@@ -65,7 +65,7 @@ impl TryExpectedValueType for Error {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move {
             self.output
                 .verification(owner, components, prev, cx)
@@ -86,7 +86,7 @@ impl TryExpectedValueType for Error {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move { self.output.linking(owner, components, prev, cx).await })
     }
     fn try_expected<'a>(
@@ -95,7 +95,7 @@ impl TryExpectedValueType for Error {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move { Ok(ValueRef::Error) })
     }
 }
@@ -110,7 +110,7 @@ impl TryExecute for Error {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             Ok(Value::Error(
                 self.output

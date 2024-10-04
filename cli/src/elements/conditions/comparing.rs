@@ -139,7 +139,7 @@ impl TryExpectedValueType for Comparing {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move {
             let left = self.left.expected(owner, components, prev, cx).await?;
             let right = self.right.expected(owner, components, prev, cx).await?;
@@ -157,7 +157,7 @@ impl TryExpectedValueType for Comparing {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move {
             self.left.linking(owner, components, prev, cx).await?;
             self.right.linking(owner, components, prev, cx).await?;
@@ -170,7 +170,7 @@ impl TryExpectedValueType for Comparing {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move { Ok(ValueRef::bool) })
     }
 }
@@ -185,7 +185,7 @@ impl TryExecute for Comparing {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let left = self
                 .left

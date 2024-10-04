@@ -77,7 +77,7 @@ impl TryExpectedValueType for Accessor {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move { self.index.verification(owner, components, prev, cx).await })
     }
 
@@ -87,7 +87,7 @@ impl TryExpectedValueType for Accessor {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move { self.index.linking(owner, components, prev, cx).await })
     }
     fn try_expected<'a>(
@@ -96,7 +96,7 @@ impl TryExpectedValueType for Accessor {
         _components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move {
             let Some(prev_value) = prev else {
                 return Err(operator::E::CallPPMWithoutPrevValue.linked(&self.token));
@@ -124,7 +124,7 @@ impl TryExecute for Accessor {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let Some(prev_value) = prev else {
                 return Err(operator::E::CallPPMWithoutPrevValue.linked(&self.token));

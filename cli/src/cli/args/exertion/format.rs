@@ -47,7 +47,7 @@ impl Action for Format {
     fn no_context(&self) -> bool {
         true
     }
-    fn action<'a>(&'a self, _components: &'a [Element]) -> ActionPinnedResult {
+    fn action<'a>(&'a self, _components: &'a [Element]) -> ActionPinnedResult<'a> {
         Box::pin(async move {
             format_file(&self.filename).await?;
             Ok(Value::empty())

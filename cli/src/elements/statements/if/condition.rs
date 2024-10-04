@@ -82,7 +82,7 @@ impl TryExpectedValueType for IfCondition {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move { Ok(()) })
     }
 
@@ -92,7 +92,7 @@ impl TryExpectedValueType for IfCondition {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move { self.subsequence.linking(owner, components, prev, cx).await })
     }
     fn try_expected<'a>(
@@ -101,7 +101,7 @@ impl TryExpectedValueType for IfCondition {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move { Ok(ValueRef::bool) })
     }
 }
@@ -116,7 +116,7 @@ impl TryExecute for IfCondition {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             Ok(Value::bool(
                 *self

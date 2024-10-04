@@ -261,7 +261,7 @@ impl TryExpectedValueType for Function {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move {
             for el in self.args.iter() {
                 el.verification(owner, components, prev, cx).await?;
@@ -358,7 +358,7 @@ impl TryExpectedValueType for Function {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move {
             for el in self.args.iter() {
                 el.linking(owner, components, prev, cx).await?;
@@ -372,7 +372,7 @@ impl TryExpectedValueType for Function {
         _components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move {
             Ok(cx
                 .get_func_desc(&self.name, prev.as_ref().map(|v| v.value.clone()).clone())
@@ -392,7 +392,7 @@ impl TryExecute for Function {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let args: Vec<FuncArg> = self
                 .get_processed_args(

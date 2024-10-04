@@ -100,7 +100,7 @@ impl TryExpectedValueType for PatternString {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move { Ok(()) })
     }
 
@@ -110,7 +110,7 @@ impl TryExpectedValueType for PatternString {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move {
             for el in self.elements.iter() {
                 el.linking(owner, components, prev, cx).await?;
@@ -125,7 +125,7 @@ impl TryExpectedValueType for PatternString {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move { Ok(ValueRef::String) })
     }
 }
@@ -140,7 +140,7 @@ impl TryExecute for PatternString {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let mut output = String::new();
             for element in self.elements.iter() {

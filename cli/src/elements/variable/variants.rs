@@ -71,7 +71,7 @@ impl TryExpectedValueType for VariableVariants {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move { Ok(()) })
     }
     fn try_linking<'a>(
@@ -80,7 +80,7 @@ impl TryExpectedValueType for VariableVariants {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move { Ok(()) })
     }
     fn try_expected<'a>(
@@ -89,7 +89,7 @@ impl TryExpectedValueType for VariableVariants {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move {
             // TODO: needs implementation
             Ok(ValueRef::String)
@@ -107,7 +107,7 @@ impl TryExecute for VariableVariants {
         _cx: Context,
         _sc: Scope,
         _token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let value = if args.len() != 1 {
                 Err(operator::E::InvalidNumberOfArgumentsForDeclaration.by(self))?

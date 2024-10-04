@@ -152,7 +152,7 @@ impl TryExpectedValueType for Gatekeeper {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move { Ok(()) })
     }
     fn try_linking<'a>(
@@ -161,7 +161,7 @@ impl TryExpectedValueType for Gatekeeper {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move { Ok(()) })
     }
 
@@ -171,7 +171,7 @@ impl TryExpectedValueType for Gatekeeper {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move { Ok(ValueRef::bool) })
     }
 }
@@ -186,7 +186,7 @@ impl TryExecute for Gatekeeper {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let condition = *self
                 .function

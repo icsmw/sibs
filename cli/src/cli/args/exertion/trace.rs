@@ -34,7 +34,7 @@ impl Argument for Trace {
 }
 
 impl Action for Trace {
-    fn action<'a>(&'a self, _components: &'a [Element]) -> ActionPinnedResult {
+    fn action<'a>(&'a self, _components: &'a [Element]) -> ActionPinnedResult<'a> {
         Box::pin(async move { Ok(Value::bool(self.state)) })
     }
     fn key(&self) -> String {

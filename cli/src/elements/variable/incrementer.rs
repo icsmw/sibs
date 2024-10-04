@@ -112,7 +112,7 @@ impl TryExpectedValueType for Incrementer {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move {
             self.variable
                 .verification(owner, components, prev, cx)
@@ -133,7 +133,7 @@ impl TryExpectedValueType for Incrementer {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move {
             self.variable.linking(owner, components, prev, cx).await?;
             self.right.linking(owner, components, prev, cx).await
@@ -145,7 +145,7 @@ impl TryExpectedValueType for Incrementer {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move { Ok(ValueRef::isize) })
     }
 }
@@ -160,7 +160,7 @@ impl TryExecute for Incrementer {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let name = if let Element::VariableName(el, _) = &*self.variable {
                 el.get_name()

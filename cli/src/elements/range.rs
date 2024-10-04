@@ -68,7 +68,7 @@ impl TryExpectedValueType for Range {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move {
             if self
                 .from
@@ -97,7 +97,7 @@ impl TryExpectedValueType for Range {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move {
             self.from.linking(owner, components, prev, cx).await?;
             self.to.linking(owner, components, prev, cx).await
@@ -109,7 +109,7 @@ impl TryExpectedValueType for Range {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move { Ok(ValueRef::Vec(Box::new(ValueRef::usize))) })
     }
 }
@@ -124,7 +124,7 @@ impl TryExecute for Range {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let from = self
                 .from

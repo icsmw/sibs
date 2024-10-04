@@ -70,7 +70,7 @@ impl TryExpectedValueType for First {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move { self.block.verification(owner, components, prev, cx).await })
     }
     fn try_linking<'a>(
@@ -79,7 +79,7 @@ impl TryExpectedValueType for First {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move { self.block.linking(owner, components, prev, cx).await })
     }
 
@@ -89,7 +89,7 @@ impl TryExpectedValueType for First {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move { self.block.expected(owner, components, prev, cx).await })
     }
 }
@@ -104,7 +104,7 @@ impl TryExecute for First {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             self.block
                 .execute(owner, components, args, prev, cx, sc, token)

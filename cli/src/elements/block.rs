@@ -151,7 +151,7 @@ impl TryExpectedValueType for Block {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move {
             for el in self.elements.iter() {
                 el.verification(owner, components, prev, cx).await?;
@@ -165,7 +165,7 @@ impl TryExpectedValueType for Block {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move {
             for el in self.elements.iter() {
                 el.linking(owner, components, prev, cx).await?;
@@ -180,7 +180,7 @@ impl TryExpectedValueType for Block {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move {
             let Some(el) = self.elements.last() else {
                 return Ok(ValueRef::Empty);
@@ -200,7 +200,7 @@ impl TryExecute for Block {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let mut output = Value::empty();
             for element in self.elements.iter() {

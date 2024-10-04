@@ -39,7 +39,7 @@ impl Action for Version {
     fn no_context(&self) -> bool {
         true
     }
-    fn action<'a>(&'a self, _components: &'a [Element]) -> ActionPinnedResult {
+    fn action<'a>(&'a self, _components: &'a [Element]) -> ActionPinnedResult<'a> {
         Box::pin(async move {
             println!("{VERSION}");
             Ok(Value::empty())

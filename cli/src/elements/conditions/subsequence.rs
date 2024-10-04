@@ -127,7 +127,7 @@ impl TryExpectedValueType for Subsequence {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move {
             for el in self.subsequence.iter() {
                 el.verification(owner, components, prev, cx).await?;
@@ -142,7 +142,7 @@ impl TryExpectedValueType for Subsequence {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move {
             for el in self.subsequence.iter() {
                 el.linking(owner, components, prev, cx).await?;
@@ -156,7 +156,7 @@ impl TryExpectedValueType for Subsequence {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move { Ok(ValueRef::bool) })
     }
 }
@@ -171,7 +171,7 @@ impl TryExecute for Subsequence {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let mut last_value = true;
             for el in self.subsequence.iter() {

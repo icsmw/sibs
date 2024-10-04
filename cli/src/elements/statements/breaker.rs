@@ -61,7 +61,7 @@ impl TryExpectedValueType for Breaker {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move { Ok(()) })
     }
     fn try_linking<'a>(
@@ -70,7 +70,7 @@ impl TryExpectedValueType for Breaker {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move { Ok(()) })
     }
     fn try_expected<'a>(
@@ -79,7 +79,7 @@ impl TryExpectedValueType for Breaker {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move { Ok(ValueRef::Empty) })
     }
 }
@@ -94,7 +94,7 @@ impl TryExecute for Breaker {
         _cx: Context,
         sc: Scope,
         _token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             sc.break_loop().await?;
             Ok(Value::empty())

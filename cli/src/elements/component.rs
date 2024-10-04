@@ -195,7 +195,7 @@ impl TryExpectedValueType for Component {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move {
             for el in self.elements.iter() {
                 el.verification(owner, components, prev, cx).await?;
@@ -209,7 +209,7 @@ impl TryExpectedValueType for Component {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move {
             for el in self.elements.iter() {
                 el.linking(owner, components, prev, cx).await?;
@@ -223,7 +223,7 @@ impl TryExpectedValueType for Component {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move { Ok(ValueRef::Empty) })
     }
 }
@@ -238,7 +238,7 @@ impl TryExecute for Component {
         cx: Context,
         _sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let task = args
                 .first()

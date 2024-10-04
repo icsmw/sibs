@@ -99,7 +99,7 @@ impl TryExpectedValueType for Command {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move {
             for el in self.elements.iter() {
                 el.verification(owner, components, prev, cx).await?;
@@ -114,7 +114,7 @@ impl TryExpectedValueType for Command {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move {
             for el in self.elements.iter() {
                 el.linking(owner, components, prev, cx).await?;
@@ -129,7 +129,7 @@ impl TryExpectedValueType for Command {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move { Ok(ValueRef::SpawnStatus) })
     }
 }
@@ -144,7 +144,7 @@ impl TryExecute for Command {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let mut command = String::new();
             for element in self.elements.iter() {

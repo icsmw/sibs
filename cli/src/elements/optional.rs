@@ -107,7 +107,7 @@ impl TryExpectedValueType for Optional {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move {
             self.condition
                 .verification(owner, components, prev, cx)
@@ -121,7 +121,7 @@ impl TryExpectedValueType for Optional {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move {
             self.condition.linking(owner, components, prev, cx).await?;
             self.action.linking(owner, components, prev, cx).await
@@ -133,7 +133,7 @@ impl TryExpectedValueType for Optional {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move { self.action.try_expected(owner, components, prev, cx).await })
     }
 }
@@ -148,7 +148,7 @@ impl TryExecute for Optional {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let condition = *self
                 .condition

@@ -92,7 +92,7 @@ impl TryExpectedValueType for VariableDeclaration {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move { Ok(()) })
     }
     fn try_linking<'a>(
@@ -101,7 +101,7 @@ impl TryExpectedValueType for VariableDeclaration {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move {
             let Element::VariableName(el, _) = self.variable.as_ref() else {
                 return Err(operator::E::NoVariableName.by(self));
@@ -125,7 +125,7 @@ impl TryExpectedValueType for VariableDeclaration {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move {
             self.declaration
                 .try_expected(owner, components, prev, cx)
@@ -144,7 +144,7 @@ impl TryExecute for VariableDeclaration {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             sc.set_var(
                 if let Element::VariableName(el, _) = self.variable.as_ref() {

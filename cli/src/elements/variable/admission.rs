@@ -79,7 +79,7 @@ impl TryExpectedValueType for VariableName {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move { Ok(()) })
     }
 
@@ -89,7 +89,7 @@ impl TryExpectedValueType for VariableName {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         _cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move { Ok(()) })
     }
     fn try_expected<'a>(
@@ -98,7 +98,7 @@ impl TryExpectedValueType for VariableName {
         _components: &'a [Element],
         _prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move {
             cx.variables
                 .get(&owner.as_component()?.uuid, &self.name)
@@ -118,7 +118,7 @@ impl TryExecute for VariableName {
         _: Context,
         sc: Scope,
         _token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             Ok(sc
                 .get_var(&self.name)

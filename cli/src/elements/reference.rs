@@ -29,7 +29,7 @@ impl Reference {
         &'a self,
         owner: &'a Element,
         components: &'a [Element],
-    ) -> Result<&Element, LinkedErr<operator::E>> {
+    ) -> Result<&'a Element, LinkedErr<operator::E>> {
         let (master, task_name) = if self.path.len() == 1 {
             (owner.as_component()?, &self.path[0])
         } else if self.path.len() == 2 {
@@ -192,7 +192,7 @@ impl TryExpectedValueType for Reference {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move {
             for el in self.inputs.iter() {
                 el.verification(owner, components, prev, cx).await?
@@ -231,7 +231,7 @@ impl TryExpectedValueType for Reference {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move {
             for el in self.inputs.iter() {
                 el.linking(owner, components, prev, cx).await?
@@ -245,7 +245,7 @@ impl TryExpectedValueType for Reference {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move {
             self.get_linked_task(owner, components)?
                 .expected(owner, components, prev, cx)
@@ -264,7 +264,7 @@ impl TryExecute for Reference {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let target = owner.ok_or(operator::E::NoOwnerComponent.by(self))?;
             let (parent, task) = if self.path.len() == 1 {

@@ -66,7 +66,7 @@ impl TryExpectedValueType for Call {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move { self.func.verification(owner, components, prev, cx).await })
     }
 
@@ -76,7 +76,7 @@ impl TryExpectedValueType for Call {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move { self.func.linking(owner, components, prev, cx).await })
     }
     fn try_expected<'a>(
@@ -85,7 +85,7 @@ impl TryExpectedValueType for Call {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move { self.func.expected(owner, components, prev, cx).await })
     }
 }
@@ -100,7 +100,7 @@ impl TryExecute for Call {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let Some(prev_value) = prev else {
                 return Err(operator::E::CallPPMWithoutPrevValue.linked(&self.token));

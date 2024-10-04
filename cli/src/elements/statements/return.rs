@@ -100,7 +100,7 @@ impl TryExpectedValueType for Return {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move {
             if let Some(el) = self.output.as_ref() {
                 el.verification(owner, components, prev, cx).await?;
@@ -114,7 +114,7 @@ impl TryExpectedValueType for Return {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move {
             if let Some(el) = self.output.as_ref() {
                 el.linking(owner, components, prev, cx).await?;
@@ -128,7 +128,7 @@ impl TryExpectedValueType for Return {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move {
             Ok(if let Some(el) = self.output.as_ref() {
                 el.expected(owner, components, prev, cx).await?
@@ -149,7 +149,7 @@ impl TryExecute for Return {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             sc.resolve(if let Some(el) = self.output.as_ref() {
                 el.execute(owner, components, args, prev, cx, sc.clone(), token)

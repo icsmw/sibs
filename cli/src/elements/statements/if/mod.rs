@@ -42,7 +42,7 @@ impl TryExpectedValueType for Thread {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move {
             match self {
                 Self::If(sub, bl) => {
@@ -63,7 +63,7 @@ impl TryExpectedValueType for Thread {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move {
             match self {
                 Self::If(sub, bl) => {
@@ -84,7 +84,7 @@ impl TryExpectedValueType for Thread {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move {
             match self {
                 Self::If(_, block) => block.expected(owner, components, prev, cx).await,
@@ -104,7 +104,7 @@ impl TryExecute for Thread {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             match self {
                 Self::If(subsequence, block) => {
@@ -263,7 +263,7 @@ impl TryExpectedValueType for If {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> VerificationResult {
+    ) -> VerificationResult<'a> {
         Box::pin(async move {
             for thr in self.threads.iter() {
                 thr.try_verification(owner, components, prev, cx).await?;
@@ -278,7 +278,7 @@ impl TryExpectedValueType for If {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> LinkingResult {
+    ) -> LinkingResult<'a> {
         Box::pin(async move {
             for thr in self.threads.iter() {
                 thr.try_linking(owner, components, prev, cx).await?;
@@ -293,7 +293,7 @@ impl TryExpectedValueType for If {
         components: &'a [Element],
         prev: &'a Option<PrevValueExpectation>,
         cx: &'a Context,
-    ) -> ExpectedResult {
+    ) -> ExpectedResult<'a> {
         Box::pin(async move {
             let mut refs: Option<ValueRef> = None;
             for value_ref in self.threads.iter() {
@@ -320,7 +320,7 @@ impl TryExecute for If {
         cx: Context,
         sc: Scope,
         token: CancellationToken,
-    ) -> ExecutePinnedResult {
+    ) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             for thread in self.threads.iter() {
                 let output = thread
