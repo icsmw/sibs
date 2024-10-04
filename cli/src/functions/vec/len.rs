@@ -1,5 +1,3 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
     elements::FuncArg,
     error::LinkedErr,
@@ -14,8 +12,8 @@ pub fn name() -> String {
 pub fn execute(
     args: Vec<FuncArg>,
     args_token: usize,
-    cx: Context,
-    sc: Scope,
+    _cx: Context,
+    _sc: Scope,
 ) -> ExecutorPinnedResult {
     module_path!();
     Box::pin(async move {

@@ -43,8 +43,6 @@ pub enum E {
     EmptyValue,
     #[error("Error parsing an integer from string: {0}")]
     IntegerParsingError(String),
-    #[error("No content before semicolon")]
-    NoContentBeforeSemicolon,
     #[error("No content before comma")]
     NoContentBeforeComma,
     #[error("Using reserved chars")]
@@ -67,8 +65,6 @@ pub enum E {
     EmptyBlock,
     #[error("Invalid token position; from={0}; offset={1}")]
     InvalidTokenPosition(usize, usize),
-    #[error("Closure already bound with an owner")]
-    ClosureAlreadyHasOwner,
     #[error("No error message definition")]
     NoErrorMessageDefinition,
     #[error("No end range value [from..??]")]

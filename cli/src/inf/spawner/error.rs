@@ -7,8 +7,6 @@ pub enum E {
     IO(String),
     #[error("Fail to setup command: {0}")]
     Setup(String),
-    #[error("Error on executing \"{0}\": {1}")]
-    Executing(String, String),
     #[error("{0}")]
     TrackerError(tracker::E),
 }

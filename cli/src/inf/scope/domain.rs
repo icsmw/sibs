@@ -139,7 +139,6 @@ impl ScopeDomain {
                         }
                     }
                     Demand::GetRetreat(tx) => tx.send(retreat.clone()).is_err(),
-                    Demand::IsResolved(tx) => tx.send(retreat.is_some()).is_err(),
                     Demand::Destroy => true,
                 } {
                     own_journal.err(format!("Fail to send response for \"{requested}\""));

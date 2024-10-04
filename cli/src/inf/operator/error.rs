@@ -39,8 +39,6 @@ pub enum E {
     NotStringInError,
     #[error("Gatekeeper doesn't return bool value")]
     NoBoolValueFromGatekeeper,
-    #[error("Spawned process exit with error")]
-    SpawnedProcessExitWithError,
     #[error("Different parts/threads returns different types")]
     ReturnsDifferentTypes,
     #[error("Element doesn't have return type")]
@@ -139,8 +137,6 @@ pub enum E {
     InvalidRepeatedType(String),
     #[error("Function \"{0}\" uses Repeated and Optional types together")]
     RepeatedAndOptionalTypes(String),
-    #[error("Variable \"${0}\" defined/declared multiple times")]
-    MultipleDeclaration(String),
     #[error("Invalid value ref: {0}")]
     InvalidValueRef(String),
     #[error("Attempt to call PPM without prev value")]

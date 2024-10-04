@@ -154,9 +154,8 @@ impl fmt::Display for ElTarget {
 
 #[derive(Debug, Clone, Default)]
 pub struct Metadata {
-    // Element: Comment | Meta
-    pub comments: Vec<Comment>,
-    pub meta: Vec<Meta>,
+    pub comments: Vec<Element>,
+    pub meta: Vec<Element>,
     pub ppm: Option<Box<Element>>,
     pub tolerance: bool,
     pub inverting: bool,
@@ -172,15 +171,33 @@ impl Metadata {
             inverting: false,
         }
     }
-    #[allow(unused)]
-    pub fn comments(&self) -> &[Comment] {
-        &self.comments
+    #[cfg(test)]
+    pub fn comments(&self) -> Vec<&Comment> {
+        self.comments
+            .iter()
+            .filter_map(|el| {
+                if let Element::Comment(comment) = el {
+                    Some(comment)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<&Comment>>()
     }
-    pub fn meta(&self) -> &[Meta] {
-        &self.meta
+    pub fn meta(&self) -> Vec<&Meta> {
+        self.meta
+            .iter()
+            .filter_map(|el| {
+                if let Element::Meta(md) = el {
+                    Some(md)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<&Meta>>()
     }
     pub fn meta_as_lines(&self) -> Vec<&str> {
-        self.meta.iter().flat_map(|el| el.as_lines()).collect()
+        self.meta().iter().flat_map(|el| el.as_lines()).collect()
     }
     pub fn set_ppm(&mut self, el: Element) {
         self.ppm = Some(Box::new(el));
@@ -292,15 +309,15 @@ impl Element {
             el.get_mut_metadata().set_ppm(ppm);
             Ok(Some(el))
         }
-        let mut comments: Vec<Comment> = Vec::new();
-        let mut meta: Vec<Meta> = Vec::new();
+        let mut comments: Vec<Element> = Vec::new();
+        let mut meta: Vec<Element> = Vec::new();
         loop {
             if let Some(el) = Comment::dissect(reader)? {
-                comments.push(el);
+                comments.push(Element::Comment(el));
                 continue;
             }
             if let Some(el) = Meta::dissect(reader)? {
-                meta.push(el);
+                meta.push(Element::Meta(el));
                 continue;
             }
             break;

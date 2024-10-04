@@ -5,10 +5,9 @@ use crate::{
     elements::{ElTarget, Element},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, HasOptional, HasRepeated, LinkingResult, PrevValue,
-        PrevValueExpectation, Scope, TokenGetter, TryExecute, TryExpectedValueType, Value,
-        ValueRef, VerificationResult,
+        Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
+        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
+        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -127,10 +126,10 @@ impl TokenGetter for Closure {
 impl TryExpectedValueType for Closure {
     fn try_verification<'a>(
         &'a self,
-        owner: &'a Element,
-        components: &'a [Element],
-        prev: &'a Option<PrevValueExpectation>,
-        cx: &'a Context,
+        _owner: &'a Element,
+        _components: &'a [Element],
+        _prev: &'a Option<PrevValueExpectation>,
+        _cx: &'a Context,
     ) -> VerificationResult {
         Box::pin(async move {
             // let parent = self
