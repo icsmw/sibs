@@ -51,14 +51,16 @@ impl Footprints {
             maps.get(&token)?.get_fragment(&token)?,
             Status::Error(err.e.clone()),
         ));
-        self.journal.report(
-            (
-                records,
-                Some(maps.get(&token)?.report_err(&token, &err.e)?),
-                err,
-            )
-                .into(),
-        );
+        if self.journal.cfg.trace {
+            self.journal.report(
+                (
+                    records,
+                    Some(maps.get(&token)?.report_err(&token, &err.e)?),
+                    err,
+                )
+                    .into(),
+            );
+        }
         Ok(())
     }
 }

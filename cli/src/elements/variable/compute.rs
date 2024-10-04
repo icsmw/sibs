@@ -221,7 +221,7 @@ impl TryExecute for Compute {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        elements::{Compute, ElTarget, Element, Operator, Task},
+        elements::{compute::Operator, Compute, ElTarget, Element, Task},
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,

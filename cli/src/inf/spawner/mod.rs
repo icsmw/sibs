@@ -111,12 +111,12 @@ pub async fn run(
             join!(
                 async {
                     while let Some(line) = stdout.next().await {
-                        post_logs(line, &job).map(|l| stdout_collected.push(l));
+                        if let Some(l) = post_logs(line, &job) { stdout_collected.push(l) }
                     }
                 },
                 async {
                     while let Some(line) = stderr.next().await {
-                        post_logs(line, &job).map(|l| stderr_collected.push(l));
+                        if let Some(l) = post_logs(line, &job) { stderr_collected.push(l) }
                     }
                 }
             );

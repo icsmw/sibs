@@ -186,14 +186,16 @@ impl ValueRef {
             | Self::isize => Some(self),
         }
     }
-    pub fn into_origin(&self, origin: &ValueRef) -> Option<ValueRef> {
+    pub fn try_from_origin(&self, origin: &ValueRef) -> Option<ValueRef> {
         match self {
-            Self::Vec(ty) => ty.into_origin(origin).map(|ty| ValueRef::Vec(Box::new(ty))),
+            Self::Vec(ty) => ty
+                .try_from_origin(origin)
+                .map(|ty| ValueRef::Vec(Box::new(ty))),
             Self::Optional(ty) => ty
-                .into_origin(origin)
+                .try_from_origin(origin)
                 .map(|ty| ValueRef::Optional(Box::new(ty))),
             Self::Repeated(ty) => ty
-                .into_origin(origin)
+                .try_from_origin(origin)
                 .map(|ty| ValueRef::Repeated(Box::new(ty))),
             Self::Incoming => origin.get_origin().cloned(),
             Self::SpawnStatus

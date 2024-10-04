@@ -64,7 +64,7 @@ impl ExecutorFnDescription {
     pub fn output(&self) -> Result<ValueRef, E> {
         Ok(if self.output.has_incoming() {
             self.output
-                .into_origin(self.args.first().ok_or(E::InvalidIncomeValueType)?)
+                .try_from_origin(self.args.first().ok_or(E::InvalidIncomeValueType)?)
                 .ok_or(E::InvalidIncomeValueType)?
         } else {
             self.output.clone()

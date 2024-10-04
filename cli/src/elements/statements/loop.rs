@@ -10,7 +10,7 @@ use crate::{
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
-use std::{fmt, u64};
+use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct Loop {

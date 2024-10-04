@@ -139,6 +139,7 @@ impl TryExecute for Join {
         sc: Scope,
         token: CancellationToken,
     ) -> ExecutePinnedResult {
+        #[allow(clippy::type_complexity)]
         fn clone(
             owner: Option<&Element>,
             components: &[Element],

@@ -165,7 +165,7 @@ impl TryExecute for Return {
 
 #[cfg(test)]
 mod processing {
-    use crate::{inf::Value, runners::process_block, test_block};
+    use crate::{inf::Value, test_block};
 
     test_block!(
         returning,
