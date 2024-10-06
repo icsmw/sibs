@@ -29,5 +29,5 @@ async fn main() {
         eprintln!("{err}");
         exit(1);
     }
-    exit(code)
+    exit(code);
 }

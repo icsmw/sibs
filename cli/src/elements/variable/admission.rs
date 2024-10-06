@@ -1,12 +1,10 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, ExecutePinnedResult, ExpectedResult, Formation, FormationCursor,
-        LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter, TryExecute,
-        TryExpectedValueType, Value, VerificationResult,
+        operator, Context, ExecuteContext, ExecutePinnedResult, ExpectedResult, Formation,
+        FormationCursor, LinkingResult, PrevValueExpectation, Processing, TryExecute,
+        TryExpectedValueType, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -21,7 +19,7 @@ pub struct VariableName {
 impl TryDissect<VariableName> for VariableName {
     fn try_dissect(reader: &mut Reader) -> Result<Option<VariableName>, LinkedErr<E>> {
         reader.move_to().any();
-        let close = reader.open_token(ElTarget::VariableName);
+        let close = reader.open_token(ElementRef::VariableName);
         if reader.move_to().char(&[&chars::DOLLAR]).is_some() {
             let content = reader
                 .until()
@@ -108,19 +106,13 @@ impl TryExpectedValueType for VariableName {
     }
 }
 
+impl Processing for VariableName {}
+
 impl TryExecute for VariableName {
-    fn try_execute<'a>(
-        &'a self,
-        _: Option<&'a Element>,
-        _: &'a [Element],
-        _: &'a [Value],
-        _: &'a Option<PrevValue>,
-        _: Context,
-        sc: Scope,
-        _token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
-            Ok(sc
+            Ok(cx
+                .sc
                 .get_var(&self.name)
                 .await?
                 .ok_or(operator::E::VariableIsNotAssigned(self.name.to_owned()))?
@@ -137,7 +129,10 @@ impl fmt::Display for VariableName {
 
 impl Formation for VariableName {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        format!("{}{self}", cursor.offset_as_string_if(&[ElTarget::Block]))
+        format!(
+            "{}{self}",
+            cursor.offset_as_string_if(&[ElementRef::Block])
+        )
     }
 }
 

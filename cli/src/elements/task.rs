@@ -1,14 +1,13 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
     elements::{
-        Boolean, ElTarget, Element, Integer, Metadata, PatternString, Reference, SimpleString,
+        Boolean, Element, ElementRef, Integer, Metadata, PatternString, Reference, SimpleString,
+        TokenGetter,
     },
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValueExpectation,
+        Processing, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -31,15 +30,9 @@ impl Task {
     #[allow(clippy::too_many_arguments)]
     pub async fn get_args_values<'a>(
         &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
+        cx: ExecuteContext<'a>,
     ) -> Result<Vec<Value>, LinkedErr<operator::E>> {
-        if self.declarations.len() != args.len() {
+        if self.declarations.len() != cx.args.len() {
             Err(operator::E::DismatchTaskArgumentsCount(
                 self.declarations.len(),
                 self.declarations
@@ -47,8 +40,9 @@ impl Task {
                     .map(|d| d.to_string())
                     .collect::<Vec<String>>()
                     .join(", "),
-                args.len(),
-                args.iter()
+                cx.args.len(),
+                cx.args
+                    .iter()
                     .map(|s| s.to_string())
                     .collect::<Vec<String>>()
                     .join(", "),
@@ -60,15 +54,7 @@ impl Task {
             if let Element::VariableDeclaration(declaration, _) = el {
                 values.push(
                     declaration
-                        .get_val(
-                            owner,
-                            components,
-                            &[args[i].to_owned()],
-                            prev,
-                            cx.clone(),
-                            sc.clone(),
-                            token.clone(),
-                        )
+                        .get_val(cx.clone().args(&[cx.args[i].to_owned()]))
                         .await?,
                 );
             } else {
@@ -81,20 +67,10 @@ impl Task {
     #[allow(clippy::too_many_arguments)]
     pub async fn as_reference<'a>(
         &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
+        cx: ExecuteContext<'a>,
     ) -> Result<Reference, LinkedErr<operator::E>> {
         let mut inputs = Vec::new();
-        for arg in self
-            .get_args_values(owner, components, args, prev, cx, sc, token)
-            .await?
-            .into_iter()
-        {
+        for arg in self.get_args_values(cx).await?.into_iter() {
             if let Some(v) = arg.as_num() {
                 inputs.push(Element::Integer(
                     Integer { value: v, token: 0 },
@@ -130,7 +106,7 @@ impl Task {
 
 impl TryDissect<Task> for Task {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::Task);
+        let close = reader.open_token(ElementRef::Task);
         let Some(_) = reader.move_to().char(&[&chars::AT]) else {
             return Ok(None);
         };
@@ -154,7 +130,8 @@ impl TryDissect<Task> for Task {
             reader.move_to().next();
             let mut declarations: Vec<Element> = Vec::new();
             let mut inner = reader.token()?.bound;
-            while let Some(el) = Element::include(&mut inner, &[ElTarget::VariableDeclaration])? {
+            while let Some(el) = Element::include(&mut inner, &[ElementRef::VariableDeclaration])?
+            {
                 let _ = inner.move_to().char(&[&chars::COMMA]);
                 declarations.push(el);
             }
@@ -174,7 +151,7 @@ impl TryDissect<Task> for Task {
             let mut inner = reader.token()?.bound;
             while let Some(el) = Element::include(
                 &mut inner,
-                &[ElTarget::Reference, ElTarget::VariableAssignation],
+                &[ElementRef::Reference, ElementRef::VariableAssignation],
             )? {
                 let _ = inner.move_to().char(&[&chars::SEMICOLON]);
                 dependencies.push(el);
@@ -183,7 +160,7 @@ impl TryDissect<Task> for Task {
                 Err(E::UnrecognizedCode(inner.move_to().end()).by_reader(&inner))?;
             }
         }
-        if let Some(block) = Element::include(reader, &[ElTarget::Block])? {
+        if let Some(block) = Element::include(reader, &[ElementRef::Block])? {
             Ok(Some(Task {
                 name: SimpleString {
                     value: name,
@@ -239,7 +216,7 @@ impl fmt::Display for Task {
 
 impl Formation for Task {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        let mut inner = cursor.reown(Some(ElTarget::Task));
+        let mut inner = cursor.reown(Some(ElementRef::Task));
         format!(
             "@{}{}{}{} {}",
             cursor.offset_as_string(),
@@ -335,19 +312,12 @@ impl TryExpectedValueType for Task {
     }
 }
 
+impl Processing for Task {}
+
 impl TryExecute for Task {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
-            if self.declarations.len() != args.len() {
+            if self.declarations.len() != cx.args.len() {
                 Err(operator::E::DismatchTaskArgumentsCount(
                     self.declarations.len(),
                     self.declarations
@@ -355,8 +325,9 @@ impl TryExecute for Task {
                         .map(|d| d.to_string())
                         .collect::<Vec<String>>()
                         .join(", "),
-                    args.len(),
-                    args.iter()
+                    cx.args.len(),
+                    cx.args
+                        .iter()
                         .map(|d| d.to_string())
                         .collect::<Vec<String>>()
                         .join(", "),
@@ -364,35 +335,14 @@ impl TryExecute for Task {
                 .by(self))?;
             }
             for (i, el) in self.declarations.iter().enumerate() {
-                el.execute(
-                    owner,
-                    components,
-                    &[args[i].to_owned()],
-                    prev,
-                    cx.clone(),
-                    sc.clone(),
-                    token.clone(),
-                )
-                .await?;
-            }
-            for dependency in self.dependencies.iter() {
-                dependency
-                    .execute(
-                        owner,
-                        components,
-                        &[],
-                        prev,
-                        cx.clone(),
-                        sc.clone(),
-                        token.clone(),
-                    )
+                el.execute(cx.clone().args(&[cx.args[i].to_owned()]))
                     .await?;
             }
-            let result = self
-                .block
-                .execute(owner, components, args, prev, cx, sc.clone(), token)
-                .await?;
-            Ok(sc.get_retreat().await?.unwrap_or(result))
+            for dependency in self.dependencies.iter() {
+                dependency.execute(cx.clone().args(&[])).await?;
+            }
+            let result = self.block.execute(cx.clone()).await?;
+            Ok(cx.sc.get_retreat().await?.unwrap_or(result))
         })
     }
 }
@@ -400,9 +350,9 @@ impl TryExecute for Task {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::{ElTarget, Element, Task},
+        elements::{Element, ElementRef, Task, TokenGetter},
         error::LinkedErr,
-        inf::{operator::TokenGetter, tests::*, Configuration},
+        inf::{tests::*, Configuration},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -415,7 +365,7 @@ mod reading {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
                 while let Some(el) =
-                    src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                    src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
                 {
                     assert!(matches!(el, Element::Task(..)));
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
@@ -437,7 +387,7 @@ mod reading {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
                 while let Some(el) =
-                    src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                    src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
                 {
                     assert!(matches!(el, Element::Task(..)));
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
@@ -459,7 +409,7 @@ mod reading {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
                 while let Some(el) =
-                    src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                    src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
                 {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     assert!(matches!(el, Element::Task(..)));
@@ -519,14 +469,12 @@ mod reading {
 
 #[cfg(test)]
 mod processing {
-    use tokio_util::sync::CancellationToken;
-
     use crate::{
-        elements::{ElTarget, Element},
+        elements::{Element, ElementRef},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
-            Configuration, Context, Journal, Scope, Value,
+            Configuration, Context, ExecuteContext, Journal, Scope, Value,
         },
         process_string,
         reader::{chars, Reader, Sources},
@@ -542,7 +490,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                    src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
                 {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
@@ -553,16 +501,12 @@ mod processing {
                 for (i, task) in tasks.iter().enumerate() {
                     let result = task
                         .execute(
-                            None,
-                            &[],
-                            &VALUES[i]
-                                .iter()
-                                .map(|s| Value::String(s.to_string()))
-                                .collect::<Vec<Value>>(),
-                            &None,
-                            cx.clone(),
-                            sc.clone(),
-                            CancellationToken::new(),
+                            ExecuteContext::unbound(cx.clone(), sc.clone()).args(
+                                &VALUES[i]
+                                    .iter()
+                                    .map(|s| Value::String(s.to_string()))
+                                    .collect::<Vec<Value>>(),
+                            ),
                         )
                         .await?;
                     assert_eq!(
@@ -583,7 +527,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut components: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElTarget::Component]))?
+                    src.report_err_if(Element::include(reader, &[ElementRef::Component]))?
                 {
                     components.push(task);
                 }
@@ -596,17 +540,14 @@ mod processing {
                     }
                     let result = component
                         .execute(
-                            Some(component),
-                            &components,
-                            &[
-                                Value::String("test".to_owned()),
-                                Value::String("a".to_owned()),
-                                Value::String("b".to_owned()),
-                            ],
-                            &None,
-                            cx.clone(),
-                            sc.clone(),
-                            CancellationToken::new(),
+                            ExecuteContext::unbound(cx.clone(), sc.clone())
+                                .owner(Some(component))
+                                .components(&components)
+                                .args(&[
+                                    Value::String("test".to_owned()),
+                                    Value::String("a".to_owned()),
+                                    Value::String("b".to_owned()),
+                                ]),
                         )
                         .await?;
                     assert_eq!(
@@ -623,7 +564,7 @@ mod processing {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        elements::{ElTarget, Element, SimpleString, Task},
+        elements::{Element, ElementRef, SimpleString, Task},
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
@@ -638,14 +579,14 @@ mod proptest {
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             (
                 prop::collection::vec(
-                    Element::arbitrary_with((vec![ElTarget::VariableDeclaration], deep)),
+                    Element::arbitrary_with((vec![ElementRef::VariableDeclaration], deep)),
                     0..=5,
                 ),
                 prop::collection::vec(
-                    Element::arbitrary_with((vec![ElTarget::Reference], deep)),
+                    Element::arbitrary_with((vec![ElementRef::Reference], deep)),
                     0..=5,
                 ),
-                Element::arbitrary_with((vec![ElTarget::Block], deep)),
+                Element::arbitrary_with((vec![ElementRef::Block], deep)),
                 "[a-zA-Z_]*".prop_map(String::from),
             )
                 .prop_map(|(declarations, dependencies, block, name)| Task {

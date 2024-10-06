@@ -1,11 +1,11 @@
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExecuteResult, ExpectedResult,
-        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValue,
-        PrevValueExpectation, Scope, TokenGetter, TryExecute, TryExpectedValueType, Value,
-        ValueRef, VerificationResult,
+        operator, Context, Execute, ExecuteContext, ExecutePinnedResult, ExecuteResult,
+        ExpectedResult, ExpectedValueType, Formation, FormationCursor, LinkingResult,
+        PrevValueExpectation, Processing, TryExecute, TryExpectedValueType, Value, ValueRef,
+        VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -25,10 +25,10 @@ pub struct Join {
 
 impl TryDissect<Join> for Join {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Join>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::Join);
+        let close = reader.open_token(ElementRef::Join);
         if reader.move_to().word(&[words::JOIN]).is_some() {
             let Some(Element::Values(elements, md)) =
-                Element::include(reader, &[ElTarget::Values])?
+                Element::include(reader, &[ElementRef::Values])?
             else {
                 return Err(E::NoJOINStatementBody.by_reader(reader));
             };
@@ -65,10 +65,10 @@ impl fmt::Display for Join {
 
 impl Formation for Join {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        let mut inner = cursor.reown(Some(ElTarget::Join));
+        let mut inner = cursor.reown(Some(ElementRef::Join));
         format!(
             "{}join {}",
-            cursor.offset_as_string_if(&[ElTarget::Block]),
+            cursor.offset_as_string_if(&[ElementRef::Block]),
             self.elements.format(&mut inner)
         )
     }
@@ -128,45 +128,10 @@ impl TryExpectedValueType for Join {
     }
 }
 
+impl Processing for Join {}
+
 impl TryExecute for Join {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
-        #[allow(clippy::type_complexity)]
-        fn clone(
-            owner: Option<&Element>,
-            components: &[Element],
-            args: &[Value],
-            prev: &Option<PrevValue>,
-            cx: &Context,
-            sc: &Scope,
-            token: &CancellationToken,
-        ) -> (
-            Option<Element>,
-            Vec<Element>,
-            Vec<Value>,
-            Option<PrevValue>,
-            Context,
-            Scope,
-            CancellationToken,
-        ) {
-            (
-                owner.cloned().clone(),
-                components.to_vec(),
-                args.to_vec(),
-                prev.clone(),
-                cx.clone(),
-                sc.clone(),
-                token.clone(),
-            )
-        }
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         async fn wait(
             tasks: &mut [JoinHandle<ExecuteResult>],
             token: CancellationToken,
@@ -203,23 +168,15 @@ impl TryExecute for Join {
                 .iter()
                 .cloned()
                 .map(|el| {
-                    let params = clone(owner, components, args, prev, &cx, &sc, &token);
+                    let props = cx.split();
                     spawn(async move {
+                        let inner = ExecuteContext::join(&props.0, props.1);
                         // inside exclude will be create clone
-                        el.execute(
-                            params.0.as_ref(),
-                            &params.1,
-                            &params.2,
-                            &params.3,
-                            params.4,
-                            params.5,
-                            params.6,
-                        )
-                        .await
+                        el.execute(inner).await
                     })
                 })
                 .collect::<Vec<JoinHandle<ExecuteResult>>>();
-            match wait(&mut tasks, token).await {
+            match wait(&mut tasks, cx.token).await {
                 Ok(results) => {
                     let mut output: Vec<Value> = Vec::new();
                     for result in results.into_iter() {
@@ -243,9 +200,9 @@ impl TryExecute for Join {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::Join,
+        elements::{Join, TokenGetter},
         error::LinkedErr,
-        inf::{tests::*, Configuration, TokenGetter},
+        inf::{tests::*, Configuration},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -319,14 +276,13 @@ mod reading {
 
 #[cfg(test)]
 mod processing {
-    use tokio_util::sync::CancellationToken;
 
     use crate::{
         elements::Element,
         error::LinkedErr,
         inf::{
             journal::{Configuration, Journal},
-            Context, Execute, Scope, Value,
+            Context, Execute, ExecuteContext, Scope, Value,
         },
         process_file,
         reader::{error::E, Reader, Sources},
@@ -347,13 +303,8 @@ mod processing {
                 };
                 let results = el
                     .execute(
-                        None,
-                        &[],
-                        &[Value::String(String::from("test_a"))],
-                        &None,
-                        cx.clone(),
-                        sc.clone(),
-                        CancellationToken::new(),
+                        ExecuteContext::unbound(cx.clone(), sc.clone())
+                            .args(&[Value::String(String::from("test_a"))]),
                     )
                     .await
                     .expect("run is successfull");
@@ -367,13 +318,9 @@ mod processing {
                 );
                 let results = el
                     .execute(
-                        Some(el),
-                        &[],
-                        &[Value::String(String::from("test_b"))],
-                        &None,
-                        cx,
-                        sc,
-                        CancellationToken::new(),
+                        ExecuteContext::unbound(cx.clone(), sc.clone())
+                            .owner(Some(el))
+                            .args(&[Value::String(String::from("test_b"))]),
                     )
                     .await
                     .expect("run is successfull");
@@ -406,13 +353,9 @@ mod processing {
                 for task in &["test_c", "test_d", "test_e", "test_f", "test_g", "test_j"] {
                     assert!(el
                         .execute(
-                            Some(el),
-                            &[],
-                            &[Value::String(task.to_string())],
-                            &None,
-                            cx.clone(),
-                            sc.clone(),
-                            CancellationToken::new(),
+                            ExecuteContext::unbound(cx.clone(), sc.clone())
+                                .owner(Some(el))
+                                .args(&[Value::String(task.to_string())])
                         )
                         .await
                         .expect("task is done successfuly")
@@ -429,7 +372,7 @@ mod processing {
 mod proptest {
 
     use crate::{
-        elements::{ElTarget, Element, Join, Metadata, Task, Values},
+        elements::{Element, ElementRef, Join, Metadata, Task, Values},
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
@@ -445,9 +388,13 @@ mod proptest {
             prop::collection::vec(
                 Element::arbitrary_with((
                     if deep > MAX_DEEP {
-                        vec![ElTarget::Reference]
+                        vec![ElementRef::Reference]
                     } else {
-                        vec![ElTarget::Reference, ElTarget::Function, ElTarget::Command]
+                        vec![
+                            ElementRef::Reference,
+                            ElementRef::Function,
+                            ElementRef::Command,
+                        ]
                     },
                     deep,
                 )),

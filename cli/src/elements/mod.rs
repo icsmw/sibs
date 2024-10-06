@@ -35,23 +35,22 @@ pub use reference::*;
 pub use statements::*;
 pub use string::*;
 pub use task::*;
-use tokio_util::sync::CancellationToken;
 pub use values::*;
 pub use variable::*;
 
 use crate::{
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, VerificationResult,
+        operator, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValueExpectation,
+        Processing, TryExecute, TryExpectedValueType, Value, VerificationResult,
     },
     reader::{chars, Dissect, Reader, E},
 };
 use std::fmt::{self, Display};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
-pub enum ElTarget {
+pub enum ElementRef {
     Call,
     Accessor,
     Function,
@@ -98,7 +97,7 @@ pub enum ElTarget {
     Comment,
 }
 
-impl fmt::Display for ElTarget {
+impl fmt::Display for ElementRef {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
@@ -245,6 +244,15 @@ impl Formation for Metadata {
     }
 }
 
+pub trait TokenGetter {
+    fn token(&self) -> usize;
+}
+
+pub trait ElementRefGetter {
+    #[cfg(test)]
+    fn get_alias(&self) -> ElementRef;
+}
+
 #[derive(Debug, Clone)]
 pub enum Element {
     Call(Call, Metadata),
@@ -295,7 +303,7 @@ pub enum Element {
 impl Element {
     fn parse(
         reader: &mut Reader,
-        targets: &[ElTarget],
+        targets: &[ElementRef],
         includes: bool,
     ) -> Result<Option<Element>, LinkedErr<E>> {
         fn tolerance(reader: &mut Reader, mut md: Metadata) -> Metadata {
@@ -303,7 +311,8 @@ impl Element {
             md
         }
         fn next(reader: &mut Reader, mut el: Element) -> Result<Option<Element>, LinkedErr<E>> {
-            let Some(ppm) = Element::include(reader, &[ElTarget::Call, ElTarget::Accessor])? else {
+            let Some(ppm) = Element::include(reader, &[ElementRef::Call, ElementRef::Accessor])?
+            else {
                 return Ok(Some(el));
             };
             el.get_mut_metadata().set_ppm(ppm);
@@ -327,220 +336,220 @@ impl Element {
             meta,
             ppm: None,
             tolerance: false,
-            inverting: if targets.contains(&ElTarget::Function) {
+            inverting: if targets.contains(&ElementRef::Function) {
                 reader.move_to().char(&[&chars::EXCLAMATION]).is_some()
             } else {
                 false
             },
         };
-        if includes == targets.contains(&ElTarget::Closure) {
+        if includes == targets.contains(&ElementRef::Closure) {
             if let Some(el) = Closure::dissect(reader)? {
                 return next(reader, Element::Closure(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Return) {
+        if includes == targets.contains(&ElementRef::Return) {
             if let Some(el) = Return::dissect(reader)? {
                 return next(reader, Element::Return(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Error) {
+        if includes == targets.contains(&ElementRef::Error) {
             if let Some(el) = Error::dissect(reader)? {
                 return next(reader, Element::Error(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Compute) {
+        if includes == targets.contains(&ElementRef::Compute) {
             if let Some(el) = Compute::dissect(reader)? {
                 return next(reader, Element::Compute(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Loop) {
+        if includes == targets.contains(&ElementRef::Loop) {
             if let Some(el) = Loop::dissect(reader)? {
                 return next(reader, Element::Loop(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::While) {
+        if includes == targets.contains(&ElementRef::While) {
             if let Some(el) = While::dissect(reader)? {
                 return next(reader, Element::While(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::For) {
+        if includes == targets.contains(&ElementRef::For) {
             if let Some(el) = For::dissect(reader)? {
                 return next(reader, Element::For(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Range) {
+        if includes == targets.contains(&ElementRef::Range) {
             if let Some(el) = Range::dissect(reader)? {
                 return next(reader, Element::Range(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Breaker) {
+        if includes == targets.contains(&ElementRef::Breaker) {
             if let Some(el) = Breaker::dissect(reader)? {
                 return next(reader, Element::Breaker(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Accessor) {
+        if includes == targets.contains(&ElementRef::Accessor) {
             if let Some(el) = Accessor::dissect(reader)? {
                 return next(reader, Element::Accessor(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Call) {
+        if includes == targets.contains(&ElementRef::Call) {
             if let Some(el) = Call::dissect(reader)? {
                 return next(reader, Element::Call(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Optional) {
+        if includes == targets.contains(&ElementRef::Optional) {
             if let Some(el) = Optional::dissect(reader)? {
                 return next(reader, Element::Optional(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Conclusion) {
+        if includes == targets.contains(&ElementRef::Conclusion) {
             if let Some(el) = Conclusion::dissect(reader)? {
                 return next(reader, Element::Conclusion(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Combination) {
+        if includes == targets.contains(&ElementRef::Combination) {
             if let Some(el) = Combination::dissect(reader)? {
                 return next(reader, Element::Combination(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Subsequence) {
+        if includes == targets.contains(&ElementRef::Subsequence) {
             if let Some(el) = Subsequence::dissect(reader)? {
                 return next(reader, Element::Subsequence(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Condition) {
+        if includes == targets.contains(&ElementRef::Condition) {
             if let Some(el) = Condition::dissect(reader)? {
                 return next(reader, Element::Condition(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Meta) {
+        if includes == targets.contains(&ElementRef::Meta) {
             if let Some(el) = Meta::dissect(reader)? {
                 return next(reader, Element::Meta(el));
             }
         }
-        if includes == targets.contains(&ElTarget::Command) {
+        if includes == targets.contains(&ElementRef::Command) {
             if let Some(el) = Command::dissect(reader)? {
                 let to = tolerance(reader, md);
                 return next(reader, Element::Command(el, to));
             }
         }
-        if includes == targets.contains(&ElTarget::If) {
+        if includes == targets.contains(&ElementRef::If) {
             if let Some(el) = If::dissect(reader)? {
                 return next(reader, Element::If(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::IfSubsequence) {
+        if includes == targets.contains(&ElementRef::IfSubsequence) {
             if let Some(el) = IfSubsequence::dissect(reader)? {
                 return next(reader, Element::IfSubsequence(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::IfCondition) {
+        if includes == targets.contains(&ElementRef::IfCondition) {
             if let Some(el) = IfCondition::dissect(reader)? {
                 return next(reader, Element::IfCondition(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Gatekeeper) {
+        if includes == targets.contains(&ElementRef::Gatekeeper) {
             if let Some(el) = Gatekeeper::dissect(reader)? {
                 return next(reader, Element::Gatekeeper(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Comparing) {
+        if includes == targets.contains(&ElementRef::Comparing) {
             if let Some(el) = Comparing::dissect(reader)? {
                 return next(reader, Element::Comparing(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Integer) {
+        if includes == targets.contains(&ElementRef::Integer) {
             if let Some(el) = Integer::dissect(reader)? {
                 return next(reader, Element::Integer(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Boolean) {
+        if includes == targets.contains(&ElementRef::Boolean) {
             if let Some(el) = Boolean::dissect(reader)? {
                 return next(reader, Element::Boolean(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Incrementer) {
+        if includes == targets.contains(&ElementRef::Incrementer) {
             if let Some(el) = Incrementer::dissect(reader)? {
                 return next(reader, Element::Incrementer(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::VariableAssignation) {
+        if includes == targets.contains(&ElementRef::VariableAssignation) {
             if let Some(el) = VariableAssignation::dissect(reader)? {
                 return next(reader, Element::VariableAssignation(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Each) {
+        if includes == targets.contains(&ElementRef::Each) {
             if let Some(el) = Each::dissect(reader)? {
                 return next(reader, Element::Each(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::First) {
+        if includes == targets.contains(&ElementRef::First) {
             if let Some(el) = First::dissect(reader)? {
                 return next(reader, Element::First(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Join) {
+        if includes == targets.contains(&ElementRef::Join) {
             if let Some(el) = Join::dissect(reader)? {
                 return next(reader, Element::Join(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Function) {
+        if includes == targets.contains(&ElementRef::Function) {
             if let Some(el) = Function::dissect(reader)? {
                 let to = tolerance(reader, md);
                 return next(reader, Element::Function(el, to));
             }
         }
-        if includes == targets.contains(&ElTarget::Reference) {
+        if includes == targets.contains(&ElementRef::Reference) {
             if let Some(el) = Reference::dissect(reader)? {
                 return next(reader, Element::Reference(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::PatternString) {
+        if includes == targets.contains(&ElementRef::PatternString) {
             if let Some(el) = PatternString::dissect(reader)? {
                 return next(reader, Element::PatternString(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Block) {
+        if includes == targets.contains(&ElementRef::Block) {
             if let Some(el) = Block::dissect(reader)? {
                 return next(reader, Element::Block(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Values) {
+        if includes == targets.contains(&ElementRef::Values) {
             if let Some(el) = Values::dissect(reader)? {
                 return next(reader, Element::Values(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::VariableName) {
+        if includes == targets.contains(&ElementRef::VariableName) {
             if let Some(el) = VariableName::dissect(reader)? {
                 return next(reader, Element::VariableName(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Component) {
+        if includes == targets.contains(&ElementRef::Component) {
             if let Some(el) = Component::dissect(reader)? {
                 return next(reader, Element::Component(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::Task) {
+        if includes == targets.contains(&ElementRef::Task) {
             if let Some(el) = Task::dissect(reader)? {
                 return next(reader, Element::Task(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::VariableDeclaration) {
+        if includes == targets.contains(&ElementRef::VariableDeclaration) {
             if let Some(el) = VariableDeclaration::dissect(reader)? {
                 return next(reader, Element::VariableDeclaration(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::VariableType) {
+        if includes == targets.contains(&ElementRef::VariableType) {
             if let Some(el) = VariableType::dissect(reader)? {
                 return next(reader, Element::VariableType(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::VariableVariants) {
+        if includes == targets.contains(&ElementRef::VariableVariants) {
             if let Some(el) = VariableVariants::dissect(reader)? {
                 return next(reader, Element::VariableVariants(el, md));
             }
         }
-        if includes == targets.contains(&ElTarget::SimpleString) {
+        if includes == targets.contains(&ElementRef::SimpleString) {
             if let Some(el) = SimpleString::dissect(reader)? {
                 return next(reader, Element::SimpleString(el, md));
             }
@@ -550,14 +559,14 @@ impl Element {
 
     pub fn exclude(
         reader: &mut Reader,
-        targets: &[ElTarget],
+        targets: &[ElementRef],
     ) -> Result<Option<Element>, LinkedErr<E>> {
         Self::parse(reader, targets, false)
     }
 
     pub fn include(
         reader: &mut Reader,
-        targets: &[ElTarget],
+        targets: &[ElementRef],
     ) -> Result<Option<Element>, LinkedErr<E>> {
         Self::parse(reader, targets, true)
     }
@@ -685,55 +694,6 @@ impl Element {
     }
 
     #[cfg(test)]
-    pub fn el_target(&self) -> ElTarget {
-        match self {
-            Self::Call(..) => ElTarget::Call,
-            Self::Accessor(..) => ElTarget::Accessor,
-            Self::Function(..) => ElTarget::Function,
-            Self::If(..) => ElTarget::If,
-            Self::IfCondition(..) => ElTarget::IfCondition,
-            Self::IfSubsequence(..) => ElTarget::IfSubsequence,
-            Self::Breaker(..) => ElTarget::Breaker,
-            Self::Each(..) => ElTarget::Each,
-            Self::First(..) => ElTarget::First,
-            Self::Join(..) => ElTarget::Join,
-            Self::VariableAssignation(..) => ElTarget::VariableAssignation,
-            Self::Comparing(..) => ElTarget::Comparing,
-            Self::Combination(..) => ElTarget::Combination,
-            Self::Condition(..) => ElTarget::Condition,
-            Self::Subsequence(..) => ElTarget::Subsequence,
-            Self::Optional(..) => ElTarget::Optional,
-            Self::Gatekeeper(..) => ElTarget::Gatekeeper,
-            Self::Reference(..) => ElTarget::Reference,
-            Self::PatternString(..) => ElTarget::PatternString,
-            Self::VariableName(..) => ElTarget::VariableName,
-            Self::Values(..) => ElTarget::Values,
-            Self::Meta(..) => ElTarget::Meta,
-            Self::Block(..) => ElTarget::Block,
-            Self::Command(..) => ElTarget::Command,
-            Self::Task(..) => ElTarget::Task,
-            Self::Component(..) => ElTarget::Component,
-            Self::Boolean(..) => ElTarget::Boolean,
-            Self::Integer(..) => ElTarget::Integer,
-            Self::VariableDeclaration(..) => ElTarget::VariableDeclaration,
-            Self::VariableVariants(..) => ElTarget::VariableVariants,
-            Self::VariableType(..) => ElTarget::VariableType,
-            Self::SimpleString(..) => ElTarget::SimpleString,
-            Self::Range(..) => ElTarget::Range,
-            Self::For(..) => ElTarget::For,
-            Self::Compute(..) => ElTarget::Compute,
-            Self::Return(..) => ElTarget::Return,
-            Self::Error(..) => ElTarget::Error,
-            Self::Incrementer(..) => ElTarget::Incrementer,
-            Self::Loop(..) => ElTarget::Loop,
-            Self::While(..) => ElTarget::While,
-            Self::Closure(..) => ElTarget::Closure,
-            Self::Conclusion(..) => ElTarget::Conclusion,
-            Self::Comment(..) => ElTarget::Comment,
-        }
-    }
-
-    #[cfg(test)]
     pub fn inner_to_string(&self) -> String {
         match self {
             Self::Call(v, _) => v.to_string(),
@@ -783,6 +743,56 @@ impl Element {
     }
 }
 
+impl ElementRefGetter for Element {
+    #[cfg(test)]
+    fn get_alias(&self) -> ElementRef {
+        match self {
+            Self::Call(..) => ElementRef::Call,
+            Self::Accessor(..) => ElementRef::Accessor,
+            Self::Function(..) => ElementRef::Function,
+            Self::If(..) => ElementRef::If,
+            Self::IfCondition(..) => ElementRef::IfCondition,
+            Self::IfSubsequence(..) => ElementRef::IfSubsequence,
+            Self::Breaker(..) => ElementRef::Breaker,
+            Self::Each(..) => ElementRef::Each,
+            Self::First(..) => ElementRef::First,
+            Self::Join(..) => ElementRef::Join,
+            Self::VariableAssignation(..) => ElementRef::VariableAssignation,
+            Self::Comparing(..) => ElementRef::Comparing,
+            Self::Combination(..) => ElementRef::Combination,
+            Self::Condition(..) => ElementRef::Condition,
+            Self::Subsequence(..) => ElementRef::Subsequence,
+            Self::Optional(..) => ElementRef::Optional,
+            Self::Gatekeeper(..) => ElementRef::Gatekeeper,
+            Self::Reference(..) => ElementRef::Reference,
+            Self::PatternString(..) => ElementRef::PatternString,
+            Self::VariableName(..) => ElementRef::VariableName,
+            Self::Values(..) => ElementRef::Values,
+            Self::Meta(..) => ElementRef::Meta,
+            Self::Block(..) => ElementRef::Block,
+            Self::Command(..) => ElementRef::Command,
+            Self::Task(..) => ElementRef::Task,
+            Self::Component(..) => ElementRef::Component,
+            Self::Boolean(..) => ElementRef::Boolean,
+            Self::Integer(..) => ElementRef::Integer,
+            Self::VariableDeclaration(..) => ElementRef::VariableDeclaration,
+            Self::VariableVariants(..) => ElementRef::VariableVariants,
+            Self::VariableType(..) => ElementRef::VariableType,
+            Self::SimpleString(..) => ElementRef::SimpleString,
+            Self::Range(..) => ElementRef::Range,
+            Self::For(..) => ElementRef::For,
+            Self::Compute(..) => ElementRef::Compute,
+            Self::Return(..) => ElementRef::Return,
+            Self::Error(..) => ElementRef::Error,
+            Self::Incrementer(..) => ElementRef::Incrementer,
+            Self::Loop(..) => ElementRef::Loop,
+            Self::While(..) => ElementRef::While,
+            Self::Closure(..) => ElementRef::Closure,
+            Self::Conclusion(..) => ElementRef::Conclusion,
+            Self::Comment(..) => ElementRef::Comment,
+        }
+    }
+}
 impl fmt::Display for Element {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fn as_string<A>(el: &A, md: &Metadata) -> String
@@ -1212,185 +1222,108 @@ impl TryExpectedValueType for Element {
 
 impl ExpectedValueType for Element {}
 
-impl TryExecute for Element {
-    fn try_execute<'a>(
+impl Processing for Element {
+    fn processing<'a>(
         &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+        results: &'a Value,
+        cx: ExecuteContext<'a>,
+    ) -> operator::ProcessingPinnedResult<'a> {
         Box::pin(async move {
-            let journal = cx.journal.clone();
+            match self {
+                Self::Conclusion(v, _) => v.processing(results, cx).await,
+                Self::Closure(v, _) => v.processing(results, cx).await,
+                Self::Loop(v, _) => v.processing(results, cx).await,
+                Self::While(v, _) => v.processing(results, cx).await,
+                Self::Incrementer(v, _) => v.processing(results, cx).await,
+                Self::Return(v, _) => v.processing(results, cx).await,
+                Self::Error(v, _) => v.processing(results, cx).await,
+                Self::Compute(v, _) => v.processing(results, cx).await,
+                Self::For(v, _) => v.processing(results, cx).await,
+                Self::Range(v, _) => v.processing(results, cx).await,
+                Self::Call(v, _) => v.processing(results, cx).await,
+                Self::Accessor(v, _) => v.processing(results, cx).await,
+                Self::Function(v, _) => v.processing(results, cx).await,
+                Self::If(v, _) => v.processing(results, cx).await,
+                Self::IfCondition(v, _) => v.processing(results, cx).await,
+                Self::IfSubsequence(v, _) => v.processing(results, cx).await,
+                Self::Breaker(v, _) => v.processing(results, cx).await,
+                Self::Each(v, _) => v.processing(results, cx).await,
+                Self::First(v, _) => v.processing(results, cx).await,
+                Self::Join(v, _) => v.processing(results, cx).await,
+                Self::VariableAssignation(v, _) => v.processing(results, cx).await,
+                Self::Comparing(v, _) => v.processing(results, cx).await,
+                Self::Combination(v, _) => v.processing(results, cx).await,
+                Self::Condition(v, _) => v.processing(results, cx).await,
+                Self::Subsequence(v, _) => v.processing(results, cx).await,
+                Self::Optional(v, _) => v.processing(results, cx).await,
+                Self::Gatekeeper(v, _) => v.processing(results, cx).await,
+                Self::Reference(v, _) => v.processing(results, cx).await,
+                Self::PatternString(v, _) => v.processing(results, cx).await,
+                Self::VariableName(v, _) => v.processing(results, cx).await,
+                Self::Values(v, _) => v.processing(results, cx).await,
+                Self::Block(v, _) => v.processing(results, cx).await,
+                Self::Command(v, _) => v.processing(results, cx).await,
+                Self::Task(v, _) => v.processing(results, cx).await,
+                Self::Component(v, _) => v.processing(results, cx).await,
+                Self::Integer(v, _) => v.processing(results, cx).await,
+                Self::Boolean(v, _) => v.processing(results, cx).await,
+                Self::VariableDeclaration(v, _) => v.processing(results, cx).await,
+                Self::VariableVariants(v, _) => v.processing(results, cx).await,
+                Self::VariableType(v, _) => v.processing(results, cx).await,
+                Self::SimpleString(v, _) => v.processing(results, cx).await,
+                Self::Meta(..) => Ok(()),
+                Self::Comment(_) => Ok(()),
+            }
+        })
+    }
+}
+impl TryExecute for Element {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
+        Box::pin(async move {
+            let journal = cx.journal().clone();
             let result = match self {
-                Self::Conclusion(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Closure(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Loop(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::While(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Incrementer(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Return(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Error(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Compute(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::For(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Range(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Call(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Accessor(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Function(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::If(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::IfCondition(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::IfSubsequence(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Breaker(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Each(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::First(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Join(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::VariableAssignation(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Comparing(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Combination(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Condition(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Subsequence(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Optional(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Gatekeeper(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Reference(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::PatternString(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::VariableName(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Values(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Block(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Command(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Task(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Component(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Integer(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::Boolean(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
+                Self::Conclusion(v, _) => v.try_execute(cx.clone()).await,
+                Self::Closure(v, _) => v.try_execute(cx.clone()).await,
+                Self::Loop(v, _) => v.try_execute(cx.clone()).await,
+                Self::While(v, _) => v.try_execute(cx.clone()).await,
+                Self::Incrementer(v, _) => v.try_execute(cx.clone()).await,
+                Self::Return(v, _) => v.try_execute(cx.clone()).await,
+                Self::Error(v, _) => v.try_execute(cx.clone()).await,
+                Self::Compute(v, _) => v.try_execute(cx.clone()).await,
+                Self::For(v, _) => v.try_execute(cx.clone()).await,
+                Self::Range(v, _) => v.try_execute(cx.clone()).await,
+                Self::Call(v, _) => v.try_execute(cx.clone()).await,
+                Self::Accessor(v, _) => v.try_execute(cx.clone()).await,
+                Self::Function(v, _) => v.try_execute(cx.clone()).await,
+                Self::If(v, _) => v.try_execute(cx.clone()).await,
+                Self::IfCondition(v, _) => v.try_execute(cx.clone()).await,
+                Self::IfSubsequence(v, _) => v.try_execute(cx.clone()).await,
+                Self::Breaker(v, _) => v.try_execute(cx.clone()).await,
+                Self::Each(v, _) => v.try_execute(cx.clone()).await,
+                Self::First(v, _) => v.try_execute(cx.clone()).await,
+                Self::Join(v, _) => v.try_execute(cx.clone()).await,
+                Self::VariableAssignation(v, _) => v.try_execute(cx.clone()).await,
+                Self::Comparing(v, _) => v.try_execute(cx.clone()).await,
+                Self::Combination(v, _) => v.try_execute(cx.clone()).await,
+                Self::Condition(v, _) => v.try_execute(cx.clone()).await,
+                Self::Subsequence(v, _) => v.try_execute(cx.clone()).await,
+                Self::Optional(v, _) => v.try_execute(cx.clone()).await,
+                Self::Gatekeeper(v, _) => v.try_execute(cx.clone()).await,
+                Self::Reference(v, _) => v.try_execute(cx.clone()).await,
+                Self::PatternString(v, _) => v.try_execute(cx.clone()).await,
+                Self::VariableName(v, _) => v.try_execute(cx.clone()).await,
+                Self::Values(v, _) => v.try_execute(cx.clone()).await,
+                Self::Block(v, _) => v.try_execute(cx.clone()).await,
+                Self::Command(v, _) => v.try_execute(cx.clone()).await,
+                Self::Task(v, _) => v.try_execute(cx.clone()).await,
+                Self::Component(v, _) => v.try_execute(cx.clone()).await,
+                Self::Integer(v, _) => v.try_execute(cx.clone()).await,
+                Self::Boolean(v, _) => v.try_execute(cx.clone()).await,
                 Self::Meta(..) => Ok(Value::empty()),
-                Self::VariableDeclaration(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::VariableVariants(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::VariableType(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
-                Self::SimpleString(v, _) => {
-                    v.try_execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
+                Self::VariableDeclaration(v, _) => v.try_execute(cx.clone()).await,
+                Self::VariableVariants(v, _) => v.try_execute(cx.clone()).await,
+                Self::VariableType(v, _) => v.try_execute(cx.clone()).await,
+                Self::SimpleString(v, _) => v.try_execute(cx.clone()).await,
                 Self::Comment(_) => Ok(Value::empty()),
             };
             if let (true, Err(err)) = (self.get_metadata().tolerance, result.as_ref()) {
@@ -1422,14 +1355,13 @@ impl Execute for Element {
 
 #[cfg(test)]
 mod processing {
-    use tokio_util::sync::CancellationToken;
 
     use crate::{
-        elements::{ElTarget, Element},
+        elements::{Element, ElementRef},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
-            Configuration, Context, Journal, Scope,
+            Configuration, Context, ExecuteContext, Journal, Scope,
         },
         process_string,
         reader::{chars, Reader, Sources},
@@ -1443,7 +1375,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut elements: Vec<Element> = Vec::new();
                 while let Some(el) =
-                    src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                    src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
                 {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     elements.push(el);
@@ -1452,16 +1384,8 @@ mod processing {
             },
             |elements: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for el in elements.iter() {
-                    el.execute(
-                        None,
-                        &[],
-                        &[],
-                        &None,
-                        cx.clone(),
-                        sc.clone(),
-                        CancellationToken::new(),
-                    )
-                    .await?;
+                    el.execute(ExecuteContext::unbound(cx.clone(), sc.clone()))
+                        .await?;
                 }
                 Ok::<(), LinkedErr<E>>(())
             }
@@ -1474,7 +1398,7 @@ mod proptest {
     use crate::{
         elements::{
             Accessor, Block, Boolean, Breaker, Call, Closure, Combination, Command, Comment,
-            Comparing, Component, Compute, Conclusion, Condition, Each, ElTarget, Element, Error,
+            Comparing, Component, Compute, Conclusion, Condition, Each, Element, ElementRef, Error,
             First, For, Function, Gatekeeper, If, IfCondition, IfSubsequence, Incrementer, Integer,
             Join, Loop, Meta, Metadata, Optional, PatternString, Range, Reference, Return,
             SimpleString, Subsequence, Task, Values, VariableAssignation, VariableDeclaration,
@@ -1504,142 +1428,142 @@ mod proptest {
         }
     }
 
-    fn generate(targets: &[ElTarget], deep: usize) -> Vec<BoxedStrategy<Element>> {
+    fn generate(targets: &[ElementRef], deep: usize) -> Vec<BoxedStrategy<Element>> {
         let mut collected = Vec::new();
-        if targets.contains(&ElTarget::Range) {
+        if targets.contains(&ElementRef::Range) {
             collected.push(
                 Range::arbitrary()
                     .prop_map(|el| Element::Range(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Call) {
+        if targets.contains(&ElementRef::Call) {
             collected.push(
                 Call::arbitrary()
                     .prop_map(|el| Element::Call(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Accessor) {
+        if targets.contains(&ElementRef::Accessor) {
             collected.push(
                 Accessor::arbitrary()
                     .prop_map(|el| Element::Accessor(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Combination) {
+        if targets.contains(&ElementRef::Combination) {
             collected.push(
                 Combination::arbitrary()
                     .prop_map(|el| Element::Combination(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Conclusion) {
+        if targets.contains(&ElementRef::Conclusion) {
             collected.push(
                 Conclusion::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::Conclusion(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Closure) {
+        if targets.contains(&ElementRef::Closure) {
             collected.push(
                 Closure::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::Closure(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Loop) {
+        if targets.contains(&ElementRef::Loop) {
             collected.push(
                 Loop::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::Loop(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::While) {
+        if targets.contains(&ElementRef::While) {
             collected.push(
                 While::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::While(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Incrementer) {
+        if targets.contains(&ElementRef::Incrementer) {
             collected.push(
                 Incrementer::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::Incrementer(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Error) {
+        if targets.contains(&ElementRef::Error) {
             collected.push(
                 Error::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::Error(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Return) {
+        if targets.contains(&ElementRef::Return) {
             collected.push(
                 Return::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::Return(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Compute) {
+        if targets.contains(&ElementRef::Compute) {
             collected.push(
                 Compute::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::Compute(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Breaker) {
+        if targets.contains(&ElementRef::Breaker) {
             collected.push(
                 Breaker::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::Breaker(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Join) {
+        if targets.contains(&ElementRef::Join) {
             collected.push(
                 Join::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::Join(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Subsequence) {
+        if targets.contains(&ElementRef::Subsequence) {
             collected.push(
                 Subsequence::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::Subsequence(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Condition) {
+        if targets.contains(&ElementRef::Condition) {
             collected.push(
                 Condition::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::Condition(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Integer) {
+        if targets.contains(&ElementRef::Integer) {
             collected.push(
                 Integer::arbitrary()
                     .prop_map(|el| Element::Integer(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Boolean) {
+        if targets.contains(&ElementRef::Boolean) {
             collected.push(
                 Boolean::arbitrary()
                     .prop_map(|el| Element::Boolean(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Block) {
+        if targets.contains(&ElementRef::Block) {
             collected.push(
                 Block::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::Block(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Command) {
+        if targets.contains(&ElementRef::Command) {
             collected.push(
                 (
                     Command::arbitrary_with(deep + 1),
@@ -1649,42 +1573,42 @@ mod proptest {
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Comparing) {
+        if targets.contains(&ElementRef::Comparing) {
             collected.push(
                 Comparing::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::Comparing(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Component) {
+        if targets.contains(&ElementRef::Component) {
             collected.push(
                 Component::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::Component(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Each) {
+        if targets.contains(&ElementRef::Each) {
             collected.push(
                 Each::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::Each(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::First) {
+        if targets.contains(&ElementRef::First) {
             collected.push(
                 First::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::First(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::For) {
+        if targets.contains(&ElementRef::For) {
             collected.push(
                 For::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::For(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Function) {
+        if targets.contains(&ElementRef::Function) {
             collected.push(
                 (
                     Function::arbitrary_with(deep + 1),
@@ -1694,122 +1618,122 @@ mod proptest {
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::If) {
+        if targets.contains(&ElementRef::If) {
             collected.push(
                 If::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::If(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::IfCondition) {
+        if targets.contains(&ElementRef::IfCondition) {
             collected.push(
                 IfCondition::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::IfCondition(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::IfSubsequence) {
+        if targets.contains(&ElementRef::IfSubsequence) {
             collected.push(
                 IfSubsequence::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::IfSubsequence(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Meta) {
+        if targets.contains(&ElementRef::Meta) {
             collected.push(Meta::arbitrary().prop_map(Element::Meta).boxed());
         }
-        if targets.contains(&ElTarget::Optional) {
+        if targets.contains(&ElementRef::Optional) {
             collected.push(
                 Optional::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::Optional(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Gatekeeper) {
+        if targets.contains(&ElementRef::Gatekeeper) {
             collected.push(
                 Gatekeeper::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::Gatekeeper(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::PatternString) {
+        if targets.contains(&ElementRef::PatternString) {
             collected.push(
                 PatternString::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::PatternString(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Reference) {
+        if targets.contains(&ElementRef::Reference) {
             collected.push(
                 Reference::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::Reference(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Task) {
+        if targets.contains(&ElementRef::Task) {
             collected.push(
                 Task::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::Task(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Values) {
+        if targets.contains(&ElementRef::Values) {
             collected.push(
                 Values::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::Values(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::VariableAssignation) {
+        if targets.contains(&ElementRef::VariableAssignation) {
             collected.push(
                 VariableAssignation::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::VariableAssignation(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::VariableName) {
+        if targets.contains(&ElementRef::VariableName) {
             collected.push(
                 VariableName::arbitrary()
                     .prop_map(|el| Element::VariableName(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::VariableType) {
+        if targets.contains(&ElementRef::VariableType) {
             collected.push(
                 VariableType::arbitrary()
                     .prop_map(|el| Element::VariableType(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::VariableDeclaration) {
+        if targets.contains(&ElementRef::VariableDeclaration) {
             collected.push(
                 VariableDeclaration::arbitrary_with(deep)
                     .prop_map(|el| Element::VariableDeclaration(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::VariableVariants) {
+        if targets.contains(&ElementRef::VariableVariants) {
             collected.push(
                 VariableVariants::arbitrary()
                     .prop_map(|el| Element::VariableVariants(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::SimpleString) {
+        if targets.contains(&ElementRef::SimpleString) {
             collected.push(
                 SimpleString::arbitrary()
                     .prop_map(|el| Element::SimpleString(el, Metadata::default()))
                     .boxed(),
             );
         }
-        if targets.contains(&ElTarget::Comment) {
+        if targets.contains(&ElementRef::Comment) {
             collected.push(Comment::arbitrary().prop_map(Element::Comment).boxed());
         }
         collected
     }
 
     impl Arbitrary for Element {
-        type Parameters = (Vec<ElTarget>, usize);
+        type Parameters = (Vec<ElementRef>, usize);
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with((targets, deep): Self::Parameters) -> Self::Strategy {
@@ -1840,7 +1764,7 @@ mod proptest {
         })]
         #[test]
         fn test_run_task(
-            args in any_with::<Element>((vec![ElTarget::Function], 0))
+            args in any_with::<Element>((vec![ElementRef::Function], 0))
         ) {
             reading(args.clone());
         }
@@ -1854,9 +1778,9 @@ mod ppm {
     mod reading {
 
         use crate::{
-            elements::{ElTarget, Element},
+            elements::{Element, ElementRef, TokenGetter},
             error::LinkedErr,
-            inf::{operator::TokenGetter, tests::*, Configuration},
+            inf::{tests::*, Configuration},
             read_string,
             reader::{chars, Reader, Sources, E},
         };
@@ -1872,7 +1796,7 @@ mod ppm {
                     let mut count = 0;
                     while let Some(el) = src.report_err_if(Element::include(
                         reader,
-                        &[ElTarget::Function, ElTarget::VariableName],
+                        &[ElementRef::Function, ElementRef::VariableName],
                     ))? {
                         let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                         assert_eq!(
@@ -1932,7 +1856,7 @@ mod ppm {
                     let mut count = 0;
                     while let Some(el) = src.report_err_if(Element::include(
                         reader,
-                        &[ElTarget::Function, ElTarget::VariableName],
+                        &[ElementRef::Function, ElementRef::VariableName],
                     ))? {
                         let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                         match el {

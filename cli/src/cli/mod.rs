@@ -10,7 +10,7 @@ use crate::{
         journal::{self, Journal},
         operator::Execute,
         scenario::Scenario,
-        term, Value,
+        term, ExecuteContext, Value,
     },
     reader::{Reader, Sources},
 };
@@ -115,16 +115,16 @@ pub async fn process(journal: Journal) -> Result<(), E> {
         let sc = cx.scope.create("root", None).await?;
         let result = component
             .execute(
-                Some(component),
-                &components,
-                &income
-                    .iter()
-                    .map(|v| Value::String(v.to_string()))
-                    .collect::<Vec<Value>>(),
-                &None,
-                cx.clone(),
-                sc.clone(),
-                cx.aborting.clone(),
+                ExecuteContext::unbound(cx.clone(), sc.clone())
+                    .owner(Some(component))
+                    .components(&components)
+                    .args(
+                        &income
+                            .iter()
+                            .map(|v| Value::String(v.to_string()))
+                            .collect::<Vec<Value>>(),
+                    )
+                    .token(cx.aborting.clone()),
             )
             .await
             .map(|_| ())

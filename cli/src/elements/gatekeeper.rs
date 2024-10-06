@@ -1,12 +1,10 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{ElTarget, Element, Reference},
+    elements::{Element, ElementRef, Reference, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, Formation,
-        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
-        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult, Formation,
+        FormationCursor, LinkingResult, PrevValueExpectation, Processing, TryExecute,
+        TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -37,12 +35,7 @@ impl Gatekeeper {
     pub async fn skippable<'a>(
         gatekeepers: Vec<&Element>,
         task_ref: &Reference,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
+        cx: ExecuteContext<'a>,
     ) -> Result<bool, LinkedErr<operator::E>> {
         if gatekeepers.is_empty() {
             return Ok(false);
@@ -57,15 +50,7 @@ impl Gatekeeper {
             }
             // On "true" - task should be done; on "false" - can be skipped.
             if el
-                .execute(
-                    owner,
-                    components,
-                    &[],
-                    prev,
-                    cx.clone(),
-                    sc.clone(),
-                    token.clone(),
-                )
+                .execute(cx.clone().args(&[]))
                 .await?
                 .as_bool()
                 .ok_or(operator::E::NoBoolValueFromGatekeeper)?
@@ -81,8 +66,8 @@ impl TryDissect<Gatekeeper> for Gatekeeper {
         if reader.rest().trim().starts_with(words::REF_TO) {
             return Ok(None);
         }
-        let close = reader.open_token(ElTarget::Gatekeeper);
-        let function = if let Some(el) = Element::include(reader, &[ElTarget::Function])? {
+        let close = reader.open_token(ElementRef::Gatekeeper);
+        let function = if let Some(el) = Element::include(reader, &[ElementRef::Function])? {
             Box::new(el)
         } else {
             return Ok(None);
@@ -93,7 +78,9 @@ impl TryDissect<Gatekeeper> for Gatekeeper {
         if reader.move_to().expression(&[words::REF_TO]).is_none() {
             return Err(E::NoReferenceForGatekeeper.by_reader(reader));
         }
-        let Some(refs) = Element::include(reader, &[ElTarget::Values, ElTarget::Reference])? else {
+        let Some(refs) =
+            Element::include(reader, &[ElementRef::Values, ElementRef::Reference])?
+        else {
             return Err(E::NoReferenceForGatekeeper.by_reader(reader));
         };
         match &refs {
@@ -129,10 +116,10 @@ impl fmt::Display for Gatekeeper {
 
 impl Formation for Gatekeeper {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        let mut inner = cursor.reown(Some(ElTarget::Gatekeeper));
+        let mut inner = cursor.reown(Some(ElementRef::Gatekeeper));
         format!(
             "{}{} -> {}",
-            cursor.offset_as_string_if(&[ElTarget::Block]),
+            cursor.offset_as_string_if(&[ElementRef::Block]),
             self.function.format(&mut inner),
             self.refs.format(&mut inner),
         )
@@ -176,29 +163,14 @@ impl TryExpectedValueType for Gatekeeper {
     }
 }
 
+impl Processing for Gatekeeper {}
+
 impl TryExecute for Gatekeeper {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let condition = *self
                 .function
-                .execute(
-                    owner,
-                    components,
-                    args,
-                    prev,
-                    cx.clone(),
-                    sc.clone(),
-                    token.clone(),
-                )
+                .execute(cx.clone())
                 .await?
                 .get::<bool>()
                 .ok_or(operator::E::FailToExtractConditionValue)?;
@@ -210,9 +182,9 @@ impl TryExecute for Gatekeeper {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::Gatekeeper,
+        elements::{Gatekeeper,TokenGetter},
         error::LinkedErr,
-        inf::{operator::TokenGetter, tests::*, Configuration},
+        inf::{ tests::*, Configuration},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -303,14 +275,12 @@ mod reading {
 
 #[cfg(test)]
 mod processing {
-    use tokio_util::sync::CancellationToken;
-
     use crate::{
-        elements::{ElTarget, Element},
+        elements::{Element, ElementRef},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
-            Configuration, Context, Journal, Scope, Value,
+            Configuration, Context, ExecuteContext, Journal, Scope, Value,
         },
         process_string,
         reader::{Reader, Sources},
@@ -341,7 +311,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut components: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElTarget::Component]))?
+                    src.report_err_if(Element::include(reader, &[ElementRef::Component]))?
                 {
                     components.push(task);
                 }
@@ -353,16 +323,15 @@ mod processing {
                     for (args, expected_result) in case.iter() {
                         let result = component
                             .execute(
-                                Some(component),
-                                &components,
-                                &args
-                                    .iter()
-                                    .map(|s| Value::String(s.to_string()))
-                                    .collect::<Vec<Value>>(),
-                                &None,
-                                cx.clone(),
-                                sc.clone(),
-                                CancellationToken::new(),
+                                ExecuteContext::unbound(cx.clone(), sc.clone())
+                                    .args(
+                                        &args
+                                            .iter()
+                                            .map(|s| Value::String(s.to_string()))
+                                            .collect::<Vec<Value>>(),
+                                    )
+                                    .owner(Some(component))
+                                    .components(&components),
                             )
                             .await
                             .expect("Component is executed");
@@ -379,7 +348,7 @@ mod processing {
 mod proptest {
 
     use crate::{
-        elements::{Component, ElTarget, Element, Gatekeeper},
+        elements::{Component, Element, ElementRef, Gatekeeper},
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
@@ -393,13 +362,13 @@ mod proptest {
 
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             (
-                Element::arbitrary_with((vec![ElTarget::Function], deep)),
+                Element::arbitrary_with((vec![ElementRef::Function], deep)),
                 Element::arbitrary_with((
                     if deep > MAX_DEEP {
-                        vec![ElTarget::Reference]
+                        vec![ElementRef::Reference]
                     } else {
-                        // TODO: should be added ElTarget::Values with references only
-                        vec![ElTarget::Reference]
+                        // TODO: should be added ElementRef::Values with references only
+                        vec![ElementRef::Reference]
                     },
                     deep,
                 )),

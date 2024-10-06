@@ -1,13 +1,10 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{string, ElTarget, Element},
+    elements::{string, Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, spawner, Context, Execute, ExecutePinnedResult, ExpectedResult,
-        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValue,
-        PrevValueExpectation, Scope, TokenGetter, TryExecute, TryExpectedValueType, Value,
-        ValueRef, VerificationResult,
+        operator, spawner, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValueExpectation,
+        Processing, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -21,7 +18,8 @@ pub struct Command {
 
 impl TryDissect<Command> for Command {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Command>, LinkedErr<E>> {
-        if let Some((_, elements, token)) = string::read(reader, chars::TILDA, ElTarget::Command)? {
+        if let Some((_, elements, token)) = string::read(reader, chars::TILDA, ElementRef::Command)?
+        {
             Ok(Some(Command { elements, token }))
         } else {
             Ok(None)
@@ -56,13 +54,13 @@ impl Formation for Command {
         self.elements.len()
     }
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        let mut inner = cursor.reown(Some(ElTarget::PatternString));
+        let mut inner = cursor.reown(Some(ElementRef::PatternString));
         if self.to_string().len() > cursor.max_len()
             || self.elements.len() > cursor.max_inline_injections()
         {
             format!(
                 "{}`{}`",
-                cursor.offset_as_string_if(&[ElTarget::Block]),
+                cursor.offset_as_string_if(&[ElementRef::Block]),
                 self.elements
                     .iter()
                     .map(|el| {
@@ -81,7 +79,7 @@ impl Formation for Command {
                     .join("")
             )
         } else {
-            format!("{}{self}", cursor.offset_as_string_if(&[ElTarget::Block]),)
+            format!("{}{self}", cursor.offset_as_string_if(&[ElementRef::Block]),)
         }
     }
 }
@@ -134,17 +132,10 @@ impl TryExpectedValueType for Command {
     }
 }
 
+impl Processing for Command {}
+
 impl TryExecute for Command {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let mut command = String::new();
             for element in self.elements.iter() {
@@ -153,24 +144,16 @@ impl TryExecute for Command {
                 } else {
                     command.push_str(
                         &element
-                            .execute(
-                                owner,
-                                components,
-                                args,
-                                prev,
-                                cx.clone(),
-                                sc.clone(),
-                                token.clone(),
-                            )
+                            .execute(cx.clone())
                             .await?
                             .as_string()
                             .ok_or(operator::E::FailToGetValueAsString.by(self))?,
                     );
                 }
             }
-            let cwd = sc.get_cwd().await?.clone();
+            let cwd = cx.sc.get_cwd().await?.clone();
             Ok(Value::SpawnStatus(
-                spawner::run(token, &command, &cwd, cx).await?,
+                spawner::run(cx.token.clone(), &command, &cwd, cx.cx.clone()).await?,
             ))
         })
     }
@@ -179,9 +162,9 @@ impl TryExecute for Command {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::Command,
+        elements::{Command, TokenGetter},
         error::LinkedErr,
-        inf::{operator::TokenGetter, tests::*, Configuration},
+        inf::{tests::*, Configuration},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -276,7 +259,7 @@ mod tests {
 mod proptest {
 
     use crate::{
-        elements::{Command, ElTarget, Element, Metadata, SimpleString},
+        elements::{Command, Element, ElementRef, Metadata, SimpleString},
         inf::tests::*,
     };
     use proptest::prelude::*;
@@ -311,13 +294,17 @@ mod proptest {
                 (
                     prop::collection::vec(
                         Element::arbitrary_with((
-                            vec![ElTarget::VariableName, ElTarget::Function, ElTarget::If],
+                            vec![
+                                ElementRef::VariableName,
+                                ElementRef::Function,
+                                ElementRef::If,
+                            ],
                             deep,
                         )),
                         0..=2,
                     ),
                     prop::collection::vec(
-                        Element::arbitrary_with((vec![ElTarget::SimpleString], deep)),
+                        Element::arbitrary_with((vec![ElementRef::SimpleString], deep)),
                         3,
                     ),
                 )

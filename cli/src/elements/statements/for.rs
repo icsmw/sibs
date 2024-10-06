@@ -1,12 +1,12 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValueExpectation,
+        Processing, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -22,9 +22,9 @@ pub struct For {
 
 impl TryDissect<For> for For {
     fn try_dissect(reader: &mut Reader) -> Result<Option<For>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::For);
+        let close = reader.open_token(ElementRef::For);
         if reader.move_to().word(&[words::FOR]).is_some() {
-            let Some(index) = Element::include(reader, &[ElTarget::VariableName])? else {
+            let Some(index) = Element::include(reader, &[ElementRef::VariableName])? else {
                 return Err(E::NoIndexInForLoop.by_reader(reader));
             };
             if reader.move_to().word(&[words::IN]).is_none() {
@@ -32,16 +32,20 @@ impl TryDissect<For> for For {
             }
             let Some(target) = Element::include(
                 reader,
-                &[ElTarget::Range, ElTarget::VariableName, ElTarget::Values],
+                &[
+                    ElementRef::Range,
+                    ElementRef::VariableName,
+                    ElementRef::Values,
+                ],
             )?
             else {
                 return Err(E::NoRangeInForLoop.by_reader(reader));
             };
-            let Some(mut block) = Element::include(reader, &[ElTarget::Block])? else {
+            let Some(mut block) = Element::include(reader, &[ElementRef::Block])? else {
                 return Err(E::NoBodyInForLoop.by_reader(reader));
             };
             if let Element::Block(block, _) = &mut block {
-                block.set_owner(ElTarget::For);
+                block.set_owner(ElementRef::For);
                 block.set_breaker(CancellationToken::new());
             }
             Ok(Some(Self {
@@ -73,10 +77,10 @@ impl fmt::Display for For {
 
 impl Formation for For {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        let mut inner = cursor.reown(Some(ElTarget::For));
+        let mut inner = cursor.reown(Some(ElementRef::For));
         format!(
             "{}{} {} in {} {}",
-            cursor.offset_as_string_if(&[ElTarget::Block]),
+            cursor.offset_as_string_if(&[ElementRef::Block]),
             words::FOR,
             self.index,
             self.target,
@@ -138,17 +142,10 @@ impl TryExpectedValueType for For {
     }
 }
 
+impl Processing for For {}
+
 impl TryExecute for For {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let Element::VariableName(variable, _) = self.index.as_ref() else {
                 return Err(
@@ -160,20 +157,8 @@ impl TryExecute for For {
             } else {
                 return Err(operator::E::BlockElementExpected.linked(&self.block.token()));
             };
-            let (loop_uuid, loop_token) = sc.open_loop(blk_token).await?;
-            match self
-                .target
-                .execute(
-                    owner,
-                    components,
-                    args,
-                    prev,
-                    cx.clone(),
-                    sc.clone(),
-                    token.clone(),
-                )
-                .await?
-            {
+            let (loop_uuid, loop_token) = cx.sc.open_loop(blk_token).await?;
+            match self.target.execute(cx.clone()).await? {
                 Value::Range(v) => {
                     if v.len() != 2 {
                         return Err(
@@ -187,26 +172,20 @@ impl TryExecute for For {
                         operator::E::InvalidRangeForStatement.linked(&self.target.token()),
                     )?;
                     let increase = from < to;
-                    sc.set_var(&variable.get_name(), Value::isize(from)).await?;
+                    cx.sc
+                        .set_var(&variable.get_name(), Value::isize(from))
+                        .await?;
                     while from != to {
                         if loop_token.is_cancelled() {
                             break;
                         }
-                        sc.set_var(&variable.get_name(), Value::isize(from)).await?;
-                        self.block
-                            .execute(
-                                owner,
-                                components,
-                                args,
-                                prev,
-                                cx.clone(),
-                                sc.clone(),
-                                token.clone(),
-                            )
+                        cx.sc
+                            .set_var(&variable.get_name(), Value::isize(from))
                             .await?;
+                        self.block.execute(cx.clone()).await?;
                         from += if increase { 1 } else { -1 };
                     }
-                    sc.close_loop(loop_uuid).await?;
+                    cx.sc.close_loop(loop_uuid).await?;
                     Ok(Value::Empty(()))
                 }
                 Value::Vec(els) => {
@@ -214,20 +193,10 @@ impl TryExecute for For {
                         if loop_token.is_cancelled() {
                             break;
                         }
-                        sc.set_var(&variable.get_name(), el.duplicate()).await?;
-                        self.block
-                            .execute(
-                                owner,
-                                components,
-                                args,
-                                prev,
-                                cx.clone(),
-                                sc.clone(),
-                                token.clone(),
-                            )
-                            .await?;
+                        cx.sc.set_var(&variable.get_name(), el.duplicate()).await?;
+                        self.block.execute(cx.clone()).await?;
                     }
-                    sc.close_loop(loop_uuid).await?;
+                    cx.sc.close_loop(loop_uuid).await?;
                     Ok(Value::Empty(()))
                 }
                 _ => Err(operator::E::InvalidTargetForStatement.linked(&self.target.token())),
@@ -239,9 +208,9 @@ impl TryExecute for For {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::For,
+        elements::{For, TokenGetter},
         error::LinkedErr,
-        inf::{tests::*, Configuration, TokenGetter},
+        inf::{tests::*, Configuration},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -430,7 +399,7 @@ mod processing {
 mod proptest {
 
     use crate::{
-        elements::{ElTarget, Element, For, Task},
+        elements::{Element, ElementRef, For, Task},
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
@@ -444,12 +413,16 @@ mod proptest {
 
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             (
-                Element::arbitrary_with((vec![ElTarget::VariableName], deep)),
+                Element::arbitrary_with((vec![ElementRef::VariableName], deep)),
                 Element::arbitrary_with((
-                    vec![ElTarget::Range, ElTarget::VariableName, ElTarget::Values],
+                    vec![
+                        ElementRef::Range,
+                        ElementRef::VariableName,
+                        ElementRef::Values,
+                    ],
                     deep,
                 )),
-                Element::arbitrary_with((vec![ElTarget::Block], deep)),
+                Element::arbitrary_with((vec![ElementRef::Block], deep)),
             )
                 .prop_map(|(index, target, block)| For {
                     index: Box::new(index),

@@ -1,12 +1,12 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValueExpectation,
+        Processing, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -21,16 +21,16 @@ pub struct While {
 
 impl TryDissect<While> for While {
     fn try_dissect(reader: &mut Reader) -> Result<Option<While>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::While);
+        let close = reader.open_token(ElementRef::While);
         if reader.move_to().word(&[words::WHILE]).is_some() {
-            let Some(condition) = Element::include(reader, &[ElTarget::Comparing])? else {
+            let Some(condition) = Element::include(reader, &[ElementRef::Comparing])? else {
                 return Err(E::NoConditionInWhile.by_reader(reader));
             };
-            let Some(mut block) = Element::include(reader, &[ElTarget::Block])? else {
+            let Some(mut block) = Element::include(reader, &[ElementRef::Block])? else {
                 return Err(E::NoBodyInForLoop.by_reader(reader));
             };
             if let Element::Block(block, _) = &mut block {
-                block.set_owner(ElTarget::While);
+                block.set_owner(ElementRef::While);
                 block.set_breaker(CancellationToken::new());
             }
             Ok(Some(Self {
@@ -54,10 +54,10 @@ impl fmt::Display for While {
 
 impl Formation for While {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        let mut inner = cursor.reown(Some(ElTarget::While));
+        let mut inner = cursor.reown(Some(ElementRef::While));
         format!(
             "{}{} {} {}",
-            cursor.offset_as_string_if(&[ElTarget::Block]),
+            cursor.offset_as_string_if(&[ElementRef::Block]),
             words::WHILE,
             self.condition,
             self.block.format(&mut inner)
@@ -110,24 +110,17 @@ impl TryExpectedValueType for While {
     }
 }
 
+impl Processing for While {}
+
 impl TryExecute for While {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let blk_token = if let Element::Block(el, _) = self.block.as_ref() {
                 el.get_breaker()?
             } else {
                 return Err(operator::E::BlockElementExpected.linked(&self.block.token()));
             };
-            let (loop_uuid, loop_token) = sc.open_loop(blk_token).await?;
+            let (loop_uuid, loop_token) = cx.sc.open_loop(blk_token).await?;
             let mut n = u64::MIN;
             while n < u64::MAX {
                 if loop_token.is_cancelled() {
@@ -135,15 +128,7 @@ impl TryExecute for While {
                 }
                 if !self
                     .condition
-                    .execute(
-                        owner,
-                        components,
-                        args,
-                        prev,
-                        cx.clone(),
-                        sc.clone(),
-                        token.clone(),
-                    )
+                    .execute(cx.clone())
                     .await?
                     .as_bool()
                     .ok_or(operator::E::ConditionReturnsNotBool.linked(&self.condition.token()))?
@@ -151,23 +136,13 @@ impl TryExecute for While {
                     break;
                 }
                 if n == u64::MAX - 1 {
-                    sc.close_loop(loop_uuid).await?;
+                    cx.sc.close_loop(loop_uuid).await?;
                     return Err(operator::E::MaxIterations.linked(&self.token));
                 }
-                self.block
-                    .execute(
-                        owner,
-                        components,
-                        args,
-                        prev,
-                        cx.clone(),
-                        sc.clone(),
-                        token.clone(),
-                    )
-                    .await?;
+                self.block.execute(cx.clone()).await?;
                 n += 1;
             }
-            sc.close_loop(loop_uuid).await?;
+            cx.sc.close_loop(loop_uuid).await?;
             Ok(Value::Empty(()))
         })
     }
@@ -176,9 +151,9 @@ impl TryExecute for While {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::While,
+        elements::{TokenGetter, While},
         error::LinkedErr,
-        inf::{tests::*, Configuration, TokenGetter},
+        inf::{tests::*, Configuration},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -268,7 +243,7 @@ mod processing {
 mod proptest {
 
     use crate::{
-        elements::{ElTarget, Element, Task, While},
+        elements::{Element, ElementRef, Task, While},
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
@@ -282,8 +257,8 @@ mod proptest {
 
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             (
-                Element::arbitrary_with((vec![ElTarget::Comparing], deep)),
-                Element::arbitrary_with((vec![ElTarget::Block], deep)),
+                Element::arbitrary_with((vec![ElementRef::Comparing], deep)),
+                Element::arbitrary_with((vec![ElementRef::Block], deep)),
             )
                 .prop_map(|(condition, block)| While {
                     condition: Box::new(condition),

@@ -20,12 +20,12 @@ where
     T: 'static + Clone + PartialEq + std::fmt::Debug,
 {
     use crate::{
-        elements::{ElTarget, Element},
+        elements::{ElementRef, Element},
         error::LinkedErr,
         inf::{
             journal::Journal,
             operator::{Execute, E},
-            Configuration, Context, ExpectedValueType, Scope, Value,
+            Configuration, Context, ExecuteContext, ExpectedValueType, Scope, Value,
         },
         process_string,
         reader::{Reader, Sources},
@@ -38,7 +38,7 @@ where
         &task,
         |reader: &mut Reader, src: &mut Sources| {
             let Some(component) =
-                src.report_err_if(Element::include(reader, &[ElTarget::Component]))?
+                src.report_err_if(Element::include(reader, &[ElementRef::Component]))?
             else {
                 panic!("Fait to read component from:\n{task}\n");
             };
@@ -63,13 +63,9 @@ where
             assert!(result.is_ok());
             let result = component
                 .execute(
-                    Some(&component),
-                    &[],
-                    &[Value::String("test".to_owned())],
-                    &None,
-                    cx.clone(),
-                    sc.clone(),
-                    CancellationToken::new(),
+                    ExecuteContext::unbound(cx.clone(), sc.clone())
+                        .owner(Some(&component))
+                        .args(&[Value::String("test".to_owned())]),
                 )
                 .await;
             if let Err(err) = result.as_ref() {

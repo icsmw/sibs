@@ -123,17 +123,16 @@ pub fn execute(
 #[cfg(test)]
 mod test {
     use crate::{
-        elements::{ElTarget, Element},
+        elements::{ElementRef, Element},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
             tests::*,
-            Configuration, Context, Journal, Scope, Value,
+            Configuration, Context, ExecuteContext, Journal, Scope, Value,
         },
         process_string,
         reader::{Reader, Sources},
     };
-    use tokio_util::sync::CancellationToken;
 
     type CaseExpectation<'a> = (&'a [&'a str], bool, Value);
     const CASES: &[&[CaseExpectation]] = &[
@@ -200,7 +199,7 @@ mod test {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut components: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElTarget::Component]))?
+                    src.report_err_if(Element::include(reader, &[ElementRef::Component]))?
                 {
                     components.push(task);
                 }
@@ -217,16 +216,15 @@ mod test {
                         }
                         let result = component
                             .execute(
-                                Some(component),
-                                &components,
-                                &args
-                                    .iter()
-                                    .map(|s| Value::String(s.to_string()))
-                                    .collect::<Vec<Value>>(),
-                                &None,
-                                cx.clone(),
-                                sc.clone(),
-                                CancellationToken::new(),
+                                ExecuteContext::unbound(cx.clone(), sc.clone())
+                                    .owner(Some(component))
+                                    .components(&components)
+                                    .args(
+                                        &args
+                                            .iter()
+                                            .map(|s| Value::String(s.to_string()))
+                                            .collect::<Vec<Value>>(),
+                                    ),
                             )
                             .await?;
                         assert_eq!(result, *expected_result);

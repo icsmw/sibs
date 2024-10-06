@@ -1,12 +1,10 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValueExpectation,
+        Processing, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -41,8 +39,8 @@ pub struct Incrementer {
 
 impl TryDissect<Incrementer> for Incrementer {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Incrementer>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::Incrementer);
-        let Some(variable) = Element::include(reader, &[ElTarget::VariableName])? else {
+        let close = reader.open_token(ElementRef::Incrementer);
+        let Some(variable) = Element::include(reader, &[ElementRef::VariableName])? else {
             return Ok(None);
         };
         reader.move_to().any();
@@ -59,11 +57,11 @@ impl TryDissect<Incrementer> for Incrementer {
         let Some(right) = Element::include(
             reader,
             &[
-                ElTarget::VariableName,
-                ElTarget::Function,
-                ElTarget::If,
-                ElTarget::Block,
-                ElTarget::Integer,
+                ElementRef::VariableName,
+                ElementRef::Function,
+                ElementRef::If,
+                ElementRef::Block,
+                ElementRef::Integer,
             ],
         )?
         else {
@@ -88,10 +86,10 @@ impl fmt::Display for Incrementer {
 
 impl Formation for Incrementer {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        let mut inner = cursor.reown(Some(ElTarget::Incrementer));
+        let mut inner = cursor.reown(Some(ElementRef::Incrementer));
         format!(
             "{}{} {} {}",
-            cursor.offset_as_string_if(&[ElTarget::Block]),
+            cursor.offset_as_string_if(&[ElementRef::Block]),
             self.variable.format(&mut inner),
             self.operator,
             self.right.format(&mut inner)
@@ -150,17 +148,10 @@ impl TryExpectedValueType for Incrementer {
     }
 }
 
+impl Processing for Incrementer {}
+
 impl TryExecute for Incrementer {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let name = if let Element::VariableName(el, _) = &*self.variable {
                 el.get_name()
@@ -169,29 +160,13 @@ impl TryExecute for Incrementer {
             };
             let variable = self
                 .variable
-                .execute(
-                    owner,
-                    components,
-                    args,
-                    prev,
-                    cx.clone(),
-                    sc.clone(),
-                    token.clone(),
-                )
+                .execute(cx.clone())
                 .await?
                 .as_num()
                 .ok_or(operator::E::ArithmeticWrongType.by(&*self.variable))?;
             let right = self
                 .right
-                .execute(
-                    owner,
-                    components,
-                    args,
-                    prev,
-                    cx.clone(),
-                    sc.clone(),
-                    token.clone(),
-                )
+                .execute(cx.clone())
                 .await?
                 .as_num()
                 .ok_or(operator::E::ArithmeticWrongType.by(&*self.right))?;
@@ -199,7 +174,7 @@ impl TryExecute for Incrementer {
                 Operator::Inc => variable + right,
                 Operator::Dec => variable - right,
             });
-            sc.set_var(&name, changed.duplicate()).await?;
+            cx.sc.set_var(&name, changed.duplicate()).await?;
             Ok(changed)
         })
     }
@@ -208,7 +183,7 @@ impl TryExecute for Incrementer {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        elements::{incrementer::Operator, ElTarget, Element, Incrementer, Task},
+        elements::{incrementer::Operator, Element, ElementRef, Incrementer, Task},
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
@@ -222,15 +197,15 @@ mod proptest {
 
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             (
-                Element::arbitrary_with((vec![ElTarget::VariableName], deep)),
+                Element::arbitrary_with((vec![ElementRef::VariableName], deep)),
                 Element::arbitrary_with((
                     if deep > MAX_DEEP {
-                        vec![ElTarget::VariableName, ElTarget::Integer]
+                        vec![ElementRef::VariableName, ElementRef::Integer]
                     } else {
                         vec![
-                            ElTarget::Function,
-                            ElTarget::VariableName,
-                            ElTarget::Integer,
+                            ElementRef::Function,
+                            ElementRef::VariableName,
+                            ElementRef::Integer,
                         ]
                     },
                     deep,

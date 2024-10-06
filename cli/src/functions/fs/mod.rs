@@ -120,20 +120,18 @@ pub fn register(store: &mut Store<ExecutorFnDescription>) -> Result<(), E> {
 
 #[cfg(test)]
 mod test {
-    use journal::Journal;
-    use tokio_util::sync::CancellationToken;
-
     use crate::{
-        elements::{ElTarget, Element},
+        elements::{ElementRef, Element},
         error::LinkedErr,
         inf::{
             journal,
             operator::{Execute, E},
-            Configuration, Context, Scope,
+            Configuration, Context, ExecuteContext, Scope,
         },
         process_string,
         reader::{chars, Reader, Sources},
     };
+    use journal::Journal;
 
     const TESTS: &[&str] = &[
         r#"$tmp_path = env::temp_dir(); $file_name = "test.txt"; $file = fs::path_join(($tmp_path, $file_name)); if $file == "__temp_file__" {"true";} else {"false";};"#,
@@ -161,7 +159,7 @@ mod test {
                 |reader: &mut Reader, src: &mut Sources| {
                     let mut tasks: Vec<Element> = Vec::new();
                     while let Some(task) =
-                        src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                        src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
                     {
                         let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                         tasks.push(task);
@@ -172,15 +170,7 @@ mod test {
                     assert!(!tasks.is_empty());
                     for task in tasks.iter() {
                         let result = task
-                            .execute(
-                                None,
-                                &[],
-                                &[],
-                                &None,
-                                cx.clone(),
-                                sc.clone(),
-                                CancellationToken::new(),
-                            )
+                            .execute(ExecuteContext::unbound(cx.clone(), sc.clone()))
                             .await;
                         if let Err(err) = result.as_ref() {
                             journal.report(err.into());

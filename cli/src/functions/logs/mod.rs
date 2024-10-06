@@ -36,17 +36,16 @@ pub fn register(store: &mut Store<ExecutorFnDescription>) -> Result<(), E> {
 #[cfg(test)]
 mod test {
     use crate::{
-        elements::{ElTarget, Element},
+        elements::{ElementRef, Element},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
-            Configuration, Context, Journal, Scope,
+            Configuration, Context, ExecuteContext, Journal, Scope,
         },
         process_string,
         reader::{chars, Reader, Sources},
     };
     use std::{env::temp_dir, fs::read_to_string};
-    use tokio_util::sync::CancellationToken;
     use uuid::Uuid;
 
     const TESTS: &[&str] = &[
@@ -75,7 +74,7 @@ mod test {
                 |reader: &mut Reader, src: &mut Sources| {
                     let mut tasks: Vec<Element> = Vec::new();
                     while let Some(task) =
-                        src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                        src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
                     {
                         let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                         tasks.push(task);
@@ -86,15 +85,7 @@ mod test {
                     assert!(!tasks.is_empty());
                     for task in tasks.iter() {
                         let result = task
-                            .execute(
-                                None,
-                                &[],
-                                &[],
-                                &None,
-                                cx.clone(),
-                                sc.clone(),
-                                CancellationToken::new(),
-                            )
+                            .execute(ExecuteContext::unbound(cx.clone(), sc.clone()))
                             .await;
                         if let Err(err) = result.as_ref() {
                             journal.report(err.into());

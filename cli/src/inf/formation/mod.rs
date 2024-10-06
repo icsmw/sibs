@@ -1,7 +1,7 @@
 use std::{fs, io::Write, path::PathBuf};
 
 use crate::{
-    elements::ElTarget,
+    elements::ElementRef,
     error::LinkedErr,
     reader::{Reader, E},
 };
@@ -18,7 +18,7 @@ const MAX_ELEMENTS: usize = 4;
 #[derive(Debug, Default)]
 pub struct FormationCursor {
     pub offset: usize,
-    pub parent: Option<ElTarget>,
+    pub parent: Option<ElementRef>,
 }
 
 impl FormationCursor {
@@ -42,7 +42,7 @@ impl FormationCursor {
     pub fn offset_as_string(&self) -> String {
         " ".repeat(TAB as usize).repeat(self.offset)
     }
-    pub fn offset_as_string_if(&self, targets: &[ElTarget]) -> String {
+    pub fn offset_as_string_if(&self, targets: &[ElementRef]) -> String {
         if let Some(parent) = self.parent.as_ref() {
             if targets.contains(parent) {
                 return " ".repeat(TAB as usize).repeat(self.offset);
@@ -56,7 +56,7 @@ impl FormationCursor {
             parent: self.parent,
         }
     }
-    pub fn reown(&mut self, parent: Option<ElTarget>) -> Self {
+    pub fn reown(&mut self, parent: Option<ElementRef>) -> Self {
         FormationCursor {
             offset: self.offset,
             parent,
@@ -106,7 +106,7 @@ pub async fn format_string(content: &str) -> Result<String, LinkedErr<E>> {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::{ElTarget, Element},
+        elements::{Element, ElementRef, ElementRefGetter},
         error::LinkedErr,
         functions::load,
         inf::{format_string, Configuration},
@@ -128,7 +128,7 @@ mod reading {
             |reader: &mut Reader, src: &mut Sources| {
                 while let Some(el) = src.report_err_if(Element::include(
                     reader,
-                    &[ElTarget::Function, ElTarget::Component],
+                    &[ElementRef::Function, ElementRef::Component],
                 ))? {
                     if let Element::Function(func, _) = &el {
                         if load::NAME != func.name {
@@ -154,7 +154,7 @@ mod reading {
                 let mut origin = Vec::new();
                 while let Some(el) = src.report_err_if(Element::include(
                     reader,
-                    &[ElTarget::Function, ElTarget::Component],
+                    &[ElementRef::Function, ElementRef::Component],
                 ))? {
                     if let Element::Function(func, _) = &el {
                         if load::NAME != func.name {
@@ -172,13 +172,13 @@ mod reading {
                 assert_eq!(origin.len(), formated.len());
                 let mut count: usize = 0;
                 for (i, el) in origin.iter().enumerate() {
-                    assert_eq!(el.el_target(), formated[i].el_target());
+                    assert_eq!(el.get_alias(), formated[i].get_alias());
                     if let (Element::Component(origin, _), Element::Component(formated, _)) =
                         (el, &formated[i])
                     {
                         assert_eq!(origin.elements.len(), formated.elements.len());
                         for (i, el) in origin.elements.iter().enumerate() {
-                            assert_eq!(el.el_target(), formated.elements[i].el_target());
+                            assert_eq!(el.get_alias(), formated.elements[i].get_alias());
                             if let (Element::Task(origin, _), Element::Task(formated, _)) =
                                 (el, &formated.elements[i])
                             {

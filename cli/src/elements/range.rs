@@ -1,12 +1,10 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValueExpectation,
+        Processing, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -21,15 +19,17 @@ pub struct Range {
 
 impl TryDissect<Range> for Range {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Range>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::Range);
-        let Some(from) = Element::include(reader, &[ElTarget::VariableName, ElTarget::Integer])?
+        let close = reader.open_token(ElementRef::Range);
+        let Some(from) =
+            Element::include(reader, &[ElementRef::VariableName, ElementRef::Integer])?
         else {
             return Ok(None);
         };
         if reader.move_to().word_any(&[words::RANGE]).is_none() {
             return Ok(None);
         }
-        let Some(to) = Element::include(reader, &[ElTarget::VariableName, ElTarget::Integer])?
+        let Some(to) =
+            Element::include(reader, &[ElementRef::VariableName, ElementRef::Integer])?
         else {
             return Err(E::NoEndRangeBorder.by_reader(reader));
         };
@@ -114,35 +114,20 @@ impl TryExpectedValueType for Range {
     }
 }
 
+impl Processing for Range {}
+
 impl TryExecute for Range {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let from = self
                 .from
-                .execute(
-                    owner,
-                    components,
-                    args,
-                    prev,
-                    cx.clone(),
-                    sc.clone(),
-                    token.clone(),
-                )
+                .execute(cx.clone())
                 .await?
                 .as_num()
                 .ok_or(operator::E::ExpectedNumericValue.linked(&self.from.token()))?;
             let to = self
                 .to
-                .execute(owner, components, args, prev, cx, sc, token)
+                .execute(cx)
                 .await?
                 .as_num()
                 .ok_or(operator::E::ExpectedNumericValue.linked(&self.to.token()))?;
@@ -154,7 +139,7 @@ impl TryExecute for Range {
 #[cfg(test)]
 mod proptest {
 
-    use crate::elements::{ElTarget, Element, Range};
+    use crate::elements::{Element, ElementRef, Range};
     use proptest::prelude::*;
 
     impl Arbitrary for Range {
@@ -162,8 +147,14 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             (
-                Element::arbitrary_with((vec![ElTarget::VariableName, ElTarget::Integer], deep)),
-                Element::arbitrary_with((vec![ElTarget::VariableName, ElTarget::Integer], deep)),
+                Element::arbitrary_with((
+                    vec![ElementRef::VariableName, ElementRef::Integer],
+                    deep,
+                )),
+                Element::arbitrary_with((
+                    vec![ElementRef::VariableName, ElementRef::Integer],
+                    deep,
+                )),
             )
                 .prop_map(|(from, to)| Range {
                     from: Box::new(from),

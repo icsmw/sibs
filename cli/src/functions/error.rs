@@ -1,6 +1,7 @@
 use crate::{
+    elements::TokenGetter,
     error::LinkedErr,
-    inf::{context, operator, store, TokenGetter},
+    inf::{context, operator, store},
 };
 use thiserror::Error;
 use tokio::sync::{mpsc, oneshot};

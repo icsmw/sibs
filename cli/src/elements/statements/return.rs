@@ -1,12 +1,10 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
-        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
-        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
+        Formation, FormationCursor, LinkingResult, PrevValueExpectation, Processing, TryExecute,
+        TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -20,21 +18,21 @@ pub struct Return {
 
 impl TryDissect<Return> for Return {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Return>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::Return);
+        let close = reader.open_token(ElementRef::Return);
         if reader.move_to().word(&[words::RETURN]).is_none() {
             return Ok(None);
         }
         let output = if let Some(output) = Element::include(
             reader,
             &[
-                ElTarget::Values,
-                ElTarget::VariableName,
-                ElTarget::Error,
-                ElTarget::Function,
-                ElTarget::If,
-                ElTarget::Integer,
-                ElTarget::Boolean,
-                ElTarget::PatternString,
+                ElementRef::Values,
+                ElementRef::VariableName,
+                ElementRef::Error,
+                ElementRef::Function,
+                ElementRef::If,
+                ElementRef::Integer,
+                ElementRef::Boolean,
+                ElementRef::PatternString,
             ],
         )? {
             Some(Box::new(output))
@@ -76,7 +74,7 @@ impl Formation for Return {
     fn format(&self, cursor: &mut FormationCursor) -> String {
         format!(
             "{}{}{}",
-            cursor.offset_as_string_if(&[ElTarget::Block]),
+            cursor.offset_as_string_if(&[ElementRef::Block]),
             words::RETURN,
             if let Some(el) = self.output.as_ref() {
                 format!(" {}", el.format(cursor))
@@ -139,25 +137,18 @@ impl TryExpectedValueType for Return {
     }
 }
 
+impl Processing for Return {}
+
 impl TryExecute for Return {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
-            sc.resolve(if let Some(el) = self.output.as_ref() {
-                el.execute(owner, components, args, prev, cx, sc.clone(), token)
-                    .await?
-            } else {
-                Value::Empty(())
-            })
-            .await?;
+            cx.sc
+                .resolve(if let Some(el) = self.output.as_ref() {
+                    el.execute(cx.clone()).await?
+                } else {
+                    Value::Empty(())
+                })
+                .await?;
             Ok(Value::Empty(()))
         })
     }
@@ -248,7 +239,7 @@ mod processing {
 mod proptest {
 
     use crate::{
-        elements::{ElTarget, Element, Return, Task},
+        elements::{Element, ElementRef, Return, Task},
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
@@ -264,21 +255,21 @@ mod proptest {
             Element::arbitrary_with((
                 if deep > MAX_DEEP {
                     vec![
-                        ElTarget::VariableName,
-                        ElTarget::Error,
-                        ElTarget::Integer,
-                        ElTarget::Boolean,
+                        ElementRef::VariableName,
+                        ElementRef::Error,
+                        ElementRef::Integer,
+                        ElementRef::Boolean,
                     ]
                 } else {
                     vec![
-                        ElTarget::Values,
-                        ElTarget::VariableName,
-                        ElTarget::Error,
-                        ElTarget::Function,
-                        ElTarget::If,
-                        ElTarget::Integer,
-                        ElTarget::Boolean,
-                        ElTarget::PatternString,
+                        ElementRef::Values,
+                        ElementRef::VariableName,
+                        ElementRef::Error,
+                        ElementRef::Function,
+                        ElementRef::If,
+                        ElementRef::Integer,
+                        ElementRef::Boolean,
+                        ElementRef::PatternString,
                     ]
                 },
                 deep,

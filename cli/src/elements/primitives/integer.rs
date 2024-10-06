@@ -1,12 +1,10 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        Context, ExecutePinnedResult, ExpectedResult, Formation, FormationCursor, LinkingResult,
-        PrevValue, PrevValueExpectation, Scope, TokenGetter, TryExecute, TryExpectedValueType,
-        Value, ValueRef, VerificationResult,
+        Context, ExecuteContext, ExecutePinnedResult, ExpectedResult, Formation, FormationCursor,
+        LinkingResult, PrevValueExpectation, Processing, TryExecute, TryExpectedValueType, Value,
+        ValueRef, VerificationResult,
     },
     reader::{Dissect, Reader, TryDissect, E},
 };
@@ -44,7 +42,11 @@ impl fmt::Display for Integer {
 
 impl Formation for Integer {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        format!("{}{}", cursor.offset_as_string_if(&[ElTarget::Block]), self)
+        format!(
+            "{}{}",
+            cursor.offset_as_string_if(&[ElementRef::Block]),
+            self
+        )
     }
 }
 
@@ -100,17 +102,10 @@ impl TryExpectedValueType for Integer {
     }
 }
 
+impl Processing for Integer {}
+
 impl TryExecute for Integer {
-    fn try_execute<'a>(
-        &'a self,
-        _owner: Option<&'a Element>,
-        _components: &'a [Element],
-        _args: &'a [Value],
-        _prev: &'a Option<PrevValue>,
-        _cx: Context,
-        _sc: Scope,
-        _token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, _cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move { Ok(Value::isize(self.value)) })
     }
 }

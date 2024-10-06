@@ -1,13 +1,11 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, HasOptional, HasRepeated, LinkingResult, PrevValue,
-        PrevValueExpectation, Scope, TokenGetter, TryExecute, TryExpectedValueType, Value,
-        ValueRef, VerificationResult,
+        operator, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, HasOptional, HasRepeated, LinkingResult,
+        PrevValueExpectation, Processing, TryExecute, TryExpectedValueType, Value, ValueRef,
+        VerificationResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -39,7 +37,7 @@ pub struct Function {
 impl TryDissect<Function> for Function {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
         reader.move_to().any();
-        let close = reader.open_token(ElTarget::Function);
+        let close = reader.open_token(ElementRef::Function);
         let Some((name, mut stop)) = reader.until().char(&[
             &chars::OPEN_BRACKET,
             &chars::CARET,
@@ -81,7 +79,7 @@ impl TryDissect<Function> for Function {
         {
             return Ok(None);
         }
-        let args_close = reader.open_token(ElTarget::Function);
+        let args_close = reader.open_token(ElementRef::Function);
         if reader
             .group()
             .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
@@ -95,17 +93,17 @@ impl TryDissect<Function> for Function {
             if let Some(el) = Element::include(
                 &mut inner,
                 &[
-                    ElTarget::Closure,
-                    ElTarget::Values,
-                    ElTarget::Function,
-                    ElTarget::If,
-                    ElTarget::PatternString,
-                    ElTarget::Reference,
-                    ElTarget::Comparing,
-                    ElTarget::VariableName,
-                    ElTarget::Command,
-                    ElTarget::Integer,
-                    ElTarget::Boolean,
+                    ElementRef::Closure,
+                    ElementRef::Values,
+                    ElementRef::Function,
+                    ElementRef::If,
+                    ElementRef::PatternString,
+                    ElementRef::Reference,
+                    ElementRef::Comparing,
+                    ElementRef::VariableName,
+                    ElementRef::Command,
+                    ElementRef::Integer,
+                    ElementRef::Boolean,
                 ],
             )? {
                 if inner.move_to().char(&[&chars::COMMA]).is_none() && !inner.is_empty() {
@@ -117,13 +115,13 @@ impl TryDissect<Function> for Function {
                     Err(E::NoContentBeforeComma.by_reader(&inner))?;
                 }
                 elements.push(
-                    Element::include(&mut inner.token()?.bound, &[ElTarget::SimpleString])?
+                    Element::include(&mut inner.token()?.bound, &[ElementRef::SimpleString])?
                         .ok_or(E::NoContentBeforeComma.by_reader(&inner))?,
                 );
                 let _ = inner.move_to().char(&[&chars::COMMA]);
             } else if !inner.is_empty() {
                 elements.push(
-                    Element::include(&mut inner, &[ElTarget::SimpleString])?
+                    Element::include(&mut inner, &[ElementRef::SimpleString])?
                         .ok_or(E::NoContentBeforeComma.by_reader(&inner))?,
                 );
             }
@@ -165,31 +163,13 @@ impl Function {
     #[allow(clippy::too_many_arguments)]
     pub async fn get_processed_args<'a>(
         &self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
+        cx: ExecuteContext<'a>,
     ) -> Result<Vec<FuncArg>, operator::E> {
         let mut values: Vec<FuncArg> = Vec::new();
         for arg in self.args.iter() {
-            values.push(FuncArg::new(
-                arg.execute(
-                    owner,
-                    components,
-                    args,
-                    prev,
-                    cx.clone(),
-                    sc.clone(),
-                    token.clone(),
-                )
-                .await?,
-                arg.token(),
-            ))
+            values.push(FuncArg::new(arg.execute(cx.clone()).await?, arg.token()))
         }
-        if let Some(prev) = prev {
+        if let Some(prev) = cx.prev {
             values.insert(0, FuncArg::new(prev.value.duplicate(), prev.token))
         }
         Ok(values)
@@ -225,20 +205,20 @@ impl Formation for Function {
         //             .map(|arg| format!(
         //                 "\n{}{}",
         //                 cursor.right().offset_as_string(),
-        //                 arg.format(&mut cursor.reown(Some(ElTarget::Function)).right())
+        //                 arg.format(&mut cursor.reown(Some(ElementRef::Function)).right())
         //             ))
         //             .collect::<Vec<String>>()
         //             .join(", "),
         //         if func.args.is_empty() {
         //             ")".to_string()
         //         } else {
-        //             format!("\n{})", cursor.offset_as_string_if(&[ElTarget::Block]))
+        //             format!("\n{})", cursor.offset_as_string_if(&[ElementRef::Block]))
         //         }
         //     )
         // }
         let output = format!(
             "{}{}",
-            cursor.offset_as_string_if(&[ElTarget::Block, ElTarget::Component]),
+            cursor.offset_as_string_if(&[ElementRef::Block, ElementRef::Component]),
             self
         );
         format!(
@@ -382,36 +362,20 @@ impl TryExpectedValueType for Function {
     }
 }
 
+impl Processing for Function {}
+
 impl TryExecute for Function {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        inputs: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
-            let args: Vec<FuncArg> = self
-                .get_processed_args(
-                    owner,
-                    components,
-                    inputs,
-                    prev,
-                    cx.clone(),
-                    sc.clone(),
-                    token.clone(),
-                )
-                .await?;
+            let args: Vec<FuncArg> = self.get_processed_args(cx.clone()).await?;
             Ok(cx
+                .cx
                 .execute(
                     &self.name,
                     args,
                     self.args_token,
-                    prev.as_ref().map(|v| v.value.clone()).clone(),
-                    sc,
+                    cx.prev.as_ref().map(|v| v.value.clone()).clone(),
+                    cx.sc,
                 )
                 .await?)
         })
@@ -422,9 +386,9 @@ impl TryExecute for Function {
 mod reading {
 
     use crate::{
-        elements::Function,
+        elements::{Function, TokenGetter},
         error::LinkedErr,
-        inf::{operator::TokenGetter, tests::*, Configuration},
+        inf::{tests::*, Configuration},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -514,14 +478,12 @@ mod reading {
 
 #[cfg(test)]
 mod processing {
-    use tokio_util::sync::CancellationToken;
-
     use crate::{
-        elements::{ElTarget, Element},
+        elements::{Element, ElementRef},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
-            Configuration, Context, Journal, Scope,
+            Configuration, Context, ExecuteContext, Journal, Scope,
         },
         process_string,
         reader::{chars, Reader, Sources},
@@ -535,7 +497,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                    src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
                 {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
@@ -545,15 +507,7 @@ mod processing {
             |tasks: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
                     let result = task
-                        .execute(
-                            None,
-                            &[],
-                            &[],
-                            &None,
-                            cx.clone(),
-                            sc.clone(),
-                            CancellationToken::new(),
-                        )
+                        .execute(ExecuteContext::unbound(cx.clone(), sc.clone()))
                         .await?;
                     assert_eq!(
                         result.as_string().expect("Task returns string value"),
@@ -569,7 +523,7 @@ mod processing {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        elements::{ElTarget, Element, Function, Task},
+        elements::{Element, ElementRef, Function, Task},
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
@@ -605,17 +559,17 @@ mod proptest {
                     prop::collection::vec(
                         Element::arbitrary_with((
                             vec![
-                                ElTarget::Values,
-                                ElTarget::Function,
-                                ElTarget::If,
-                                ElTarget::PatternString,
-                                ElTarget::Reference,
-                                ElTarget::Comparing,
-                                ElTarget::VariableName,
-                                ElTarget::Command,
-                                ElTarget::Integer,
-                                ElTarget::Boolean,
-                                ElTarget::SimpleString,
+                                ElementRef::Values,
+                                ElementRef::Function,
+                                ElementRef::If,
+                                ElementRef::PatternString,
+                                ElementRef::Reference,
+                                ElementRef::Comparing,
+                                ElementRef::VariableName,
+                                ElementRef::Command,
+                                ElementRef::Integer,
+                                ElementRef::Boolean,
+                                ElementRef::SimpleString,
                             ],
                             deep,
                         )),

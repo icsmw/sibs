@@ -1,12 +1,10 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValueExpectation,
+        Processing, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -20,7 +18,7 @@ pub struct Values {
 
 impl TryDissect<Values> for Values {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Values>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::Values);
+        let close = reader.open_token(ElementRef::Values);
         if reader
             .group()
             .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
@@ -40,16 +38,16 @@ impl TryDissect<Values> for Values {
         while let Some(el) = Element::include(
             &mut inner,
             &[
-                ElTarget::Command,
-                ElTarget::Function,
-                ElTarget::If,
-                ElTarget::PatternString,
-                ElTarget::Reference,
-                ElTarget::Values,
-                ElTarget::Comparing,
-                ElTarget::VariableName,
-                ElTarget::Integer,
-                ElTarget::Boolean,
+                ElementRef::Command,
+                ElementRef::Function,
+                ElementRef::If,
+                ElementRef::PatternString,
+                ElementRef::Reference,
+                ElementRef::Values,
+                ElementRef::Comparing,
+                ElementRef::VariableName,
+                ElementRef::Integer,
+                ElementRef::Boolean,
             ],
         )? {
             if inner.move_to().char(&[&chars::COMMA]).is_none() && !inner.rest().trim().is_empty() {
@@ -95,20 +93,24 @@ impl Formation for Values {
         if self.to_string().len() > cursor.max_len() && self.elements.len() > cursor.max_items() {
             format!(
                 "{}(\n{}\n{})",
-                cursor.offset_as_string_if(&[ElTarget::Block]),
+                cursor.offset_as_string_if(&[ElementRef::Block]),
                 self.elements
                     .iter()
                     .map(|v| format!(
                         "{}{}",
                         cursor.right().offset_as_string(),
-                        v.format(&mut cursor.reown(Some(ElTarget::Values)).right())
+                        v.format(&mut cursor.reown(Some(ElementRef::Values)).right())
                     ))
                     .collect::<Vec<String>>()
                     .join(",\n"),
-                cursor.offset_as_string_if(&[ElTarget::Block, ElTarget::Function])
+                cursor.offset_as_string_if(&[ElementRef::Block, ElementRef::Function])
             )
         } else {
-            format!("{}{}", cursor.offset_as_string_if(&[ElTarget::Block]), self)
+            format!(
+                "{}{}",
+                cursor.offset_as_string_if(&[ElementRef::Block]),
+                self
+            )
         }
     }
 }
@@ -166,32 +168,14 @@ impl TryExpectedValueType for Values {
     }
 }
 
+impl Processing for Values {}
+
 impl TryExecute for Values {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let mut values: Vec<Value> = Vec::new();
             for el in self.elements.iter() {
-                values.push(
-                    el.execute(
-                        owner,
-                        components,
-                        args,
-                        prev,
-                        cx.clone(),
-                        sc.clone(),
-                        token.clone(),
-                    )
-                    .await?,
-                );
+                values.push(el.execute(cx.clone()).await?);
             }
             Ok(Value::Vec(values))
         })
@@ -201,9 +185,9 @@ impl TryExecute for Values {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::Values,
+        elements::{TokenGetter, Values},
         error::LinkedErr,
-        inf::{operator::TokenGetter, tests::*, Configuration},
+        inf::{tests::*, Configuration},
         read_string,
         reader::{Dissect, Reader, Sources, E},
     };
@@ -283,14 +267,13 @@ mod reading {
 
 #[cfg(test)]
 mod processing {
-    use tokio_util::sync::CancellationToken;
 
     use crate::{
-        elements::{ElTarget, Element},
+        elements::{Element, ElementRef},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
-            Configuration, Context, Journal, Scope, Value,
+            Configuration, Context, ExecuteContext, Journal, Scope, Value,
         },
         process_string, read_string,
         reader::{chars, Reader, Sources},
@@ -314,7 +297,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut components: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElTarget::Component]))?
+                    src.report_err_if(Element::include(reader, &[ElementRef::Component]))?
                 {
                     components.push(task);
                 }
@@ -327,7 +310,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                    src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
                 {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
@@ -337,13 +320,9 @@ mod processing {
             |tasks: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
                     task.execute(
-                        components.first(),
-                        &components,
-                        &[],
-                        &None,
-                        cx.clone(),
-                        sc.clone(),
-                        CancellationToken::new(),
+                        ExecuteContext::unbound(cx.clone(), sc.clone())
+                            .owner(components.first())
+                            .components(&components),
                     )
                     .await?;
                 }
@@ -376,7 +355,7 @@ mod processing {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        elements::values::{ElTarget, Element, Values},
+        elements::values::{Element, ElementRef, Values},
         inf::tests::*,
     };
     use proptest::prelude::*;
@@ -390,19 +369,23 @@ mod proptest {
             prop::collection::vec(
                 Element::arbitrary_with((
                     if deep > MAX_DEEP {
-                        vec![ElTarget::VariableName, ElTarget::Integer, ElTarget::Boolean]
+                        vec![
+                            ElementRef::VariableName,
+                            ElementRef::Integer,
+                            ElementRef::Boolean,
+                        ]
                     } else {
                         vec![
-                            ElTarget::Command,
-                            ElTarget::Function,
-                            ElTarget::If,
-                            ElTarget::PatternString,
-                            ElTarget::Reference,
-                            ElTarget::Values,
-                            ElTarget::Comparing,
-                            ElTarget::VariableName,
-                            ElTarget::Integer,
-                            ElTarget::Boolean,
+                            ElementRef::Command,
+                            ElementRef::Function,
+                            ElementRef::If,
+                            ElementRef::PatternString,
+                            ElementRef::Reference,
+                            ElementRef::Values,
+                            ElementRef::Comparing,
+                            ElementRef::VariableName,
+                            ElementRef::Integer,
+                            ElementRef::Boolean,
                         ]
                     },
                     deep,

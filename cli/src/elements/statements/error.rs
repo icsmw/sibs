@@ -1,12 +1,10 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValueExpectation,
+        Processing, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -20,11 +18,11 @@ pub struct Error {
 
 impl TryDissect<Error> for Error {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Error>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::Error);
+        let close = reader.open_token(ElementRef::Error);
         if reader.move_to().word(&[words::ERROR]).is_none() {
             return Ok(None);
         };
-        let output = Element::include(reader, &[ElTarget::PatternString])?
+        let output = Element::include(reader, &[ElementRef::PatternString])?
             .ok_or(E::NoErrorMessageDefinition.by_reader(reader))?;
         Ok(Some(Error {
             token: close(reader),
@@ -45,7 +43,7 @@ impl Formation for Error {
     fn format(&self, cursor: &mut FormationCursor) -> String {
         format!(
             "{}{} {}",
-            cursor.offset_as_string_if(&[ElTarget::Block]),
+            cursor.offset_as_string_if(&[ElementRef::Block]),
             words::ERROR,
             self.output.format(cursor)
         )
@@ -100,21 +98,14 @@ impl TryExpectedValueType for Error {
     }
 }
 
+impl Processing for Error {}
+
 impl TryExecute for Error {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             Ok(Value::Error(
                 self.output
-                    .execute(owner, components, args, prev, cx, sc, token)
+                    .execute(cx)
                     .await?
                     .as_string()
                     .ok_or(operator::E::NotStringInError.linked(&self.output.token()))?,
@@ -127,7 +118,7 @@ impl TryExecute for Error {
 mod proptest {
 
     use crate::{
-        elements::{ElTarget, Element, Error, Metadata, Return, Task},
+        elements::{Element, ElementRef, Error, Metadata, Return, Task},
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
@@ -140,7 +131,7 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
-            Element::arbitrary_with((vec![ElTarget::PatternString], deep))
+            Element::arbitrary_with((vec![ElementRef::PatternString], deep))
                 .prop_map(|output| Error {
                     output: Box::new(output),
                     token: 0,

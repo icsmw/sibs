@@ -1,12 +1,10 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{string, ElTarget, Element},
+    elements::{string, Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValueExpectation,
+        Processing, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -21,7 +19,7 @@ pub struct PatternString {
 impl TryDissect<PatternString> for PatternString {
     fn try_dissect(reader: &mut Reader) -> Result<Option<PatternString>, LinkedErr<E>> {
         if let Some((_, elements, token)) =
-            string::read(reader, chars::QUOTES, ElTarget::PatternString)?
+            string::read(reader, chars::QUOTES, ElementRef::PatternString)?
         {
             Ok(Some(PatternString { elements, token }))
         } else {
@@ -57,13 +55,13 @@ impl Formation for PatternString {
         self.elements.len()
     }
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        let mut inner = cursor.reown(Some(ElTarget::PatternString));
+        let mut inner = cursor.reown(Some(ElementRef::PatternString));
         if self.to_string().len() > cursor.max_len()
             || self.elements.len() > cursor.max_inline_injections()
         {
             format!(
                 "{}\"{}\"",
-                cursor.offset_as_string_if(&[ElTarget::Block]),
+                cursor.offset_as_string_if(&[ElementRef::Block]),
                 self.elements
                     .iter()
                     .map(|el| {
@@ -82,7 +80,10 @@ impl Formation for PatternString {
                     .join("")
             )
         } else {
-            format!("{}{self}", cursor.offset_as_string_if(&[ElTarget::Block]),)
+            format!(
+                "{}{self}",
+                cursor.offset_as_string_if(&[ElementRef::Block]),
+            )
         }
     }
 }
@@ -130,17 +131,10 @@ impl TryExpectedValueType for PatternString {
     }
 }
 
+impl Processing for PatternString {}
+
 impl TryExecute for PatternString {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let mut output = String::new();
             for element in self.elements.iter() {
@@ -150,15 +144,7 @@ impl TryExecute for PatternString {
                     output = format!(
                         "{output}{}",
                         element
-                            .execute(
-                                owner,
-                                components,
-                                args,
-                                prev,
-                                cx.clone(),
-                                sc.clone(),
-                                token.clone()
-                            )
+                            .execute(cx.clone())
                             .await?
                             .as_string()
                             .ok_or(operator::E::FailToGetValueAsString)?
@@ -173,9 +159,9 @@ impl TryExecute for PatternString {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::PatternString,
+        elements::{PatternString, TokenGetter},
         error::LinkedErr,
-        inf::{operator::TokenGetter, tests::*, Configuration},
+        inf::{tests::*, Configuration},
         read_string,
         reader::{Dissect, Reader, Sources, E},
     };
@@ -242,7 +228,7 @@ mod reading {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        elements::{ElTarget, Element, Metadata, PatternString, SimpleString},
+        elements::{Element, ElementRef, Metadata, PatternString, SimpleString},
         inf::tests::MAX_DEEP,
     };
     use proptest::prelude::*;
@@ -277,13 +263,17 @@ mod proptest {
                 (
                     prop::collection::vec(
                         Element::arbitrary_with((
-                            vec![ElTarget::VariableName, ElTarget::Function, ElTarget::If],
+                            vec![
+                                ElementRef::VariableName,
+                                ElementRef::Function,
+                                ElementRef::If,
+                            ],
                             deep,
                         )),
                         0..=2,
                     ),
                     prop::collection::vec(
-                        Element::arbitrary_with((vec![ElTarget::SimpleString], deep)),
+                        Element::arbitrary_with((vec![ElementRef::SimpleString], deep)),
                         3,
                     ),
                 )

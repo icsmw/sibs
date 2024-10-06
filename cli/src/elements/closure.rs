@@ -2,11 +2,11 @@ use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
 
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
-        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
+        Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
+        Formation, FormationCursor, LinkingResult, PrevValueExpectation, Processing, Scope,
         TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
@@ -42,7 +42,7 @@ impl Closure {
     ) -> ExecutePinnedResult {
         Box::pin(async move {
             self.block
-                .execute(None, &[], &[], &None, cx, sc, token)
+                .execute(ExecuteContext::unbound(cx, sc).token(token))
                 .await
         })
     }
@@ -51,7 +51,7 @@ impl Closure {
 impl TryDissect<Closure> for Closure {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
         reader.move_to().any();
-        let close = reader.open_token(ElTarget::Closure);
+        let close = reader.open_token(ElementRef::Closure);
         if reader
             .group()
             .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
@@ -60,12 +60,12 @@ impl TryDissect<Closure> for Closure {
             return Ok(None);
         }
         let mut args_inner = reader.token()?.bound;
-        let Some(block) = Element::include(reader, &[ElTarget::Block])? else {
+        let Some(block) = Element::include(reader, &[ElementRef::Block])? else {
             return Ok(None);
         };
         let mut args = Vec::new();
         while !args_inner.is_empty() {
-            if let Some(el) = Element::include(&mut args_inner, &[ElTarget::VariableName])? {
+            if let Some(el) = Element::include(&mut args_inner, &[ElementRef::VariableName])? {
                 if args_inner.move_to().char(&[&chars::COMMA]).is_none() && !args_inner.is_empty() {
                     Err(E::MissedComma.by_reader(&args_inner))?;
                 }
@@ -107,7 +107,7 @@ impl Formation for Closure {
     fn format(&self, cursor: &mut FormationCursor) -> String {
         let output = format!(
             "{}{}",
-            cursor.offset_as_string_if(&[ElTarget::Block, ElTarget::Component]),
+            cursor.offset_as_string_if(&[ElementRef::Block, ElementRef::Component]),
             self
         );
         format!(
@@ -175,48 +175,17 @@ impl TryExpectedValueType for Closure {
     }
 }
 
+impl Processing for Closure {}
+
 impl TryExecute for Closure {
-    fn try_execute<'a>(
-        &'a self,
-        _owner: Option<&'a Element>,
-        _components: &'a [Element],
-        _inputs: &'a [Value],
-        _prev: &'a Option<PrevValue>,
-        _cx: Context,
-        _sc: Scope,
-        _token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
-        Box::pin(async move {
-            Ok(Value::Closure(self.uuid))
-            // let blk = self.block.clone();
-            // let names = self
-            //     .args
-            //     .iter()
-            //     .filter_map(|el| {
-            //         if let Element::VariableName(el, _) = el {
-            //             Some(el.get_name())
-            //         } else {
-            //             None
-            //         }
-            //     })
-            //     .collect::<Vec<String>>();
-            // let factory = move || {
-            //     let cxc = cx.clone();
-            //     let scc = sc.clone();
-            //     let tokenc = token.clone();
-            //     async move {
-            //         blk.execute(owner, components, inputs, prev, cxc, scc, tokenc)
-            //             .await
-            //     }
-            // };
-            // todo!("Not implemented");
-        })
+    fn try_execute<'a>(&'a self, _cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
+        Box::pin(async move { Ok(Value::Closure(self.uuid)) })
     }
 }
 
 #[cfg(test)]
 mod proptest {
-    use crate::elements::{Closure, ElTarget, Element};
+    use crate::elements::{Closure, Element, ElementRef};
     use proptest::prelude::*;
     use uuid::Uuid;
 
@@ -226,9 +195,9 @@ mod proptest {
 
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             (
-                Element::arbitrary_with((vec![ElTarget::Block], deep)),
+                Element::arbitrary_with((vec![ElementRef::Block], deep)),
                 prop::collection::vec(
-                    Element::arbitrary_with((vec![ElTarget::VariableName], deep)),
+                    Element::arbitrary_with((vec![ElementRef::VariableName], deep)),
                     0..=3,
                 ),
             )

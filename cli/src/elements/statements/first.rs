@@ -1,12 +1,10 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
-        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
-        TryExecute, TryExpectedValueType, Value, VerificationResult,
+        Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
+        Formation, FormationCursor, LinkingResult, PrevValueExpectation, Processing, TryExecute,
+        TryExpectedValueType, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -20,13 +18,13 @@ pub struct First {
 
 impl TryDissect<First> for First {
     fn try_dissect(reader: &mut Reader) -> Result<Option<First>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::First);
+        let close = reader.open_token(ElementRef::First);
         if reader.move_to().word(&[words::FIRST]).is_some() {
-            let Some(mut block) = Element::include(reader, &[ElTarget::Block])? else {
+            let Some(mut block) = Element::include(reader, &[ElementRef::Block])? else {
                 return Err(E::NoFIRSTStatementBody.by_reader(reader));
             };
             if let Element::Block(block, _) = &mut block {
-                block.set_owner(ElTarget::First);
+                block.set_owner(ElementRef::First);
             }
             Ok(Some(First {
                 block: Box::new(block),
@@ -48,10 +46,10 @@ impl fmt::Display for First {
 
 impl Formation for First {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        let mut inner = cursor.reown(Some(ElTarget::First));
+        let mut inner = cursor.reown(Some(ElementRef::First));
         format!(
             "{}first {}",
-            cursor.offset_as_string_if(&[ElTarget::Block]),
+            cursor.offset_as_string_if(&[ElementRef::Block]),
             self.block.format(&mut inner)
         )
     }
@@ -94,31 +92,20 @@ impl TryExpectedValueType for First {
     }
 }
 
+impl Processing for First {}
+
 impl TryExecute for First {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
-        Box::pin(async move {
-            self.block
-                .execute(owner, components, args, prev, cx, sc, token)
-                .await
-        })
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
+        Box::pin(async move { self.block.execute(cx).await })
     }
 }
 
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::First,
+        elements::{First, TokenGetter},
         error::LinkedErr,
-        inf::{tests::*, Configuration, TokenGetter},
+        inf::{tests::*, Configuration},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -192,14 +179,12 @@ mod reading {
 
 #[cfg(test)]
 mod processing {
-    use tokio_util::sync::CancellationToken;
-
     use crate::{
-        elements::{ElTarget, Element},
+        elements::{Element, ElementRef},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
-            Configuration, Context, Journal, Scope,
+            Configuration, Context, ExecuteContext, Journal, Scope,
         },
         process_string,
         reader::{chars, Reader, Sources},
@@ -213,7 +198,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                    src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
                 {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
@@ -223,15 +208,7 @@ mod processing {
             |tasks: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
                     let result = task
-                        .execute(
-                            None,
-                            &[],
-                            &[],
-                            &None,
-                            cx.clone(),
-                            sc.clone(),
-                            CancellationToken::new(),
-                        )
+                        .execute(ExecuteContext::unbound(cx.clone(), sc.clone()))
                         .await?;
                     assert_eq!(
                         result.as_string().expect("Task returns string value"),
@@ -248,7 +225,7 @@ mod processing {
 mod proptest {
 
     use crate::{
-        elements::{ElTarget, Element, First, Task},
+        elements::{Element, ElementRef, First, Task},
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
@@ -261,7 +238,7 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
-            Element::arbitrary_with((vec![ElTarget::Block], deep))
+            Element::arbitrary_with((vec![ElementRef::Block], deep))
                 .prop_map(|block| First {
                     block: Box::new(block),
                     token: 0,

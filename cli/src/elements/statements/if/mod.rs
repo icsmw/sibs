@@ -4,15 +4,13 @@ pub mod subsequence;
 pub use condition::*;
 pub use subsequence::*;
 
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValueExpectation,
+        Processing, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -95,45 +93,22 @@ impl TryExpectedValueType for Thread {
 }
 
 impl TryExecute for Thread {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             match self {
                 Self::If(subsequence, block) => {
                     if *subsequence
-                        .execute(
-                            owner,
-                            components,
-                            args,
-                            prev,
-                            cx.clone(),
-                            sc.clone(),
-                            token.clone(),
-                        )
+                        .execute(cx.clone())
                         .await?
                         .get::<bool>()
                         .ok_or(operator::E::NoBoolResultFromProviso)?
                     {
-                        block
-                            .execute(owner, components, args, prev, cx, sc, token)
-                            .await
+                        block.execute(cx).await
                     } else {
                         Ok(Value::empty())
                     }
                 }
-                Self::Else(block) => {
-                    block
-                        .execute(owner, components, args, prev, cx, sc, token)
-                        .await
-                }
+                Self::Else(block) => block.execute(cx).await,
             }
         })
     }
@@ -163,13 +138,13 @@ impl Formation for Thread {
         match self {
             Self::If(el, block) => format!(
                 "{}if {} {}",
-                cursor.offset_as_string_if(&[ElTarget::Block]),
+                cursor.offset_as_string_if(&[ElementRef::Block]),
                 el.format(cursor),
                 block.format(cursor)
             ),
             Self::Else(block) => format!(
                 "{}else {}",
-                cursor.offset_as_string_if(&[ElTarget::Block]),
+                cursor.offset_as_string_if(&[ElementRef::Block]),
                 block.format(cursor)
             ),
         }
@@ -185,20 +160,22 @@ pub struct If {
 impl TryDissect<If> for If {
     fn try_dissect(reader: &mut Reader) -> Result<Option<If>, LinkedErr<E>> {
         let mut threads: Vec<Thread> = Vec::new();
-        let close = reader.open_token(ElTarget::If);
+        let close = reader.open_token(ElementRef::If);
         while !reader.rest().trim().is_empty() {
             if reader.move_to().word(&[words::IF]).is_some() {
-                let conditions =
-                    Element::include(reader, &[ElTarget::IfSubsequence, ElTarget::IfCondition])?
-                        .ok_or(E::NoConditionForIfStatement.by_reader(reader))?;
-                let block = Element::include(reader, &[ElTarget::Block])?
+                let conditions = Element::include(
+                    reader,
+                    &[ElementRef::IfSubsequence, ElementRef::IfCondition],
+                )?
+                .ok_or(E::NoConditionForIfStatement.by_reader(reader))?;
+                let block = Element::include(reader, &[ElementRef::Block])?
                     .ok_or(E::NoBlockForIfStatement.by_reader(reader))?;
                 threads.push(Thread::If(conditions, block));
             } else if reader.move_to().word(&[words::ELSE]).is_some() {
                 if threads.is_empty() {
                     Err(E::NoMainBlockForIfStatement.by_reader(reader))?;
                 }
-                let block = Element::include(reader, &[ElTarget::Block])?
+                let block = Element::include(reader, &[ElementRef::Block])?
                     .ok_or(E::NoBlockForIfStatement.by_reader(reader))?;
                 threads.push(Thread::Else(block));
             } else {
@@ -237,10 +214,10 @@ impl Formation for If {
         self.threads.iter().map(|th| th.elements_count()).sum()
     }
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        let mut inner = cursor.reown(Some(ElTarget::If));
+        let mut inner = cursor.reown(Some(ElementRef::If));
         format!(
             "{}{}",
-            cursor.offset_as_string_if(&[ElTarget::Block]),
+            cursor.offset_as_string_if(&[ElementRef::Block]),
             self.threads
                 .iter()
                 .map(|el| el.format(&mut inner))
@@ -310,30 +287,13 @@ impl TryExpectedValueType for If {
     }
 }
 
+impl Processing for If {}
+
 impl TryExecute for If {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             for thread in self.threads.iter() {
-                let output = thread
-                    .try_execute(
-                        owner,
-                        components,
-                        args,
-                        prev,
-                        cx.clone(),
-                        sc.clone(),
-                        token.clone(),
-                    )
-                    .await?;
+                let output = thread.try_execute(cx.clone()).await?;
                 if !output.is_empty() {
                     return Ok(output);
                 }
@@ -346,9 +306,9 @@ impl TryExecute for If {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::{If, Thread},
+        elements::{If, Thread, TokenGetter},
         error::LinkedErr,
-        inf::{tests::*, Configuration, TokenGetter},
+        inf::{tests::*, Configuration},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -444,13 +404,11 @@ mod reading {
 
 #[cfg(test)]
 mod processing {
-    use tokio_util::sync::CancellationToken;
-
     use crate::{
-        elements::{ElTarget, Element},
+        elements::{Element, ElementRef},
         error::LinkedErr,
         inf::{
-            operator::{Execute, E},
+            operator::{Execute, ExecuteContext, E},
             Configuration, Context, Journal, Scope,
         },
         process_string,
@@ -468,7 +426,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                    src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
                 {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
@@ -478,15 +436,7 @@ mod processing {
             |tasks: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for (i, task) in tasks.iter().enumerate() {
                     let result = task
-                        .execute(
-                            None,
-                            &[],
-                            &[],
-                            &None,
-                            cx.clone(),
-                            sc.clone(),
-                            CancellationToken::new(),
-                        )
+                        .execute(ExecuteContext::unbound(cx.clone(), sc.clone()))
                         .await?;
                     assert_eq!(
                         result.as_string().expect("if returns string value"),
@@ -506,7 +456,7 @@ mod processing {
 mod proptest {
 
     use crate::{
-        elements::{task::Task, ElTarget, Element, If, Thread},
+        elements::{task::Task, Element, ElementRef, If, Thread},
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
@@ -522,15 +472,15 @@ mod proptest {
             if target == 0 {
                 (
                     Element::arbitrary_with((
-                        vec![ElTarget::IfSubsequence, ElTarget::IfCondition],
+                        vec![ElementRef::IfSubsequence, ElementRef::IfCondition],
                         deep,
                     )),
-                    Element::arbitrary_with((vec![ElTarget::Block], deep)),
+                    Element::arbitrary_with((vec![ElementRef::Block], deep)),
                 )
                     .prop_map(|(subsequence, block)| Thread::If(subsequence, block))
                     .boxed()
             } else {
-                Element::arbitrary_with((vec![ElTarget::Block], deep))
+                Element::arbitrary_with((vec![ElementRef::Block], deep))
                     .prop_map(Thread::Else)
                     .boxed()
             }

@@ -1,11 +1,9 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, ExecutePinnedResult, ExpectedResult, Formation, FormationCursor,
-        LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter, TryExecute,
+        operator, Context, ExecuteContext, ExecutePinnedResult, ExpectedResult, Formation,
+        FormationCursor, LinkingResult, PrevValueExpectation, Processing, TryExecute,
         TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
@@ -41,7 +39,7 @@ pub struct VariableType {
 
 impl TryDissect<VariableType> for VariableType {
     fn try_dissect(reader: &mut Reader) -> Result<Option<VariableType>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::VariableType);
+        let close = reader.open_token(ElementRef::VariableType);
         if reader.move_to().char(&[&chars::OPEN_CURLY_BRACE]).is_none() {
             return Ok(None);
         }
@@ -122,22 +120,15 @@ impl TryExpectedValueType for VariableType {
     }
 }
 
+impl Processing for VariableType {}
+
 impl TryExecute for VariableType {
-    fn try_execute<'a>(
-        &'a self,
-        _owner: Option<&'a Element>,
-        _components: &'a [Element],
-        args: &'a [Value],
-        _prev: &'a Option<PrevValue>,
-        _cx: Context,
-        _sc: Scope,
-        _token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
-            let value = if args.len() != 1 {
+            let value = if cx.args.len() != 1 {
                 Err(operator::E::InvalidNumberOfArgumentsForDeclaration)?
             } else {
-                args[0].to_owned()
+                cx.args[0].to_owned()
             };
             Ok(match &self.var_type {
                 Types::String => {

@@ -1,12 +1,10 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, VerificationResult,
+        operator, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValueExpectation,
+        Processing, TryExecute, TryExpectedValueType, Value, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -23,29 +21,15 @@ impl VariableDeclaration {
     #[allow(clippy::too_many_arguments)]
     pub async fn get_val<'a>(
         &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
+        cx: ExecuteContext<'a>,
     ) -> Result<Value, LinkedErr<operator::E>> {
-        let input = if args.len() != 1 {
+        let input = if cx.args.len() != 1 {
             Err(operator::E::InvalidNumberOfArgumentsForDeclaration)?
         } else {
-            args[0].to_owned()
+            cx.args[0].to_owned()
         };
         self.declaration
-            .execute(
-                owner,
-                components,
-                &[input.clone()],
-                prev,
-                cx.clone(),
-                sc.clone(),
-                token.clone(),
-            )
+            .execute(cx.clone().args(&[input.clone()]))
             .await?
             .not_empty_or(
                 operator::E::NoValueToDeclareTaskArgument.linked(&self.declaration.token()),
@@ -55,8 +39,8 @@ impl VariableDeclaration {
 
 impl TryDissect<VariableDeclaration> for VariableDeclaration {
     fn try_dissect(reader: &mut Reader) -> Result<Option<VariableDeclaration>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::VariableDeclaration);
-        let Some(variable) = Element::include(reader, &[ElTarget::VariableName])? else {
+        let close = reader.open_token(ElementRef::VariableDeclaration);
+        let Some(variable) = Element::include(reader, &[ElementRef::VariableName])? else {
             return Ok(None);
         };
         if reader.move_to().char(&[&chars::COLON]).is_none() {
@@ -64,7 +48,7 @@ impl TryDissect<VariableDeclaration> for VariableDeclaration {
         }
         if let Some(declaration) = Element::include(
             reader,
-            &[ElTarget::VariableType, ElTarget::VariableVariants],
+            &[ElementRef::VariableType, ElementRef::VariableVariants],
         )? {
             Ok(Some(VariableDeclaration {
                 variable: Box::new(variable),
@@ -134,28 +118,21 @@ impl TryExpectedValueType for VariableDeclaration {
     }
 }
 
+impl Processing for VariableDeclaration {}
+
 impl TryExecute for VariableDeclaration {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
-            sc.set_var(
-                if let Element::VariableName(el, _) = self.variable.as_ref() {
-                    &el.name
-                } else {
-                    Err(operator::E::FailToGetDeclaredVariable)?
-                },
-                self.get_val(owner, components, args, prev, cx, sc.clone(), token)
-                    .await?,
-            )
-            .await?;
+            cx.sc
+                .set_var(
+                    if let Element::VariableName(el, _) = self.variable.as_ref() {
+                        &el.name
+                    } else {
+                        Err(operator::E::FailToGetDeclaredVariable)?
+                    },
+                    self.get_val(cx.clone()).await?,
+                )
+                .await?;
             Ok(Value::empty())
         })
     }
@@ -175,7 +152,7 @@ impl Formation for VariableDeclaration {
 
 #[cfg(test)]
 mod proptest {
-    use crate::elements::{ElTarget, Element, VariableDeclaration};
+    use crate::elements::{Element, ElementRef, VariableDeclaration};
     use proptest::prelude::*;
 
     impl Arbitrary for VariableDeclaration {
@@ -185,10 +162,10 @@ mod proptest {
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             (
                 Element::arbitrary_with((
-                    vec![ElTarget::VariableType, ElTarget::VariableVariants],
+                    vec![ElementRef::VariableType, ElementRef::VariableVariants],
                     deep,
                 )),
-                Element::arbitrary_with((vec![ElTarget::VariableName], deep)),
+                Element::arbitrary_with((vec![ElementRef::VariableName], deep)),
             )
                 .prop_map(move |(declaration, variable)| VariableDeclaration {
                     declaration: Box::new(declaration),

@@ -1,12 +1,10 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValueExpectation,
+        Processing, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -62,15 +60,15 @@ pub struct Comparing {
 
 impl TryDissect<Comparing> for Comparing {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Comparing>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::Comparing);
+        let close = reader.open_token(ElementRef::Comparing);
         let left = if let Some(el) = Element::include(
             reader,
             &[
-                ElTarget::VariableName,
-                ElTarget::Function,
-                ElTarget::PatternString,
-                ElTarget::Integer,
-                ElTarget::Boolean,
+                ElementRef::VariableName,
+                ElementRef::Function,
+                ElementRef::PatternString,
+                ElementRef::Integer,
+                ElementRef::Boolean,
             ],
         )? {
             Box::new(el)
@@ -92,11 +90,11 @@ impl TryDissect<Comparing> for Comparing {
         let right = if let Some(el) = Element::include(
             reader,
             &[
-                ElTarget::VariableName,
-                ElTarget::Function,
-                ElTarget::PatternString,
-                ElTarget::Integer,
-                ElTarget::Boolean,
+                ElementRef::VariableName,
+                ElementRef::Function,
+                ElementRef::PatternString,
+                ElementRef::Integer,
+                ElementRef::Boolean,
             ],
         )? {
             Box::new(el)
@@ -122,7 +120,11 @@ impl fmt::Display for Comparing {
 
 impl Formation for Comparing {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        format!("{}{}", cursor.offset_as_string_if(&[ElTarget::Block]), self)
+        format!(
+            "{}{}",
+            cursor.offset_as_string_if(&[ElementRef::Block]),
+            self
+        )
     }
 }
 
@@ -175,34 +177,13 @@ impl TryExpectedValueType for Comparing {
     }
 }
 
+impl Processing for Comparing {}
+
 impl TryExecute for Comparing {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
-            let left = self
-                .left
-                .execute(
-                    owner,
-                    components,
-                    args,
-                    prev,
-                    cx.clone(),
-                    sc.clone(),
-                    token.clone(),
-                )
-                .await?;
-            let right = self
-                .right
-                .execute(owner, components, args, prev, cx, sc, token)
-                .await?;
+            let left = self.left.execute(cx.clone()).await?;
+            let right = self.right.execute(cx).await?;
             Ok(match self.cmp {
                 Cmp::LeftBig | Cmp::RightBig => {
                     let left = left.as_num().ok_or(operator::E::FailToGetIntegerValue)?;
@@ -237,9 +218,9 @@ impl TryExecute for Comparing {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::{Comparing, ElTarget, Element},
+        elements::{Comparing, Element, ElementRef, TokenGetter},
         error::LinkedErr,
-        inf::{tests::*, Configuration, TokenGetter},
+        inf::{tests::*, Configuration},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -257,7 +238,7 @@ mod reading {
                 str,
                 |reader: &mut Reader, src: &mut Sources| {
                     let entity =
-                        src.report_err_if(Element::include(reader, &[ElTarget::Comparing]))?;
+                        src.report_err_if(Element::include(reader, &[ElementRef::Comparing]))?;
                     assert!(entity.is_some(), "Line: {}", count + 1);
                     let entity = entity.unwrap();
                     assert_eq!(
@@ -287,7 +268,7 @@ mod reading {
                 str,
                 |reader: &mut Reader, src: &mut Sources| {
                     let entity =
-                        src.report_err_if(Element::include(reader, &[ElTarget::Comparing]))?;
+                        src.report_err_if(Element::include(reader, &[ElementRef::Comparing]))?;
                     assert!(entity.is_some(), "Line: {}", count + 1);
                     let entity = entity.unwrap();
                     assert_eq!(
@@ -352,7 +333,7 @@ mod reading {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        elements::{Cmp, Comparing, ElTarget, Element},
+        elements::{Cmp, Comparing, Element, ElementRef},
         inf::tests::MAX_DEEP,
     };
     use proptest::prelude::*;
@@ -382,14 +363,18 @@ mod proptest {
             (
                 Element::arbitrary_with((
                     if deep > MAX_DEEP {
-                        vec![ElTarget::VariableName, ElTarget::Integer, ElTarget::Boolean]
+                        vec![
+                            ElementRef::VariableName,
+                            ElementRef::Integer,
+                            ElementRef::Boolean,
+                        ]
                     } else {
                         vec![
-                            ElTarget::VariableName,
-                            ElTarget::Function,
-                            ElTarget::PatternString,
-                            ElTarget::Integer,
-                            ElTarget::Boolean,
+                            ElementRef::VariableName,
+                            ElementRef::Function,
+                            ElementRef::PatternString,
+                            ElementRef::Integer,
+                            ElementRef::Boolean,
                         ]
                     },
                     deep,
@@ -397,14 +382,18 @@ mod proptest {
                 Cmp::arbitrary(),
                 Element::arbitrary_with((
                     if deep > MAX_DEEP {
-                        vec![ElTarget::VariableName, ElTarget::Integer, ElTarget::Boolean]
+                        vec![
+                            ElementRef::VariableName,
+                            ElementRef::Integer,
+                            ElementRef::Boolean,
+                        ]
                     } else {
                         vec![
-                            ElTarget::VariableName,
-                            ElTarget::Function,
-                            ElTarget::PatternString,
-                            ElTarget::Integer,
-                            ElTarget::Boolean,
+                            ElementRef::VariableName,
+                            ElementRef::Function,
+                            ElementRef::PatternString,
+                            ElementRef::Integer,
+                            ElementRef::Boolean,
                         ]
                     },
                     deep,

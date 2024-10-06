@@ -1,11 +1,9 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
     elements::Element,
     error::LinkedErr,
     inf::{
         journal::{Configuration, Journal},
-        Context, Execute, Scope, Value,
+        Context, Execute, ExecuteContext, Scope, Value,
     },
     process_file,
     reader::{error::E, Reader, Sources},
@@ -26,13 +24,7 @@ async fn reading() {
             };
             assert!(el
                 .execute(
-                    None,
-                    &[],
-                    &[Value::String(String::from("success"))],
-                    &None,
-                    cx,
-                    sc,
-                    CancellationToken::new()
+                    ExecuteContext::unbound(cx, sc).args(&[Value::String(String::from("success"))])
                 )
                 .await
                 .is_ok());

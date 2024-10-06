@@ -1,12 +1,10 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, VerificationResult,
+        operator, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValueExpectation,
+        Processing, TryExecute, TryExpectedValueType, Value, VerificationResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -22,9 +20,9 @@ pub struct VariableAssignation {
 
 impl TryDissect<VariableAssignation> for VariableAssignation {
     fn try_dissect(reader: &mut Reader) -> Result<Option<VariableAssignation>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::VariableAssignation);
+        let close = reader.open_token(ElementRef::VariableAssignation);
         let global = reader.move_to().word(&[words::GLOBAL_VAR]).is_some();
-        if let Some(variable) = Element::include(reader, &[ElTarget::VariableName])? {
+        if let Some(variable) = Element::include(reader, &[ElementRef::VariableName])? {
             let rest = reader.rest().trim();
             if rest.starts_with(words::DO_ON)
                 || rest.starts_with(words::CMP_TRUE)
@@ -36,20 +34,20 @@ impl TryDissect<VariableAssignation> for VariableAssignation {
             let assignation = Element::include(
                 reader,
                 &[
-                    ElTarget::Block,
-                    ElTarget::First,
-                    ElTarget::Function,
-                    ElTarget::If,
-                    ElTarget::PatternString,
-                    ElTarget::Values,
-                    ElTarget::Comparing,
-                    ElTarget::Command,
-                    ElTarget::VariableName,
-                    ElTarget::Integer,
-                    ElTarget::Boolean,
-                    ElTarget::Reference,
-                    ElTarget::Compute,
-                    ElTarget::Join,
+                    ElementRef::Block,
+                    ElementRef::First,
+                    ElementRef::Function,
+                    ElementRef::If,
+                    ElementRef::PatternString,
+                    ElementRef::Values,
+                    ElementRef::Comparing,
+                    ElementRef::Command,
+                    ElementRef::VariableName,
+                    ElementRef::Integer,
+                    ElementRef::Boolean,
+                    ElementRef::Reference,
+                    ElementRef::Compute,
+                    ElementRef::Join,
                 ],
             )?
             .ok_or(E::FailToParseRightSideOfAssignation.by_reader(reader))?;
@@ -87,10 +85,10 @@ impl fmt::Display for VariableAssignation {
 
 impl Formation for VariableAssignation {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        let mut inner = cursor.reown(Some(ElTarget::VariableAssignation));
+        let mut inner = cursor.reown(Some(ElementRef::VariableAssignation));
         format!(
             "{}{} = {}",
-            cursor.offset_as_string_if(&[ElTarget::Block]),
+            cursor.offset_as_string_if(&[ElementRef::Block]),
             self.variable.format(&mut inner),
             self.assignation.format(&mut inner)
         )
@@ -160,30 +158,23 @@ impl TryExpectedValueType for VariableAssignation {
     }
 }
 
+impl Processing for VariableAssignation {}
+
 impl TryExecute for VariableAssignation {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let Element::VariableName(variable, _) = self.variable.as_ref() else {
                 return Err(operator::E::NoVariableName.by(self.variable.as_ref()));
             };
             let value = self
                 .assignation
-                .execute(owner, components, args, prev, cx, sc.clone(), token)
+                .execute(cx.clone())
                 .await?
                 .not_empty_or(operator::E::NoValueToAssign(variable.name.clone()))?;
             if self.global {
-                sc.set_global_var(&variable.name, value).await?;
+                cx.sc.set_global_var(&variable.name, value).await?;
             } else {
-                sc.set_var(&variable.name, value).await?;
+                cx.sc.set_var(&variable.name, value).await?;
             }
             Ok(Value::empty())
         })
@@ -193,9 +184,9 @@ impl TryExecute for VariableAssignation {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::VariableAssignation,
+        elements::{TokenGetter, VariableAssignation},
         error::LinkedErr,
-        inf::{operator::TokenGetter, tests::*, Configuration},
+        inf::{tests::*, Configuration},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -282,14 +273,12 @@ mod reading {
 
 #[cfg(test)]
 mod processing {
-    use tokio_util::sync::CancellationToken;
-
     use crate::{
-        elements::{ElTarget, Element},
+        elements::{Element, ElementRef},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
-            Configuration, Context, Journal, Scope,
+            Configuration, Context, ExecuteContext, Journal, Scope,
         },
         process_string,
         reader::{chars, Reader, Sources},
@@ -313,7 +302,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                    src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
                 {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
@@ -322,16 +311,8 @@ mod processing {
             },
             |tasks: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
-                    task.execute(
-                        None,
-                        &[],
-                        &[],
-                        &None,
-                        cx.clone(),
-                        sc.clone(),
-                        CancellationToken::new(),
-                    )
-                    .await?;
+                    task.execute(ExecuteContext::unbound(cx.clone(), sc.clone()))
+                        .await?;
                 }
                 for (name, value, global) in VALUES.iter() {
                     assert_eq!(
@@ -355,7 +336,7 @@ mod processing {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        elements::{ElTarget, Element, Task, VariableAssignation},
+        elements::{Element, ElementRef, Task, VariableAssignation},
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
@@ -372,34 +353,34 @@ mod proptest {
                 Element::arbitrary_with((
                     if deep > MAX_DEEP {
                         vec![
-                            ElTarget::Function,
-                            ElTarget::PatternString,
-                            ElTarget::Values,
-                            ElTarget::Command,
-                            ElTarget::VariableName,
-                            ElTarget::Integer,
-                            ElTarget::Boolean,
+                            ElementRef::Function,
+                            ElementRef::PatternString,
+                            ElementRef::Values,
+                            ElementRef::Command,
+                            ElementRef::VariableName,
+                            ElementRef::Integer,
+                            ElementRef::Boolean,
                         ]
                     } else {
                         vec![
-                            ElTarget::Block,
-                            ElTarget::First,
-                            ElTarget::Function,
-                            ElTarget::If,
-                            ElTarget::PatternString,
-                            ElTarget::Values,
-                            ElTarget::Comparing,
-                            ElTarget::Command,
-                            ElTarget::VariableName,
-                            ElTarget::Integer,
-                            ElTarget::Boolean,
-                            ElTarget::Reference,
-                            ElTarget::Compute,
+                            ElementRef::Block,
+                            ElementRef::First,
+                            ElementRef::Function,
+                            ElementRef::If,
+                            ElementRef::PatternString,
+                            ElementRef::Values,
+                            ElementRef::Comparing,
+                            ElementRef::Command,
+                            ElementRef::VariableName,
+                            ElementRef::Integer,
+                            ElementRef::Boolean,
+                            ElementRef::Reference,
+                            ElementRef::Compute,
                         ]
                     },
                     deep,
                 )),
-                Element::arbitrary_with((vec![ElTarget::VariableName], deep)),
+                Element::arbitrary_with((vec![ElementRef::VariableName], deep)),
                 prop_oneof![Just(true), Just(false),].boxed(),
             )
                 .prop_map(move |(assignation, variable, global)| VariableAssignation {

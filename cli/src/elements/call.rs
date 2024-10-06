@@ -1,12 +1,10 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, VerificationResult,
+        operator, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValueExpectation,
+        Processing, TryExecute, TryExpectedValueType, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -20,12 +18,12 @@ pub struct Call {
 
 impl TryDissect<Call> for Call {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Call>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::Call);
+        let close = reader.open_token(ElementRef::Call);
         Ok(if reader.move_to().char(&[&chars::DOT]).is_some() {
             if let Some(chars::DOT) = reader.next().char() {
                 None
             } else {
-                let Some(el) = Element::include(reader, &[ElTarget::Function])? else {
+                let Some(el) = Element::include(reader, &[ElementRef::Function])? else {
                     return Err(E::NoCallFunction.linked(&close(reader)));
                 };
                 Some(Call {
@@ -90,31 +88,16 @@ impl TryExpectedValueType for Call {
     }
 }
 
+impl Processing for Call {}
+
 impl TryExecute for Call {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
-            let Some(prev_value) = prev else {
+            let Some(prev_value) = cx.prev else {
                 return Err(operator::E::CallPPMWithoutPrevValue.linked(&self.token));
             };
             self.func
-                .execute(
-                    owner,
-                    components,
-                    args,
-                    &Some(prev_value.clone()),
-                    cx,
-                    sc,
-                    token,
-                )
+                .execute(cx.clone().prev(&Some(prev_value.clone())))
                 .await
         })
     }
@@ -123,14 +106,14 @@ impl TryExecute for Call {
 #[cfg(test)]
 mod proptest {
 
-    use crate::elements::{Call, ElTarget, Element};
+    use crate::elements::{Call, Element, ElementRef};
     use proptest::prelude::*;
 
     impl Arbitrary for Call {
         type Parameters = usize;
         type Strategy = BoxedStrategy<Self>;
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
-            Element::arbitrary_with((vec![ElTarget::Function], deep))
+            Element::arbitrary_with((vec![ElementRef::Function], deep))
                 .prop_map(|el| Call {
                     func: Box::new(el),
                     token: 0,

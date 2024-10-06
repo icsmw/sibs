@@ -1,16 +1,14 @@
 use crate::{
-    elements::{ElTarget, Element, Gatekeeper, SimpleString, Task},
+    elements::{Element, ElementRef, Gatekeeper, SimpleString, Task, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, scenario, Context, Execute, ExecutePinnedResult, ExpectedResult,
-        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValue,
-        PrevValueExpectation, Scope, TokenGetter, TryExecute, TryExpectedValueType, Value,
-        ValueRef, VerificationResult,
+        operator, scenario, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValueExpectation,
+        Processing, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
 use std::{fmt, path::PathBuf};
-use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
@@ -70,7 +68,7 @@ impl Component {
 
 impl TryDissect<Component> for Component {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Component>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::Component);
+        let close = reader.open_token(ElementRef::Component);
         let Some((before, _)) = reader.until().char(&[&chars::POUND_SIGN]) else {
             return Ok(None);
         };
@@ -114,7 +112,8 @@ impl TryDissect<Component> for Component {
         let mut inner = reader.token()?.bound;
         let inner_token_id = reader.token()?.id;
         let mut elements: Vec<Element> = Vec::new();
-        while let Some(el) = Element::include(&mut inner, &[ElTarget::Task, ElTarget::Gatekeeper])?
+        while let Some(el) =
+            Element::include(&mut inner, &[ElementRef::Task, ElementRef::Gatekeeper])?
         {
             let _ = inner.move_to().char(&[&chars::SEMICOLON]);
             elements.push(el);
@@ -165,7 +164,7 @@ impl Formation for Component {
         self.elements.len()
     }
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        let mut inner = cursor.reown(Some(ElTarget::Component)).right();
+        let mut inner = cursor.reown(Some(ElementRef::Component)).right();
         format!(
             "#({}{})\n{}",
             self.name,
@@ -228,19 +227,13 @@ impl TryExpectedValueType for Component {
     }
 }
 
+impl Processing for Component {}
+
 impl TryExecute for Component {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        _sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
-            let task = args
+            let task = cx
+                .args
                 .first()
                 .and_then(|task| task.as_string())
                 .ok_or_else(|| {
@@ -255,44 +248,24 @@ impl TryExecute for Component {
             })?;
             let task = task_el.as_task()?;
             let sc = cx
+                .cx
                 .scope
                 .create(
                     format!("{}:{}", self.name, task.get_name()),
                     self.cwd.clone(),
                 )
                 .await?;
-            let task_ref = task
-                .as_reference(
-                    owner,
-                    components,
-                    &args[1..],
-                    prev,
-                    cx.clone(),
-                    sc.clone(),
-                    token.clone(),
-                )
-                .await?;
-            let skippable = Gatekeeper::skippable(
-                gatekeepers,
-                &task_ref,
-                owner,
-                components,
-                prev,
-                cx.clone(),
-                sc.clone(),
-                token.clone(),
-            )
-            .await?;
+            let inner = cx.clone().sc(sc.clone()).args(&cx.args[1..]);
+            let task_ref = task.as_reference(inner.clone()).await?;
+            let skippable = Gatekeeper::skippable(gatekeepers, &task_ref, cx.clone()).await?;
             if skippable {
-                cx.journal.debug(
+                cx.journal().debug(
                     task.get_name(),
                     format!("{task_ref} will be skipped because gatekeeper conclusion",),
                 );
             }
             let result = if !skippable {
-                task_el
-                    .execute(owner, components, &args[1..], prev, cx, sc.clone(), token)
-                    .await
+                task_el.execute(inner.clone()).await
             } else {
                 Ok(Value::Empty(()))
             };
@@ -305,9 +278,9 @@ impl TryExecute for Component {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::{Component, ElTarget, Element},
+        elements::{Component, Element, ElementRef, TokenGetter},
         error::LinkedErr,
-        inf::{operator::TokenGetter, tests::*, Configuration},
+        inf::{tests::*, Configuration},
         read_string,
         reader::{Dissect, Reader, Sources, E},
     };
@@ -357,7 +330,7 @@ mod reading {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut count = 0;
                 while let Some(el) =
-                    src.report_err_if(Element::include(reader, &[ElTarget::Component]))?
+                    src.report_err_if(Element::include(reader, &[ElementRef::Component]))?
                 {
                     assert!(matches!(el, Element::Component(..)));
                     assert_eq!(
@@ -418,14 +391,12 @@ mod reading {
 
 #[cfg(test)]
 mod processing {
-    use tokio_util::sync::CancellationToken;
-
     use crate::{
-        elements::{ElTarget, Element},
+        elements::{Element, ElementRef},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
-            Configuration, Context, Journal, Scope, Value,
+            Configuration, Context, ExecuteContext, Journal, Scope, Value,
         },
         process_string,
         reader::{Reader, Sources},
@@ -446,7 +417,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut components: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElTarget::Component]))?
+                    src.report_err_if(Element::include(reader, &[ElementRef::Component]))?
                 {
                     components.push(task);
                 }
@@ -456,16 +427,15 @@ mod processing {
                 for (i, component) in components.iter().enumerate() {
                     let result = component
                         .execute(
-                            Some(component),
-                            &components,
-                            &VALUES[i]
-                                .iter()
-                                .map(|s| Value::String(s.to_string()))
-                                .collect::<Vec<Value>>(),
-                            &None,
-                            cx.clone(),
-                            sc.clone(),
-                            CancellationToken::new(),
+                            ExecuteContext::unbound(cx.clone(), sc.clone())
+                                .owner(Some(component))
+                                .components(&components)
+                                .args(
+                                    &VALUES[i]
+                                        .iter()
+                                        .map(|s| Value::String(s.to_string()))
+                                        .collect::<Vec<Value>>(),
+                                ),
                         )
                         .await?;
                     assert_eq!(
@@ -483,7 +453,7 @@ mod processing {
 mod proptest {
     use std::path::PathBuf;
 
-    use crate::elements::{Component, ElTarget, Element, SimpleString};
+    use crate::elements::{Component, Element, ElementRef, SimpleString};
     use proptest::prelude::*;
     use uuid::Uuid;
 
@@ -494,10 +464,16 @@ mod proptest {
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             (
                 "[a-zA-Z]*".prop_map(String::from),
-                prop::collection::vec(Element::arbitrary_with((vec![ElTarget::Task], deep)), 2..6),
-                prop::collection::vec(Element::arbitrary_with((vec![ElTarget::Meta], deep)), 0..3),
                 prop::collection::vec(
-                    Element::arbitrary_with((vec![ElTarget::Function], deep)),
+                    Element::arbitrary_with((vec![ElementRef::Task], deep)),
+                    2..6,
+                ),
+                prop::collection::vec(
+                    Element::arbitrary_with((vec![ElementRef::Meta], deep)),
+                    0..3,
+                ),
+                prop::collection::vec(
+                    Element::arbitrary_with((vec![ElementRef::Function], deep)),
                     0..3,
                 ),
             )

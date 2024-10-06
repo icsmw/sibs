@@ -1,12 +1,10 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{ElTarget, Element, Gatekeeper},
+    elements::{Element, ElementRef, Gatekeeper, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValueExpectation,
+        Processing, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -72,7 +70,7 @@ impl Eq for Reference {}
 
 impl TryDissect<Reference> for Reference {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::Reference);
+        let close = reader.open_token(ElementRef::Reference);
         if reader.move_to().char(&[&chars::COLON]).is_none() {
             return Ok(None);
         }
@@ -116,10 +114,10 @@ impl TryDissect<Reference> for Reference {
             while let Some(el) = Element::include(
                 &mut inner,
                 &[
-                    ElTarget::VariableName,
-                    ElTarget::Integer,
-                    ElTarget::Boolean,
-                    ElTarget::PatternString,
+                    ElementRef::VariableName,
+                    ElementRef::Integer,
+                    ElementRef::Boolean,
+                    ElementRef::PatternString,
                 ],
             )? {
                 inputs.push(el);
@@ -175,7 +173,11 @@ impl fmt::Display for Reference {
 
 impl Formation for Reference {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        format!("{}{}", cursor.offset_as_string_if(&[ElTarget::Block]), self)
+        format!(
+            "{}{}",
+            cursor.offset_as_string_if(&[ElementRef::Block]),
+            self
+        )
     }
 }
 
@@ -254,26 +256,19 @@ impl TryExpectedValueType for Reference {
     }
 }
 
+impl Processing for Reference {}
+
 impl TryExecute for Reference {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        inputs: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
-            let target = owner.ok_or(operator::E::NoOwnerComponent.by(self))?;
+            let target = cx.owner.ok_or(operator::E::NoOwnerComponent.by(self))?;
             let (parent, task) = if self.path.len() == 1 {
                 (target.as_component()?, &self.path[0])
             } else if self.path.len() == 2 {
                 let parent = if self.path[0] == SELF {
                     target
                 } else {
-                    components
+                    cx.components
                         .iter()
                         .find(|c| {
                             if let Ok(c) = c.as_component() {
@@ -289,8 +284,9 @@ impl TryExecute for Reference {
                 return Err(operator::E::InvalidPartsInReference.by(self));
             };
             let scope = cx
+                .cx
                 .scope
-                .create(format!("{}:{task}", parent.name), parent.get_cwd(&cx)?)
+                .create(format!("{}:{task}", parent.name), parent.get_cwd(&cx.cx)?)
                 .await?;
             let (task_el, gatekeepers) = parent.get_task(task).ok_or(
                 operator::E::TaskNotFound(task.to_owned(), parent.name.to_string()).by(self),
@@ -299,50 +295,23 @@ impl TryExecute for Reference {
             let mut args: Vec<Value> = Vec::new();
             for input in self.inputs.iter() {
                 let output = input
-                    .execute(
-                        owner,
-                        components,
-                        inputs,
-                        prev,
-                        cx.clone(),
-                        sc.clone(),
-                        token.clone(),
-                    )
+                    .execute(cx.clone())
                     .await?
                     .not_empty_or(operator::E::FailToGetAnyValueAsTaskArg.by(self))?;
                 args.push(output);
             }
-            let task_ref = task
-                .as_reference(
-                    owner,
-                    components,
-                    &args,
-                    prev,
-                    cx.clone(),
-                    sc.clone(),
-                    token.clone(),
-                )
-                .await?;
-            let skippable = Gatekeeper::skippable(
-                gatekeepers,
-                &task_ref,
-                owner,
-                components,
-                prev,
-                cx.clone(),
-                scope.clone(),
-                token.clone(),
-            )
-            .await?;
+            let task_ref = task.as_reference(cx.clone().args(&args)).await?;
+            let skippable =
+                Gatekeeper::skippable(gatekeepers, &task_ref, cx.clone().sc(scope.clone())).await?;
             if skippable {
-                cx.journal.debug(
+                cx.journal().debug(
                     task.get_name(),
                     format!("{task_ref} will be skipped because gatekeeper conclusion",),
                 );
             }
             let result = if !skippable {
                 task_el
-                    .execute(owner, components, &args, prev, cx, scope.clone(), token)
+                    .execute(cx.clone().args(&args).sc(scope.clone()))
                     .await
             } else {
                 Ok(Value::empty())
@@ -356,9 +325,9 @@ impl TryExecute for Reference {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::Reference,
+        elements::{Reference, TokenGetter},
         error::LinkedErr,
-        inf::{operator::TokenGetter, tests::*, Configuration},
+        inf::{tests::*, Configuration},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -436,7 +405,7 @@ mod reading {
 mod proptest {
 
     use crate::{
-        elements::{ElTarget, Element, Reference},
+        elements::{Element, ElementRef, Reference},
         inf::tests::*,
         reader::words,
     };
@@ -482,10 +451,10 @@ mod proptest {
                     prop::collection::vec(
                         Element::arbitrary_with((
                             vec![
-                                ElTarget::VariableName,
-                                ElTarget::Integer,
-                                ElTarget::Boolean,
-                                ElTarget::PatternString,
+                                ElementRef::VariableName,
+                                ElementRef::Integer,
+                                ElementRef::Boolean,
+                                ElementRef::PatternString,
                             ],
                             deep,
                         )),

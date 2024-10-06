@@ -1,12 +1,12 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValueExpectation,
+        Processing, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -20,13 +20,13 @@ pub struct Loop {
 
 impl TryDissect<Loop> for Loop {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Loop>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::Loop);
+        let close = reader.open_token(ElementRef::Loop);
         if reader.move_to().word(&[words::LOOP]).is_some() {
-            let Some(mut block) = Element::include(reader, &[ElTarget::Block])? else {
+            let Some(mut block) = Element::include(reader, &[ElementRef::Block])? else {
                 return Err(E::NoBodyInForLoop.by_reader(reader));
             };
             if let Element::Block(block, _) = &mut block {
-                block.set_owner(ElTarget::Loop);
+                block.set_owner(ElementRef::Loop);
                 block.set_breaker(CancellationToken::new());
             }
             Ok(Some(Self {
@@ -49,10 +49,10 @@ impl fmt::Display for Loop {
 
 impl Formation for Loop {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        let mut inner = cursor.reown(Some(ElTarget::Loop));
+        let mut inner = cursor.reown(Some(ElementRef::Loop));
         format!(
             "{}{} {}",
-            cursor.offset_as_string_if(&[ElTarget::Block]),
+            cursor.offset_as_string_if(&[ElementRef::Block]),
             words::LOOP,
             self.block.format(&mut inner)
         )
@@ -96,47 +96,30 @@ impl TryExpectedValueType for Loop {
     }
 }
 
+impl Processing for Loop {}
+
 impl TryExecute for Loop {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let blk_token = if let Element::Block(el, _) = self.block.as_ref() {
                 el.get_breaker()?
             } else {
                 return Err(operator::E::BlockElementExpected.linked(&self.block.token()));
             };
-            let (loop_uuid, loop_token) = sc.open_loop(blk_token).await?;
+            let (loop_uuid, loop_token) = cx.sc.open_loop(blk_token).await?;
             let mut n = u64::MIN;
             while n < u64::MAX {
                 if loop_token.is_cancelled() {
                     break;
                 }
                 if n == u64::MAX - 1 {
-                    sc.close_loop(loop_uuid).await?;
+                    cx.sc.close_loop(loop_uuid).await?;
                     return Err(operator::E::MaxIterations.linked(&self.token));
                 }
-                self.block
-                    .execute(
-                        owner,
-                        components,
-                        args,
-                        prev,
-                        cx.clone(),
-                        sc.clone(),
-                        token.clone(),
-                    )
-                    .await?;
+                self.block.execute(cx.clone()).await?;
                 n += 1;
             }
-            sc.close_loop(loop_uuid).await?;
+            cx.sc.close_loop(loop_uuid).await?;
             Ok(Value::Empty(()))
         })
     }
@@ -145,9 +128,9 @@ impl TryExecute for Loop {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::Loop,
+        elements::{Loop, TokenGetter},
         error::LinkedErr,
-        inf::{tests::*, Configuration, TokenGetter},
+        inf::{tests::*, Configuration},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -225,7 +208,7 @@ mod processing {
 mod proptest {
 
     use crate::{
-        elements::{ElTarget, Element, Loop, Task},
+        elements::{Element, ElementRef, Loop, Task},
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
@@ -238,7 +221,7 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
-            Element::arbitrary_with((vec![ElTarget::Block], deep))
+            Element::arbitrary_with((vec![ElementRef::Block], deep))
                 .prop_map(|block| Loop {
                     block: Box::new(block),
                     token: 0,

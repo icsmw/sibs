@@ -1,12 +1,10 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, VerificationResult,
+        operator, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValueExpectation,
+        Processing, TryExecute, TryExpectedValueType, Value, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -24,15 +22,15 @@ impl TryDissect<Optional> for Optional {
         if reader.rest().trim().starts_with(words::DO_ON) {
             return Ok(None);
         }
-        let close = reader.open_token(ElTarget::Optional);
+        let close = reader.open_token(ElementRef::Optional);
         let condition = if let Some(el) = Element::include(
             reader,
             &[
-                ElTarget::Function,
-                ElTarget::VariableName,
-                ElTarget::Block,
-                ElTarget::Reference,
-                ElTarget::Comparing,
+                ElementRef::Function,
+                ElementRef::VariableName,
+                ElementRef::Block,
+                ElementRef::Reference,
+                ElementRef::Comparing,
             ],
         )? {
             Box::new(el)
@@ -48,17 +46,17 @@ impl TryDissect<Optional> for Optional {
         let action = if let Some(el) = Element::include(
             reader,
             &[
-                ElTarget::Function,
-                ElTarget::Reference,
-                ElTarget::VariableAssignation,
-                ElTarget::VariableName,
-                ElTarget::Block,
-                ElTarget::Each,
-                ElTarget::First,
-                ElTarget::PatternString,
-                ElTarget::Command,
-                ElTarget::Integer,
-                ElTarget::Boolean,
+                ElementRef::Function,
+                ElementRef::Reference,
+                ElementRef::VariableAssignation,
+                ElementRef::VariableName,
+                ElementRef::Block,
+                ElementRef::Each,
+                ElementRef::First,
+                ElementRef::PatternString,
+                ElementRef::Command,
+                ElementRef::Integer,
+                ElementRef::Boolean,
             ],
         )? {
             Box::new(el)
@@ -83,14 +81,14 @@ impl fmt::Display for Optional {
 
 impl Formation for Optional {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        let mut inner = cursor.reown(Some(ElTarget::Optional));
+        let mut inner = cursor.reown(Some(ElementRef::Optional));
         format!(
             "{}{} => {}",
-            cursor.offset_as_string_if(&[ElTarget::Block]),
+            cursor.offset_as_string_if(&[ElementRef::Block]),
             self.condition.format(&mut inner),
             self.action.format(&mut inner),
         )
-        // format!("{}{}", cursor.offset_as_string_if(&[ElTarget::Block]), self)
+        // format!("{}{}", cursor.offset_as_string_if(&[ElementRef::Block]), self)
     }
 }
 
@@ -138,38 +136,21 @@ impl TryExpectedValueType for Optional {
     }
 }
 
+impl Processing for Optional {}
+
 impl TryExecute for Optional {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let condition = *self
                 .condition
-                .execute(
-                    owner,
-                    components,
-                    args,
-                    prev,
-                    cx.clone(),
-                    sc.clone(),
-                    token.clone(),
-                )
+                .execute(cx.clone())
                 .await?
                 .get::<bool>()
                 .ok_or(operator::E::FailToExtractConditionValue)?;
             if !condition {
                 Ok(Value::empty())
             } else {
-                self.action
-                    .execute(owner, components, args, prev, cx, sc, token)
-                    .await
+                self.action.execute(cx).await
             }
         })
     }
@@ -178,9 +159,9 @@ impl TryExecute for Optional {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::Optional,
+        elements::{Optional, TokenGetter},
         error::LinkedErr,
-        inf::{operator::TokenGetter, tests::*, Configuration},
+        inf::{tests::*, Configuration},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -276,14 +257,12 @@ mod reading {
 
 #[cfg(test)]
 mod processing {
-    use tokio_util::sync::CancellationToken;
-
     use crate::{
-        elements::{ElTarget, Element},
+        elements::{Element, ElementRef},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
-            Configuration, Context, Journal, Scope,
+            Configuration, Context, ExecuteContext, Journal, Scope,
         },
         process_string,
         reader::{chars, Reader, Sources},
@@ -297,7 +276,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                    src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
                 {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
@@ -307,15 +286,7 @@ mod processing {
             |tasks: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
                     let result = task
-                        .execute(
-                            None,
-                            &[],
-                            &[],
-                            &None,
-                            cx.clone(),
-                            sc.clone(),
-                            CancellationToken::new(),
-                        )
+                        .execute(ExecuteContext::unbound(cx.clone(), sc.clone()))
                         .await?;
                     assert_eq!(
                         result.as_string().expect("Task returns string value"),
@@ -332,7 +303,7 @@ mod processing {
 mod proptest {
 
     use crate::{
-        elements::{ElTarget, Element, Optional, Task},
+        elements::{Element, ElementRef, Optional, Task},
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
@@ -348,14 +319,14 @@ mod proptest {
             (
                 Element::arbitrary_with((
                     if deep > MAX_DEEP {
-                        vec![ElTarget::VariableName, ElTarget::Reference]
+                        vec![ElementRef::VariableName, ElementRef::Reference]
                     } else {
                         vec![
-                            ElTarget::Function,
-                            ElTarget::VariableName,
-                            ElTarget::Reference,
-                            ElTarget::Block,
-                            ElTarget::Comparing,
+                            ElementRef::Function,
+                            ElementRef::VariableName,
+                            ElementRef::Reference,
+                            ElementRef::Block,
+                            ElementRef::Comparing,
                         ]
                     },
                     deep,
@@ -363,25 +334,25 @@ mod proptest {
                 Element::arbitrary_with((
                     if deep > MAX_DEEP {
                         vec![
-                            ElTarget::Function,
-                            ElTarget::Reference,
-                            ElTarget::VariableName,
-                            ElTarget::Integer,
-                            ElTarget::Boolean,
+                            ElementRef::Function,
+                            ElementRef::Reference,
+                            ElementRef::VariableName,
+                            ElementRef::Integer,
+                            ElementRef::Boolean,
                         ]
                     } else {
                         vec![
-                            ElTarget::Function,
-                            ElTarget::Reference,
-                            ElTarget::VariableAssignation,
-                            ElTarget::VariableName,
-                            ElTarget::Block,
-                            ElTarget::Each,
-                            ElTarget::First,
-                            ElTarget::PatternString,
-                            ElTarget::Command,
-                            ElTarget::Integer,
-                            ElTarget::Boolean,
+                            ElementRef::Function,
+                            ElementRef::Reference,
+                            ElementRef::VariableAssignation,
+                            ElementRef::VariableName,
+                            ElementRef::Block,
+                            ElementRef::Each,
+                            ElementRef::First,
+                            ElementRef::PatternString,
+                            ElementRef::Command,
+                            ElementRef::Integer,
+                            ElementRef::Boolean,
                         ]
                     },
                     deep,

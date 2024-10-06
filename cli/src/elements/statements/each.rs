@@ -1,12 +1,12 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, VerificationResult,
+        operator, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValueExpectation,
+        Processing, TryExecute, TryExpectedValueType, Value, VerificationResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -21,7 +21,7 @@ pub struct Each {
 
 impl TryDissect<Each> for Each {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Each>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::Each);
+        let close = reader.open_token(ElementRef::Each);
         if reader.move_to().word(&[words::EACH]).is_some() {
             let (variable, input) = if reader
                 .group()
@@ -30,7 +30,7 @@ impl TryDissect<Each> for Each {
             {
                 let mut inner = reader.token()?.bound;
                 let variable = if let Some(variable) =
-                    Element::include(&mut inner, &[ElTarget::VariableName])?
+                    Element::include(&mut inner, &[ElementRef::VariableName])?
                 {
                     if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
                         return Err(E::MissedSemicolon.linked(&inner.token()?.id));
@@ -39,9 +39,10 @@ impl TryDissect<Each> for Each {
                 } else {
                     return Err(E::NoLoopVariable.linked(&inner.token()?.id));
                 };
-                let input = if let Some(el) =
-                    Element::include(&mut inner, &[ElTarget::Function, ElTarget::VariableName])?
-                {
+                let input = if let Some(el) = Element::include(
+                    &mut inner,
+                    &[ElementRef::Function, ElementRef::VariableName],
+                )? {
                     Box::new(el)
                 } else {
                     Err(E::NoLoopInput.by_reader(&inner))?
@@ -50,11 +51,11 @@ impl TryDissect<Each> for Each {
             } else {
                 return Err(E::NoLoopInitialization.linked(&reader.token()?.id));
             };
-            let Some(mut block) = Element::include(reader, &[ElTarget::Block])? else {
+            let Some(mut block) = Element::include(reader, &[ElementRef::Block])? else {
                 Err(E::NoGroup.by_reader(reader))?
             };
             if let Element::Block(block, _) = &mut block {
-                block.set_owner(ElTarget::Each);
+                block.set_owner(ElementRef::Each);
                 block.set_breaker(CancellationToken::new());
             }
             Ok(Some(Each {
@@ -81,7 +82,7 @@ impl Formation for Each {
     fn format(&self, cursor: &mut FormationCursor) -> String {
         format!(
             "{}each({}; {}) {}",
-            cursor.offset_as_string_if(&[ElTarget::Block]),
+            cursor.offset_as_string_if(&[ElementRef::Block]),
             self.variable,
             self.input,
             self.block.format(cursor)
@@ -131,29 +132,14 @@ impl TryExpectedValueType for Each {
     }
 }
 
+impl Processing for Each {}
+
 impl TryExecute for Each {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let inputs = self
                 .input
-                .execute(
-                    owner,
-                    components,
-                    args,
-                    prev,
-                    cx.clone(),
-                    sc.clone(),
-                    token.clone(),
-                )
+                .execute(cx.clone())
                 .await?
                 .as_strings()
                 .ok_or(operator::E::FailConvertInputIntoStringsForEach)?;
@@ -163,7 +149,7 @@ impl TryExecute for Each {
             } else {
                 return Err(operator::E::BlockElementExpected.linked(&self.block.token()));
             };
-            let (loop_uuid, loop_token) = sc.open_loop(blk_token).await?;
+            let (loop_uuid, loop_token) = cx.sc.open_loop(blk_token).await?;
             let Element::VariableName(variable, _) = self.variable.as_ref() else {
                 return Err(operator::E::NoVariableName.by(self.variable.as_ref()));
             };
@@ -171,22 +157,12 @@ impl TryExecute for Each {
                 if loop_token.is_cancelled() {
                     break;
                 }
-                sc.set_var(&variable.name, Value::String(iteration.to_string()))
+                cx.sc
+                    .set_var(&variable.name, Value::String(iteration.to_string()))
                     .await?;
-                output = self
-                    .block
-                    .execute(
-                        owner,
-                        components,
-                        args,
-                        prev,
-                        cx.clone(),
-                        sc.clone(),
-                        token.clone(),
-                    )
-                    .await?;
+                output = self.block.execute(cx.clone()).await?;
             }
-            sc.close_loop(loop_uuid).await?;
+            cx.sc.close_loop(loop_uuid).await?;
             Ok(output)
         })
     }
@@ -195,9 +171,9 @@ impl TryExecute for Each {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::Each,
+        elements::{Each, TokenGetter},
         error::LinkedErr,
-        inf::{tests::*, Configuration, TokenGetter},
+        inf::{tests::*, Configuration},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -279,14 +255,12 @@ mod reading {
 
 #[cfg(test)]
 mod processing {
-    use tokio_util::sync::CancellationToken;
-
     use crate::{
-        elements::{ElTarget, Element},
+        elements::{Element, ElementRef},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
-            Configuration, Context, Journal, Scope,
+            Configuration, Context, ExecuteContext, Journal, Scope,
         },
         process_string,
         reader::{chars, Reader, Sources},
@@ -301,7 +275,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                    src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
                 {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
@@ -310,16 +284,8 @@ mod processing {
             },
             |tasks: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
-                    task.execute(
-                        None,
-                        &[],
-                        &[],
-                        &None,
-                        cx.clone(),
-                        sc.clone(),
-                        CancellationToken::new(),
-                    )
-                    .await?;
+                    task.execute(ExecuteContext::unbound(cx.clone(), sc.clone()))
+                        .await?;
                 }
                 for (name, value) in VALUES.iter() {
                     assert_eq!(
@@ -337,7 +303,7 @@ mod processing {
 mod proptest {
 
     use crate::{
-        elements::{task::Task, Each, ElTarget, Element},
+        elements::{task::Task, Each, Element, ElementRef},
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
@@ -351,9 +317,9 @@ mod proptest {
 
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             (
-                Element::arbitrary_with((vec![ElTarget::Block], deep)),
-                Element::arbitrary_with((vec![ElTarget::VariableName], deep)),
-                Element::arbitrary_with((vec![ElTarget::VariableName], deep)),
+                Element::arbitrary_with((vec![ElementRef::Block], deep)),
+                Element::arbitrary_with((vec![ElementRef::VariableName], deep)),
+                Element::arbitrary_with((vec![ElementRef::VariableName], deep)),
             )
                 .prop_map(|(block, variable, input)| Each {
                     block: Box::new(block),

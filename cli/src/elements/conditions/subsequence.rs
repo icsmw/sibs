@@ -1,12 +1,10 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{Cmb, ElTarget, Element},
+    elements::{Cmb, Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
-        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
-        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
+        Formation, FormationCursor, LinkingResult, PrevValueExpectation, Processing, TryExecute,
+        TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -20,20 +18,20 @@ pub struct Subsequence {
 
 impl TryDissect<Subsequence> for Subsequence {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Subsequence>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::Subsequence);
+        let close = reader.open_token(ElementRef::Subsequence);
         let mut subsequence: Vec<Element> = Vec::new();
         while !reader.rest().trim().is_empty() {
             if subsequence.is_empty()
                 || matches!(subsequence.last(), Some(Element::Combination(..)))
             {
                 if let Some(el) =
-                    Element::include(reader, &[ElTarget::Comparing, ElTarget::Condition])?
+                    Element::include(reader, &[ElementRef::Comparing, ElementRef::Condition])?
                 {
                     subsequence.push(el);
                 } else {
                     break;
                 }
-            } else if let Some(el) = Element::include(reader, &[ElTarget::Combination])? {
+            } else if let Some(el) = Element::include(reader, &[ElementRef::Combination])? {
                 subsequence.push(el);
             } else {
                 break;
@@ -82,7 +80,7 @@ impl Formation for Subsequence {
         if self.elements_count() > cursor.max_elements()
             || self.to_string().len() > cursor.max_len()
         {
-            let mut inner = cursor.reown(Some(ElTarget::Subsequence));
+            let mut inner = cursor.reown(Some(ElementRef::Subsequence));
             self.subsequence
                 .chunks(2)
                 .enumerate()
@@ -90,7 +88,7 @@ impl Formation for Subsequence {
                     format!(
                         "{}{}{}",
                         if i == 0 {
-                            cursor.offset_as_string_if(&[ElTarget::Block])
+                            cursor.offset_as_string_if(&[ElementRef::Block])
                         } else {
                             String::new()
                         },
@@ -109,7 +107,10 @@ impl Formation for Subsequence {
                 .collect::<Vec<String>>()
                 .join("")
         } else {
-            format!("{}{self}", cursor.offset_as_string_if(&[ElTarget::Block]))
+            format!(
+                "{}{self}",
+                cursor.offset_as_string_if(&[ElementRef::Block])
+            )
         }
     }
 }
@@ -161,31 +162,14 @@ impl TryExpectedValueType for Subsequence {
     }
 }
 
+impl Processing for Subsequence {}
+
 impl TryExecute for Subsequence {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let mut last_value = true;
             for el in self.subsequence.iter() {
-                let value = el
-                    .execute(
-                        owner,
-                        components,
-                        args,
-                        prev,
-                        cx.clone(),
-                        sc.clone(),
-                        token.clone(),
-                    )
-                    .await?;
+                let value = el.execute(cx.clone()).await?;
                 if let Some(cmb) = value.get::<Cmb>() {
                     match cmb {
                         Cmb::And => {
@@ -286,7 +270,7 @@ impl TryExecute for Subsequence {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        elements::{ElTarget, Element, Subsequence},
+        elements::{Element, ElementRef, Subsequence},
         inf::tests::MAX_DEEP,
     };
     use proptest::prelude::*;
@@ -300,16 +284,16 @@ mod proptest {
                 prop::collection::vec(
                     Element::arbitrary_with((
                         if deep > MAX_DEEP {
-                            vec![ElTarget::Comparing]
+                            vec![ElementRef::Comparing]
                         } else {
-                            vec![ElTarget::Comparing, ElTarget::Condition]
+                            vec![ElementRef::Comparing, ElementRef::Condition]
                         },
                         deep,
                     )),
                     1..=5,
                 ),
                 prop::collection::vec(
-                    Element::arbitrary_with((vec![ElTarget::Combination], deep)),
+                    Element::arbitrary_with((vec![ElementRef::Combination], deep)),
                     5..=5,
                 ),
             )

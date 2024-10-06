@@ -1,11 +1,9 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::Element,
+    elements::{Element, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, ExecutePinnedResult, ExpectedResult, Formation, FormationCursor,
-        LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter, TryExecute,
+        operator, Context, ExecuteContext, ExecutePinnedResult, ExpectedResult, Formation,
+        FormationCursor, LinkingResult, PrevValueExpectation, Processing, TryExecute,
         TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
@@ -97,22 +95,15 @@ impl TryExpectedValueType for VariableVariants {
     }
 }
 
+impl Processing for VariableVariants {}
+
 impl TryExecute for VariableVariants {
-    fn try_execute<'a>(
-        &'a self,
-        _owner: Option<&'a Element>,
-        _components: &'a [Element],
-        args: &'a [Value],
-        _prev: &'a Option<PrevValue>,
-        _cx: Context,
-        _sc: Scope,
-        _token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
-            let value = if args.len() != 1 {
+            let value = if cx.args.len() != 1 {
                 Err(operator::E::InvalidNumberOfArgumentsForDeclaration.by(self))?
             } else {
-                args[0].to_owned()
+                cx.args[0].to_owned()
             };
             if self.values.contains(&value) {
                 Ok(value)

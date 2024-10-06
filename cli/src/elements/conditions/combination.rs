@@ -1,12 +1,10 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::Element,
+    elements::{Element, TokenGetter},
     error::LinkedErr,
     inf::{
-        Context, ExecutePinnedResult, ExpectedResult, Formation, FormationCursor, LinkingResult,
-        PrevValue, PrevValueExpectation, Scope, TokenGetter, TryExecute, TryExpectedValueType,
-        Value, ValueRef, VerificationResult,
+        Context, ExecuteContext, ExecutePinnedResult, ExpectedResult, Formation, FormationCursor,
+        LinkingResult, PrevValueExpectation, Processing, TryExecute, TryExpectedValueType, Value,
+        ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -106,17 +104,10 @@ impl TryExpectedValueType for Combination {
     }
 }
 
+impl Processing for Combination {}
+
 impl TryExecute for Combination {
-    fn try_execute<'a>(
-        &'a self,
-        _owner: Option<&'a Element>,
-        _components: &'a [Element],
-        _args: &'a [Value],
-        _prev: &'a Option<PrevValue>,
-        _cx: Context,
-        _sc: Scope,
-        _token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, _cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move { Ok(Value::Cmb(self.cmb.clone())) })
     }
 }

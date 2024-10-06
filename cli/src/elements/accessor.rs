@@ -1,12 +1,10 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValueExpectation,
+        Processing, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -20,7 +18,7 @@ pub struct Accessor {
 
 impl TryDissect<Accessor> for Accessor {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Accessor>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::Accessor);
+        let close = reader.open_token(ElementRef::Accessor);
         Ok(
             if reader
                 .group()
@@ -31,9 +29,9 @@ impl TryDissect<Accessor> for Accessor {
                 let Some(el) = Element::include(
                     &mut inner,
                     &[
-                        ElTarget::Integer,
-                        ElTarget::Function,
-                        ElTarget::VariableName,
+                        ElementRef::Integer,
+                        ElementRef::Function,
+                        ElementRef::VariableName,
                     ],
                 )?
                 else {
@@ -114,24 +112,17 @@ impl TryExpectedValueType for Accessor {
     }
 }
 
+impl Processing for Accessor {}
+
 impl TryExecute for Accessor {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
-            let Some(prev_value) = prev else {
+            let Some(prev_value) = cx.prev else {
                 return Err(operator::E::CallPPMWithoutPrevValue.linked(&self.token));
             };
             let n = self
                 .index
-                .execute(owner, components, args, prev, cx, sc, token)
+                .execute(cx)
                 .await?
                 .as_num()
                 .ok_or(operator::E::FailToExtractAccessorIndex.by(&*self.index))?;
@@ -162,7 +153,7 @@ impl TryExecute for Accessor {
 #[cfg(test)]
 mod proptest {
 
-    use crate::elements::{Accessor, ElTarget, Element};
+    use crate::elements::{Accessor, Element, ElementRef};
     use proptest::prelude::*;
 
     impl Arbitrary for Accessor {
@@ -171,9 +162,9 @@ mod proptest {
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
             Element::arbitrary_with((
                 vec![
-                    ElTarget::Function,
-                    ElTarget::VariableName,
-                    ElTarget::Integer,
+                    ElementRef::Function,
+                    ElementRef::VariableName,
+                    ElementRef::Integer,
                 ],
                 deep,
             ))

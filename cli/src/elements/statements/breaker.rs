@@ -1,12 +1,10 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        Context, ExecutePinnedResult, ExpectedResult, Formation, FormationCursor, LinkingResult,
-        PrevValue, PrevValueExpectation, Scope, TokenGetter, TryExecute, TryExpectedValueType,
-        Value, ValueRef, VerificationResult,
+        Context, ExecuteContext, ExecutePinnedResult, ExpectedResult, Formation, FormationCursor,
+        LinkingResult, PrevValueExpectation, Processing, TryExecute, TryExpectedValueType, Value,
+        ValueRef, VerificationResult,
     },
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -19,7 +17,7 @@ pub struct Breaker {
 
 impl TryDissect<Breaker> for Breaker {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Breaker>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::Breaker);
+        let close = reader.open_token(ElementRef::Breaker);
         if reader.move_to().word(&[words::BREAK]).is_some() {
             Ok(Some(Breaker {
                 token: close(reader),
@@ -42,7 +40,7 @@ impl Formation for Breaker {
     fn format(&self, cursor: &mut FormationCursor) -> String {
         format!(
             "{}{}",
-            cursor.offset_as_string_if(&[ElTarget::Block]),
+            cursor.offset_as_string_if(&[ElementRef::Block]),
             words::BREAK
         )
     }
@@ -84,19 +82,12 @@ impl TryExpectedValueType for Breaker {
     }
 }
 
+impl Processing for Breaker {}
+
 impl TryExecute for Breaker {
-    fn try_execute<'a>(
-        &'a self,
-        _owner: Option<&'a Element>,
-        _components: &'a [Element],
-        _args: &'a [Value],
-        _prev: &'a Option<PrevValue>,
-        _cx: Context,
-        sc: Scope,
-        _token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
-            sc.break_loop().await?;
+            cx.sc.break_loop().await?;
             Ok(Value::empty())
         })
     }
@@ -105,9 +96,9 @@ impl TryExecute for Breaker {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::Each,
+        elements::{Each, TokenGetter},
         error::LinkedErr,
-        inf::{tests::*, Configuration, TokenGetter},
+        inf::{tests::*, Configuration},
         read_string,
         reader::{chars, Dissect, Reader, Sources, E},
     };
@@ -163,14 +154,13 @@ mod reading {
 
 #[cfg(test)]
 mod processing {
-    use tokio_util::sync::CancellationToken;
 
     use crate::{
-        elements::{ElTarget, Element},
+        elements::{Element, ElementRef},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
-            Configuration, Context, Journal, Scope,
+            Configuration, Context, ExecuteContext, Journal, Scope,
         },
         process_string,
         reader::{chars, Reader, Sources},
@@ -185,7 +175,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElTarget::Task]))?
+                    src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
                 {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
@@ -194,16 +184,8 @@ mod processing {
             },
             |tasks: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
                 for task in tasks.iter() {
-                    task.execute(
-                        None,
-                        &[],
-                        &[],
-                        &None,
-                        cx.clone(),
-                        sc.clone(),
-                        CancellationToken::new(),
-                    )
-                    .await?;
+                    task.execute(ExecuteContext::unbound(cx.clone(), sc.clone()))
+                        .await?;
                 }
                 for (name, value) in VALUES.iter() {
                     assert_eq!(

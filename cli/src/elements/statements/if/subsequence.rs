@@ -1,12 +1,10 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{Cmb, ElTarget, Element},
+    elements::{Cmb, Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
-        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
-        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
+        Formation, FormationCursor, LinkingResult, PrevValueExpectation, Processing, TryExecute,
+        TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -20,7 +18,7 @@ pub struct IfSubsequence {
 
 impl TryDissect<IfSubsequence> for IfSubsequence {
     fn try_dissect(reader: &mut Reader) -> Result<Option<IfSubsequence>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::IfSubsequence);
+        let close = reader.open_token(ElementRef::IfSubsequence);
         let mut subsequence: Vec<Element> = Vec::new();
         while !reader.rest().trim().is_empty() {
             if subsequence.is_empty()
@@ -29,20 +27,20 @@ impl TryDissect<IfSubsequence> for IfSubsequence {
                 if let Some(el) = Element::include(
                     reader,
                     &[
-                        ElTarget::Boolean,
-                        ElTarget::Command,
-                        ElTarget::Comparing,
-                        ElTarget::Function,
-                        ElTarget::VariableName,
-                        ElTarget::Reference,
-                        ElTarget::IfCondition,
+                        ElementRef::Boolean,
+                        ElementRef::Command,
+                        ElementRef::Comparing,
+                        ElementRef::Function,
+                        ElementRef::VariableName,
+                        ElementRef::Reference,
+                        ElementRef::IfCondition,
                     ],
                 )? {
                     subsequence.push(el);
                 } else {
                     break;
                 }
-            } else if let Some(el) = Element::include(reader, &[ElTarget::Combination])? {
+            } else if let Some(el) = Element::include(reader, &[ElementRef::Combination])? {
                 subsequence.push(el);
             } else {
                 break;
@@ -91,7 +89,7 @@ impl Formation for IfSubsequence {
         if self.elements_count() > cursor.max_elements()
             || self.to_string().len() > cursor.max_len()
         {
-            let mut inner = cursor.reown(Some(ElTarget::IfSubsequence));
+            let mut inner = cursor.reown(Some(ElementRef::IfSubsequence));
             self.subsequence
                 .chunks(2)
                 .enumerate()
@@ -99,7 +97,7 @@ impl Formation for IfSubsequence {
                     format!(
                         "{}{}{}",
                         if i == 0 {
-                            cursor.offset_as_string_if(&[ElTarget::Block])
+                            cursor.offset_as_string_if(&[ElementRef::Block])
                         } else {
                             String::new()
                         },
@@ -118,7 +116,10 @@ impl Formation for IfSubsequence {
                 .collect::<Vec<String>>()
                 .join("")
         } else {
-            format!("{}{self}", cursor.offset_as_string_if(&[ElTarget::Block]))
+            format!(
+                "{}{self}",
+                cursor.offset_as_string_if(&[ElementRef::Block])
+            )
         }
     }
 }
@@ -170,31 +171,14 @@ impl TryExpectedValueType for IfSubsequence {
     }
 }
 
+impl Processing for IfSubsequence {}
+
 impl TryExecute for IfSubsequence {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let mut last_value = true;
             for el in self.subsequence.iter() {
-                let value = el
-                    .execute(
-                        owner,
-                        components,
-                        args,
-                        prev,
-                        cx.clone(),
-                        sc.clone(),
-                        token.clone(),
-                    )
-                    .await?;
+                let value = el.execute(cx.clone()).await?;
                 if let Some(cmb) = value.get::<Cmb>() {
                     match cmb {
                         Cmb::And => {
@@ -222,9 +206,9 @@ impl TryExecute for IfSubsequence {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::IfSubsequence,
+        elements::{IfSubsequence, TokenGetter},
         error::LinkedErr,
-        inf::{tests::*, Configuration, TokenGetter},
+        inf::{tests::*, Configuration},
         read_string,
         reader::{Dissect, Reader, Sources, E},
     };
@@ -295,7 +279,7 @@ mod reading {
 #[cfg(test)]
 mod proptest {
     use crate::{
-        elements::{ElTarget, Element, IfSubsequence},
+        elements::{Element, ElementRef, IfSubsequence},
         inf::tests::MAX_DEEP,
     };
     use proptest::prelude::*;
@@ -310,21 +294,21 @@ mod proptest {
                     Element::arbitrary_with((
                         if deep > MAX_DEEP {
                             vec![
-                                ElTarget::Boolean,
-                                ElTarget::Comparing,
-                                ElTarget::Function,
-                                ElTarget::VariableName,
-                                ElTarget::Reference,
+                                ElementRef::Boolean,
+                                ElementRef::Comparing,
+                                ElementRef::Function,
+                                ElementRef::VariableName,
+                                ElementRef::Reference,
                             ]
                         } else {
                             vec![
-                                ElTarget::Boolean,
-                                ElTarget::Command,
-                                ElTarget::Comparing,
-                                ElTarget::Function,
-                                ElTarget::VariableName,
-                                ElTarget::Reference,
-                                ElTarget::IfCondition,
+                                ElementRef::Boolean,
+                                ElementRef::Command,
+                                ElementRef::Comparing,
+                                ElementRef::Function,
+                                ElementRef::VariableName,
+                                ElementRef::Reference,
+                                ElementRef::IfCondition,
                             ]
                         },
                         deep,
@@ -332,7 +316,7 @@ mod proptest {
                     1..=5,
                 ),
                 prop::collection::vec(
-                    Element::arbitrary_with((vec![ElTarget::Combination], deep)),
+                    Element::arbitrary_with((vec![ElementRef::Combination], deep)),
                     5..=5,
                 ),
             )

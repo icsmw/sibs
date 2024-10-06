@@ -38,14 +38,12 @@ pub fn execute(
 
 #[cfg(test)]
 mod test {
-    use tokio_util::sync::CancellationToken;
-
     use crate::{
         elements::Element,
         error::LinkedErr,
         inf::{
             journal::{Configuration, Journal},
-            Context, Execute, Scope, Value,
+            Context, Execute, ExecuteContext, Scope, Value,
         },
         process_file,
         reader::{error::E, Reader, Sources},
@@ -66,13 +64,9 @@ mod test {
                 };
                 let results = el
                     .execute(
-                        Some(el),
-                        &[],
-                        &[Value::String(String::from("run"))],
-                        &None,
-                        cx.clone(),
-                        sc.clone(),
-                        CancellationToken::new(),
+                        ExecuteContext::unbound(cx.clone(), sc.clone())
+                            .owner(Some(el))
+                            .args(&[Value::String(String::from("run"))]),
                     )
                     .await
                     .expect("run is successfull");

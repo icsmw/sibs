@@ -1,12 +1,10 @@
-use tokio_util::sync::CancellationToken;
-
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType, Formation,
-        FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope, TokenGetter,
-        TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
+        Formation, FormationCursor, LinkingResult, PrevValueExpectation, Processing, TryExecute,
+        TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -20,14 +18,14 @@ pub struct IfCondition {
 
 impl TryDissect<IfCondition> for IfCondition {
     fn try_dissect(reader: &mut Reader) -> Result<Option<IfCondition>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::IfCondition);
+        let close = reader.open_token(ElementRef::IfCondition);
         if reader
             .group()
             .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
             .is_some()
         {
             let mut inner = reader.token()?.bound;
-            if let Some(el) = Element::include(&mut inner, &[ElTarget::IfSubsequence])? {
+            if let Some(el) = Element::include(&mut inner, &[ElementRef::IfSubsequence])? {
                 Ok(Some(IfCondition {
                     subsequence: Box::new(el),
                     token: close(reader),
@@ -59,12 +57,16 @@ impl Formation for IfCondition {
         {
             format!(
                 "{}({})",
-                cursor.offset_as_string_if(&[ElTarget::Block]),
+                cursor.offset_as_string_if(&[ElementRef::Block]),
                 self.subsequence
-                    .format(&mut cursor.reown(Some(ElTarget::IfCondition)))
+                    .format(&mut cursor.reown(Some(ElementRef::IfCondition)))
             )
         } else {
-            format!("{}{}", cursor.offset_as_string_if(&[ElTarget::Block]), self)
+            format!(
+                "{}{}",
+                cursor.offset_as_string_if(&[ElementRef::Block]),
+                self
+            )
         }
     }
 }
@@ -106,22 +108,15 @@ impl TryExpectedValueType for IfCondition {
     }
 }
 
+impl Processing for IfCondition {}
+
 impl TryExecute for IfCondition {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             Ok(Value::bool(
                 *self
                     .subsequence
-                    .execute(owner, components, args, prev, cx, sc, token)
+                    .execute(cx)
                     .await?
                     .get::<bool>()
                     .ok_or(E::NoBoolValueFromSubsequence)?,
@@ -132,7 +127,7 @@ impl TryExecute for IfCondition {
 
 #[cfg(test)]
 mod proptest {
-    use crate::elements::{ElTarget, Element, IfCondition};
+    use crate::elements::{Element, ElementRef, IfCondition};
     use proptest::prelude::*;
 
     impl Arbitrary for IfCondition {
@@ -140,7 +135,7 @@ mod proptest {
         type Strategy = BoxedStrategy<Self>;
 
         fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
-            Element::arbitrary_with((vec![ElTarget::IfSubsequence], deep))
+            Element::arbitrary_with((vec![ElementRef::IfSubsequence], deep))
                 .prop_map(|subsequence| IfCondition {
                     subsequence: Box::new(subsequence),
                     token: 0,

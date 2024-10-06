@@ -1,12 +1,12 @@
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    elements::{ElTarget, Element},
+    elements::{Element, ElementRef, TokenGetter},
     error::LinkedErr,
     inf::{
-        operator, Context, Execute, ExecutePinnedResult, ExpectedResult, ExpectedValueType,
-        Formation, FormationCursor, LinkingResult, PrevValue, PrevValueExpectation, Scope,
-        TokenGetter, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
+        operator, Context, Execute, ExecuteContext, ExecutePinnedResult, ExpectedResult,
+        ExpectedValueType, Formation, FormationCursor, LinkingResult, PrevValueExpectation,
+        Processing, TryExecute, TryExpectedValueType, Value, ValueRef, VerificationResult,
     },
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -15,13 +15,13 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub struct Block {
     pub elements: Vec<Element>,
-    pub owner: Option<ElTarget>,
+    pub owner: Option<ElementRef>,
     pub breaker: Option<CancellationToken>,
     pub token: usize,
 }
 
 impl Block {
-    pub fn set_owner(&mut self, owner: ElTarget) {
+    pub fn set_owner(&mut self, owner: ElementRef) {
         self.owner = Some(owner);
     }
     pub fn set_breaker(&mut self, breaker: CancellationToken) {
@@ -37,7 +37,7 @@ impl Block {
 
 impl TryDissect<Block> for Block {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Block>, LinkedErr<E>> {
-        let close = reader.open_token(ElTarget::Block);
+        let close = reader.open_token(ElementRef::Block);
         if reader
             .group()
             .between(&chars::OPEN_CURLY_BRACE, &chars::CLOSE_CURLY_BRACE)
@@ -52,26 +52,26 @@ impl TryDissect<Block> for Block {
             if let Some(el) = Element::exclude(
                 &mut inner,
                 &[
-                    ElTarget::Block,
-                    ElTarget::Task,
-                    ElTarget::Component,
-                    ElTarget::Combination,
-                    ElTarget::Condition,
-                    ElTarget::Comparing,
-                    ElTarget::Subsequence,
-                    ElTarget::VariableDeclaration,
-                    ElTarget::VariableVariants,
-                    ElTarget::VariableType,
-                    ElTarget::SimpleString,
-                    ElTarget::Gatekeeper,
-                    ElTarget::Call,
-                    ElTarget::Accessor,
-                    ElTarget::Range,
-                    ElTarget::Compute,
-                    ElTarget::Error,
-                    ElTarget::Closure,
-                    ElTarget::IfCondition,
-                    ElTarget::IfSubsequence,
+                    ElementRef::Block,
+                    ElementRef::Task,
+                    ElementRef::Component,
+                    ElementRef::Combination,
+                    ElementRef::Condition,
+                    ElementRef::Comparing,
+                    ElementRef::Subsequence,
+                    ElementRef::VariableDeclaration,
+                    ElementRef::VariableVariants,
+                    ElementRef::VariableType,
+                    ElementRef::SimpleString,
+                    ElementRef::Gatekeeper,
+                    ElementRef::Call,
+                    ElementRef::Accessor,
+                    ElementRef::Range,
+                    ElementRef::Compute,
+                    ElementRef::Error,
+                    ElementRef::Closure,
+                    ElementRef::IfCondition,
+                    ElementRef::IfSubsequence,
                 ],
             )? {
                 if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
@@ -124,7 +124,7 @@ impl Formation for Block {
         self.elements.len()
     }
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        let mut inner = cursor.reown(Some(ElTarget::Block)).right();
+        let mut inner = cursor.reown(Some(ElementRef::Block)).right();
         format!(
             "{{\n{}{}{}}}",
             self.elements
@@ -190,17 +190,10 @@ impl TryExpectedValueType for Block {
     }
 }
 
+impl Processing for Block {}
+
 impl TryExecute for Block {
-    fn try_execute<'a>(
-        &'a self,
-        owner: Option<&'a Element>,
-        components: &'a [Element],
-        args: &'a [Value],
-        prev: &'a Option<PrevValue>,
-        cx: Context,
-        sc: Scope,
-        token: CancellationToken,
-    ) -> ExecutePinnedResult<'a> {
+    fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let mut output = Value::empty();
             for element in self.elements.iter() {
@@ -209,21 +202,12 @@ impl TryExecute for Block {
                         return Ok(output);
                     }
                 }
-                if let Some(retreat) = sc.get_retreat().await? {
+                if let Some(retreat) = cx.sc.get_retreat().await? {
                     return Ok(retreat);
                 }
-                output = element
-                    .execute(
-                        owner,
-                        components,
-                        args,
-                        prev,
-                        cx.clone(),
-                        sc.clone(),
-                        token.clone(),
-                    )
-                    .await?;
-                if let (Some(ElTarget::First), false) = (self.owner.as_ref(), output.is_empty()) {
+                output = element.execute(cx.clone()).await?;
+                if let (Some(ElementRef::First), false) = (self.owner.as_ref(), output.is_empty())
+                {
                     return Ok(output);
                 }
             }
@@ -299,7 +283,7 @@ mod reading {
 mod proptest {
 
     use crate::{
-        elements::{Block, ElTarget, Element, Task},
+        elements::{Block, Element, ElementRef, Task},
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
         read_string,
@@ -316,36 +300,36 @@ mod proptest {
                 Element::arbitrary_with((
                     if deep > MAX_DEEP {
                         vec![
-                            ElTarget::Function,
-                            ElTarget::VariableAssignation,
-                            ElTarget::Optional,
-                            ElTarget::Command,
-                            ElTarget::PatternString,
-                            ElTarget::Reference,
-                            ElTarget::Boolean,
-                            ElTarget::Integer,
+                            ElementRef::Function,
+                            ElementRef::VariableAssignation,
+                            ElementRef::Optional,
+                            ElementRef::Command,
+                            ElementRef::PatternString,
+                            ElementRef::Reference,
+                            ElementRef::Boolean,
+                            ElementRef::Integer,
                         ]
                     } else {
                         vec![
-                            ElTarget::Function,
-                            ElTarget::VariableAssignation,
-                            ElTarget::If,
-                            ElTarget::Optional,
-                            ElTarget::First,
-                            ElTarget::Breaker,
-                            ElTarget::Each,
-                            ElTarget::Join,
-                            ElTarget::Command,
-                            ElTarget::PatternString,
-                            ElTarget::Reference,
-                            ElTarget::Boolean,
-                            ElTarget::Integer,
-                            ElTarget::For,
-                            ElTarget::Loop,
-                            ElTarget::While,
-                            ElTarget::Conclusion,
-                            ElTarget::VariableName,
-                            ElTarget::Values,
+                            ElementRef::Function,
+                            ElementRef::VariableAssignation,
+                            ElementRef::If,
+                            ElementRef::Optional,
+                            ElementRef::First,
+                            ElementRef::Breaker,
+                            ElementRef::Each,
+                            ElementRef::Join,
+                            ElementRef::Command,
+                            ElementRef::PatternString,
+                            ElementRef::Reference,
+                            ElementRef::Boolean,
+                            ElementRef::Integer,
+                            ElementRef::For,
+                            ElementRef::Loop,
+                            ElementRef::While,
+                            ElementRef::Conclusion,
+                            ElementRef::VariableName,
+                            ElementRef::Values,
                         ]
                     },
                     deep,

@@ -1,9 +1,10 @@
 use crate::{
+    elements::TokenGetter,
     error::LinkedErr,
     functions,
     inf::{
         context::{self, atlas},
-        scenario, spawner, tracker, TokenGetter, ValueRef,
+        scenario, spawner, tracker, ValueRef,
     },
     reader,
 };
