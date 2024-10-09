@@ -34,7 +34,7 @@ pub trait Execute {
         Box::pin(async move {
             if cx.is_aborting() {
                 cx.journal().warn("runner", "skipping, because aborting");
-                return Ok(Value::empty());
+                return Err(E::Aborted.linked(&self.token()));
             }
             cx.atlas().set_map_position(self.token()).await?;
             let result = self.try_execute(cx.clone()).await;

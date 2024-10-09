@@ -427,10 +427,9 @@ impl Element {
                 return next(reader, Element::Meta(el));
             }
         }
-        if includes == targets.contains(&ElementRef::Command) {
-            if let Some(el) = Command::dissect(reader)? {
-                let to = tolerance(reader, md);
-                return next(reader, Element::Command(el, to));
+        if includes == targets.contains(&ElementRef::Comparing) {
+            if let Some(el) = Comparing::dissect(reader)? {
+                return next(reader, Element::Comparing(el, md));
             }
         }
         if includes == targets.contains(&ElementRef::If) {
@@ -453,9 +452,10 @@ impl Element {
                 return next(reader, Element::Gatekeeper(el, md));
             }
         }
-        if includes == targets.contains(&ElementRef::Comparing) {
-            if let Some(el) = Comparing::dissect(reader)? {
-                return next(reader, Element::Comparing(el, md));
+        if includes == targets.contains(&ElementRef::Command) {
+            if let Some(el) = Command::dissect(reader)? {
+                let to = tolerance(reader, md);
+                return next(reader, Element::Command(el, to));
             }
         }
         if includes == targets.contains(&ElementRef::Integer) {

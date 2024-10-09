@@ -65,6 +65,7 @@ impl TryDissect<Comparing> for Comparing {
             reader,
             &[
                 ElementRef::VariableName,
+                ElementRef::Command,
                 ElementRef::Function,
                 ElementRef::PatternString,
                 ElementRef::Integer,
@@ -91,6 +92,7 @@ impl TryDissect<Comparing> for Comparing {
             reader,
             &[
                 ElementRef::VariableName,
+                ElementRef::Command,
                 ElementRef::Function,
                 ElementRef::PatternString,
                 ElementRef::Integer,
@@ -183,7 +185,7 @@ impl TryExecute for Comparing {
     fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {
             let left = self.left.execute(cx.clone()).await?;
-            let right = self.right.execute(cx).await?;
+            let right = self.right.execute(cx.clone()).await?;
             Ok(match self.cmp {
                 Cmp::LeftBig | Cmp::RightBig => {
                     let left = left.as_num().ok_or(operator::E::FailToGetIntegerValue)?;

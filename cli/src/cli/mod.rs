@@ -10,7 +10,7 @@ use crate::{
         journal::{self, Journal},
         operator::Execute,
         scenario::Scenario,
-        term, ExecuteContext, Value,
+        term, ExecuteContext, ExitCode, Value,
     },
     reader::{Reader, Sources},
 };
@@ -48,7 +48,7 @@ pub async fn get_journal_configuration() -> Result<journal::Configuration, E> {
     })
 }
 
-pub async fn process(journal: Journal) -> Result<(), E> {
+pub async fn process(journal: Journal) -> Result<ExitCode, E> {
     let (mut income, arguments) = get_arguments()?;
     if arguments.all_without_context().await? {
         if !income.is_empty() {
@@ -57,11 +57,11 @@ pub async fn process(journal: Journal) -> Result<(), E> {
                 income.join(", ")
             ));
         }
-        return Ok(());
+        return Ok(ExitCode::Success);
     }
     if arguments.len() == 1 && arguments.has::<args::exertion::Help>() {
         Arguments::print();
-        return Ok(());
+        return Ok(ExitCode::Success);
     }
     let scenario = if let Some(target) = arguments
         .get_value_no_cx::<args::exertion::Scenario, PathBuf>()
@@ -74,7 +74,7 @@ pub async fn process(journal: Journal) -> Result<(), E> {
             Err(_) => {
                 term::print("[b]ERROR:[/b] Scenario file hasn't been found.");
                 Arguments::print();
-                return Ok(());
+                return Ok(ExitCode::Success);
             }
         }
     };
@@ -92,7 +92,7 @@ pub async fn process(journal: Journal) -> Result<(), E> {
     arguments.run::<args::exertion::Help>(&elements).await?;
     if no_actions {
         cx.destroy().await?;
-        return Ok(());
+        return Ok(ExitCode::Success);
     }
     let components = elements
         .into_iter()
@@ -128,12 +128,14 @@ pub async fn process(journal: Journal) -> Result<(), E> {
             )
             .await
             .map(|_| ())
+            .or_else(|e| if e.e.is_aborted() { Ok(()) } else { Err(e) })
             .map_err(|e| e.into());
         sc.destroy().await?;
         result
     } else {
         Err(E::NoArguments)
     };
-    cx.destroy().await?;
-    result
+    let code = cx.destroy().await?;
+    result?;
+    Ok(code)
 }

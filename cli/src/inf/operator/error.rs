@@ -158,6 +158,8 @@ pub enum E {
     ScenarioError(scenario::E),
     #[error("Fail to recv channel message: {0}")]
     Recv(String),
+    #[error("Operation aborted")]
+    Aborted,
 }
 
 impl From<oneshot::error::RecvError> for E {
@@ -176,8 +178,10 @@ impl E {
     pub fn unlinked(self) -> LinkedErr<E> {
         LinkedErr::new(self, None)
     }
+    pub fn is_aborted(&self) -> bool {
+        matches!(self, E::Aborted)
+    }
 }
-
 impl From<tracker::E> for E {
     fn from(e: tracker::E) -> Self {
         Self::TrackerError(e)

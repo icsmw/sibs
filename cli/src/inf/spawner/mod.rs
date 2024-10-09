@@ -127,14 +127,14 @@ pub async fn run(
                 e.to_string()
             })
         } => {
-            SpawnStatus::from_res(res)
+            SpawnStatus::from_res(command, cwd, res)
         }
         _ = async {
             token.cancelled().await;
         } => {
             match child.try_wait() {
                 Ok(Some(status)) => {
-                    SpawnStatus::from_status(chk_status(status, &job))
+                    SpawnStatus::from_status(command, cwd, chk_status(status, &job))
                 }
                 Ok(None) => {
                     if let Err(err) = child.kill().await {

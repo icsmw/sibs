@@ -60,6 +60,7 @@ impl TryDissect<IfSubsequence> for IfSubsequence {
                 token: close(reader),
             }))
         } else {
+            println!(">>>>>>>>>>>>:{}", reader.rest());
             Err(E::FailToReadConditions.linked(&close(reader)))
         }
     }
@@ -116,10 +117,7 @@ impl Formation for IfSubsequence {
                 .collect::<Vec<String>>()
                 .join("")
         } else {
-            format!(
-                "{}{self}",
-                cursor.offset_as_string_if(&[ElementRef::Block])
-            )
+            format!("{}{self}", cursor.offset_as_string_if(&[ElementRef::Block]))
         }
     }
 }

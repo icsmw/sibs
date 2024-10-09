@@ -20,7 +20,7 @@ where
     T: 'static + Clone + PartialEq + std::fmt::Debug,
 {
     use crate::{
-        elements::{ElementRef, Element},
+        elements::{Element, ElementRef},
         error::LinkedErr,
         inf::{
             journal::Journal,
@@ -30,7 +30,6 @@ where
         process_string,
         reader::{Reader, Sources},
     };
-    use tokio_util::sync::CancellationToken;
 
     let task = format!("#(app: ../) @test(){{{}}}", block.as_ref());
     process_string!(
@@ -67,7 +66,14 @@ where
                         .owner(Some(&component))
                         .args(&[Value::String("test".to_owned())]),
                 )
-                .await;
+                .await
+                .or_else(|e| {
+                    if e.e.is_aborted() {
+                        Ok(Value::Empty(()))
+                    } else {
+                        Err(e)
+                    }
+                });
             if let Err(err) = result.as_ref() {
                 cx.atlas
                     .report_err(err)

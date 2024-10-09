@@ -2,6 +2,7 @@ mod is_all_success;
 mod is_any_fail;
 mod is_fail;
 mod is_success;
+mod stop_on_fail;
 
 use crate::{
     functions::{ExecutorFnDescription, E},
@@ -39,6 +40,14 @@ pub fn register(store: &mut Store<ExecutorFnDescription>) -> Result<(), E> {
             is_all_success::execute,
             vec![ValueRef::Vec(Box::new(ValueRef::SpawnStatus))],
             ValueRef::bool,
+        ),
+    )?;
+    store.insert(
+        stop_on_fail::name(),
+        ExecutorFnDescription::new(
+            stop_on_fail::execute,
+            vec![ValueRef::SpawnStatus],
+            ValueRef::SpawnStatus,
         ),
     )?;
     Ok(())

@@ -10,6 +10,7 @@ mod runners;
 
 use inf::journal::Journal;
 
+#[allow(clippy::needless_return)]
 #[tokio::main]
 async fn main() {
     let Ok(cfg) = cli::get_journal_configuration()
@@ -19,15 +20,17 @@ async fn main() {
         exit(1);
     };
     let journal = Journal::unwrapped(cfg);
-    let code = if let Err(err) = cli::process(journal.clone()).await {
-        journal.err("cli::process", err.to_string());
-        1
-    } else {
-        0
+    let code = match cli::process(journal.clone()).await {
+        Ok(code) => code.code(),
+        Err(err) => {
+            journal.err("cli::process", err.to_string());
+            1
+        }
     };
     if let Err(err) = journal.destroy().await {
         eprintln!("{err}");
         exit(1);
-    }
-    exit(code);
+    } else {
+        exit(code);
+    };
 }

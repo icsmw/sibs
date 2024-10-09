@@ -5,6 +5,7 @@ use std::{
 use uuid::Uuid;
 
 #[derive(Clone)]
+#[allow(dead_code)]
 pub enum Strategy {
     Number(u16),
     Named(Vec<String>),

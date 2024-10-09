@@ -7,7 +7,7 @@ pub mod variables;
 
 use bstorage::Storage;
 use closures::Closures;
-use std::{process, sync::Arc};
+use std::{fmt, process, sync::Arc};
 
 use crate::{
     elements::FuncArg,
@@ -21,7 +21,10 @@ pub use error::E;
 pub use scenario::*;
 use tokio::{
     spawn,
-    sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
+    sync::{
+        mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
+        oneshot,
+    },
 };
 use tokio_util::sync::CancellationToken;
 pub use tracker::*;
@@ -31,8 +34,61 @@ use super::ValueRef;
 
 const SIBS_FOLDER: &str = ".sibs";
 
-/// Defines a way to close application
+#[derive(Debug)]
+/// Cases to close application
 pub enum ExitCode {
+    /// Immediately close the application with given exit's code and message. It will
+    /// not wait for operations, which might be still running.
+    ///
+    /// # Parameters
+    ///
+    /// * `i32` - exit code
+    Immediately(i32),
+    /// Store given exit code and message to use it as soon destructor of context
+    /// will be called in regular way.
+    ///
+    /// # Parameters
+    ///
+    /// * `i32` - exit code
+    Aborting(i32),
+    /// Close application in regular way
+    Success,
+}
+
+impl ExitCode {
+    pub fn code(&self) -> i32 {
+        match self {
+            Self::Aborting(code) | Self::Immediately(code) => *code,
+            Self::Success => 0,
+        }
+    }
+}
+
+impl From<&ExitCodeMessage> for ExitCode {
+    fn from(value: &ExitCodeMessage) -> Self {
+        match value {
+            ExitCodeMessage::Aborting(code, ..) => Self::Aborting(*code),
+            ExitCodeMessage::Immediately(code, ..) => Self::Immediately(*code),
+            ExitCodeMessage::Regular(..) => Self::Success,
+        }
+    }
+}
+
+impl fmt::Display for ExitCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Aborting(..) => "abort",
+                Self::Immediately(..) => "exit",
+                Self::Success => "success",
+            }
+        )
+    }
+}
+/// Defines a way to close application
+pub enum ExitCodeMessage {
     /// Immediately close the application with given exit's code and message. It will
     /// not wait for operations, which might be still running.
     ///
@@ -50,7 +106,10 @@ pub enum ExitCode {
     /// * `Option<String>` - message to post in stdout before exit
     Aborting(i32, Option<String>),
     /// Close application in regular way
-    Regular,
+    /// # Parameters
+    ///
+    /// * `ExitCode` - exit code
+    Regular(oneshot::Sender<ExitCode>),
 }
 
 #[derive(Clone, Debug)]
@@ -65,13 +124,11 @@ pub struct Context {
     pub signals: Signals,
     pub variables: VariablesMeta,
     pub closures: Closures,
-    tx: UnboundedSender<ExitCode>,
-    state: CancellationToken,
+    tx: UnboundedSender<ExitCodeMessage>,
 }
 
 impl Context {
     pub fn init(scenario: Scenario, src: &Sources, journal: &Journal) -> Result<Self, E> {
-        let state = CancellationToken::new();
         let tracker = Tracker::init(journal);
         let atlas = Atlas::init(src, journal);
         let funcs = Functions::init(journal)?;
@@ -79,15 +136,16 @@ impl Context {
         let variables = VariablesMeta::init(journal);
         let closures = Closures::init(journal);
         let signals = Signals::init(journal);
-        let (tx, mut rx): (UnboundedSender<ExitCode>, UnboundedReceiver<ExitCode>) =
-            unbounded_channel();
+        let (tx, mut rx): (
+            UnboundedSender<ExitCodeMessage>,
+            UnboundedReceiver<ExitCodeMessage>,
+        ) = unbounded_channel();
         let instance = Self {
             scenario,
             tracker: tracker.clone(),
             journal: journal.clone(),
             atlas: atlas.clone(),
             funcs: funcs.clone(),
-            state: state.clone(),
             scope: scope.clone(),
             signals: signals.clone(),
             variables: variables.clone(),
@@ -109,43 +167,47 @@ impl Context {
                     let _ = journal.err_if("closures", closures.destroy().await);
                 })
             };
-            let mut exit_code = ExitCode::Regular;
-            while let Some(code) = rx.recv().await {
-                let breaking = !matches!(code, ExitCode::Aborting(..));
-                if !matches!(code, ExitCode::Regular) {
-                    exit_code = code;
-                }
-                if breaking {
-                    break;
-                }
-            }
-            match exit_code {
-                ExitCode::Immediately(code, msg) | ExitCode::Aborting(code, msg) => {
-                    journal.warn("", format!("Forced exit with code {code}"));
-                    journal.flush().await;
-                    shutdown(&journal).await;
-                    if let Some(msg) = msg {
-                        if code == 0 {
-                            println!("{msg}");
+            let mut exit_code = ExitCode::Success;
+            while let Some(cmd) = rx.recv().await {
+                let recv_exit_code: ExitCode = (&cmd).into();
+                let immediately = matches!(cmd, ExitCodeMessage::Immediately(..));
+                match cmd {
+                    ExitCodeMessage::Aborting(code, msg)
+                    | ExitCodeMessage::Immediately(code, msg) => {
+                        exit_code = recv_exit_code;
+                        journal.warn("", format!("Forced {exit_code} with code {code}"));
+                        journal.flush().await;
+                        if let Some(msg) = msg {
+                            if code == 0 {
+                                println!("{msg}");
+                            } else {
+                                eprintln!("{msg}");
+                            }
+                        }
+                        if immediately {
+                            shutdown(&journal).await;
+                            process::exit(code);
                         } else {
-                            eprintln!("{msg}");
+                            continue;
                         }
                     }
-                    process::exit(code);
-                }
-                ExitCode::Regular => {
-                    shutdown(&journal).await;
+                    ExitCodeMessage::Regular(tx) => {
+                        shutdown(&journal).await;
+                        if tx.send(exit_code).is_err() {
+                            eprintln!("Fail to confirm context destroy")
+                        }
+                        break;
+                    }
                 }
             }
-            state.cancel();
         });
         Ok(instance)
     }
 
-    pub async fn destroy(&self) -> Result<(), E> {
-        self.tx.send(ExitCode::Regular)?;
-        self.state.cancelled().await;
-        Ok(())
+    pub async fn destroy(&self) -> Result<ExitCode, E> {
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(ExitCodeMessage::Regular(tx))?;
+        Ok(rx.await?)
     }
 
     /// Destroy context with dependencies and immediately exit from the application
@@ -157,7 +219,7 @@ impl Context {
     /// * `code` - code to exit
     /// * `msg` - message to post into stdout before exit
     pub async fn exit(&self, code: i32, msg: Option<String>) -> Result<(), E> {
-        self.tx.send(ExitCode::Immediately(code, msg))?;
+        self.tx.send(ExitCodeMessage::Immediately(code, msg))?;
         Ok(())
     }
 
@@ -169,7 +231,7 @@ impl Context {
     /// * `code` - code to exit
     /// * `msg` - message to post into stdout before exit
     pub async fn abort(&self, code: i32, msg: Option<String>) -> Result<(), E> {
-        self.tx.send(ExitCode::Aborting(code, msg))?;
+        self.tx.send(ExitCodeMessage::Aborting(code, msg))?;
         self.aborting.cancel();
         Ok(())
     }
