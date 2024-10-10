@@ -101,6 +101,16 @@ impl TryExecute for First {
 }
 
 #[cfg(test)]
+use crate::elements::InnersGetter;
+
+#[cfg(test)]
+impl InnersGetter for First {
+    fn get_inners(&self) -> Vec<&Element> {
+        vec![self.block.as_ref()]
+    }
+}
+
+#[cfg(test)]
 mod reading {
     use crate::{
         elements::{First, TokenGetter},

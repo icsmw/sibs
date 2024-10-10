@@ -304,6 +304,17 @@ impl TryExecute for If {
 }
 
 #[cfg(test)]
+use crate::elements::InnersGetter;
+
+#[cfg(test)]
+impl InnersGetter for If {
+    fn get_inners(&self) -> Vec<&Element> {
+        todo!("Switch threads to Element");
+        Vec::new()
+    }
+}
+
+#[cfg(test)]
 mod reading {
     use crate::{
         elements::{If, Thread, TokenGetter},

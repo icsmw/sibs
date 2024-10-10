@@ -4,18 +4,18 @@
 };
 @test {
     $a = env::os();
-    $b = str::repeat(env::is_os($a), 3);
+    $b = str::repeat("{env::is_os($a)}", 3);
     if $b == "truetruetrue" {
-        "true";
+        true;
     };
 };
 @test {
     if test::return_bool(true) {
-        "true";
+        true;
     };
 };
 @test {
     if !test::return_bool(false) {
-        "true";
+        true;
     };
 };

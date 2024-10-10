@@ -1,6 +1,9 @@
 use crate::inf::{journal::Report, Journal};
 use std::process;
 
+#[cfg(test)]
+use crate::elements::ElementRef;
+
 #[allow(unused)]
 pub async fn exit<T>(journal: Journal, err: T)
 where
@@ -15,7 +18,186 @@ where
 }
 
 #[cfg(test)]
-pub async fn process_block<S: AsRef<str>, T>(block: S, expectation: T)
+pub async fn reading_line_by_line<S: AsRef<str>>(
+    content: S,
+    element_ref: ElementRef,
+    exp_count: usize,
+) {
+    use crate::{
+        elements::{Element, InnersGetter, TokenGetter},
+        error::LinkedErr,
+        inf::{operator::E, tests::trim_carets, Configuration},
+        read_string,
+        reader::{chars, Reader, Sources},
+    };
+    let len = content.as_ref().split('\n').count();
+    let content = content.as_ref().to_string();
+    read_string!(
+        &Configuration::logs(false),
+        &content,
+        |reader: &mut Reader, src: &mut Sources| {
+            let mut count = 0;
+            let mut tokens = 0;
+            while let Some(entity) = src.report_err_if(Element::include(reader, &[element_ref]))? {
+                let semicolon = reader.move_to().char(&[&chars::SEMICOLON]).is_some();
+                // Compare generated and origin content
+                assert_eq!(
+                    trim_carets(reader.recent()),
+                    trim_carets(&format!("{entity}{}", if semicolon { ";" } else { "" })),
+                    "Line: {}",
+                    count + 1
+                );
+                // Checking self tokens
+                assert_eq!(
+                    trim_carets(&format!("{entity}")),
+                    reader.get_fragment(&entity.token())?.content
+                );
+                tokens += 1;
+                // Checking inners tokens
+                for inner in entity.get_inners().iter() {
+                    assert_eq!(
+                        trim_carets(&inner.to_string()),
+                        reader.get_fragment(&inner.token())?.lined,
+                        "Line: {}",
+                        count + 1
+                    );
+                    tokens += 1;
+                }
+                count += 1;
+            }
+            assert_eq!(count, len);
+            assert_eq!(count, exp_count);
+            assert!(reader.rest().trim().is_empty());
+            println!("[Reading Test]: done for \"{element_ref}\"; tested {count} element(s); checked {tokens} token(s).");
+            Ok::<(), LinkedErr<E>>(())
+        }
+    );
+}
+
+#[cfg(test)]
+#[macro_export]
+macro_rules! test_reading_line_by_line {
+    ($fn_name:ident, $content:expr, $element_ref:expr, $exp_count:literal) => {
+        paste::item! {
+            #[tokio::test]
+            async fn [< test_ $fn_name >] () {
+                $crate::runners::reading_line_by_line($content, $element_ref, $exp_count).await;
+            }
+        }
+    };
+}
+
+#[cfg(test)]
+pub async fn reading_with_errors_line_by_line<S: AsRef<str>>(
+    content: S,
+    element_ref: ElementRef,
+    exp_count: usize,
+) {
+    use crate::{
+        elements::Element,
+        error::LinkedErr,
+        inf::{operator::E, Configuration},
+        read_string,
+        reader::{chars, Reader, Sources},
+    };
+    let cfg = Configuration::logs(false);
+    let samples = content
+        .as_ref()
+        .split('\n')
+        .map(|s| s.to_owned())
+        .collect::<Vec<String>>();
+    let len = samples.len();
+    let mut count = 0;
+    for sample in samples.iter() {
+        count += read_string!(&cfg, sample, |reader: &mut Reader, src: &mut Sources| {
+            let el = src.report_err_if(Element::include(reader, &[element_ref]));
+            if let Ok(el) = el {
+                let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                assert!(el.is_none(), "Line {}: element: {:?}", count + 1, el);
+                assert!(
+                    !reader.rest().trim().is_empty(),
+                    "Line {}: element: {:?}",
+                    count + 1,
+                    el
+                );
+            } else {
+                assert!(el.is_err(), "Line {}: func: {:?}", count + 1, el);
+            }
+            Ok::<usize, LinkedErr<E>>(1)
+        });
+    }
+    assert_eq!(count, len);
+    assert_eq!(count, exp_count);
+    println!("[Errors Reading Test]: done for \"{element_ref}\"; tested {count} element(s).");
+}
+
+#[cfg(test)]
+#[macro_export]
+macro_rules! test_reading_with_errors_line_by_line {
+    ($fn_name:ident, $content:expr, $element_ref:expr, $exp_count:literal) => {
+        paste::item! {
+            #[tokio::test]
+            async fn [< test_ $fn_name >] () {
+                $crate::runners::reading_with_errors_line_by_line($content, $element_ref, $exp_count).await;
+            }
+        }
+    };
+}
+
+#[cfg(test)]
+pub async fn process_tasks_one_by_one<S: AsRef<str>, T>(
+    content: S,
+    expectation: T,
+    exp_count: usize,
+) where
+    T: 'static + Clone + PartialEq + std::fmt::Debug,
+{
+    use crate::{
+        elements::Element,
+        error::LinkedErr,
+        inf::{operator::E, Configuration, Context, Scope},
+        process_string,
+        reader::{chars, Reader, Sources},
+    };
+    let content = content.as_ref().to_string();
+    process_string!(
+        &Configuration::logs(false),
+        &content,
+        |reader: &mut Reader, src: &mut Sources| {
+            let mut tasks: Vec<Element> = Vec::new();
+            while let Some(task) =
+                src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
+            {
+                let _ = reader.move_to().char(&[&chars::SEMICOLON]);
+                tasks.push(task);
+            }
+            Ok::<Vec<Element>, LinkedErr<E>>(tasks)
+        },
+        |tasks: Vec<Element>, _: Context, _: Scope, _: Journal| async move {
+            assert_eq!(exp_count, tasks.len());
+            for task in tasks.iter() {
+                process_task(task.to_string(), expectation.clone()).await;
+            }
+            Ok::<(), LinkedErr<E>>(())
+        }
+    );
+}
+
+#[cfg(test)]
+#[macro_export]
+macro_rules! test_process_tasks_one_by_one {
+    ($fn_name:ident, $content:expr, $expectation:expr, $exp_count:literal) => {
+        paste::item! {
+            #[tokio::test]
+            async fn [< test_ $fn_name >] () {
+                $crate::runners::process_tasks_one_by_one($content, $expectation, $exp_count).await;
+            }
+        }
+    };
+}
+
+#[cfg(test)]
+pub async fn process_task<S: AsRef<str>, T>(task: S, expectation: T)
 where
     T: 'static + Clone + PartialEq + std::fmt::Debug,
 {
@@ -31,15 +213,15 @@ where
         reader::{Reader, Sources},
     };
 
-    let task = format!("#(app: ../) @test(){{{}}}", block.as_ref());
+    let comp = format!("#(app: ../) {}", task.as_ref());
     process_string!(
         &Configuration::logs(false),
-        &task,
+        &comp,
         |reader: &mut Reader, src: &mut Sources| {
             let Some(component) =
                 src.report_err_if(Element::include(reader, &[ElementRef::Component]))?
             else {
-                panic!("Fait to read component from:\n{task}\n");
+                panic!("Fait to read component from:\n{comp}\n");
             };
             Ok::<Element, LinkedErr<E>>(component)
         },
@@ -93,6 +275,14 @@ where
             Ok::<(), LinkedErr<E>>(())
         }
     );
+}
+
+#[cfg(test)]
+pub async fn process_block<S: AsRef<str>, T>(block: S, expectation: T)
+where
+    T: 'static + Clone + PartialEq + std::fmt::Debug,
+{
+    process_task(format!("@test(){{{}}}", block.as_ref()), expectation).await;
 }
 
 #[cfg(test)]

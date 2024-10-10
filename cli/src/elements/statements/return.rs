@@ -155,6 +155,19 @@ impl TryExecute for Return {
 }
 
 #[cfg(test)]
+use crate::elements::InnersGetter;
+
+#[cfg(test)]
+impl InnersGetter for Return {
+    fn get_inners(&self) -> Vec<&Element> {
+        self.output
+            .as_ref()
+            .map(|el| vec![el.as_ref()])
+            .unwrap_or_default()
+    }
+}
+
+#[cfg(test)]
 mod processing {
     use crate::{inf::Value, test_block};
 

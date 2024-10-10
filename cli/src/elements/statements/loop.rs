@@ -126,6 +126,16 @@ impl TryExecute for Loop {
 }
 
 #[cfg(test)]
+use crate::elements::InnersGetter;
+
+#[cfg(test)]
+impl InnersGetter for Loop {
+    fn get_inners(&self) -> Vec<&Element> {
+        vec![self.block.as_ref()]
+    }
+}
+
+#[cfg(test)]
 mod reading {
     use crate::{
         elements::{Loop, TokenGetter},

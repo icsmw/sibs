@@ -115,6 +115,16 @@ impl TryExecute for Error {
 }
 
 #[cfg(test)]
+use crate::elements::InnersGetter;
+
+#[cfg(test)]
+impl InnersGetter for Error {
+    fn get_inners(&self) -> Vec<&Element> {
+        vec![self.output.as_ref()]
+    }
+}
+
+#[cfg(test)]
 mod proptest {
 
     use crate::{

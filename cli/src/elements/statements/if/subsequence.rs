@@ -202,6 +202,16 @@ impl TryExecute for IfSubsequence {
 }
 
 #[cfg(test)]
+use crate::elements::InnersGetter;
+
+#[cfg(test)]
+impl InnersGetter for IfSubsequence {
+    fn get_inners(&self) -> Vec<&Element> {
+        self.subsequence.iter().collect()
+    }
+}
+
+#[cfg(test)]
 mod reading {
     use crate::{
         elements::{IfSubsequence, TokenGetter},

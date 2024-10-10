@@ -198,6 +198,16 @@ impl TryExecute for Join {
 }
 
 #[cfg(test)]
+use crate::elements::InnersGetter;
+
+#[cfg(test)]
+impl InnersGetter for Join {
+    fn get_inners(&self) -> Vec<&Element> {
+        vec![self.elements.as_ref()]
+    }
+}
+
+#[cfg(test)]
 mod reading {
     use crate::{
         elements::{Join, TokenGetter},

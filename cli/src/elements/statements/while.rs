@@ -149,6 +149,16 @@ impl TryExecute for While {
 }
 
 #[cfg(test)]
+use crate::elements::InnersGetter;
+
+#[cfg(test)]
+impl InnersGetter for While {
+    fn get_inners(&self) -> Vec<&Element> {
+        vec![self.block.as_ref(), self.condition.as_ref()]
+    }
+}
+
+#[cfg(test)]
 mod reading {
     use crate::{
         elements::{TokenGetter, While},

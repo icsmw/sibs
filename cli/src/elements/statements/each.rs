@@ -169,6 +169,20 @@ impl TryExecute for Each {
 }
 
 #[cfg(test)]
+use crate::elements::InnersGetter;
+
+#[cfg(test)]
+impl InnersGetter for Each {
+    fn get_inners(&self) -> Vec<&Element> {
+        vec![
+            self.block.as_ref(),
+            self.input.as_ref(),
+            self.variable.as_ref(),
+        ]
+    }
+}
+
+#[cfg(test)]
 mod reading {
     use crate::{
         elements::{Each, TokenGetter},

@@ -2,7 +2,7 @@ mod context;
 pub use context::*;
 
 use crate::{
-    elements::{ElementRefGetter, Metadata, TokenGetter},
+    elements::{Metadata, TokenGetter},
     error::LinkedErr,
     inf::{
         operator::{Processing, TryExpectedValueType, E},
@@ -23,13 +23,7 @@ pub trait Execute {
     #[allow(clippy::too_many_arguments)]
     fn execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a>
     where
-        Self: ElementRefGetter
-            + TryExecute
-            + Processing
-            + TokenGetter
-            + TryExpectedValueType
-            + Debug
-            + Sync,
+        Self: TryExecute + Processing + TokenGetter + TryExpectedValueType + Debug + Sync,
     {
         Box::pin(async move {
             if cx.is_aborting() {

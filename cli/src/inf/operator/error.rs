@@ -14,6 +14,10 @@ use uuid::Uuid;
 
 #[derive(Error, Debug, Clone)]
 pub enum E {
+    #[error("Subsequence doesn't return bool value")]
+    NoBoolValueFromSubsequence,
+    #[error("Fail to parse subsequence's element value")]
+    FailToParseValueOfSubsequenceElement,
     #[error("Channel error: {0}")]
     Channel(String),
     #[error("Invalid variable declaration")]

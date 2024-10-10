@@ -248,9 +248,14 @@ pub trait TokenGetter {
     fn token(&self) -> usize;
 }
 
+#[cfg(test)]
 pub trait ElementRefGetter {
-    #[cfg(test)]
     fn get_alias(&self) -> ElementRef;
+}
+
+#[cfg(test)]
+pub trait InnersGetter {
+    fn get_inners(&self) -> Vec<&Element>;
 }
 
 #[derive(Debug, Clone)]
@@ -743,6 +748,57 @@ impl Element {
     }
 }
 
+#[cfg(test)]
+impl InnersGetter for Element {
+    fn get_inners(&self) -> Vec<&Element> {
+        match self {
+            Self::Call(v, _) => v.get_inners(),
+            Self::Accessor(v, _) => v.get_inners(),
+            Self::Function(v, _) => v.get_inners(),
+            Self::If(v, _) => v.get_inners(),
+            Self::IfCondition(v, _) => v.get_inners(),
+            Self::IfSubsequence(v, _) => v.get_inners(),
+            Self::Breaker(v, _) => v.get_inners(),
+            Self::Each(v, _) => v.get_inners(),
+            Self::First(v, _) => v.get_inners(),
+            Self::Join(v, _) => v.get_inners(),
+            Self::VariableAssignation(v, _) => v.get_inners(),
+            Self::Comparing(v, _) => v.get_inners(),
+            Self::Combination(v, _) => v.get_inners(),
+            Self::Condition(v, _) => v.get_inners(),
+            Self::Subsequence(v, _) => v.get_inners(),
+            Self::Optional(v, _) => v.get_inners(),
+            Self::Gatekeeper(v, _) => v.get_inners(),
+            Self::Reference(v, _) => v.get_inners(),
+            Self::PatternString(v, _) => v.get_inners(),
+            Self::VariableName(v, _) => v.get_inners(),
+            Self::Values(v, _) => v.get_inners(),
+            Self::Block(v, _) => v.get_inners(),
+            Self::Command(v, _) => v.get_inners(),
+            Self::Task(v, _) => v.get_inners(),
+            Self::Component(v, _) => v.get_inners(),
+            Self::Boolean(v, _) => v.get_inners(),
+            Self::Integer(v, _) => v.get_inners(),
+            Self::VariableDeclaration(v, _) => v.get_inners(),
+            Self::VariableVariants(v, _) => v.get_inners(),
+            Self::VariableType(v, _) => v.get_inners(),
+            Self::SimpleString(v, _) => v.get_inners(),
+            Self::Range(v, _) => v.get_inners(),
+            Self::For(v, _) => v.get_inners(),
+            Self::Compute(v, _) => v.get_inners(),
+            Self::Return(v, _) => v.get_inners(),
+            Self::Error(v, _) => v.get_inners(),
+            Self::Incrementer(v, _) => v.get_inners(),
+            Self::Loop(v, _) => v.get_inners(),
+            Self::While(v, _) => v.get_inners(),
+            Self::Closure(v, _) => v.get_inners(),
+            Self::Conclusion(v, _) => v.get_inners(),
+            Self::Meta(v) => v.get_inners(),
+            Self::Comment(v) => v.get_inners(),
+        }
+    }
+}
+#[cfg(test)]
 impl ElementRefGetter for Element {
     #[cfg(test)]
     fn get_alias(&self) -> ElementRef {
@@ -793,6 +849,7 @@ impl ElementRefGetter for Element {
         }
     }
 }
+
 impl fmt::Display for Element {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fn as_string<A>(el: &A, md: &Metadata) -> String
@@ -1277,6 +1334,7 @@ impl Processing for Element {
         })
     }
 }
+
 impl TryExecute for Element {
     fn try_execute<'a>(&'a self, cx: ExecuteContext<'a>) -> ExecutePinnedResult<'a> {
         Box::pin(async move {

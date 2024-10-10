@@ -126,6 +126,16 @@ impl TryExecute for IfCondition {
 }
 
 #[cfg(test)]
+use crate::elements::InnersGetter;
+
+#[cfg(test)]
+impl InnersGetter for IfCondition {
+    fn get_inners(&self) -> Vec<&Element> {
+        vec![self.subsequence.as_ref()]
+    }
+}
+
+#[cfg(test)]
 mod proptest {
     use crate::elements::{Element, ElementRef, IfCondition};
     use proptest::prelude::*;

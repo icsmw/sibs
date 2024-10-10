@@ -94,6 +94,16 @@ impl TryExecute for Breaker {
 }
 
 #[cfg(test)]
+use crate::elements::InnersGetter;
+
+#[cfg(test)]
+impl InnersGetter for Breaker {
+    fn get_inners(&self) -> Vec<&Element> {
+        Vec::new()
+    }
+}
+
+#[cfg(test)]
 mod reading {
     use crate::{
         elements::{Each, TokenGetter},
