@@ -1,9 +1,22 @@
-use crate::elements::{Element, IfSubsequence, InnersGetter};
+use crate::{
+    elements::{Element, ElementRef, IfSubsequence, InnersGetter},
+    test_reading_el_by_el,
+};
+
 impl InnersGetter for IfSubsequence {
     fn get_inners(&self) -> Vec<&Element> {
         self.subsequence.iter().collect()
     }
 }
+
+// test_reading_el_by_el!(
+//     reading,
+//     &include_str!("../../../../tests/reading/subsequence.sibs"),
+//     ElementRef::IfSubsequence,
+//     7
+// );
+//
+// Needs runner one line by one line
 
 #[cfg(test)]
 mod reading {

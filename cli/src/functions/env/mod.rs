@@ -48,7 +48,7 @@ pub fn register(store: &mut Store<ExecutorFnDescription>) -> Result<(), E> {
 #[cfg(test)]
 mod test {
     use crate::{
-        elements::{ElementRef, Element},
+        elements::{Element, ElementRef},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
@@ -69,7 +69,7 @@ mod test {
     ];
 
     #[tokio::test]
-    async fn reading() {
+    async fn processing() {
         std::env::set_var("TEST_VAR", "TEST");
         let temp_dir = std::env::temp_dir().to_string_lossy().to_string();
         let hooks: &[(&str, &str)] = &[

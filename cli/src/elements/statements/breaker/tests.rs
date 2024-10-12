@@ -1,68 +1,21 @@
-use crate::elements::{Breaker, Element, InnersGetter};
+use crate::{
+    elements::{Breaker, Element, ElementRef, InnersGetter},
+    test_reading_el_by_el,
+};
+
 impl InnersGetter for Breaker {
     fn get_inners(&self) -> Vec<&Element> {
         Vec::new()
     }
 }
 
-#[cfg(test)]
-mod reading {
-    use crate::{
-        elements::{Each, TokenGetter},
-        error::LinkedErr,
-        inf::{tests::*, Configuration},
-        read_string,
-        reader::{chars, Dissect, Reader, Sources, E},
-    };
+test_reading_el_by_el!(
+    reading,
+    &include_str!("../../../tests/reading/break.sibs"),
+    ElementRef::Each,
+    3
+);
 
-    #[tokio::test]
-    async fn reading() {
-        read_string!(
-            &Configuration::logs(false),
-            &include_str!("../../../tests/reading/break.sibs"),
-            |reader: &mut Reader, src: &mut Sources| {
-                let mut count = 0;
-                while let Some(entity) = src.report_err_if(Each::dissect(reader))? {
-                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-                    assert_eq!(
-                        trim_carets(reader.recent()),
-                        trim_carets(&format!("{entity};"))
-                    );
-                    count += 1;
-                }
-                assert_eq!(count, 3);
-                assert!(reader.rest().trim().is_empty());
-                Ok::<(), LinkedErr<E>>(())
-            }
-        );
-    }
-
-    #[tokio::test]
-    async fn tokens() {
-        read_string!(
-            &Configuration::logs(false),
-            &include_str!("../../../tests/reading/break.sibs"),
-            |reader: &mut Reader, src: &mut Sources| {
-                let mut count = 0;
-                while let Some(entity) = src.report_err_if(Each::dissect(reader))? {
-                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-                    assert_eq!(
-                        trim_carets(&format!("{entity}")),
-                        trim_carets(&reader.get_fragment(&entity.token)?.lined),
-                    );
-                    assert_eq!(
-                        trim_carets(&entity.block.to_string()),
-                        trim_carets(&reader.get_fragment(&entity.block.token())?.lined),
-                    );
-                    count += 1;
-                }
-                assert_eq!(count, 3);
-                assert!(reader.rest().trim().is_empty());
-                Ok::<(), LinkedErr<E>>(())
-            }
-        );
-    }
-}
 mod processing {
 
     use crate::{
@@ -78,7 +31,7 @@ mod processing {
     const VALUES: &[(&str, &str)] = &[("a", "two"), ("b", "one"), ("c", "one")];
 
     #[tokio::test]
-    async fn reading() {
+    async fn processing() {
         process_string!(
             &Configuration::logs(false),
             &include_str!("../../../tests/processing/break.sibs"),

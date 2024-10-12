@@ -57,6 +57,7 @@ pub enum ElementRef {
     If,
     IfCondition,
     IfSubsequence,
+    IfThread,
     Each,
     Breaker,
     First,
@@ -109,6 +110,7 @@ impl fmt::Display for ElementRef {
                 Self::If => "If",
                 Self::IfCondition => "IfCondition",
                 Self::IfSubsequence => "IfSubsequence",
+                Self::IfThread => "IfThread",
                 Self::Each => "Each",
                 Self::Breaker => "Breaker",
                 Self::First => "First",
@@ -266,6 +268,7 @@ pub enum Element {
     If(If, Metadata),
     IfCondition(IfCondition, Metadata),
     IfSubsequence(IfSubsequence, Metadata),
+    IfThread(IfThread, Metadata),
     Breaker(Breaker, Metadata),
     Each(Each, Metadata),
     First(First, Metadata),
@@ -442,6 +445,11 @@ impl Element {
                 return next(reader, Element::If(el, md));
             }
         }
+        if includes == targets.contains(&ElementRef::IfThread) {
+            if let Some(el) = IfThread::dissect(reader)? {
+                return next(reader, Element::IfThread(el, md));
+            }
+        }
         if includes == targets.contains(&ElementRef::IfSubsequence) {
             if let Some(el) = IfSubsequence::dissect(reader)? {
                 return next(reader, Element::IfSubsequence(el, md));
@@ -584,6 +592,7 @@ impl Element {
             Self::If(_, md) => md,
             Self::IfCondition(_, md) => md,
             Self::IfSubsequence(_, md) => md,
+            Self::IfThread(_, md) => md,
             Self::Breaker(_, md) => md,
             Self::Each(_, md) => md,
             Self::First(_, md) => md,
@@ -633,6 +642,7 @@ impl Element {
             Self::If(_, md) => md,
             Self::IfCondition(_, md) => md,
             Self::IfSubsequence(_, md) => md,
+            Self::IfThread(_, md) => md,
             Self::Breaker(_, md) => md,
             Self::Each(_, md) => md,
             Self::First(_, md) => md,
@@ -707,6 +717,7 @@ impl Element {
             Self::If(v, _) => v.to_string(),
             Self::IfCondition(v, _) => v.to_string(),
             Self::IfSubsequence(v, _) => v.to_string(),
+            Self::IfThread(v, _) => v.to_string(),
             Self::Each(v, _) => v.to_string(),
             Self::Breaker(v, _) => v.to_string(),
             Self::First(v, _) => v.to_string(),
@@ -758,6 +769,7 @@ impl InnersGetter for Element {
             Self::If(v, _) => v.get_inners(),
             Self::IfCondition(v, _) => v.get_inners(),
             Self::IfSubsequence(v, _) => v.get_inners(),
+            Self::IfThread(v, _) => v.get_inners(),
             Self::Breaker(v, _) => v.get_inners(),
             Self::Each(v, _) => v.get_inners(),
             Self::First(v, _) => v.get_inners(),
@@ -809,6 +821,7 @@ impl ElementRefGetter for Element {
             Self::If(..) => ElementRef::If,
             Self::IfCondition(..) => ElementRef::IfCondition,
             Self::IfSubsequence(..) => ElementRef::IfSubsequence,
+            Self::IfThread(..) => ElementRef::IfThread,
             Self::Breaker(..) => ElementRef::Breaker,
             Self::Each(..) => ElementRef::Each,
             Self::First(..) => ElementRef::First,
@@ -885,6 +898,7 @@ impl fmt::Display for Element {
                 Self::If(v, md) => as_string(v, md),
                 Self::IfCondition(v, md) => as_string(v, md),
                 Self::IfSubsequence(v, md) => as_string(v, md),
+                Self::IfThread(v, md) => as_string(v, md),
                 Self::Breaker(v, md) => as_string(v, md),
                 Self::Each(v, md) => as_string(v, md),
                 Self::First(v, md) => as_string(v, md),
@@ -936,6 +950,7 @@ impl Formation for Element {
             Self::If(v, _) => v.elements_count(),
             Self::IfCondition(v, _) => v.elements_count(),
             Self::IfSubsequence(v, _) => v.elements_count(),
+            Self::IfThread(v, _) => v.elements_count(),
             Self::Breaker(v, _) => v.elements_count(),
             Self::Each(v, _) => v.elements_count(),
             Self::First(v, _) => v.elements_count(),
@@ -1008,6 +1023,7 @@ impl Formation for Element {
             Self::If(v, m) => format_el(v, m, cursor),
             Self::IfCondition(v, m) => format_el(v, m, cursor),
             Self::IfSubsequence(v, m) => format_el(v, m, cursor),
+            Self::IfThread(v, m) => format_el(v, m, cursor),
             Self::Breaker(v, m) => format_el(v, m, cursor),
             Self::Each(v, m) => format_el(v, m, cursor),
             Self::First(v, m) => format_el(v, m, cursor),
@@ -1058,6 +1074,7 @@ impl TokenGetter for Element {
             Self::If(v, _) => v.token(),
             Self::IfCondition(v, _) => v.token(),
             Self::IfSubsequence(v, _) => v.token(),
+            Self::IfThread(v, _) => v.token(),
             Self::Breaker(v, _) => v.token(),
             Self::Each(v, _) => v.token(),
             Self::First(v, _) => v.token(),
@@ -1115,6 +1132,7 @@ impl TryExpectedValueType for Element {
                 Self::If(v, _) => v.try_verification(owner, components, prev, cx).await,
                 Self::IfCondition(v, _) => v.try_verification(owner, components, prev, cx).await,
                 Self::IfSubsequence(v, _) => v.try_verification(owner, components, prev, cx).await,
+                Self::IfThread(v, _) => v.try_verification(owner, components, prev, cx).await,
                 Self::Breaker(v, _) => v.try_verification(owner, components, prev, cx).await,
                 Self::Each(v, _) => v.try_verification(owner, components, prev, cx).await,
                 Self::First(v, _) => v.try_verification(owner, components, prev, cx).await,
@@ -1176,6 +1194,7 @@ impl TryExpectedValueType for Element {
                 Self::If(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::IfCondition(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::IfSubsequence(v, _) => v.try_linking(owner, components, prev, cx).await,
+                Self::IfThread(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::Breaker(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::Each(v, _) => v.try_linking(owner, components, prev, cx).await,
                 Self::First(v, _) => v.try_linking(owner, components, prev, cx).await,
@@ -1231,6 +1250,7 @@ impl TryExpectedValueType for Element {
                 Self::If(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::IfCondition(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::IfSubsequence(v, _) => v.try_expected(owner, components, prev, cx).await,
+                Self::IfThread(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::Breaker(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::Each(v, _) => v.try_expected(owner, components, prev, cx).await,
                 Self::First(v, _) => v.try_expected(owner, components, prev, cx).await,
@@ -1303,6 +1323,7 @@ impl Processing for Element {
                 Self::If(v, _) => v.processing(results, cx).await,
                 Self::IfCondition(v, _) => v.processing(results, cx).await,
                 Self::IfSubsequence(v, _) => v.processing(results, cx).await,
+                Self::IfThread(v, _) => v.processing(results, cx).await,
                 Self::Breaker(v, _) => v.processing(results, cx).await,
                 Self::Each(v, _) => v.processing(results, cx).await,
                 Self::First(v, _) => v.processing(results, cx).await,
@@ -1356,6 +1377,7 @@ impl TryExecute for Element {
                 Self::If(v, _) => v.try_execute(cx.clone()).await,
                 Self::IfCondition(v, _) => v.try_execute(cx.clone()).await,
                 Self::IfSubsequence(v, _) => v.try_execute(cx.clone()).await,
+                Self::IfThread(v, _) => v.try_execute(cx.clone()).await,
                 Self::Breaker(v, _) => v.try_execute(cx.clone()).await,
                 Self::Each(v, _) => v.try_execute(cx.clone()).await,
                 Self::First(v, _) => v.try_execute(cx.clone()).await,
@@ -1457,10 +1479,10 @@ mod proptest {
         elements::{
             Accessor, Block, Boolean, Breaker, Call, Closure, Combination, Command, Comment,
             Comparing, Component, Compute, Conclusion, Condition, Each, Element, ElementRef, Error,
-            First, For, Function, Gatekeeper, If, IfCondition, IfSubsequence, Incrementer, Integer,
-            Join, Loop, Meta, Metadata, Optional, PatternString, Range, Reference, Return,
-            SimpleString, Subsequence, Task, Values, VariableAssignation, VariableDeclaration,
-            VariableName, VariableType, VariableVariants, While,
+            First, For, Function, Gatekeeper, If, IfCondition, IfSubsequence, IfThread,
+            Incrementer, Integer, Join, Loop, Meta, Metadata, Optional, PatternString, Range,
+            Reference, Return, SimpleString, Subsequence, Task, Values, VariableAssignation,
+            VariableDeclaration, VariableName, VariableType, VariableVariants, While,
         },
         error::LinkedErr,
         inf::{operator::E, tests::*, Configuration},
@@ -1680,6 +1702,13 @@ mod proptest {
             collected.push(
                 If::arbitrary_with(deep + 1)
                     .prop_map(|el| Element::If(el, Metadata::default()))
+                    .boxed(),
+            );
+        }
+        if targets.contains(&ElementRef::IfThread) {
+            collected.push(
+                IfThread::arbitrary_with((0, deep + 1))
+                    .prop_map(|el| Element::IfThread(el, Metadata::default()))
                     .boxed(),
             );
         }

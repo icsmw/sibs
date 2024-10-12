@@ -1,4 +1,8 @@
-use crate::elements::{Element, InnersGetter, Task};
+use crate::{
+    elements::{Element, ElementRef, InnersGetter, Task},
+    test_reading_el_by_el,
+};
+
 impl InnersGetter for Task {
     fn get_inners(&self) -> Vec<&Element> {
         [
@@ -9,6 +13,14 @@ impl InnersGetter for Task {
         .concat()
     }
 }
+
+// test_reading_el_by_el!(
+//     reading,
+//     &include_str!("../../tests/reading/tasks.sibs"),
+//     ElementRef::Task,
+//     11
+// );
+// reader recent in use
 
 #[cfg(test)]
 mod reading {

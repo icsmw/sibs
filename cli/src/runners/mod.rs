@@ -18,7 +18,7 @@ where
 }
 
 #[cfg(test)]
-pub async fn reading_line_by_line<S: AsRef<str>>(
+pub async fn reading_el_by_el<S: AsRef<str>>(
     content: S,
     element_ref: ElementRef,
     exp_count: usize,
@@ -30,7 +30,6 @@ pub async fn reading_line_by_line<S: AsRef<str>>(
         read_string,
         reader::{chars, Reader, Sources},
     };
-    let len = content.as_ref().split('\n').count();
     let content = content.as_ref().to_string();
     read_string!(
         &Configuration::logs(false),
@@ -50,7 +49,7 @@ pub async fn reading_line_by_line<S: AsRef<str>>(
                 // Checking self tokens
                 assert_eq!(
                     trim_carets(&format!("{entity}")),
-                    reader.get_fragment(&entity.token())?.content
+                    trim_carets(&reader.get_fragment(&entity.token())?.content)
                 );
                 tokens += 1;
                 // Checking inners tokens
@@ -65,7 +64,6 @@ pub async fn reading_line_by_line<S: AsRef<str>>(
                 }
                 count += 1;
             }
-            assert_eq!(count, len);
             assert_eq!(count, exp_count);
             assert!(reader.rest().trim().is_empty());
             println!("[Reading Test]: done for \"{element_ref}\"; tested {count} element(s); checked {tokens} token(s).");
@@ -76,12 +74,12 @@ pub async fn reading_line_by_line<S: AsRef<str>>(
 
 #[cfg(test)]
 #[macro_export]
-macro_rules! test_reading_line_by_line {
+macro_rules! test_reading_el_by_el {
     ($fn_name:ident, $content:expr, $element_ref:expr, $exp_count:literal) => {
         paste::item! {
             #[tokio::test]
             async fn [< test_ $fn_name >] () {
-                $crate::runners::reading_line_by_line($content, $element_ref, $exp_count).await;
+                $crate::runners::reading_el_by_el($content, $element_ref, $exp_count).await;
             }
         }
     };

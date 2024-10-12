@@ -1,10 +1,21 @@
-use crate::elements::{Comparing, Element, InnersGetter};
+use crate::{
+    elements::{Comparing, Element, ElementRef, InnersGetter},
+    test_reading_el_by_el,
+};
 
 impl InnersGetter for Comparing {
     fn get_inners(&self) -> Vec<&Element> {
         vec![self.left.as_ref(), self.right.as_ref()]
     }
 }
+
+// test_reading_el_by_el!(
+//     reading,
+//     &include_str!("../../../tests/reading/comparing.sibs"),
+//     ElementRef::Comparing,
+//     2
+// );
+// "!" isn't included into token
 
 #[cfg(test)]
 mod reading {

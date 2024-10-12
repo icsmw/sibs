@@ -50,7 +50,7 @@ mod test {
     };
 
     #[tokio::test]
-    async fn reading() {
+    async fn processing() {
         let target = std::env::current_dir()
             .unwrap()
             .join("./src/tests/processing/signal.sibs");

@@ -1,4 +1,8 @@
-use crate::elements::{Command, Element, InnersGetter};
+use crate::{
+    elements::{Command, Element, InnersGetter},
+    test_block,
+};
+
 impl InnersGetter for Command {
     fn get_inners(&self) -> Vec<&Element> {
         self.elements.iter().collect()
@@ -77,8 +81,6 @@ mod reading {
         );
     }
 }
-
-use crate::test_block;
 
 test_block!(
     success,

@@ -1,26 +1,29 @@
 use crate::{
-    elements::{Element, ElementRef, InnersGetter, Optional},
+    elements::{Element, ElementRef, If, InnersGetter},
     test_reading_el_by_el, test_reading_with_errors_line_by_line,
 };
 
-impl InnersGetter for Optional {
+impl InnersGetter for If {
     fn get_inners(&self) -> Vec<&Element> {
-        vec![self.condition.as_ref(), self.action.as_ref()]
+        self.threads
+            .iter()
+            .flat_map(|thr| thr.get_inners())
+            .collect()
     }
 }
 
 test_reading_el_by_el!(
     reading,
-    &include_str!("../../tests/reading/optional.sibs"),
-    ElementRef::Optional,
-    106
+    &include_str!("../../../tests/reading/if.sibs"),
+    ElementRef::If,
+    90
 );
 
 test_reading_with_errors_line_by_line!(
     errors,
-    &include_str!("../../tests/error/optional.sibs"),
-    ElementRef::Optional,
-    7
+    &include_str!("../../../tests/error/if.sibs"),
+    ElementRef::If,
+    15
 );
 
 #[cfg(test)]
@@ -29,8 +32,8 @@ mod processing {
         elements::{Element, ElementRef},
         error::LinkedErr,
         inf::{
-            operator::{Execute, E},
-            Configuration, Context, ExecuteContext, Journal, Scope,
+            operator::{Execute, ExecuteContext, E},
+            Configuration, Context, Journal, Scope,
         },
         process_string,
         reader::{chars, Reader, Sources},
@@ -38,9 +41,12 @@ mod processing {
 
     #[tokio::test]
     async fn processing() {
+        let tasks_count = include_str!("../../../tests/processing/if.sibs")
+            .match_indices(chars::AT)
+            .count();
         process_string!(
             &Configuration::logs(false),
-            &include_str!("../../tests/processing/optional.sibs"),
+            &include_str!("../../../tests/processing/if.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Element> = Vec::new();
                 while let Some(task) =
@@ -52,15 +58,18 @@ mod processing {
                 Ok::<Vec<Element>, LinkedErr<E>>(tasks)
             },
             |tasks: Vec<Element>, cx: Context, sc: Scope, _: Journal| async move {
-                for task in tasks.iter() {
+                for (i, task) in tasks.iter().enumerate() {
                     let result = task
                         .execute(ExecuteContext::unbound(cx.clone(), sc.clone()))
                         .await?;
                     assert_eq!(
-                        result.as_string().expect("Task returns string value"),
-                        "true".to_owned()
+                        result.as_string().expect("if returns string value"),
+                        "true".to_owned(),
+                        "Line: {}",
+                        i + 1
                     );
                 }
+                assert_eq!(tasks_count, tasks.len());
                 Ok::<(), LinkedErr<E>>(())
             }
         );

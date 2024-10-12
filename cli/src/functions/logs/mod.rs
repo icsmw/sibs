@@ -36,7 +36,7 @@ pub fn register(store: &mut Store<ExecutorFnDescription>) -> Result<(), E> {
 #[cfg(test)]
 mod test {
     use crate::{
-        elements::{ElementRef, Element},
+        elements::{Element, ElementRef},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
@@ -65,7 +65,7 @@ mod test {
     ];
 
     #[tokio::test]
-    async fn reading() {
+    async fn processing() {
         for (i, test) in TESTS.iter().enumerate() {
             let logs = temp_dir().join(format!("{}.log", Uuid::new_v4()));
             process_string!(

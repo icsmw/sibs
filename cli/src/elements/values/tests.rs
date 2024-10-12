@@ -1,92 +1,27 @@
-use crate::elements::{Element, InnersGetter, Values};
+use crate::{
+    elements::{Element, ElementRef, InnersGetter, Values},
+    test_reading_el_by_el, test_reading_with_errors_line_by_line,
+};
+
 impl InnersGetter for Values {
     fn get_inners(&self) -> Vec<&Element> {
         self.elements.iter().collect()
     }
 }
 
-#[cfg(test)]
-mod reading {
-    use crate::{
-        elements::{TokenGetter, Values},
-        error::LinkedErr,
-        inf::{tests::*, Configuration},
-        read_string,
-        reader::{Dissect, Reader, Sources, E},
-    };
+test_reading_el_by_el!(
+    reading,
+    &include_str!("../../tests/reading/values.sibs"),
+    ElementRef::Values,
+    62
+);
 
-    #[tokio::test]
-    async fn reading() {
-        let samples = include_str!("../../tests/reading/values.sibs");
-        let samples = samples.split('\n').collect::<Vec<&str>>();
-        let mut count = 0;
-        let cfg = Configuration::logs(false);
-        for sample in samples.iter() {
-            count += read_string!(&cfg, sample, |reader: &mut Reader, src: &mut Sources| {
-                let mut count = 0;
-                let entity = src.report_err_if(Values::dissect(reader))?;
-                assert!(entity.is_some(), "Line: {}", count + 1);
-                let entity = entity.unwrap();
-                assert_eq!(
-                    trim_carets(reader.recent()),
-                    trim_carets(&format!("{entity}")),
-                    "Line: {}",
-                    count + 1
-                );
-                count += 1;
-                Ok::<usize, LinkedErr<E>>(count)
-            });
-        }
-        assert_eq!(count, samples.len());
-    }
-
-    #[tokio::test]
-    async fn tokens() {
-        let samples = include_str!("../../tests/reading/values.sibs");
-        let samples = samples.split('\n').collect::<Vec<&str>>();
-        let mut count = 0;
-        let cfg = Configuration::logs(false);
-        for sample in samples.iter() {
-            count += read_string!(&cfg, sample, |reader: &mut Reader, src: &mut Sources| {
-                let mut count = 0;
-                let entity = src.report_err_if(Values::dissect(reader))?.unwrap();
-                assert_eq!(
-                    trim_carets(&entity.to_string()),
-                    reader.get_fragment(&entity.token)?.lined,
-                    "Line: {}",
-                    count + 1
-                );
-                for el in entity.elements.iter() {
-                    assert_eq!(
-                        trim_carets(&el.to_string()),
-                        trim_carets(&reader.get_fragment(&el.token())?.content),
-                        "Line: {}",
-                        count + 1
-                    );
-                }
-                count += 1;
-                Ok::<usize, LinkedErr<E>>(count)
-            });
-        }
-        assert_eq!(count, samples.len());
-    }
-
-    #[tokio::test]
-    async fn error() {
-        let samples = include_str!("../../tests/error/values.sibs");
-        let samples = samples.split('\n').collect::<Vec<&str>>();
-        let mut count = 0;
-        let cfg = Configuration::logs(false);
-        for sample in samples.iter() {
-            count += read_string!(&cfg, sample, |reader: &mut Reader, _: &mut Sources| {
-                let entity = Values::dissect(reader);
-                assert!(entity.is_err());
-                Ok::<usize, LinkedErr<E>>(1)
-            });
-        }
-        assert_eq!(count, samples.len());
-    }
-}
+test_reading_with_errors_line_by_line!(
+    errors,
+    &include_str!("../../tests/error/values.sibs"),
+    ElementRef::Values,
+    7
+);
 
 #[cfg(test)]
 mod processing {
@@ -113,7 +48,7 @@ mod processing {
     const NESTED_VALUES: &[(&str, &str)] = &[("a6", "c:a,d:b,d:c")];
 
     #[tokio::test]
-    async fn reading() {
+    async fn processing() {
         let components: Vec<Element> = read_string!(
             &Configuration::logs(false),
             &include_str!("../../tests/processing/values_components.sibs"),
