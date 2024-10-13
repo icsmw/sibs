@@ -71,10 +71,6 @@ pub enum E {
     NoEndRangeBorder,
     #[error("File {0} already has a map")]
     FileAlreadyHasMap(PathBuf),
-    #[error("Fail to parse subsequence's element value")]
-    FailToParseValueOfSubsequenceElement,
-    #[error("Subsequence doesn't return bool value")]
-    NoBoolValueFromSubsequence,
     #[error("No component name")]
     EmptyComponentName,
     #[error("Fail to read conditions")]

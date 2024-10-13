@@ -7,7 +7,7 @@ pub use pattern::*;
 pub use simple::*;
 
 use crate::{
-    elements::{Element, ElementRef, Metadata},
+    elements::{Element, ElementRef},
     error::LinkedErr,
     reader::{chars, Reader, E},
 };
