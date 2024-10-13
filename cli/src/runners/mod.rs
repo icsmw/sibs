@@ -142,7 +142,7 @@ pub async fn reading_el_by_el<S: AsRef<str>>(
                 for inner in entity.get_inners().iter() {
                     assert_eq!(
                         trim_carets(&inner.to_string()),
-                        reader.get_fragment(&inner.token())?.lined,
+                        trim_carets(&reader.get_fragment(&inner.token())?.lined),
                         "Line: {}",
                         count + 1
                     );

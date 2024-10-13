@@ -7,7 +7,7 @@ pub mod tests;
 pub mod words;
 
 use crate::{
-    elements::{ElementRef, Element},
+    elements::{Element, ElementRef},
     error::LinkedErr,
     functions::load,
     inf::{
@@ -208,6 +208,16 @@ impl Reader {
                 .map
                 .borrow_mut()
                 .add(Some(el), from, (reader.pos + reader.offset) - from)
+        }
+    }
+    pub fn open_unbound_token(&mut self) -> impl Fn(&mut Reader) -> usize {
+        self.move_to().any();
+        let from = self.pos + self.offset;
+        move |reader: &mut Reader| {
+            reader
+                .map
+                .borrow_mut()
+                .add(None, from, (reader.pos + reader.offset) - from)
         }
     }
     pub fn pin(&mut self) -> impl Fn(&mut Reader) {

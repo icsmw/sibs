@@ -9,13 +9,12 @@ impl InnersGetter for Comparing {
     }
 }
 
-// test_reading_ln_by_ln!(
-//     reading,
-//     &include_str!("../../../tests/reading/comparing.sibs"),
-//     ElementRef::Comparing,
-//     190
-// );
-// "!" isn't included into token
+test_reading_ln_by_ln!(
+    reading,
+    &include_str!("../../../tests/reading/comparing.sibs"),
+    ElementRef::Comparing,
+    190
+);
 
 test_reading_with_errors_ln_by_ln!(
     errors,
@@ -23,99 +22,3 @@ test_reading_with_errors_ln_by_ln!(
     ElementRef::Comparing,
     11
 );
-
-#[cfg(test)]
-mod reading {
-    use crate::{
-        elements::{Comparing, Element, ElementRef, TokenGetter},
-        error::LinkedErr,
-        inf::{tests::*, Configuration},
-        read_string,
-        reader::{chars, Dissect, Reader, Sources, E},
-    };
-
-    #[tokio::test]
-    async fn reading() {
-        let content = include_str!("../../../tests/reading/comparing.sibs")
-            .split('\n')
-            .map(|s| s.to_string())
-            .collect::<Vec<String>>();
-        let mut count = 0;
-        for str in content.iter() {
-            count += read_string!(
-                &Configuration::logs(false),
-                str,
-                |reader: &mut Reader, src: &mut Sources| {
-                    let entity =
-                        src.report_err_if(Element::include(reader, &[ElementRef::Comparing]))?;
-                    assert!(entity.is_some(), "Line: {}", count + 1);
-                    let entity = entity.unwrap();
-                    assert_eq!(
-                        trim_carets(reader.recent()),
-                        trim_carets(&format!("{entity}")),
-                        "Line: {}",
-                        count + 1
-                    );
-                    assert!(reader.rest().trim().is_empty(), "Line: {}", count + 1);
-                    Ok::<usize, LinkedErr<E>>(1)
-                }
-            );
-        }
-        assert_eq!(count, content.len());
-    }
-
-    #[tokio::test]
-    async fn tokens() {
-        let content = include_str!("../../../tests/reading/comparing.sibs")
-            .split('\n')
-            .map(|s| s.to_string())
-            .collect::<Vec<String>>();
-        let mut count = 0;
-        for str in content.iter() {
-            count += read_string!(
-                &Configuration::logs(false),
-                str,
-                |reader: &mut Reader, src: &mut Sources| {
-                    let entity =
-                        src.report_err_if(Element::include(reader, &[ElementRef::Comparing]))?;
-                    assert!(entity.is_some(), "Line: {}", count + 1);
-                    let entity = entity.unwrap();
-                    assert_eq!(
-                        trim_carets(&format!("{entity}")),
-                        reader.get_fragment(&entity.token())?.lined
-                    );
-                    if let Element::Comparing(entity, _) = entity {
-                        assert_eq!(
-                            trim_semicolon(&trim_carets(&entity.left.to_string())),
-                            trim_semicolon(&trim_carets(&format!(
-                                "{}{}",
-                                if entity.left.get_metadata().inverting {
-                                    chars::EXCLAMATION.to_string()
-                                } else {
-                                    String::new()
-                                },
-                                reader.get_fragment(&entity.left.token())?.lined
-                            ))),
-                        );
-                        assert_eq!(
-                            trim_semicolon(&trim_carets(&entity.right.to_string())),
-                            trim_semicolon(&trim_carets(&format!(
-                                "{}{}",
-                                if entity.right.get_metadata().inverting {
-                                    chars::EXCLAMATION.to_string()
-                                } else {
-                                    String::new()
-                                },
-                                reader.get_fragment(&entity.right.token())?.lined
-                            ))),
-                        );
-                    } else {
-                        panic!("Fail to extract Element::Comparing")
-                    }
-                    Ok::<usize, LinkedErr<E>>(1)
-                }
-            );
-        }
-        assert_eq!(count, content.len());
-    }
-}

@@ -1,6 +1,6 @@
 use crate::{
     elements::{Element, ElementRef, InnersGetter, Task},
-    test_reading_el_by_el,
+    test_reading_el_by_el, test_reading_with_errors_ln_by_ln,
 };
 
 impl InnersGetter for Task {
@@ -14,133 +14,19 @@ impl InnersGetter for Task {
     }
 }
 
-// test_reading_el_by_el!(
-//     reading,
-//     &include_str!("../../tests/reading/tasks.sibs"),
-//     ElementRef::Task,
-//     11
-// );
-// reader recent in use
+test_reading_el_by_el!(
+    reading,
+    &include_str!("../../tests/reading/tasks.sibs"),
+    ElementRef::Task,
+    12
+);
 
-#[cfg(test)]
-mod reading {
-    use crate::{
-        elements::{Element, ElementRef, Task, TokenGetter},
-        error::LinkedErr,
-        inf::{tests::*, Configuration},
-        read_string,
-        reader::{chars, Dissect, Reader, Sources, E},
-    };
-
-    #[tokio::test]
-    async fn reading() {
-        read_string!(
-            &Configuration::logs(false),
-            &include_str!("../../tests/reading/tasks.sibs"),
-            |reader: &mut Reader, src: &mut Sources| {
-                let mut count = 0;
-                while let Some(el) =
-                    src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
-                {
-                    assert!(matches!(el, Element::Task(..)));
-                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-                    assert_eq!(trim_carets(reader.recent()), trim_carets(&format!("{el};")));
-                    count += 1;
-                }
-                assert!(reader.rest().trim().is_empty());
-                assert_eq!(count, 11);
-                Ok::<(), LinkedErr<E>>(())
-            }
-        );
-    }
-
-    #[tokio::test]
-    async fn deps() {
-        read_string!(
-            &Configuration::logs(false),
-            &include_str!("../../tests/reading/deps.sibs"),
-            |reader: &mut Reader, src: &mut Sources| {
-                let mut count = 0;
-                while let Some(el) =
-                    src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
-                {
-                    assert!(matches!(el, Element::Task(..)));
-                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-                    assert_eq!(trim_carets(reader.recent()), trim_carets(&format!("{el};")));
-                    count += 1;
-                }
-                assert!(reader.rest().trim().is_empty());
-                assert_eq!(count, 1);
-                Ok::<(), LinkedErr<E>>(())
-            }
-        );
-    }
-
-    #[tokio::test]
-    async fn tokens() {
-        read_string!(
-            &Configuration::logs(false),
-            &include_str!("../../tests/reading/tasks.sibs"),
-            |reader: &mut Reader, src: &mut Sources| {
-                let mut count = 0;
-                while let Some(el) =
-                    src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
-                {
-                    let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-                    assert!(matches!(el, Element::Task(..)));
-                    if let Element::Task(el, _) = el {
-                        assert_eq!(
-                            trim_carets(&format!("{el}")),
-                            trim_carets(&reader.get_fragment(&el.token)?.lined)
-                        );
-                        assert_eq!(
-                            trim_carets(&el.name.value),
-                            trim_carets(&reader.get_fragment(&el.name.token)?.lined)
-                        );
-                        assert_eq!(
-                            trim_carets(&el.block.to_string()),
-                            trim_carets(&reader.get_fragment(&el.block.token())?.lined)
-                        );
-                        for declaration in el.declarations.iter() {
-                            assert_eq!(
-                                trim_carets(&declaration.to_string()),
-                                trim_carets(&reader.get_fragment(&declaration.token())?.lined)
-                            );
-                        }
-                        for dependency in el.dependencies.iter() {
-                            assert_eq!(
-                                trim_carets(&dependency.to_string()),
-                                trim_carets(&reader.get_fragment(&dependency.token())?.lined)
-                            );
-                        }
-                    }
-                    count += 1;
-                }
-                assert!(reader.rest().trim().is_empty());
-                assert_eq!(count, 11);
-                Ok::<(), LinkedErr<E>>(())
-            }
-        );
-    }
-
-    #[tokio::test]
-    async fn error() {
-        let samples = include_str!("../../tests/error/tasks.sibs");
-        let samples = samples.split('\n').collect::<Vec<&str>>();
-        let mut count = 0;
-        for sample in samples.iter() {
-            count += read_string!(
-                &Configuration::logs(false),
-                sample,
-                |reader: &mut Reader, _: &mut Sources| {
-                    assert!(Task::dissect(reader).is_err());
-                    Ok::<usize, LinkedErr<E>>(1)
-                }
-            );
-        }
-        assert_eq!(count, samples.len());
-    }
-}
+test_reading_with_errors_ln_by_ln!(
+    errors,
+    &include_str!("../../tests/error/tasks.sibs"),
+    ElementRef::Task,
+    9
+);
 
 #[cfg(test)]
 mod processing {
@@ -158,7 +44,7 @@ mod processing {
     const VALUES: &[&[&str]] = &[&["a"], &["a", "b"], &["a"], &["a", "b"], &["a", "b", "c"]];
 
     #[tokio::test]
-    async fn reading() {
+    async fn processing() {
         process_string!(
             &Configuration::logs(false),
             &include_str!("../../tests/processing/tasks.sibs"),

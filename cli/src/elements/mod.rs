@@ -160,6 +160,7 @@ pub struct Metadata {
     pub ppm: Option<Box<Element>>,
     pub tolerance: bool,
     pub inverting: bool,
+    pub token: usize,
 }
 
 impl Metadata {
@@ -170,6 +171,7 @@ impl Metadata {
             ppm: None,
             tolerance: false,
             inverting: false,
+            token: 0,
         }
     }
     #[cfg(test)]
@@ -200,8 +202,16 @@ impl Metadata {
     pub fn meta_as_lines(&self) -> Vec<&str> {
         self.meta().iter().flat_map(|el| el.as_lines()).collect()
     }
-    pub fn set_ppm(&mut self, el: Element) {
+    pub fn set_ppm(&mut self, el: Element) -> &mut Self {
         self.ppm = Some(Box::new(el));
+        self
+    }
+    pub fn set_token(&mut self, token: usize) -> &mut Self {
+        self.token = token;
+        self
+    }
+    pub fn get_token(&self) -> usize {
+        self.token
     }
 }
 
@@ -318,16 +328,22 @@ impl Element {
             md.tolerance = reader.move_to().char(&[&chars::QUESTION]).is_some();
             md
         }
-        fn next(reader: &mut Reader, mut el: Element) -> Result<Option<Element>, LinkedErr<E>> {
+        fn next(
+            reader: &mut Reader,
+            mut el: Element,
+            token: impl Fn(&mut Reader) -> usize,
+        ) -> Result<Option<Element>, LinkedErr<E>> {
             let Some(ppm) = Element::include(reader, &[ElementRef::Call, ElementRef::Accessor])?
             else {
+                el.get_mut_metadata().set_token(token(reader));
                 return Ok(Some(el));
             };
-            el.get_mut_metadata().set_ppm(ppm);
+            el.get_mut_metadata().set_ppm(ppm).set_token(token(reader));
             Ok(Some(el))
         }
         let mut comments: Vec<Element> = Vec::new();
         let mut meta: Vec<Element> = Vec::new();
+        let token = reader.open_unbound_token();
         loop {
             if let Some(el) = Comment::dissect(reader)? {
                 comments.push(Element::Comment(el));
@@ -349,222 +365,223 @@ impl Element {
             } else {
                 false
             },
+            token: 0,
         };
         if includes == targets.contains(&ElementRef::Closure) {
             if let Some(el) = Closure::dissect(reader)? {
-                return next(reader, Element::Closure(el, md));
+                return next(reader, Element::Closure(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Return) {
             if let Some(el) = Return::dissect(reader)? {
-                return next(reader, Element::Return(el, md));
+                return next(reader, Element::Return(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Error) {
             if let Some(el) = Error::dissect(reader)? {
-                return next(reader, Element::Error(el, md));
+                return next(reader, Element::Error(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Compute) {
             if let Some(el) = Compute::dissect(reader)? {
-                return next(reader, Element::Compute(el, md));
+                return next(reader, Element::Compute(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Loop) {
             if let Some(el) = Loop::dissect(reader)? {
-                return next(reader, Element::Loop(el, md));
+                return next(reader, Element::Loop(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::While) {
             if let Some(el) = While::dissect(reader)? {
-                return next(reader, Element::While(el, md));
+                return next(reader, Element::While(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::For) {
             if let Some(el) = For::dissect(reader)? {
-                return next(reader, Element::For(el, md));
+                return next(reader, Element::For(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Range) {
             if let Some(el) = Range::dissect(reader)? {
-                return next(reader, Element::Range(el, md));
+                return next(reader, Element::Range(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Breaker) {
             if let Some(el) = Breaker::dissect(reader)? {
-                return next(reader, Element::Breaker(el, md));
+                return next(reader, Element::Breaker(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Accessor) {
             if let Some(el) = Accessor::dissect(reader)? {
-                return next(reader, Element::Accessor(el, md));
+                return next(reader, Element::Accessor(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Call) {
             if let Some(el) = Call::dissect(reader)? {
-                return next(reader, Element::Call(el, md));
+                return next(reader, Element::Call(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Optional) {
             if let Some(el) = Optional::dissect(reader)? {
-                return next(reader, Element::Optional(el, md));
+                return next(reader, Element::Optional(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Conclusion) {
             if let Some(el) = Conclusion::dissect(reader)? {
-                return next(reader, Element::Conclusion(el, md));
+                return next(reader, Element::Conclusion(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Combination) {
             if let Some(el) = Combination::dissect(reader)? {
-                return next(reader, Element::Combination(el, md));
+                return next(reader, Element::Combination(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Subsequence) {
             if let Some(el) = Subsequence::dissect(reader)? {
-                return next(reader, Element::Subsequence(el, md));
+                return next(reader, Element::Subsequence(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Condition) {
             if let Some(el) = Condition::dissect(reader)? {
-                return next(reader, Element::Condition(el, md));
+                return next(reader, Element::Condition(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Meta) {
             if let Some(el) = Meta::dissect(reader)? {
-                return next(reader, Element::Meta(el));
+                return next(reader, Element::Meta(el), token);
             }
         }
         if includes == targets.contains(&ElementRef::Comparing) {
             if let Some(el) = Comparing::dissect(reader)? {
-                return next(reader, Element::Comparing(el, md));
+                return next(reader, Element::Comparing(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::If) {
             if let Some(el) = If::dissect(reader)? {
-                return next(reader, Element::If(el, md));
+                return next(reader, Element::If(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::IfThread) {
             if let Some(el) = IfThread::dissect(reader)? {
-                return next(reader, Element::IfThread(el, md));
+                return next(reader, Element::IfThread(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::IfSubsequence) {
             if let Some(el) = IfSubsequence::dissect(reader)? {
-                return next(reader, Element::IfSubsequence(el, md));
+                return next(reader, Element::IfSubsequence(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::IfCondition) {
             if let Some(el) = IfCondition::dissect(reader)? {
-                return next(reader, Element::IfCondition(el, md));
+                return next(reader, Element::IfCondition(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Gatekeeper) {
             if let Some(el) = Gatekeeper::dissect(reader)? {
-                return next(reader, Element::Gatekeeper(el, md));
+                return next(reader, Element::Gatekeeper(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Command) {
             if let Some(el) = Command::dissect(reader)? {
                 let to = tolerance(reader, md);
-                return next(reader, Element::Command(el, to));
+                return next(reader, Element::Command(el, to), token);
             }
         }
         if includes == targets.contains(&ElementRef::Integer) {
             if let Some(el) = Integer::dissect(reader)? {
-                return next(reader, Element::Integer(el, md));
+                return next(reader, Element::Integer(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Boolean) {
             if let Some(el) = Boolean::dissect(reader)? {
-                return next(reader, Element::Boolean(el, md));
+                return next(reader, Element::Boolean(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Incrementer) {
             if let Some(el) = Incrementer::dissect(reader)? {
-                return next(reader, Element::Incrementer(el, md));
+                return next(reader, Element::Incrementer(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::VariableAssignation) {
             if let Some(el) = VariableAssignation::dissect(reader)? {
-                return next(reader, Element::VariableAssignation(el, md));
+                return next(reader, Element::VariableAssignation(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Each) {
             if let Some(el) = Each::dissect(reader)? {
-                return next(reader, Element::Each(el, md));
+                return next(reader, Element::Each(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::First) {
             if let Some(el) = First::dissect(reader)? {
-                return next(reader, Element::First(el, md));
+                return next(reader, Element::First(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Join) {
             if let Some(el) = Join::dissect(reader)? {
-                return next(reader, Element::Join(el, md));
+                return next(reader, Element::Join(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Function) {
             if let Some(el) = Function::dissect(reader)? {
                 let to = tolerance(reader, md);
-                return next(reader, Element::Function(el, to));
+                return next(reader, Element::Function(el, to), token);
             }
         }
         if includes == targets.contains(&ElementRef::Reference) {
             if let Some(el) = Reference::dissect(reader)? {
-                return next(reader, Element::Reference(el, md));
+                return next(reader, Element::Reference(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::PatternString) {
             if let Some(el) = PatternString::dissect(reader)? {
-                return next(reader, Element::PatternString(el, md));
+                return next(reader, Element::PatternString(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Block) {
             if let Some(el) = Block::dissect(reader)? {
-                return next(reader, Element::Block(el, md));
+                return next(reader, Element::Block(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Values) {
             if let Some(el) = Values::dissect(reader)? {
-                return next(reader, Element::Values(el, md));
+                return next(reader, Element::Values(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::VariableName) {
             if let Some(el) = VariableName::dissect(reader)? {
-                return next(reader, Element::VariableName(el, md));
+                return next(reader, Element::VariableName(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Component) {
             if let Some(el) = Component::dissect(reader)? {
-                return next(reader, Element::Component(el, md));
+                return next(reader, Element::Component(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::Task) {
             if let Some(el) = Task::dissect(reader)? {
-                return next(reader, Element::Task(el, md));
+                return next(reader, Element::Task(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::VariableDeclaration) {
             if let Some(el) = VariableDeclaration::dissect(reader)? {
-                return next(reader, Element::VariableDeclaration(el, md));
+                return next(reader, Element::VariableDeclaration(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::VariableType) {
             if let Some(el) = VariableType::dissect(reader)? {
-                return next(reader, Element::VariableType(el, md));
+                return next(reader, Element::VariableType(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::VariableVariants) {
             if let Some(el) = VariableVariants::dissect(reader)? {
-                return next(reader, Element::VariableVariants(el, md));
+                return next(reader, Element::VariableVariants(el, md), token);
             }
         }
         if includes == targets.contains(&ElementRef::SimpleString) {
             if let Some(el) = SimpleString::dissect(reader)? {
-                return next(reader, Element::SimpleString(el, md));
+                return next(reader, Element::SimpleString(el, md), token);
             }
         }
         Ok(None)
@@ -1117,48 +1134,48 @@ impl Formation for Element {
 impl TokenGetter for Element {
     fn token(&self) -> usize {
         match self {
-            Self::Call(v, _) => v.token(),
-            Self::Accessor(v, _) => v.token(),
-            Self::Function(v, _) => v.token(),
-            Self::If(v, _) => v.token(),
-            Self::IfCondition(v, _) => v.token(),
-            Self::IfSubsequence(v, _) => v.token(),
-            Self::IfThread(v, _) => v.token(),
-            Self::Breaker(v, _) => v.token(),
-            Self::Each(v, _) => v.token(),
-            Self::First(v, _) => v.token(),
-            Self::Join(v, _) => v.token(),
-            Self::VariableAssignation(v, _) => v.token(),
-            Self::Comparing(v, _) => v.token(),
-            Self::Combination(v, _) => v.token(),
-            Self::Condition(v, _) => v.token(),
-            Self::Subsequence(v, _) => v.token(),
-            Self::Optional(v, _) => v.token(),
-            Self::Gatekeeper(v, _) => v.token(),
-            Self::Reference(v, _) => v.token(),
-            Self::PatternString(v, _) => v.token(),
-            Self::VariableName(v, _) => v.token(),
-            Self::Values(v, _) => v.token(),
-            Self::Block(v, _) => v.token(),
-            Self::Command(v, _) => v.token(),
-            Self::Task(v, _) => v.token(),
-            Self::Component(v, _) => v.token(),
-            Self::Integer(v, _) => v.token(),
-            Self::Boolean(v, _) => v.token(),
-            Self::VariableDeclaration(v, _) => v.token,
-            Self::VariableVariants(v, _) => v.token,
-            Self::VariableType(v, _) => v.token,
-            Self::SimpleString(v, _) => v.token(),
-            Self::Range(v, _) => v.token(),
-            Self::For(v, _) => v.token(),
-            Self::Compute(v, _) => v.token(),
-            Self::Return(v, _) => v.token(),
-            Self::Error(v, _) => v.token(),
-            Self::Incrementer(v, _) => v.token(),
-            Self::Loop(v, _) => v.token(),
-            Self::While(v, _) => v.token(),
-            Self::Closure(v, _) => v.token(),
-            Self::Conclusion(v, _) => v.token(),
+            Self::Call(_, md) => md.get_token(),
+            Self::Accessor(_, md) => md.get_token(),
+            Self::Function(_, md) => md.get_token(),
+            Self::If(_, md) => md.get_token(),
+            Self::IfCondition(_, md) => md.get_token(),
+            Self::IfSubsequence(_, md) => md.get_token(),
+            Self::IfThread(_, md) => md.get_token(),
+            Self::Breaker(_, md) => md.get_token(),
+            Self::Each(_, md) => md.get_token(),
+            Self::First(_, md) => md.get_token(),
+            Self::Join(_, md) => md.get_token(),
+            Self::VariableAssignation(_, md) => md.get_token(),
+            Self::Comparing(_, md) => md.get_token(),
+            Self::Combination(_, md) => md.get_token(),
+            Self::Condition(_, md) => md.get_token(),
+            Self::Subsequence(_, md) => md.get_token(),
+            Self::Optional(_, md) => md.get_token(),
+            Self::Gatekeeper(_, md) => md.get_token(),
+            Self::Reference(_, md) => md.get_token(),
+            Self::PatternString(_, md) => md.get_token(),
+            Self::VariableName(_, md) => md.get_token(),
+            Self::Values(_, md) => md.get_token(),
+            Self::Block(_, md) => md.get_token(),
+            Self::Command(_, md) => md.get_token(),
+            Self::Task(_, md) => md.get_token(),
+            Self::Component(_, md) => md.get_token(),
+            Self::Integer(_, md) => md.get_token(),
+            Self::Boolean(_, md) => md.get_token(),
+            Self::VariableDeclaration(_, md) => md.get_token(),
+            Self::VariableVariants(_, md) => md.get_token(),
+            Self::VariableType(_, md) => md.get_token(),
+            Self::SimpleString(_, md) => md.get_token(),
+            Self::Range(_, md) => md.get_token(),
+            Self::For(_, md) => md.get_token(),
+            Self::Compute(_, md) => md.get_token(),
+            Self::Return(_, md) => md.get_token(),
+            Self::Error(_, md) => md.get_token(),
+            Self::Incrementer(_, md) => md.get_token(),
+            Self::Loop(_, md) => md.get_token(),
+            Self::While(_, md) => md.get_token(),
+            Self::Closure(_, md) => md.get_token(),
+            Self::Conclusion(_, md) => md.get_token(),
             Self::Meta(v) => v.token,
             Self::Comment(v) => v.token,
         }
@@ -1497,7 +1514,7 @@ mod processing {
     };
 
     #[tokio::test]
-    async fn reading() {
+    async fn processing() {
         process_string!(
             &Configuration::logs(false),
             &include_str!("../tests/processing/tolerance.sibs"),
@@ -1552,6 +1569,7 @@ mod proptest {
                     ppm: None,
                     tolerance,
                     inverting: false,
+                    token: 0,
                 })
                 .boxed()
         }

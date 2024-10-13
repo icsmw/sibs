@@ -7,7 +7,7 @@ pub use pattern::*;
 pub use simple::*;
 
 use crate::{
-    elements::{ElementRef, Element, Metadata},
+    elements::{Element, ElementRef, Metadata},
     error::LinkedErr,
     reader::{chars, Reader, E},
 };
@@ -29,12 +29,9 @@ pub fn read(
     while let Some((_, stopped)) = reader.until().char(&[&chars::OPEN_CURLY_BRACE, &wrapper]) {
         let inner_token = reader.token()?;
         if stopped == wrapper {
-            elements.push(Element::SimpleString(
-                SimpleString {
-                    value: inner_token.content,
-                    token: inner_token.id,
-                },
-                Metadata::default(),
+            elements.push(SimpleString::as_element(
+                inner_token.content,
+                &inner_token.id,
             ));
             closed = true;
             break;
@@ -46,16 +43,14 @@ pub fn read(
             let mut inner = reader.token()?.bound;
             if let Some(el) = Element::include(
                 &mut inner,
-                &[ElementRef::VariableName, ElementRef::Function, ElementRef::If],
+                &[
+                    ElementRef::VariableName,
+                    ElementRef::Function,
+                    ElementRef::If,
+                ],
             )? {
                 elements.extend_from_slice(&[
-                    Element::SimpleString(
-                        SimpleString {
-                            value: inner_token.content,
-                            token: inner_token.id,
-                        },
-                        Metadata::default(),
-                    ),
+                    SimpleString::as_element(inner_token.content, &inner_token.id),
                     el,
                 ]);
                 if !inner.is_empty() {
