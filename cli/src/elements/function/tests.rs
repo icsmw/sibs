@@ -12,14 +12,14 @@ impl InnersGetter for Function {
 test_reading_el_by_el!(
     reading,
     &include_str!("../../tests/reading/function.sibs"),
-    ElementRef::Function,
+    &[ElementRef::Function],
     107
 );
 
 test_reading_with_errors_ln_by_ln!(
     reading_with_errors,
     &include_str!("../../tests/error/function.sibs"),
-    ElementRef::Function,
+    &[ElementRef::Function],
     7
 );
 

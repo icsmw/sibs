@@ -12,7 +12,7 @@ impl InnersGetter for Breaker {
 test_reading_el_by_el!(
     reading,
     &include_str!("../../../tests/reading/break.sibs"),
-    ElementRef::Each,
+    &[ElementRef::Each],
     3
 );
 

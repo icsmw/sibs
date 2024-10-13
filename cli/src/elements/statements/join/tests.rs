@@ -12,14 +12,14 @@ impl InnersGetter for Join {
 test_reading_el_by_el!(
     reading,
     &include_str!("../../../tests/reading/join.sibs"),
-    ElementRef::Join,
+    &[ElementRef::Join],
     2
 );
 
 test_reading_with_errors_ln_by_ln!(
     errors,
     &include_str!("../../../tests/error/join.sibs"),
-    ElementRef::Join,
+    &[ElementRef::Join],
     2
 );
 

@@ -17,14 +17,14 @@ impl InnersGetter for Task {
 test_reading_el_by_el!(
     reading,
     &include_str!("../../tests/reading/tasks.sibs"),
-    ElementRef::Task,
+    &[ElementRef::Task],
     12
 );
 
 test_reading_with_errors_ln_by_ln!(
     errors,
     &include_str!("../../tests/error/tasks.sibs"),
-    ElementRef::Task,
+    &[ElementRef::Task],
     9
 );
 

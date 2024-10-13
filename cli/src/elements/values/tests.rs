@@ -12,14 +12,14 @@ impl InnersGetter for Values {
 test_reading_el_by_el!(
     reading,
     &include_str!("../../tests/reading/values.sibs"),
-    ElementRef::Values,
+    &[ElementRef::Values],
     62
 );
 
 test_reading_with_errors_ln_by_ln!(
     errors,
     &include_str!("../../tests/error/values.sibs"),
-    ElementRef::Values,
+    &[ElementRef::Values],
     7
 );
 

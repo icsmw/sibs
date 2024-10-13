@@ -12,6 +12,6 @@ impl InnersGetter for IfSubsequence {
 test_reading_ln_by_ln!(
     reading,
     &include_str!("../../../../tests/reading/subsequence.sibs"),
-    ElementRef::IfSubsequence,
+    &[ElementRef::IfSubsequence],
     86
 );

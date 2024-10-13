@@ -1,18 +1,16 @@
-use crate::elements::{Comment, Element, InnersGetter};
+use crate::{
+    elements::{Comment, Element, InnersGetter, Task},
+    error::LinkedErr,
+    inf::Configuration,
+    read_string,
+    reader::{chars, Dissect, Reader, Sources, E},
+};
 
 impl InnersGetter for Comment {
     fn get_inners(&self) -> Vec<&Element> {
         Vec::new()
     }
 }
-
-use crate::{
-    elements::Task,
-    error::LinkedErr,
-    inf::Configuration,
-    read_string,
-    reader::{chars, Dissect, Reader, Sources, E},
-};
 
 #[tokio::test]
 async fn reading() {

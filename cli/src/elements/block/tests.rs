@@ -20,6 +20,6 @@ test_reading_el_by_el!(
         include_str!("../../tests/reading/each.sibs"),
         include_str!("../../tests/reading/refs.sibs")
     ),
-    ElementRef::Block,
+    &[ElementRef::Block],
     6
 );

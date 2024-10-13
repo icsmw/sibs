@@ -15,14 +15,14 @@ impl InnersGetter for Each {
 test_reading_el_by_el!(
     reading,
     &include_str!("../../../tests/reading/each.sibs"),
-    ElementRef::Each,
+    &[ElementRef::Each],
     7
 );
 
 test_reading_with_errors_ln_by_ln!(
     errors,
     &include_str!("../../../tests/error/each.sibs"),
-    ElementRef::Each,
+    &[ElementRef::Each],
     10
 );
 

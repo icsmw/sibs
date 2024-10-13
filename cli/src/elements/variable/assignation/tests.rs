@@ -12,14 +12,14 @@ impl InnersGetter for VariableAssignation {
 test_reading_el_by_el!(
     reading,
     &include_str!("../../../tests/reading/variable_assignation.sibs"),
-    ElementRef::VariableAssignation,
+    &[ElementRef::VariableAssignation],
     113
 );
 
 test_reading_with_errors_ln_by_ln!(
     errors,
     &include_str!("../../../tests/error/variable_assignation.sibs"),
-    ElementRef::VariableAssignation,
+    &[ElementRef::VariableAssignation],
     3
 );
 

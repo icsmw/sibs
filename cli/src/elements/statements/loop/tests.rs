@@ -12,7 +12,7 @@ impl InnersGetter for Loop {
 test_reading_el_by_el!(
     reading,
     &include_str!("../../../tests/reading/loop.sibs"),
-    ElementRef::Loop,
+    &[ElementRef::Loop],
     1
 );
 

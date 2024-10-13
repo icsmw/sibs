@@ -17,7 +17,7 @@ async fn reading() {
         .map(|c| format!("{c}\n{tasks}"))
         .collect::<Vec<String>>()
         .join("\n");
-    reading_el_by_el(&content, ElementRef::Component, 6).await;
+    reading_el_by_el(&content, &[ElementRef::Component], 6).await;
 }
 
 #[tokio::test]
@@ -27,7 +27,7 @@ async fn errors() {
         .map(|c| format!("{c} task {{env::is_os();}};"))
         .collect::<Vec<String>>()
         .join("\n");
-    reading_with_errors_ln_by_ln(&content, ElementRef::Component, 16).await;
+    reading_with_errors_ln_by_ln(&content, &[ElementRef::Component], 16).await;
 }
 
 #[cfg(test)]

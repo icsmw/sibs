@@ -12,13 +12,13 @@ impl InnersGetter for Reference {
 test_reading_el_by_el!(
     reading,
     &include_str!("../../tests/reading/refs.sibs"),
-    ElementRef::Reference,
+    &[ElementRef::Reference],
     6
 );
 
 test_reading_with_errors_ln_by_ln!(
     errors,
     &include_str!("../../tests/error/refs.sibs"),
-    ElementRef::Reference,
+    &[ElementRef::Reference],
     8
 );

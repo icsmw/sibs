@@ -12,14 +12,14 @@ impl InnersGetter for First {
 test_reading_el_by_el!(
     reading,
     &include_str!("../../../tests/reading/first.sibs"),
-    ElementRef::First,
+    &[ElementRef::First],
     2
 );
 
 test_reading_with_errors_ln_by_ln!(
     errors,
     &include_str!("../../../tests/error/first.sibs"),
-    ElementRef::First,
+    &[ElementRef::First],
     3
 );
 

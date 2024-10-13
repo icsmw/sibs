@@ -20,7 +20,7 @@ where
 #[cfg(test)]
 pub async fn reading_ln_by_ln<S: AsRef<str>>(
     content: S,
-    element_ref: ElementRef,
+    elements_ref: &[ElementRef],
     exp_count: usize,
 ) {
     use crate::{
@@ -41,13 +41,13 @@ pub async fn reading_ln_by_ln<S: AsRef<str>>(
     let mut tokens = 0;
     for sample in samples.iter() {
         count += read_string!(&cfg, sample, |reader: &mut Reader, src: &mut Sources| {
-            let Ok(result) = src.report_err_if(Element::include(reader, &[element_ref])) else {
+            let Ok(result) = src.report_err_if(Element::include(reader, elements_ref)) else {
                 panic!("Fail to read; line {}: sample:{:?}", count + 1, sample);
             };
             let Some(entity) = result else {
                 panic!(
-                    "Fail to get {}; line {}: sample:{:?}",
-                    element_ref,
+                    "Fail to get {:?}; line {}: sample:{:?}",
+                    elements_ref,
                     count + 1,
                     sample
                 );
@@ -87,7 +87,7 @@ pub async fn reading_ln_by_ln<S: AsRef<str>>(
     }
     assert_eq!(count, len);
     assert_eq!(count, exp_count);
-    println!("[Errors Reading Test]: done for \"{element_ref}\"; tested {count} element(s).");
+    println!("[Errors Reading Test]: done for \"{elements_ref:?}\"; tested {count} element(s).");
 }
 
 #[cfg(test)]
@@ -106,7 +106,7 @@ macro_rules! test_reading_ln_by_ln {
 #[cfg(test)]
 pub async fn reading_el_by_el<S: AsRef<str>>(
     content: S,
-    element_ref: ElementRef,
+    elements_ref: &[ElementRef],
     exp_count: usize,
 ) {
     use crate::{
@@ -123,7 +123,7 @@ pub async fn reading_el_by_el<S: AsRef<str>>(
         |reader: &mut Reader, src: &mut Sources| {
             let mut count = 0;
             let mut tokens = 0;
-            while let Some(entity) = src.report_err_if(Element::include(reader, &[element_ref]))? {
+            while let Some(entity) = src.report_err_if(Element::include(reader, elements_ref))? {
                 let semicolon = reader.move_to().char(&[&chars::SEMICOLON]).is_some();
                 // Compare generated and origin content
                 assert_eq!(
@@ -152,7 +152,7 @@ pub async fn reading_el_by_el<S: AsRef<str>>(
             }
             assert_eq!(count, exp_count);
             assert!(reader.rest().trim().is_empty());
-            println!("[Reading Test]: done for \"{element_ref}\"; tested {count} element(s); checked {tokens} token(s).");
+            println!("[Reading Test]: done for \"{elements_ref:?}\"; tested {count} element(s); checked {tokens} token(s).");
             Ok::<(), LinkedErr<E>>(())
         }
     );
@@ -174,7 +174,7 @@ macro_rules! test_reading_el_by_el {
 #[cfg(test)]
 pub async fn reading_with_errors_ln_by_ln<S: AsRef<str>>(
     content: S,
-    element_ref: ElementRef,
+    elements_ref: &[ElementRef],
     exp_count: usize,
 ) {
     use crate::{
@@ -194,7 +194,7 @@ pub async fn reading_with_errors_ln_by_ln<S: AsRef<str>>(
     let mut count = 0;
     for sample in samples.iter() {
         count += read_string!(&cfg, sample, |reader: &mut Reader, src: &mut Sources| {
-            let el = src.report_err_if(Element::include(reader, &[element_ref]));
+            let el = src.report_err_if(Element::include(reader, elements_ref));
             if let Ok(el) = el {
                 let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                 assert!(el.is_none(), "Line {}: element: {:?}", count + 1, el);
@@ -212,7 +212,7 @@ pub async fn reading_with_errors_ln_by_ln<S: AsRef<str>>(
     }
     assert_eq!(count, len);
     assert_eq!(count, exp_count);
-    println!("[Errors Reading Test]: done for \"{element_ref}\"; tested {count} element(s).");
+    println!("[Errors Reading Test]: done for \"{elements_ref:?}\"; tested {count} element(s).");
 }
 
 #[cfg(test)]

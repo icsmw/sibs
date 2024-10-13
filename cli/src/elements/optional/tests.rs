@@ -12,14 +12,14 @@ impl InnersGetter for Optional {
 test_reading_el_by_el!(
     reading,
     &include_str!("../../tests/reading/optional.sibs"),
-    ElementRef::Optional,
+    &[ElementRef::Optional],
     106
 );
 
 test_reading_with_errors_ln_by_ln!(
     errors,
     &include_str!("../../tests/error/optional.sibs"),
-    ElementRef::Optional,
+    &[ElementRef::Optional],
     7
 );
 

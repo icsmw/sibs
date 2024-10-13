@@ -12,7 +12,7 @@ impl InnersGetter for While {
 test_reading_el_by_el!(
     reading,
     &include_str!("../../../tests/reading/while.sibs"),
-    ElementRef::While,
+    &[ElementRef::While],
     1
 );
 

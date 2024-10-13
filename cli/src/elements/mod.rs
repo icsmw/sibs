@@ -1927,126 +1927,14 @@ mod proptest {
 
 #[cfg(test)]
 mod ppm {
+    use crate::{elements::ElementRef, test_reading_el_by_el};
 
-    #[cfg(test)]
-    mod reading {
-
-        use crate::{
-            elements::{Element, ElementRef, TokenGetter},
-            error::LinkedErr,
-            inf::{tests::*, Configuration},
-            read_string,
-            reader::{chars, Reader, Sources, E},
-        };
-
-        #[tokio::test]
-        async fn reading() {
-            let content = include_str!("../tests/reading/ppm.sibs");
-            let len = content.split('\n').count();
-            read_string!(
-                &Configuration::logs(false),
-                &include_str!("../tests/reading/ppm.sibs"),
-                |reader: &mut Reader, src: &mut Sources| {
-                    let mut count = 0;
-                    while let Some(el) = src.report_err_if(Element::include(
-                        reader,
-                        &[ElementRef::Function, ElementRef::VariableName],
-                    ))? {
-                        let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-                        assert_eq!(
-                            trim_carets(reader.recent()),
-                            trim_carets(&format!("{el};")),
-                            "Line: {}",
-                            count + 1
-                        );
-                        count += 1;
-                    }
-                    assert_eq!(count, len);
-                    assert!(reader.rest().trim().is_empty());
-                    Ok::<(), LinkedErr<E>>(())
-                }
-            );
-        }
-
-        #[tokio::test]
-        async fn tokens() {
-            let content = include_str!("../tests/reading/ppm.sibs");
-            let len = content.split('\n').count();
-            fn check_ppm_token(reader: &Reader, ppm: &Element) {
-                match ppm {
-                    Element::Call(el, md) => {
-                        assert_eq!(
-                            trim_carets(&format!("{el}")),
-                            reader
-                                .get_fragment(&el.token())
-                                .expect("Read a fragment")
-                                .content
-                        );
-                        if let Some(ppm) = md.ppm.as_ref() {
-                            check_ppm_token(reader, ppm);
-                        }
-                    }
-                    Element::Accessor(el, md) => {
-                        assert_eq!(
-                            trim_carets(&format!("{el}")),
-                            reader
-                                .get_fragment(&el.token())
-                                .expect("Read a fragment")
-                                .content
-                        );
-                        if let Some(ppm) = md.ppm.as_ref() {
-                            check_ppm_token(reader, ppm);
-                        }
-                    }
-                    _ => {
-                        panic!("Not Ppm element: {ppm:?}")
-                    }
-                }
-            }
-            read_string!(
-                &Configuration::logs(false),
-                &include_str!("../tests/reading/ppm.sibs"),
-                |reader: &mut Reader, src: &mut Sources| {
-                    let mut count = 0;
-                    while let Some(el) = src.report_err_if(Element::include(
-                        reader,
-                        &[ElementRef::Function, ElementRef::VariableName],
-                    ))? {
-                        let _ = reader.move_to().char(&[&chars::SEMICOLON]);
-                        match el {
-                            Element::Function(el, md) => {
-                                assert_eq!(
-                                    trim_carets(&format!("{el}")),
-                                    reader.get_fragment(&el.token())?.content
-                                );
-                                check_ppm_token(
-                                    reader,
-                                    md.ppm.as_ref().expect("Ppm element should be present"),
-                                );
-                            }
-                            Element::VariableName(el, md) => {
-                                assert_eq!(
-                                    trim_carets(&format!("{el}")),
-                                    reader.get_fragment(&el.token())?.content
-                                );
-                                check_ppm_token(
-                                    reader,
-                                    md.ppm.as_ref().expect("Ppm element should be present"),
-                                );
-                            }
-                            _ => {
-                                panic!("Not considered element: {el:?}")
-                            }
-                        }
-                        count += 1;
-                    }
-                    assert_eq!(count, len);
-                    assert!(reader.rest().trim().is_empty());
-                    Ok::<(), LinkedErr<E>>(())
-                }
-            );
-        }
-    }
+    test_reading_el_by_el!(
+        reading,
+        &include_str!("../tests/reading/ppm.sibs"),
+        &[ElementRef::Function, ElementRef::VariableName],
+        94
+    );
 
     #[cfg(test)]
     mod proptest {

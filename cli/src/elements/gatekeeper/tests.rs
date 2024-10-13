@@ -12,14 +12,14 @@ impl InnersGetter for Gatekeeper {
 test_reading_el_by_el!(
     reading,
     &include_str!("../../tests/reading/gatekeeper.sibs"),
-    ElementRef::Gatekeeper,
+    &[ElementRef::Gatekeeper],
     3
 );
 
 test_reading_with_errors_ln_by_ln!(
     errors,
     &include_str!("../../tests/error/gatekeeper.sibs"),
-    ElementRef::Gatekeeper,
+    &[ElementRef::Gatekeeper],
     5
 );
 

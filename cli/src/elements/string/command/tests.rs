@@ -12,7 +12,7 @@ impl InnersGetter for Command {
 test_reading_ln_by_ln!(
     reading,
     &include_str!("../../../tests/reading/command.sibs"),
-    ElementRef::Command,
+    &[ElementRef::Command],
     130
 );
 
