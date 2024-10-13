@@ -708,6 +708,55 @@ impl Element {
         Ok(())
     }
 
+    pub fn inner_token(&self) -> usize {
+        match self {
+            Self::Call(v, _) => v.token(),
+            Self::Accessor(v, _) => v.token(),
+            Self::Function(v, _) => v.token(),
+            Self::If(v, _) => v.token(),
+            Self::IfCondition(v, _) => v.token(),
+            Self::IfSubsequence(v, _) => v.token(),
+            Self::IfThread(v, _) => v.token(),
+            Self::Breaker(v, _) => v.token(),
+            Self::Each(v, _) => v.token(),
+            Self::First(v, _) => v.token(),
+            Self::Join(v, _) => v.token(),
+            Self::VariableAssignation(v, _) => v.token(),
+            Self::Comparing(v, _) => v.token(),
+            Self::Combination(v, _) => v.token(),
+            Self::Condition(v, _) => v.token(),
+            Self::Subsequence(v, _) => v.token(),
+            Self::Optional(v, _) => v.token(),
+            Self::Gatekeeper(v, _) => v.token(),
+            Self::Reference(v, _) => v.token(),
+            Self::PatternString(v, _) => v.token(),
+            Self::VariableName(v, _) => v.token(),
+            Self::Values(v, _) => v.token(),
+            Self::Block(v, _) => v.token(),
+            Self::Command(v, _) => v.token(),
+            Self::Task(v, _) => v.token(),
+            Self::Component(v, _) => v.token(),
+            Self::Integer(v, _) => v.token(),
+            Self::Boolean(v, _) => v.token(),
+            Self::VariableDeclaration(v, _) => v.token,
+            Self::VariableVariants(v, _) => v.token,
+            Self::VariableType(v, _) => v.token,
+            Self::SimpleString(v, _) => v.token(),
+            Self::Range(v, _) => v.token(),
+            Self::For(v, _) => v.token(),
+            Self::Compute(v, _) => v.token(),
+            Self::Return(v, _) => v.token(),
+            Self::Error(v, _) => v.token(),
+            Self::Incrementer(v, _) => v.token(),
+            Self::Loop(v, _) => v.token(),
+            Self::While(v, _) => v.token(),
+            Self::Closure(v, _) => v.token(),
+            Self::Conclusion(v, _) => v.token(),
+            Self::Meta(v) => v.token,
+            Self::Comment(v) => v.token,
+        }
+    }
+
     #[cfg(test)]
     pub fn inner_to_string(&self) -> String {
         match self {

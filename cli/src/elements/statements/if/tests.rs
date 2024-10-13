@@ -1,6 +1,6 @@
 use crate::{
     elements::{Element, ElementRef, If, InnersGetter},
-    test_reading_el_by_el, test_reading_with_errors_line_by_line,
+    test_reading_el_by_el, test_reading_with_errors_ln_by_ln,
 };
 
 impl InnersGetter for If {
@@ -19,7 +19,7 @@ test_reading_el_by_el!(
     90
 );
 
-test_reading_with_errors_line_by_line!(
+test_reading_with_errors_ln_by_ln!(
     errors,
     &include_str!("../../../tests/error/if.sibs"),
     ElementRef::If,

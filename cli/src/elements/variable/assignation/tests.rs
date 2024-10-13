@@ -1,6 +1,6 @@
 use crate::{
     elements::{Element, ElementRef, InnersGetter, VariableAssignation},
-    test_reading_el_by_el, test_reading_with_errors_line_by_line,
+    test_reading_el_by_el, test_reading_with_errors_ln_by_ln,
 };
 
 impl InnersGetter for VariableAssignation {
@@ -16,7 +16,7 @@ test_reading_el_by_el!(
     113
 );
 
-test_reading_with_errors_line_by_line!(
+test_reading_with_errors_ln_by_ln!(
     errors,
     &include_str!("../../../tests/error/variable_assignation.sibs"),
     ElementRef::VariableAssignation,

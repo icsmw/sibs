@@ -1,6 +1,6 @@
 use crate::{
     elements::{Comparing, Element, ElementRef, InnersGetter},
-    test_reading_el_by_el,
+    test_reading_ln_by_ln, test_reading_with_errors_ln_by_ln,
 };
 
 impl InnersGetter for Comparing {
@@ -9,13 +9,20 @@ impl InnersGetter for Comparing {
     }
 }
 
-// test_reading_el_by_el!(
+// test_reading_ln_by_ln!(
 //     reading,
 //     &include_str!("../../../tests/reading/comparing.sibs"),
 //     ElementRef::Comparing,
-//     2
+//     190
 // );
 // "!" isn't included into token
+
+test_reading_with_errors_ln_by_ln!(
+    errors,
+    &include_str!("../../../tests/error/comparing.sibs"),
+    ElementRef::Comparing,
+    11
+);
 
 #[cfg(test)]
 mod reading {
@@ -110,24 +117,5 @@ mod reading {
             );
         }
         assert_eq!(count, content.len());
-    }
-
-    #[tokio::test]
-    async fn error() {
-        let samples = include_str!("../../../tests/error/comparing.sibs");
-        let samples = samples.split('\n').collect::<Vec<&str>>();
-        let mut count = 0;
-        for sample in samples.iter() {
-            count += read_string!(
-                &Configuration::logs(false),
-                sample,
-                |reader: &mut Reader, _: &mut Sources| {
-                    let cmp = Comparing::dissect(reader);
-                    assert!(cmp.is_err() || matches!(cmp, Ok(None)));
-                    Ok::<usize, LinkedErr<E>>(1)
-                }
-            );
-        }
-        assert_eq!(count, samples.len());
     }
 }

@@ -1,6 +1,6 @@
 use crate::{
     elements::{Each, Element, ElementRef, InnersGetter},
-    test_reading_el_by_el, test_reading_with_errors_line_by_line,
+    test_reading_el_by_el, test_reading_with_errors_ln_by_ln,
 };
 impl InnersGetter for Each {
     fn get_inners(&self) -> Vec<&Element> {
@@ -19,7 +19,7 @@ test_reading_el_by_el!(
     7
 );
 
-test_reading_with_errors_line_by_line!(
+test_reading_with_errors_ln_by_ln!(
     errors,
     &include_str!("../../../tests/error/each.sibs"),
     ElementRef::Each,

@@ -1,6 +1,6 @@
 use crate::{
     elements::{function::Function, Element, ElementRef, InnersGetter},
-    test_process_tasks_one_by_one, test_reading_el_by_el, test_reading_with_errors_line_by_line,
+    test_process_tasks_one_by_one, test_reading_el_by_el, test_reading_with_errors_ln_by_ln,
 };
 
 impl InnersGetter for Function {
@@ -16,7 +16,7 @@ test_reading_el_by_el!(
     107
 );
 
-test_reading_with_errors_line_by_line!(
+test_reading_with_errors_ln_by_ln!(
     reading_with_errors,
     &include_str!("../../tests/error/function.sibs"),
     ElementRef::Function,

@@ -18,6 +18,92 @@ where
 }
 
 #[cfg(test)]
+pub async fn reading_ln_by_ln<S: AsRef<str>>(
+    content: S,
+    element_ref: ElementRef,
+    exp_count: usize,
+) {
+    use crate::{
+        elements::{Element, InnersGetter, TokenGetter},
+        error::LinkedErr,
+        inf::{operator::E, tests::trim_carets, Configuration},
+        read_string,
+        reader::{chars, Reader, Sources},
+    };
+    let cfg = Configuration::logs(false);
+    let samples = content
+        .as_ref()
+        .split('\n')
+        .map(|s| s.to_owned())
+        .collect::<Vec<String>>();
+    let len = samples.len();
+    let mut count = 0;
+    let mut tokens = 0;
+    for sample in samples.iter() {
+        count += read_string!(&cfg, sample, |reader: &mut Reader, src: &mut Sources| {
+            let Ok(result) = src.report_err_if(Element::include(reader, &[element_ref])) else {
+                panic!("Fail to read; line {}: sample:{:?}", count + 1, sample);
+            };
+            let Some(entity) = result else {
+                panic!(
+                    "Fail to get {}; line {}: sample:{:?}",
+                    element_ref,
+                    count + 1,
+                    sample
+                );
+            };
+            let semicolon = reader.move_to().char(&[&chars::SEMICOLON]).is_some();
+            // Compare generated and origin content
+            assert_eq!(
+                trim_carets(reader.recent()),
+                trim_carets(&format!("{entity}{}", if semicolon { ";" } else { "" })),
+                "Line: {}",
+                count + 1
+            );
+            assert_eq!(
+                trim_carets(sample),
+                trim_carets(&format!("{entity}{}", if semicolon { ";" } else { "" })),
+                "Line: {}",
+                count + 1
+            );
+            // Checking self tokens
+            assert_eq!(
+                trim_carets(&format!("{entity}")),
+                trim_carets(&reader.get_fragment(&entity.token())?.content)
+            );
+            tokens += 1;
+            // Checking inners tokens
+            for inner in entity.get_inners().iter() {
+                assert_eq!(
+                    trim_carets(&inner.to_string()),
+                    trim_carets(&reader.get_fragment(&inner.token())?.lined),
+                    "Line: {}",
+                    count + 1
+                );
+                tokens += 1;
+            }
+            Ok::<usize, LinkedErr<E>>(1)
+        });
+    }
+    assert_eq!(count, len);
+    assert_eq!(count, exp_count);
+    println!("[Errors Reading Test]: done for \"{element_ref}\"; tested {count} element(s).");
+}
+
+#[cfg(test)]
+#[macro_export]
+macro_rules! test_reading_ln_by_ln {
+    ($fn_name:ident, $content:expr, $element_ref:expr, $exp_count:literal) => {
+        paste::item! {
+            #[tokio::test]
+            async fn [< test_ $fn_name >] () {
+                $crate::runners::reading_ln_by_ln($content, $element_ref, $exp_count).await;
+            }
+        }
+    };
+}
+
+#[cfg(test)]
 pub async fn reading_el_by_el<S: AsRef<str>>(
     content: S,
     element_ref: ElementRef,
@@ -86,7 +172,7 @@ macro_rules! test_reading_el_by_el {
 }
 
 #[cfg(test)]
-pub async fn reading_with_errors_line_by_line<S: AsRef<str>>(
+pub async fn reading_with_errors_ln_by_ln<S: AsRef<str>>(
     content: S,
     element_ref: ElementRef,
     exp_count: usize,
@@ -131,12 +217,12 @@ pub async fn reading_with_errors_line_by_line<S: AsRef<str>>(
 
 #[cfg(test)]
 #[macro_export]
-macro_rules! test_reading_with_errors_line_by_line {
+macro_rules! test_reading_with_errors_ln_by_ln {
     ($fn_name:ident, $content:expr, $element_ref:expr, $exp_count:literal) => {
         paste::item! {
             #[tokio::test]
             async fn [< test_ $fn_name >] () {
-                $crate::runners::reading_with_errors_line_by_line($content, $element_ref, $exp_count).await;
+                $crate::runners::reading_with_errors_ln_by_ln($content, $element_ref, $exp_count).await;
             }
         }
     };

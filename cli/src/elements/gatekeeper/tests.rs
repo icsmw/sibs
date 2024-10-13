@@ -1,6 +1,6 @@
 use crate::{
     elements::{Element, ElementRef, Gatekeeper, InnersGetter},
-    test_reading_el_by_el, test_reading_with_errors_line_by_line,
+    test_reading_el_by_el, test_reading_with_errors_ln_by_ln,
 };
 
 impl InnersGetter for Gatekeeper {
@@ -16,7 +16,7 @@ test_reading_el_by_el!(
     3
 );
 
-test_reading_with_errors_line_by_line!(
+test_reading_with_errors_ln_by_ln!(
     errors,
     &include_str!("../../tests/error/gatekeeper.sibs"),
     ElementRef::Gatekeeper,
