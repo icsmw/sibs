@@ -1,15 +1,15 @@
 use crate::{
-    elements::{Element, ElementRef, Join, TokenGetter},
+    elements::{Element, ElementId, Join, TokenGetter},
     error::LinkedErr,
     reader::{words, Dissect, Reader, TryDissect, E},
 };
 
 impl TryDissect<Join> for Join {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Join>, LinkedErr<E>> {
-        let close = reader.open_token(ElementRef::Join);
+        let close = reader.open_token(ElementId::Join);
         if reader.move_to().word(&[words::JOIN]).is_some() {
             let Some(Element::Values(elements, md)) =
-                Element::include(reader, &[ElementRef::Values])?
+                Element::include(reader, &[ElementId::Values])?
             else {
                 return Err(E::NoJOINStatementBody.by_reader(reader));
             };

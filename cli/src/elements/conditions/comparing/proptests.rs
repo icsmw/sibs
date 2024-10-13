@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Cmp, Comparing, Element, ElementRef},
+    elements::{Cmp, Comparing, Element, ElementId},
     inf::tests::MAX_DEEP,
 };
 use proptest::prelude::*;
@@ -30,17 +30,17 @@ impl Arbitrary for Comparing {
             Element::arbitrary_with((
                 if deep > MAX_DEEP {
                     vec![
-                        ElementRef::VariableName,
-                        ElementRef::Integer,
-                        ElementRef::Boolean,
+                        ElementId::VariableName,
+                        ElementId::Integer,
+                        ElementId::Boolean,
                     ]
                 } else {
                     vec![
-                        ElementRef::VariableName,
-                        ElementRef::Function,
-                        ElementRef::PatternString,
-                        ElementRef::Integer,
-                        ElementRef::Boolean,
+                        ElementId::VariableName,
+                        ElementId::Function,
+                        ElementId::PatternString,
+                        ElementId::Integer,
+                        ElementId::Boolean,
                     ]
                 },
                 deep,
@@ -49,17 +49,17 @@ impl Arbitrary for Comparing {
             Element::arbitrary_with((
                 if deep > MAX_DEEP {
                     vec![
-                        ElementRef::VariableName,
-                        ElementRef::Integer,
-                        ElementRef::Boolean,
+                        ElementId::VariableName,
+                        ElementId::Integer,
+                        ElementId::Boolean,
                     ]
                 } else {
                     vec![
-                        ElementRef::VariableName,
-                        ElementRef::Function,
-                        ElementRef::PatternString,
-                        ElementRef::Integer,
-                        ElementRef::Boolean,
+                        ElementId::VariableName,
+                        ElementId::Function,
+                        ElementId::PatternString,
+                        ElementId::Integer,
+                        ElementId::Boolean,
                     ]
                 },
                 deep,

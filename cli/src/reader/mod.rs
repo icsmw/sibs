@@ -7,7 +7,7 @@ pub mod tests;
 pub mod words;
 
 use crate::{
-    elements::{Element, ElementRef},
+    elements::{Element, ElementId},
     error::LinkedErr,
     functions::load,
     inf::{
@@ -97,7 +97,7 @@ impl Reader {
             let mut reader = Reader::unbound(&mut src, content)?;
             let mut elements: Vec<Element> = Vec::new();
             while let Some(el) =
-                Element::include(&mut reader, &[ElementRef::Function, ElementRef::Component])?
+                Element::include(&mut reader, &[ElementId::Function, ElementId::Component])?
             {
                 if let Element::Function(func, _) = &el {
                     if load::NAME != func.name {
@@ -176,7 +176,7 @@ impl Reader {
             }
         }
     }
-    pub(self) fn index(&mut self, el: Option<ElementRef>, from: usize, len: usize) {
+    pub(self) fn index(&mut self, el: Option<ElementId>, from: usize, len: usize) {
         self.map.borrow_mut().add(el, from + self.offset, len);
     }
     pub fn token(&self) -> Result<Token, E> {
@@ -200,7 +200,7 @@ impl Reader {
             })
             .ok_or(E::FailGetToken)
     }
-    pub fn open_token(&mut self, el: ElementRef) -> impl Fn(&mut Reader) -> usize {
+    pub fn open_token(&mut self, el: ElementId) -> impl Fn(&mut Reader) -> usize {
         self.move_to().any();
         let from = self.pos + self.offset;
         move |reader: &mut Reader| {
@@ -272,7 +272,7 @@ fn read_file<'a>(
         let mut reader = Reader::bound(src, filename)?;
         let mut elements: Vec<Element> = Vec::new();
         while let Some(el) =
-            Element::include(&mut reader, &[ElementRef::Function, ElementRef::Component])?
+            Element::include(&mut reader, &[ElementId::Function, ElementId::Component])?
         {
             if let Element::Function(func, _) = &el {
                 if load::NAME != func.name {

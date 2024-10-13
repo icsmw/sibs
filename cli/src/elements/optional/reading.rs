@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, Optional},
+    elements::{Element, ElementId, Optional},
     error::LinkedErr,
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -9,15 +9,15 @@ impl TryDissect<Optional> for Optional {
         if reader.rest().trim().starts_with(words::DO_ON) {
             return Ok(None);
         }
-        let close = reader.open_token(ElementRef::Optional);
+        let close = reader.open_token(ElementId::Optional);
         let condition = if let Some(el) = Element::include(
             reader,
             &[
-                ElementRef::Function,
-                ElementRef::VariableName,
-                ElementRef::Block,
-                ElementRef::Reference,
-                ElementRef::Comparing,
+                ElementId::Function,
+                ElementId::VariableName,
+                ElementId::Block,
+                ElementId::Reference,
+                ElementId::Comparing,
             ],
         )? {
             Box::new(el)
@@ -33,17 +33,17 @@ impl TryDissect<Optional> for Optional {
         let action = if let Some(el) = Element::include(
             reader,
             &[
-                ElementRef::Function,
-                ElementRef::Reference,
-                ElementRef::VariableAssignation,
-                ElementRef::VariableName,
-                ElementRef::Block,
-                ElementRef::Each,
-                ElementRef::First,
-                ElementRef::PatternString,
-                ElementRef::Command,
-                ElementRef::Integer,
-                ElementRef::Boolean,
+                ElementId::Function,
+                ElementId::Reference,
+                ElementId::VariableAssignation,
+                ElementId::VariableName,
+                ElementId::Block,
+                ElementId::Each,
+                ElementId::First,
+                ElementId::PatternString,
+                ElementId::Command,
+                ElementId::Integer,
+                ElementId::Boolean,
             ],
         )? {
             Box::new(el)

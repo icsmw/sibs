@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, Values},
+    elements::{Element, ElementId, Values},
     inf::tests::*,
 };
 use proptest::prelude::*;
@@ -14,22 +14,22 @@ impl Arbitrary for Values {
             Element::arbitrary_with((
                 if deep > MAX_DEEP {
                     vec![
-                        ElementRef::VariableName,
-                        ElementRef::Integer,
-                        ElementRef::Boolean,
+                        ElementId::VariableName,
+                        ElementId::Integer,
+                        ElementId::Boolean,
                     ]
                 } else {
                     vec![
-                        ElementRef::Command,
-                        ElementRef::Function,
-                        ElementRef::If,
-                        ElementRef::PatternString,
-                        ElementRef::Reference,
-                        ElementRef::Values,
-                        ElementRef::Comparing,
-                        ElementRef::VariableName,
-                        ElementRef::Integer,
-                        ElementRef::Boolean,
+                        ElementId::Command,
+                        ElementId::Function,
+                        ElementId::If,
+                        ElementId::PatternString,
+                        ElementId::Reference,
+                        ElementId::Values,
+                        ElementId::Comparing,
+                        ElementId::VariableName,
+                        ElementId::Integer,
+                        ElementId::Boolean,
                     ]
                 },
                 deep,

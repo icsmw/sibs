@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, Join, Metadata, Task, Values},
+    elements::{Element, ElementId, Join, Metadata, Task, Values},
     error::LinkedErr,
     inf::{operator::E, tests::*, Configuration},
     read_string,
@@ -15,12 +15,12 @@ impl Arbitrary for Join {
         prop::collection::vec(
             Element::arbitrary_with((
                 if deep > MAX_DEEP {
-                    vec![ElementRef::Reference]
+                    vec![ElementId::Reference]
                 } else {
                     vec![
-                        ElementRef::Reference,
-                        ElementRef::Function,
-                        ElementRef::Command,
+                        ElementId::Reference,
+                        ElementId::Function,
+                        ElementId::Command,
                     ]
                 },
                 deep,

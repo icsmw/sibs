@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, Task, While},
+    elements::{Element, ElementId, Task, While},
     error::LinkedErr,
     inf::{operator::E, tests::*, Configuration},
     read_string,
@@ -13,8 +13,8 @@ impl Arbitrary for While {
 
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         (
-            Element::arbitrary_with((vec![ElementRef::Comparing], deep)),
-            Element::arbitrary_with((vec![ElementRef::Block], deep)),
+            Element::arbitrary_with((vec![ElementId::Comparing], deep)),
+            Element::arbitrary_with((vec![ElementId::Block], deep)),
         )
             .prop_map(|(condition, block)| While {
                 condition: Box::new(condition),

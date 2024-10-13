@@ -1,5 +1,5 @@
 use crate::{
-    elements::{function::Function, Element, ElementRef},
+    elements::{function::Function, Element, ElementId},
     error::LinkedErr,
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -7,7 +7,7 @@ use crate::{
 impl TryDissect<Function> for Function {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
         reader.move_to().any();
-        let close = reader.open_token(ElementRef::Function);
+        let close = reader.open_token(ElementId::Function);
         let Some((name, mut stop)) = reader.until().char(&[
             &chars::OPEN_BRACKET,
             &chars::CARET,
@@ -49,7 +49,7 @@ impl TryDissect<Function> for Function {
         {
             return Ok(None);
         }
-        let args_close = reader.open_token(ElementRef::Function);
+        let args_close = reader.open_token(ElementId::Function);
         if reader
             .group()
             .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
@@ -63,17 +63,17 @@ impl TryDissect<Function> for Function {
             if let Some(el) = Element::include(
                 &mut inner,
                 &[
-                    ElementRef::Closure,
-                    ElementRef::Values,
-                    ElementRef::Function,
-                    ElementRef::If,
-                    ElementRef::PatternString,
-                    ElementRef::Reference,
-                    ElementRef::Comparing,
-                    ElementRef::VariableName,
-                    ElementRef::Command,
-                    ElementRef::Integer,
-                    ElementRef::Boolean,
+                    ElementId::Closure,
+                    ElementId::Values,
+                    ElementId::Function,
+                    ElementId::If,
+                    ElementId::PatternString,
+                    ElementId::Reference,
+                    ElementId::Comparing,
+                    ElementId::VariableName,
+                    ElementId::Command,
+                    ElementId::Integer,
+                    ElementId::Boolean,
                 ],
             )? {
                 if inner.move_to().char(&[&chars::COMMA]).is_none() && !inner.is_empty() {
@@ -85,13 +85,13 @@ impl TryDissect<Function> for Function {
                     Err(E::NoContentBeforeComma.by_reader(&inner))?;
                 }
                 elements.push(
-                    Element::include(&mut inner.token()?.bound, &[ElementRef::SimpleString])?
+                    Element::include(&mut inner.token()?.bound, &[ElementId::SimpleString])?
                         .ok_or(E::NoContentBeforeComma.by_reader(&inner))?,
                 );
                 let _ = inner.move_to().char(&[&chars::COMMA]);
             } else if !inner.is_empty() {
                 elements.push(
-                    Element::include(&mut inner, &[ElementRef::SimpleString])?
+                    Element::include(&mut inner, &[ElementId::SimpleString])?
                         .ok_or(E::NoContentBeforeComma.by_reader(&inner))?,
                 );
             }

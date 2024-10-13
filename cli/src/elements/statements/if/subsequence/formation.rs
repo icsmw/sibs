@@ -1,5 +1,5 @@
 use crate::{
-    elements::{ElementRef, IfSubsequence},
+    elements::{ElementId, IfSubsequence},
     inf::{Formation, FormationCursor},
 };
 
@@ -11,7 +11,7 @@ impl Formation for IfSubsequence {
         if self.elements_count() > cursor.max_elements()
             || self.to_string().len() > cursor.max_len()
         {
-            let mut inner = cursor.reown(Some(ElementRef::IfSubsequence));
+            let mut inner = cursor.reown(Some(ElementId::IfSubsequence));
             self.subsequence
                 .chunks(2)
                 .enumerate()
@@ -19,7 +19,7 @@ impl Formation for IfSubsequence {
                     format!(
                         "{}{}{}",
                         if i == 0 {
-                            cursor.offset_as_string_if(&[ElementRef::Block])
+                            cursor.offset_as_string_if(&[ElementId::Block])
                         } else {
                             String::new()
                         },
@@ -38,7 +38,7 @@ impl Formation for IfSubsequence {
                 .collect::<Vec<String>>()
                 .join("")
         } else {
-            format!("{}{self}", cursor.offset_as_string_if(&[ElementRef::Block]))
+            format!("{}{self}", cursor.offset_as_string_if(&[ElementId::Block]))
         }
     }
 }

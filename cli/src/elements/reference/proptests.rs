@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, Reference},
+    elements::{Element, ElementId, Reference},
     inf::tests::*,
     reader::words,
 };
@@ -43,10 +43,10 @@ impl Arbitrary for Reference {
                 prop::collection::vec(
                     Element::arbitrary_with((
                         vec![
-                            ElementRef::VariableName,
-                            ElementRef::Integer,
-                            ElementRef::Boolean,
-                            ElementRef::PatternString,
+                            ElementId::VariableName,
+                            ElementId::Integer,
+                            ElementId::Boolean,
+                            ElementId::PatternString,
                         ],
                         deep,
                     )),

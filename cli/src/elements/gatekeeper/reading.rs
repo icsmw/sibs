@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, Gatekeeper},
+    elements::{Element, ElementId, Gatekeeper},
     error::LinkedErr,
     reader::{words, Dissect, Reader, TryDissect, E},
 };
@@ -9,8 +9,8 @@ impl TryDissect<Gatekeeper> for Gatekeeper {
         if reader.rest().trim().starts_with(words::REF_TO) {
             return Ok(None);
         }
-        let close = reader.open_token(ElementRef::Gatekeeper);
-        let function = if let Some(el) = Element::include(reader, &[ElementRef::Function])? {
+        let close = reader.open_token(ElementId::Gatekeeper);
+        let function = if let Some(el) = Element::include(reader, &[ElementId::Function])? {
             Box::new(el)
         } else {
             return Ok(None);
@@ -21,7 +21,7 @@ impl TryDissect<Gatekeeper> for Gatekeeper {
         if reader.move_to().expression(&[words::REF_TO]).is_none() {
             return Err(E::NoReferenceForGatekeeper.by_reader(reader));
         }
-        let Some(refs) = Element::include(reader, &[ElementRef::Values, ElementRef::Reference])?
+        let Some(refs) = Element::include(reader, &[ElementId::Values, ElementId::Reference])?
         else {
             return Err(E::NoReferenceForGatekeeper.by_reader(reader));
         };

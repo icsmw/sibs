@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Conclusion, Element, ElementRef},
+    elements::{Conclusion, Element, ElementId},
     inf::tests::MAX_DEEP,
 };
 use proptest::prelude::*;
@@ -13,16 +13,16 @@ impl Arbitrary for Conclusion {
             prop::collection::vec(
                 Element::arbitrary_with((
                     if deep > MAX_DEEP {
-                        vec![ElementRef::Comparing]
+                        vec![ElementId::Comparing]
                     } else {
-                        vec![ElementRef::Comparing, ElementRef::Condition]
+                        vec![ElementId::Comparing, ElementId::Condition]
                     },
                     deep,
                 )),
                 1..=5,
             ),
             prop::collection::vec(
-                Element::arbitrary_with((vec![ElementRef::Combination], deep)),
+                Element::arbitrary_with((vec![ElementId::Combination], deep)),
                 5..=5,
             ),
         )

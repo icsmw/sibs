@@ -1,13 +1,13 @@
 use crate::{
-    elements::{incrementer::Operator, Element, ElementRef, Incrementer},
+    elements::{incrementer::Operator, Element, ElementId, Incrementer},
     error::LinkedErr,
     reader::{words, Dissect, Reader, TryDissect, E},
 };
 
 impl TryDissect<Incrementer> for Incrementer {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Incrementer>, LinkedErr<E>> {
-        let close = reader.open_token(ElementRef::Incrementer);
-        let Some(variable) = Element::include(reader, &[ElementRef::VariableName])? else {
+        let close = reader.open_token(ElementId::Incrementer);
+        let Some(variable) = Element::include(reader, &[ElementId::VariableName])? else {
             return Ok(None);
         };
         reader.move_to().any();
@@ -24,11 +24,11 @@ impl TryDissect<Incrementer> for Incrementer {
         let Some(right) = Element::include(
             reader,
             &[
-                ElementRef::VariableName,
-                ElementRef::Function,
-                ElementRef::If,
-                ElementRef::Block,
-                ElementRef::Integer,
+                ElementId::VariableName,
+                ElementId::Function,
+                ElementId::If,
+                ElementId::Block,
+                ElementId::Integer,
             ],
         )?
         else {

@@ -1,25 +1,25 @@
 use crate::{
-    elements::{Element, ElementRef, Subsequence},
+    elements::{Element, ElementId, Subsequence},
     error::LinkedErr,
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
 
 impl TryDissect<Subsequence> for Subsequence {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Subsequence>, LinkedErr<E>> {
-        let close = reader.open_token(ElementRef::Subsequence);
+        let close = reader.open_token(ElementId::Subsequence);
         let mut subsequence: Vec<Element> = Vec::new();
         while !reader.rest().trim().is_empty() {
             if subsequence.is_empty()
                 || matches!(subsequence.last(), Some(Element::Combination(..)))
             {
                 if let Some(el) =
-                    Element::include(reader, &[ElementRef::Comparing, ElementRef::Condition])?
+                    Element::include(reader, &[ElementId::Comparing, ElementId::Condition])?
                 {
                     subsequence.push(el);
                 } else {
                     break;
                 }
-            } else if let Some(el) = Element::include(reader, &[ElementRef::Combination])? {
+            } else if let Some(el) = Element::include(reader, &[ElementId::Combination])? {
                 subsequence.push(el);
             } else {
                 break;

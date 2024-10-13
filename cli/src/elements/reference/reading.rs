@@ -1,12 +1,12 @@
 use crate::{
-    elements::{Element, ElementRef, Reference},
+    elements::{Element, ElementId, Reference},
     error::LinkedErr,
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
 
 impl TryDissect<Reference> for Reference {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
-        let close = reader.open_token(ElementRef::Reference);
+        let close = reader.open_token(ElementId::Reference);
         if reader.move_to().char(&[&chars::COLON]).is_none() {
             return Ok(None);
         }
@@ -50,10 +50,10 @@ impl TryDissect<Reference> for Reference {
             while let Some(el) = Element::include(
                 &mut inner,
                 &[
-                    ElementRef::VariableName,
-                    ElementRef::Integer,
-                    ElementRef::Boolean,
-                    ElementRef::PatternString,
+                    ElementId::VariableName,
+                    ElementId::Integer,
+                    ElementId::Boolean,
+                    ElementId::PatternString,
                 ],
             )? {
                 inputs.push(el);

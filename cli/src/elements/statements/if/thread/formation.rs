@@ -1,5 +1,5 @@
 use crate::{
-    elements::{ElementRef, IfThread},
+    elements::{ElementId, IfThread},
     inf::{Formation, FormationCursor},
 };
 
@@ -14,13 +14,13 @@ impl Formation for IfThread {
         match self {
             Self::If(el, block) => format!(
                 "{}if {} {}",
-                cursor.offset_as_string_if(&[ElementRef::Block]),
+                cursor.offset_as_string_if(&[ElementId::Block]),
                 el.format(cursor),
                 block.format(cursor)
             ),
             Self::Else(block) => format!(
                 "{}else {}",
-                cursor.offset_as_string_if(&[ElementRef::Block]),
+                cursor.offset_as_string_if(&[ElementId::Block]),
                 block.format(cursor)
             ),
         }

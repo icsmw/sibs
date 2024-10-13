@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Component, Element, ElementRef, Gatekeeper},
+    elements::{Component, Element, ElementId, Gatekeeper},
     error::LinkedErr,
     inf::{operator::E, tests::*, Configuration},
     read_string,
@@ -13,13 +13,13 @@ impl Arbitrary for Gatekeeper {
 
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         (
-            Element::arbitrary_with((vec![ElementRef::Function], deep)),
+            Element::arbitrary_with((vec![ElementId::Function], deep)),
             Element::arbitrary_with((
                 if deep > MAX_DEEP {
-                    vec![ElementRef::Reference]
+                    vec![ElementId::Reference]
                 } else {
-                    // TODO: should be added ElementRef::Values with references only
-                    vec![ElementRef::Reference]
+                    // TODO: should be added ElementId::Values with references only
+                    vec![ElementId::Reference]
                 },
                 deep,
             )),

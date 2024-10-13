@@ -1,4 +1,4 @@
-use crate::elements::{Closure, Element, ElementRef};
+use crate::elements::{Closure, Element, ElementId};
 use proptest::prelude::*;
 use uuid::Uuid;
 
@@ -8,9 +8,9 @@ impl Arbitrary for Closure {
 
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         (
-            Element::arbitrary_with((vec![ElementRef::Block], deep)),
+            Element::arbitrary_with((vec![ElementId::Block], deep)),
             prop::collection::vec(
-                Element::arbitrary_with((vec![ElementRef::VariableName], deep)),
+                Element::arbitrary_with((vec![ElementId::VariableName], deep)),
                 0..=3,
             ),
         )

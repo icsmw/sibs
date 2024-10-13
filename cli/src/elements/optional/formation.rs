@@ -1,17 +1,17 @@
 use crate::{
-    elements::{ElementRef, Optional},
+    elements::{ElementId, Optional},
     inf::{Formation, FormationCursor},
 };
 
 impl Formation for Optional {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        let mut inner = cursor.reown(Some(ElementRef::Optional));
+        let mut inner = cursor.reown(Some(ElementId::Optional));
         format!(
             "{}{} => {}",
-            cursor.offset_as_string_if(&[ElementRef::Block]),
+            cursor.offset_as_string_if(&[ElementId::Block]),
             self.condition.format(&mut inner),
             self.action.format(&mut inner),
         )
-        // format!("{}{}", cursor.offset_as_string_if(&[ElementRef::Block]), self)
+        // format!("{}{}", cursor.offset_as_string_if(&[ElementId::Block]), self)
     }
 }

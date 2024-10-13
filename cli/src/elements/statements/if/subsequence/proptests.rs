@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, IfSubsequence},
+    elements::{Element, ElementId, IfSubsequence},
     inf::tests::MAX_DEEP,
 };
 use proptest::prelude::*;
@@ -14,21 +14,21 @@ impl Arbitrary for IfSubsequence {
                 Element::arbitrary_with((
                     if deep > MAX_DEEP {
                         vec![
-                            ElementRef::Boolean,
-                            ElementRef::Comparing,
-                            ElementRef::Function,
-                            ElementRef::VariableName,
-                            ElementRef::Reference,
+                            ElementId::Boolean,
+                            ElementId::Comparing,
+                            ElementId::Function,
+                            ElementId::VariableName,
+                            ElementId::Reference,
                         ]
                     } else {
                         vec![
-                            ElementRef::Boolean,
-                            ElementRef::Command,
-                            ElementRef::Comparing,
-                            ElementRef::Function,
-                            ElementRef::VariableName,
-                            ElementRef::Reference,
-                            ElementRef::IfCondition,
+                            ElementId::Boolean,
+                            ElementId::Command,
+                            ElementId::Comparing,
+                            ElementId::Function,
+                            ElementId::VariableName,
+                            ElementId::Reference,
+                            ElementId::IfCondition,
                         ]
                     },
                     deep,
@@ -36,7 +36,7 @@ impl Arbitrary for IfSubsequence {
                 1..=5,
             ),
             prop::collection::vec(
-                Element::arbitrary_with((vec![ElementRef::Combination], deep)),
+                Element::arbitrary_with((vec![ElementId::Combination], deep)),
                 5..=5,
             ),
         )

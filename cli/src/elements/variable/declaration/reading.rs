@@ -1,13 +1,13 @@
 use crate::{
-    elements::{Element, ElementRef, VariableDeclaration},
+    elements::{Element, ElementId, VariableDeclaration},
     error::LinkedErr,
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
 
 impl TryDissect<VariableDeclaration> for VariableDeclaration {
     fn try_dissect(reader: &mut Reader) -> Result<Option<VariableDeclaration>, LinkedErr<E>> {
-        let close = reader.open_token(ElementRef::VariableDeclaration);
-        let Some(variable) = Element::include(reader, &[ElementRef::VariableName])? else {
+        let close = reader.open_token(ElementId::VariableDeclaration);
+        let Some(variable) = Element::include(reader, &[ElementId::VariableName])? else {
             return Ok(None);
         };
         if reader.move_to().char(&[&chars::COLON]).is_none() {
@@ -15,7 +15,7 @@ impl TryDissect<VariableDeclaration> for VariableDeclaration {
         }
         if let Some(declaration) = Element::include(
             reader,
-            &[ElementRef::VariableType, ElementRef::VariableVariants],
+            &[ElementId::VariableType, ElementId::VariableVariants],
         )? {
             Ok(Some(VariableDeclaration {
                 variable: Box::new(variable),

@@ -1,12 +1,12 @@
 use crate::{
-    elements::{Element, ElementRef, IfSubsequence},
+    elements::{Element, ElementId, IfSubsequence},
     error::LinkedErr,
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
 
 impl TryDissect<IfSubsequence> for IfSubsequence {
     fn try_dissect(reader: &mut Reader) -> Result<Option<IfSubsequence>, LinkedErr<E>> {
-        let close = reader.open_token(ElementRef::IfSubsequence);
+        let close = reader.open_token(ElementId::IfSubsequence);
         let mut subsequence: Vec<Element> = Vec::new();
         while !reader.rest().trim().is_empty() {
             if subsequence.is_empty()
@@ -15,20 +15,20 @@ impl TryDissect<IfSubsequence> for IfSubsequence {
                 if let Some(el) = Element::include(
                     reader,
                     &[
-                        ElementRef::Boolean,
-                        ElementRef::Command,
-                        ElementRef::Comparing,
-                        ElementRef::Function,
-                        ElementRef::VariableName,
-                        ElementRef::Reference,
-                        ElementRef::IfCondition,
+                        ElementId::Boolean,
+                        ElementId::Command,
+                        ElementId::Comparing,
+                        ElementId::Function,
+                        ElementId::VariableName,
+                        ElementId::Reference,
+                        ElementId::IfCondition,
                     ],
                 )? {
                     subsequence.push(el);
                 } else {
                     break;
                 }
-            } else if let Some(el) = Element::include(reader, &[ElementRef::Combination])? {
+            } else if let Some(el) = Element::include(reader, &[ElementId::Combination])? {
                 subsequence.push(el);
             } else {
                 break;

@@ -9,6 +9,7 @@ mod executing;
 mod formation;
 mod function;
 mod gatekeeper;
+mod ids;
 mod interfaces;
 mod md;
 mod meta;
@@ -17,7 +18,6 @@ mod primitives;
 #[cfg(test)]
 mod proptests;
 mod range;
-mod r#ref;
 mod reference;
 mod requirements;
 mod statements;
@@ -38,11 +38,11 @@ pub use component::*;
 pub use conditions::*;
 pub use function::*;
 pub use gatekeeper::*;
+pub use ids::*;
 pub use md::*;
 pub use meta::*;
 pub use optional::*;
 pub use primitives::*;
-pub use r#ref::*;
 pub use range::*;
 pub use reference::*;
 pub use requirements::*;
@@ -109,7 +109,7 @@ pub enum Element {
 impl Element {
     fn parse(
         reader: &mut Reader,
-        targets: &[ElementRef],
+        targets: &[ElementId],
         includes: bool,
     ) -> Result<Option<Element>, LinkedErr<E>> {
         fn tolerance(reader: &mut Reader, mut md: Metadata) -> Metadata {
@@ -121,7 +121,7 @@ impl Element {
             mut el: Element,
             token: impl Fn(&mut Reader) -> usize,
         ) -> Result<Option<Element>, LinkedErr<E>> {
-            let Some(ppm) = Element::include(reader, &[ElementRef::Call, ElementRef::Accessor])?
+            let Some(ppm) = Element::include(reader, &[ElementId::Call, ElementId::Accessor])?
             else {
                 el.get_mut_metadata().set_token(token(reader));
                 return Ok(Some(el));
@@ -148,226 +148,226 @@ impl Element {
             meta,
             ppm: None,
             tolerance: false,
-            inverting: if targets.contains(&ElementRef::Function) {
+            inverting: if targets.contains(&ElementId::Function) {
                 reader.move_to().char(&[&chars::EXCLAMATION]).is_some()
             } else {
                 false
             },
             token: 0,
         };
-        if includes == targets.contains(&ElementRef::Closure) {
+        if includes == targets.contains(&ElementId::Closure) {
             if let Some(el) = Closure::dissect(reader)? {
                 return next(reader, Element::Closure(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Return) {
+        if includes == targets.contains(&ElementId::Return) {
             if let Some(el) = Return::dissect(reader)? {
                 return next(reader, Element::Return(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Error) {
+        if includes == targets.contains(&ElementId::Error) {
             if let Some(el) = Error::dissect(reader)? {
                 return next(reader, Element::Error(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Compute) {
+        if includes == targets.contains(&ElementId::Compute) {
             if let Some(el) = Compute::dissect(reader)? {
                 return next(reader, Element::Compute(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Loop) {
+        if includes == targets.contains(&ElementId::Loop) {
             if let Some(el) = Loop::dissect(reader)? {
                 return next(reader, Element::Loop(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::While) {
+        if includes == targets.contains(&ElementId::While) {
             if let Some(el) = While::dissect(reader)? {
                 return next(reader, Element::While(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::For) {
+        if includes == targets.contains(&ElementId::For) {
             if let Some(el) = For::dissect(reader)? {
                 return next(reader, Element::For(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Range) {
+        if includes == targets.contains(&ElementId::Range) {
             if let Some(el) = Range::dissect(reader)? {
                 return next(reader, Element::Range(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Breaker) {
+        if includes == targets.contains(&ElementId::Breaker) {
             if let Some(el) = Breaker::dissect(reader)? {
                 return next(reader, Element::Breaker(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Accessor) {
+        if includes == targets.contains(&ElementId::Accessor) {
             if let Some(el) = Accessor::dissect(reader)? {
                 return next(reader, Element::Accessor(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Call) {
+        if includes == targets.contains(&ElementId::Call) {
             if let Some(el) = Call::dissect(reader)? {
                 return next(reader, Element::Call(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Optional) {
+        if includes == targets.contains(&ElementId::Optional) {
             if let Some(el) = Optional::dissect(reader)? {
                 return next(reader, Element::Optional(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Conclusion) {
+        if includes == targets.contains(&ElementId::Conclusion) {
             if let Some(el) = Conclusion::dissect(reader)? {
                 return next(reader, Element::Conclusion(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Combination) {
+        if includes == targets.contains(&ElementId::Combination) {
             if let Some(el) = Combination::dissect(reader)? {
                 return next(reader, Element::Combination(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Subsequence) {
+        if includes == targets.contains(&ElementId::Subsequence) {
             if let Some(el) = Subsequence::dissect(reader)? {
                 return next(reader, Element::Subsequence(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Condition) {
+        if includes == targets.contains(&ElementId::Condition) {
             if let Some(el) = Condition::dissect(reader)? {
                 return next(reader, Element::Condition(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Meta) {
+        if includes == targets.contains(&ElementId::Meta) {
             if let Some(el) = Meta::dissect(reader)? {
                 return next(reader, Element::Meta(el), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Comparing) {
+        if includes == targets.contains(&ElementId::Comparing) {
             if let Some(el) = Comparing::dissect(reader)? {
                 return next(reader, Element::Comparing(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::If) {
+        if includes == targets.contains(&ElementId::If) {
             if let Some(el) = If::dissect(reader)? {
                 return next(reader, Element::If(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::IfThread) {
+        if includes == targets.contains(&ElementId::IfThread) {
             if let Some(el) = IfThread::dissect(reader)? {
                 return next(reader, Element::IfThread(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::IfSubsequence) {
+        if includes == targets.contains(&ElementId::IfSubsequence) {
             if let Some(el) = IfSubsequence::dissect(reader)? {
                 return next(reader, Element::IfSubsequence(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::IfCondition) {
+        if includes == targets.contains(&ElementId::IfCondition) {
             if let Some(el) = IfCondition::dissect(reader)? {
                 return next(reader, Element::IfCondition(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Gatekeeper) {
+        if includes == targets.contains(&ElementId::Gatekeeper) {
             if let Some(el) = Gatekeeper::dissect(reader)? {
                 return next(reader, Element::Gatekeeper(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Command) {
+        if includes == targets.contains(&ElementId::Command) {
             if let Some(el) = Command::dissect(reader)? {
                 let to = tolerance(reader, md);
                 return next(reader, Element::Command(el, to), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Integer) {
+        if includes == targets.contains(&ElementId::Integer) {
             if let Some(el) = Integer::dissect(reader)? {
                 return next(reader, Element::Integer(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Boolean) {
+        if includes == targets.contains(&ElementId::Boolean) {
             if let Some(el) = Boolean::dissect(reader)? {
                 return next(reader, Element::Boolean(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Incrementer) {
+        if includes == targets.contains(&ElementId::Incrementer) {
             if let Some(el) = Incrementer::dissect(reader)? {
                 return next(reader, Element::Incrementer(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::VariableAssignation) {
+        if includes == targets.contains(&ElementId::VariableAssignation) {
             if let Some(el) = VariableAssignation::dissect(reader)? {
                 return next(reader, Element::VariableAssignation(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Each) {
+        if includes == targets.contains(&ElementId::Each) {
             if let Some(el) = Each::dissect(reader)? {
                 return next(reader, Element::Each(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::First) {
+        if includes == targets.contains(&ElementId::First) {
             if let Some(el) = First::dissect(reader)? {
                 return next(reader, Element::First(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Join) {
+        if includes == targets.contains(&ElementId::Join) {
             if let Some(el) = Join::dissect(reader)? {
                 return next(reader, Element::Join(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Function) {
+        if includes == targets.contains(&ElementId::Function) {
             if let Some(el) = Function::dissect(reader)? {
                 let to = tolerance(reader, md);
                 return next(reader, Element::Function(el, to), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Reference) {
+        if includes == targets.contains(&ElementId::Reference) {
             if let Some(el) = Reference::dissect(reader)? {
                 return next(reader, Element::Reference(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::PatternString) {
+        if includes == targets.contains(&ElementId::PatternString) {
             if let Some(el) = PatternString::dissect(reader)? {
                 return next(reader, Element::PatternString(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Block) {
+        if includes == targets.contains(&ElementId::Block) {
             if let Some(el) = Block::dissect(reader)? {
                 return next(reader, Element::Block(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Values) {
+        if includes == targets.contains(&ElementId::Values) {
             if let Some(el) = Values::dissect(reader)? {
                 return next(reader, Element::Values(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::VariableName) {
+        if includes == targets.contains(&ElementId::VariableName) {
             if let Some(el) = VariableName::dissect(reader)? {
                 return next(reader, Element::VariableName(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Component) {
+        if includes == targets.contains(&ElementId::Component) {
             if let Some(el) = Component::dissect(reader)? {
                 return next(reader, Element::Component(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::Task) {
+        if includes == targets.contains(&ElementId::Task) {
             if let Some(el) = Task::dissect(reader)? {
                 return next(reader, Element::Task(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::VariableDeclaration) {
+        if includes == targets.contains(&ElementId::VariableDeclaration) {
             if let Some(el) = VariableDeclaration::dissect(reader)? {
                 return next(reader, Element::VariableDeclaration(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::VariableType) {
+        if includes == targets.contains(&ElementId::VariableType) {
             if let Some(el) = VariableType::dissect(reader)? {
                 return next(reader, Element::VariableType(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::VariableVariants) {
+        if includes == targets.contains(&ElementId::VariableVariants) {
             if let Some(el) = VariableVariants::dissect(reader)? {
                 return next(reader, Element::VariableVariants(el, md), token);
             }
         }
-        if includes == targets.contains(&ElementRef::SimpleString) {
+        if includes == targets.contains(&ElementId::SimpleString) {
             if let Some(el) = SimpleString::dissect(reader)? {
                 return next(reader, Element::SimpleString(el, md), token);
             }
@@ -377,14 +377,14 @@ impl Element {
 
     pub fn exclude(
         reader: &mut Reader,
-        targets: &[ElementRef],
+        targets: &[ElementId],
     ) -> Result<Option<Element>, LinkedErr<E>> {
         Self::parse(reader, targets, false)
     }
 
     pub fn include(
         reader: &mut Reader,
-        targets: &[ElementRef],
+        targets: &[ElementId],
     ) -> Result<Option<Element>, LinkedErr<E>> {
         Self::parse(reader, targets, true)
     }

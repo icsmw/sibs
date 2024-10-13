@@ -2,7 +2,7 @@ use crate::inf::{journal::Report, Journal};
 use std::process;
 
 #[cfg(test)]
-use crate::elements::ElementRef;
+use crate::elements::ElementId;
 
 #[allow(unused)]
 pub async fn exit<T>(journal: Journal, err: T)
@@ -20,7 +20,7 @@ where
 #[cfg(test)]
 pub async fn reading_ln_by_ln<S: AsRef<str>>(
     content: S,
-    elements_ref: &[ElementRef],
+    elements_ref: &[ElementId],
     exp_count: usize,
 ) {
     use crate::{
@@ -106,7 +106,7 @@ macro_rules! test_reading_ln_by_ln {
 #[cfg(test)]
 pub async fn reading_el_by_el<S: AsRef<str>>(
     content: S,
-    elements_ref: &[ElementRef],
+    elements_ref: &[ElementId],
     exp_count: usize,
 ) {
     use crate::{
@@ -174,7 +174,7 @@ macro_rules! test_reading_el_by_el {
 #[cfg(test)]
 pub async fn reading_with_errors_ln_by_ln<S: AsRef<str>>(
     content: S,
-    elements_ref: &[ElementRef],
+    elements_ref: &[ElementId],
     exp_count: usize,
 ) {
     use crate::{
@@ -250,7 +250,7 @@ pub async fn process_tasks_one_by_one<S: AsRef<str>, T>(
         |reader: &mut Reader, src: &mut Sources| {
             let mut tasks: Vec<Element> = Vec::new();
             while let Some(task) =
-                src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
+                src.report_err_if(Element::include(reader, &[ElementId::Task]))?
             {
                 let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                 tasks.push(task);
@@ -286,7 +286,7 @@ where
     T: 'static + Clone + PartialEq + std::fmt::Debug,
 {
     use crate::{
-        elements::{Element, ElementRef},
+        elements::{Element, ElementId},
         error::LinkedErr,
         inf::{
             journal::Journal,
@@ -303,7 +303,7 @@ where
         &comp,
         |reader: &mut Reader, src: &mut Sources| {
             let Some(component) =
-                src.report_err_if(Element::include(reader, &[ElementRef::Component]))?
+                src.report_err_if(Element::include(reader, &[ElementId::Component]))?
             else {
                 panic!("Fait to read component from:\n{comp}\n");
             };

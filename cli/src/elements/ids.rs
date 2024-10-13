@@ -1,7 +1,7 @@
 use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
-pub enum ElementRef {
+pub enum ElementId {
     Call,
     Accessor,
     Function,
@@ -49,7 +49,7 @@ pub enum ElementRef {
     Comment,
 }
 
-impl fmt::Display for ElementRef {
+impl fmt::Display for ElementId {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,

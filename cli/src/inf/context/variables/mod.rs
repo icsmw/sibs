@@ -93,7 +93,7 @@ impl VariablesMeta {
 #[cfg(test)]
 mod processing {
     use crate::{
-        elements::{ElementRef, Element},
+        elements::{Element, ElementId},
         error::LinkedErr,
         inf::{operator::E, Configuration, Context, ExpectedValueType, Journal, Scope},
         process_string,
@@ -108,7 +108,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut components: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElementRef::Component]))?
+                    src.report_err_if(Element::include(reader, &[ElementId::Component]))?
                 {
                     components.push(task);
                 }
@@ -145,7 +145,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut components: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElementRef::Component]))?
+                    src.report_err_if(Element::include(reader, &[ElementId::Component]))?
                 {
                     components.push(task);
                 }

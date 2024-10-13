@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, Task, VariableAssignation},
+    elements::{Element, ElementId, Task, VariableAssignation},
     error::LinkedErr,
     inf::{operator::E, tests::*, Configuration},
     read_string,
@@ -16,34 +16,34 @@ impl Arbitrary for VariableAssignation {
             Element::arbitrary_with((
                 if deep > MAX_DEEP {
                     vec![
-                        ElementRef::Function,
-                        ElementRef::PatternString,
-                        ElementRef::Values,
-                        ElementRef::Command,
-                        ElementRef::VariableName,
-                        ElementRef::Integer,
-                        ElementRef::Boolean,
+                        ElementId::Function,
+                        ElementId::PatternString,
+                        ElementId::Values,
+                        ElementId::Command,
+                        ElementId::VariableName,
+                        ElementId::Integer,
+                        ElementId::Boolean,
                     ]
                 } else {
                     vec![
-                        ElementRef::Block,
-                        ElementRef::First,
-                        ElementRef::Function,
-                        ElementRef::If,
-                        ElementRef::PatternString,
-                        ElementRef::Values,
-                        ElementRef::Comparing,
-                        ElementRef::Command,
-                        ElementRef::VariableName,
-                        ElementRef::Integer,
-                        ElementRef::Boolean,
-                        ElementRef::Reference,
-                        ElementRef::Compute,
+                        ElementId::Block,
+                        ElementId::First,
+                        ElementId::Function,
+                        ElementId::If,
+                        ElementId::PatternString,
+                        ElementId::Values,
+                        ElementId::Comparing,
+                        ElementId::Command,
+                        ElementId::VariableName,
+                        ElementId::Integer,
+                        ElementId::Boolean,
+                        ElementId::Reference,
+                        ElementId::Compute,
                     ]
                 },
                 deep,
             )),
-            Element::arbitrary_with((vec![ElementRef::VariableName], deep)),
+            Element::arbitrary_with((vec![ElementId::VariableName], deep)),
             prop_oneof![Just(true), Just(false),].boxed(),
         )
             .prop_map(move |(assignation, variable, global)| VariableAssignation {

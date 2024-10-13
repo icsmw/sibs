@@ -1,12 +1,12 @@
 use crate::{
-    elements::{Element, ElementRef, SimpleString, Task},
+    elements::{Element, ElementId, SimpleString, Task},
     error::LinkedErr,
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
 
 impl TryDissect<Task> for Task {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Self>, LinkedErr<E>> {
-        let close = reader.open_token(ElementRef::Task);
+        let close = reader.open_token(ElementId::Task);
         let Some(_) = reader.move_to().char(&[&chars::AT]) else {
             return Ok(None);
         };
@@ -30,7 +30,7 @@ impl TryDissect<Task> for Task {
             reader.move_to().next();
             let mut declarations: Vec<Element> = Vec::new();
             let mut inner = reader.token()?.bound;
-            while let Some(el) = Element::include(&mut inner, &[ElementRef::VariableDeclaration])? {
+            while let Some(el) = Element::include(&mut inner, &[ElementId::VariableDeclaration])? {
                 let _ = inner.move_to().char(&[&chars::COMMA]);
                 declarations.push(el);
             }
@@ -50,7 +50,7 @@ impl TryDissect<Task> for Task {
             let mut inner = reader.token()?.bound;
             while let Some(el) = Element::include(
                 &mut inner,
-                &[ElementRef::Reference, ElementRef::VariableAssignation],
+                &[ElementId::Reference, ElementId::VariableAssignation],
             )? {
                 let _ = inner.move_to().char(&[&chars::SEMICOLON]);
                 dependencies.push(el);
@@ -59,7 +59,7 @@ impl TryDissect<Task> for Task {
                 Err(E::UnrecognizedCode(inner.move_to().end()).by_reader(&inner))?;
             }
         }
-        if let Some(block) = Element::include(reader, &[ElementRef::Block])? {
+        if let Some(block) = Element::include(reader, &[ElementId::Block])? {
             Ok(Some(Task {
                 name: SimpleString {
                     value: name,

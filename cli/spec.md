@@ -5,7 +5,7 @@ Okay, let’s discover all statements and definitions.
 Here is a list of all available entities:
 
 ```
-pub enum ElementRef {
+pub enum ElementId {
 Function,
 If,
 Each,

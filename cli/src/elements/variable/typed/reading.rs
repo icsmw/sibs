@@ -1,12 +1,12 @@
 use crate::{
-    elements::{ElementRef, VariableType},
+    elements::{ElementId, VariableType},
     error::LinkedErr,
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
 
 impl TryDissect<VariableType> for VariableType {
     fn try_dissect(reader: &mut Reader) -> Result<Option<VariableType>, LinkedErr<E>> {
-        let close = reader.open_token(ElementRef::VariableType);
+        let close = reader.open_token(ElementId::VariableType);
         if reader.move_to().char(&[&chars::OPEN_CURLY_BRACE]).is_none() {
             return Ok(None);
         }

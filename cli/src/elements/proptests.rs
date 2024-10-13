@@ -90,142 +90,142 @@ impl Arbitrary for Metadata {
     }
 }
 
-fn generate(targets: &[ElementRef], deep: usize) -> Vec<BoxedStrategy<Element>> {
+fn generate(targets: &[ElementId], deep: usize) -> Vec<BoxedStrategy<Element>> {
     let mut collected = Vec::new();
-    if targets.contains(&ElementRef::Range) {
+    if targets.contains(&ElementId::Range) {
         collected.push(
             Range::arbitrary()
                 .prop_map(|el| Element::Range(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Call) {
+    if targets.contains(&ElementId::Call) {
         collected.push(
             Call::arbitrary()
                 .prop_map(|el| Element::Call(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Accessor) {
+    if targets.contains(&ElementId::Accessor) {
         collected.push(
             Accessor::arbitrary()
                 .prop_map(|el| Element::Accessor(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Combination) {
+    if targets.contains(&ElementId::Combination) {
         collected.push(
             Combination::arbitrary()
                 .prop_map(|el| Element::Combination(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Conclusion) {
+    if targets.contains(&ElementId::Conclusion) {
         collected.push(
             Conclusion::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::Conclusion(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Closure) {
+    if targets.contains(&ElementId::Closure) {
         collected.push(
             Closure::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::Closure(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Loop) {
+    if targets.contains(&ElementId::Loop) {
         collected.push(
             Loop::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::Loop(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::While) {
+    if targets.contains(&ElementId::While) {
         collected.push(
             While::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::While(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Incrementer) {
+    if targets.contains(&ElementId::Incrementer) {
         collected.push(
             Incrementer::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::Incrementer(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Error) {
+    if targets.contains(&ElementId::Error) {
         collected.push(
             Error::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::Error(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Return) {
+    if targets.contains(&ElementId::Return) {
         collected.push(
             Return::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::Return(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Compute) {
+    if targets.contains(&ElementId::Compute) {
         collected.push(
             Compute::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::Compute(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Breaker) {
+    if targets.contains(&ElementId::Breaker) {
         collected.push(
             Breaker::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::Breaker(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Join) {
+    if targets.contains(&ElementId::Join) {
         collected.push(
             Join::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::Join(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Subsequence) {
+    if targets.contains(&ElementId::Subsequence) {
         collected.push(
             Subsequence::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::Subsequence(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Condition) {
+    if targets.contains(&ElementId::Condition) {
         collected.push(
             Condition::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::Condition(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Integer) {
+    if targets.contains(&ElementId::Integer) {
         collected.push(
             Integer::arbitrary()
                 .prop_map(|el| Element::Integer(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Boolean) {
+    if targets.contains(&ElementId::Boolean) {
         collected.push(
             Boolean::arbitrary()
                 .prop_map(|el| Element::Boolean(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Block) {
+    if targets.contains(&ElementId::Block) {
         collected.push(
             Block::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::Block(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Command) {
+    if targets.contains(&ElementId::Command) {
         collected.push(
             (
                 Command::arbitrary_with(deep + 1),
@@ -235,42 +235,42 @@ fn generate(targets: &[ElementRef], deep: usize) -> Vec<BoxedStrategy<Element>> 
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Comparing) {
+    if targets.contains(&ElementId::Comparing) {
         collected.push(
             Comparing::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::Comparing(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Component) {
+    if targets.contains(&ElementId::Component) {
         collected.push(
             Component::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::Component(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Each) {
+    if targets.contains(&ElementId::Each) {
         collected.push(
             Each::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::Each(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::First) {
+    if targets.contains(&ElementId::First) {
         collected.push(
             First::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::First(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::For) {
+    if targets.contains(&ElementId::For) {
         collected.push(
             For::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::For(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Function) {
+    if targets.contains(&ElementId::Function) {
         collected.push(
             (
                 Function::arbitrary_with(deep + 1),
@@ -280,129 +280,129 @@ fn generate(targets: &[ElementRef], deep: usize) -> Vec<BoxedStrategy<Element>> 
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::If) {
+    if targets.contains(&ElementId::If) {
         collected.push(
             If::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::If(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::IfThread) {
+    if targets.contains(&ElementId::IfThread) {
         collected.push(
             IfThread::arbitrary_with((0, deep + 1))
                 .prop_map(|el| Element::IfThread(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::IfCondition) {
+    if targets.contains(&ElementId::IfCondition) {
         collected.push(
             IfCondition::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::IfCondition(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::IfSubsequence) {
+    if targets.contains(&ElementId::IfSubsequence) {
         collected.push(
             IfSubsequence::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::IfSubsequence(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Meta) {
+    if targets.contains(&ElementId::Meta) {
         collected.push(Meta::arbitrary().prop_map(Element::Meta).boxed());
     }
-    if targets.contains(&ElementRef::Optional) {
+    if targets.contains(&ElementId::Optional) {
         collected.push(
             Optional::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::Optional(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Gatekeeper) {
+    if targets.contains(&ElementId::Gatekeeper) {
         collected.push(
             Gatekeeper::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::Gatekeeper(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::PatternString) {
+    if targets.contains(&ElementId::PatternString) {
         collected.push(
             PatternString::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::PatternString(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Reference) {
+    if targets.contains(&ElementId::Reference) {
         collected.push(
             Reference::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::Reference(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Task) {
+    if targets.contains(&ElementId::Task) {
         collected.push(
             Task::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::Task(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Values) {
+    if targets.contains(&ElementId::Values) {
         collected.push(
             Values::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::Values(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::VariableAssignation) {
+    if targets.contains(&ElementId::VariableAssignation) {
         collected.push(
             VariableAssignation::arbitrary_with(deep + 1)
                 .prop_map(|el| Element::VariableAssignation(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::VariableName) {
+    if targets.contains(&ElementId::VariableName) {
         collected.push(
             VariableName::arbitrary()
                 .prop_map(|el| Element::VariableName(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::VariableType) {
+    if targets.contains(&ElementId::VariableType) {
         collected.push(
             VariableType::arbitrary()
                 .prop_map(|el| Element::VariableType(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::VariableDeclaration) {
+    if targets.contains(&ElementId::VariableDeclaration) {
         collected.push(
             VariableDeclaration::arbitrary_with(deep)
                 .prop_map(|el| Element::VariableDeclaration(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::VariableVariants) {
+    if targets.contains(&ElementId::VariableVariants) {
         collected.push(
             VariableVariants::arbitrary()
                 .prop_map(|el| Element::VariableVariants(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::SimpleString) {
+    if targets.contains(&ElementId::SimpleString) {
         collected.push(
             SimpleString::arbitrary()
                 .prop_map(|el| Element::SimpleString(el, Metadata::default()))
                 .boxed(),
         );
     }
-    if targets.contains(&ElementRef::Comment) {
+    if targets.contains(&ElementId::Comment) {
         collected.push(Comment::arbitrary().prop_map(Element::Comment).boxed());
     }
     collected
 }
 
 impl Arbitrary for Element {
-    type Parameters = (Vec<ElementRef>, usize);
+    type Parameters = (Vec<ElementId>, usize);
     type Strategy = BoxedStrategy<Self>;
 
     fn arbitrary_with((targets, deep): Self::Parameters) -> Self::Strategy {
@@ -433,7 +433,7 @@ proptest! {
     })]
     #[test]
     fn test_run_task(
-        args in any_with::<Element>((vec![ElementRef::Function], 0))
+        args in any_with::<Element>((vec![ElementId::Function], 0))
     ) {
         reading(args.clone());
     }

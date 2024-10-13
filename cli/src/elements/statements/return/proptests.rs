@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, Return, Task},
+    elements::{Element, ElementId, Return, Task},
     error::LinkedErr,
     inf::{operator::E, tests::*, Configuration},
     read_string,
@@ -15,21 +15,21 @@ impl Arbitrary for Return {
         Element::arbitrary_with((
             if deep > MAX_DEEP {
                 vec![
-                    ElementRef::VariableName,
-                    ElementRef::Error,
-                    ElementRef::Integer,
-                    ElementRef::Boolean,
+                    ElementId::VariableName,
+                    ElementId::Error,
+                    ElementId::Integer,
+                    ElementId::Boolean,
                 ]
             } else {
                 vec![
-                    ElementRef::Values,
-                    ElementRef::VariableName,
-                    ElementRef::Error,
-                    ElementRef::Function,
-                    ElementRef::If,
-                    ElementRef::Integer,
-                    ElementRef::Boolean,
-                    ElementRef::PatternString,
+                    ElementId::Values,
+                    ElementId::VariableName,
+                    ElementId::Error,
+                    ElementId::Function,
+                    ElementId::If,
+                    ElementId::Integer,
+                    ElementId::Boolean,
+                    ElementId::PatternString,
                 ]
             },
             deep,

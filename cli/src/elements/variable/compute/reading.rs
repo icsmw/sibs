@@ -1,20 +1,20 @@
 use crate::{
-    elements::{compute::Operator, Compute, Element, ElementRef},
+    elements::{compute::Operator, Compute, Element, ElementId},
     error::LinkedErr,
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
 
 impl TryDissect<Compute> for Compute {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Compute>, LinkedErr<E>> {
-        let close = reader.open_token(ElementRef::Compute);
+        let close = reader.open_token(ElementId::Compute);
         let Some(left) = Element::include(
             reader,
             &[
-                ElementRef::VariableName,
-                ElementRef::Function,
-                ElementRef::If,
-                ElementRef::Block,
-                ElementRef::Integer,
+                ElementId::VariableName,
+                ElementId::Function,
+                ElementId::If,
+                ElementId::Block,
+                ElementId::Integer,
             ],
         )?
         else {
@@ -40,11 +40,11 @@ impl TryDissect<Compute> for Compute {
         let Some(right) = Element::include(
             reader,
             &[
-                ElementRef::VariableName,
-                ElementRef::Function,
-                ElementRef::If,
-                ElementRef::Block,
-                ElementRef::Integer,
+                ElementId::VariableName,
+                ElementId::Function,
+                ElementId::If,
+                ElementId::Block,
+                ElementId::Integer,
             ],
         )?
         else {

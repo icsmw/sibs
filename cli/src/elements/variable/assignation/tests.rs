@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, InnersGetter, VariableAssignation},
+    elements::{Element, ElementId, InnersGetter, VariableAssignation},
     test_reading_el_by_el, test_reading_with_errors_ln_by_ln,
 };
 
@@ -12,21 +12,21 @@ impl InnersGetter for VariableAssignation {
 test_reading_el_by_el!(
     reading,
     &include_str!("../../../tests/reading/variable_assignation.sibs"),
-    &[ElementRef::VariableAssignation],
+    &[ElementId::VariableAssignation],
     113
 );
 
 test_reading_with_errors_ln_by_ln!(
     errors,
     &include_str!("../../../tests/error/variable_assignation.sibs"),
-    &[ElementRef::VariableAssignation],
+    &[ElementId::VariableAssignation],
     3
 );
 
 #[cfg(test)]
 mod processing {
     use crate::{
-        elements::{Element, ElementRef},
+        elements::{Element, ElementId},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
@@ -54,7 +54,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
+                    src.report_err_if(Element::include(reader, &[ElementId::Task]))?
                 {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);

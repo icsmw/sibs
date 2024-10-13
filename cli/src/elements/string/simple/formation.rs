@@ -1,5 +1,5 @@
 use crate::{
-    elements::{ElementRef, SimpleString},
+    elements::{ElementId, SimpleString},
     inf::{Formation, FormationCursor},
 };
 
@@ -7,7 +7,7 @@ impl Formation for SimpleString {
     fn format(&self, cursor: &mut FormationCursor) -> String {
         format!(
             "{}{}",
-            cursor.offset_as_string_if(&[ElementRef::Block]),
+            cursor.offset_as_string_if(&[ElementId::Block]),
             self
         )
     }

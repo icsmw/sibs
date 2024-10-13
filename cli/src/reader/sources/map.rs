@@ -1,5 +1,5 @@
 use crate::{
-    elements::ElementRef,
+    elements::ElementId,
     inf::map::{MapFragment, Mapping},
     reader::Ids,
 };
@@ -46,7 +46,7 @@ impl Map {
             None
         }
     }
-    pub fn add(&mut self, el: Option<ElementRef>, from: usize, len: usize) -> usize {
+    pub fn add(&mut self, el: Option<ElementId>, from: usize, len: usize) -> usize {
         let id = self.ids.borrow_mut().get();
         self.recent = Some(id);
         self.fragments.insert(id, MapFragment::new(el, from, len));

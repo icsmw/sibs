@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Command, Element, ElementRef, InnersGetter},
+    elements::{Command, Element, ElementId, InnersGetter},
     test_block, test_reading_ln_by_ln,
 };
 
@@ -12,7 +12,7 @@ impl InnersGetter for Command {
 test_reading_ln_by_ln!(
     reading,
     &include_str!("../../../tests/reading/command.sibs"),
-    &[ElementRef::Command],
+    &[ElementId::Command],
     130
 );
 

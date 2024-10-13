@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, Error, Metadata, Return, Task},
+    elements::{Element, ElementId, Error, Metadata, Return, Task},
     error::LinkedErr,
     inf::{operator::E, tests::*, Configuration},
     read_string,
@@ -12,7 +12,7 @@ impl Arbitrary for Error {
     type Strategy = BoxedStrategy<Self>;
 
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
-        Element::arbitrary_with((vec![ElementRef::PatternString], deep))
+        Element::arbitrary_with((vec![ElementId::PatternString], deep))
             .prop_map(|output| Error {
                 output: Box::new(output),
                 token: 0,

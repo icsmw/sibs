@@ -1,12 +1,12 @@
 use crate::{
-    elements::{Block, Element, ElementRef},
+    elements::{Block, Element, ElementId},
     error::LinkedErr,
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
 
 impl TryDissect<Block> for Block {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Block>, LinkedErr<E>> {
-        let close = reader.open_token(ElementRef::Block);
+        let close = reader.open_token(ElementId::Block);
         if reader
             .group()
             .between(&chars::OPEN_CURLY_BRACE, &chars::CLOSE_CURLY_BRACE)
@@ -21,26 +21,26 @@ impl TryDissect<Block> for Block {
             if let Some(el) = Element::exclude(
                 &mut inner,
                 &[
-                    ElementRef::Block,
-                    ElementRef::Task,
-                    ElementRef::Component,
-                    ElementRef::Combination,
-                    ElementRef::Condition,
-                    ElementRef::Comparing,
-                    ElementRef::Subsequence,
-                    ElementRef::VariableDeclaration,
-                    ElementRef::VariableVariants,
-                    ElementRef::VariableType,
-                    ElementRef::SimpleString,
-                    ElementRef::Gatekeeper,
-                    ElementRef::Call,
-                    ElementRef::Accessor,
-                    ElementRef::Range,
-                    ElementRef::Compute,
-                    ElementRef::Error,
-                    ElementRef::Closure,
-                    ElementRef::IfCondition,
-                    ElementRef::IfSubsequence,
+                    ElementId::Block,
+                    ElementId::Task,
+                    ElementId::Component,
+                    ElementId::Combination,
+                    ElementId::Condition,
+                    ElementId::Comparing,
+                    ElementId::Subsequence,
+                    ElementId::VariableDeclaration,
+                    ElementId::VariableVariants,
+                    ElementId::VariableType,
+                    ElementId::SimpleString,
+                    ElementId::Gatekeeper,
+                    ElementId::Call,
+                    ElementId::Accessor,
+                    ElementId::Range,
+                    ElementId::Compute,
+                    ElementId::Error,
+                    ElementId::Closure,
+                    ElementId::IfCondition,
+                    ElementId::IfSubsequence,
                 ],
             )? {
                 if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {

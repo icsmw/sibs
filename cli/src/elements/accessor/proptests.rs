@@ -1,4 +1,4 @@
-use crate::elements::{Accessor, Element, ElementRef};
+use crate::elements::{Accessor, Element, ElementId};
 use proptest::prelude::*;
 
 impl Arbitrary for Accessor {
@@ -7,9 +7,9 @@ impl Arbitrary for Accessor {
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         Element::arbitrary_with((
             vec![
-                ElementRef::Function,
-                ElementRef::VariableName,
-                ElementRef::Integer,
+                ElementId::Function,
+                ElementId::VariableName,
+                ElementId::Integer,
             ],
             deep,
         ))

@@ -1,5 +1,5 @@
 use crate::{
-    elements::{task::Task, Each, Element, ElementRef},
+    elements::{task::Task, Each, Element, ElementId},
     error::LinkedErr,
     inf::{operator::E, tests::*, Configuration},
     read_string,
@@ -13,9 +13,9 @@ impl Arbitrary for Each {
 
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         (
-            Element::arbitrary_with((vec![ElementRef::Block], deep)),
-            Element::arbitrary_with((vec![ElementRef::VariableName], deep)),
-            Element::arbitrary_with((vec![ElementRef::VariableName], deep)),
+            Element::arbitrary_with((vec![ElementId::Block], deep)),
+            Element::arbitrary_with((vec![ElementId::VariableName], deep)),
+            Element::arbitrary_with((vec![ElementId::VariableName], deep)),
         )
             .prop_map(|(block, variable, input)| Each {
                 block: Box::new(block),

@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Condition, ElementRef},
+    elements::{Condition, ElementId},
     inf::{Formation, FormationCursor},
 };
 
@@ -13,14 +13,14 @@ impl Formation for Condition {
         {
             format!(
                 "{}({})",
-                cursor.offset_as_string_if(&[ElementRef::Block]),
+                cursor.offset_as_string_if(&[ElementId::Block]),
                 self.subsequence
-                    .format(&mut cursor.reown(Some(ElementRef::Condition)))
+                    .format(&mut cursor.reown(Some(ElementId::Condition)))
             )
         } else {
             format!(
                 "{}{}",
-                cursor.offset_as_string_if(&[ElementRef::Block]),
+                cursor.offset_as_string_if(&[ElementId::Block]),
                 self
             )
         }

@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, SimpleString, Task},
+    elements::{Element, ElementId, SimpleString, Task},
     error::LinkedErr,
     inf::{operator::E, tests::*, Configuration},
     read_string,
@@ -14,14 +14,14 @@ impl Arbitrary for Task {
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         (
             prop::collection::vec(
-                Element::arbitrary_with((vec![ElementRef::VariableDeclaration], deep)),
+                Element::arbitrary_with((vec![ElementId::VariableDeclaration], deep)),
                 0..=5,
             ),
             prop::collection::vec(
-                Element::arbitrary_with((vec![ElementRef::Reference], deep)),
+                Element::arbitrary_with((vec![ElementId::Reference], deep)),
                 0..=5,
             ),
-            Element::arbitrary_with((vec![ElementRef::Block], deep)),
+            Element::arbitrary_with((vec![ElementId::Block], deep)),
             "[a-zA-Z_]*".prop_map(String::from),
         )
             .prop_map(|(declarations, dependencies, block, name)| Task {

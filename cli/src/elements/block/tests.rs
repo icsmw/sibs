@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Block, Element, ElementRef, InnersGetter},
+    elements::{Block, Element, ElementId, InnersGetter},
     test_reading_el_by_el,
 };
 
@@ -20,6 +20,6 @@ test_reading_el_by_el!(
         include_str!("../../tests/reading/each.sibs"),
         include_str!("../../tests/reading/refs.sibs")
     ),
-    &[ElementRef::Block],
+    &[ElementId::Block],
     6
 );

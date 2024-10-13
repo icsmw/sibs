@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Each, Element, ElementRef, InnersGetter},
+    elements::{Each, Element, ElementId, InnersGetter},
     test_reading_el_by_el, test_reading_with_errors_ln_by_ln,
 };
 impl InnersGetter for Each {
@@ -15,21 +15,21 @@ impl InnersGetter for Each {
 test_reading_el_by_el!(
     reading,
     &include_str!("../../../tests/reading/each.sibs"),
-    &[ElementRef::Each],
+    &[ElementId::Each],
     7
 );
 
 test_reading_with_errors_ln_by_ln!(
     errors,
     &include_str!("../../../tests/error/each.sibs"),
-    &[ElementRef::Each],
+    &[ElementId::Each],
     10
 );
 
 #[cfg(test)]
 mod processing {
     use crate::{
-        elements::{Element, ElementRef},
+        elements::{Element, ElementId},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
@@ -48,7 +48,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
+                    src.report_err_if(Element::include(reader, &[ElementId::Task]))?
                 {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);

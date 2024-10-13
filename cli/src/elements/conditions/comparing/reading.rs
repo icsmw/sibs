@@ -1,21 +1,21 @@
 use crate::{
-    elements::{conditions::Cmp, Comparing, Element, ElementRef},
+    elements::{conditions::Cmp, Comparing, Element, ElementId},
     error::LinkedErr,
     reader::{words, Dissect, Reader, TryDissect, E},
 };
 
 impl TryDissect<Comparing> for Comparing {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Comparing>, LinkedErr<E>> {
-        let close = reader.open_token(ElementRef::Comparing);
+        let close = reader.open_token(ElementId::Comparing);
         let left = if let Some(el) = Element::include(
             reader,
             &[
-                ElementRef::VariableName,
-                ElementRef::Command,
-                ElementRef::Function,
-                ElementRef::PatternString,
-                ElementRef::Integer,
-                ElementRef::Boolean,
+                ElementId::VariableName,
+                ElementId::Command,
+                ElementId::Function,
+                ElementId::PatternString,
+                ElementId::Integer,
+                ElementId::Boolean,
             ],
         )? {
             Box::new(el)
@@ -37,12 +37,12 @@ impl TryDissect<Comparing> for Comparing {
         let right = if let Some(el) = Element::include(
             reader,
             &[
-                ElementRef::VariableName,
-                ElementRef::Command,
-                ElementRef::Function,
-                ElementRef::PatternString,
-                ElementRef::Integer,
-                ElementRef::Boolean,
+                ElementId::VariableName,
+                ElementId::Command,
+                ElementId::Function,
+                ElementId::PatternString,
+                ElementId::Integer,
+                ElementId::Boolean,
             ],
         )? {
             Box::new(el)

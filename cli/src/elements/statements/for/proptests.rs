@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, For, Task},
+    elements::{Element, ElementId, For, Task},
     error::LinkedErr,
     inf::{operator::E, tests::*, Configuration},
     read_string,
@@ -13,16 +13,12 @@ impl Arbitrary for For {
 
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         (
-            Element::arbitrary_with((vec![ElementRef::VariableName], deep)),
+            Element::arbitrary_with((vec![ElementId::VariableName], deep)),
             Element::arbitrary_with((
-                vec![
-                    ElementRef::Range,
-                    ElementRef::VariableName,
-                    ElementRef::Values,
-                ],
+                vec![ElementId::Range, ElementId::VariableName, ElementId::Values],
                 deep,
             )),
-            Element::arbitrary_with((vec![ElementRef::Block], deep)),
+            Element::arbitrary_with((vec![ElementId::Block], deep)),
         )
             .prop_map(|(index, target, block)| For {
                 index: Box::new(index),

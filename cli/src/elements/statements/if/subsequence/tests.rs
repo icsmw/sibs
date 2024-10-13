@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, IfSubsequence, InnersGetter},
+    elements::{Element, ElementId, IfSubsequence, InnersGetter},
     test_reading_ln_by_ln,
 };
 
@@ -12,6 +12,6 @@ impl InnersGetter for IfSubsequence {
 test_reading_ln_by_ln!(
     reading,
     &include_str!("../../../../tests/reading/subsequence.sibs"),
-    &[ElementRef::IfSubsequence],
+    &[ElementId::IfSubsequence],
     86
 );

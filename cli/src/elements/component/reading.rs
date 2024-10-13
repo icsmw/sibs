@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Component, Element, ElementRef, SimpleString},
+    elements::{Component, Element, ElementId, SimpleString},
     error::LinkedErr,
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 impl TryDissect<Component> for Component {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Component>, LinkedErr<E>> {
-        let close = reader.open_token(ElementRef::Component);
+        let close = reader.open_token(ElementId::Component);
         let Some((before, _)) = reader.until().char(&[&chars::POUND_SIGN]) else {
             return Ok(None);
         };
@@ -53,7 +53,7 @@ impl TryDissect<Component> for Component {
         let inner_token_id = reader.token()?.id;
         let mut elements: Vec<Element> = Vec::new();
         while let Some(el) =
-            Element::include(&mut inner, &[ElementRef::Task, ElementRef::Gatekeeper])?
+            Element::include(&mut inner, &[ElementId::Task, ElementId::Gatekeeper])?
         {
             let _ = inner.move_to().char(&[&chars::SEMICOLON]);
             elements.push(el);

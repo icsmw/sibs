@@ -1,7 +1,7 @@
 mod error;
 mod fragment;
 
-use crate::elements::ElementRef;
+use crate::elements::ElementId;
 use console::Style;
 pub use error::E;
 pub use fragment::*;
@@ -11,13 +11,13 @@ const REPORT_LN_AROUND: usize = 6;
 
 #[derive(Debug, Clone)]
 pub struct MapFragment {
-    el: Option<ElementRef>,
+    el: Option<ElementId>,
     from: usize,
     len: usize,
 }
 
 impl MapFragment {
-    pub fn new(el: Option<ElementRef>, from: usize, len: usize) -> Self {
+    pub fn new(el: Option<ElementId>, from: usize, len: usize) -> Self {
         Self { el, from, len }
     }
     pub fn to(&self) -> usize {
@@ -29,7 +29,7 @@ impl MapFragment {
     pub fn len(&self) -> usize {
         self.len
     }
-    pub fn el(&self) -> Option<ElementRef> {
+    pub fn el(&self) -> Option<ElementId> {
         self.el
     }
 }

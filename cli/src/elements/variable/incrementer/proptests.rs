@@ -1,5 +1,5 @@
 use crate::{
-    elements::{incrementer::Operator, Element, ElementRef, Incrementer, Task},
+    elements::{incrementer::Operator, Element, ElementId, Incrementer, Task},
     error::LinkedErr,
     inf::{operator::E, tests::*, Configuration},
     read_string,
@@ -13,15 +13,15 @@ impl Arbitrary for Incrementer {
 
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         (
-            Element::arbitrary_with((vec![ElementRef::VariableName], deep)),
+            Element::arbitrary_with((vec![ElementId::VariableName], deep)),
             Element::arbitrary_with((
                 if deep > MAX_DEEP {
-                    vec![ElementRef::VariableName, ElementRef::Integer]
+                    vec![ElementId::VariableName, ElementId::Integer]
                 } else {
                     vec![
-                        ElementRef::Function,
-                        ElementRef::VariableName,
-                        ElementRef::Integer,
+                        ElementId::Function,
+                        ElementId::VariableName,
+                        ElementId::Integer,
                     ]
                 },
                 deep,

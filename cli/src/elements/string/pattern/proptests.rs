@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, Metadata, PatternString, SimpleString},
+    elements::{Element, ElementId, Metadata, PatternString, SimpleString},
     inf::tests::MAX_DEEP,
 };
 use proptest::prelude::*;
@@ -35,16 +35,16 @@ impl Arbitrary for PatternString {
                 prop::collection::vec(
                     Element::arbitrary_with((
                         vec![
-                            ElementRef::VariableName,
-                            ElementRef::Function,
-                            ElementRef::If,
+                            ElementId::VariableName,
+                            ElementId::Function,
+                            ElementId::If,
                         ],
                         deep,
                     )),
                     0..=2,
                 ),
                 prop::collection::vec(
-                    Element::arbitrary_with((vec![ElementRef::SimpleString], deep)),
+                    Element::arbitrary_with((vec![ElementId::SimpleString], deep)),
                     3,
                 ),
             )

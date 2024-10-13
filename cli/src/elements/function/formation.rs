@@ -1,5 +1,5 @@
 use crate::{
-    elements::{function::Function, ElementRef},
+    elements::{function::Function, ElementId},
     inf::{Formation, FormationCursor},
 };
 
@@ -17,20 +17,20 @@ impl Formation for Function {
         //             .map(|arg| format!(
         //                 "\n{}{}",
         //                 cursor.right().offset_as_string(),
-        //                 arg.format(&mut cursor.reown(Some(ElementRef::Function)).right())
+        //                 arg.format(&mut cursor.reown(Some(ElementId::Function)).right())
         //             ))
         //             .collect::<Vec<String>>()
         //             .join(", "),
         //         if func.args.is_empty() {
         //             ")".to_string()
         //         } else {
-        //             format!("\n{})", cursor.offset_as_string_if(&[ElementRef::Block]))
+        //             format!("\n{})", cursor.offset_as_string_if(&[ElementId::Block]))
         //         }
         //     )
         // }
         let output = format!(
             "{}{}",
-            cursor.offset_as_string_if(&[ElementRef::Block, ElementRef::Component]),
+            cursor.offset_as_string_if(&[ElementId::Block, ElementId::Component]),
             self
         );
         format!(

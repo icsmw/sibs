@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, Optional, Task},
+    elements::{Element, ElementId, Optional, Task},
     error::LinkedErr,
     inf::{operator::E, tests::*, Configuration},
     read_string,
@@ -15,14 +15,14 @@ impl Arbitrary for Optional {
         (
             Element::arbitrary_with((
                 if deep > MAX_DEEP {
-                    vec![ElementRef::VariableName, ElementRef::Reference]
+                    vec![ElementId::VariableName, ElementId::Reference]
                 } else {
                     vec![
-                        ElementRef::Function,
-                        ElementRef::VariableName,
-                        ElementRef::Reference,
-                        ElementRef::Block,
-                        ElementRef::Comparing,
+                        ElementId::Function,
+                        ElementId::VariableName,
+                        ElementId::Reference,
+                        ElementId::Block,
+                        ElementId::Comparing,
                     ]
                 },
                 deep,
@@ -30,25 +30,25 @@ impl Arbitrary for Optional {
             Element::arbitrary_with((
                 if deep > MAX_DEEP {
                     vec![
-                        ElementRef::Function,
-                        ElementRef::Reference,
-                        ElementRef::VariableName,
-                        ElementRef::Integer,
-                        ElementRef::Boolean,
+                        ElementId::Function,
+                        ElementId::Reference,
+                        ElementId::VariableName,
+                        ElementId::Integer,
+                        ElementId::Boolean,
                     ]
                 } else {
                     vec![
-                        ElementRef::Function,
-                        ElementRef::Reference,
-                        ElementRef::VariableAssignation,
-                        ElementRef::VariableName,
-                        ElementRef::Block,
-                        ElementRef::Each,
-                        ElementRef::First,
-                        ElementRef::PatternString,
-                        ElementRef::Command,
-                        ElementRef::Integer,
-                        ElementRef::Boolean,
+                        ElementId::Function,
+                        ElementId::Reference,
+                        ElementId::VariableAssignation,
+                        ElementId::VariableName,
+                        ElementId::Block,
+                        ElementId::Each,
+                        ElementId::First,
+                        ElementId::PatternString,
+                        ElementId::Command,
+                        ElementId::Integer,
+                        ElementId::Boolean,
                     ]
                 },
                 deep,

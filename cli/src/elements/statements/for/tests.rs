@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, For, InnersGetter},
+    elements::{Element, ElementId, For, InnersGetter},
     test_block, test_reading_el_by_el,
 };
 
@@ -16,7 +16,7 @@ impl InnersGetter for For {
 test_reading_el_by_el!(
     reading,
     &include_str!("../../../tests/reading/for.sibs"),
-    &[ElementRef::For],
+    &[ElementId::For],
     5
 );
 

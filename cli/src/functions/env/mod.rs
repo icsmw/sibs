@@ -48,7 +48,7 @@ pub fn register(store: &mut Store<ExecutorFnDescription>) -> Result<(), E> {
 #[cfg(test)]
 mod test {
     use crate::{
-        elements::{Element, ElementRef},
+        elements::{Element, ElementId},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
@@ -92,7 +92,7 @@ mod test {
                 |reader: &mut Reader, src: &mut Sources| {
                     let mut tasks: Vec<Element> = Vec::new();
                     while let Some(task) =
-                        src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
+                        src.report_err_if(Element::include(reader, &[ElementId::Task]))?
                     {
                         let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                         tasks.push(task);

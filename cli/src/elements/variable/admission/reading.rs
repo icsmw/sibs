@@ -1,5 +1,5 @@
 use crate::{
-    elements::{ElementRef, VariableName},
+    elements::{ElementId, VariableName},
     error::LinkedErr,
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
@@ -7,7 +7,7 @@ use crate::{
 impl TryDissect<VariableName> for VariableName {
     fn try_dissect(reader: &mut Reader) -> Result<Option<VariableName>, LinkedErr<E>> {
         reader.move_to().any();
-        let close = reader.open_token(ElementRef::VariableName);
+        let close = reader.open_token(ElementId::VariableName);
         if reader.move_to().char(&[&chars::DOLLAR]).is_some() {
             let content = reader
                 .until()

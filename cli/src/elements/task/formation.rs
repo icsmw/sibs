@@ -1,11 +1,11 @@
 use crate::{
-    elements::{ElementRef, Task},
+    elements::{ElementId, Task},
     inf::{Formation, FormationCursor},
 };
 
 impl Formation for Task {
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        let mut inner = cursor.reown(Some(ElementRef::Task));
+        let mut inner = cursor.reown(Some(ElementId::Task));
         format!(
             "@{}{}{}{} {}",
             cursor.offset_as_string(),

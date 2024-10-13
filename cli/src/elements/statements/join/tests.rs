@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, InnersGetter, Join},
+    elements::{Element, ElementId, InnersGetter, Join},
     test_reading_el_by_el, test_reading_with_errors_ln_by_ln,
 };
 
@@ -12,14 +12,14 @@ impl InnersGetter for Join {
 test_reading_el_by_el!(
     reading,
     &include_str!("../../../tests/reading/join.sibs"),
-    &[ElementRef::Join],
+    &[ElementId::Join],
     2
 );
 
 test_reading_with_errors_ln_by_ln!(
     errors,
     &include_str!("../../../tests/error/join.sibs"),
-    &[ElementRef::Join],
+    &[ElementId::Join],
     2
 );
 

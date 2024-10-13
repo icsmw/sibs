@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, Gatekeeper, InnersGetter},
+    elements::{Element, ElementId, Gatekeeper, InnersGetter},
     test_reading_el_by_el, test_reading_with_errors_ln_by_ln,
 };
 
@@ -12,21 +12,21 @@ impl InnersGetter for Gatekeeper {
 test_reading_el_by_el!(
     reading,
     &include_str!("../../tests/reading/gatekeeper.sibs"),
-    &[ElementRef::Gatekeeper],
+    &[ElementId::Gatekeeper],
     3
 );
 
 test_reading_with_errors_ln_by_ln!(
     errors,
     &include_str!("../../tests/error/gatekeeper.sibs"),
-    &[ElementRef::Gatekeeper],
+    &[ElementId::Gatekeeper],
     5
 );
 
 #[cfg(test)]
 mod processing {
     use crate::{
-        elements::{Element, ElementRef},
+        elements::{Element, ElementId},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
@@ -61,7 +61,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut components: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElementRef::Component]))?
+                    src.report_err_if(Element::include(reader, &[ElementId::Component]))?
                 {
                     components.push(task);
                 }

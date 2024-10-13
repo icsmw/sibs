@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Closure, ElementRef},
+    elements::{Closure, ElementId},
     inf::{Formation, FormationCursor},
 };
 
@@ -10,7 +10,7 @@ impl Formation for Closure {
     fn format(&self, cursor: &mut FormationCursor) -> String {
         let output = format!(
             "{}{}",
-            cursor.offset_as_string_if(&[ElementRef::Block, ElementRef::Component]),
+            cursor.offset_as_string_if(&[ElementId::Block, ElementId::Component]),
             self
         );
         format!(

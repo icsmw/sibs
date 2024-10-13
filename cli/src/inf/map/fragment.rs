@@ -1,6 +1,6 @@
 use regex::Regex;
 
-use crate::elements::ElementRef;
+use crate::elements::ElementId;
 
 #[derive(Debug, Clone)]
 pub struct Fragment {
@@ -25,13 +25,13 @@ pub struct Fragment {
     /// End position in end line
     pub to_pos: usize,
     /// Type of element
-    pub el: Option<ElementRef>,
+    pub el: Option<ElementId>,
 }
 
 impl Fragment {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        el: Option<ElementRef>,
+        el: Option<ElementId>,
         content: String,
         from: usize,
         len: usize,

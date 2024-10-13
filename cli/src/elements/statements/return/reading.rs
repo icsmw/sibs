@@ -1,26 +1,26 @@
 use crate::{
-    elements::{Element, ElementRef, Return},
+    elements::{Element, ElementId, Return},
     error::LinkedErr,
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
 
 impl TryDissect<Return> for Return {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Return>, LinkedErr<E>> {
-        let close = reader.open_token(ElementRef::Return);
+        let close = reader.open_token(ElementId::Return);
         if reader.move_to().word(&[words::RETURN]).is_none() {
             return Ok(None);
         }
         let output = if let Some(output) = Element::include(
             reader,
             &[
-                ElementRef::Values,
-                ElementRef::VariableName,
-                ElementRef::Error,
-                ElementRef::Function,
-                ElementRef::If,
-                ElementRef::Integer,
-                ElementRef::Boolean,
-                ElementRef::PatternString,
+                ElementId::Values,
+                ElementId::VariableName,
+                ElementId::Error,
+                ElementId::Function,
+                ElementId::If,
+                ElementId::Integer,
+                ElementId::Boolean,
+                ElementId::PatternString,
             ],
         )? {
             Some(Box::new(output))

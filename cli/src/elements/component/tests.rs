@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Component, Element, ElementRef, InnersGetter},
+    elements::{Component, Element, ElementId, InnersGetter},
     runners::{reading_el_by_el, reading_with_errors_ln_by_ln},
 };
 
@@ -17,7 +17,7 @@ async fn reading() {
         .map(|c| format!("{c}\n{tasks}"))
         .collect::<Vec<String>>()
         .join("\n");
-    reading_el_by_el(&content, &[ElementRef::Component], 6).await;
+    reading_el_by_el(&content, &[ElementId::Component], 6).await;
 }
 
 #[tokio::test]
@@ -27,13 +27,13 @@ async fn errors() {
         .map(|c| format!("{c} task {{env::is_os();}};"))
         .collect::<Vec<String>>()
         .join("\n");
-    reading_with_errors_ln_by_ln(&content, &[ElementRef::Component], 16).await;
+    reading_with_errors_ln_by_ln(&content, &[ElementId::Component], 16).await;
 }
 
 #[cfg(test)]
 mod processing {
     use crate::{
-        elements::{Element, ElementRef},
+        elements::{Element, ElementId},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
@@ -58,7 +58,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut components: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElementRef::Component]))?
+                    src.report_err_if(Element::include(reader, &[ElementId::Component]))?
                 {
                     components.push(task);
                 }

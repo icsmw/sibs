@@ -1,12 +1,12 @@
 use crate::{
-    elements::{Accessor, Element, ElementRef},
+    elements::{Accessor, Element, ElementId},
     error::LinkedErr,
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
 
 impl TryDissect<Accessor> for Accessor {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Accessor>, LinkedErr<E>> {
-        let close = reader.open_token(ElementRef::Accessor);
+        let close = reader.open_token(ElementId::Accessor);
         Ok(
             if reader
                 .group()
@@ -17,9 +17,9 @@ impl TryDissect<Accessor> for Accessor {
                 let Some(el) = Element::include(
                     &mut inner,
                     &[
-                        ElementRef::Integer,
-                        ElementRef::Function,
-                        ElementRef::VariableName,
+                        ElementId::Integer,
+                        ElementId::Function,
+                        ElementId::VariableName,
                     ],
                 )?
                 else {

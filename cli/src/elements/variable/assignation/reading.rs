@@ -1,14 +1,14 @@
 use crate::{
-    elements::{Element, ElementRef, VariableAssignation},
+    elements::{Element, ElementId, VariableAssignation},
     error::LinkedErr,
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
 
 impl TryDissect<VariableAssignation> for VariableAssignation {
     fn try_dissect(reader: &mut Reader) -> Result<Option<VariableAssignation>, LinkedErr<E>> {
-        let close = reader.open_token(ElementRef::VariableAssignation);
+        let close = reader.open_token(ElementId::VariableAssignation);
         let global = reader.move_to().word(&[words::GLOBAL_VAR]).is_some();
-        if let Some(variable) = Element::include(reader, &[ElementRef::VariableName])? {
+        if let Some(variable) = Element::include(reader, &[ElementId::VariableName])? {
             let rest = reader.rest().trim();
             if rest.starts_with(words::DO_ON)
                 || rest.starts_with(words::CMP_TRUE)
@@ -20,20 +20,20 @@ impl TryDissect<VariableAssignation> for VariableAssignation {
             let assignation = Element::include(
                 reader,
                 &[
-                    ElementRef::Block,
-                    ElementRef::First,
-                    ElementRef::Function,
-                    ElementRef::If,
-                    ElementRef::PatternString,
-                    ElementRef::Values,
-                    ElementRef::Comparing,
-                    ElementRef::Command,
-                    ElementRef::VariableName,
-                    ElementRef::Integer,
-                    ElementRef::Boolean,
-                    ElementRef::Reference,
-                    ElementRef::Compute,
-                    ElementRef::Join,
+                    ElementId::Block,
+                    ElementId::First,
+                    ElementId::Function,
+                    ElementId::If,
+                    ElementId::PatternString,
+                    ElementId::Values,
+                    ElementId::Comparing,
+                    ElementId::Command,
+                    ElementId::VariableName,
+                    ElementId::Integer,
+                    ElementId::Boolean,
+                    ElementId::Reference,
+                    ElementId::Compute,
+                    ElementId::Join,
                 ],
             )?
             .ok_or(E::FailToParseRightSideOfAssignation.by_reader(reader))?;

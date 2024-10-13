@@ -1,4 +1,4 @@
-use crate::elements::{Element, ElementRef, IfCondition};
+use crate::elements::{Element, ElementId, IfCondition};
 use proptest::prelude::*;
 
 impl Arbitrary for IfCondition {
@@ -6,7 +6,7 @@ impl Arbitrary for IfCondition {
     type Strategy = BoxedStrategy<Self>;
 
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
-        Element::arbitrary_with((vec![ElementRef::IfSubsequence], deep))
+        Element::arbitrary_with((vec![ElementId::IfSubsequence], deep))
             .prop_map(|subsequence| IfCondition {
                 subsequence: Box::new(subsequence),
                 token: 0,

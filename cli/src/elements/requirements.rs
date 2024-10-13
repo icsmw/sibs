@@ -1,5 +1,5 @@
 #[cfg(test)]
-use crate::elements::{Element, ElementRef};
+use crate::elements::{Element, ElementId};
 
 pub trait TokenGetter {
     fn token(&self) -> usize;
@@ -7,7 +7,7 @@ pub trait TokenGetter {
 
 #[cfg(test)]
 pub trait ElementRefGetter {
-    fn get_alias(&self) -> ElementRef;
+    fn get_alias(&self) -> ElementId;
 }
 
 #[cfg(test)]

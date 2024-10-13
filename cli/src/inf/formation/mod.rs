@@ -1,7 +1,7 @@
 use std::{fs, io::Write, path::PathBuf};
 
 use crate::{
-    elements::ElementRef,
+    elements::ElementId,
     error::LinkedErr,
     reader::{Reader, E},
 };
@@ -18,7 +18,7 @@ const MAX_ELEMENTS: usize = 4;
 #[derive(Debug, Default)]
 pub struct FormationCursor {
     pub offset: usize,
-    pub parent: Option<ElementRef>,
+    pub parent: Option<ElementId>,
 }
 
 impl FormationCursor {
@@ -42,7 +42,7 @@ impl FormationCursor {
     pub fn offset_as_string(&self) -> String {
         " ".repeat(TAB as usize).repeat(self.offset)
     }
-    pub fn offset_as_string_if(&self, targets: &[ElementRef]) -> String {
+    pub fn offset_as_string_if(&self, targets: &[ElementId]) -> String {
         if let Some(parent) = self.parent.as_ref() {
             if targets.contains(parent) {
                 return " ".repeat(TAB as usize).repeat(self.offset);
@@ -56,7 +56,7 @@ impl FormationCursor {
             parent: self.parent,
         }
     }
-    pub fn reown(&mut self, parent: Option<ElementRef>) -> Self {
+    pub fn reown(&mut self, parent: Option<ElementId>) -> Self {
         FormationCursor {
             offset: self.offset,
             parent,
@@ -106,7 +106,7 @@ pub async fn format_string(content: &str) -> Result<String, LinkedErr<E>> {
 #[cfg(test)]
 mod reading {
     use crate::{
-        elements::{Element, ElementRef, ElementRefGetter},
+        elements::{Element, ElementId, ElementRefGetter},
         error::LinkedErr,
         functions::load,
         inf::{format_string, Configuration},
@@ -128,7 +128,7 @@ mod reading {
             |reader: &mut Reader, src: &mut Sources| {
                 while let Some(el) = src.report_err_if(Element::include(
                     reader,
-                    &[ElementRef::Function, ElementRef::Component],
+                    &[ElementId::Function, ElementId::Component],
                 ))? {
                     if let Element::Function(func, _) = &el {
                         if load::NAME != func.name {
@@ -154,7 +154,7 @@ mod reading {
                 let mut origin = Vec::new();
                 while let Some(el) = src.report_err_if(Element::include(
                     reader,
-                    &[ElementRef::Function, ElementRef::Component],
+                    &[ElementId::Function, ElementId::Component],
                 ))? {
                     if let Element::Function(func, _) = &el {
                         if load::NAME != func.name {

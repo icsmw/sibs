@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Each, Element, ElementRef},
+    elements::{Each, Element, ElementId},
     error::LinkedErr,
     reader::{chars, words, Dissect, Reader, TryDissect, E},
 };
@@ -7,7 +7,7 @@ use tokio_util::sync::CancellationToken;
 
 impl TryDissect<Each> for Each {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Each>, LinkedErr<E>> {
-        let close = reader.open_token(ElementRef::Each);
+        let close = reader.open_token(ElementId::Each);
         if reader.move_to().word(&[words::EACH]).is_some() {
             let (variable, input) = if reader
                 .group()
@@ -16,7 +16,7 @@ impl TryDissect<Each> for Each {
             {
                 let mut inner = reader.token()?.bound;
                 let variable = if let Some(variable) =
-                    Element::include(&mut inner, &[ElementRef::VariableName])?
+                    Element::include(&mut inner, &[ElementId::VariableName])?
                 {
                     if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
                         return Err(E::MissedSemicolon.linked(&inner.token()?.id));
@@ -25,10 +25,9 @@ impl TryDissect<Each> for Each {
                 } else {
                     return Err(E::NoLoopVariable.linked(&inner.token()?.id));
                 };
-                let input = if let Some(el) = Element::include(
-                    &mut inner,
-                    &[ElementRef::Function, ElementRef::VariableName],
-                )? {
+                let input = if let Some(el) =
+                    Element::include(&mut inner, &[ElementId::Function, ElementId::VariableName])?
+                {
                     Box::new(el)
                 } else {
                     Err(E::NoLoopInput.by_reader(&inner))?
@@ -37,11 +36,11 @@ impl TryDissect<Each> for Each {
             } else {
                 return Err(E::NoLoopInitialization.linked(&reader.token()?.id));
             };
-            let Some(mut block) = Element::include(reader, &[ElementRef::Block])? else {
+            let Some(mut block) = Element::include(reader, &[ElementId::Block])? else {
                 Err(E::NoGroup.by_reader(reader))?
             };
             if let Element::Block(block, _) = &mut block {
-                block.set_owner(ElementRef::Each);
+                block.set_owner(ElementId::Each);
                 block.set_breaker(CancellationToken::new());
             }
             Ok(Some(Each {

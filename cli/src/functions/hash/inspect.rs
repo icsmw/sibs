@@ -123,7 +123,7 @@ pub fn execute(
 #[cfg(test)]
 mod test {
     use crate::{
-        elements::{ElementRef, Element},
+        elements::{ElementId, Element},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
@@ -199,7 +199,7 @@ mod test {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut components: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElementRef::Component]))?
+                    src.report_err_if(Element::include(reader, &[ElementId::Component]))?
                 {
                     components.push(task);
                 }

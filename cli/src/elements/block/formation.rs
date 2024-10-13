@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Block, ElementRef},
+    elements::{Block, ElementId},
     inf::{Formation, FormationCursor},
 };
 
@@ -8,7 +8,7 @@ impl Formation for Block {
         self.elements.len()
     }
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        let mut inner = cursor.reown(Some(ElementRef::Block)).right();
+        let mut inner = cursor.reown(Some(ElementId::Block)).right();
         format!(
             "{{\n{}{}{}}}",
             self.elements

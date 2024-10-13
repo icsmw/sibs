@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Component, ElementRef},
+    elements::{Component, ElementId},
     inf::{Formation, FormationCursor},
 };
 
@@ -8,7 +8,7 @@ impl Formation for Component {
         self.elements.len()
     }
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        let mut inner = cursor.reown(Some(ElementRef::Component)).right();
+        let mut inner = cursor.reown(Some(ElementId::Component)).right();
         format!(
             "#({}{})\n{}",
             self.name,

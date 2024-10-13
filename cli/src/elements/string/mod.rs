@@ -7,7 +7,7 @@ pub use pattern::*;
 pub use simple::*;
 
 use crate::{
-    elements::{Element, ElementRef},
+    elements::{Element, ElementId},
     error::LinkedErr,
     reader::{chars, Reader, E},
 };
@@ -17,7 +17,7 @@ pub type PatternStringResult = (String, Vec<Element>, usize);
 pub fn read(
     reader: &mut Reader,
     wrapper: char,
-    el: ElementRef,
+    el: ElementId,
 ) -> Result<Option<PatternStringResult>, LinkedErr<E>> {
     reader.trim();
     let close = reader.open_token(el);
@@ -44,9 +44,9 @@ pub fn read(
             if let Some(el) = Element::include(
                 &mut inner,
                 &[
-                    ElementRef::VariableName,
-                    ElementRef::Function,
-                    ElementRef::If,
+                    ElementId::VariableName,
+                    ElementId::Function,
+                    ElementId::If,
                 ],
             )? {
                 elements.extend_from_slice(&[

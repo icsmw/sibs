@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, InnersGetter, Task},
+    elements::{Element, ElementId, InnersGetter, Task},
     test_reading_el_by_el, test_reading_with_errors_ln_by_ln,
 };
 
@@ -17,21 +17,21 @@ impl InnersGetter for Task {
 test_reading_el_by_el!(
     reading,
     &include_str!("../../tests/reading/tasks.sibs"),
-    &[ElementRef::Task],
+    &[ElementId::Task],
     12
 );
 
 test_reading_with_errors_ln_by_ln!(
     errors,
     &include_str!("../../tests/error/tasks.sibs"),
-    &[ElementRef::Task],
+    &[ElementId::Task],
     9
 );
 
 #[cfg(test)]
 mod processing {
     use crate::{
-        elements::{Element, ElementRef},
+        elements::{Element, ElementId},
         error::LinkedErr,
         inf::{
             operator::{Execute, E},
@@ -51,7 +51,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElementRef::Task]))?
+                    src.report_err_if(Element::include(reader, &[ElementId::Task]))?
                 {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
@@ -88,7 +88,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut components: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElementRef::Component]))?
+                    src.report_err_if(Element::include(reader, &[ElementId::Component]))?
                 {
                     components.push(task);
                 }

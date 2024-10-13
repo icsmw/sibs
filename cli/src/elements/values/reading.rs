@@ -1,12 +1,12 @@
 use crate::{
-    elements::{Element, ElementRef, Values},
+    elements::{Element, ElementId, Values},
     error::LinkedErr,
     reader::{chars, Dissect, Reader, TryDissect, E},
 };
 
 impl TryDissect<Values> for Values {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Values>, LinkedErr<E>> {
-        let close = reader.open_token(ElementRef::Values);
+        let close = reader.open_token(ElementId::Values);
         if reader
             .group()
             .between(&chars::OPEN_BRACKET, &chars::CLOSE_BRACKET)
@@ -26,16 +26,16 @@ impl TryDissect<Values> for Values {
         while let Some(el) = Element::include(
             &mut inner,
             &[
-                ElementRef::Command,
-                ElementRef::Function,
-                ElementRef::If,
-                ElementRef::PatternString,
-                ElementRef::Reference,
-                ElementRef::Values,
-                ElementRef::Comparing,
-                ElementRef::VariableName,
-                ElementRef::Integer,
-                ElementRef::Boolean,
+                ElementId::Command,
+                ElementId::Function,
+                ElementId::If,
+                ElementId::PatternString,
+                ElementId::Reference,
+                ElementId::Values,
+                ElementId::Comparing,
+                ElementId::VariableName,
+                ElementId::Integer,
+                ElementId::Boolean,
             ],
         )? {
             if inner.move_to().char(&[&chars::COMMA]).is_none() && !inner.rest().trim().is_empty() {

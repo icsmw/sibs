@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, First, Task},
+    elements::{Element, ElementId, First, Task},
     error::LinkedErr,
     inf::{operator::E, tests::*, Configuration},
     read_string,
@@ -12,7 +12,7 @@ impl Arbitrary for First {
     type Strategy = BoxedStrategy<Self>;
 
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
-        Element::arbitrary_with((vec![ElementRef::Block], deep))
+        Element::arbitrary_with((vec![ElementId::Block], deep))
             .prop_map(|block| First {
                 block: Box::new(block),
                 token: 0,

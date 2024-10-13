@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef},
+    elements::{Element, ElementId},
     error::LinkedErr,
     inf::{
         operator::{Execute, E},
@@ -13,7 +13,7 @@ use crate::{
 test_reading_el_by_el!(
     reading,
     &include_str!("../tests/reading/ppm.sibs"),
-    &[ElementRef::Function, ElementRef::VariableName],
+    &[ElementId::Function, ElementId::VariableName],
     94
 );
 
@@ -24,7 +24,7 @@ async fn processing() {
         &include_str!("../tests/processing/tolerance.sibs"),
         |reader: &mut Reader, src: &mut Sources| {
             let mut elements: Vec<Element> = Vec::new();
-            while let Some(el) = src.report_err_if(Element::include(reader, &[ElementRef::Task]))? {
+            while let Some(el) = src.report_err_if(Element::include(reader, &[ElementId::Task]))? {
                 let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                 elements.push(el);
             }

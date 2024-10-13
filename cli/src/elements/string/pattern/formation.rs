@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, PatternString},
+    elements::{Element, ElementId, PatternString},
     inf::{Formation, FormationCursor},
 };
 
@@ -8,13 +8,13 @@ impl Formation for PatternString {
         self.elements.len()
     }
     fn format(&self, cursor: &mut FormationCursor) -> String {
-        let mut inner = cursor.reown(Some(ElementRef::PatternString));
+        let mut inner = cursor.reown(Some(ElementId::PatternString));
         if self.to_string().len() > cursor.max_len()
             || self.elements.len() > cursor.max_inline_injections()
         {
             format!(
                 "{}\"{}\"",
-                cursor.offset_as_string_if(&[ElementRef::Block]),
+                cursor.offset_as_string_if(&[ElementId::Block]),
                 self.elements
                     .iter()
                     .map(|el| {
@@ -33,7 +33,7 @@ impl Formation for PatternString {
                     .join("")
             )
         } else {
-            format!("{}{self}", cursor.offset_as_string_if(&[ElementRef::Block]),)
+            format!("{}{self}", cursor.offset_as_string_if(&[ElementId::Block]),)
         }
     }
 }

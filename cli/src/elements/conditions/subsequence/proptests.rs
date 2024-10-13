@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, Subsequence},
+    elements::{Element, ElementId, Subsequence},
     inf::tests::MAX_DEEP,
 };
 use proptest::prelude::*;
@@ -13,16 +13,16 @@ impl Arbitrary for Subsequence {
             prop::collection::vec(
                 Element::arbitrary_with((
                     if deep > MAX_DEEP {
-                        vec![ElementRef::Comparing]
+                        vec![ElementId::Comparing]
                     } else {
-                        vec![ElementRef::Comparing, ElementRef::Condition]
+                        vec![ElementId::Comparing, ElementId::Condition]
                     },
                     deep,
                 )),
                 1..=5,
             ),
             prop::collection::vec(
-                Element::arbitrary_with((vec![ElementRef::Combination], deep)),
+                Element::arbitrary_with((vec![ElementId::Combination], deep)),
                 5..=5,
             ),
         )

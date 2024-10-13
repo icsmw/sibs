@@ -1,4 +1,4 @@
-use crate::elements::{Element, ElementRef, VariableDeclaration};
+use crate::elements::{Element, ElementId, VariableDeclaration};
 use proptest::prelude::*;
 
 impl Arbitrary for VariableDeclaration {
@@ -8,10 +8,10 @@ impl Arbitrary for VariableDeclaration {
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         (
             Element::arbitrary_with((
-                vec![ElementRef::VariableType, ElementRef::VariableVariants],
+                vec![ElementId::VariableType, ElementId::VariableVariants],
                 deep,
             )),
-            Element::arbitrary_with((vec![ElementRef::VariableName], deep)),
+            Element::arbitrary_with((vec![ElementId::VariableName], deep)),
         )
             .prop_map(move |(declaration, variable)| VariableDeclaration {
                 declaration: Box::new(declaration),

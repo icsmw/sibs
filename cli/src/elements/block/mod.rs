@@ -9,7 +9,7 @@ mod tests;
 mod verification;
 
 use crate::{
-    elements::{Element, ElementRef},
+    elements::{Element, ElementId},
     error::LinkedErr,
     inf::operator::E,
 };
@@ -18,13 +18,13 @@ use tokio_util::sync::CancellationToken;
 #[derive(Debug, Clone)]
 pub struct Block {
     pub elements: Vec<Element>,
-    pub owner: Option<ElementRef>,
+    pub owner: Option<ElementId>,
     pub breaker: Option<CancellationToken>,
     pub token: usize,
 }
 
 impl Block {
-    pub fn set_owner(&mut self, owner: ElementRef) {
+    pub fn set_owner(&mut self, owner: ElementId) {
         self.owner = Some(owner);
     }
     pub fn set_breaker(&mut self, breaker: CancellationToken) {

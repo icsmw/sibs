@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, First, InnersGetter},
+    elements::{Element, ElementId, First, InnersGetter},
     test_process_tasks_one_by_one, test_reading_el_by_el, test_reading_with_errors_ln_by_ln,
 };
 
@@ -12,14 +12,14 @@ impl InnersGetter for First {
 test_reading_el_by_el!(
     reading,
     &include_str!("../../../tests/reading/first.sibs"),
-    &[ElementRef::First],
+    &[ElementId::First],
     2
 );
 
 test_reading_with_errors_ln_by_ln!(
     errors,
     &include_str!("../../../tests/error/first.sibs"),
-    &[ElementRef::First],
+    &[ElementId::First],
     3
 );
 

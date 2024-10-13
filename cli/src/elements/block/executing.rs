@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Block, ElementRef},
+    elements::{Block, ElementId},
     inf::{Execute, ExecuteContext, ExecutePinnedResult, Processing, TryExecute, Value},
 };
 
@@ -19,7 +19,7 @@ impl TryExecute for Block {
                     return Ok(retreat);
                 }
                 output = element.execute(cx.clone()).await?;
-                if let (Some(ElementRef::First), false) = (self.owner.as_ref(), output.is_empty()) {
+                if let (Some(ElementId::First), false) = (self.owner.as_ref(), output.is_empty()) {
                     return Ok(output);
                 }
             }

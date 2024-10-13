@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, ElementRef, InnersGetter, While},
+    elements::{Element, ElementId, InnersGetter, While},
     test_block, test_reading_el_by_el,
 };
 
@@ -12,7 +12,7 @@ impl InnersGetter for While {
 test_reading_el_by_el!(
     reading,
     &include_str!("../../../tests/reading/while.sibs"),
-    &[ElementRef::While],
+    &[ElementId::While],
     1
 );
 
