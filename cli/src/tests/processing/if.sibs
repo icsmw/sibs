@@ -1,72 +1,72 @@
 @test {
     $a = "one";
     if $a == "one" {
-        "true";
+        true;
     } else {
-        "false";
+        false;
     };
 };
 @test {
     $a = "not one";
     if $a != "one" {
-        "true";
+        true;
     } else {
-        "false";
+        false;
     };
 };
 @test {
     $a = "one";
     if $a != "one" {
-        "false";
+        false;
     } else {
-        "true";
+        true;
     };
 };
 @test {
     $a = "one";
     $b = "two";
     if $a == "one" || $b == "two" {
-        "true";
+        true;
     } else {
-        "false";
+        false;
     };
 };
 @test {
     $a = "one";
     $b = "two";
     if $a == "one" && $b == "two" {
-        "true";
+        true;
     } else {
-        "false";
+        false;
     };
 };
 @test {
     $a = "one";
     $b = "two";
     if $a != "one" && $b != "two" {
-        "false";
+        false;
     } else {
-        "true";
+        true;
     };
 };
 @test {
     $a = "one";
     if $a == "__" {
-        "false";
+        false;
     } if $a == "one" {
-        "true";
+        true;
     } else {
-        "false";
+        false;
     };
 };
 @test {
     $a = "one";
     if $a == "__" {
-        "false";
+        false;
     } if $a == "__" {
-        "false";
+        false;
     } else {
-        "true";
+        true;
     };
 };
 @test {
@@ -74,9 +74,9 @@
     $b = "two";
     $c = "three";
     if $c != "one" && ($a == "one" && $b == "two") {
-        "true";
+        true;
     } else {
-        "false";
+        false;
     };
 };
 @test {
@@ -84,41 +84,41 @@
     $b = "two";
     $c = "three";
     if ($c != "one" && $c != "two") && ($a == "one" && $b == "two") {
-        "true";
+        true;
     } else {
-        "false";
+        false;
     };
 };
 @test {
     $a = env::os();
-    if env::is_os($a) == "true" {
-        "true";
+    if env::is_os($a) == true {
+        true;
     } else {
-        "false";
+        false;
     };
 };
 @test {
     $a = env::os();
-    if "true" == env::is_os($a) {
-        "true";
+    if true == env::is_os($a) {
+        true;
     } else {
-        "false";
+        false;
     };
 };
 @test {
     $a = env::os();
-    if "true" == env::is_os($a) && env::is_os($a) == "true"{
-        "true";
+    if true == env::is_os($a) && env::is_os($a) == true{
+        true;
     } else {
-        "false";
+        false;
     };
 };
 @test {
     $a = env::os();
-    if "true" == env::is_os($a) || env::is_os($a) == "true"{
-        "true";
+    if true == env::is_os($a) || env::is_os($a) == true{
+        true;
     } else {
-        "false";
+        false;
     };
 };
 @test {
@@ -254,7 +254,7 @@
 };
 @test {
     $a = "not one";
-    if $a != 1 {
+    if $a != "1" {
         true;
     } else {
         false;
@@ -297,7 +297,7 @@
 };
 @test {
     $a = 1;
-    if $a == "__" {
+    if $a == 2 {
         false;
     } if $a == 1 {
         true;
@@ -306,7 +306,7 @@
     };
 };
 @test {
-    $a = 1;
+    $a = "1";
     if $a == "__" {
         false;
     } if $a == "__" {

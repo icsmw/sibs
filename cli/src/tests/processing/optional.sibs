@@ -1,20 +1,15 @@
 @test {
     $a = "one";
-    $a == "one" => $b = "true";
+    $a == "one" => $b = true;
     $b;
 };
 @test {
     $a = "one";
-    $a == "one" => $b = "true";
+    $a == "one" => $b = true;
     $b;
 };
 @test {
     $a = "one";
     $a == "one" => $b = str::repeat("true", 1);
-    $b;
-};
-@test {
-    $a = "one";
-    $a == "one" => $b = str::repeat(true, 1);
-    $b;
+    $b == "true";
 };
