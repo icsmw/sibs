@@ -22,11 +22,9 @@ impl Arbitrary for Values {
                     vec![
                         ElementId::Command,
                         ElementId::Function,
-                        ElementId::If,
                         ElementId::PatternString,
                         ElementId::Reference,
                         ElementId::Values,
-                        ElementId::Comparing,
                         ElementId::VariableName,
                         ElementId::Integer,
                         ElementId::Boolean,

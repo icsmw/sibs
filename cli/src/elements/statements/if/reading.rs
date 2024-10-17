@@ -11,16 +11,16 @@ impl TryDissect<If> for If {
         while !reader.rest().trim().is_empty() {
             if reader.move_to().word(&[words::IF]).is_some() {
                 let conditions =
-                    Element::include(reader, &[ElementId::IfSubsequence, ElementId::IfCondition])?
+                    Element::read(reader, &[ElementId::IfSubsequence, ElementId::IfCondition])?
                         .ok_or(E::NoConditionForIfStatement.by_reader(reader))?;
-                let block = Element::include(reader, &[ElementId::Block])?
+                let block = Element::read(reader, &[ElementId::Block])?
                     .ok_or(E::NoBlockForIfStatement.by_reader(reader))?;
                 threads.push(IfThread::If(Box::new(conditions), Box::new(block)));
             } else if reader.move_to().word(&[words::ELSE]).is_some() {
                 if threads.is_empty() {
                     Err(E::NoMainBlockForIfStatement.by_reader(reader))?;
                 }
-                let block = Element::include(reader, &[ElementId::Block])?
+                let block = Element::read(reader, &[ElementId::Block])?
                     .ok_or(E::NoBlockForIfStatement.by_reader(reader))?;
                 threads.push(IfThread::Else(Box::new(block)));
             } else {

@@ -54,7 +54,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElementId::Task]))?
+                    src.report_err_if(Element::read(reader, &[ElementId::Task]))?
                 {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);

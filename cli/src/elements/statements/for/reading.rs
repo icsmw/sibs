@@ -9,20 +9,20 @@ impl TryDissect<For> for For {
     fn try_dissect(reader: &mut Reader) -> Result<Option<For>, LinkedErr<E>> {
         let close = reader.open_token(ElementId::For);
         if reader.move_to().word(&[words::FOR]).is_some() {
-            let Some(index) = Element::include(reader, &[ElementId::VariableName])? else {
+            let Some(index) = Element::read(reader, &[ElementId::VariableName])? else {
                 return Err(E::NoIndexInForLoop.by_reader(reader));
             };
             if reader.move_to().word(&[words::IN]).is_none() {
                 return Err(E::NoINKeywordInForLoop.by_reader(reader));
             }
-            let Some(target) = Element::include(
+            let Some(target) = Element::read(
                 reader,
                 &[ElementId::Range, ElementId::VariableName, ElementId::Values],
             )?
             else {
                 return Err(E::NoRangeInForLoop.by_reader(reader));
             };
-            let Some(mut block) = Element::include(reader, &[ElementId::Block])? else {
+            let Some(mut block) = Element::read(reader, &[ElementId::Block])? else {
                 return Err(E::NoBodyInForLoop.by_reader(reader));
             };
             if let Element::Block(block, _) = &mut block {

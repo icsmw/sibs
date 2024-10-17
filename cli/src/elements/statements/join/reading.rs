@@ -9,7 +9,7 @@ impl TryDissect<Join> for Join {
         let close = reader.open_token(ElementId::Join);
         if reader.move_to().word(&[words::JOIN]).is_some() {
             let Some(Element::Values(elements, md)) =
-                Element::include(reader, &[ElementId::Values])?
+                Element::read(reader, &[ElementId::Values])?
             else {
                 return Err(E::NoJOINStatementBody.by_reader(reader));
             };

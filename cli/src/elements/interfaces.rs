@@ -1,5 +1,5 @@
 use crate::{
-    elements::{Element, Metadata, TokenGetter},
+    elements::{Element, ElementId, ElementRefGetter, Metadata, TokenGetter},
     reader::chars,
 };
 use std::fmt::{self, Display};
@@ -134,7 +134,7 @@ impl fmt::Display for Element {
 }
 
 #[cfg(test)]
-use crate::elements::{ElementId, ElementRefGetter, InnersGetter};
+use crate::elements::InnersGetter;
 
 #[cfg(test)]
 impl InnersGetter for Element {
@@ -187,10 +187,8 @@ impl InnersGetter for Element {
         }
     }
 }
-#[cfg(test)]
 impl ElementRefGetter for Element {
-    #[cfg(test)]
-    fn get_alias(&self) -> ElementId {
+    fn id(&self) -> ElementId {
         match self {
             Self::Call(..) => ElementId::Call,
             Self::Accessor(..) => ElementId::Accessor,

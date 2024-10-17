@@ -7,7 +7,7 @@ use crate::{
 impl TryDissect<Compute> for Compute {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Compute>, LinkedErr<E>> {
         let close = reader.open_token(ElementId::Compute);
-        let Some(left) = Element::include(
+        let Some(left) = Element::read(
             reader,
             &[
                 ElementId::VariableName,
@@ -37,7 +37,7 @@ impl TryDissect<Compute> for Compute {
                 return Err(E::UnknownOperator(operator.to_string()).by_reader(reader));
             }
         };
-        let Some(right) = Element::include(
+        let Some(right) = Element::read(
             reader,
             &[
                 ElementId::VariableName,

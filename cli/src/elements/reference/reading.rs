@@ -47,7 +47,7 @@ impl TryDissect<Reference> for Reference {
         {
             let mut inner = reader.token()?.bound;
             let inputs_token_id = reader.token()?.id;
-            while let Some(el) = Element::include(
+            while let Some(el) = Element::read(
                 &mut inner,
                 &[
                     ElementId::VariableName,

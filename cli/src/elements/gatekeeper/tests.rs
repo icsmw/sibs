@@ -61,7 +61,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut components: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElementId::Component]))?
+                    src.report_err_if(Element::read(reader, &[ElementId::Component]))?
                 {
                     components.push(task);
                 }

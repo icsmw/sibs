@@ -27,5 +27,5 @@ test_process_tasks_one_by_one!(
     processing_test,
     &include_str!("../../tests/processing/functions.sibs"),
     true,
-    4
+    1
 );

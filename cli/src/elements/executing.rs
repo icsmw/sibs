@@ -116,18 +116,16 @@ impl TryExecute for Element {
                 return Ok(Value::empty());
             }
             let output = result?;
-            Ok(
-                if self.get_metadata().inverting && matches!(self, Element::Function(..)) {
-                    Value::bool(
-                        !output
-                            .not_empty_or(operator::E::InvertingOnEmptyReturn.by(self))?
-                            .as_bool()
-                            .ok_or(operator::E::InvertingOnNotBool.by(self))?,
-                    )
-                } else {
-                    output
-                },
-            )
+            Ok(if self.get_metadata().inverting {
+                Value::bool(
+                    !output
+                        .not_empty_or(operator::E::InvertingOnEmptyReturn.by(self))?
+                        .as_bool()
+                        .ok_or(operator::E::InvertingOnNotBool.by(self))?,
+                )
+            } else {
+                output
+            })
         })
     }
 }

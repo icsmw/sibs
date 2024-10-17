@@ -45,6 +45,8 @@ pub struct Token {
     pub bound: Reader,
 }
 
+pub type ReaderRestorePoint = (usize, MapRestorePoint);
+
 #[derive(Debug)]
 pub struct Reader {
     pub content: String,
@@ -97,7 +99,7 @@ impl Reader {
             let mut reader = Reader::unbound(&mut src, content)?;
             let mut elements: Vec<Element> = Vec::new();
             while let Some(el) =
-                Element::include(&mut reader, &[ElementId::Function, ElementId::Component])?
+                Element::read(&mut reader, &[ElementId::Function, ElementId::Component])?
             {
                 if let Element::Function(func, _) = &el {
                     if load::NAME != func.name {
@@ -167,6 +169,9 @@ impl Reader {
     pub fn rest(&self) -> &str {
         &self.content[self.pos..]
     }
+    pub fn pos(&self) -> usize {
+        self.pos
+    }
     pub fn trim(&mut self) {
         let content = &self.content[self.pos..];
         for (pos, char) in content.chars().enumerate() {
@@ -220,13 +225,18 @@ impl Reader {
                 .add(None, from, (reader.pos + reader.offset) - from)
         }
     }
-    pub fn pin(&mut self) -> impl Fn(&mut Reader) {
+    pub fn pin(&mut self) -> impl Fn(&mut Reader) -> ReaderRestorePoint {
         let from = self.pos;
         let restore_map = self.map.borrow().pin();
         move |reader: &mut Reader| {
+            let to_restore = reader.pos();
             reader.pos = from;
-            restore_map(&mut reader.map.borrow_mut());
+            (to_restore, restore_map(&mut reader.map.borrow_mut()))
         }
+    }
+    pub fn restore_to_point(&mut self, point: ReaderRestorePoint) {
+        self.pos = point.0;
+        self.map.borrow_mut().restore(point.1);
     }
     pub fn done(&self) -> bool {
         self.pos == self.content.len()
@@ -272,7 +282,7 @@ fn read_file<'a>(
         let mut reader = Reader::bound(src, filename)?;
         let mut elements: Vec<Element> = Vec::new();
         while let Some(el) =
-            Element::include(&mut reader, &[ElementId::Function, ElementId::Component])?
+            Element::read(&mut reader, &[ElementId::Function, ElementId::Component])?
         {
             if let Element::Function(func, _) = &el {
                 if load::NAME != func.name {

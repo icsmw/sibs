@@ -23,16 +23,14 @@ impl TryDissect<Values> for Values {
                 elements,
             }));
         }
-        while let Some(el) = Element::include(
+        while let Some(el) = Element::read(
             &mut inner,
             &[
                 ElementId::Command,
                 ElementId::Function,
-                ElementId::If,
                 ElementId::PatternString,
                 ElementId::Reference,
                 ElementId::Values,
-                ElementId::Comparing,
                 ElementId::VariableName,
                 ElementId::Integer,
                 ElementId::Boolean,

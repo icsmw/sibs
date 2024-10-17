@@ -2,7 +2,8 @@ use crate::{
     inf::map::{MapFragment, Mapping},
     reader::Map as ReaderMap,
 };
-use std::{collections::HashMap, path::PathBuf};
+use hashbrown::HashMap;
+use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
 pub struct Map {

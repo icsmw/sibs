@@ -53,7 +53,7 @@ impl TryDissect<Component> for Component {
         let inner_token_id = reader.token()?.id;
         let mut elements: Vec<Element> = Vec::new();
         while let Some(el) =
-            Element::include(&mut inner, &[ElementId::Task, ElementId::Gatekeeper])?
+            Element::read(&mut inner, &[ElementId::Task, ElementId::Gatekeeper])?
         {
             let _ = inner.move_to().char(&[&chars::SEMICOLON]);
             elements.push(el);

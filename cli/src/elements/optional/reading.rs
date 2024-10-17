@@ -10,7 +10,7 @@ impl TryDissect<Optional> for Optional {
             return Ok(None);
         }
         let close = reader.open_token(ElementId::Optional);
-        let condition = if let Some(el) = Element::include(
+        let condition = if let Some(el) = Element::read(
             reader,
             &[
                 ElementId::Function,
@@ -30,7 +30,7 @@ impl TryDissect<Optional> for Optional {
         if reader.move_to().expression(&[words::DO_ON]).is_none() {
             return Err(E::NoOptionalRedirection.by_reader(reader));
         }
-        let action = if let Some(el) = Element::include(
+        let action = if let Some(el) = Element::read(
             reader,
             &[
                 ElementId::Function,

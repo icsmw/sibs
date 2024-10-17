@@ -10,7 +10,7 @@ impl TryDissect<Return> for Return {
         if reader.move_to().word(&[words::RETURN]).is_none() {
             return Ok(None);
         }
-        let output = if let Some(output) = Element::include(
+        let output = if let Some(output) = Element::read(
             reader,
             &[
                 ElementId::Values,

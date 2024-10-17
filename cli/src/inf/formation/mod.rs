@@ -126,7 +126,7 @@ mod reading {
             &Configuration::logs(false),
             &formated_content,
             |reader: &mut Reader, src: &mut Sources| {
-                while let Some(el) = src.report_err_if(Element::include(
+                while let Some(el) = src.report_err_if(Element::read(
                     reader,
                     &[ElementId::Function, ElementId::Component],
                 ))? {
@@ -152,7 +152,7 @@ mod reading {
             &include_str!("../../tests/formation.sibs"),
             |reader: &mut Reader, src: &mut Sources| {
                 let mut origin = Vec::new();
-                while let Some(el) = src.report_err_if(Element::include(
+                while let Some(el) = src.report_err_if(Element::read(
                     reader,
                     &[ElementId::Function, ElementId::Component],
                 ))? {
@@ -172,13 +172,13 @@ mod reading {
                 assert_eq!(origin.len(), formated.len());
                 let mut count: usize = 0;
                 for (i, el) in origin.iter().enumerate() {
-                    assert_eq!(el.get_alias(), formated[i].get_alias());
+                    assert_eq!(el.id(), formated[i].id());
                     if let (Element::Component(origin, _), Element::Component(formated, _)) =
                         (el, &formated[i])
                     {
                         assert_eq!(origin.elements.len(), formated.elements.len());
                         for (i, el) in origin.elements.iter().enumerate() {
-                            assert_eq!(el.get_alias(), formated.elements[i].get_alias());
+                            assert_eq!(el.id(), formated.elements[i].id());
                             if let (Element::Task(origin, _), Element::Task(formated, _)) =
                                 (el, &formated.elements[i])
                             {

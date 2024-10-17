@@ -9,7 +9,7 @@ impl TryDissect<Loop> for Loop {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Loop>, LinkedErr<E>> {
         let close = reader.open_token(ElementId::Loop);
         if reader.move_to().word(&[words::LOOP]).is_some() {
-            let Some(mut block) = Element::include(reader, &[ElementId::Block])? else {
+            let Some(mut block) = Element::read(reader, &[ElementId::Block])? else {
                 return Err(E::NoBodyInForLoop.by_reader(reader));
             };
             if let Element::Block(block, _) = &mut block {

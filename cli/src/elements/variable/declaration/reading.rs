@@ -7,13 +7,13 @@ use crate::{
 impl TryDissect<VariableDeclaration> for VariableDeclaration {
     fn try_dissect(reader: &mut Reader) -> Result<Option<VariableDeclaration>, LinkedErr<E>> {
         let close = reader.open_token(ElementId::VariableDeclaration);
-        let Some(variable) = Element::include(reader, &[ElementId::VariableName])? else {
+        let Some(variable) = Element::read(reader, &[ElementId::VariableName])? else {
             return Ok(None);
         };
         if reader.move_to().char(&[&chars::COLON]).is_none() {
             return Err(E::NoTypeDeclaration.by_reader(reader));
         }
-        if let Some(declaration) = Element::include(
+        if let Some(declaration) = Element::read(
             reader,
             &[ElementId::VariableType, ElementId::VariableVariants],
         )? {

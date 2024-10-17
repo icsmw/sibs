@@ -29,9 +29,39 @@ pub const CMP_RBIG: char = '<';
 pub const CMP_LBIG: char = '>';
 
 pub fn has_reserved(str: &str) -> bool {
-    let reserved = [&COMMA, &SEMICOLON, &COLON];
+    let reserved = [
+        SEMICOLON,
+        OPEN_CURLY_BRACE,
+        CLOSE_CURLY_BRACE,
+        QUESTION,
+        COLON,
+        DOLLAR,
+        AT,
+        POUND_SIGN,
+        OPEN_BRACKET,
+        CLOSE_BRACKET,
+        OPEN_SQ_BRACKET,
+        CLOSE_SQ_BRACKET,
+        EXCLAMATION,
+        EQUAL,
+        CARET,
+        SERIALIZING,
+        QUOTES,
+        TILDA,
+        WS,
+        COMMA,
+        UNDERSCORE,
+        DASH,
+        DOT,
+        INC,
+        DEC,
+        DIV,
+        MLT,
+        CMP_RBIG,
+        CMP_LBIG,
+    ];
     for char in str.chars() {
-        if reserved.contains(&&char) {
+        if reserved.contains(&char) {
             return true;
         }
     }

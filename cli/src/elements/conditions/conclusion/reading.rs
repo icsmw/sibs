@@ -13,13 +13,13 @@ impl TryDissect<Conclusion> for Conclusion {
                 || matches!(subsequence.last(), Some(Element::Combination(..)))
             {
                 if let Some(el) =
-                    Element::include(reader, &[ElementId::Comparing, ElementId::Condition])?
+                    Element::read(reader, &[ElementId::Comparing, ElementId::Condition])?
                 {
                     subsequence.push(el);
                 } else {
                     break;
                 }
-            } else if let Some(el) = Element::include(reader, &[ElementId::Combination])? {
+            } else if let Some(el) = Element::read(reader, &[ElementId::Combination])? {
                 subsequence.push(el);
             } else {
                 break;

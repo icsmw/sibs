@@ -10,7 +10,7 @@ impl TryDissect<Error> for Error {
         if reader.move_to().word(&[words::ERROR]).is_none() {
             return Ok(None);
         };
-        let output = Element::include(reader, &[ElementId::PatternString])?
+        let output = Element::read(reader, &[ElementId::PatternString])?
             .ok_or(E::NoErrorMessageDefinition.by_reader(reader))?;
         Ok(Some(Error {
             token: close(reader),

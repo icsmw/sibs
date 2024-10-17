@@ -7,7 +7,7 @@ use crate::{
 impl TryDissect<Incrementer> for Incrementer {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Incrementer>, LinkedErr<E>> {
         let close = reader.open_token(ElementId::Incrementer);
-        let Some(variable) = Element::include(reader, &[ElementId::VariableName])? else {
+        let Some(variable) = Element::read(reader, &[ElementId::VariableName])? else {
             return Ok(None);
         };
         reader.move_to().any();
@@ -21,7 +21,7 @@ impl TryDissect<Incrementer> for Incrementer {
                 return Err(E::UnknownOperator(operator.to_string()).by_reader(reader));
             }
         };
-        let Some(right) = Element::include(
+        let Some(right) = Element::read(
             reader,
             &[
                 ElementId::VariableName,

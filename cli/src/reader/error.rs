@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
 use crate::{
-    error,
-    error::LinkedErr,
+    elements::ElementId,
+    error::{self, LinkedErr},
     functions,
     inf::{context, journal, map, operator},
     reader::Reader,
@@ -63,6 +63,8 @@ pub enum E {
     FailFindTaskActions,
     #[error("Empty block")]
     EmptyBlock,
+    #[error("Between elements {0} and {1} is conflict")]
+    ConflictBetweenElements(ElementId, ElementId),
     #[error("Invalid token position; from={0}; offset={1}")]
     InvalidTokenPosition(usize, usize),
     #[error("No error message definition")]

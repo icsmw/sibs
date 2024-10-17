@@ -1,7 +1,7 @@
 use crate::{
     elements::FuncArg,
     functions::ExecutorPinnedResult,
-    inf::{tools::get_last_name, Value, Context, Scope},
+    inf::{tools::get_last_name, Context, Scope, Value},
 };
 
 pub fn name() -> String {
@@ -51,7 +51,11 @@ mod test {
         ])
         .output()
         .expect("failed to execute process");
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        println!("STDOUT:\n{stdout}\n");
+        println!("STDOUT:\n{stderr}\n");
         assert_eq!(output.status.code(), Some(0));
-        assert!(String::from_utf8_lossy(&output.stdout).contains("Hello World!"));
+        assert!(stdout.contains("Hello World!"));
     }
 }

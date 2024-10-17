@@ -107,28 +107,113 @@ pub enum Element {
 }
 
 impl Element {
-    fn parse(
+    fn try_read(
+        reader: &mut Reader,
+        target: ElementId,
+        md: Metadata,
+    ) -> Result<Option<Element>, LinkedErr<E>> {
+        let el = match target {
+            ElementId::Call => Call::dissect(reader)?.map(|el| Element::Call(el, md)),
+            ElementId::Accessor => Accessor::dissect(reader)?.map(|el| Element::Accessor(el, md)),
+            ElementId::Function => Function::dissect(reader)?.map(|el| Element::Function(el, md)),
+            ElementId::If => If::dissect(reader)?.map(|el| Element::If(el, md)),
+            ElementId::IfCondition => {
+                IfCondition::dissect(reader)?.map(|el| Element::IfCondition(el, md))
+            }
+            ElementId::IfSubsequence => {
+                IfSubsequence::dissect(reader)?.map(|el| Element::IfSubsequence(el, md))
+            }
+            ElementId::IfThread => IfThread::dissect(reader)?.map(|el| Element::IfThread(el, md)),
+            ElementId::Each => Each::dissect(reader)?.map(|el| Element::Each(el, md)),
+            ElementId::Breaker => Breaker::dissect(reader)?.map(|el| Element::Breaker(el, md)),
+            ElementId::First => First::dissect(reader)?.map(|el| Element::First(el, md)),
+            ElementId::Join => Join::dissect(reader)?.map(|el| Element::Join(el, md)),
+            ElementId::VariableAssignation => {
+                VariableAssignation::dissect(reader)?.map(|el| Element::VariableAssignation(el, md))
+            }
+            ElementId::Optional => Optional::dissect(reader)?.map(|el| Element::Optional(el, md)),
+            ElementId::Gatekeeper => {
+                Gatekeeper::dissect(reader)?.map(|el| Element::Gatekeeper(el, md))
+            }
+            ElementId::Reference => {
+                Reference::dissect(reader)?.map(|el| Element::Reference(el, md))
+            }
+            ElementId::PatternString => {
+                PatternString::dissect(reader)?.map(|el| Element::PatternString(el, md))
+            }
+            ElementId::VariableName => {
+                VariableName::dissect(reader)?.map(|el| Element::VariableName(el, md))
+            }
+            ElementId::Comparing => {
+                Comparing::dissect(reader)?.map(|el| Element::Comparing(el, md))
+            }
+            ElementId::Combination => {
+                Combination::dissect(reader)?.map(|el| Element::Combination(el, md))
+            }
+            ElementId::Subsequence => {
+                Subsequence::dissect(reader)?.map(|el| Element::Subsequence(el, md))
+            }
+            ElementId::Condition => {
+                Condition::dissect(reader)?.map(|el| Element::Condition(el, md))
+            }
+            ElementId::Values => Values::dissect(reader)?.map(|el| Element::Values(el, md)),
+            ElementId::Block => Block::dissect(reader)?.map(|el| Element::Block(el, md)),
+            ElementId::Meta => Meta::dissect(reader)?.map(Element::Meta),
+            ElementId::Command => Command::dissect(reader)?.map(|el| Element::Command(el, md)),
+            ElementId::Task => Task::dissect(reader)?.map(|el| Element::Task(el, md)),
+            ElementId::Component => {
+                Component::dissect(reader)?.map(|el| Element::Component(el, md))
+            }
+            ElementId::Integer => Integer::dissect(reader)?.map(|el| Element::Integer(el, md)),
+            ElementId::Boolean => Boolean::dissect(reader)?.map(|el| Element::Boolean(el, md)),
+            ElementId::VariableDeclaration => {
+                VariableDeclaration::dissect(reader)?.map(|el| Element::VariableDeclaration(el, md))
+            }
+            ElementId::VariableVariants => {
+                VariableVariants::dissect(reader)?.map(|el| Element::VariableVariants(el, md))
+            }
+            ElementId::VariableType => {
+                VariableType::dissect(reader)?.map(|el| Element::VariableType(el, md))
+            }
+            ElementId::SimpleString => {
+                SimpleString::dissect(reader)?.map(|el| Element::SimpleString(el, md))
+            }
+            ElementId::Range => Range::dissect(reader)?.map(|el| Element::Range(el, md)),
+            ElementId::For => For::dissect(reader)?.map(|el| Element::For(el, md)),
+            ElementId::Return => Return::dissect(reader)?.map(|el| Element::Return(el, md)),
+            ElementId::Error => Error::dissect(reader)?.map(|el| Element::Error(el, md)),
+            ElementId::Compute => Compute::dissect(reader)?.map(|el| Element::Compute(el, md)),
+            ElementId::Incrementer => {
+                Incrementer::dissect(reader)?.map(|el| Element::Incrementer(el, md))
+            }
+            ElementId::Loop => Loop::dissect(reader)?.map(|el| Element::Loop(el, md)),
+            ElementId::While => While::dissect(reader)?.map(|el| Element::While(el, md)),
+            ElementId::Closure => Closure::dissect(reader)?.map(|el| Element::Closure(el, md)),
+            ElementId::Conclusion => {
+                Conclusion::dissect(reader)?.map(|el| Element::Conclusion(el, md))
+            }
+            ElementId::Comment => Comment::dissect(reader)?.map(Element::Comment),
+        };
+        Ok(el)
+    }
+
+    pub fn read(
         reader: &mut Reader,
         targets: &[ElementId],
-        includes: bool,
     ) -> Result<Option<Element>, LinkedErr<E>> {
-        fn tolerance(reader: &mut Reader, mut md: Metadata) -> Metadata {
-            md.tolerance = reader.move_to().char(&[&chars::QUESTION]).is_some();
-            md
-        }
         fn next(
             reader: &mut Reader,
             mut el: Element,
             token: impl Fn(&mut Reader) -> usize,
         ) -> Result<Option<Element>, LinkedErr<E>> {
-            let Some(ppm) = Element::include(reader, &[ElementId::Call, ElementId::Accessor])?
-            else {
+            let Some(ppm) = Element::read(reader, &[ElementId::Call, ElementId::Accessor])? else {
                 el.get_mut_metadata().set_token(token(reader));
                 return Ok(Some(el));
             };
             el.get_mut_metadata().set_ppm(ppm).set_token(token(reader));
             Ok(Some(el))
         }
+        let drop_pos = reader.pin();
         let mut comments: Vec<Element> = Vec::new();
         let mut meta: Vec<Element> = Vec::new();
         let token = reader.open_unbound_token();
@@ -143,250 +228,65 @@ impl Element {
             }
             break;
         }
-        let md = Metadata {
+        let md: Metadata = Metadata {
             comments,
             meta,
             ppm: None,
             tolerance: false,
-            inverting: if targets.contains(&ElementId::Function) {
-                reader.move_to().char(&[&chars::EXCLAMATION]).is_some()
-            } else {
-                false
-            },
+            inverting: reader.move_to().char(&[&chars::EXCLAMATION]).is_some(),
             token: 0,
         };
-        if includes == targets.contains(&ElementId::Closure) {
-            if let Some(el) = Closure::dissect(reader)? {
-                return next(reader, Element::Closure(el, md), token);
+        let mut done = Vec::new();
+        let mut fail = Vec::new();
+        for target in targets.sort_by_uniqueness().iter() {
+            let drop_pos = reader.pin();
+            let result = Element::try_read(reader, **target, md.clone());
+            let restore_point = drop_pos(reader);
+            match result {
+                Ok(Some(el)) => {
+                    done.push((restore_point.0, (el, restore_point)));
+                    if target.is_sufficient() {
+                        break;
+                    }
+                }
+                Ok(None) => {}
+                Err(err) => {
+                    fail.push((restore_point.0, (err, restore_point)));
+                }
             }
         }
-        if includes == targets.contains(&ElementId::Return) {
-            if let Some(el) = Return::dissect(reader)? {
-                return next(reader, Element::Return(el, md), token);
-            }
+        if let (Some((_, (err, restore_point))), true) = (
+            fail.into_iter().max_by_key(|(pos, _)| *pos),
+            done.is_empty(),
+        ) {
+            reader.restore_to_point(restore_point);
+            return Err(err);
         }
-        if includes == targets.contains(&ElementId::Error) {
-            if let Some(el) = Error::dissect(reader)? {
-                return next(reader, Element::Error(el, md), token);
+        let Some((n, _)) = done.iter().enumerate().max_by_key(|(_, (pos, _))| pos) else {
+            drop_pos(reader);
+            return Ok(None);
+        };
+        let (pos, (el, restore_point)) = done.remove(n);
+        reader.restore_to_point(restore_point);
+        let mut el = if let Some((sec_n, (sec_el, _))) = done.into_iter().find(|(p, _)| p == &pos) {
+            if let Some(resolved) = el.id().resolve_conflict(sec_el.id()) {
+                if el.id() == resolved {
+                    el
+                } else {
+                    sec_el
+                }
+            } else {
+                println!(">>>>>>>>>>>>>>>>>>>>:{}", reader.content);
+                println!(">>>>>>>>>>>>>>>>>>>>({pos}):{el:?}");
+                println!(">>>>>>>>>>>>>>>>>>>>({sec_n}):{sec_el:?}");
+                return Err(E::ConflictBetweenElements(el.id(), sec_el.id()).by_reader(reader));
             }
-        }
-        if includes == targets.contains(&ElementId::Compute) {
-            if let Some(el) = Compute::dissect(reader)? {
-                return next(reader, Element::Compute(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Loop) {
-            if let Some(el) = Loop::dissect(reader)? {
-                return next(reader, Element::Loop(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::While) {
-            if let Some(el) = While::dissect(reader)? {
-                return next(reader, Element::While(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::For) {
-            if let Some(el) = For::dissect(reader)? {
-                return next(reader, Element::For(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Range) {
-            if let Some(el) = Range::dissect(reader)? {
-                return next(reader, Element::Range(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Breaker) {
-            if let Some(el) = Breaker::dissect(reader)? {
-                return next(reader, Element::Breaker(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Accessor) {
-            if let Some(el) = Accessor::dissect(reader)? {
-                return next(reader, Element::Accessor(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Call) {
-            if let Some(el) = Call::dissect(reader)? {
-                return next(reader, Element::Call(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Optional) {
-            if let Some(el) = Optional::dissect(reader)? {
-                return next(reader, Element::Optional(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Conclusion) {
-            if let Some(el) = Conclusion::dissect(reader)? {
-                return next(reader, Element::Conclusion(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Combination) {
-            if let Some(el) = Combination::dissect(reader)? {
-                return next(reader, Element::Combination(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Subsequence) {
-            if let Some(el) = Subsequence::dissect(reader)? {
-                return next(reader, Element::Subsequence(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Condition) {
-            if let Some(el) = Condition::dissect(reader)? {
-                return next(reader, Element::Condition(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Meta) {
-            if let Some(el) = Meta::dissect(reader)? {
-                return next(reader, Element::Meta(el), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Comparing) {
-            if let Some(el) = Comparing::dissect(reader)? {
-                return next(reader, Element::Comparing(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::If) {
-            if let Some(el) = If::dissect(reader)? {
-                return next(reader, Element::If(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::IfThread) {
-            if let Some(el) = IfThread::dissect(reader)? {
-                return next(reader, Element::IfThread(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::IfSubsequence) {
-            if let Some(el) = IfSubsequence::dissect(reader)? {
-                return next(reader, Element::IfSubsequence(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::IfCondition) {
-            if let Some(el) = IfCondition::dissect(reader)? {
-                return next(reader, Element::IfCondition(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Gatekeeper) {
-            if let Some(el) = Gatekeeper::dissect(reader)? {
-                return next(reader, Element::Gatekeeper(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Command) {
-            if let Some(el) = Command::dissect(reader)? {
-                let to = tolerance(reader, md);
-                return next(reader, Element::Command(el, to), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Integer) {
-            if let Some(el) = Integer::dissect(reader)? {
-                return next(reader, Element::Integer(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Boolean) {
-            if let Some(el) = Boolean::dissect(reader)? {
-                return next(reader, Element::Boolean(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Incrementer) {
-            if let Some(el) = Incrementer::dissect(reader)? {
-                return next(reader, Element::Incrementer(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::VariableAssignation) {
-            if let Some(el) = VariableAssignation::dissect(reader)? {
-                return next(reader, Element::VariableAssignation(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Each) {
-            if let Some(el) = Each::dissect(reader)? {
-                return next(reader, Element::Each(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::First) {
-            if let Some(el) = First::dissect(reader)? {
-                return next(reader, Element::First(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Join) {
-            if let Some(el) = Join::dissect(reader)? {
-                return next(reader, Element::Join(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Function) {
-            if let Some(el) = Function::dissect(reader)? {
-                let to = tolerance(reader, md);
-                return next(reader, Element::Function(el, to), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Reference) {
-            if let Some(el) = Reference::dissect(reader)? {
-                return next(reader, Element::Reference(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::PatternString) {
-            if let Some(el) = PatternString::dissect(reader)? {
-                return next(reader, Element::PatternString(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Block) {
-            if let Some(el) = Block::dissect(reader)? {
-                return next(reader, Element::Block(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Values) {
-            if let Some(el) = Values::dissect(reader)? {
-                return next(reader, Element::Values(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::VariableName) {
-            if let Some(el) = VariableName::dissect(reader)? {
-                return next(reader, Element::VariableName(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Component) {
-            if let Some(el) = Component::dissect(reader)? {
-                return next(reader, Element::Component(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::Task) {
-            if let Some(el) = Task::dissect(reader)? {
-                return next(reader, Element::Task(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::VariableDeclaration) {
-            if let Some(el) = VariableDeclaration::dissect(reader)? {
-                return next(reader, Element::VariableDeclaration(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::VariableType) {
-            if let Some(el) = VariableType::dissect(reader)? {
-                return next(reader, Element::VariableType(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::VariableVariants) {
-            if let Some(el) = VariableVariants::dissect(reader)? {
-                return next(reader, Element::VariableVariants(el, md), token);
-            }
-        }
-        if includes == targets.contains(&ElementId::SimpleString) {
-            if let Some(el) = SimpleString::dissect(reader)? {
-                return next(reader, Element::SimpleString(el, md), token);
-            }
-        }
-        Ok(None)
-    }
-
-    pub fn exclude(
-        reader: &mut Reader,
-        targets: &[ElementId],
-    ) -> Result<Option<Element>, LinkedErr<E>> {
-        Self::parse(reader, targets, false)
-    }
-
-    pub fn include(
-        reader: &mut Reader,
-        targets: &[ElementId],
-    ) -> Result<Option<Element>, LinkedErr<E>> {
-        Self::parse(reader, targets, true)
+        } else {
+            el
+        };
+        // let mut el = Element::try_read(reader, el.id(), md.clone())?.unwrap();
+        el.get_mut_metadata().tolerance = reader.move_to().char(&[&chars::QUESTION]).is_some();
+        next(reader, el, token)
     }
 
     pub fn get_metadata(&self) -> &Metadata {

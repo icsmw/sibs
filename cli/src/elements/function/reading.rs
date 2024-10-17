@@ -60,7 +60,7 @@ impl TryDissect<Function> for Function {
         let mut elements: Vec<Element> = Vec::new();
         let mut inner = reader.token()?.bound;
         while !inner.is_empty() {
-            if let Some(el) = Element::include(
+            if let Some(el) = Element::read(
                 &mut inner,
                 &[
                     ElementId::Closure,
@@ -85,13 +85,13 @@ impl TryDissect<Function> for Function {
                     Err(E::NoContentBeforeComma.by_reader(&inner))?;
                 }
                 elements.push(
-                    Element::include(&mut inner.token()?.bound, &[ElementId::SimpleString])?
+                    Element::read(&mut inner.token()?.bound, &[ElementId::SimpleString])?
                         .ok_or(E::NoContentBeforeComma.by_reader(&inner))?,
                 );
                 let _ = inner.move_to().char(&[&chars::COMMA]);
             } else if !inner.is_empty() {
                 elements.push(
-                    Element::include(&mut inner, &[ElementId::SimpleString])?
+                    Element::read(&mut inner, &[ElementId::SimpleString])?
                         .ok_or(E::NoContentBeforeComma.by_reader(&inner))?,
                 );
             }

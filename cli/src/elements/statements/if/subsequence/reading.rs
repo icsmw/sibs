@@ -12,7 +12,7 @@ impl TryDissect<IfSubsequence> for IfSubsequence {
             if subsequence.is_empty()
                 || matches!(subsequence.last(), Some(Element::Combination(..)))
             {
-                if let Some(el) = Element::include(
+                if let Some(el) = Element::read(
                     reader,
                     &[
                         ElementId::Boolean,
@@ -28,7 +28,7 @@ impl TryDissect<IfSubsequence> for IfSubsequence {
                 } else {
                     break;
                 }
-            } else if let Some(el) = Element::include(reader, &[ElementId::Combination])? {
+            } else if let Some(el) = Element::read(reader, &[ElementId::Combination])? {
                 subsequence.push(el);
             } else {
                 break;
@@ -50,6 +50,26 @@ impl TryDissect<IfSubsequence> for IfSubsequence {
         } else {
             Err(E::FailToReadConditions.linked(&close(reader)))
         }
+        // if subsequence.is_empty() {
+        //     Ok(None)
+        // } else if let (1, Some(Element::IfCondition(..))) = (subsequence.len(), subsequence.first())
+        // {
+        //     // If it''s only IfCondition, we do not use IfSubsequence
+        //     Ok(None)
+        // } else if reader.is_empty()
+        //     || reader.next().is_word(&[
+        //         words::IF,
+        //         words::ELSE,
+        //         &format!("{}", chars::OPEN_CURLY_BRACE),
+        //     ])
+        // {
+        //     Ok(Some(IfSubsequence {
+        //         subsequence,
+        //         token: close(reader),
+        //     }))
+        // } else {
+        //     Err(E::FailToReadConditions.linked(&close(reader)))
+        // }
     }
 }
 

@@ -17,12 +17,12 @@ impl TryDissect<Closure> for Closure {
             return Ok(None);
         }
         let mut args_inner = reader.token()?.bound;
-        let Some(block) = Element::include(reader, &[ElementId::Block])? else {
+        let Some(block) = Element::read(reader, &[ElementId::Block])? else {
             return Ok(None);
         };
         let mut args = Vec::new();
         while !args_inner.is_empty() {
-            if let Some(el) = Element::include(&mut args_inner, &[ElementId::VariableName])? {
+            if let Some(el) = Element::read(&mut args_inner, &[ElementId::VariableName])? {
                 if args_inner.move_to().char(&[&chars::COMMA]).is_none() && !args_inner.is_empty() {
                     Err(E::MissedComma.by_reader(&args_inner))?;
                 }

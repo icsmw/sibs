@@ -30,7 +30,7 @@ impl TryDissect<Task> for Task {
             reader.move_to().next();
             let mut declarations: Vec<Element> = Vec::new();
             let mut inner = reader.token()?.bound;
-            while let Some(el) = Element::include(&mut inner, &[ElementId::VariableDeclaration])? {
+            while let Some(el) = Element::read(&mut inner, &[ElementId::VariableDeclaration])? {
                 let _ = inner.move_to().char(&[&chars::COMMA]);
                 declarations.push(el);
             }
@@ -48,7 +48,7 @@ impl TryDissect<Task> for Task {
             .is_some()
         {
             let mut inner = reader.token()?.bound;
-            while let Some(el) = Element::include(
+            while let Some(el) = Element::read(
                 &mut inner,
                 &[ElementId::Reference, ElementId::VariableAssignation],
             )? {
@@ -59,7 +59,7 @@ impl TryDissect<Task> for Task {
                 Err(E::UnrecognizedCode(inner.move_to().end()).by_reader(&inner))?;
             }
         }
-        if let Some(block) = Element::include(reader, &[ElementId::Block])? {
+        if let Some(block) = Element::read(reader, &[ElementId::Block])? {
             Ok(Some(Task {
                 name: SimpleString {
                     value: name,

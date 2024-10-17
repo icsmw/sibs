@@ -24,7 +24,7 @@ async fn processing() {
         &include_str!("../tests/processing/tolerance.sibs"),
         |reader: &mut Reader, src: &mut Sources| {
             let mut elements: Vec<Element> = Vec::new();
-            while let Some(el) = src.report_err_if(Element::include(reader, &[ElementId::Task]))? {
+            while let Some(el) = src.report_err_if(Element::read(reader, &[ElementId::Task]))? {
                 let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                 elements.push(el);
             }

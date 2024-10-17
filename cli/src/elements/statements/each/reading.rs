@@ -16,7 +16,7 @@ impl TryDissect<Each> for Each {
             {
                 let mut inner = reader.token()?.bound;
                 let variable = if let Some(variable) =
-                    Element::include(&mut inner, &[ElementId::VariableName])?
+                    Element::read(&mut inner, &[ElementId::VariableName])?
                 {
                     if inner.move_to().char(&[&chars::SEMICOLON]).is_none() {
                         return Err(E::MissedSemicolon.linked(&inner.token()?.id));
@@ -26,7 +26,7 @@ impl TryDissect<Each> for Each {
                     return Err(E::NoLoopVariable.linked(&inner.token()?.id));
                 };
                 let input = if let Some(el) =
-                    Element::include(&mut inner, &[ElementId::Function, ElementId::VariableName])?
+                    Element::read(&mut inner, &[ElementId::Function, ElementId::VariableName])?
                 {
                     Box::new(el)
                 } else {
@@ -36,7 +36,7 @@ impl TryDissect<Each> for Each {
             } else {
                 return Err(E::NoLoopInitialization.linked(&reader.token()?.id));
             };
-            let Some(mut block) = Element::include(reader, &[ElementId::Block])? else {
+            let Some(mut block) = Element::read(reader, &[ElementId::Block])? else {
                 Err(E::NoGroup.by_reader(reader))?
             };
             if let Element::Block(block, _) = &mut block {

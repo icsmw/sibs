@@ -9,10 +9,10 @@ impl TryDissect<While> for While {
     fn try_dissect(reader: &mut Reader) -> Result<Option<While>, LinkedErr<E>> {
         let close = reader.open_token(ElementId::While);
         if reader.move_to().word(&[words::WHILE]).is_some() {
-            let Some(condition) = Element::include(reader, &[ElementId::Comparing])? else {
+            let Some(condition) = Element::read(reader, &[ElementId::Comparing])? else {
                 return Err(E::NoConditionInWhile.by_reader(reader));
             };
-            let Some(mut block) = Element::include(reader, &[ElementId::Block])? else {
+            let Some(mut block) = Element::read(reader, &[ElementId::Block])? else {
                 return Err(E::NoBodyInForLoop.by_reader(reader));
             };
             if let Element::Block(block, _) = &mut block {

@@ -8,7 +8,7 @@ impl TryDissect<First> for First {
     fn try_dissect(reader: &mut Reader) -> Result<Option<First>, LinkedErr<E>> {
         let close = reader.open_token(ElementId::First);
         if reader.move_to().word(&[words::FIRST]).is_some() {
-            let Some(mut block) = Element::include(reader, &[ElementId::Block])? else {
+            let Some(mut block) = Element::read(reader, &[ElementId::Block])? else {
                 return Err(E::NoFIRSTStatementBody.by_reader(reader));
             };
             if let Element::Block(block, _) = &mut block {

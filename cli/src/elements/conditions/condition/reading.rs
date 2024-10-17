@@ -13,7 +13,7 @@ impl TryDissect<Condition> for Condition {
             .is_some()
         {
             let mut inner = reader.token()?.bound;
-            if let Some(el) = Element::include(&mut inner, &[ElementId::Subsequence])? {
+            if let Some(el) = Element::read(&mut inner, &[ElementId::Subsequence])? {
                 Ok(Some(Condition {
                     subsequence: Box::new(el),
                     token: close(reader),

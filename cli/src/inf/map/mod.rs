@@ -5,7 +5,8 @@ use crate::elements::ElementId;
 use console::Style;
 pub use error::E;
 pub use fragment::*;
-use std::{collections::HashMap, path::PathBuf};
+use hashbrown::HashMap;
+use std::path::PathBuf;
 
 const REPORT_LN_AROUND: usize = 6;
 

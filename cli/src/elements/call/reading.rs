@@ -11,7 +11,7 @@ impl TryDissect<Call> for Call {
             if let Some(chars::DOT) = reader.next().char() {
                 None
             } else {
-                let Some(el) = Element::include(reader, &[ElementId::Function])? else {
+                let Some(el) = Element::read(reader, &[ElementId::Function])? else {
                     return Err(E::NoCallFunction.linked(&close(reader)));
                 };
                 Some(Call {

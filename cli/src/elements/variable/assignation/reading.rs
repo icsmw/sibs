@@ -8,7 +8,7 @@ impl TryDissect<VariableAssignation> for VariableAssignation {
     fn try_dissect(reader: &mut Reader) -> Result<Option<VariableAssignation>, LinkedErr<E>> {
         let close = reader.open_token(ElementId::VariableAssignation);
         let global = reader.move_to().word(&[words::GLOBAL_VAR]).is_some();
-        if let Some(variable) = Element::include(reader, &[ElementId::VariableName])? {
+        if let Some(variable) = Element::read(reader, &[ElementId::VariableName])? {
             let rest = reader.rest().trim();
             if rest.starts_with(words::DO_ON)
                 || rest.starts_with(words::CMP_TRUE)
@@ -17,7 +17,7 @@ impl TryDissect<VariableAssignation> for VariableAssignation {
                 return Ok(None);
             }
             let _ = reader.move_to().char(&[&chars::EQUAL]);
-            let assignation = Element::include(
+            let assignation = Element::read(
                 reader,
                 &[
                     ElementId::Block,

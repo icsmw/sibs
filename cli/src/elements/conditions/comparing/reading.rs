@@ -7,7 +7,7 @@ use crate::{
 impl TryDissect<Comparing> for Comparing {
     fn try_dissect(reader: &mut Reader) -> Result<Option<Comparing>, LinkedErr<E>> {
         let close = reader.open_token(ElementId::Comparing);
-        let left = if let Some(el) = Element::include(
+        let left = if let Some(el) = Element::read(
             reader,
             &[
                 ElementId::VariableName,
@@ -34,7 +34,7 @@ impl TryDissect<Comparing> for Comparing {
         } else {
             return Ok(None);
         };
-        let right = if let Some(el) = Element::include(
+        let right = if let Some(el) = Element::read(
             reader,
             &[
                 ElementId::VariableName,

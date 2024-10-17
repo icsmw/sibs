@@ -10,7 +10,7 @@ impl TryDissect<Gatekeeper> for Gatekeeper {
             return Ok(None);
         }
         let close = reader.open_token(ElementId::Gatekeeper);
-        let function = if let Some(el) = Element::include(reader, &[ElementId::Function])? {
+        let function = if let Some(el) = Element::read(reader, &[ElementId::Function])? {
             Box::new(el)
         } else {
             return Ok(None);
@@ -21,8 +21,7 @@ impl TryDissect<Gatekeeper> for Gatekeeper {
         if reader.move_to().expression(&[words::REF_TO]).is_none() {
             return Err(E::NoReferenceForGatekeeper.by_reader(reader));
         }
-        let Some(refs) = Element::include(reader, &[ElementId::Values, ElementId::Reference])?
-        else {
+        let Some(refs) = Element::read(reader, &[ElementId::Values, ElementId::Reference])? else {
             return Err(E::NoReferenceForGatekeeper.by_reader(reader));
         };
         match &refs {

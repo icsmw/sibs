@@ -13,7 +13,7 @@ test_reading_el_by_el!(
     reading,
     &include_str!("../../tests/reading/values.sibs"),
     &[ElementId::Values],
-    62
+    50
 );
 
 test_reading_with_errors_ln_by_ln!(
@@ -55,7 +55,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut components: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElementId::Component]))?
+                    src.report_err_if(Element::read(reader, &[ElementId::Component]))?
                 {
                     components.push(task);
                 }
@@ -68,7 +68,7 @@ mod processing {
             |reader: &mut Reader, src: &mut Sources| {
                 let mut tasks: Vec<Element> = Vec::new();
                 while let Some(task) =
-                    src.report_err_if(Element::include(reader, &[ElementId::Task]))?
+                    src.report_err_if(Element::read(reader, &[ElementId::Task]))?
                 {
                     let _ = reader.move_to().char(&[&chars::SEMICOLON]);
                     tasks.push(task);
