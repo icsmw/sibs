@@ -268,7 +268,7 @@ XѨ`󠗐P򎨈�񶨆$,::Ⱥ:%<S/<
         identB
         //comment B
         identC
-        }rest`
+        }re\`st`
     };"#;
     let mut lx = Lexer::new(content, 0);
     let tokens = lx.read(true);

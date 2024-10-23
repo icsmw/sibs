@@ -232,28 +232,13 @@ impl Arbitrary for StringPart {
                         chars
                             .into_iter()
                             .map(|ch| {
-                                if ch == '\''
-                                    || ch == '`'
-                                    || ch == '"'
-                                    || ch == '{'
-                                    || ch == '}'
-                                    || ch == '\\'
-                                {
+                                if ch == '{' || ch == '}' || ch == '\\' {
                                     "_".to_string()
+                                } else if ch == sch {
+                                    format!("\\{sch}")
                                 } else {
                                     ch.to_string()
                                 }
-                                // if ch == sch {
-                                //     format!("\\{sch}")
-                                // } else if ch == '{' {
-                                //     "\\{".to_string()
-                                // } else if ch == '}' {
-                                //     "\\}".to_string()
-                                // } else if ch == '\\' {
-                                //     "_".to_string()
-                                // } else {
-                                //     ch.to_string()
-                                // }
                             })
                             .collect::<String>(),
                     )

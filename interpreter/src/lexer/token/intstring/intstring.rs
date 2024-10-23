@@ -49,14 +49,14 @@ impl StringPart {
                 } else {
                     return Err(E::NoClosingSymbol('}'));
                 }
-            } else if nch == ch {
+            } else if nch == ch && !serialized {
                 if !collected.is_empty() {
                     parts.push(StringPart::Literal(collected.clone()));
                 }
                 lx.advance();
                 break true;
             } else {
-                serialized = ch == '\\';
+                serialized = nch == '\\';
                 collected.push(nch);
             }
         };
