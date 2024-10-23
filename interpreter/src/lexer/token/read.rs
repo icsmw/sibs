@@ -263,6 +263,12 @@ XѨ`󠗐P򎨈�񶨆$,::Ⱥ:%<S/<
         `command_a{variable}`
         `{variable}command_b`
         `¡{//=}`
+        `some{ident
+        // comment A
+        identB
+        //comment B
+        identC
+        }rest`
     };"#;
     let mut lx = Lexer::new(content, 0);
     let tokens = lx.read(true);

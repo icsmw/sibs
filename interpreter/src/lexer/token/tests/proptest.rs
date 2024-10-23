@@ -4,7 +4,7 @@ use crate::tests::*;
 use prop::strategy::Union;
 use proptest::prelude::*;
 
-fn get_rnd_kind(exceptions: Vec<KindId>) -> BoxedStrategy<Kind> {
+fn get_rnd_kind(exceptions: Vec<KindId>) -> BoxedStrategy<Vec<Kind>> {
     prop_oneof![
         Just(KindId::If),
         Just(KindId::Else),
@@ -67,7 +67,7 @@ fn get_rnd_kind(exceptions: Vec<KindId>) -> BoxedStrategy<Kind> {
     .boxed()
 }
 
-fn get_kind(id: KindId) -> BoxedStrategy<Kind> {
+fn get_kind(id: KindId) -> Vec<BoxedStrategy<Kind>> {
     match id {
         KindId::If
         | KindId::Else
@@ -119,16 +119,16 @@ fn get_kind(id: KindId) -> BoxedStrategy<Kind> {
         | KindId::EOF
         | KindId::LF
         | KindId::CR
-        | KindId::CRLF => Just(id.try_into().expect("Fail convert KindId to Kind")).boxed(),
-        KindId::Identifier => "[a-z][a-z0-9]*"
+        | KindId::CRLF => vec![Just(id.try_into().expect("Fail convert KindId to Kind")).boxed()],
+        KindId::Identifier => vec!["[a-z][a-z0-9]*"
             .prop_map(String::from)
             .prop_map(Kind::Identifier)
-            .boxed(),
-        KindId::Number => proptest::num::f64::NORMAL
+            .boxed()],
+        KindId::Number => vec![proptest::num::f64::NORMAL
             .prop_filter("Finite f64", |x| x.is_finite())
             .prop_map(Kind::Number)
-            .boxed(),
-        KindId::String => proptest::collection::vec(any::<char>(), 0..200)
+            .boxed()],
+        KindId::String => vec![proptest::collection::vec(any::<char>(), 0..200)
             .prop_map(|chars| {
                 Kind::String(
                     chars
@@ -145,8 +145,8 @@ fn get_kind(id: KindId) -> BoxedStrategy<Kind> {
                         .collect::<String>(),
                 )
             })
-            .boxed(),
-        KindId::InterpolatedString => (1..10, prop_oneof![Just(0u8), Just(1u8)])
+            .boxed()],
+        KindId::InterpolatedString => vec![(1..10, prop_oneof![Just(0u8), Just(1u8)])
             .prop_flat_map(|(count, first)| {
                 let mut parts: Vec<BoxedStrategy<StringPart>> = Vec::new();
                 let mut variant = first;
@@ -160,8 +160,8 @@ fn get_kind(id: KindId) -> BoxedStrategy<Kind> {
                 }
                 parts.prop_map(Kind::InterpolatedString).boxed()
             })
-            .boxed(),
-        KindId::Command => (1..10, prop_oneof![Just(0u8), Just(1u8)])
+            .boxed()],
+        KindId::Command => vec![(1..10, prop_oneof![Just(0u8), Just(1u8)])
             .prop_flat_map(|(count, first)| {
                 let mut parts: Vec<BoxedStrategy<StringPart>> = Vec::new();
                 let mut variant = first;
@@ -175,39 +175,49 @@ fn get_kind(id: KindId) -> BoxedStrategy<Kind> {
                 }
                 parts.prop_map(Kind::Command).boxed()
             })
-            .boxed(),
-        KindId::Comment => proptest::collection::vec(any::<char>(), 0..200)
-            .prop_map(|chars| {
-                Kind::Comment(
-                    chars
-                        .into_iter()
-                        .map(|ch| {
-                            if ch == '\n' {
-                                "_".to_string()
-                            } else {
-                                ch.to_string()
-                            }
-                        })
-                        .collect::<String>(),
-                )
-            })
-            .boxed(),
-        KindId::Meta => proptest::collection::vec(any::<char>(), 0..200)
-            .prop_map(|chars| {
-                Kind::Meta(
-                    chars
-                        .into_iter()
-                        .map(|ch| {
-                            if ch == '\n' {
-                                "_".to_string()
-                            } else {
-                                ch.to_string()
-                            }
-                        })
-                        .collect::<String>(),
-                )
-            })
-            .boxed(),
+            .boxed()],
+        KindId::Comment => vec![
+            Just(Kind::LF).boxed(),
+            proptest::collection::vec(any::<char>(), 0..200)
+                .prop_map(|chars| {
+                    Kind::Comment(format!(
+                        "comment:{}",
+                        chars
+                            .into_iter()
+                            .map(|ch| {
+                                if ch == '\n' || ch == '\r' || ch == '\\' {
+                                    "_".to_string()
+                                } else {
+                                    ch.to_string()
+                                }
+                            })
+                            .collect::<String>()
+                    ))
+                })
+                .boxed(),
+            Just(Kind::LF).boxed(),
+        ],
+        KindId::Meta => vec![
+            Just(Kind::LF).boxed(),
+            proptest::collection::vec(any::<char>(), 0..200)
+                .prop_map(|chars| {
+                    Kind::Meta(format!(
+                        "meta:{}",
+                        chars
+                            .into_iter()
+                            .map(|ch| {
+                                if ch == '\n' || ch == '\r' || ch == '\\' {
+                                    "_".to_string()
+                                } else {
+                                    ch.to_string()
+                                }
+                            })
+                            .collect::<String>()
+                    ))
+                })
+                .boxed(),
+            Just(Kind::LF).boxed(),
+        ],
     }
 }
 
@@ -223,7 +233,13 @@ impl Arbitrary for StringPart {
                         chars
                             .into_iter()
                             .map(|ch| {
-                                if ch == '\'' || ch == '`' || ch == '"' || ch == '{' || ch == '}' {
+                                if ch == '\''
+                                    || ch == '`'
+                                    || ch == '"'
+                                    || ch == '{'
+                                    || ch == '}'
+                                    || ch == '\\'
+                                {
                                     "_".to_string()
                                 } else {
                                     ch.to_string()
@@ -249,8 +265,6 @@ impl Arbitrary for StringPart {
                 get_rnd_kind(vec![
                     KindId::LeftBrace,
                     KindId::RightBrace,
-                    KindId::Comment,
-                    KindId::Meta,
                     KindId::CR,
                     KindId::LF,
                     KindId::CRLF,
@@ -260,7 +274,11 @@ impl Arbitrary for StringPart {
             .prop_map(|knd| {
                 StringPart::Expression(
                     knd.into_iter()
-                        .map(|knd| Token::by_pos(knd, 0, 0))
+                        .flat_map(|knd| {
+                            knd.into_iter()
+                                .map(|knd| Token::by_pos(knd, 0, 0))
+                                .collect::<Vec<Token>>()
+                        })
                         .collect::<Vec<Token>>(),
                 )
             })
@@ -269,7 +287,8 @@ impl Arbitrary for StringPart {
     }
 }
 
-fn run(kinds: Vec<Kind>) {
+fn run(kinds: Vec<Vec<Kind>>) {
+    let kinds = kinds.into_iter().flatten().collect::<Vec<Kind>>();
     let mut pos: usize = 0;
     let mut origin = String::new();
     let tokens = kinds
@@ -303,7 +322,8 @@ fn run(kinds: Vec<Kind>) {
             }
         }
         Err(err) => {
-            println!("REST:{:?}\n\nFULL:{origin:?}\n\n", lx.rest());
+            println!("REST DEBUG:{:?}\n\nFULL:{origin:?}\n\n", lx.rest());
+            println!("REST:{}\n\nFULL:{origin}\n\n", lx.rest());
             panic!("{err:?}");
         }
     }
@@ -337,6 +357,7 @@ proptest! {
 
     #[test]
     fn tokens(kinds in proptest::collection::vec(get_rnd_kind(vec![]), 1..100)) {
+        let kinds = kinds.into_iter().flatten().collect::<Vec<Kind>>();
         let mut pos: usize = 0;
         let mut origin = String::new();
         let tokens = kinds.into_iter().map(|knd| {

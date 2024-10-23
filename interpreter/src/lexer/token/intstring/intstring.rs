@@ -29,18 +29,22 @@ impl StringPart {
                 collected.clear();
                 let mut tokens: Vec<Token> = Vec::new();
                 let mut prev = None;
+                let mut closed = false;
                 while let Some(tk) = Token::read(lx, prev)? {
+                    if matches!(tk.kind, Kind::RightBrace) {
+                        closed = true;
+                        break;
+                    }
                     prev = Some(tk.id());
                     tokens.push(tk);
                     if let Some('}') = lx.char() {
+                        closed = true;
                         break;
                     }
                 }
-                if let Some('}') = lx.char() {
+                if closed {
                     parts.push(StringPart::Expression(tokens));
                 } else {
-                    println!("{tokens:?}");
-                    println!(">>>>>>>>>>>>>>>>>>>000");
                     return Err(E::NoClosingSymbol('}'));
                 }
             } else if nch == ch {
@@ -55,7 +59,6 @@ impl StringPart {
             }
         };
         if !closed {
-            println!(">>>>>>>>>>>>>>>>>>>");
             return Err(E::NoClosingSymbol(ch));
         }
         Ok(Some(if ch == '`' {
