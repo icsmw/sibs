@@ -18,8 +18,13 @@ impl StringPart {
         let mut collected = String::new();
         let mut serialized: bool = false;
         let mut parts: Vec<StringPart> = Vec::new();
+        let mut skip = false;
         let closed = loop {
-            lx.advance();
+            if !skip {
+                lx.advance();
+            } else {
+                skip = false;
+            }
             let Some(nch) = lx.char() else {
                 break false;
             };
@@ -33,14 +38,11 @@ impl StringPart {
                 while let Some(tk) = Token::read(lx, prev)? {
                     if matches!(tk.kind, Kind::RightBrace) {
                         closed = true;
+                        skip = true;
                         break;
                     }
                     prev = Some(tk.id());
                     tokens.push(tk);
-                    if let Some('}') = lx.char() {
-                        closed = true;
-                        break;
-                    }
                 }
                 if closed {
                     parts.push(StringPart::Expression(tokens));

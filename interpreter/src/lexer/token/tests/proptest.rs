@@ -1,7 +1,6 @@
 use crate::lexer::*;
 use crate::tests::*;
 
-use prop::strategy::Union;
 use proptest::prelude::*;
 
 fn get_rnd_kind(exceptions: Vec<KindId>) -> BoxedStrategy<Vec<Kind>> {
@@ -268,6 +267,7 @@ impl Arbitrary for StringPart {
                     KindId::CR,
                     KindId::LF,
                     KindId::CRLF,
+                    KindId::Slash,
                 ]),
                 1..5,
             )
@@ -291,7 +291,7 @@ fn run(kinds: Vec<Vec<Kind>>) {
     let kinds = kinds.into_iter().flatten().collect::<Vec<Kind>>();
     let mut pos: usize = 0;
     let mut origin = String::new();
-    let tokens = kinds
+    let mut generated = kinds
         .into_iter()
         .map(|knd| {
             let mut token = Token::by_pos(knd, pos, 0);
@@ -305,12 +305,11 @@ fn run(kinds: Vec<Vec<Kind>>) {
             token
         })
         .collect::<Vec<Token>>();
-
+    generated.insert(0, Token::by_pos(Kind::BOF, 0, 0));
     let mut lx = Lexer::new(&origin, 0);
     let tokens = lx.read(true);
     match tokens {
         Ok(tokens) => {
-            // println!("{tokens:?}");
             let restored = tokens
                 .iter()
                 .map(|tk| tk.to_string())
@@ -320,10 +319,16 @@ fn run(kinds: Vec<Vec<Kind>>) {
             for tk in tokens.iter() {
                 assert_eq!(lx.input[tk.pos.from..tk.pos.to], tk.to_string());
             }
+            assert_eq!(tokens.len(), generated.len());
+            // for (n, tk) in tokens.iter().enumerate() {
+            //     assert_eq!(lx.input[tk.pos.from..tk.pos.to], tk.to_string());
+            // }
         }
         Err(err) => {
-            println!("REST DEBUG:{:?}\n\nFULL:{origin:?}\n\n", lx.rest());
-            println!("REST:{}\n\nFULL:{origin}\n\n", lx.rest());
+            // println!(">>>>>>>>>>>>>>>REST:{}", lx.rest());
+            println!(">>>>>>>>>>>>>>>REST DEB:{:?}", lx.rest());
+            // println!(">>>>>>>>>>>>>>>ORIGIN:{origin}",);
+            println!(">>>>>>>>>>>>>>>ORIGIN DEB:{origin:?}");
             panic!("{err:?}");
         }
     }
