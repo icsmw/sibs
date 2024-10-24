@@ -9,6 +9,7 @@ pub trait ConstantLength {
 impl ConstantLength for KindId {
     fn length(&self) -> Result<usize, E> {
         match self {
+            Self::EOF | Self::BOF => Ok(0),
             Self::Question
             | Self::Dollar
             | Self::At
@@ -59,9 +60,7 @@ impl ConstantLength for KindId {
             | Self::Number
             | Self::String
             | Self::InterpolatedString
-            | Self::Command
-            | Self::EOF
-            | Self::BOF => Err(E::NoConstantLength(self.clone())),
+            | Self::Command => Err(E::NoConstantLength(self.clone())),
         }
     }
 }
