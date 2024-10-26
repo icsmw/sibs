@@ -5,8 +5,6 @@ mod kind;
 mod length;
 mod position;
 mod read;
-#[cfg(test)]
-mod tests;
 mod tokens;
 
 pub use conflict::*;
@@ -19,8 +17,6 @@ pub use read::*;
 pub use tokens::*;
 
 use std::fmt;
-#[cfg(test)]
-pub use tests::*;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Token {
@@ -29,9 +25,6 @@ pub struct Token {
 }
 
 impl Token {
-    pub fn new(kind: Kind, pos: Position) -> Self {
-        Self { kind, pos }
-    }
     pub fn by_pos(kind: Kind, from: usize, to: usize) -> Self {
         Self {
             kind,

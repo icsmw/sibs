@@ -133,6 +133,11 @@ pub fn kind(id: KindId) -> Vec<BoxedStrategy<Kind>> {
         KindId::Identifier => vec!["[a-z][a-z0-9]*"
             .prop_map(String::from)
             .prop_filter("conflicts", |s| {
+                if let Some(ch) = s.chars().next() {
+                    if ch.is_numeric() {
+                        return false;
+                    }
+                }
                 ![
                     KindId::If.to_string(),
                     KindId::Let.to_string(),

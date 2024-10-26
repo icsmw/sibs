@@ -121,8 +121,8 @@ fn kinds_into(knds: Vec<Kind>) -> (Vec<Token>, String) {
     (tokens, content)
 }
 
-pub fn test_tokens_by_kinds(kinds: Vec<Vec<Kind>>) {
-    let (mut generated, origin) = kinds_into(kinds.into_iter().flatten().collect::<Vec<Kind>>());
+pub fn test_tokens_by_kinds(kinds: Vec<Kind>) {
+    let (mut generated, origin) = kinds_into(kinds);
     generated.insert(0, Token::by_pos(Kind::BOF, 0, 0));
     let mut lx = Lexer::new(&origin, 0);
     match lx.read(true) {
@@ -135,6 +135,10 @@ pub fn test_tokens_by_kinds(kinds: Vec<Vec<Kind>>) {
             assert_eq!(restored, origin);
             for tk in tokens.iter() {
                 assert_eq!(lx.input[tk.pos.from..tk.pos.to], tk.to_string());
+            }
+            if tokens.count() != generated.len() {
+                println!("LEFT: {tokens:?}");
+                println!("RIGHT: {generated:?}");
             }
             assert_eq!(tokens.count(), generated.len());
             for (n, tk) in tokens.iter().enumerate() {
