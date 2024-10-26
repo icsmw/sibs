@@ -54,14 +54,19 @@ impl Token {
             | Kind::CR
             | Kind::CRLF
             | Kind::EOF
-            | Kind::BOF => {
+            | Kind::BOF
+            | Kind::SingleQuote
+            | Kind::DoubleQuote
+            | Kind::Tilde
+            | Kind::Backtick => {
                 self.pos.to = from + self.kind.id().length().expect("Fail to get element length");
             }
             Kind::Identifier(..)
             | Kind::String(..)
             | Kind::Comment(..)
             | Kind::Meta(..)
-            | Kind::Number(..) => {
+            | Kind::Number(..)
+            | Kind::Whitespace(..) => {
                 self.pos.to = from + self.to_string().len();
             }
             Kind::InterpolatedString(parts) | Kind::Command(parts) => {
@@ -70,6 +75,13 @@ impl Token {
                 parts.iter_mut().for_each(|part| {
                     self.pos.to += part.to_string().len();
                     match part {
+                        StringPart::Open(tk) => {
+                            tk.set_pos(pos);
+                            pos += tk
+                                .id()
+                                .length()
+                                .expect("Wrapping token doesn't have a length");
+                        }
                         StringPart::Literal(s) => {
                             pos += s.len();
                         }
@@ -77,6 +89,13 @@ impl Token {
                             tks.iter_mut().for_each(|tk| {
                                 pos = tk.set_pos(pos);
                             });
+                        }
+                        StringPart::Close(tk) => {
+                            tk.set_pos(pos);
+                            pos += tk
+                                .id()
+                                .length()
+                                .expect("Wrapping token doesn't have a length");
                         }
                     }
                 });
@@ -117,10 +136,8 @@ pub fn test_tokens_by_kinds(kinds: Vec<Vec<Kind>>) {
             for tk in tokens.iter() {
                 assert_eq!(lx.input[tk.pos.from..tk.pos.to], tk.to_string());
             }
-            assert_eq!(tokens.len(), generated.len());
+            assert_eq!(tokens.count(), generated.len());
             for (n, tk) in tokens.iter().enumerate() {
-                println!("READED: {tk:?}");
-                println!("GEN: {:?}", generated[n]);
                 assert_eq!(tk, &generated[n]);
             }
         }

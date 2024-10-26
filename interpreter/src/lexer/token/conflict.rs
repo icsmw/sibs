@@ -9,8 +9,7 @@ pub trait ConflictResolver {
 impl ConflictResolver for KindId {
     fn resolve_conflict(&self, id: &KindId) -> KindId {
         match self {
-            Self::If
-            | Self::Else
+            Self::Else
             | Self::While
             | Self::Loop
             | Self::For
@@ -18,8 +17,6 @@ impl ConflictResolver for KindId {
             | Self::Let
             | Self::True
             | Self::False
-            | Self::Identifier
-            | Self::Number
             | Self::String
             | Self::InterpolatedString
             | Self::Command
@@ -29,24 +26,16 @@ impl ConflictResolver for KindId {
             | Self::Dollar
             | Self::At
             | Self::Pound
-            | Self::Plus
-            | Self::Minus
             | Self::Star
             | Self::Slash
             | Self::Percent
-            | Self::Equals
-            | Self::EqualEqual
             | Self::BangEqual
-            | Self::Less
-            | Self::LessEqual
             | Self::Greater
             | Self::GreaterEqual
             | Self::And
             | Self::Or
             | Self::VerticalBar
             | Self::Bang
-            | Self::PlusEqual
-            | Self::MinusEqual
             | Self::StarEqual
             | Self::SlashEqual
             | Self::LeftParen
@@ -64,7 +53,101 @@ impl ConflictResolver for KindId {
             | Self::DoubleArrow
             | Self::LF
             | Self::CR
-            | Self::CRLF => self.clone(),
+            | Self::CRLF
+            | Self::SingleQuote
+            | Self::DoubleQuote
+            | Self::Tilde
+            | Self::Backtick
+            | Self::Whitespace => self.clone(),
+            Self::Plus => {
+                if matches!(id, KindId::PlusEqual) {
+                    id.clone()
+                } else {
+                    self.clone()
+                }
+            }
+            Self::PlusEqual => {
+                if matches!(id, KindId::Plus) {
+                    self.clone()
+                } else {
+                    id.clone()
+                }
+            }
+            Self::Less => {
+                if matches!(id, KindId::LessEqual) {
+                    id.clone()
+                } else {
+                    self.clone()
+                }
+            }
+            Self::LessEqual => {
+                if matches!(id, KindId::Less) {
+                    self.clone()
+                } else {
+                    id.clone()
+                }
+            }
+            Self::Minus => {
+                if matches!(id, KindId::MinusEqual) {
+                    id.clone()
+                } else {
+                    self.clone()
+                }
+            }
+            Self::MinusEqual => {
+                if matches!(id, KindId::Minus) {
+                    self.clone()
+                } else {
+                    id.clone()
+                }
+            }
+            Self::Number => {
+                if matches!(id, KindId::Identifier) {
+                    self.clone()
+                } else {
+                    id.clone()
+                }
+            }
+            Self::Equals => {
+                if matches!(id, KindId::EqualEqual) {
+                    id.clone()
+                } else {
+                    self.clone()
+                }
+            }
+            Self::EqualEqual => {
+                if matches!(id, KindId::Equals) {
+                    self.clone()
+                } else {
+                    id.clone()
+                }
+            }
+            Self::If => {
+                if matches!(id, KindId::Identifier) {
+                    self.clone()
+                } else {
+                    id.clone()
+                }
+            }
+            Self::Identifier => {
+                if matches!(
+                    id,
+                    KindId::If
+                        | KindId::Else
+                        | KindId::While
+                        | KindId::Loop
+                        | KindId::For
+                        | KindId::Return
+                        | KindId::Let
+                        | KindId::True
+                        | KindId::False
+                        | KindId::Number
+                ) {
+                    id.clone()
+                } else {
+                    self.clone()
+                }
+            }
             Self::Comment => {
                 if matches!(id, KindId::Meta) {
                     id.clone()

@@ -18,6 +18,10 @@ pub enum Kind {
     String(String),
     InterpolatedString(Vec<StringPart>), // concatenated string
     Command(Vec<StringPart>),            // string with command
+    SingleQuote,                         // '
+    DoubleQuote,                         // "
+    Tilde,                               // ~
+    Backtick,                            // `
     Question,                            // ?
     Dollar,                              // $
     At,                                  // @
@@ -55,6 +59,7 @@ pub enum Kind {
     Colon,                               // :
     Arrow,                               // ->
     DoubleArrow,                         // =>
+    Whitespace(String),                  // any whitespaces
     Comment(String),                     // //
     Meta(String),                        // ///
     LF,                                  // \n Line Feed
@@ -82,20 +87,21 @@ impl fmt::Display for Kind {
                 Self::Identifier(s) => s.clone(),
                 Self::Number(n) => n.to_string(),
                 Self::String(s) => format!("\"{s}\""),
-                Self::InterpolatedString(s) => format!(
-                    "'{}'",
-                    s.iter()
-                        .map(|p| p.to_string())
-                        .collect::<Vec<String>>()
-                        .join("")
-                ),
-                Self::Command(s) => format!(
-                    "`{}`",
-                    s.iter()
-                        .map(|p| p.to_string())
-                        .collect::<Vec<String>>()
-                        .join("")
-                ),
+                Self::Whitespace(s) => s.clone(),
+                Self::InterpolatedString(s) => s
+                    .iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(""),
+                Self::Command(s) => s
+                    .iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(""),
+                Self::SingleQuote => "'".to_owned(),
+                Self::DoubleQuote => "\"".to_owned(),
+                Self::Tilde => "~".to_owned(),
+                Self::Backtick => "`".to_owned(),
                 Self::Question => "?".to_owned(),
                 Self::Dollar => "$".to_owned(),
                 Self::At => "@".to_owned(),
@@ -159,6 +165,10 @@ impl fmt::Display for KindId {
                 Self::Let => "let".to_owned(),
                 Self::True => "true".to_owned(),
                 Self::False => "false".to_owned(),
+                Self::SingleQuote => "'".to_owned(),
+                Self::DoubleQuote => "\"".to_owned(),
+                Self::Tilde => "~".to_owned(),
+                Self::Backtick => "`".to_owned(),
                 Self::Question => "?".to_owned(),
                 Self::Dollar => "$".to_owned(),
                 Self::At => "@".to_owned(),
@@ -207,7 +217,8 @@ impl fmt::Display for KindId {
                 | Self::InterpolatedString
                 | Self::Command
                 | Self::EOF
-                | Self::BOF => String::new(),
+                | Self::BOF
+                | Self::Whitespace => String::new(),
             }
         )
     }
@@ -226,6 +237,10 @@ impl TryFrom<KindId> for Kind {
             KindId::Let => Ok(Kind::Let),
             KindId::True => Ok(Kind::True),
             KindId::False => Ok(Kind::False),
+            KindId::SingleQuote => Ok(Kind::SingleQuote),
+            KindId::DoubleQuote => Ok(Kind::DoubleQuote),
+            KindId::Tilde => Ok(Kind::Tilde),
+            KindId::Backtick => Ok(Kind::Backtick),
             KindId::Question => Ok(Kind::Question),
             KindId::Dollar => Ok(Kind::Dollar),
             KindId::At => Ok(Kind::At),
@@ -271,10 +286,82 @@ impl TryFrom<KindId> for Kind {
             KindId::Identifier
             | KindId::Number
             | KindId::String
+            | KindId::Whitespace
             | KindId::InterpolatedString
             | KindId::Command
             | KindId::Comment
             | KindId::Meta => Err(E::CannotConvertToKind(id)),
+        }
+    }
+}
+
+impl TryFrom<KindId> for char {
+    type Error = E;
+    fn try_from(id: KindId) -> Result<Self, Self::Error> {
+        match id {
+            KindId::If
+            | KindId::Else
+            | KindId::While
+            | KindId::Loop
+            | KindId::For
+            | KindId::Return
+            | KindId::Let
+            | KindId::True
+            | KindId::False
+            | KindId::Identifier
+            | KindId::Number
+            | KindId::String
+            | KindId::InterpolatedString
+            | KindId::Command
+            | KindId::EOF
+            | KindId::EqualEqual
+            | KindId::BangEqual
+            | KindId::LessEqual
+            | KindId::GreaterEqual
+            | KindId::And
+            | KindId::Or
+            | KindId::PlusEqual
+            | KindId::MinusEqual
+            | KindId::StarEqual
+            | KindId::SlashEqual
+            | KindId::DotDot
+            | KindId::Arrow
+            | KindId::DoubleArrow
+            | KindId::Comment
+            | KindId::Meta
+            | KindId::BOF
+            | KindId::CRLF
+            | KindId::Whitespace => Err(E::CannotConverToChar(id)),
+            KindId::SingleQuote => Ok('\''),
+            KindId::DoubleQuote => Ok('"'),
+            KindId::Tilde => Ok('~'),
+            KindId::Backtick => Ok('`'),
+            KindId::Question => Ok('?'),
+            KindId::Dollar => Ok('$'),
+            KindId::At => Ok('@'),
+            KindId::Pound => Ok('#'),
+            KindId::Plus => Ok('+'),
+            KindId::Minus => Ok('-'),
+            KindId::Star => Ok('*'),
+            KindId::Slash => Ok('/'),
+            KindId::Percent => Ok('%'),
+            KindId::Equals => Ok('='),
+            KindId::Less => Ok('<'),
+            KindId::Greater => Ok('>'),
+            KindId::VerticalBar => Ok('|'),
+            KindId::Bang => Ok('!'),
+            KindId::LeftParen => Ok('('),
+            KindId::RightParen => Ok(')'),
+            KindId::LeftBrace => Ok('{'),
+            KindId::RightBrace => Ok('}'),
+            KindId::LeftBracket => Ok('['),
+            KindId::RightBracket => Ok(']'),
+            KindId::Comma => Ok(','),
+            KindId::Colon => Ok(':'),
+            KindId::Dot => Ok('.'),
+            KindId::Semicolon => Ok(';'),
+            KindId::LF => Ok('\n'),
+            KindId::CR => Ok('\r'),
         }
     }
 }

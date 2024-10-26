@@ -19,11 +19,16 @@ impl Interest for KindId {
             | Self::False
             | Self::EOF
             | Self::BOF => false,
+            Self::Whitespace => ch.is_whitespace(),
             Self::Identifier => ch.is_alphabetic(),
             Self::Number => ch.is_alphanumeric(),
             Self::String => &'"' == ch,
             Self::InterpolatedString => &'\'' == ch,
             Self::Command => &'`' == ch,
+            Self::SingleQuote => &'\'' == ch,
+            Self::DoubleQuote => &'"' == ch,
+            Self::Tilde => &'~' == ch,
+            Self::Backtick => &'`' == ch,
             Self::Question => &'?' == ch,
             Self::Dollar => &'$' == ch,
             Self::At => &'@' == ch,
@@ -84,6 +89,10 @@ impl Interest for KindId {
             | Self::String
             | Self::InterpolatedString
             | Self::Command
+            | Self::SingleQuote
+            | Self::DoubleQuote
+            | Self::Tilde
+            | Self::Backtick
             | Self::Question
             | Self::Dollar
             | Self::At
@@ -127,7 +136,8 @@ impl Interest for KindId {
             | Self::CR
             | Self::CRLF
             | Self::EOF
-            | Self::BOF => false,
+            | Self::BOF
+            | Self::Whitespace => false,
         }
     }
 }

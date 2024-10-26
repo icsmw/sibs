@@ -1,12 +1,12 @@
 use crate::lexer::*;
 
 pub trait Read {
-    fn read(lx: &mut Lexer, prev: Option<KindId>) -> Result<Option<Token>, E>;
-    fn try_read(lx: &mut Lexer, id: KindId, prev: Option<&KindId>) -> Result<Option<Token>, E>;
+    fn read(lx: &mut Lexer, tks: &Tokens) -> Result<Option<Token>, E>;
+    fn try_read(lx: &mut Lexer, id: KindId, tks: &Tokens) -> Result<Option<Token>, E>;
 }
 
 impl Read for Token {
-    fn read(lx: &mut Lexer, prev: Option<KindId>) -> Result<Option<Token>, E> {
+    fn read(lx: &mut Lexer, tks: &Tokens) -> Result<Option<Token>, E> {
         fn select(
             results: &mut Vec<(usize, Token, KindId)>,
             lx: &mut Lexer,
@@ -45,7 +45,6 @@ impl Read for Token {
                 Ok(None)
             }
         }
-        lx.align();
         let drop = lx.pin();
         let next_ident = lx.read_identifier();
         drop(lx);
@@ -56,7 +55,7 @@ impl Read for Token {
         let mut results = Vec::new();
         for id in interested.iter() {
             let drop = lx.pin();
-            if let Some(tk) = Token::try_read(lx, id.clone(), prev.as_ref())? {
+            if let Some(tk) = Token::try_read(lx, id.clone(), tks)? {
                 results.push((lx.pos, tk, id.clone()));
             }
             drop(lx);
@@ -74,7 +73,7 @@ impl Read for Token {
             .collect::<Vec<KindId>>();
         for id in interested.iter() {
             let drop = lx.pin();
-            if let Some(tk) = Token::try_read(lx, id.clone(), prev.as_ref())? {
+            if let Some(tk) = Token::try_read(lx, id.clone(), tks)? {
                 results.push((lx.pos, tk, id.clone()));
             }
             drop(lx);
@@ -86,7 +85,7 @@ impl Read for Token {
         }
     }
 
-    fn try_read(lx: &mut Lexer, id: KindId, prev: Option<&KindId>) -> Result<Option<Token>, E> {
+    fn try_read(lx: &mut Lexer, id: KindId, tks: &Tokens) -> Result<Option<Token>, E> {
         let from = lx.pos;
         match id {
             KindId::If
@@ -102,6 +101,14 @@ impl Read for Token {
             } else {
                 None
             }),
+            KindId::Whitespace => {
+                let ws = lx.read_whitespace();
+                Ok(if ws.is_empty() {
+                    None
+                } else {
+                    Some(Token::by_pos(Kind::Whitespace(ws), from, lx.pos))
+                })
+            }
             KindId::Identifier => {
                 let ident = lx.read_identifier();
                 Ok(if ident.is_empty() {
@@ -138,16 +145,14 @@ impl Read for Token {
                     Ok(None)
                 }
             }
-            KindId::Command => {
-                Ok(StringPart::try_read(lx, '`')?.map(|kind| Token::by_pos(kind, from, lx.pos)))
-            }
-            KindId::InterpolatedString => {
-                Ok(StringPart::try_read(lx, '\'')?.map(|kind| Token::by_pos(kind, from, lx.pos)))
-            }
+            KindId::Command => Ok(StringPart::try_read(lx, KindId::Backtick)?
+                .map(|kind| Token::by_pos(kind, from, lx.pos))),
+            KindId::InterpolatedString => Ok(StringPart::try_read(lx, KindId::SingleQuote)?
+                .map(|kind| Token::by_pos(kind, from, lx.pos))),
             KindId::Comment => {
-                let Some(KindId::LF | KindId::CR | KindId::CRLF | KindId::BOF) = prev else {
+                if !tks.is_nl() {
                     return Ok(None);
-                };
+                }
                 if id.to_string() == lx.read_nth(2) {
                     let drop = lx.pin();
                     Ok(if let Some(content) = lx.read_until('\n') {
@@ -161,9 +166,9 @@ impl Read for Token {
                 }
             }
             KindId::Meta => {
-                let Some(KindId::LF | KindId::CR | KindId::CRLF | KindId::BOF) = prev else {
+                if !tks.is_nl() {
                     return Ok(None);
-                };
+                }
                 if id.to_string() == lx.read_nth(3) {
                     let drop = lx.pin();
                     Ok(if let Some(content) = lx.read_until('\n') {
@@ -177,6 +182,10 @@ impl Read for Token {
                 }
             }
             KindId::Question
+            | KindId::SingleQuote
+            | KindId::DoubleQuote
+            | KindId::Tilde
+            | KindId::Backtick
             | KindId::Dollar
             | KindId::At
             | KindId::Pound
@@ -239,12 +248,12 @@ import(./defaults.sibs);
         $dev = envvar(DEV_MODE);
         cd(./some_folder);
         // Comment
-        // Comment yarn 툃.옻A%b󈀀RL򢫕'󴓇\u{202e}<%.I򑰒q~%򵺜򤆅𸮟󵏅=1�vlong comment long comment long comment long comment long comment long comment long comment long comment long comment long comment
+        // Comment yarn 툃aaaaaaaaa.옻A%b󈀀RL򢫕'󴓇\u{202e}<%.I򑰒q~%򵺜򤆅𸮟󵏅=1�vlong comment long comment long comment long comment long comment long comment long comment long comment long comment long comment
         cd(..);
         "yarn 툃.옻A%b󈀀RL򢫕'󴓇<%.I򑰒q~%򵺜򤆅𸮟󵏅=1�v
 XѨ`󠗐P򎨈�񶨆$,::Ⱥ:%<S/<
         Wú`$$P.'􋹇Svug run build"
-        "\u{38d8a}\0v\u{101bb3}.\u{202e}\u{1948d}\u{1b}?@<\u{feff};\u{202e}?\u{e62d6}\u{5ca75}\u{bfd17}\u{36130}v\u{47903}Ⱥ럈'<{'/%\0\u{34e66}&吃??\u{49c68}h\u{e84b9}\t.l\n`H"
+        "\u{38d8a}bbbbbbbbbb\0v\u{101bb3}.\u{202e}\u{1948d}\u{1b}?@<\u{feff};\u{202e}?\u{e62d6}\u{5ca75}\u{bfd17}\u{36130}v\u{47903}Ⱥ럈'<{'/%\0\u{34e66}&吃??\u{49c68}h\u{e84b9}\t.l\n`H"
         remove(./node_modules/shared);
         remove(./node_modules/wrapper);
         remove(./dist/client);
@@ -294,6 +303,7 @@ XѨ`󠗐P򎨈�񶨆$,::Ⱥ:%<S/<
         Err(err) => {
             println!("ERR: {err}");
             println!("REST:{}", lx.rest());
+            panic!("{err}");
         }
     }
 }

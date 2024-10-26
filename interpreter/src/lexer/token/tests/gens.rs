@@ -14,6 +14,10 @@ pub fn rnd_kind(exceptions: Vec<KindId>) -> BoxedStrategy<Vec<Kind>> {
         Just(KindId::True),
         Just(KindId::False),
         Just(KindId::Question),
+        Just(KindId::SingleQuote),
+        Just(KindId::DoubleQuote),
+        Just(KindId::Tilde),
+        Just(KindId::Backtick),
         Just(KindId::Dollar),
         Just(KindId::At),
         Just(KindId::Pound),
@@ -56,6 +60,7 @@ pub fn rnd_kind(exceptions: Vec<KindId>) -> BoxedStrategy<Vec<Kind>> {
         Just(KindId::InterpolatedString),
         Just(KindId::Command),
         Just(KindId::Comment),
+        Just(KindId::Whitespace),
         Just(KindId::Meta),
     ]
     .prop_filter("Exception", move |id| {
@@ -77,6 +82,10 @@ pub fn kind(id: KindId) -> Vec<BoxedStrategy<Kind>> {
         | KindId::True
         | KindId::False
         | KindId::Question
+        | KindId::SingleQuote
+        | KindId::DoubleQuote
+        | KindId::Tilde
+        | KindId::Backtick
         | KindId::Dollar
         | KindId::At
         | KindId::Pound
@@ -117,7 +126,10 @@ pub fn kind(id: KindId) -> Vec<BoxedStrategy<Kind>> {
         | KindId::EOF
         | KindId::LF
         | KindId::CR
-        | KindId::CRLF => vec![Just(id.try_into().expect("Fail convert KindId to Kind")).boxed()],
+        | KindId::CRLF
+        | KindId::Whitespace => {
+            vec![Just(id.try_into().expect("Fail convert KindId to Kind")).boxed()]
+        }
         KindId::Identifier => vec!["[a-z][a-z0-9]*"
             .prop_map(String::from)
             .prop_map(Kind::Identifier)
@@ -161,7 +173,8 @@ pub fn kind(id: KindId) -> Vec<BoxedStrategy<Kind>> {
             .boxed()],
         KindId::Command => vec![(1..10, prop_oneof![Just(0u8), Just(1u8)])
             .prop_flat_map(|(count, first)| {
-                let mut parts: Vec<BoxedStrategy<StringPart>> = Vec::new();
+                let mut parts: Vec<BoxedStrategy<StringPart>> =
+                    vec![Just(StringPart::Open(Token::by_pos(Kind::Backtick, 0, 0))).boxed()];
                 let mut variant = first;
                 for _ in 0..count {
                     parts.push(StringPart::arbitrary_with((variant, '`')));
@@ -171,6 +184,7 @@ pub fn kind(id: KindId) -> Vec<BoxedStrategy<Kind>> {
                         variant = 0;
                     }
                 }
+                parts.push(Just(StringPart::Close(Token::by_pos(Kind::Backtick, 0, 0))).boxed());
                 parts.prop_map(Kind::Command).boxed()
             })
             .boxed()],

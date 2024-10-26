@@ -10,7 +10,11 @@ impl ConstantLength for KindId {
     fn length(&self) -> Result<usize, E> {
         match self {
             Self::EOF | Self::BOF => Ok(0),
-            Self::Question
+            Self::SingleQuote
+            | Self::DoubleQuote
+            | Self::Tilde
+            | Self::Backtick
+            | Self::Question
             | Self::Dollar
             | Self::At
             | Self::Pound
@@ -60,7 +64,8 @@ impl ConstantLength for KindId {
             | Self::Number
             | Self::String
             | Self::InterpolatedString
-            | Self::Command => Err(E::NoConstantLength(self.clone())),
+            | Self::Command
+            | Self::Whitespace => Err(E::NoConstantLength(self.clone())),
         }
     }
 }

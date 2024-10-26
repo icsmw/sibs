@@ -7,8 +7,8 @@ mod position;
 mod read;
 #[cfg(test)]
 mod tests;
+mod tokens;
 
-use crate::lexer::*;
 pub use conflict::*;
 pub use interest::*;
 pub use intstring::*;
@@ -16,6 +16,8 @@ pub use kind::*;
 pub use length::*;
 pub use position::*;
 pub use read::*;
+pub use tokens::*;
+
 use std::fmt;
 #[cfg(test)]
 pub use tests::*;

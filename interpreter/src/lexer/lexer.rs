@@ -15,8 +15,20 @@ impl<'a> Lexer<'a> {
 
     pub(crate) fn read_identifier(&mut self) -> String {
         let start = self.pos;
-        while let Some(c) = self.char() {
-            if c.is_alphanumeric() || c == '_' {
+        while let Some(ch) = self.char() {
+            if ch.is_alphanumeric() || ch == '_' {
+                self.advance();
+            } else {
+                break;
+            }
+        }
+        self.input[start..self.pos].to_string()
+    }
+
+    pub(crate) fn read_whitespace(&mut self) -> String {
+        let start = self.pos;
+        while let Some(ch) = self.char() {
+            if ch.is_whitespace() && ch != '\n' && ch != '\r' {
                 self.advance();
             } else {
                 break;
@@ -55,15 +67,15 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    pub(crate) fn align(&mut self) {
-        while let Some(ch) = self.char() {
-            if ch.is_whitespace() && ch != '\n' && ch != '\r' {
-                self.advance();
-            } else {
-                break;
-            }
-        }
-    }
+    // pub(crate) fn align(&mut self) {
+    //     while let Some(ch) = self.char() {
+    //         if ch.is_whitespace() && ch != '\n' && ch != '\r' {
+    //             self.advance();
+    //         } else {
+    //             break;
+    //         }
+    //     }
+    // }
 
     pub(crate) fn read_until(&mut self, stop: char) -> Option<String> {
         let mut str: String = String::new();
@@ -94,19 +106,18 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    pub fn read(&mut self, new_file: bool) -> Result<Vec<Token>, E> {
-        let mut tokens: Vec<Token> = if new_file {
-            vec![Token::by_pos(Kind::BOF, 0, 0)]
+    pub fn read(&mut self, new_file: bool) -> Result<Tokens, E> {
+        let mut tokens = if new_file {
+            Tokens::with(vec![Token::by_pos(Kind::BOF, 0, 0)])
         } else {
-            Vec::new()
+            Tokens::default()
         };
-
-        let mut prev = new_file.then_some(KindId::BOF);
-        while let Some(tk) = Token::read(self, prev)? {
-            prev = Some(tk.id());
-            tokens.push(tk);
+        while let Some(tk) = Token::read(self, &tokens)? {
+            tokens.add(tk);
         }
         if !self.complited() {
+            println!(">>>>>>>> REST: {:?}", self.rest());
+            println!("{tokens:?}");
             Err(E::FailRecognizeContent(self.pos))
         } else {
             Ok(tokens)

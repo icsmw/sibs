@@ -20,7 +20,7 @@ semicollon and the end on "true".
 - prevent recursion on reference in a same task
 - $str = "{$str}new" - doesn't work
 - test "functions::process::exit::test::success_with_message" give randomly errors
-
+- show changes in logs between runs... could be cool for example to show change in time
 
 
 NO Errors:

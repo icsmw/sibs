@@ -34,22 +34,41 @@ impl Arbitrary for StringPart {
                     KindId::CR,
                     KindId::LF,
                     KindId::CRLF,
-                    KindId::Slash,
+                    KindId::Backtick,
+                    KindId::SingleQuote,
+                    KindId::DoubleQuote,
+                    KindId::InterpolatedString, // remove from here
+                    KindId::Number,
+                    KindId::Whitespace,
                 ]),
                 1..5,
             )
             .prop_map(|mut knds| {
                 knds.insert(0, vec![Kind::LeftBrace]);
                 knds.push(vec![Kind::RightBrace]);
-                StringPart::Expression(
-                    knds.into_iter()
-                        .flat_map(|knd| {
-                            knd.into_iter()
-                                .map(|knd| Token::by_pos(knd, 0, 0))
-                                .collect::<Vec<Token>>()
-                        })
-                        .collect::<Vec<Token>>(),
-                )
+                let mut tokens: Vec<Token> = knds
+                    .into_iter()
+                    .flat_map(|knd| {
+                        knd.into_iter()
+                            .map(|knd| Token::by_pos(knd, 0, 0))
+                            .collect::<Vec<Token>>()
+                    })
+                    .flat_map(|tk| {
+                        if matches!(tk.id(), KindId::Comment | KindId::Meta) {
+                            vec![tk]
+                        } else {
+                            vec![tk, Token::by_pos(Kind::Whitespace(String::from(" ")), 0, 0)]
+                        }
+                    })
+                    .collect();
+                if if let Some(tk) = tokens.last() {
+                    tk.id() == KindId::Whitespace
+                } else {
+                    false
+                } {
+                    tokens.remove(tokens.len() - 1);
+                }
+                StringPart::Expression(tokens)
             })
             .boxed()
         }

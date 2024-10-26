@@ -12,6 +12,8 @@ pub enum E {
     InvalidNumber,
     #[error("Attempt to read EOF or BOF")]
     AttemptToReadEOForBOF,
+    #[error("{0:?} cannot be converted to char")]
+    CannotConverToChar(KindId),
     #[error("Cannot find closing symbol: {0}")]
     NoClosingSymbol(char),
     #[error("Cannot read a group between {0} and {1}")]
