@@ -24,7 +24,12 @@ proptest! {
     }
 
     #[test]
-    fn command(cases in proptest::collection::vec(gens::kind(KindId::Command), 500)) {
+    fn command(cases in proptest::collection::vec(gens::kind(KindId::Command), 1000)) {
+        runners::test_tokens_by_kinds(cases);
+    }
+
+    #[test]
+    fn interpolated_string(cases in proptest::collection::vec(gens::kind(KindId::InterpolatedString), 1000)) {
         runners::test_tokens_by_kinds(cases);
     }
 

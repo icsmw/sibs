@@ -37,7 +37,6 @@ impl Arbitrary for StringPart {
                     KindId::Backtick,
                     KindId::SingleQuote,
                     KindId::DoubleQuote,
-                    KindId::InterpolatedString, // remove from here
                     KindId::Number,
                     KindId::Whitespace,
                 ]),
