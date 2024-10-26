@@ -24,7 +24,7 @@ proptest! {
     }
 
     #[test]
-    fn command(cases in proptest::collection::vec(gens::kind(KindId::Command), 100)) {
+    fn command(cases in proptest::collection::vec(gens::kind(KindId::Command), 500)) {
         runners::test_tokens_by_kinds(cases);
     }
 
