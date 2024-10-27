@@ -130,6 +130,7 @@ impl Read for Token {
             | KindId::Loop
             | KindId::For
             | KindId::Return
+            | KindId::Break
             | KindId::Let
             | KindId::True
             | KindId::False => Ok(if lx.read_identifier() == id.to_string() {

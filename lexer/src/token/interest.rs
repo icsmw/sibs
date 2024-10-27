@@ -36,6 +36,7 @@ impl Interest for KindId {
             | Self::Loop
             | Self::For
             | Self::Return
+            | Self::Break
             | Self::Let
             | Self::True
             | Self::False
@@ -104,11 +105,64 @@ impl Interest for KindId {
             Self::Loop => "loop" == ident,
             Self::For => "for" == ident,
             Self::Return => "return" == ident,
+            Self::Break => "break" == ident,
             Self::Let => "let" == ident,
             Self::True => "true" == ident,
             Self::False => "false" == ident,
             Self::Identifier => true,
-            _ => false,
+            Self::Whitespace
+            | Self::Number
+            | Self::String
+            | Self::InterpolatedString
+            | Self::Command
+            | Self::SingleQuote
+            | Self::DoubleQuote
+            | Self::Tilde
+            | Self::Backtick
+            | Self::Question
+            | Self::Dollar
+            | Self::At
+            | Self::Pound
+            | Self::Plus
+            | Self::Minus
+            | Self::Star
+            | Self::Slash
+            | Self::Percent
+            | Self::Equals
+            | Self::EqualEqual
+            | Self::BangEqual
+            | Self::Less
+            | Self::LessEqual
+            | Self::Greater
+            | Self::GreaterEqual
+            | Self::And
+            | Self::Or
+            | Self::VerticalBar
+            | Self::Bang
+            | Self::PlusEqual
+            | Self::MinusEqual
+            | Self::StarEqual
+            | Self::SlashEqual
+            | Self::LeftParen
+            | Self::RightParen
+            | Self::LeftBrace
+            | Self::RightBrace
+            | Self::LeftBracket
+            | Self::RightBracket
+            | Self::Comma
+            | Self::Colon
+            | Self::Dot
+            | Self::DotDot
+            | Self::Semicolon
+            | Self::Arrow
+            | Self::DoubleArrow
+            | Self::Comment
+            | Self::Meta
+            | Self::LF
+            | Self::CR
+            | Self::CRLF
+            | Self::EOF
+            | Self::BOF => false,
         }
     }
 }

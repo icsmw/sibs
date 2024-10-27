@@ -21,6 +21,8 @@ pub enum Kind {
     For,
     /// The `return` keyword.
     Return,
+    /// The `break` keyword.
+    Break,
     /// The `let` keyword.
     Let,
     /// The boolean literal `true`.
@@ -153,6 +155,7 @@ impl fmt::Display for Kind {
                 Self::Loop => "loop".to_owned(),
                 Self::For => "for".to_owned(),
                 Self::Return => "return".to_owned(),
+                Self::Break => "break".to_owned(),
                 Self::Let => "let".to_owned(),
                 Self::True => "true".to_owned(),
                 Self::False => "false".to_owned(),
@@ -241,6 +244,7 @@ impl fmt::Display for KindId {
                 Self::Loop => "loop".to_owned(),
                 Self::For => "for".to_owned(),
                 Self::Return => "return".to_owned(),
+                Self::Break => "break".to_owned(),
                 Self::Let => "let".to_owned(),
                 Self::True => "true".to_owned(),
                 Self::False => "false".to_owned(),
@@ -319,6 +323,7 @@ impl TryFrom<KindId> for Kind {
             KindId::Loop => Ok(Kind::Loop),
             KindId::For => Ok(Kind::For),
             KindId::Return => Ok(Kind::Return),
+            KindId::Break => Ok(Kind::Break),
             KindId::Let => Ok(Kind::Let),
             KindId::True => Ok(Kind::True),
             KindId::False => Ok(Kind::False),

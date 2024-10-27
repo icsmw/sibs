@@ -23,6 +23,7 @@ pub fn rnd_kind(exceptions: Vec<KindId>) -> BoxedStrategy<Vec<Kind>> {
         Just(KindId::Loop),
         Just(KindId::For),
         Just(KindId::Return),
+        Just(KindId::Break),
         Just(KindId::Let),
         Just(KindId::True),
         Just(KindId::False),
@@ -103,6 +104,7 @@ pub fn kind(id: KindId) -> Vec<BoxedStrategy<Kind>> {
         | KindId::Loop
         | KindId::For
         | KindId::Return
+        | KindId::Break
         | KindId::Let
         | KindId::True
         | KindId::False
@@ -167,6 +169,7 @@ pub fn kind(id: KindId) -> Vec<BoxedStrategy<Kind>> {
                     KindId::If.to_string(),
                     KindId::Let.to_string(),
                     KindId::Return.to_string(),
+                    KindId::Break.to_string(),
                     KindId::While.to_string(),
                     KindId::Else.to_string(),
                     KindId::For.to_string(),

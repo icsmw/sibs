@@ -24,6 +24,7 @@ impl Token {
             | Kind::Loop
             | Kind::For
             | Kind::Return
+            | Kind::Break
             | Kind::Let
             | Kind::True
             | Kind::False

@@ -23,6 +23,7 @@ impl ConflictResolver for KindId {
             | Self::Loop
             | Self::For
             | Self::Return
+            | Self::Break
             | Self::Let
             | Self::True
             | Self::False
@@ -147,6 +148,7 @@ impl ConflictResolver for KindId {
                         | KindId::Loop
                         | KindId::For
                         | KindId::Return
+                        | KindId::Break
                         | KindId::Let
                         | KindId::True
                         | KindId::False
