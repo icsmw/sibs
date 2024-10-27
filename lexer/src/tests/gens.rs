@@ -1,7 +1,20 @@
-use crate::lexer::*;
+use crate::*;
 
 use proptest::prelude::*;
 
+/// Generates a `BoxedStrategy` that produces vectors of `Kind` instances,
+/// excluding specified exceptions.
+///
+/// This function is used in property-based testing to create random sequences
+/// of `Kind` tokens while omitting any kinds listed in the `exceptions`.
+///
+/// # Arguments
+///
+/// * `exceptions` - A vector of `KindId` instances to exclude from the generated strategies.
+///
+/// # Returns
+///
+/// A `BoxedStrategy` yielding vectors of `Kind` instances.
 pub fn rnd_kind(exceptions: Vec<KindId>) -> BoxedStrategy<Vec<Kind>> {
     prop_oneof![
         Just(KindId::If),
@@ -70,6 +83,18 @@ pub fn rnd_kind(exceptions: Vec<KindId>) -> BoxedStrategy<Vec<Kind>> {
     .boxed()
 }
 
+/// Generates strategies for creating `Kind` instances based on the given `KindId`.
+///
+/// This function maps a `KindId` to one or more `BoxedStrategy<Kind>` instances,
+/// which are used in property-based testing to generate random `Kind` tokens.
+///
+/// # Arguments
+///
+/// * `id` - The `KindId` for which to generate strategies.
+///
+/// # Returns
+///
+/// A vector of `BoxedStrategy<Kind>` instances corresponding to the provided `KindId`.
 pub fn kind(id: KindId) -> Vec<BoxedStrategy<Kind>> {
     match id {
         KindId::If
@@ -128,7 +153,7 @@ pub fn kind(id: KindId) -> Vec<BoxedStrategy<Kind>> {
         | KindId::CR
         | KindId::CRLF
         | KindId::Whitespace => {
-            vec![Just(id.try_into().expect("Fail convert KindId to Kind")).boxed()]
+            vec![Just(id.try_into().expect("Failed to convert KindId to Kind")).boxed()]
         }
         KindId::Identifier => vec!["[a-z][a-z0-9]*"
             .prop_map(String::from)
@@ -185,11 +210,7 @@ pub fn kind(id: KindId) -> Vec<BoxedStrategy<Kind>> {
                         variant,
                         KindId::SingleQuote.try_into().expect("SingleQuote as char"),
                     )));
-                    if variant == 0 {
-                        variant = 1;
-                    } else {
-                        variant = 0;
-                    }
+                    variant = if variant == 0 { 1 } else { 0 };
                 }
                 parts.push(Just(StringPart::Close(Token::by_pos(Kind::SingleQuote, 0, 0))).boxed());
                 parts.prop_map(Kind::InterpolatedString).boxed()
@@ -205,11 +226,7 @@ pub fn kind(id: KindId) -> Vec<BoxedStrategy<Kind>> {
                         variant,
                         KindId::Backtick.try_into().expect("Backtick as char"),
                     )));
-                    if variant == 0 {
-                        variant = 1;
-                    } else {
-                        variant = 0;
-                    }
+                    variant = if variant == 0 { 1 } else { 0 };
                 }
                 parts.push(Just(StringPart::Close(Token::by_pos(Kind::Backtick, 0, 0))).boxed());
                 parts.prop_map(Kind::Command).boxed()

@@ -1,7 +1,29 @@
-use crate::lexer::*;
+use crate::*;
 
+/// Trait defining methods to determine if a character or identifier is of interest to a specific token kind.
+///
+/// This is used by the lexer to decide whether to consume characters or identifiers based on the current token kind.
 pub trait Interest {
+    /// Checks if the given character is relevant for the token kind.
+    ///
+    /// # Arguments
+    ///
+    /// * `ch` - A reference to the character to check.
+    ///
+    /// # Returns
+    ///
+    /// * `true` if the character is of interest, `false` otherwise.
     fn interest_in_char(&self, ch: &char) -> bool;
+
+    /// Checks if the given identifier string is relevant for the token kind.
+    ///
+    /// # Arguments
+    ///
+    /// * `ident` - A reference to the identifier string to check.
+    ///
+    /// # Returns
+    ///
+    /// * `true` if the identifier is of interest, `false` otherwise.
     fn interest_in_identifier(&self, ident: &str) -> bool;
 }
 
@@ -73,6 +95,7 @@ impl Interest for KindId {
             Self::CRLF => &'\r' == ch,
         }
     }
+
     fn interest_in_identifier(&self, ident: &str) -> bool {
         match self {
             Self::If => "if" == ident,
@@ -85,59 +108,7 @@ impl Interest for KindId {
             Self::True => "true" == ident,
             Self::False => "false" == ident,
             Self::Identifier => true,
-            Self::Number
-            | Self::String
-            | Self::InterpolatedString
-            | Self::Command
-            | Self::SingleQuote
-            | Self::DoubleQuote
-            | Self::Tilde
-            | Self::Backtick
-            | Self::Question
-            | Self::Dollar
-            | Self::At
-            | Self::Pound
-            | Self::Plus
-            | Self::Minus
-            | Self::Star
-            | Self::Slash
-            | Self::Percent
-            | Self::Equals
-            | Self::EqualEqual
-            | Self::BangEqual
-            | Self::Less
-            | Self::LessEqual
-            | Self::Greater
-            | Self::GreaterEqual
-            | Self::And
-            | Self::Or
-            | Self::VerticalBar
-            | Self::Bang
-            | Self::PlusEqual
-            | Self::MinusEqual
-            | Self::StarEqual
-            | Self::SlashEqual
-            | Self::LeftParen
-            | Self::RightParen
-            | Self::LeftBrace
-            | Self::RightBrace
-            | Self::LeftBracket
-            | Self::RightBracket
-            | Self::Comma
-            | Self::Colon
-            | Self::Dot
-            | Self::DotDot
-            | Self::Semicolon
-            | Self::Arrow
-            | Self::DoubleArrow
-            | Self::Comment
-            | Self::Meta
-            | Self::LF
-            | Self::CR
-            | Self::CRLF
-            | Self::EOF
-            | Self::BOF
-            | Self::Whitespace => false,
+            _ => false,
         }
     }
 }

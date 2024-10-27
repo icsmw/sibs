@@ -1,8 +1,17 @@
-use crate::lexer::*;
+use crate::*;
 
+/// Trait for resolving conflicts between tokens of type `KindId`.
+///
+/// This trait defines a method for determining the correct `KindId` when there is
+/// a potential conflict between two token kinds.
 pub trait ConflictResolver {
-    /// Returns length of only any content. Identifer as valid alphanumeric should not
-    /// return a length
+    /// Resolves a conflict between `self` and another `KindId`.
+    ///
+    /// Returns the appropriate `KindId` based on conflict resolution rules.
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - A reference to another `KindId` to resolve the conflict with.
     fn resolve_conflict(&self, id: &KindId) -> KindId;
 }
 

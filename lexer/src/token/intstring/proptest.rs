@@ -1,11 +1,20 @@
-use crate::lexer::*;
+use crate::*;
 
 use proptest::prelude::*;
 
 impl Arbitrary for StringPart {
+    /// Parameters used for generating arbitrary `StringPart`.
     type Parameters = (u8, char);
+
+    /// Strategy used for generating arbitrary `StringPart`.
     type Strategy = BoxedStrategy<Self>;
 
+    /// Generates an arbitrary `StringPart` based on the given parameters.
+    ///
+    /// # Arguments
+    ///
+    /// * `(variant, sch)` - A tuple where `variant` determines the variant of `StringPart` to generate,
+    ///   and `sch` is the stop character used in the string.
     fn arbitrary_with((variant, sch): Self::Parameters) -> Self::Strategy {
         if variant == 0 {
             (proptest::collection::vec(any::<char>(), 1..100), Just(sch))

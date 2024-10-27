@@ -1,75 +1,147 @@
-use crate::lexer::*;
+use crate::*;
 use std::fmt;
 
+/// Represents the various kinds of tokens that can be identified by the lexer.
+///
+/// This enumeration includes all possible token types that the lexer can produce,
+/// which are then used by the parser for further syntactic analysis.
+#[allow(clippy::upper_case_acronyms)]
 #[enum_ids::enum_ids]
 #[derive(Debug, PartialEq, Clone)]
 pub enum Kind {
+    /// The `if` keyword.
     If,
+    /// The `else` keyword.
     Else,
+    /// The `while` keyword.
     While,
+    /// The `loop` keyword.
     Loop,
+    /// The `for` keyword.
     For,
+    /// The `return` keyword.
     Return,
+    /// The `let` keyword.
     Let,
+    /// The boolean literal `true`.
     True,
+    /// The boolean literal `false`.
     False,
+    /// An identifier consisting of a string.
     Identifier(String),
+    /// A numeric literal represented as a floating-point number.
     Number(f64),
+    /// A string literal.
     String(String),
-    InterpolatedString(Vec<StringPart>), // concatenated string
-    Command(Vec<StringPart>),            // string with command
-    SingleQuote,                         // '
-    DoubleQuote,                         // "
-    Tilde,                               // ~
-    Backtick,                            // `
-    Question,                            // ?
-    Dollar,                              // $
-    At,                                  // @
-    Pound,                               // #
-    Plus,                                // +
-    Minus,                               // -
-    Star,                                // *
-    Slash,                               // /
-    Percent,                             // %
-    Equals,                              // =
-    EqualEqual,                          // ==
-    BangEqual,                           // !=
-    Less,                                // <
-    LessEqual,                           // <=
-    Greater,                             // >
-    GreaterEqual,                        // >=
-    And,                                 // &&
-    Or,                                  // ||
-    VerticalBar,                         // |
-    Bang,                                // !
-    PlusEqual,                           // +=
-    MinusEqual,                          // -=
-    StarEqual,                           // *=
-    SlashEqual,                          // /=
-    LeftParen,                           // (
-    RightParen,                          // )
-    LeftBrace,                           // {
-    RightBrace,                          // }
-    LeftBracket,                         // [
-    RightBracket,                        // ]
-    Comma,                               // ,
-    Dot,                                 // .
-    DotDot,                              // ..
-    Semicolon,                           // ;
-    Colon,                               // :
-    Arrow,                               // ->
-    DoubleArrow,                         // =>
-    Whitespace(String),                  // any whitespaces
-    Comment(String),                     // //
-    Meta(String),                        // ///
-    LF,                                  // \n Line Feed
-    CR,                                  // \r Carriage Return
-    CRLF,                                // \r\n
+    /// An interpolated string, represented as a vector of `StringPart`.
+    InterpolatedString(Vec<StringPart>),
+    /// A command string, represented as a vector of `StringPart`.
+    Command(Vec<StringPart>),
+    /// A single quote character (`'`).
+    SingleQuote,
+    /// A double quote character (`"`).
+    DoubleQuote,
+    /// A tilde character (`~`).
+    Tilde,
+    /// A backtick character (`` ` ``).
+    Backtick,
+    /// A question mark character (`?`).
+    Question,
+    /// A dollar sign character (`$`).
+    Dollar,
+    /// An at symbol character (`@`).
+    At,
+    /// A pound/hash character (`#`).
+    Pound,
+    /// A plus sign character (`+`).
+    Plus,
+    /// A minus sign character (`-`).
+    Minus,
+    /// An asterisk character (`*`).
+    Star,
+    /// A slash character (`/`).
+    Slash,
+    /// A percent sign character (`%`).
+    Percent,
+    /// An equals sign character (`=`).
+    Equals,
+    /// A double equals sign (`==`).
+    EqualEqual,
+    /// A not equals sign (`!=`).
+    BangEqual,
+    /// A less-than sign (`<`).
+    Less,
+    /// A less-than or equal to sign (`<=`).
+    LessEqual,
+    /// A greater-than sign (`>`).
+    Greater,
+    /// A greater-than or equal to sign (`>=`).
+    GreaterEqual,
+    /// A logical AND operator (`&&`).
+    And,
+    /// A logical OR operator (`||`).
+    Or,
+    /// A vertical bar character (`|`).
+    VerticalBar,
+    /// A bang/exclamation mark character (`!`).
+    Bang,
+    /// A plus equals sign (`+=`).
+    PlusEqual,
+    /// A minus equals sign (`-=`).
+    MinusEqual,
+    /// An asterisk equals sign (`*=`).
+    StarEqual,
+    /// A slash equals sign (`/=`).
+    SlashEqual,
+    /// A left parenthesis character (`(`).
+    LeftParen,
+    /// A right parenthesis character (`)`).
+    RightParen,
+    /// A left brace character (`{`).
+    LeftBrace,
+    /// A right brace character (`}`).
+    RightBrace,
+    /// A left bracket character (`[`).
+    LeftBracket,
+    /// A right bracket character (`]`).
+    RightBracket,
+    /// A comma character (`,`).
+    Comma,
+    /// A dot character (`.`).
+    Dot,
+    /// A double dot (`..`).
+    DotDot,
+    /// A semicolon character (`;`).
+    Semicolon,
+    /// A colon character (`:`).
+    Colon,
+    /// An arrow (`->`).
+    Arrow,
+    /// A double arrow (`=>`).
+    DoubleArrow,
+    /// A whitespace sequence.
+    Whitespace(String),
+    /// A single-line comment starting with `//`.
+    Comment(String),
+    /// A meta comment starting with `///`.
+    Meta(String),
+    /// A line feed character (`\n`).
+    LF,
+    /// A carriage return character (`\r`).
+    CR,
+    /// A carriage return followed by a line feed (`\r\n`).
+    CRLF,
+    /// Represents the end of the file.
     EOF,
+    /// Represents the beginning of the file.
     BOF,
 }
 
 impl fmt::Display for Kind {
+    /// Formats the `Kind` variant into its corresponding string representation.
+    ///
+    /// This implementation is used to convert a `Kind` into a human-readable string,
+    /// which is useful for debugging and error messages.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -150,7 +222,14 @@ impl fmt::Display for Kind {
     }
 }
 
+/// Represents the unique identifier for each `Kind` variant.
+///
+/// This is typically used internally for more efficient comparisons and mappings.
 impl fmt::Display for KindId {
+    /// Formats the `KindId` variant into its corresponding string representation.
+    ///
+    /// Similar to the `Display` implementation for `Kind`, this converts a `KindId`
+    /// into a human-readable string.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -226,6 +305,12 @@ impl fmt::Display for KindId {
 
 impl TryFrom<KindId> for Kind {
     type Error = E;
+    /// Attempts to convert a `KindId` into its corresponding `Kind` variant.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error of type `E::CannotConvertToKind` if the `KindId` does not
+    /// have a corresponding `Kind` variant.
     fn try_from(id: KindId) -> Result<Self, Self::Error> {
         match id {
             KindId::If => Ok(Kind::If),
@@ -297,41 +382,14 @@ impl TryFrom<KindId> for Kind {
 
 impl TryFrom<KindId> for char {
     type Error = E;
+    /// Attempts to convert a `KindId` into its corresponding `char`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error of type `E::CannotConverToChar` if the `KindId` does not
+    /// correspond to a single character.
     fn try_from(id: KindId) -> Result<Self, Self::Error> {
         match id {
-            KindId::If
-            | KindId::Else
-            | KindId::While
-            | KindId::Loop
-            | KindId::For
-            | KindId::Return
-            | KindId::Let
-            | KindId::True
-            | KindId::False
-            | KindId::Identifier
-            | KindId::Number
-            | KindId::String
-            | KindId::InterpolatedString
-            | KindId::Command
-            | KindId::EOF
-            | KindId::EqualEqual
-            | KindId::BangEqual
-            | KindId::LessEqual
-            | KindId::GreaterEqual
-            | KindId::And
-            | KindId::Or
-            | KindId::PlusEqual
-            | KindId::MinusEqual
-            | KindId::StarEqual
-            | KindId::SlashEqual
-            | KindId::DotDot
-            | KindId::Arrow
-            | KindId::DoubleArrow
-            | KindId::Comment
-            | KindId::Meta
-            | KindId::BOF
-            | KindId::CRLF
-            | KindId::Whitespace => Err(E::CannotConverToChar(id)),
             KindId::SingleQuote => Ok('\''),
             KindId::DoubleQuote => Ok('"'),
             KindId::Tilde => Ok('~'),
@@ -362,6 +420,7 @@ impl TryFrom<KindId> for char {
             KindId::Semicolon => Ok(';'),
             KindId::LF => Ok('\n'),
             KindId::CR => Ok('\r'),
+            _ => Err(E::CannotConverToChar(id)),
         }
     }
 }

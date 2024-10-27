@@ -1,18 +1,40 @@
 #[cfg(test)]
 mod proptest;
 
-use crate::lexer::*;
+use crate::*;
 use std::fmt;
 
+/// Represents a part of an interpolated string or command in the source code.
+///
+/// The `StringPart` enum is used to represent the different components that can occur within
+/// an interpolated string or command, such as the opening token, literals, expressions, and closing token.
 #[derive(Debug, PartialEq, Clone)]
 pub enum StringPart {
+    /// The opening token of the string or command (e.g., `"`, `'`, or `` ` ``).
     Open(Token),
+    /// A literal string segment.
     Literal(String),
+    /// An expression enclosed within `{}`.
     Expression(Vec<Token>),
+    /// The closing token of the string or command.
     Close(Token),
 }
 
 impl StringPart {
+    /// Attempts to read a `StringPart` from the lexer.
+    ///
+    /// This method tries to parse an interpolated string or command starting with the specified `KindId`.
+    ///
+    /// # Arguments
+    ///
+    /// * `lx` - A mutable reference to the lexer.
+    /// * `knd` - The kind identifier of the starting token (e.g., `KindId::SingleQuote` or `KindId::Backtick`).
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Some(Kind))` if a string part was successfully read.
+    /// * `Ok(None)` if no string part could be read.
+    /// * `Err(E)` if an error occurred during parsing.
     pub fn try_read(lx: &mut Lexer, knd: KindId) -> Result<Option<Kind>, E> {
         let Some(nch) = lx.char() else {
             return Ok(None);
@@ -88,6 +110,10 @@ impl StringPart {
 }
 
 impl fmt::Display for StringPart {
+    /// Formats the `StringPart` into its string representation.
+    ///
+    /// This implementation concatenates the string representation of the parts,
+    /// which is useful for reconstructing the original string or for debugging.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,

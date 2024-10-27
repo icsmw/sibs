@@ -1,8 +1,16 @@
-use crate::lexer::*;
+use crate::*;
 
+/// Trait for calculating the length of tokens with a constant size.
+///
+/// This trait is implemented for token kinds that have a fixed length representation.
+/// For tokens like identifiers, numbers, or strings, which can vary in length,
+/// the `length` method will return an error.
 pub trait ConstantLength {
-    /// Returns length of only any content. Identifer as valid alphanumeric should not
-    /// return a length
+    /// Returns the constant length of the token.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the token does not have a constant length.
     fn length(&self) -> Result<usize, E>;
 }
 

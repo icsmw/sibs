@@ -1,6 +1,20 @@
-use crate::lexer::*;
+use crate::*;
 
+/// Implementation of methods for the `Token` struct.
 impl Token {
+    /// Sets the position of the token starting from `from`.
+    ///
+    /// This method updates the `from` and `to` positions of the token based on its kind.
+    /// For tokens with a constant length, it uses the `length` method.
+    /// For tokens with variable length, it uses the length of their string representation.
+    ///
+    /// # Arguments
+    ///
+    /// * `from` - The starting position for the token.
+    ///
+    /// # Returns
+    ///
+    /// * The updated `to` position of the token.
     pub fn set_pos(&mut self, from: usize) -> usize {
         self.pos.from = from;
         match &mut self.kind {
@@ -105,6 +119,17 @@ impl Token {
     }
 }
 
+/// Converts a vector of `Kind` instances into tokens and the corresponding content string.
+///
+/// This function creates tokens from kinds, sets their positions, and concatenates their string representations.
+///
+/// # Arguments
+///
+/// * `knds` - A vector of `Kind` instances to convert.
+///
+/// # Returns
+///
+/// * A tuple containing a vector of tokens and the content string.
 fn kinds_into(knds: Vec<Kind>) -> (Vec<Token>, String) {
     let mut pos: usize = 0;
     let mut content = String::new();
@@ -121,9 +146,20 @@ fn kinds_into(knds: Vec<Kind>) -> (Vec<Token>, String) {
     (tokens, content)
 }
 
+/// Tests the lexer by generating tokens from kinds and comparing them.
+///
+/// This function takes a vector of `Kind` instances, generates tokens, reads the tokens from the lexer,
+/// and asserts that the generated tokens match the tokens read by the lexer.
+///
+/// # Arguments
+///
+/// * `kinds` - A vector of `Kind` instances to test.
 pub fn test_tokens_by_kinds(kinds: Vec<Kind>) {
     let (mut generated, origin) = kinds_into(kinds);
     generated.insert(0, Token::by_pos(Kind::BOF, 0, 0));
+    if let Some(tk) = generated.last() {
+        generated.push(Token::by_pos(Kind::EOF, tk.pos.to, tk.pos.to));
+    }
     let mut lx = Lexer::new(&origin, 0);
     match lx.read(true) {
         Ok(tokens) => {
@@ -135,10 +171,6 @@ pub fn test_tokens_by_kinds(kinds: Vec<Kind>) {
             assert_eq!(restored, origin);
             for tk in tokens.iter() {
                 assert_eq!(lx.input[tk.pos.from..tk.pos.to], tk.to_string());
-            }
-            if tokens.count() != generated.len() {
-                println!("LEFT: {tokens:?}");
-                println!("RIGHT: {generated:?}");
             }
             assert_eq!(tokens.count(), generated.len());
             for (n, tk) in tokens.iter().enumerate() {

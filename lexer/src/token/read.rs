@@ -1,7 +1,37 @@
-use crate::lexer::*;
+use crate::*;
 
+/// Trait for reading tokens from a lexer.
+///
+/// This trait defines methods for reading tokens from a lexer,
+/// both general (`read`) and specific (`try_read`) based on `KindId`.
 pub trait Read {
+    /// Reads the next token from the lexer.
+    ///
+    /// # Arguments
+    ///
+    /// * `lx` - A mutable reference to the lexer.
+    /// * `tks` - A reference to the current list of tokens.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Some(Token))` if a token was successfully read.
+    /// * `Ok(None)` if no token could be read.
+    /// * `Err(E)` if an error occurred.
     fn read(lx: &mut Lexer, tks: &Tokens) -> Result<Option<Token>, E>;
+
+    /// Tries to read a token of a specific kind from the lexer.
+    ///
+    /// # Arguments
+    ///
+    /// * `lx` - A mutable reference to the lexer.
+    /// * `id` - The kind identifier of the token to read.
+    /// * `tks` - A reference to the current list of tokens.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Some(Token))` if a token of the specified kind was successfully read.
+    /// * `Ok(None)` if no token of the specified kind could be read.
+    /// * `Err(E)` if an error occurred.
     fn try_read(lx: &mut Lexer, id: KindId, tks: &Tokens) -> Result<Option<Token>, E>;
 }
 
@@ -19,6 +49,7 @@ impl Read for Token {
                     .filter(|(p, _, oid)| p == pos && oid != id)
                     .cloned()
                     .collect::<Vec<(usize, Token, KindId)>>();
+
                 if conflicted.is_empty() {
                     lx.pos = *pos;
                     Ok(Some(results.remove(n).1))
@@ -45,13 +76,16 @@ impl Read for Token {
                 Ok(None)
             }
         }
+
         let drop = lx.pin();
         let next_ident = lx.read_identifier();
         drop(lx);
+
         let all: std::vec::IntoIter<KindId> = KindId::get_iter();
         let interested = all
             .filter(|el| el.interest_in_identifier(&next_ident))
             .collect::<Vec<KindId>>();
+
         let mut results = Vec::new();
         for id in interested.iter() {
             let drop = lx.pin();
@@ -63,6 +97,7 @@ impl Read for Token {
         if let Some(tk) = select(&mut results, lx)? {
             return Ok(Some(tk));
         }
+
         results.clear();
         let Some(next_ch) = lx.char() else {
             return Ok(None);
@@ -71,6 +106,7 @@ impl Read for Token {
         let interested = all
             .filter(|el| el.interest_in_char(&next_ch))
             .collect::<Vec<KindId>>();
+
         for id in interested.iter() {
             let drop = lx.pin();
             if let Some(tk) = Token::try_read(lx, id.clone(), tks)? {
@@ -164,7 +200,7 @@ impl Read for Token {
                         Some(Token::by_pos(Kind::Comment(content), from, lx.pos))
                     } else {
                         drop(lx);
-                        Some(Token::by_pos(Kind::Comment(lx.to_end()), from, lx.pos))
+                        Some(Token::by_pos(Kind::Comment(lx.read_to_end()), from, lx.pos))
                     })
                 } else {
                     Ok(None)
@@ -180,7 +216,7 @@ impl Read for Token {
                         Some(Token::by_pos(Kind::Meta(content), from, lx.pos))
                     } else {
                         drop(lx);
-                        Some(Token::by_pos(Kind::Meta(lx.to_end()), from, lx.pos))
+                        Some(Token::by_pos(Kind::Meta(lx.read_to_end()), from, lx.pos))
                     })
                 } else {
                     Ok(None)
@@ -235,80 +271,6 @@ impl Read for Token {
                 None
             }),
             KindId::EOF | KindId::BOF => Err(E::AttemptToReadEOForBOF),
-        }
-    }
-}
-
-#[test]
-fn test() {
-    let content = r#"import(./common.sibs);
-import(./defaults.sibs);
-/// Application 
-#(app: ./app)
-    hash ("./src", "./dist", :client, :shared, :wrapper) -> (:build("dev"));
-    /// Building electron application 
-    /// build dev >> build developing version
-    /// build prod >> build production version
-    @build($mode: dev | prod) {
-        $dev = envvar(DEV_MODE);
-        cd(./some_folder);
-        // Comment
-        // Comment yarn 툃aaaaaaaaa.옻A%b󈀀RL򢫕'󴓇\u{202e}<%.I򑰒q~%򵺜򤆅𸮟󵏅=1�vlong comment long comment long comment long comment long comment long comment long comment long comment long comment long comment
-        cd(..);
-        "yarn 툃.옻A%b󈀀RL򢫕'󴓇<%.I򑰒q~%򵺜򤆅𸮟󵏅=1�v
-XѨ`󠗐P򎨈�񶨆$,::Ⱥ:%<S/<
-        Wú`$$P.'􋹇Svug run build"
-        "\u{38d8a}bbbbbbbbbb\0v\u{101bb3}.\u{202e}\u{1948d}\u{1b}?@<\u{feff};\u{202e}?\u{e62d6}\u{5ca75}\u{bfd17}\u{36130}v\u{47903}Ⱥ럈'<{'/%\0\u{34e66}&吃??\u{49c68}h\u{e84b9}\t.l\n`H"
-        remove(./node_modules/shared);
-        remove(./node_modules/wrapper);
-        remove(./dist/client);
-        :shared:prod;
-        copy(../shared, ./node_modules);
-        :wrapper:prod;
-        copy(../core/wrapper, ./node_modules);
-        $mode == "dev" => :client:build("dev");
-        $mode == "prod" => :client:build("prod");
-        // Comment
-        // Comment 1long comment  2long comment  3long comment  4long comment  5long comment  6long comment 7long comment  8long comment  9long comment  10long comment 11long comment  12long comment  13long comment  14long comment  15long comment  16long comment 17long comment  18long comment  19long comment  20long comment
-        copy(../client/dist/client, ./dist);
-        copy(./package.json, ./dist);
-        `command_a{variable}command_b`
-        `command_a{variable"string"variable'string_a{variable}string_b'}command_b`
-        `command_a{variable}`
-        `{variable}command_b`
-        `¡{//=}`
-        `some{ident
-        // comment A
-        identB
-        //comment B
-        identC
-        }re\`st`
-    };"#;
-    let mut lx = Lexer::new(content, 0);
-    let tokens = lx.read(true);
-    match tokens {
-        Ok(tokens) => {
-            println!("{tokens:?}");
-            let restored = tokens
-                .iter()
-                .map(|tk| tk.to_string())
-                .collect::<Vec<String>>()
-                .join("");
-            assert_eq!(
-                restored.replace(" ", "").replace("\n", ""),
-                content.to_string().replace(" ", "").replace("\n", "")
-            );
-            for tk in tokens.iter() {
-                assert_eq!(
-                    lx.input[tk.pos.from..tk.pos.to].replace("\n", ""),
-                    tk.to_string().replace("\n", "")
-                );
-            }
-        }
-        Err(err) => {
-            println!("ERR: {err}");
-            println!("REST:{}", lx.rest());
-            panic!("{err}");
         }
     }
 }
