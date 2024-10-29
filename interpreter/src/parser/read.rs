@@ -15,7 +15,7 @@ pub trait AsVec<T> {
 
 pub trait Read<
     T: Clone + TryRead<T, K>,
-    K: AsVec<K> + Display + Clone + PartialEq + ConflictResolver<K>,
+    K: AsVec<K> + Interest + Display + Clone + PartialEq + ConflictResolver<K>,
 >
 {
     fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<T>, E> {
@@ -62,13 +62,22 @@ pub trait Read<
             }
         }
         let mut results = Vec::new();
-        for id in K::as_vec().into_iter() {
+        let reset = parser.pin();
+        let Some(token) = parser.token() else {
+            return Ok(None);
+        };
+        let intrested = K::as_vec()
+            .into_iter()
+            .filter(|k| k.intrested(token, nodes))
+            .collect::<Vec<K>>();
+        for id in intrested {
             let drop = parser.pin();
             if let Some(el) = T::try_read(parser, id.clone(), nodes)? {
                 results.push((parser.pos, el, id));
             }
             drop(parser);
         }
+        reset(parser);
         select(results, parser)
     }
 }
