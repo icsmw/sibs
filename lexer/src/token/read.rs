@@ -81,8 +81,8 @@ impl Read for Token {
         let next_ident = lx.read_identifier();
         drop(lx);
 
-        let all: std::vec::IntoIter<KindId> = KindId::get_iter();
-        let interested = all
+        let interested = KindId::as_vec()
+            .into_iter()
             .filter(|el| el.interest_in_identifier(&next_ident))
             .collect::<Vec<KindId>>();
 
@@ -102,8 +102,8 @@ impl Read for Token {
         let Some(next_ch) = lx.char() else {
             return Ok(None);
         };
-        let all: std::vec::IntoIter<KindId> = KindId::get_iter();
-        let interested = all
+        let interested = KindId::as_vec()
+            .into_iter()
             .filter(|el| el.interest_in_char(&next_ch))
             .collect::<Vec<KindId>>();
 
@@ -114,11 +114,7 @@ impl Read for Token {
             }
             drop(lx);
         }
-        if let Some(tk) = select(&mut results, lx)? {
-            Ok(Some(tk))
-        } else {
-            Ok(None)
-        }
+        select(&mut results, lx)
     }
 
     fn try_read(lx: &mut Lexer, id: KindId, tks: &Tokens) -> Result<Option<Token>, E> {
