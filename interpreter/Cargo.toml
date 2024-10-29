@@ -23,6 +23,7 @@ blake3 = "1.5.3"
 fshasher = "0.3.1"
 hashbrown = "0.15.0"
 enum_ids = "0.2.0"
+lexer = { path = "../lexer" }
 
 [dependencies.uuid]
 version = "1.8.0"
