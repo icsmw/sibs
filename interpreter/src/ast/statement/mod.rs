@@ -1,11 +1,22 @@
+mod assignation;
 mod r#break;
+mod each;
+mod r#for;
+mod r#loop;
+mod r#return;
+mod r#while;
+
 mod conflict;
 mod interest;
 mod read;
-mod r#return;
 
+pub use assignation::*;
+pub use each::*;
 pub use r#break::*;
+pub use r#for::*;
+pub use r#loop::*;
 pub use r#return::*;
+pub use r#while::*;
 
 use std::fmt;
 
@@ -18,12 +29,12 @@ pub enum Statement {
     // IfCondition(IfCondition),
     // IfSubsequence(IfSubsequence),
     // IfThread(IfThread),
-    // For(For),
-    // While(While),
-    // Loop(Loop),
-    // Each(Each),
+    For(For),
+    While(While),
+    Loop(Loop),
+    Each(Each),
     // Conclusion(Conclusion),
-    // VariableAssignation(VariableAssignation),
+    Assignation(Assignation),
 }
 
 impl fmt::Display for StatementId {
@@ -34,6 +45,11 @@ impl fmt::Display for StatementId {
             match self {
                 Self::Break => "Statement::Break",
                 Self::Return => "Statement::Return",
+                Self::For => "Statement::For",
+                Self::While => "Statement::While",
+                Self::Loop => "Statement::Loop",
+                Self::Each => "Statement::Each",
+                Self::Assignation => "Statement::Assignation",
             }
         )
     }

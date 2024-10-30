@@ -18,7 +18,6 @@ pub enum Expression {
     // Condition(Condition),
     // Compute(Compute),
     // Optional(Optional),
-    // PatternString(PatternString),
     // Range(Range),
     Variable(Variable),
 }
