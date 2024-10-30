@@ -19,6 +19,8 @@ pub enum Kind {
     Loop,
     /// The `for` keyword.
     For,
+    /// The `each` keyword.
+    Each,
     /// The `return` keyword.
     Return,
     /// The `break` keyword.
@@ -154,6 +156,7 @@ impl fmt::Display for Kind {
                 Self::While => "while".to_owned(),
                 Self::Loop => "loop".to_owned(),
                 Self::For => "for".to_owned(),
+                Self::Each => "each".to_owned(),
                 Self::Return => "return".to_owned(),
                 Self::Break => "break".to_owned(),
                 Self::Let => "let".to_owned(),
@@ -243,6 +246,7 @@ impl fmt::Display for KindId {
                 Self::While => "while".to_owned(),
                 Self::Loop => "loop".to_owned(),
                 Self::For => "for".to_owned(),
+                Self::Each => "each".to_owned(),
                 Self::Return => "return".to_owned(),
                 Self::Break => "break".to_owned(),
                 Self::Let => "let".to_owned(),
@@ -322,6 +326,7 @@ impl TryFrom<KindId> for Kind {
             KindId::While => Ok(Kind::While),
             KindId::Loop => Ok(Kind::Loop),
             KindId::For => Ok(Kind::For),
+            KindId::Each => Ok(Kind::Each),
             KindId::Return => Ok(Kind::Return),
             KindId::Break => Ok(Kind::Break),
             KindId::Let => Ok(Kind::Let),

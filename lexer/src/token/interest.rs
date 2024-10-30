@@ -35,6 +35,7 @@ impl Interest for KindId {
             | Self::While
             | Self::Loop
             | Self::For
+            | Self::Each
             | Self::Return
             | Self::Break
             | Self::Let
@@ -104,6 +105,7 @@ impl Interest for KindId {
             Self::While => "while" == ident,
             Self::Loop => "loop" == ident,
             Self::For => "for" == ident,
+            Self::Each => "each" == ident,
             Self::Return => "return" == ident,
             Self::Break => "break" == ident,
             Self::Let => "let" == ident,

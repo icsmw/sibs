@@ -125,6 +125,7 @@ impl Read for Token {
             | KindId::While
             | KindId::Loop
             | KindId::For
+            | KindId::Each
             | KindId::Return
             | KindId::Break
             | KindId::Let

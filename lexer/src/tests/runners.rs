@@ -23,6 +23,7 @@ impl Token {
             | Kind::While
             | Kind::Loop
             | Kind::For
+            | Kind::Each
             | Kind::Return
             | Kind::Break
             | Kind::Let

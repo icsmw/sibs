@@ -22,6 +22,7 @@ impl ConflictResolver for KindId {
             | Self::While
             | Self::Loop
             | Self::For
+            | Self::Each
             | Self::Return
             | Self::Break
             | Self::Let
@@ -139,26 +140,73 @@ impl ConflictResolver for KindId {
                     id.clone()
                 }
             }
-            Self::Identifier => {
-                if matches!(
-                    id,
-                    KindId::If
-                        | KindId::Else
-                        | KindId::While
-                        | KindId::Loop
-                        | KindId::For
-                        | KindId::Return
-                        | KindId::Break
-                        | KindId::Let
-                        | KindId::True
-                        | KindId::False
-                        | KindId::Number
-                ) {
-                    id.clone()
-                } else {
-                    self.clone()
-                }
-            }
+            Self::Identifier => match id {
+                KindId::If
+                | KindId::Else
+                | KindId::While
+                | KindId::Loop
+                | KindId::For
+                | KindId::Each
+                | KindId::Return
+                | KindId::Break
+                | KindId::Let
+                | KindId::True
+                | KindId::False
+                | KindId::Number => id.clone(),
+                KindId::SingleQuote
+                | KindId::DoubleQuote
+                | KindId::Tilde
+                | KindId::Backtick
+                | KindId::Question
+                | KindId::Dollar
+                | KindId::At
+                | KindId::Pound
+                | KindId::Plus
+                | KindId::Minus
+                | KindId::Star
+                | KindId::Slash
+                | KindId::Percent
+                | KindId::Equals
+                | KindId::EqualEqual
+                | KindId::BangEqual
+                | KindId::Less
+                | KindId::LessEqual
+                | KindId::Greater
+                | KindId::GreaterEqual
+                | KindId::And
+                | KindId::Or
+                | KindId::VerticalBar
+                | KindId::Bang
+                | KindId::PlusEqual
+                | KindId::MinusEqual
+                | KindId::StarEqual
+                | KindId::SlashEqual
+                | KindId::LeftParen
+                | KindId::RightParen
+                | KindId::LeftBrace
+                | KindId::RightBrace
+                | KindId::LeftBracket
+                | KindId::RightBracket
+                | KindId::Comma
+                | KindId::Colon
+                | KindId::Dot
+                | KindId::DotDot
+                | KindId::Semicolon
+                | KindId::Arrow
+                | KindId::DoubleArrow
+                | KindId::LF
+                | KindId::CR
+                | KindId::CRLF
+                | KindId::EOF
+                | KindId::BOF
+                | KindId::Identifier
+                | KindId::String
+                | KindId::Whitespace
+                | KindId::InterpolatedString
+                | KindId::Command
+                | KindId::Comment
+                | KindId::Meta => self.clone(),
+            },
             Self::Comment => {
                 if matches!(id, KindId::Meta) {
                     id.clone()
