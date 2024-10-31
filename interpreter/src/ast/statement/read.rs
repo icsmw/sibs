@@ -15,6 +15,7 @@ impl TryRead<Statement, StatementId> for Statement {
         nodes: &Nodes,
     ) -> Result<Option<Statement>, E> {
         Ok(match id {
+            StatementId::Block => Block::read(parser, nodes)?.map(Statement::Block),
             StatementId::Break => Break::read(parser, nodes)?.map(Statement::Break),
             StatementId::Return => Return::read(parser, nodes)?.map(Statement::Return),
             StatementId::Each => Each::read(parser, nodes)?.map(Statement::Each),
@@ -24,6 +25,10 @@ impl TryRead<Statement, StatementId> for Statement {
             StatementId::Assignation => {
                 Assignation::read(parser, nodes)?.map(Statement::Assignation)
             }
+            StatementId::Optional => Optional::read(parser, nodes)?.map(Statement::Optional),
+            StatementId::OneOf => OneOf::read(parser, nodes)?.map(Statement::OneOf),
+            StatementId::Join => Join::read(parser, nodes)?.map(Statement::Join),
+            StatementId::If => If::read(parser, nodes)?.map(Statement::If),
         })
     }
 }

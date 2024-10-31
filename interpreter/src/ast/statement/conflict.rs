@@ -9,7 +9,12 @@ impl ConflictResolver<StatementId> for StatementId {
             | Self::For
             | Self::Loop
             | Self::While
-            | Self::Assignation => self.clone(),
+            | Self::Assignation
+            | Self::Optional
+            | Self::OneOf
+            | Self::Join
+            | Self::Block
+            | Self::If => self.clone(),
         }
     }
 }

@@ -9,8 +9,20 @@ impl Interest for StatementId {
             Self::For => matches!(token.id(), KindId::For),
             Self::Loop => matches!(token.id(), KindId::Loop),
             Self::While => matches!(token.id(), KindId::While),
-            Self::Each => matches!(token.id(), KindId::Identifier),
-            Self::Assignation => matches!(token.id(), KindId::Identifier),
+            Self::Each => matches!(token.id(), KindId::Each),
+            Self::Assignation | Self::Join | Self::OneOf => {
+                matches!(token.id(), KindId::Identifier)
+            }
+            Self::Optional => matches!(
+                token.id(),
+                KindId::LeftParen
+                    | KindId::Identifier
+                    | KindId::Number
+                    | KindId::True
+                    | KindId::False
+            ),
+            Self::Block => matches!(token.id(), KindId::LeftBrace),
+            Self::If => matches!(token.id(), KindId::If),
         }
     }
 }

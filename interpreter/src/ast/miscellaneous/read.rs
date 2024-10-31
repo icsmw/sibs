@@ -15,7 +15,8 @@ impl TryRead<Miscellaneous, MiscellaneousId> for Miscellaneous {
         nodes: &Nodes,
     ) -> Result<Option<Miscellaneous>, E> {
         Ok(match id {
-            MiscellaneousId::Command => Command::read(parser, nodes)?.map(Miscellaneous::Command),
+            MiscellaneousId::Comment => Comment::read(parser, nodes)?.map(Miscellaneous::Comment),
+            MiscellaneousId::Meta => Meta::read(parser, nodes)?.map(Miscellaneous::Meta),
         })
     }
 }

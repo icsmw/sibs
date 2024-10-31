@@ -2,19 +2,19 @@ mod conflict;
 mod interest;
 mod read;
 
-mod command;
+mod comment;
+mod meta;
 
-pub use command::*;
+pub use comment::*;
+pub use meta::*;
 
 use std::fmt;
 
 #[enum_ids::enum_ids(derive = "Debug, PartialEq, Clone")]
 #[derive(Debug, Clone)]
 pub enum Miscellaneous {
-    // Block(Block),
-    Command(Command),
-    // Meta(Meta),
-    // Comment(Comment),
+    Meta(Meta),
+    Comment(Comment),
 }
 
 impl fmt::Display for MiscellaneousId {
@@ -23,7 +23,8 @@ impl fmt::Display for MiscellaneousId {
             f,
             "{}",
             match self {
-                Self::Command => "Miscellaneous::Command",
+                Self::Meta => "Miscellaneous::Meta",
+                Self::Comment => "Miscellaneous::Comment",
             }
         )
     }
