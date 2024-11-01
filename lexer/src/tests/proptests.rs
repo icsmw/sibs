@@ -1,3 +1,4 @@
+#[cfg(test)]
 use crate::*;
 
 use proptest::prelude::*;

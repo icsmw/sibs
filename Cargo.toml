@@ -1,10 +1,6 @@
 [workspace]
 resolver = "2"
 members = [
-    "cli", "cmds/common", 
-    "cmds/noise",
-    "cmds/exit",
-    "importer",
     "interpreter",
     "lexer"
 ]
