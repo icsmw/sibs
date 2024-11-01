@@ -34,6 +34,7 @@ features = [
 ]
 
 [dev-dependencies]
+lexer = { path = "../lexer", features = ["proptests"] }
 proptest = "1.4.0"
 rand = "0.8.5"
 env_logger = "0.11.5"
