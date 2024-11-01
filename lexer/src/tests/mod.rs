@@ -1,3 +1,3 @@
 pub mod gens;
-mod proptest;
+pub mod proptests;
 pub mod runners;

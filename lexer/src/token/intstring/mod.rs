@@ -1,5 +1,5 @@
-#[cfg(test)]
-mod proptest;
+#[cfg(any(test, feature = "proptests"))]
+mod proptests;
 
 use crate::*;
 use std::fmt;

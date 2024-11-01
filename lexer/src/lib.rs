@@ -1,10 +1,10 @@
 pub mod error;
-#[cfg(test)]
+#[cfg(any(test, feature = "proptests"))]
 mod tests;
 
 mod token;
 pub use error::*;
-#[cfg(test)]
+#[cfg(any(test, feature = "proptests"))]
 pub use tests::*;
 pub use token::*;
 
