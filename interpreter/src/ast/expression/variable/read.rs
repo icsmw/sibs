@@ -10,6 +10,7 @@ impl ReadElement<Variable> for Variable {
             };
             let node = Variable {
                 ident: ident.clone(),
+                token: tk.to_owned(),
             };
             parser.advance();
             return Ok(Some(node));

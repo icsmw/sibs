@@ -578,7 +578,6 @@ dependencies = [
  "log",
  "paste",
  "proptest",
- "rand",
  "regex",
  "serde",
  "strum",
@@ -625,6 +624,7 @@ dependencies = [
  "enum_ids",
  "proptest",
  "thiserror",
+ "uuid",
 ]
 
 [[package]]

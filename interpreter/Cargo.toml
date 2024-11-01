@@ -6,27 +6,27 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-console = "0.15.8"
-indicatif = "0.17.7"
-regex = "1.10.3"
-terminal_size = "0.4.0"
-thiserror = "1.0.50"
+console = "0.15"
+indicatif = "0.17"
+regex = "1.10"
+terminal_size = "0.4"
+thiserror = "1.0"
 tokio = { version = "1", features = ["rt", "rt-multi-thread", "process", "sync", "macros"] }
-tokio-stream = "0.1.14"
+tokio-stream = "0.1"
 tokio-util = { version = "0.7", features = ["codec"] }
 importer = { path = "../importer" }
-futures = "0.3.30"
-chrono = "0.4.38"
-bstorage = "0.2.1"
+futures = "0.3"
+chrono = "0.4"
+bstorage = "0.2"
 serde = { version = "1.0", features = ["derive"] }
-blake3 = "1.5.3"
-fshasher = "0.3.1"
-hashbrown = "0.15.0"
-enum_ids = "0.2.0"
+blake3 = "1.5"
+fshasher = "0.3"
+hashbrown = "0.15"
+enum_ids = "0.2"
 lexer = { path = "../lexer" }
 
 [dependencies.uuid]
-version = "1.8.0"
+version = "1.8"
 features = [
     "v4",                # Lets you generate random UUIDs
     "fast-rng",          # Use a faster (but still sufficiently random) RNG
@@ -35,10 +35,9 @@ features = [
 
 [dev-dependencies]
 lexer = { path = "../lexer", features = ["proptests"] }
-proptest = "1.4.0"
-rand = "0.8.5"
-env_logger = "0.11.5"
-log = "0.4.22"
+proptest = "1.4"
+env_logger = "0.11"
+log = "0.4"
 strum = "0.26"
 strum_macros = "0.26"
-paste = "1.0.15"
+paste = "1.0"
