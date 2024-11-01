@@ -8,8 +8,6 @@ pub use interest::*;
 pub use nodes::*;
 pub use read::*;
 
-use crate::*;
-
 use lexer::{KindId, Token};
 
 pub struct Parser {

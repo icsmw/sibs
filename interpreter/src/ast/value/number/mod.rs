@@ -2,5 +2,5 @@ mod read;
 
 #[derive(Debug, Clone)]
 pub struct Number {
-    inner: f64,
+    pub inner: f64,
 }
