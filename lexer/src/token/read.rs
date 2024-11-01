@@ -131,7 +131,7 @@ impl Read for Token {
             | KindId::Let
             | KindId::True
             | KindId::False => Ok(if lx.read_identifier() == id.to_string() {
-                Some(Token::by_pos(id.try_into()?, from, lx.pos))
+                Some(Token::by_pos(id.try_into()?, &lx.uuid, from, lx.pos))
             } else {
                 None
             }),
@@ -140,7 +140,7 @@ impl Read for Token {
                 Ok(if ws.is_empty() {
                     None
                 } else {
-                    Some(Token::by_pos(Kind::Whitespace(ws), from, lx.pos))
+                    Some(Token::by_pos(Kind::Whitespace(ws), &lx.uuid, from, lx.pos))
                 })
             }
             KindId::Identifier => {
@@ -153,7 +153,12 @@ impl Read for Token {
                 Ok(if ident.is_empty() {
                     None
                 } else {
-                    Some(Token::by_pos(Kind::Identifier(ident), from, lx.pos))
+                    Some(Token::by_pos(
+                        Kind::Identifier(ident),
+                        &lx.uuid,
+                        from,
+                        lx.pos,
+                    ))
                 })
             }
             KindId::Number => {
@@ -167,7 +172,7 @@ impl Read for Token {
                 let to = lx.pos;
                 let snum = &lx.input[from..to];
                 match snum.parse::<f64>() {
-                    Ok(num) => Ok(Some(Token::by_pos(Kind::Number(num), from, to))),
+                    Ok(num) => Ok(Some(Token::by_pos(Kind::Number(num), &lx.uuid, from, to))),
                     Err(_) => Err(E::InvalidNumber),
                 }
             }
@@ -176,7 +181,12 @@ impl Read for Token {
                     lx.advance();
                     if let Some(str) = lx.read_until('"') {
                         lx.advance();
-                        Ok(Some(Token::by_pos(Kind::String(str), from, lx.pos)))
+                        Ok(Some(Token::by_pos(
+                            Kind::String(str),
+                            &lx.uuid,
+                            from,
+                            lx.pos,
+                        )))
                     } else {
                         Err(E::NoClosingSymbol('\"'))
                     }
@@ -185,9 +195,9 @@ impl Read for Token {
                 }
             }
             KindId::Command => Ok(StringPart::try_read(lx, KindId::Backtick)?
-                .map(|kind| Token::by_pos(kind, from, lx.pos))),
+                .map(|kind| Token::by_pos(kind, &lx.uuid, from, lx.pos))),
             KindId::InterpolatedString => Ok(StringPart::try_read(lx, KindId::SingleQuote)?
-                .map(|kind| Token::by_pos(kind, from, lx.pos))),
+                .map(|kind| Token::by_pos(kind, &lx.uuid, from, lx.pos))),
             KindId::Comment => {
                 if !tks.is_nl() {
                     return Ok(None);
@@ -195,10 +205,20 @@ impl Read for Token {
                 if id.to_string() == lx.read_nth(2) {
                     let drop = lx.pin();
                     Ok(if let Some(content) = lx.read_until('\n') {
-                        Some(Token::by_pos(Kind::Comment(content), from, lx.pos))
+                        Some(Token::by_pos(
+                            Kind::Comment(content),
+                            &lx.uuid,
+                            from,
+                            lx.pos,
+                        ))
                     } else {
                         drop(lx);
-                        Some(Token::by_pos(Kind::Comment(lx.read_to_end()), from, lx.pos))
+                        Some(Token::by_pos(
+                            Kind::Comment(lx.read_to_end()),
+                            &lx.uuid,
+                            from,
+                            lx.pos,
+                        ))
                     })
                 } else {
                     Ok(None)
@@ -211,10 +231,15 @@ impl Read for Token {
                 if id.to_string() == lx.read_nth(3) {
                     let drop = lx.pin();
                     Ok(if let Some(content) = lx.read_until('\n') {
-                        Some(Token::by_pos(Kind::Meta(content), from, lx.pos))
+                        Some(Token::by_pos(Kind::Meta(content), &lx.uuid, from, lx.pos))
                     } else {
                         drop(lx);
-                        Some(Token::by_pos(Kind::Meta(lx.read_to_end()), from, lx.pos))
+                        Some(Token::by_pos(
+                            Kind::Meta(lx.read_to_end()),
+                            &lx.uuid,
+                            from,
+                            lx.pos,
+                        ))
                     })
                 } else {
                     Ok(None)
@@ -264,7 +289,7 @@ impl Read for Token {
             | KindId::LF
             | KindId::CR
             | KindId::CRLF => Ok(if id.to_string() == lx.read_nth(id.length()?) {
-                Some(Token::by_pos(id.try_into()?, from, lx.pos))
+                Some(Token::by_pos(id.try_into()?, &lx.uuid, from, lx.pos))
             } else {
                 None
             }),

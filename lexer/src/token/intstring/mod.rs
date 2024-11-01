@@ -47,6 +47,7 @@ impl StringPart {
         let mut serialized: bool = false;
         let mut parts: Vec<StringPart> = vec![StringPart::Open(Token::by_pos(
             knd.clone().try_into()?,
+            &lx.uuid,
             lx.pos,
             lx.pos + knd.length()?,
         ))];
@@ -65,8 +66,12 @@ impl StringPart {
                     parts.push(StringPart::Literal(collected.clone()));
                     collected.clear();
                 }
-                let mut tokens =
-                    Tokens::with(vec![Token::by_pos(Kind::LeftBrace, lx.pos, lx.pos + 1)]);
+                let mut tokens = Tokens::with(vec![Token::by_pos(
+                    Kind::LeftBrace,
+                    &lx.uuid,
+                    lx.pos,
+                    lx.pos + 1,
+                )]);
                 let mut closed = false;
                 lx.advance();
                 while let Some(tk) = Token::read(lx, &tokens)? {
@@ -97,6 +102,7 @@ impl StringPart {
         }
         parts.push(StringPart::Close(Token::by_pos(
             knd.clone().try_into()?,
+            &lx.uuid,
             lx.pos,
             lx.pos + knd.length()?,
         )));

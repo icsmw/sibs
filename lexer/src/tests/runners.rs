@@ -138,7 +138,7 @@ fn kinds_into(knds: Vec<Kind>) -> (Vec<Token>, String) {
     let tokens = knds
         .into_iter()
         .map(|knd| {
-            let mut token = Token::by_pos(knd, pos, 0);
+            let mut token = Token::by_pos(knd, &Uuid::new_v4(), pos, 0);
             content.push_str(token.to_string().as_str());
             token.set_pos(pos);
             pos = content.len();
@@ -158,9 +158,14 @@ fn kinds_into(knds: Vec<Kind>) -> (Vec<Token>, String) {
 /// * `kinds` - A vector of `Kind` instances to test.
 pub fn test_tokens_by_kinds(kinds: Vec<Kind>) {
     let (mut generated, origin) = kinds_into(kinds);
-    generated.insert(0, Token::by_pos(Kind::BOF, 0, 0));
+    generated.insert(0, Token::by_pos(Kind::BOF, &Uuid::new_v4(), 0, 0));
     if let Some(tk) = generated.last() {
-        generated.push(Token::by_pos(Kind::EOF, tk.pos.to, tk.pos.to));
+        generated.push(Token::by_pos(
+            Kind::EOF,
+            &Uuid::new_v4(),
+            tk.pos.to,
+            tk.pos.to,
+        ));
     }
     let mut lx = Lexer::new(&origin, 0);
     match lx.read(true) {

@@ -16,18 +16,34 @@ pub use position::*;
 pub use read::*;
 pub use tokens::*;
 
-use std::fmt;
+use std::{cmp::PartialEq, fmt};
+use uuid::Uuid;
 
 /// Represents a lexical token produced by the lexer.
 ///
 /// Each `Token` consists of a `kind`, indicating the type of token,
 /// and a `pos`, representing its position in the source code.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone)]
 pub struct Token {
+    /// Uuid of token's source. This uuid is equal to Lexer's uuid
+    ///
+    /// **Note:** The `src` field is intentionally excluded from `PartialEq`
+    /// to simplify testing by ignoring differences in source identifiers.
+    pub src: Uuid,
     /// The kind of the token.
     pub kind: Kind,
     /// The position of the token in the source code.
     pub pos: Position,
+}
+
+impl PartialEq for Token {
+    /// Compares two `Token` instances for equality, ignoring the `src` field.
+    ///
+    /// This implementation checks if both `pos` and `kind` are equal.
+    /// The `src` field is not considered in the comparison to facilitate testing.
+    fn eq(&self, other: &Self) -> bool {
+        self.pos == other.pos && self.kind == other.kind
+    }
 }
 
 impl Token {
@@ -36,10 +52,12 @@ impl Token {
     /// # Arguments
     ///
     /// * `kind` - The kind of the token.
+    /// * `src` - Uuid of source; equal to Lexer's uuid
     /// * `from` - The starting index of the token.
     /// * `to` - The ending index of the token.
-    pub fn by_pos(kind: Kind, from: usize, to: usize) -> Self {
+    pub fn by_pos(kind: Kind, src: &Uuid, from: usize, to: usize) -> Self {
         Self {
+            src: src.to_owned(),
             kind,
             pos: Position::new(from, to),
         }

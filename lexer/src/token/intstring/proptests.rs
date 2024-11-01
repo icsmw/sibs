@@ -58,14 +58,22 @@ impl Arbitrary for StringPart {
                     .into_iter()
                     .flat_map(|knd| {
                         knd.into_iter()
-                            .map(|knd| Token::by_pos(knd, 0, 0))
+                            .map(|knd| Token::by_pos(knd, &Uuid::new_v4(), 0, 0))
                             .collect::<Vec<Token>>()
                     })
                     .flat_map(|tk| {
                         if matches!(tk.id(), KindId::Comment | KindId::Meta) {
                             vec![tk]
                         } else {
-                            vec![tk, Token::by_pos(Kind::Whitespace(String::from(" ")), 0, 0)]
+                            vec![
+                                tk,
+                                Token::by_pos(
+                                    Kind::Whitespace(String::from(" ")),
+                                    &Uuid::new_v4(),
+                                    0,
+                                    0,
+                                ),
+                            ]
                         }
                     })
                     .collect();

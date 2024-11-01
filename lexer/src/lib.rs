@@ -7,6 +7,7 @@ pub use error::*;
 #[cfg(any(test, feature = "proptests"))]
 pub use tests::*;
 pub use token::*;
+use uuid::Uuid;
 
 /// The `Lexer` struct is responsible for converting input strings into tokens.
 ///
@@ -18,6 +19,8 @@ pub struct Lexer<'a> {
     pub(crate) input: &'a str,
     /// The current position in the input string.
     pub(crate) pos: usize,
+    /// Uuid of lexer's instance
+    pub uuid: Uuid,
 }
 
 impl<'a> Lexer<'a> {
@@ -28,7 +31,11 @@ impl<'a> Lexer<'a> {
     /// * `input` - A string slice that holds the input to be lexed.
     /// * `offset` - The starting position in the input string.
     pub fn new(input: &'a str, offset: usize) -> Self {
-        Lexer { input, pos: offset }
+        Lexer {
+            input,
+            pos: offset,
+            uuid: Uuid::new_v4(),
+        }
     }
 
     /// Reads an identifier from the current position.
@@ -192,7 +199,7 @@ impl<'a> Lexer<'a> {
     /// * `Err(E)` if an error occurs during lexing.
     pub fn read(&mut self, new_file: bool) -> Result<Tokens, E> {
         let mut tokens = if new_file {
-            Tokens::with(vec![Token::by_pos(Kind::BOF, 0, 0)])
+            Tokens::with(vec![Token::by_pos(Kind::BOF, &self.uuid, 0, 0)])
         } else {
             Tokens::default()
         };
@@ -203,7 +210,7 @@ impl<'a> Lexer<'a> {
             Err(E::FailRecognizeContent(self.pos))
         } else {
             if new_file {
-                tokens.add(Token::by_pos(Kind::EOF, self.pos, self.pos));
+                tokens.add(Token::by_pos(Kind::EOF, &self.uuid, self.pos, self.pos));
             }
             Ok(tokens)
         }
