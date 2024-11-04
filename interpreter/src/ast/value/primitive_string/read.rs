@@ -10,6 +10,7 @@ impl ReadElement<PrimitiveString> for PrimitiveString {
             };
             let node = PrimitiveString {
                 inner: inner.to_owned(),
+                token: tk.clone(),
             };
             parser.advance();
             return Ok(Some(node));

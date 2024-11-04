@@ -9,6 +9,7 @@ impl ConflictResolver<ExpressionId> for ExpressionId {
             | Self::ComparingSeq
             | Self::Condition
             | Self::LogicalOp
+            | Self::ComparisonOp
             | Self::Range
             | Self::BinaryExp
             | Self::Accessor

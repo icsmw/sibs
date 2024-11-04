@@ -18,7 +18,7 @@ pub use primitive_string::*;
 
 use std::fmt;
 
-#[enum_ids::enum_ids(derive = "Debug, PartialEq, Clone")]
+#[enum_ids::enum_ids(derive = "Debug, PartialEq, Clone", display, display_from_value)]
 #[derive(Debug, Clone)]
 pub enum Value {
     Error(Error),
@@ -27,21 +27,4 @@ pub enum Value {
     Array(Array),
     InterpolatedString(InterpolatedString),
     PrimitiveString(PrimitiveString),
-}
-
-impl fmt::Display for ValueId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Self::InterpolatedString => "Value::InterpolatedString",
-                Self::PrimitiveString => "Value::PrimitiveString",
-                Self::Boolean => "Value::Boolean",
-                Self::Number => "Value::Number",
-                Self::Array => "Value::Array",
-                Self::Error => "Value::Error",
-            }
-        )
-    }
 }

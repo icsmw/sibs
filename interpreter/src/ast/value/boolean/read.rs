@@ -11,6 +11,7 @@ impl ReadElement<Boolean> for Boolean {
                     Kind::False => false,
                     _ => return Ok(None),
                 },
+                token: tk.clone(),
             };
             parser.advance();
             return Ok(Some(node));

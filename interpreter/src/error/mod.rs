@@ -4,4 +4,6 @@ use thiserror::Error;
 pub enum E {
     #[error("Next nodes are in conflict: {0}")]
     NodesAreInConflict(String),
+    #[error("Infinite number cannot be used")]
+    InfiniteNumber,
 }

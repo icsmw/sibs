@@ -1,15 +1,20 @@
-use lexer::Token;
+use crate::*;
+use lexer::Kind;
 
+#[cfg(test)]
+mod proptests;
 mod read;
 
-#[derive(Debug, Clone)]
-enum Side {
-    Number(isize, Token),
-    Variable(String, Token),
-}
+use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct Range {
-    pub left: Side,
-    pub right: Side,
+    pub left: Box<Node>,
+    pub right: Box<Node>,
+}
+
+impl fmt::Display for Range {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}{}{}", self.left, Kind::DotDot, self.right)
+    }
 }

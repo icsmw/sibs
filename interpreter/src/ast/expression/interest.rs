@@ -11,6 +11,15 @@ impl Interest for ExpressionId {
                 matches!(token.id(), KindId::Identifier)
             }
             Self::LogicalOp => matches!(token.id(), KindId::And | KindId::Or),
+            Self::ComparisonOp => matches!(
+                token.id(),
+                KindId::Less
+                    | KindId::LessEqual
+                    | KindId::Greater
+                    | KindId::GreaterEqual
+                    | KindId::EqualEqual
+                    | KindId::BangEqual
+            ),
             Self::Comparing => matches!(
                 token.id(),
                 KindId::Identifier | KindId::Number | KindId::True | KindId::False

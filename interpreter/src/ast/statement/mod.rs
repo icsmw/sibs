@@ -30,7 +30,7 @@ pub use r#while::*;
 
 use std::fmt;
 
-#[enum_ids::enum_ids(derive = "Debug, PartialEq, Clone")]
+#[enum_ids::enum_ids(derive = "Debug, PartialEq, Clone", display, display_from_value)]
 #[derive(Debug, Clone)]
 pub enum Statement {
     Block(Block),
@@ -45,27 +45,4 @@ pub enum Statement {
     Assignation(Assignation),
     OneOf(OneOf),
     Join(Join),
-}
-
-impl fmt::Display for StatementId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Self::Block => "Statement::Block",
-                Self::Break => "Statement::Break",
-                Self::Return => "Statement::Return",
-                Self::For => "Statement::For",
-                Self::While => "Statement::While",
-                Self::Loop => "Statement::Loop",
-                Self::Each => "Statement::Each",
-                Self::Assignation => "Statement::Assignation",
-                Self::Optional => "Statement::Optional",
-                Self::OneOf => "Statement::OneOf",
-                Self::Join => "Statement::Join",
-                Self::If => "Statement::If",
-            }
-        )
-    }
 }

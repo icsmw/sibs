@@ -8,8 +8,12 @@ impl ReadElement<Number> for Number {
             let Kind::Number(inner) = &tk.kind else {
                 return Ok(None);
             };
+            if inner.is_infinite() {
+                return Err(E::InfiniteNumber);
+            }
             let node = Number {
                 inner: inner.to_owned(),
+                token: tk.clone(),
             };
             parser.advance();
             return Ok(Some(node));
