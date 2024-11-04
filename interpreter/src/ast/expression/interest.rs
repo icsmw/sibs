@@ -7,7 +7,7 @@ impl Interest for ExpressionId {
             Self::Command => matches!(token.id(), KindId::Command),
             Self::Call => matches!(token.id(), KindId::Dot),
             Self::Accessor => matches!(token.id(), KindId::LeftBracket),
-            Self::Variable | Self::FunctionCall | Self::Incrementer => {
+            Self::Variable | Self::FunctionCall | Self::CompoundAssignments => {
                 matches!(token.id(), KindId::Identifier)
             }
             Self::LogicalOp => matches!(token.id(), KindId::And | KindId::Or),
@@ -20,11 +20,11 @@ impl Interest for ExpressionId {
                     | KindId::EqualEqual
                     | KindId::BangEqual
             ),
-            Self::Comparing => matches!(
+            Self::Comparison => matches!(
                 token.id(),
                 KindId::Identifier | KindId::Number | KindId::True | KindId::False
             ),
-            Self::ComparingSeq => matches!(token.id(), KindId::LeftParen),
+            Self::ComparisonSeq => matches!(token.id(), KindId::LeftParen),
             Self::Condition => matches!(
                 token.id(),
                 KindId::LeftParen
@@ -34,7 +34,23 @@ impl Interest for ExpressionId {
                     | KindId::False
             ),
             Self::Range => matches!(token.id(), KindId::Identifier | KindId::Number),
-            Self::BinaryExp => matches!(token.id(), KindId::Identifier | KindId::Number),
+            Self::CompoundAssignmentsOp => {
+                matches!(
+                    token.id(),
+                    KindId::PlusEqual | KindId::MinusEqual | KindId::StarEqual | KindId::SlashEqual
+                )
+            }
+
+            Self::BinaryExp => matches!(
+                token.id(),
+                KindId::Identifier | KindId::Number | KindId::LeftParen
+            ),
+            Self::BinaryOp => {
+                matches!(
+                    token.id(),
+                    KindId::Plus | KindId::Minus | KindId::Star | KindId::Slash
+                )
+            }
             Self::TaskCall => matches!(token.id(), KindId::Colon),
         }
     }

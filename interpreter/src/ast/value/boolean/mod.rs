@@ -11,6 +11,6 @@ pub struct Boolean {
 
 impl fmt::Display for Boolean {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "")
+        write!(f, "{}", self.token)
     }
 }

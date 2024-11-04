@@ -19,7 +19,7 @@ impl fmt::Display for Cmb {
 
 impl fmt::Display for Combination {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, " {} ", self.cmb)
+        write!(f, "{}", self.cmb)
     }
 }
 

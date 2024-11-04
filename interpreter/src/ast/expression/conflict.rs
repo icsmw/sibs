@@ -2,11 +2,11 @@ use crate::*;
 
 impl ConflictResolver<ExpressionId> for ExpressionId {
     fn resolve_conflict(&self, _id: &ExpressionId) -> ExpressionId {
-        // Variable and Comparing are in conflict
+        // Variable and Comparison are in conflict
         match self {
             Self::Variable
-            | Self::Comparing
-            | Self::ComparingSeq
+            | Self::Comparison
+            | Self::ComparisonSeq
             | Self::Condition
             | Self::LogicalOp
             | Self::ComparisonOp
@@ -15,9 +15,11 @@ impl ConflictResolver<ExpressionId> for ExpressionId {
             | Self::Accessor
             | Self::Call
             | Self::FunctionCall
-            | Self::Incrementer
+            | Self::CompoundAssignments
+            | Self::CompoundAssignmentsOp
             | Self::Command
-            | Self::TaskCall => self.clone(),
+            | Self::TaskCall
+            | Self::BinaryOp => self.clone(),
         }
     }
 }
