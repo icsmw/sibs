@@ -8,6 +8,7 @@ mod binary_op;
 mod call;
 mod command;
 mod comparison;
+mod comparison_group;
 mod comparison_op;
 mod comparison_seq;
 mod compound_assignments;
@@ -25,6 +26,7 @@ pub use binary_op::*;
 pub use call::*;
 pub use command::*;
 pub use comparison::*;
+pub use comparison_group::*;
 pub use comparison_op::*;
 pub use comparison_seq::*;
 pub use compound_assignments::*;
@@ -39,8 +41,11 @@ pub use variable::*;
 #[enum_ids::enum_ids(derive = "Debug, PartialEq, Clone", display, display_from_value)]
 #[derive(Debug, Clone)]
 pub enum Expression {
+    /// .as_str(), .is_err(), call of function after expression
     Call(Call),
+    /// [1], [n], [get_index()], access to indexed value
     Accessor(Accessor),
+    /// Do I need this still?
     Condition(Condition),
     /// &&, ||
     LogicalOp(LogicalOp),
@@ -48,18 +53,26 @@ pub enum Expression {
     ComparisonOp(ComparisonOp),
     /// x < y, x <= y, x == y, etc.
     Comparison(Comparison),
+    /// (x), (x < y), (x < y && c > t), etc, but always in (...)
+    ComparisonGroup(ComparisonGroup),
+    /// t == v || (x < y), (x < y && c > t) || u != p, etc
     ComparisonSeq(ComparisonSeq),
+    /// 1..3, n..4, n..m, etc
     Range(Range),
+    /// a, b, c, x, y, etc
     Variable(Variable),
     /// 1 + 2, 1 / 2, (x + 2) / 3, etc.
     BinaryExp(BinaryExp),
     /// +, -, *, /
     BinaryOp(BinaryOp),
+    /// func(), get_os(), etc.
     FunctionCall(FunctionCall),
     /// x += 1, x -= 1, x *= 2, x /= 2
     CompoundAssignments(CompoundAssignments),
     /// +=, -=, *=, \=
     CompoundAssignmentsOp(CompoundAssignmentsOp),
+    /// `command`
     Command(Command),
+    /// :comp:task(args)
     TaskCall(TaskCall),
 }

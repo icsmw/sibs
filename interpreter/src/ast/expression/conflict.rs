@@ -7,6 +7,7 @@ impl ConflictResolver<ExpressionId> for ExpressionId {
             Self::Variable
             | Self::Comparison
             | Self::ComparisonSeq
+            | Self::ComparisonGroup
             | Self::Condition
             | Self::LogicalOp
             | Self::ComparisonOp

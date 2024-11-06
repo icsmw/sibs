@@ -1,10 +1,15 @@
+use lexer::KindId;
+
 use crate::*;
 
-impl ReadElement<ComparisonSeq> for ComparisonSeq {
-    fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<ComparisonSeq>, E> {
+impl ReadElement<ComparisonGroup> for ComparisonGroup {
+    fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<ComparisonGroup>, E> {
+        let Some(mut inner) = parser.between(KindId::LeftParen, KindId::RightParen)? else {
+            return Ok(None);
+        };
         let mut collected = Vec::new();
         while let Some(node) = Expression::try_oneof(
-            parser,
+            &mut inner,
             &[
                 ExpressionId::Comparison,
                 ExpressionId::LogicalOp,
@@ -37,7 +42,7 @@ impl ReadElement<ComparisonSeq> for ComparisonSeq {
         Ok(if collected.is_empty() {
             None
         } else {
-            Some(ComparisonSeq { nodes: collected })
+            Some(ComparisonGroup { nodes: collected })
         })
     }
 }

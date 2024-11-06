@@ -24,7 +24,15 @@ impl Interest for ExpressionId {
                 token.id(),
                 KindId::Identifier | KindId::Number | KindId::True | KindId::False
             ),
-            Self::ComparisonSeq => matches!(token.id(), KindId::LeftParen),
+            Self::ComparisonSeq => matches!(
+                token.id(),
+                KindId::LeftParen
+                    | KindId::Identifier
+                    | KindId::Number
+                    | KindId::True
+                    | KindId::False
+            ),
+            Self::ComparisonGroup => matches!(token.id(), KindId::LeftParen),
             Self::Condition => matches!(
                 token.id(),
                 KindId::LeftParen

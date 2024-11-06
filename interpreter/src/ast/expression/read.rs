@@ -22,6 +22,9 @@ impl TryRead<Expression, ExpressionId> for Expression {
             ExpressionId::ComparisonSeq => {
                 ComparisonSeq::read(parser, nodes)?.map(Expression::ComparisonSeq)
             }
+            ExpressionId::ComparisonGroup => {
+                ComparisonGroup::read(parser, nodes)?.map(Expression::ComparisonGroup)
+            }
             ExpressionId::Condition => Condition::read(parser, nodes)?.map(Expression::Condition),
             ExpressionId::LogicalOp => LogicalOp::read(parser, nodes)?.map(Expression::LogicalOp),
             ExpressionId::ComparisonOp => {

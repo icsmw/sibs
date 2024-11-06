@@ -13,9 +13,14 @@ impl ReadElement<CompoundAssignments> for CompoundAssignments {
         else {
             return Ok(None);
         };
-        let Some(right) = Value::try_read(parser, ValueId::Number, nodes)?
-            .map(Node::Value)
-            .or(Expression::try_read(parser, ExpressionId::Variable, nodes)?.map(Node::Expression))
+        let Some(right) = Node::try_oneof(
+            parser,
+            nodes,
+            &[
+                NodeReadTarget::Value(&[ValueId::Number]),
+                NodeReadTarget::Expression(&[ExpressionId::Variable]),
+            ],
+        )?
         else {
             return Ok(None);
         };

@@ -4,13 +4,15 @@ use crate::*;
 
 impl ReadElement<Range> for Range {
     fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<Range>, E> {
-        fn get_side(parser: &mut Parser, nodes: &Nodes) -> Result<Option<Node>, E> {
-            Ok(Value::try_read(parser, ValueId::Number, nodes)?
-                .map(Node::Value)
-                .or(Expression::try_read(parser, ExpressionId::Variable, nodes)?
-                    .map(Node::Expression)))
-        }
-        let Some(left) = get_side(parser, nodes)? else {
+        let Some(left) = Node::try_oneof(
+            parser,
+            nodes,
+            &[
+                NodeReadTarget::Value(&[ValueId::Number]),
+                NodeReadTarget::Expression(&[ExpressionId::Variable]),
+            ],
+        )?
+        else {
             return Ok(None);
         };
         parser.advance();
@@ -20,7 +22,15 @@ impl ReadElement<Range> for Range {
             }
         }
         parser.advance();
-        let Some(right) = get_side(parser, nodes)? else {
+        let Some(right) = Node::try_oneof(
+            parser,
+            nodes,
+            &[
+                NodeReadTarget::Value(&[ValueId::Number]),
+                NodeReadTarget::Expression(&[ExpressionId::Variable]),
+            ],
+        )?
+        else {
             return Ok(None);
         };
         Ok(Some(Range {

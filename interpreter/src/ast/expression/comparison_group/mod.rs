@@ -4,11 +4,11 @@ use crate::*;
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub struct ComparisonSeq {
+pub struct ComparisonGroup {
     pub nodes: Vec<Node>,
 }
 
-impl fmt::Display for ComparisonSeq {
+impl fmt::Display for ComparisonGroup {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,

@@ -1,17 +1,16 @@
-use lexer::Kind;
-
 use crate::*;
 
 impl ReadElement<Comparison> for Comparison {
     fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<Comparison>, E> {
-        fn get_side(parser: &mut Parser, nodes: &Nodes) -> Result<Option<Node>, E> {
-            Ok(Expression::try_read(parser, ExpressionId::Variable, nodes)?
-                .map(Node::Expression)
-                .or(Value::try_read(parser, ValueId::Boolean, nodes)?.map(Node::Value))
-                .or(Value::try_read(parser, ValueId::Number, nodes)?.map(Node::Value)))
-        }
-
-        let Some(left) = get_side(parser, nodes)? else {
+        let Some(left) = Node::try_oneof(
+            parser,
+            nodes,
+            &[
+                NodeReadTarget::Value(&[ValueId::Number, ValueId::Boolean]),
+                NodeReadTarget::Expression(&[ExpressionId::Variable]),
+            ],
+        )?
+        else {
             return Ok(None);
         };
         parser.advance();
@@ -21,7 +20,15 @@ impl ReadElement<Comparison> for Comparison {
             return Ok(None);
         };
         parser.advance();
-        let Some(right) = get_side(parser, nodes)? else {
+        let Some(right) = Node::try_oneof(
+            parser,
+            nodes,
+            &[
+                NodeReadTarget::Value(&[ValueId::Number, ValueId::Boolean]),
+                NodeReadTarget::Expression(&[ExpressionId::Variable]),
+            ],
+        )?
+        else {
             return Ok(None);
         };
         Ok(Some(Comparison {
