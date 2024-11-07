@@ -1,7 +1,8 @@
-use lexer::Token;
-
+#[cfg(test)]
+mod proptests;
 mod read;
 
+use lexer::Token;
 use std::fmt;
 
 #[derive(Debug, Clone)]

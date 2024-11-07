@@ -1,5 +1,9 @@
 mod conflict;
+#[cfg(test)]
+mod proptests;
 mod read;
+#[cfg(test)]
+mod tests;
 
 pub use read::*;
 

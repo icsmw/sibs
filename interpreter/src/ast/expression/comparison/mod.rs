@@ -1,5 +1,7 @@
+#[cfg(test)]
+mod proptests;
+
 use crate::*;
-use lexer::Token;
 use std::fmt;
 
 mod read;

@@ -85,6 +85,23 @@ pub fn rnd_kind(exceptions: Vec<KindId>) -> BoxedStrategy<Vec<Kind>> {
     .boxed()
 }
 
+/// Generates a `BoxedStrategy` that produces vectors of `Kind` instances,
+/// excluding specified exceptions.
+///
+/// This function is used in property-based testing to create random sequences
+/// of `Kind` tokens while omitting any kinds listed in the `exceptions`.
+///
+/// # Arguments
+///
+/// * `includes` - A vector of `KindId` instances to include from the generated strategies.
+///
+/// # Returns
+///
+/// A `BoxedStrategy` yielding vectors of `Kind` instances.
+pub fn rnd_kind_with(includes: Vec<KindId>) -> BoxedStrategy<Vec<Kind>> {
+    prop::strategy::Union::new(includes.into_iter().map(kind)).boxed()
+}
+
 /// Generates strategies for creating `Kind` instances based on the given `KindId`.
 ///
 /// This function maps a `KindId` to one or more `BoxedStrategy<Kind>` instances,
@@ -98,6 +115,7 @@ pub fn rnd_kind(exceptions: Vec<KindId>) -> BoxedStrategy<Vec<Kind>> {
 ///
 /// A vector of `BoxedStrategy<Kind>` instances corresponding to the provided `KindId`.
 pub fn kind(id: KindId) -> Vec<BoxedStrategy<Kind>> {
+    // TODO: return only one Kind, not a vector
     match id {
         KindId::If
         | KindId::Else

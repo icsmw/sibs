@@ -22,7 +22,7 @@ impl Parser {
     }
     pub(crate) fn token(&mut self) -> Option<&Token> {
         while let Some(tk) = self.tokens.get(self.pos) {
-            if tk.id() != KindId::Whitespace {
+            if !matches!(tk.id(), KindId::Whitespace | KindId::BOF | KindId::EOF) {
                 return Some(tk);
             }
             self.pos += 1;

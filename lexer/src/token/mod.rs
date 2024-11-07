@@ -67,6 +67,15 @@ impl Token {
     pub fn id(&self) -> KindId {
         self.kind.id()
     }
+
+    #[cfg(any(test, feature = "proptests"))]
+    pub fn for_test(kind: Kind) -> Self {
+        Self {
+            src: Uuid::new_v4(),
+            kind,
+            pos: Position::new(0, 0),
+        }
+    }
 }
 
 impl fmt::Display for Token {

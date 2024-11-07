@@ -1,8 +1,8 @@
 use crate::*;
 
 use lexer::{gens::kind, Kind, KindId, Token};
+use prop::test_runner::Reason;
 use proptest::prelude::*;
-use uuid::Uuid;
 
 impl Arbitrary for Variable {
     type Parameters = ();
@@ -11,17 +11,18 @@ impl Arbitrary for Variable {
 
     fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
         kind(KindId::Identifier)
-            .prop_filter_map("single ident", |knds| {
+            .prop_filter_map("Expected: Kind::Identifier", |knds| {
                 if let Some(Kind::Identifier(ident)) = knds.first() {
-                    Some((ident.to_owned(), Kind::Identifier(ident.to_owned())))
+                    Some(Variable {
+                        ident: ident.to_owned(),
+                        token: Token::for_test(Kind::Identifier(ident.to_owned())),
+                    })
                 } else {
                     None
                 }
             })
-            .prop_map(|(ident, knd)| Variable {
-                ident,
-                token: Token::by_pos(knd, &Uuid::new_v4(), 0, 0),
-            })
             .boxed()
     }
 }
+
+test_node_reading!(мariable, Variable, 10);
