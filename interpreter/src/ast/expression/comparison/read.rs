@@ -31,6 +31,7 @@ impl ReadElement<Comparison> for Comparison {
         else {
             return Ok(None);
         };
+        parser.advance();
         Ok(Some(Comparison {
             left: Box::new(left),
             operator: Box::new(operator),

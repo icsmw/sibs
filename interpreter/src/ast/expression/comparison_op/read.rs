@@ -19,9 +19,11 @@ impl ReadElement<ComparisonOp> for ComparisonOp {
                 return Ok(None);
             }
         };
-        Ok(Some(ComparisonOp {
+        let node = ComparisonOp {
             token: tk.clone(),
             operator,
-        }))
+        };
+        parser.advance();;
+        Ok(Some(node))
     }
 }

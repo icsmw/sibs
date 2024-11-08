@@ -3,23 +3,32 @@ use crate::*;
 use proptest::prelude::*;
 
 impl Arbitrary for ComparisonGroup {
-    type Parameters = ();
+    type Parameters = u8;
 
     type Strategy = BoxedStrategy<Self>;
 
-    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+    fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         (
-            prop::collection::vec(
-                prop::strategy::Union::new(vec![
-                    Comparison::arbitrary()
+            if deep > 5 {
+                prop::collection::vec(
+                    prop::strategy::Union::new(vec![Comparison::arbitrary()
                         .prop_map(|v| Node::Expression(Expression::Comparison(v)))
-                        .boxed(),
-                    ComparisonGroup::arbitrary()
-                        .prop_map(|v| Node::Expression(Expression::ComparisonGroup(v)))
-                        .boxed(),
-                ]),
-                1..5,
-            ),
+                        .boxed()]),
+                    1..5,
+                )
+            } else {
+                prop::collection::vec(
+                    prop::strategy::Union::new(vec![
+                        Comparison::arbitrary()
+                            .prop_map(|v| Node::Expression(Expression::Comparison(v)))
+                            .boxed(),
+                        ComparisonGroup::arbitrary_with(deep + 1)
+                            .prop_map(|v| Node::Expression(Expression::ComparisonGroup(v)))
+                            .boxed(),
+                    ]),
+                    1..5,
+                )
+            },
             prop::collection::vec(
                 LogicalOp::arbitrary_with(())
                     .prop_map(|v| Node::Expression(Expression::LogicalOp(v)))
@@ -39,3 +48,5 @@ impl Arbitrary for ComparisonGroup {
             .boxed()
     }
 }
+
+test_node_reading!(comparison_group, ComparisonGroup, 10);

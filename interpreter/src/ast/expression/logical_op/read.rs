@@ -12,9 +12,11 @@ impl ReadElement<LogicalOp> for LogicalOp {
             Kind::Or => LogicalOperator::Or,
             _ => return Ok(None),
         };
-        Ok(Some(LogicalOp {
+        let node = LogicalOp {
             token: tk.clone(),
             operator,
-        }))
+        };
+        parser.advance();
+        Ok(Some(node))
     }
 }

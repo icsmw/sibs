@@ -11,8 +11,8 @@ impl Arbitrary for Variable {
 
     fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
         kind(KindId::Identifier)
-            .prop_filter_map("Expected: Kind::Identifier", |knds| {
-                if let Some(Kind::Identifier(ident)) = knds.first() {
+            .prop_filter_map("Expected: Kind::Identifier", |knd| {
+                if let Kind::Identifier(ident) = knd {
                     Some(Variable {
                         ident: ident.to_owned(),
                         token: Token::for_test(Kind::Identifier(ident.to_owned())),
