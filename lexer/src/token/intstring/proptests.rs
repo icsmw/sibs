@@ -51,16 +51,14 @@ impl Arbitrary for StringPart {
                 ]),
                 1..5,
             )
-            .prop_map(|mut knds| {
-                knds.insert(0, vec![Kind::LeftBrace]);
-                knds.push(vec![Kind::RightBrace]);
+            .prop_map(|knds| {
+                let mut knds: Vec<Kind> =
+                    knds.into_iter().flat_map(gens::add_bound_kinds).collect();
+                knds.insert(0, Kind::LeftBrace);
+                knds.push(Kind::RightBrace);
                 let mut tokens: Vec<Token> = knds
                     .into_iter()
-                    .flat_map(|knd| {
-                        knd.into_iter()
-                            .map(|knd| Token::by_pos(knd, &Uuid::new_v4(), 0, 0))
-                            .collect::<Vec<Token>>()
-                    })
+                    .map(|knd| Token::by_pos(knd, &Uuid::new_v4(), 0, 0))
                     .flat_map(|tk| {
                         if matches!(tk.id(), KindId::Comment | KindId::Meta) {
                             vec![tk]

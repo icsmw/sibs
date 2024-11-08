@@ -15,7 +15,7 @@ use proptest::prelude::*;
 /// # Returns
 ///
 /// A `BoxedStrategy` yielding vectors of `Kind` instances.
-pub fn rnd_kind(exceptions: Vec<KindId>) -> BoxedStrategy<Vec<Kind>> {
+pub fn rnd_kind(exceptions: Vec<KindId>) -> BoxedStrategy<Kind> {
     prop_oneof![
         Just(KindId::If),
         Just(KindId::Else),
@@ -98,9 +98,30 @@ pub fn rnd_kind(exceptions: Vec<KindId>) -> BoxedStrategy<Vec<Kind>> {
 /// # Returns
 ///
 /// A `BoxedStrategy` yielding vectors of `Kind` instances.
-pub fn rnd_kind_with(includes: Vec<KindId>) -> BoxedStrategy<Vec<Kind>> {
+pub fn rnd_kind_with(includes: Vec<KindId>) -> BoxedStrategy<Kind> {
     prop::strategy::Union::new(includes.into_iter().map(kind)).boxed()
 }
+
+// /// Generates a `BoxedStrategy` that produces vectors of `Kind` instances,
+// /// excluding specified exceptions.
+// ///
+// /// This function is used in property-based testing to create random sequences
+// /// of `Kind` tokens while omitting any kinds listed in the `exceptions`.
+// ///
+// /// # Arguments
+// ///
+// /// * `exceptions` - A vector of `KindId` instances to exclude from the generated strategies.
+// ///
+// /// # Returns
+// ///
+// /// A `BoxedStrategy` yielding vectors of `Kind` instances.
+// pub fn rnd_kind_without(exceptions: Vec<KindId>) -> BoxedStrategy<Kind> {
+//     let includes = KindId::as_vec()
+//         .into_iter()
+//         .filter(|id| !exceptions.contains(id))
+//         .collect::<Vec<KindId>>();
+//     prop::strategy::Union::new(includes.into_iter().map(kind)).boxed()
+// }
 
 /// Generates strategies for creating `Kind` instances based on the given `KindId`.
 ///
@@ -113,8 +134,8 @@ pub fn rnd_kind_with(includes: Vec<KindId>) -> BoxedStrategy<Vec<Kind>> {
 ///
 /// # Returns
 ///
-/// A vector of `BoxedStrategy<Kind>` instances corresponding to the provided `KindId`.
-pub fn kind(id: KindId) -> Vec<BoxedStrategy<Kind>> {
+/// `BoxedStrategy<Kind>` instance corresponding to the provided `KindId`.
+pub fn kind(id: KindId) -> BoxedStrategy<Kind> {
     // TODO: return only one Kind, not a vector
     match id {
         KindId::If
@@ -175,9 +196,9 @@ pub fn kind(id: KindId) -> Vec<BoxedStrategy<Kind>> {
         | KindId::CR
         | KindId::CRLF
         | KindId::Whitespace => {
-            vec![Just(id.try_into().expect("Failed to convert KindId to Kind")).boxed()]
+            Just(id.try_into().expect("Failed to convert KindId to Kind")).boxed()
         }
-        KindId::Identifier => vec!["[a-z][a-z0-9]*"
+        KindId::Identifier => "[a-z][a-z0-9]*"
             .prop_map(String::from)
             .prop_filter("conflicts", |s| {
                 if let Some(ch) = s.chars().next() {
@@ -201,12 +222,12 @@ pub fn kind(id: KindId) -> Vec<BoxedStrategy<Kind>> {
                 .contains(s)
             })
             .prop_map(Kind::Identifier)
-            .boxed()],
-        KindId::Number => vec![proptest::num::f64::NORMAL
+            .boxed(),
+        KindId::Number => proptest::num::f64::NORMAL
             .prop_filter("Finite f64", |x| x.is_finite())
             .prop_map(Kind::Number)
-            .boxed()],
-        KindId::String => vec![proptest::collection::vec(any::<char>(), 0..200)
+            .boxed(),
+        KindId::String => proptest::collection::vec(any::<char>(), 0..200)
             .prop_map(|chars| {
                 Kind::String(
                     chars
@@ -223,8 +244,8 @@ pub fn kind(id: KindId) -> Vec<BoxedStrategy<Kind>> {
                         .collect::<String>(),
                 )
             })
-            .boxed()],
-        KindId::InterpolatedString => vec![(1..10, prop_oneof![Just(0u8), Just(1u8)])
+            .boxed(),
+        KindId::InterpolatedString => (1..10, prop_oneof![Just(0u8), Just(1u8)])
             .prop_flat_map(|(count, first)| {
                 let mut parts: Vec<BoxedStrategy<StringPart>> = vec![Just(StringPart::Open(
                     Token::by_pos(Kind::SingleQuote, &Uuid::new_v4(), 0, 0),
@@ -249,8 +270,8 @@ pub fn kind(id: KindId) -> Vec<BoxedStrategy<Kind>> {
                 );
                 parts.prop_map(Kind::InterpolatedString).boxed()
             })
-            .boxed()],
-        KindId::Command => vec![(1..10, prop_oneof![Just(0u8), Just(1u8)])
+            .boxed(),
+        KindId::Command => (1..10, prop_oneof![Just(0u8), Just(1u8)])
             .prop_flat_map(|(count, first)| {
                 let mut parts: Vec<BoxedStrategy<StringPart>> = vec![Just(StringPart::Open(
                     Token::by_pos(Kind::Backtick, &Uuid::new_v4(), 0, 0),
@@ -275,48 +296,50 @@ pub fn kind(id: KindId) -> Vec<BoxedStrategy<Kind>> {
                 );
                 parts.prop_map(Kind::Command).boxed()
             })
-            .boxed()],
-        KindId::Comment => vec![
-            Just(Kind::LF).boxed(),
-            proptest::collection::vec(any::<char>(), 0..200)
-                .prop_map(|chars| {
-                    Kind::Comment(format!(
-                        "comment:{}",
-                        chars
-                            .into_iter()
-                            .map(|ch| {
-                                if ch == '\n' || ch == '\r' || ch == '\\' {
-                                    "_".to_string()
-                                } else {
-                                    ch.to_string()
-                                }
-                            })
-                            .collect::<String>()
-                    ))
-                })
-                .boxed(),
-            Just(Kind::LF).boxed(),
-        ],
-        KindId::Meta => vec![
-            Just(Kind::LF).boxed(),
-            proptest::collection::vec(any::<char>(), 0..200)
-                .prop_map(|chars| {
-                    Kind::Meta(format!(
-                        "meta:{}",
-                        chars
-                            .into_iter()
-                            .map(|ch| {
-                                if ch == '\n' || ch == '\r' || ch == '\\' {
-                                    "_".to_string()
-                                } else {
-                                    ch.to_string()
-                                }
-                            })
-                            .collect::<String>()
-                    ))
-                })
-                .boxed(),
-            Just(Kind::LF).boxed(),
-        ],
+            .boxed(),
+        KindId::Comment => proptest::collection::vec(any::<char>(), 0..200)
+            .prop_map(|chars| {
+                Kind::Comment(format!(
+                    "comment:{}",
+                    chars
+                        .into_iter()
+                        .map(|ch| {
+                            if ch == '\n' || ch == '\r' || ch == '\\' {
+                                "_".to_string()
+                            } else {
+                                ch.to_string()
+                            }
+                        })
+                        .collect::<String>()
+                ))
+            })
+            .boxed(),
+        KindId::Meta => proptest::collection::vec(any::<char>(), 0..200)
+            .prop_map(|chars| {
+                Kind::Meta(format!(
+                    "meta:{}",
+                    chars
+                        .into_iter()
+                        .map(|ch| {
+                            if ch == '\n' || ch == '\r' || ch == '\\' {
+                                "_".to_string()
+                            } else {
+                                ch.to_string()
+                            }
+                        })
+                        .collect::<String>()
+                ))
+            })
+            .boxed(),
+    }
+}
+
+/// Adds bound Kinds. For example Comment and Meta needs to be around LF
+pub fn add_bound_kinds(knd: Kind) -> Vec<Kind> {
+    match &knd {
+        Kind::Comment(..) | Kind::Meta(..) => {
+            vec![Kind::LF, knd, Kind::LF]
+        }
+        _ => vec![knd],
     }
 }
