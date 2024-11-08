@@ -2,8 +2,29 @@ use crate::*;
 
 use proptest::prelude::*;
 
-/// Generates a `BoxedStrategy` that produces vectors of `Kind` instances,
-/// excluding specified exceptions.
+/// Generates a `BoxedStrategy` with random `Kind` instance,
+///
+/// # Returns
+///
+/// A `BoxedStrategy` with random`Kind` instance.
+pub fn rnd_kind() -> BoxedStrategy<Kind> {
+    prop::strategy::Union::new(KindId::as_vec().into_iter().map(kind)).boxed()
+}
+
+/// Generates a `BoxedStrategy` with random `Kind` instance, including specified Kind.
+///
+/// # Arguments
+///
+/// * `includes` - A vector of `KindId` instances to include from the generated strategies.
+///
+/// # Returns
+///
+/// A `BoxedStrategy` with random`Kind` instance.
+pub fn rnd_kind_with(includes: Vec<KindId>) -> BoxedStrategy<Kind> {
+    prop::strategy::Union::new(includes.into_iter().map(kind)).boxed()
+}
+
+/// Generates a `BoxedStrategy` with random `Kind` instance, excluding specified exceptions.
 ///
 /// This function is used in property-based testing to create random sequences
 /// of `Kind` tokens while omitting any kinds listed in the `exceptions`.
@@ -14,114 +35,14 @@ use proptest::prelude::*;
 ///
 /// # Returns
 ///
-/// A `BoxedStrategy` yielding vectors of `Kind` instances.
-pub fn rnd_kind(exceptions: Vec<KindId>) -> BoxedStrategy<Kind> {
-    prop_oneof![
-        Just(KindId::If),
-        Just(KindId::Else),
-        Just(KindId::While),
-        Just(KindId::Loop),
-        Just(KindId::For),
-        Just(KindId::Each),
-        Just(KindId::Return),
-        Just(KindId::Break),
-        Just(KindId::Let),
-        Just(KindId::True),
-        Just(KindId::False),
-        Just(KindId::Question),
-        Just(KindId::SingleQuote),
-        Just(KindId::DoubleQuote),
-        Just(KindId::Tilde),
-        Just(KindId::Backtick),
-        Just(KindId::Dollar),
-        Just(KindId::At),
-        Just(KindId::Pound),
-        Just(KindId::Plus),
-        Just(KindId::Minus),
-        Just(KindId::Star),
-        Just(KindId::Slash),
-        Just(KindId::Percent),
-        Just(KindId::Equals),
-        Just(KindId::EqualEqual),
-        Just(KindId::BangEqual),
-        Just(KindId::Less),
-        Just(KindId::LessEqual),
-        Just(KindId::Greater),
-        Just(KindId::GreaterEqual),
-        Just(KindId::And),
-        Just(KindId::Or),
-        Just(KindId::VerticalBar),
-        Just(KindId::Bang),
-        Just(KindId::PlusEqual),
-        Just(KindId::MinusEqual),
-        Just(KindId::StarEqual),
-        Just(KindId::SlashEqual),
-        Just(KindId::LeftParen),
-        Just(KindId::RightParen),
-        Just(KindId::LeftBrace),
-        Just(KindId::RightBrace),
-        Just(KindId::LeftBracket),
-        Just(KindId::RightBracket),
-        Just(KindId::Comma),
-        Just(KindId::Colon),
-        Just(KindId::Dot),
-        Just(KindId::DotDot),
-        Just(KindId::Semicolon),
-        Just(KindId::Arrow),
-        Just(KindId::DoubleArrow),
-        Just(KindId::Identifier),
-        Just(KindId::Number),
-        Just(KindId::String),
-        Just(KindId::InterpolatedString),
-        Just(KindId::Command),
-        Just(KindId::Comment),
-        Just(KindId::Whitespace),
-        Just(KindId::Meta),
-    ]
-    .prop_filter("Exception", move |id| {
-        !exceptions.contains(id) && id != &KindId::EOF
-    })
-    .prop_flat_map(kind)
-    .boxed()
-}
-
-/// Generates a `BoxedStrategy` that produces vectors of `Kind` instances,
-/// excluding specified exceptions.
-///
-/// This function is used in property-based testing to create random sequences
-/// of `Kind` tokens while omitting any kinds listed in the `exceptions`.
-///
-/// # Arguments
-///
-/// * `includes` - A vector of `KindId` instances to include from the generated strategies.
-///
-/// # Returns
-///
-/// A `BoxedStrategy` yielding vectors of `Kind` instances.
-pub fn rnd_kind_with(includes: Vec<KindId>) -> BoxedStrategy<Kind> {
+/// A `BoxedStrategy` with random`Kind` instance.
+pub fn rnd_kind_without(exceptions: Vec<KindId>) -> BoxedStrategy<Kind> {
+    let includes = KindId::as_vec()
+        .into_iter()
+        .filter(|id| !exceptions.contains(id))
+        .collect::<Vec<KindId>>();
     prop::strategy::Union::new(includes.into_iter().map(kind)).boxed()
 }
-
-// /// Generates a `BoxedStrategy` that produces vectors of `Kind` instances,
-// /// excluding specified exceptions.
-// ///
-// /// This function is used in property-based testing to create random sequences
-// /// of `Kind` tokens while omitting any kinds listed in the `exceptions`.
-// ///
-// /// # Arguments
-// ///
-// /// * `exceptions` - A vector of `KindId` instances to exclude from the generated strategies.
-// ///
-// /// # Returns
-// ///
-// /// A `BoxedStrategy` yielding vectors of `Kind` instances.
-// pub fn rnd_kind_without(exceptions: Vec<KindId>) -> BoxedStrategy<Kind> {
-//     let includes = KindId::as_vec()
-//         .into_iter()
-//         .filter(|id| !exceptions.contains(id))
-//         .collect::<Vec<KindId>>();
-//     prop::strategy::Union::new(includes.into_iter().map(kind)).boxed()
-// }
 
 /// Generates strategies for creating `Kind` instances based on the given `KindId`.
 ///

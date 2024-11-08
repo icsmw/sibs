@@ -37,7 +37,7 @@ impl Arbitrary for StringPart {
                 .boxed()
         } else {
             proptest::collection::vec(
-                gens::rnd_kind(vec![
+                gens::rnd_kind_without(vec![
                     KindId::LeftBrace,
                     KindId::RightBrace,
                     KindId::CR,
@@ -48,6 +48,8 @@ impl Arbitrary for StringPart {
                     KindId::DoubleQuote,
                     KindId::Number,
                     KindId::Whitespace,
+                    KindId::EOF,
+                    KindId::BOF,
                 ]),
                 1..5,
             )

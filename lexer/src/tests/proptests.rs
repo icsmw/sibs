@@ -41,7 +41,13 @@ proptest! {
 
     /// Tests the lexer with combinations of random tokens.
     #[test]
-    fn combination(cases in proptest::collection::vec(gens::rnd_kind(vec![KindId::Whitespace, KindId::SingleQuote, KindId::DoubleQuote, KindId::Backtick]), 1..1000)) {
+    fn combination(cases in proptest::collection::vec(gens::rnd_kind_without(vec![
+        KindId::Whitespace,
+        KindId::SingleQuote,
+        KindId::DoubleQuote,
+        KindId::Backtick,
+        KindId::EOF,
+        KindId::BOF]), 1..1000)) {
         let mut cases = cases.into_iter().flat_map(|knd| {
             if matches!(knd.id(), KindId::Comment | KindId::Meta) {
                 gens::add_bound_kinds(knd)
