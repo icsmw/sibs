@@ -8,6 +8,6 @@ impl ReadNode<Block> for Block {
             return Ok(None);
         };
         // Read nodes;
-        Ok(None)
+        Ok(Some(Block { nodes: Vec::new() }))
     }
 }

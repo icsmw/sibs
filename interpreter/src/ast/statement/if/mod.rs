@@ -21,20 +21,10 @@ impl fmt::Display for IfCase {
             "{}",
             match self {
                 Self::If(condition, block, _) => {
-                    format!(
-                        "{} {condition} {} {block} {}",
-                        KindId::If,
-                        KindId::LeftParen,
-                        KindId::RightParen
-                    )
+                    format!("{} {condition} {block} ", KindId::If,)
                 }
                 Self::Else(block, _) => {
-                    format!(
-                        "{} {} {block} {}",
-                        KindId::Else,
-                        KindId::LeftParen,
-                        KindId::RightParen
-                    )
+                    format!("{} {block} ", KindId::Else,)
                 }
             }
         )

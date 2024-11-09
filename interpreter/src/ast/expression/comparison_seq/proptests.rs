@@ -14,7 +14,7 @@ impl Arbitrary for ComparisonSeq {
                     Comparison::arbitrary()
                         .prop_map(|v| Node::Expression(Expression::Comparison(v)))
                         .boxed(),
-                    ComparisonGroup::arbitrary()
+                    ComparisonGroup::arbitrary_with(0)
                         .prop_map(|v| Node::Expression(Expression::ComparisonGroup(v)))
                         .boxed(),
                 ]),
@@ -39,3 +39,5 @@ impl Arbitrary for ComparisonSeq {
             .boxed()
     }
 }
+
+test_node_reading!(comparison_seq, ComparisonSeq, 10);

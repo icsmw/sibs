@@ -82,7 +82,7 @@ impl fmt::Display for Parser {
         write!(
             f,
             "{}",
-            self.tokens
+            self.tokens[self.pos..]
                 .iter()
                 .map(|n| n.to_string())
                 .collect::<Vec<String>>()

@@ -43,6 +43,10 @@ impl ReadNode<If> for If {
                 }
             }
         }
-        Ok(None)
+        if cases.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(If { cases }))
+        }
     }
 }

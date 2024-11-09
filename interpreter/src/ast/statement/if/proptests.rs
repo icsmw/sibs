@@ -54,3 +54,5 @@ impl Arbitrary for If {
             .boxed()
     }
 }
+
+test_node_reading!(r#if, If, 10);
