@@ -38,7 +38,7 @@ impl ReadNode<BinaryExpGroup> for BinaryExpGroup {
             }
             collected.push(node);
         }
-        Ok(if collected.is_empty() {
+        Ok(if collected.is_empty() || !inner.is_done() {
             None
         } else {
             Some(BinaryExpGroup { nodes: collected })

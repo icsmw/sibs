@@ -19,6 +19,8 @@ pub enum E {
     MissedComma,
     #[error("Infinite number cannot be used")]
     InfiniteNumber,
+    #[error("Unrecognized code: {0}")]
+    UnrecognizedCode(String),
     #[error("After {0} expected block")]
     NoExpectedBlockAfter(KindId),
     #[error("After {0} expected {1}, but not found")]

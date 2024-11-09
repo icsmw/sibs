@@ -12,6 +12,7 @@ use crate::*;
 use lexer::{KindId, Token};
 use std::fmt;
 
+#[derive(Debug)]
 pub struct Parser {
     pub(crate) tokens: Vec<Token>,
     pub(crate) pos: usize,
@@ -97,6 +98,13 @@ impl Parser {
         } else {
             Err(E::NoClosing(right))
         }
+    }
+
+    pub(crate) fn is_done(&mut self) -> bool {
+        let restore = self.pin();
+        let is_done = self.token().is_none();
+        restore(self);
+        is_done
     }
 }
 

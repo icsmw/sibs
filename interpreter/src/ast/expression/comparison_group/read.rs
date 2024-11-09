@@ -39,7 +39,7 @@ impl ReadNode<ComparisonGroup> for ComparisonGroup {
             }
             collected.push(node);
         }
-        Ok(if collected.is_empty() {
+        Ok(if collected.is_empty() || !inner.is_done() {
             None
         } else {
             Some(ComparisonGroup { nodes: collected })

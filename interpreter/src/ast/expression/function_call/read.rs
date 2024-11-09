@@ -54,6 +54,10 @@ impl ReadNode<FunctionCall> for FunctionCall {
                 break;
             }
         }
-        Ok(Some(FunctionCall { args, reference }))
+        if !inner.is_done() {
+            Err(E::UnrecognizedCode(inner.to_string()))
+        } else {
+            Ok(Some(FunctionCall { args, reference }))
+        }
     }
 }
