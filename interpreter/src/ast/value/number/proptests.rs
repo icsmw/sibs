@@ -23,3 +23,5 @@ impl Arbitrary for Number {
             .boxed()
     }
 }
+
+test_node_reading!(number, Number, 10);

@@ -15,6 +15,6 @@ pub struct Range {
 
 impl fmt::Display for Range {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}{}{}", self.left, Kind::DotDot, self.right)
+        write!(f, "{} {} {}", self.left, Kind::DotDot, self.right)
     }
 }

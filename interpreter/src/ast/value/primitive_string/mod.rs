@@ -1,3 +1,5 @@
+#[cfg(test)]
+mod proptests;
 mod read;
 
 use lexer::Token;
@@ -11,6 +13,6 @@ pub struct PrimitiveString {
 
 impl fmt::Display for PrimitiveString {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "")
+        write!(f, "{}", self.token)
     }
 }

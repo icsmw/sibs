@@ -1,3 +1,5 @@
+#[cfg(test)]
+mod proptests;
 mod read;
 
 use lexer::Token;

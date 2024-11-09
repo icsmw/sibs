@@ -1,7 +1,6 @@
 use crate::*;
 
 use lexer::{gens::kind, Kind, KindId, Token};
-use prop::test_runner::Reason;
 use proptest::prelude::*;
 
 impl Arbitrary for Variable {

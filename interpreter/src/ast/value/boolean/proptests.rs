@@ -24,3 +24,5 @@ impl Arbitrary for Boolean {
             .boxed()
     }
 }
+
+test_node_reading!(boolean, Boolean, 10);
