@@ -12,42 +12,6 @@ pub enum NodeReadTarget<'a> {
     Miscellaneous(&'a [MiscellaneousId]),
 }
 
-fn select<T: Clone, K: Display + Clone + PartialEq + ConflictResolver<K>>(
-    mut results: Vec<(usize, T, K)>,
-    parser: &mut Parser,
-) -> Result<Option<T>, E> {
-    if let Some((n, (pos, tk, id))) = results.iter().enumerate().max_by_key(|(_, (a, ..))| a) {
-        let conflicted = results
-            .iter()
-            .filter(|(p, _, oid)| p == pos && oid != id)
-            .cloned()
-            .collect::<Vec<(usize, T, K)>>();
-
-        if conflicted.is_empty() {
-            parser.pos = *pos;
-            Ok(Some(results.remove(n).1))
-        } else if let (Some((_, c_tk, c_id)), true) = (conflicted.first(), conflicted.len() == 1) {
-            parser.pos = *pos;
-            if &id.resolve_conflict(c_id) == id {
-                Ok(Some(tk.clone()))
-            } else {
-                Ok(Some(c_tk.clone()))
-            }
-        } else {
-            Err(E::NodesAreInConflict(
-                results
-                    .iter()
-                    .filter(|(p, ..)| p == pos)
-                    .map(|(.., id)| id.to_string())
-                    .collect::<Vec<String>>()
-                    .join(", "),
-            ))
-        }
-    } else {
-        Ok(None)
-    }
-}
-
 impl Node {
     pub fn try_oneof(
         parser: &mut Parser,
@@ -91,7 +55,6 @@ impl Node {
             } {
                 results.push((parser.pos, node, id));
             }
-
             drop(parser);
         }
         reset(parser);
