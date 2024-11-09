@@ -30,3 +30,5 @@ impl Arbitrary for LogicalOp {
             .boxed()
     }
 }
+
+test_node_reading!(logical_op, LogicalOp, 10);

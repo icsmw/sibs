@@ -18,7 +18,7 @@ impl ReadNode<CompoundAssignments> for CompoundAssignments {
             nodes,
             &[
                 NodeReadTarget::Value(&[ValueId::Number]),
-                NodeReadTarget::Expression(&[ExpressionId::Variable]),
+                NodeReadTarget::Expression(&[ExpressionId::Variable, ExpressionId::BinaryExpSeq]),
             ],
         )?
         else {
