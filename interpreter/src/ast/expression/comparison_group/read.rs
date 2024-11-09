@@ -2,7 +2,7 @@ use lexer::KindId;
 
 use crate::*;
 
-impl ReadElement<ComparisonGroup> for ComparisonGroup {
+impl ReadNode<ComparisonGroup> for ComparisonGroup {
     fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<ComparisonGroup>, E> {
         let Some(mut inner) = parser.between(KindId::LeftParen, KindId::RightParen)? else {
             return Ok(None);

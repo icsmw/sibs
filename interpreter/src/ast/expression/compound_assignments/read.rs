@@ -1,6 +1,6 @@
 use crate::*;
 
-impl ReadElement<CompoundAssignments> for CompoundAssignments {
+impl ReadNode<CompoundAssignments> for CompoundAssignments {
     fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<CompoundAssignments>, E> {
         let Some(left) =
             Expression::try_read(parser, ExpressionId::Variable, nodes)?.map(Node::Expression)

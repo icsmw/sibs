@@ -2,7 +2,7 @@ use lexer::Kind;
 
 use crate::*;
 
-impl ReadElement<LogicalOp> for LogicalOp {
+impl ReadNode<LogicalOp> for LogicalOp {
     fn read(parser: &mut Parser, _nodes: &Nodes) -> Result<Option<LogicalOp>, E> {
         let Some(tk) = parser.token() else {
             return Ok(None);
@@ -12,11 +12,9 @@ impl ReadElement<LogicalOp> for LogicalOp {
             Kind::Or => LogicalOperator::Or,
             _ => return Ok(None),
         };
-        let node = LogicalOp {
+        Ok(Some(LogicalOp {
             token: tk.clone(),
             operator,
-        };
-        parser.advance();
-        Ok(Some(node))
+        }))
     }
 }

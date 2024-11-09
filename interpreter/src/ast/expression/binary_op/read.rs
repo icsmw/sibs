@@ -2,7 +2,7 @@ use lexer::Kind;
 
 use crate::*;
 
-impl ReadElement<BinaryOp> for BinaryOp {
+impl ReadNode<BinaryOp> for BinaryOp {
     fn read(parser: &mut Parser, _nodes: &Nodes) -> Result<Option<BinaryOp>, E> {
         let Some(tk) = parser.token() else {
             return Ok(None);

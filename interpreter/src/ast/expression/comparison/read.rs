@@ -1,6 +1,6 @@
 use crate::*;
 
-impl ReadElement<Comparison> for Comparison {
+impl ReadNode<Comparison> for Comparison {
     fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<Comparison>, E> {
         let Some(left) = Node::try_oneof(
             parser,
@@ -13,13 +13,11 @@ impl ReadElement<Comparison> for Comparison {
         else {
             return Ok(None);
         };
-        parser.advance();
         let Some(operator) =
             Expression::try_read(parser, ExpressionId::ComparisonOp, nodes)?.map(Node::Expression)
         else {
             return Ok(None);
         };
-        parser.advance();
         let Some(right) = Node::try_oneof(
             parser,
             nodes,
@@ -31,7 +29,6 @@ impl ReadElement<Comparison> for Comparison {
         else {
             return Ok(None);
         };
-        parser.advance();
         Ok(Some(Comparison {
             left: Box::new(left),
             operator: Box::new(operator),

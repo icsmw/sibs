@@ -10,6 +10,7 @@ pub use read::*;
 
 use crate::*;
 use lexer::{KindId, Token};
+use std::fmt;
 
 pub struct Parser {
     pub(crate) tokens: Vec<Token>,
@@ -20,18 +21,16 @@ impl Parser {
     pub(crate) fn new(tokens: Vec<Token>) -> Self {
         Self { tokens, pos: 0 }
     }
+
     pub(crate) fn token(&mut self) -> Option<&Token> {
         while let Some(tk) = self.tokens.get(self.pos) {
             if !matches!(tk.id(), KindId::Whitespace | KindId::BOF | KindId::EOF) {
+                self.pos += 1;
                 return Some(tk);
             }
             self.pos += 1;
         }
         None
-    }
-
-    pub(crate) fn advance(&mut self) {
-        self.pos += 1
     }
 
     pub(crate) fn pin(&mut self) -> impl Fn(&mut Parser) -> usize {
@@ -53,7 +52,6 @@ impl Parser {
         let mut tokens = Vec::new();
         let mut inside = 0;
         let closed = loop {
-            self.advance();
             let Some(tk) = self.token() else {
                 break inside == 0;
             };
@@ -76,5 +74,19 @@ impl Parser {
         } else {
             Err(E::NoClosing(right))
         }
+    }
+}
+
+impl fmt::Display for Parser {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            self.tokens
+                .iter()
+                .map(|n| n.to_string())
+                .collect::<Vec<String>>()
+                .join("")
+        )
     }
 }

@@ -2,7 +2,7 @@ use lexer::KindId;
 
 use crate::*;
 
-impl ReadElement<If> for If {
+impl ReadNode<If> for If {
     fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<If>, E> {
         let mut cases = Vec::new();
         while let Some(tk) = parser.token().cloned() {

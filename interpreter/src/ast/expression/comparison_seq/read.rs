@@ -1,6 +1,6 @@
 use crate::*;
 
-impl ReadElement<ComparisonSeq> for ComparisonSeq {
+impl ReadNode<ComparisonSeq> for ComparisonSeq {
     fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<ComparisonSeq>, E> {
         let mut collected = Vec::new();
         while let Some(node) = Expression::try_oneof(

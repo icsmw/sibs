@@ -2,7 +2,7 @@ use lexer::Kind;
 
 use crate::*;
 
-impl ReadElement<Number> for Number {
+impl ReadNode<Number> for Number {
     fn read(parser: &mut Parser, _nodes: &Nodes) -> Result<Option<Number>, E> {
         if let Some(tk) = parser.token() {
             let Kind::Number(inner) = &tk.kind else {
@@ -11,12 +11,10 @@ impl ReadElement<Number> for Number {
             if inner.is_infinite() {
                 return Err(E::InfiniteNumber);
             }
-            let node = Number {
+            return Ok(Some(Number {
                 inner: inner.to_owned(),
                 token: tk.clone(),
-            };
-            parser.advance();
-            return Ok(Some(node));
+            }));
         }
         Ok(None)
     }

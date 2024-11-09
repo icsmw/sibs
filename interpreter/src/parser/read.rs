@@ -36,7 +36,7 @@ pub fn resolve_reading_conflicts<T: Clone, K: Display + Clone + PartialEq + Conf
         Ok(None)
     }
 }
-pub trait ReadElement<T> {
+pub trait ReadNode<T> {
     fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<T>, E>;
 }
 

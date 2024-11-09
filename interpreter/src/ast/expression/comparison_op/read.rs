@@ -2,7 +2,7 @@ use lexer::Kind;
 
 use crate::*;
 
-impl ReadElement<ComparisonOp> for ComparisonOp {
+impl ReadNode<ComparisonOp> for ComparisonOp {
     fn read(parser: &mut Parser, _nodes: &Nodes) -> Result<Option<ComparisonOp>, E> {
         let Some(tk) = parser.token() else {
             return Ok(None);
@@ -19,11 +19,9 @@ impl ReadElement<ComparisonOp> for ComparisonOp {
                 return Ok(None);
             }
         };
-        let node = ComparisonOp {
+        Ok(Some(ComparisonOp {
             token: tk.clone(),
             operator,
-        };
-        parser.advance();;
-        Ok(Some(node))
+        }))
     }
 }
