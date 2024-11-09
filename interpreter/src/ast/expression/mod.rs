@@ -24,7 +24,6 @@ mod variable;
 
 pub use accessor::*;
 pub use binary_exp::*;
-pub use binary_exp::*;
 pub use binary_exp_group::*;
 pub use binary_exp_seq::*;
 pub use binary_op::*;
@@ -74,7 +73,7 @@ pub enum Expression {
     BinaryExpGroup(BinaryExpGroup),
     /// +, -, *, /
     BinaryOp(BinaryOp),
-    /// func(), get_os(), etc.
+    /// func(), get_os(), mod::func(arg, arg) etc.
     FunctionCall(FunctionCall),
     /// x += 1, x -= 1, x *= 2, x /= 2
     CompoundAssignments(CompoundAssignments),

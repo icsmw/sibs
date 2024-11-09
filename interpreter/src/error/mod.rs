@@ -15,6 +15,8 @@ pub enum E {
     MissedLogicalOperator,
     #[error("Missed binary operator -, +, *, /")]
     MissedBinaryOperator,
+    #[error("Missed comma")]
+    MissedComma,
     #[error("Infinite number cannot be used")]
     InfiniteNumber,
     #[error("After {0} expected block")]

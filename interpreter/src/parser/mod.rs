@@ -33,6 +33,27 @@ impl Parser {
         None
     }
 
+    pub(crate) fn tokens(&mut self, nm: usize) -> Option<Vec<Token>> {
+        let mut tokens = Vec::new();
+        while let Some(tk) = self.token().cloned() {
+            tokens.push(tk);
+            if tokens.len() == nm {
+                return Some(tokens);
+            }
+        }
+        None
+    }
+
+    pub(crate) fn is_next(&mut self, kind: KindId) -> bool {
+        let restore = self.pin();
+        let tk = self.token().cloned();
+        restore(self);
+        if let Some(tk) = tk {
+            return tk.id() == kind;
+        }
+        false
+    }
+
     pub(crate) fn pin(&mut self) -> impl Fn(&mut Parser) -> usize {
         let pos = self.pos;
         move |parser: &mut Parser| {
@@ -57,6 +78,7 @@ impl Parser {
             };
             if tk.id() == left {
                 inside += 1;
+                tokens.push(tk.clone());
                 continue;
             }
             if tk.id() == right {
@@ -64,6 +86,7 @@ impl Parser {
                     break true;
                 } else {
                     inside -= 1;
+                    tokens.push(tk.clone());
                     continue;
                 }
             }
