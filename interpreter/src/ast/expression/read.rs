@@ -32,6 +32,15 @@ impl TryRead<Expression, ExpressionId> for Expression {
             }
             ExpressionId::Range => Range::read(parser, nodes)?.map(Expression::Range),
             ExpressionId::BinaryExp => BinaryExp::read(parser, nodes)?.map(Expression::BinaryExp),
+            ExpressionId::BinaryExpGroup => {
+                BinaryExpGroup::read(parser, nodes)?.map(Expression::BinaryExpGroup)
+            }
+            ExpressionId::BinaryExpPri => {
+                BinaryExpPri::read(parser, nodes)?.map(Expression::BinaryExpPri)
+            }
+            ExpressionId::BinaryExpSeq => {
+                BinaryExpSeq::read(parser, nodes)?.map(Expression::BinaryExpSeq)
+            }
             ExpressionId::BinaryOp => BinaryOp::read(parser, nodes)?.map(Expression::BinaryOp),
             ExpressionId::Call => Call::read(parser, nodes)?.map(Expression::Call),
             ExpressionId::Accessor => Accessor::read(parser, nodes)?.map(Expression::Accessor),

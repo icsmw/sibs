@@ -4,6 +4,9 @@ mod read;
 
 mod accessor;
 mod binary_exp;
+mod binary_exp_group;
+mod binary_exp_pri;
+mod binary_exp_seq;
 mod binary_op;
 mod call;
 mod command;
@@ -22,6 +25,9 @@ mod variable;
 
 pub use accessor::*;
 pub use binary_exp::*;
+pub use binary_exp_group::*;
+pub use binary_exp_pri::*;
+pub use binary_exp_seq::*;
 pub use binary_op::*;
 pub use call::*;
 pub use command::*;
@@ -61,6 +67,12 @@ pub enum Expression {
     Range(Range),
     /// a, b, c, x, y, etc
     Variable(Variable),
+    /// (x + 2) / 3, (a + b) * x / t etc.
+    BinaryExpSeq(BinaryExpSeq),
+    /// 1 + 2, a + 2 etc, primitive expression
+    BinaryExpPri(BinaryExpPri),
+    /// (1 + 2), (a + b), etc, but always in (...)
+    BinaryExpGroup(BinaryExpGroup),
     /// 1 + 2, 1 / 2, (x + 2) / 3, etc.
     BinaryExp(BinaryExp),
     /// +, -, *, /

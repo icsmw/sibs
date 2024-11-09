@@ -9,8 +9,12 @@ pub enum E {
     NoClosing(KindId),
     #[error("Unexpected logical operator: {0}")]
     UnexpectedLogicalOperator(KindId),
+    #[error("Unexpected binary operator: {0}")]
+    UnexpectedBinaryOperator(KindId),
     #[error("Missed logical operator && or ||")]
     MissedLogicalOperator,
+    #[error("Missed binary operator -, +, *, /")]
+    MissedBinaryOperator,
     #[error("Infinite number cannot be used")]
     InfiniteNumber,
     #[error("After {0} expected block")]

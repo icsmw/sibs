@@ -15,8 +15,8 @@ pub enum BinaryOperator {
 
 #[derive(Debug, Clone)]
 pub struct BinaryOp {
-    token: Token,
-    operator: BinaryOperator,
+    pub token: Token,
+    pub operator: BinaryOperator,
 }
 
 impl fmt::Display for BinaryOp {

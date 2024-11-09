@@ -20,7 +20,10 @@ impl ConflictResolver<ExpressionId> for ExpressionId {
             | Self::CompoundAssignmentsOp
             | Self::Command
             | Self::TaskCall
-            | Self::BinaryOp => self.clone(),
+            | Self::BinaryOp
+            | Self::BinaryExpGroup
+            | Self::BinaryExpPri
+            | Self::BinaryExpSeq => self.clone(),
         }
     }
 }
