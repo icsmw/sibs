@@ -22,7 +22,7 @@ impl ConflictResolver<ExpressionId> for ExpressionId {
             | Self::TaskCall
             | Self::BinaryOp
             | Self::BinaryExpGroup
-            | Self::BinaryExpPri
+            | Self::BinaryExp
             | Self::BinaryExpSeq => self.clone(),
         }
     }

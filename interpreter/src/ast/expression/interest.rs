@@ -53,7 +53,7 @@ impl Interest for ExpressionId {
                 token.id(),
                 KindId::Identifier | KindId::Number | KindId::LeftParen
             ),
-            Self::BinaryExpPri => matches!(token.id(), KindId::Identifier | KindId::Number),
+            Self::BinaryExp => matches!(token.id(), KindId::Identifier | KindId::Number),
             Self::BinaryOp => {
                 matches!(
                     token.id(),

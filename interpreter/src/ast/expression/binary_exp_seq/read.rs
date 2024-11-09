@@ -6,7 +6,7 @@ impl ReadNode<BinaryExpSeq> for BinaryExpSeq {
         while let Some(node) = Expression::try_oneof(
             parser,
             &[
-                ExpressionId::BinaryExpPri,
+                ExpressionId::BinaryExp,
                 ExpressionId::BinaryOp,
                 ExpressionId::BinaryExpGroup,
             ],

@@ -35,9 +35,7 @@ impl TryRead<Expression, ExpressionId> for Expression {
             ExpressionId::BinaryExpGroup => {
                 BinaryExpGroup::read(parser, nodes)?.map(Expression::BinaryExpGroup)
             }
-            ExpressionId::BinaryExpPri => {
-                BinaryExpPri::read(parser, nodes)?.map(Expression::BinaryExpPri)
-            }
+            ExpressionId::BinaryExp => BinaryExp::read(parser, nodes)?.map(Expression::BinaryExp),
             ExpressionId::BinaryExpSeq => {
                 BinaryExpSeq::read(parser, nodes)?.map(Expression::BinaryExpSeq)
             }

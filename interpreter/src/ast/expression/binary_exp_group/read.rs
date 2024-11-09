@@ -10,7 +10,7 @@ impl ReadNode<BinaryExpGroup> for BinaryExpGroup {
         while let Some(node) = Expression::try_oneof(
             &mut inner,
             &[
-                ExpressionId::BinaryExpPri,
+                ExpressionId::BinaryExp,
                 ExpressionId::BinaryOp,
                 ExpressionId::BinaryExpGroup,
             ],

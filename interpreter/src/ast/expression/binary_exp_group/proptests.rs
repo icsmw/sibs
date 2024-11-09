@@ -11,16 +11,16 @@ impl Arbitrary for BinaryExpGroup {
         (
             if deep > 5 {
                 prop::collection::vec(
-                    prop::strategy::Union::new(vec![BinaryExpPri::arbitrary()
-                        .prop_map(|v| Node::Expression(Expression::BinaryExpPri(v)))
+                    prop::strategy::Union::new(vec![BinaryExp::arbitrary()
+                        .prop_map(|v| Node::Expression(Expression::BinaryExp(v)))
                         .boxed()]),
                     1..5,
                 )
             } else {
                 prop::collection::vec(
                     prop::strategy::Union::new(vec![
-                        BinaryExpPri::arbitrary()
-                            .prop_map(|v| Node::Expression(Expression::BinaryExpPri(v)))
+                        BinaryExp::arbitrary()
+                            .prop_map(|v| Node::Expression(Expression::BinaryExp(v)))
                             .boxed(),
                         BinaryExpGroup::arbitrary_with(deep + 1)
                             .prop_map(|v| Node::Expression(Expression::BinaryExpGroup(v)))

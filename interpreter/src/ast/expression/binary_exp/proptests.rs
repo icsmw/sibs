@@ -2,7 +2,7 @@ use crate::*;
 
 use proptest::prelude::*;
 
-impl Arbitrary for BinaryExpPri {
+impl Arbitrary for BinaryExp {
     type Parameters = ();
 
     type Strategy = BoxedStrategy<Self>;
@@ -29,7 +29,7 @@ impl Arbitrary for BinaryExpPri {
                     .boxed(),
             ]),
         )
-            .prop_map(move |(left, operator, right)| BinaryExpPri {
+            .prop_map(move |(left, operator, right)| BinaryExp {
                 left: Box::new(left),
                 operator: Box::new(operator),
                 right: Box::new(right),
@@ -38,4 +38,4 @@ impl Arbitrary for BinaryExpPri {
     }
 }
 
-test_node_reading!(binary_exp_pri, BinaryExpPri, 10);
+test_node_reading!(binary_exp, BinaryExp, 10);

@@ -11,8 +11,8 @@ impl Arbitrary for BinaryExpSeq {
         (
             prop::collection::vec(
                 prop::strategy::Union::new(vec![
-                    BinaryExpPri::arbitrary()
-                        .prop_map(|v| Node::Expression(Expression::BinaryExpPri(v)))
+                    BinaryExp::arbitrary()
+                        .prop_map(|v| Node::Expression(Expression::BinaryExp(v)))
                         .boxed(),
                     BinaryExpGroup::arbitrary_with(0)
                         .prop_map(|v| Node::Expression(Expression::BinaryExpGroup(v)))
