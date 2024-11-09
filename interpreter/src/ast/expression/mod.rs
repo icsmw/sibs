@@ -45,7 +45,7 @@ pub use variable::*;
 #[enum_ids::enum_ids(derive = "Debug, PartialEq, Clone", display, display_from_value)]
 #[derive(Debug, Clone)]
 pub enum Expression {
-    /// .as_str(), .is_err(), call of function after expression
+    /// .as_str(), .is_err(), .results::is_err(args) call of function after expression
     Call(Call),
     /// [1], [n], [get_index()], access to indexed value
     Accessor(Accessor),
