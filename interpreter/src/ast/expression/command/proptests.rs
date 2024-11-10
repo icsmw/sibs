@@ -1,9 +1,9 @@
 use crate::*;
 
-use lexer::{gens, Kind, KindId, Token};
+use lexer::{Kind, Token};
 use proptest::prelude::*;
 
-impl Arbitrary for InterpolatedStringPart {
+impl Arbitrary for CommandPart {
     type Parameters = (u8, bool);
 
     type Strategy = BoxedStrategy<Self>;
@@ -12,11 +12,11 @@ impl Arbitrary for InterpolatedStringPart {
         if lit {
             return proptest::collection::vec(any::<char>(), 1..100)
                 .prop_map(|chars| {
-                    InterpolatedStringPart::Literal(
+                    CommandPart::Literal(
                         chars
                             .into_iter()
                             .map(|ch| {
-                                if ch == '{' || ch == '}' || ch == '\\' || ch == '\'' {
+                                if ch == '{' || ch == '}' || ch == '\\' || ch == '`' {
                                     "_".to_string()
                                 } else {
                                     ch.to_string()
@@ -65,11 +65,11 @@ impl Arbitrary for InterpolatedStringPart {
                 BinaryExpSeq::arbitrary()
                     .prop_map(|v| Node::Expression(Expression::BinaryExpSeq(v)))
                     .boxed(),
-                FunctionCall::arbitrary_with(deep + 1)
-                    .prop_map(|v| Node::Expression(Expression::FunctionCall(v)))
-                    .boxed(),
                 Command::arbitrary_with(deep + 1)
                     .prop_map(|v| Node::Expression(Expression::Command(v)))
+                    .boxed(),
+                FunctionCall::arbitrary_with(deep + 1)
+                    .prop_map(|v| Node::Expression(Expression::FunctionCall(v)))
                     .boxed(),
                 Number::arbitrary()
                     .prop_map(|v| Node::Value(Value::Number(v)))
@@ -85,31 +85,23 @@ impl Arbitrary for InterpolatedStringPart {
                     .boxed(),
             ])
         }
-        .prop_map(InterpolatedStringPart::Expression)
+        .prop_map(CommandPart::Expression)
         .boxed()
     }
 }
 
-impl Arbitrary for InterpolatedString {
+impl Arbitrary for Command {
     type Parameters = u8;
 
     type Strategy = BoxedStrategy<Self>;
 
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         (
-            proptest::collection::vec(
-                InterpolatedStringPart::arbitrary_with((deep + 1, true)),
-                0..10,
-            ),
-            proptest::collection::vec(
-                InterpolatedStringPart::arbitrary_with((deep + 1, false)),
-                0..10,
-            ),
+            proptest::collection::vec(CommandPart::arbitrary_with((deep + 1, true)), 0..10),
+            proptest::collection::vec(CommandPart::arbitrary_with((deep + 1, false)), 0..10),
         )
             .prop_map(|(mut lits, mut exps)| {
-                let mut nodes = vec![InterpolatedStringPart::Open(Token::for_test(
-                    Kind::SingleQuote,
-                ))];
+                let mut nodes = vec![CommandPart::Open(Token::for_test(Kind::Backtick))];
                 if lits.len() > exps.len() {
                     for exp in exps.into_iter() {
                         nodes.push(exp);
@@ -121,19 +113,11 @@ impl Arbitrary for InterpolatedString {
                         nodes.push(exps.remove(0));
                     }
                 }
-                nodes.push(InterpolatedStringPart::Close(Token::for_test(
-                    Kind::SingleQuote,
-                )));
-                InterpolatedString { nodes }
+                nodes.push(CommandPart::Close(Token::for_test(Kind::Backtick)));
+                Command { nodes }
             })
             .boxed()
     }
 }
 
-test_node_reading!(interpolated_string, InterpolatedString, 10);
-
-test_node_reading_case!(
-    interpolated_string_case,
-    InterpolatedString,
-    "'test of string { if a > 4 {  }  } string'"
-);
+test_node_reading!(command, Command, 10);

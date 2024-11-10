@@ -2,7 +2,6 @@
 macro_rules! test_node_reading {
     ($fn_name:ident, $element_ref:expr, $exp_count:literal) => {
         paste::item! {
-            use proptest::prelude::*;
 
             proptest! {
                 #![proptest_config(ProptestConfig {

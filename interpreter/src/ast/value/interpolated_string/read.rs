@@ -61,6 +61,7 @@ impl ReadNode<InterpolatedString> for InterpolatedString {
                                 ExpressionId::BinaryExpSeq,
                                 ExpressionId::ComparisonSeq,
                                 ExpressionId::FunctionCall,
+                                ExpressionId::Command,
                             ]),
                         ],
                     )?
