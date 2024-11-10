@@ -15,7 +15,6 @@ mod comparison_op;
 mod comparison_seq;
 mod compound_assignments;
 mod compound_assignments_op;
-mod condition;
 mod function_call;
 mod logical_op;
 mod range;
@@ -35,7 +34,6 @@ pub use comparison_op::*;
 pub use comparison_seq::*;
 pub use compound_assignments::*;
 pub use compound_assignments_op::*;
-pub use condition::*;
 pub use function_call::*;
 pub use logical_op::*;
 pub use range::*;
@@ -49,8 +47,6 @@ pub enum Expression {
     Call(Call),
     /// [1], [n], [get_index()], access to indexed value
     Accessor(Accessor),
-    /// Do I need this still?
-    Condition(Condition),
     /// &&, ||
     LogicalOp(LogicalOp),
     /// ==, >=, <=, !=, <, >

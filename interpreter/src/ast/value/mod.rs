@@ -16,8 +16,6 @@ pub use interpolated_string::*;
 pub use number::*;
 pub use primitive_string::*;
 
-use std::fmt;
-
 #[enum_ids::enum_ids(derive = "Debug, PartialEq, Clone", display, display_from_value)]
 #[derive(Debug, Clone)]
 pub enum Value {

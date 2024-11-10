@@ -33,14 +33,6 @@ impl Interest for ExpressionId {
                     | KindId::False
             ),
             Self::ComparisonGroup | Self::BinaryExpGroup => matches!(token.id(), KindId::LeftParen),
-            Self::Condition => matches!(
-                token.id(),
-                KindId::LeftParen
-                    | KindId::Identifier
-                    | KindId::Number
-                    | KindId::True
-                    | KindId::False
-            ),
             Self::Range => matches!(token.id(), KindId::Identifier | KindId::Number),
             Self::CompoundAssignmentsOp => {
                 matches!(
@@ -48,8 +40,7 @@ impl Interest for ExpressionId {
                     KindId::PlusEqual | KindId::MinusEqual | KindId::StarEqual | KindId::SlashEqual
                 )
             }
-
-            Self::BinaryExp | Self::BinaryExpSeq => matches!(
+            Self::BinaryExpSeq => matches!(
                 token.id(),
                 KindId::Identifier | KindId::Number | KindId::LeftParen
             ),

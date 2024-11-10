@@ -28,8 +28,6 @@ pub use r#loop::*;
 pub use r#return::*;
 pub use r#while::*;
 
-use std::fmt;
-
 #[enum_ids::enum_ids(derive = "Debug, PartialEq, Clone", display, display_from_value)]
 #[derive(Debug, Clone)]
 pub enum Statement {

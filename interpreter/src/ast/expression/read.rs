@@ -25,13 +25,11 @@ impl TryRead<Expression, ExpressionId> for Expression {
             ExpressionId::ComparisonGroup => {
                 ComparisonGroup::read(parser, nodes)?.map(Expression::ComparisonGroup)
             }
-            ExpressionId::Condition => Condition::read(parser, nodes)?.map(Expression::Condition),
             ExpressionId::LogicalOp => LogicalOp::read(parser, nodes)?.map(Expression::LogicalOp),
             ExpressionId::ComparisonOp => {
                 ComparisonOp::read(parser, nodes)?.map(Expression::ComparisonOp)
             }
             ExpressionId::Range => Range::read(parser, nodes)?.map(Expression::Range),
-            ExpressionId::BinaryExp => BinaryExp::read(parser, nodes)?.map(Expression::BinaryExp),
             ExpressionId::BinaryExpGroup => {
                 BinaryExpGroup::read(parser, nodes)?.map(Expression::BinaryExpGroup)
             }
