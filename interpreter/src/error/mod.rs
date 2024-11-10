@@ -19,6 +19,8 @@ pub enum E {
     MissedComma,
     #[error("Infinite number cannot be used")]
     InfiniteNumber,
+    #[error("Invalid right side of assignation: {0}")]
+    InvalidAssignation(String),
     #[error("Error message is missed")]
     MissedErrorMessage,
     #[error("Unrecognized code: {0}")]
