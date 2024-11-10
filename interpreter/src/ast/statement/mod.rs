@@ -42,6 +42,9 @@ pub enum Statement {
     /// for (el, n) in [1, 2, 3] { ... };
     /// for (el, n) in ["one", "two", "three"] { ... };
     For(For),
+    /// while s < 100 { ... };
+    /// while a < 100 || b > 100 { ... };
+    /// while (a < 100 || b > 100) && v != 0 { ... };
     While(While),
     Loop(Loop),
     /// each(el, n, elements) { el; };

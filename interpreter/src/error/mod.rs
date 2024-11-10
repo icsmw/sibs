@@ -53,4 +53,8 @@ pub enum E {
     MissedIndexDeclarationInFor,
     #[error("Fail to recognize elements for for statement: {0}")]
     FailRecognizeElementsInFor(String),
+
+    /// While
+    #[error("In while statement comparison is missed")]
+    MissedComparisonInWhile,
 }
