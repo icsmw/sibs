@@ -36,6 +36,7 @@ impl ReadNode<FunctionCall> for FunctionCall {
                     ValueId::Number,
                     ValueId::Boolean,
                     ValueId::PrimitiveString,
+                    ValueId::InterpolatedString
                 ]),
                 NodeReadTarget::Expression(&[
                     ExpressionId::Variable,

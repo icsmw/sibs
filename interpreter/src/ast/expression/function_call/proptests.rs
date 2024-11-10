@@ -44,6 +44,9 @@ impl Arbitrary for FunctionCall {
                         PrimitiveString::arbitrary()
                             .prop_map(|v| Node::Value(Value::PrimitiveString(v)))
                             .boxed(),
+                        InterpolatedString::arbitrary_with(deep + 1)
+                            .prop_map(|v| Node::Value(Value::InterpolatedString(v)))
+                            .boxed(),
                         FunctionCall::arbitrary_with(deep + 1)
                             .prop_map(|v| Node::Expression(Expression::FunctionCall(v)))
                             .boxed(),
