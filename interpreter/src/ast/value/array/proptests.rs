@@ -47,6 +47,9 @@ impl Arbitrary for Array {
                     FunctionCall::arbitrary()
                         .prop_map(|v| Node::Expression(Expression::FunctionCall(v)))
                         .boxed(),
+                    Command::arbitrary_with(deep + 1)
+                        .prop_map(|v| Node::Expression(Expression::Command(v)))
+                        .boxed(),
                     Number::arbitrary()
                         .prop_map(|v| Node::Value(Value::Number(v)))
                         .boxed(),
@@ -55,6 +58,9 @@ impl Arbitrary for Array {
                         .boxed(),
                     PrimitiveString::arbitrary()
                         .prop_map(|v| Node::Value(Value::PrimitiveString(v)))
+                        .boxed(),
+                    InterpolatedString::arbitrary_with(deep + 1)
+                        .prop_map(|v| Node::Value(Value::InterpolatedString(v)))
                         .boxed(),
                 ]),
                 1..5,

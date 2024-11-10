@@ -16,12 +16,14 @@ impl ReadNode<Array> for Array {
                     ValueId::Number,
                     ValueId::Boolean,
                     ValueId::PrimitiveString,
+                    ValueId::InterpolatedString,
                 ]),
                 NodeReadTarget::Expression(&[
                     ExpressionId::Variable,
                     ExpressionId::BinaryExpSeq,
                     ExpressionId::ComparisonSeq,
                     ExpressionId::FunctionCall,
+                    ExpressionId::Command,
                 ]),
             ],
         )? {
