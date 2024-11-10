@@ -6,7 +6,12 @@ impl ReadNode<Comparison> for Comparison {
             parser,
             nodes,
             &[
-                NodeReadTarget::Value(&[ValueId::Number, ValueId::Boolean]),
+                NodeReadTarget::Value(&[
+                    ValueId::Number,
+                    ValueId::Boolean,
+                    ValueId::PrimitiveString,
+                    ValueId::InterpolatedString,
+                ]),
                 NodeReadTarget::Expression(&[ExpressionId::Variable]),
             ],
         )?
@@ -22,7 +27,12 @@ impl ReadNode<Comparison> for Comparison {
             parser,
             nodes,
             &[
-                NodeReadTarget::Value(&[ValueId::Number, ValueId::Boolean]),
+                NodeReadTarget::Value(&[
+                    ValueId::Number,
+                    ValueId::Boolean,
+                    ValueId::PrimitiveString,
+                    ValueId::InterpolatedString,
+                ]),
                 NodeReadTarget::Expression(&[ExpressionId::Variable]),
             ],
         )?

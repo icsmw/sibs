@@ -11,7 +11,7 @@ impl Arbitrary for ComparisonGroup {
         (
             if deep > 5 {
                 prop::collection::vec(
-                    prop::strategy::Union::new(vec![Comparison::arbitrary()
+                    prop::strategy::Union::new(vec![Comparison::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Expression(Expression::Comparison(v)))
                         .boxed()]),
                     1..5,
@@ -19,7 +19,7 @@ impl Arbitrary for ComparisonGroup {
             } else {
                 prop::collection::vec(
                     prop::strategy::Union::new(vec![
-                        Comparison::arbitrary()
+                        Comparison::arbitrary_with(deep + 1)
                             .prop_map(|v| Node::Expression(Expression::Comparison(v)))
                             .boxed(),
                         ComparisonGroup::arbitrary_with(deep + 1)

@@ -4,14 +4,14 @@ use lexer::{Kind, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for IfCase {
-    type Parameters = u8;
+    type Parameters = (u8, u8);
 
     type Strategy = BoxedStrategy<Self>;
 
-    fn arbitrary_with(target: Self::Parameters) -> Self::Strategy {
+    fn arbitrary_with((target, deep): Self::Parameters) -> Self::Strategy {
         if target == 0 {
             (
-                ComparisonSeq::arbitrary()
+                ComparisonSeq::arbitrary_with(deep + 1)
                     .prop_map(|v| Node::Expression(Expression::ComparisonSeq(v)))
                     .boxed(),
                 Block::arbitrary()
@@ -31,14 +31,14 @@ impl Arbitrary for IfCase {
 }
 
 impl Arbitrary for If {
-    type Parameters = ();
+    type Parameters = u8;
 
     type Strategy = BoxedStrategy<Self>;
 
-    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+    fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         (
-            prop::collection::vec(IfCase::arbitrary_with(0), 1..5),
-            prop::collection::vec(IfCase::arbitrary_with(0), 0..1),
+            prop::collection::vec(IfCase::arbitrary_with((0, deep + 1)), 1..5),
+            prop::collection::vec(IfCase::arbitrary_with((0, deep + 1)), 0..1),
         )
             .prop_map(move |(thrs, mut lst)| {
                 let mut cases = Vec::new();

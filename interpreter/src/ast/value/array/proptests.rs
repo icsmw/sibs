@@ -17,9 +17,6 @@ impl Arbitrary for Array {
                     BinaryExpSeq::arbitrary()
                         .prop_map(|v| Node::Expression(Expression::BinaryExpSeq(v)))
                         .boxed(),
-                    ComparisonSeq::arbitrary()
-                        .prop_map(|v| Node::Expression(Expression::ComparisonSeq(v)))
-                        .boxed(),
                     FunctionCall::arbitrary()
                         .prop_map(|v| Node::Expression(Expression::FunctionCall(v)))
                         .boxed(),
@@ -44,7 +41,7 @@ impl Arbitrary for Array {
                     BinaryExpSeq::arbitrary()
                         .prop_map(|v| Node::Expression(Expression::BinaryExpSeq(v)))
                         .boxed(),
-                    ComparisonSeq::arbitrary()
+                    ComparisonSeq::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Expression(Expression::ComparisonSeq(v)))
                         .boxed(),
                     FunctionCall::arbitrary()

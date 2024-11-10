@@ -3,11 +3,11 @@ use crate::*;
 use proptest::prelude::*;
 
 impl Arbitrary for Accessor {
-    type Parameters = ();
+    type Parameters = u8;
 
     type Strategy = BoxedStrategy<Self>;
 
-    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+    fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         prop::strategy::Union::new(vec![
             Number::arbitrary()
                 .prop_map(|v| Node::Value(Value::Number(v)))
@@ -21,7 +21,7 @@ impl Arbitrary for Accessor {
             BinaryExpSeq::arbitrary()
                 .prop_map(|v| Node::Expression(Expression::BinaryExpSeq(v)))
                 .boxed(),
-            If::arbitrary()
+            If::arbitrary_with(deep + 1)
                 .prop_map(|v| Node::Statement(Statement::If(v)))
                 .boxed(),
         ])

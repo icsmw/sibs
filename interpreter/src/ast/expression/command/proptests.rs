@@ -29,12 +29,6 @@ impl Arbitrary for CommandPart {
         }
         if deep > 5 {
             prop::strategy::Union::new(vec![
-                If::arbitrary()
-                    .prop_map(|v| Node::Statement(Statement::If(v)))
-                    .boxed(),
-                ComparisonSeq::arbitrary()
-                    .prop_map(|v| Node::Expression(Expression::ComparisonSeq(v)))
-                    .boxed(),
                 Variable::arbitrary()
                     .prop_map(|v| Node::Expression(Expression::Variable(v)))
                     .boxed(),
@@ -53,10 +47,10 @@ impl Arbitrary for CommandPart {
             ])
         } else {
             prop::strategy::Union::new(vec![
-                If::arbitrary()
+                If::arbitrary_with(deep + 1)
                     .prop_map(|v| Node::Statement(Statement::If(v)))
                     .boxed(),
-                ComparisonSeq::arbitrary()
+                ComparisonSeq::arbitrary_with(deep + 1)
                     .prop_map(|v| Node::Expression(Expression::ComparisonSeq(v)))
                     .boxed(),
                 Variable::arbitrary()

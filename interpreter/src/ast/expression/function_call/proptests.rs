@@ -14,9 +14,6 @@ impl Arbitrary for FunctionCall {
             if deep > 5 {
                 prop::collection::vec(
                     prop::strategy::Union::new(vec![
-                        ComparisonSeq::arbitrary()
-                            .prop_map(|v| Node::Expression(Expression::ComparisonSeq(v)))
-                            .boxed(),
                         Number::arbitrary()
                             .prop_map(|v| Node::Value(Value::Number(v)))
                             .boxed(),
@@ -32,7 +29,7 @@ impl Arbitrary for FunctionCall {
             } else {
                 prop::collection::vec(
                     prop::strategy::Union::new(vec![
-                        ComparisonSeq::arbitrary()
+                        ComparisonSeq::arbitrary_with(deep + 1)
                             .prop_map(|v| Node::Expression(Expression::ComparisonSeq(v)))
                             .boxed(),
                         Number::arbitrary()

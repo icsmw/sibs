@@ -3,18 +3,18 @@ use crate::*;
 use proptest::prelude::*;
 
 impl Arbitrary for ComparisonSeq {
-    type Parameters = ();
+    type Parameters = u8;
 
     type Strategy = BoxedStrategy<Self>;
 
-    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+    fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         (
             prop::collection::vec(
                 prop::strategy::Union::new(vec![
-                    Comparison::arbitrary()
+                    Comparison::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Expression(Expression::Comparison(v)))
                         .boxed(),
-                    ComparisonGroup::arbitrary_with(0)
+                    ComparisonGroup::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Expression(Expression::ComparisonGroup(v)))
                         .boxed(),
                 ]),

@@ -4,16 +4,16 @@ use lexer::{gens, KindId, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for TaskCall {
-    type Parameters = ();
+    type Parameters = u8;
 
     type Strategy = BoxedStrategy<Self>;
 
-    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+    fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         (
             prop::collection::vec(gens::kind(KindId::Identifier).boxed(), 1..5),
             prop::collection::vec(
                 prop::strategy::Union::new(vec![
-                    ComparisonSeq::arbitrary()
+                    ComparisonSeq::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Expression(Expression::ComparisonSeq(v)))
                         .boxed(),
                     Number::arbitrary()
