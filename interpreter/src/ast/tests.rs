@@ -26,3 +26,19 @@ macro_rules! test_node_reading {
         }
     };
 }
+
+#[macro_export]
+macro_rules! test_node_reading_case {
+    ($fn_name:ident, $element_ref:expr, $content:literal) => {
+        paste::item! {
+                #[test]
+                fn [< test_ $fn_name >]() {
+                    let mut lx = lexer::Lexer::new($content, 0);
+                    let mut parser = $crate::Parser::new(lx.read(true).unwrap().tokens);
+                    let node = $element_ref::read(&mut parser, &$crate::Nodes::empty()).unwrap();
+                    assert!(node.is_some());
+                    assert_eq!(node.unwrap().to_string(), $content.to_string());
+            }
+        }
+    };
+}

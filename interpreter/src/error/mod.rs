@@ -23,6 +23,12 @@ pub enum E {
     MissedErrorMessage,
     #[error("Unrecognized code: {0}")]
     UnrecognizedCode(String),
+    #[error("Fail to parse string: {0}")]
+    InvalidString(String),
+    #[error("String has empty expression")]
+    EmptyStringExpression,
+    #[error("Not supported string injection in: {0}")]
+    NotSupportedStringInjection(String),
     #[error("After {0} expected block")]
     NoExpectedBlockAfter(KindId),
     #[error("After {0} expected {1}, but not found")]
