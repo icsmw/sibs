@@ -31,10 +31,16 @@ pub use r#while::*;
 #[enum_ids::enum_ids(derive = "Debug, PartialEq, Clone", display, display_from_value)]
 #[derive(Debug, Clone)]
 pub enum Statement {
+    /// { ... }
     Block(Block),
+    /// break;
     Break(Break),
+    /// return;
     Return(Return),
     Optional(Optional),
+    /// if a > 4 { ... }
+    /// if a > 5 { ... } if b > 5 { ... }
+    /// if a > 5 { ... } if b > 5 { ... } else { ... }
     If(If),
     /// for (el, n) in 0..1 { ... };
     /// for (el, n) in from..to { ... };
@@ -46,10 +52,12 @@ pub enum Statement {
     /// while a < 100 || b > 100 { ... };
     /// while (a < 100 || b > 100) && v != 0 { ... };
     While(While),
+    /// loop { ... }
     Loop(Loop),
     /// each(el, n, elements) { el; };
     /// each(el, n, [1, 2, 3]) { el; };
     Each(Each),
+    /// a = 1, a = func(), etc.
     Assignation(Assignation),
     OneOf(OneOf),
     Join(Join),
