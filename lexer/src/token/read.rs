@@ -129,6 +129,7 @@ impl Read for Token {
             | KindId::Return
             | KindId::Break
             | KindId::Let
+            | KindId::In
             | KindId::True
             | KindId::False => Ok(if lx.read_identifier() == id.to_string() {
                 Some(Token::by_pos(id.try_into()?, &lx.uuid, from, lx.pos))

@@ -68,6 +68,7 @@ pub fn kind(id: KindId) -> BoxedStrategy<Kind> {
         | KindId::Return
         | KindId::Break
         | KindId::Let
+        | KindId::In
         | KindId::True
         | KindId::False
         | KindId::Question

@@ -27,6 +27,7 @@ impl Token {
             | Kind::Return
             | Kind::Break
             | Kind::Let
+            | Kind::In
             | Kind::True
             | Kind::False
             | Kind::Question

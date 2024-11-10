@@ -21,6 +21,8 @@ pub enum Kind {
     For,
     /// The `each` keyword.
     Each,
+    /// The `in` keyword.
+    In,
     /// The `return` keyword.
     Return,
     /// The `break` keyword.
@@ -160,6 +162,7 @@ impl fmt::Display for Kind {
                 Self::Return => "return".to_owned(),
                 Self::Break => "break".to_owned(),
                 Self::Let => "let".to_owned(),
+                Self::In => "in".to_owned(),
                 Self::True => "true".to_owned(),
                 Self::False => "false".to_owned(),
                 Self::Identifier(s) => s.clone(),
@@ -250,6 +253,7 @@ impl fmt::Display for KindId {
                 Self::Return => "return".to_owned(),
                 Self::Break => "break".to_owned(),
                 Self::Let => "let".to_owned(),
+                Self::In => "in".to_owned(),
                 Self::True => "true".to_owned(),
                 Self::False => "false".to_owned(),
                 Self::SingleQuote => "'".to_owned(),
@@ -330,6 +334,7 @@ impl TryFrom<KindId> for Kind {
             KindId::Return => Ok(Kind::Return),
             KindId::Break => Ok(Kind::Break),
             KindId::Let => Ok(Kind::Let),
+            KindId::In => Ok(Kind::In),
             KindId::True => Ok(Kind::True),
             KindId::False => Ok(Kind::False),
             KindId::SingleQuote => Ok(Kind::SingleQuote),

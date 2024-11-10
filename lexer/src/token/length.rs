@@ -63,7 +63,8 @@ impl ConstantLength for KindId {
             | Self::Arrow
             | Self::DoubleArrow
             | Self::Comment
-            | Self::CRLF => Ok(2),
+            | Self::CRLF
+            | Self::In => Ok(2),
             Self::Meta | Self::For | Self::Let => Ok(3),
             Self::Else | Self::Loop | Self::Each | Self::True => Ok(4),
             Self::While | Self::False | Self::Break => Ok(5),
