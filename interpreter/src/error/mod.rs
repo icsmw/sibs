@@ -35,12 +35,22 @@ pub enum E {
     NoExpectedBlockAfter(KindId),
     #[error("After {0} expected {1}, but not found")]
     MissedExpectation(String, String),
+    #[error("Expected block, but it's missed")]
+    MissedBlock,
+
+    /// Each
     #[error("In each statement declaration of element variable is missed")]
     MissedElementDeclarationInEach,
     #[error("In each statement declaration of index variable is missed")]
     MissedIndexDeclarationInEach,
     #[error("Fail to recognize elements for each statement: {0}")]
     FailRecognizeElementsInEach(String),
-    #[error("In each statement inner block is missed")]
-    MissedBlockInEach,
+
+    /// For
+    #[error("In for statement declaration of element variable is missed")]
+    MissedElementDeclarationInFor,
+    #[error("In for statement declaration of index variable is missed")]
+    MissedIndexDeclarationInFor,
+    #[error("Fail to recognize elements for for statement: {0}")]
+    FailRecognizeElementsInFor(String),
 }

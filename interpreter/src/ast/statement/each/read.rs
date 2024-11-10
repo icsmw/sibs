@@ -52,7 +52,7 @@ impl ReadNode<Each> for Each {
         let Some(block) =
             Statement::try_oneof(parser, &[StatementId::Block], nodes)?.map(Node::Statement)
         else {
-            return Err(E::MissedBlockInEach);
+            return Err(E::MissedBlock);
         };
         Ok(Some(Each {
             token,

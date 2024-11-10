@@ -140,6 +140,7 @@ pub fn kind(id: KindId) -> BoxedStrategy<Kind> {
                     KindId::Loop.to_string(),
                     KindId::True.to_string(),
                     KindId::False.to_string(),
+                    KindId::In.to_string(),
                 ]
                 .contains(s)
             })

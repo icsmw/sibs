@@ -36,13 +36,16 @@ pub enum Statement {
     Return(Return),
     Optional(Optional),
     If(If),
+    /// for (el, n) in 0..1 { ... };
+    /// for (el, n) in from..to { ... };
+    /// for (el, n) in elements { ... };
+    /// for (el, n) in [1, 2, 3] { ... };
+    /// for (el, n) in ["one", "two", "three"] { ... };
     For(For),
     While(While),
     Loop(Loop),
-    /// ```
     /// each(el, n, elements) { el; };
     /// each(el, n, [1, 2, 3]) { el; };
-    /// ```
     Each(Each),
     Assignation(Assignation),
     OneOf(OneOf),
