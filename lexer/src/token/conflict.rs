@@ -27,6 +27,8 @@ impl ConflictResolver for KindId {
             | Self::Break
             | Self::Let
             | Self::In
+            | Self::Join
+            | Self::OneOf
             | Self::True
             | Self::False
             | Self::String
@@ -152,6 +154,8 @@ impl ConflictResolver for KindId {
                 | KindId::Break
                 | KindId::Let
                 | KindId::In
+                | KindId::Join
+                | KindId::OneOf
                 | KindId::True
                 | KindId::False
                 | KindId::Number => id.clone(),

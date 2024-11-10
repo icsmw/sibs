@@ -40,6 +40,8 @@ impl Interest for KindId {
             | Self::Break
             | Self::Let
             | Self::In
+            | Self::Join
+            | Self::OneOf
             | Self::True
             | Self::False
             | Self::EOF
@@ -111,6 +113,8 @@ impl Interest for KindId {
             Self::Break => "break" == ident,
             Self::Let => "let" == ident,
             Self::In => "in" == ident,
+            Self::Join => "join" == ident,
+            Self::OneOf => "oneof" == ident,
             Self::True => "true" == ident,
             Self::False => "false" == ident,
             Self::Identifier => true,

@@ -69,6 +69,8 @@ pub fn kind(id: KindId) -> BoxedStrategy<Kind> {
         | KindId::Break
         | KindId::Let
         | KindId::In
+        | KindId::Join
+        | KindId::OneOf
         | KindId::True
         | KindId::False
         | KindId::Question
@@ -141,6 +143,8 @@ pub fn kind(id: KindId) -> BoxedStrategy<Kind> {
                     KindId::True.to_string(),
                     KindId::False.to_string(),
                     KindId::In.to_string(),
+                    KindId::Join.to_string(),
+                    KindId::OneOf.to_string(),
                 ]
                 .contains(s)
             })

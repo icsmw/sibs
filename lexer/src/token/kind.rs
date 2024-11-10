@@ -29,6 +29,10 @@ pub enum Kind {
     Break,
     /// The `let` keyword.
     Let,
+    /// The `Join` keyword.
+    Join,
+    /// The `oneof` keyword.
+    OneOf,
     /// The boolean literal `true`.
     True,
     /// The boolean literal `false`.
@@ -163,6 +167,8 @@ impl fmt::Display for Kind {
                 Self::Break => "break".to_owned(),
                 Self::Let => "let".to_owned(),
                 Self::In => "in".to_owned(),
+                Self::OneOf => "oneof".to_owned(),
+                Self::Join => "join".to_owned(),
                 Self::True => "true".to_owned(),
                 Self::False => "false".to_owned(),
                 Self::Identifier(s) => s.clone(),
@@ -254,6 +260,8 @@ impl fmt::Display for KindId {
                 Self::Break => "break".to_owned(),
                 Self::Let => "let".to_owned(),
                 Self::In => "in".to_owned(),
+                Self::OneOf => "oneof".to_owned(),
+                Self::Join => "join".to_owned(),
                 Self::True => "true".to_owned(),
                 Self::False => "false".to_owned(),
                 Self::SingleQuote => "'".to_owned(),
@@ -335,6 +343,8 @@ impl TryFrom<KindId> for Kind {
             KindId::Break => Ok(Kind::Break),
             KindId::Let => Ok(Kind::Let),
             KindId::In => Ok(Kind::In),
+            KindId::OneOf => Ok(Kind::OneOf),
+            KindId::Join => Ok(Kind::Join),
             KindId::True => Ok(Kind::True),
             KindId::False => Ok(Kind::False),
             KindId::SingleQuote => Ok(Kind::SingleQuote),

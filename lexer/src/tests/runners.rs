@@ -28,6 +28,8 @@ impl Token {
             | Kind::Break
             | Kind::Let
             | Kind::In
+            | Kind::Join
+            | Kind::OneOf
             | Kind::True
             | Kind::False
             | Kind::Question
