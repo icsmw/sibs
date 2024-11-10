@@ -57,4 +57,8 @@ pub enum E {
     /// While
     #[error("In while statement comparison is missed")]
     MissedComparisonInWhile,
+
+    /// Optional
+    #[error("In optional statement action is missed")]
+    MissedActionInOptional,
 }
