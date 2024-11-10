@@ -39,6 +39,10 @@ pub enum Statement {
     For(For),
     While(While),
     Loop(Loop),
+    /// ```
+    /// each(el, n, elements) { el; };
+    /// each(el, n, [1, 2, 3]) { el; };
+    /// ```
     Each(Each),
     Assignation(Assignation),
     OneOf(OneOf),
