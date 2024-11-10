@@ -74,9 +74,18 @@ impl StringPart {
                 )]);
                 let mut closed = false;
                 lx.advance();
+                let mut sub_groups = 1;
                 while let Some(tk) = Token::read(lx, &tokens)? {
+                    if matches!(tk.kind, Kind::LeftBrace) {
+                        sub_groups += 1;
+                    }
+                    if matches!(tk.kind, Kind::RightBrace) {
+                        sub_groups -= 1;
+                    }
                     tokens.add(tk);
-                    if let Some(KindId::RightBrace) = tokens.last().map(|tk| tk.id()) {
+                    if let (Some(KindId::RightBrace), true) =
+                        (tokens.last().map(|tk| tk.id()), sub_groups == 0)
+                    {
                         closed = true;
                         skip = true;
                         break;
