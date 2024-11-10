@@ -13,7 +13,7 @@ impl Arbitrary for While {
             ComparisonSeq::arbitrary_with(deep + 1)
                 .prop_map(|v| Node::Expression(Expression::ComparisonSeq(v)))
                 .boxed(),
-            Block::arbitrary()
+            Block::arbitrary_with(deep + 1)
                 .prop_map(|v| Node::Statement(Statement::Block(v)))
                 .boxed(),
         )

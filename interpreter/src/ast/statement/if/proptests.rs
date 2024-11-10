@@ -14,14 +14,14 @@ impl Arbitrary for IfCase {
                 ComparisonSeq::arbitrary_with(deep + 1)
                     .prop_map(|v| Node::Expression(Expression::ComparisonSeq(v)))
                     .boxed(),
-                Block::arbitrary()
+                Block::arbitrary_with(deep + 1)
                     .prop_map(|v| Node::Statement(Statement::Block(v)))
                     .boxed(),
             )
                 .prop_map(|(comp, blk)| IfCase::If(comp, blk, Token::for_test(Kind::If)))
                 .boxed()
         } else {
-            Block::arbitrary()
+            Block::arbitrary_with(deep + 1)
                 .prop_map(|v| Node::Statement(Statement::Block(v)))
                 .boxed()
                 .prop_map(|blk| IfCase::Else(blk, Token::for_test(Kind::Else)))

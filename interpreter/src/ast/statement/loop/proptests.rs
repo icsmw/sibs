@@ -9,7 +9,7 @@ impl Arbitrary for Loop {
     type Strategy = BoxedStrategy<Self>;
 
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
-        Block::arbitrary()
+        Block::arbitrary_with(deep + 1)
             .prop_map(|v| Node::Statement(Statement::Block(v)))
             .boxed()
             .prop_map(move |block| Loop {

@@ -33,7 +33,7 @@ impl Arbitrary for Each {
                         .boxed(),
                 ])
             },
-            Block::arbitrary()
+            Block::arbitrary_with(deep + 1)
                 .prop_map(|v| Node::Statement(Statement::Block(v)))
                 .boxed(),
         )
