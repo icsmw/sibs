@@ -54,12 +54,12 @@ impl Arbitrary for Optional {
                     Each::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Statement(Statement::Each(v)))
                         .boxed(),
-                    // Join::arbitrary_with(deep + 1)
-                    //     .prop_map(|v| Node::Statement(Statement::Join(v)))
-                    //     .boxed(),
-                    // OneOf::arbitrary_with(deep + 1)
-                    //     .prop_map(|v| Node::Statement(Statement::OneOf(v)))
-                    //     .boxed(),
+                    Join::arbitrary_with(deep + 1)
+                        .prop_map(|v| Node::Statement(Statement::Join(v)))
+                        .boxed(),
+                    OneOf::arbitrary_with(deep + 1)
+                        .prop_map(|v| Node::Statement(Statement::OneOf(v)))
+                        .boxed(),
                 ])
             },
         )
