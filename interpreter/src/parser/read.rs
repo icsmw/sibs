@@ -11,7 +11,6 @@ pub fn resolve_reading_conflicts<T: Clone, K: Display + Clone + PartialEq + Conf
             .filter(|(p, _, oid)| p == pos && oid != id)
             .cloned()
             .collect::<Vec<(usize, T, K)>>();
-
         if conflicted.is_empty() {
             parser.pos = *pos;
             Ok(Some(results.remove(n).1))

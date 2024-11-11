@@ -11,26 +11,43 @@ impl Arbitrary for TaskCall {
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         (
             prop::collection::vec(gens::kind(KindId::Identifier).boxed(), 1..5),
-            prop::collection::vec(
-                prop::strategy::Union::new(vec![
-                    ComparisonSeq::arbitrary_with(deep + 1)
-                        .prop_map(|v| Node::Expression(Expression::ComparisonSeq(v)))
-                        .boxed(),
-                    Number::arbitrary()
-                        .prop_map(|v| Node::Value(Value::Number(v)))
-                        .boxed(),
-                    Boolean::arbitrary()
-                        .prop_map(|v| Node::Value(Value::Boolean(v)))
-                        .boxed(),
-                    PrimitiveString::arbitrary()
-                        .prop_map(|v| Node::Value(Value::PrimitiveString(v)))
-                        .boxed(),
-                    FunctionCall::arbitrary_with(0)
-                        .prop_map(|v| Node::Expression(Expression::FunctionCall(v)))
-                        .boxed(),
-                ]),
-                1..5,
-            ),
+            if deep > PROPTEST_DEEP_FACTOR {
+                prop::collection::vec(
+                    prop::strategy::Union::new(vec![
+                        Number::arbitrary()
+                            .prop_map(|v| Node::Value(Value::Number(v)))
+                            .boxed(),
+                        Boolean::arbitrary()
+                            .prop_map(|v| Node::Value(Value::Boolean(v)))
+                            .boxed(),
+                        PrimitiveString::arbitrary()
+                            .prop_map(|v| Node::Value(Value::PrimitiveString(v)))
+                            .boxed(),
+                    ]),
+                    1..5,
+                )
+            } else {
+                prop::collection::vec(
+                    prop::strategy::Union::new(vec![
+                        ComparisonSeq::arbitrary_with(deep + 1)
+                            .prop_map(|v| Node::Expression(Expression::ComparisonSeq(v)))
+                            .boxed(),
+                        Number::arbitrary()
+                            .prop_map(|v| Node::Value(Value::Number(v)))
+                            .boxed(),
+                        Boolean::arbitrary()
+                            .prop_map(|v| Node::Value(Value::Boolean(v)))
+                            .boxed(),
+                        PrimitiveString::arbitrary()
+                            .prop_map(|v| Node::Value(Value::PrimitiveString(v)))
+                            .boxed(),
+                        FunctionCall::arbitrary_with(deep + 1)
+                            .prop_map(|v| Node::Expression(Expression::FunctionCall(v)))
+                            .boxed(),
+                    ]),
+                    1..5,
+                )
+            },
         )
             .prop_map(move |(idents, args)| TaskCall {
                 reference: idents

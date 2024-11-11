@@ -6,6 +6,8 @@ mod read;
 mod tests;
 
 pub use read::*;
+#[cfg(test)]
+pub use tests::*;
 
 mod cfm;
 mod declaration;

@@ -13,7 +13,7 @@ impl Arbitrary for Optional {
             ComparisonSeq::arbitrary_with(deep + 1)
                 .prop_map(|v| Node::Expression(Expression::ComparisonSeq(v)))
                 .boxed(),
-            if deep > 5 {
+            if deep > PROPTEST_DEEP_FACTOR {
                 prop::strategy::Union::new(vec![
                     Break::arbitrary()
                         .prop_map(|v| Node::Statement(Statement::Break(v)))

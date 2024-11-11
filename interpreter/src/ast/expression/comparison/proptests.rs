@@ -8,7 +8,7 @@ impl Arbitrary for Comparison {
     type Strategy = BoxedStrategy<Self>;
 
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
-        if deep > 5 {
+        if deep > PROPTEST_DEEP_FACTOR {
             (
                 prop::strategy::Union::new(vec![
                     Variable::arbitrary()

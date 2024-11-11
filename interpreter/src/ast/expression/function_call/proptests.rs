@@ -11,7 +11,7 @@ impl Arbitrary for FunctionCall {
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         (
             prop::collection::vec(gens::kind(KindId::Identifier).boxed(), 1..5),
-            if deep > 5 {
+            if deep > PROPTEST_DEEP_FACTOR {
                 prop::collection::vec(
                     prop::strategy::Union::new(vec![
                         Number::arbitrary()

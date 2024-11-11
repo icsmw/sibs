@@ -13,7 +13,7 @@ impl Arbitrary for Assignation {
             Variable::arbitrary()
                 .prop_map(|v| Node::Expression(Expression::Variable(v)))
                 .boxed(),
-            if deep > 5 {
+            if deep > PROPTEST_DEEP_FACTOR {
                 prop::strategy::Union::new(vec![
                     Number::arbitrary()
                         .prop_map(|v| Node::Value(Value::Number(v)))
@@ -23,9 +23,6 @@ impl Arbitrary for Assignation {
                         .boxed(),
                     PrimitiveString::arbitrary()
                         .prop_map(|v| Node::Value(Value::PrimitiveString(v)))
-                        .boxed(),
-                    BinaryExpSeq::arbitrary()
-                        .prop_map(|v| Node::Expression(Expression::BinaryExpSeq(v)))
                         .boxed(),
                     Variable::arbitrary()
                         .prop_map(|v| Node::Expression(Expression::Variable(v)))
@@ -60,7 +57,7 @@ impl Arbitrary for Assignation {
                     TaskCall::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Expression(Expression::TaskCall(v)))
                         .boxed(),
-                    BinaryExpSeq::arbitrary()
+                    BinaryExpSeq::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Expression(Expression::BinaryExpSeq(v)))
                         .boxed(),
                     Variable::arbitrary()

@@ -16,7 +16,7 @@ impl Arbitrary for Each {
             Variable::arbitrary()
                 .prop_map(|v| Node::Expression(Expression::Variable(v)))
                 .boxed(),
-            if deep > 5 {
+            if deep > PROPTEST_DEEP_FACTOR {
                 prop::strategy::Union::new(vec![Variable::arbitrary()
                     .prop_map(|v| Node::Expression(Expression::Variable(v)))
                     .boxed()])

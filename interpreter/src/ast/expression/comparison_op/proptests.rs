@@ -14,7 +14,7 @@ impl Arbitrary for ComparisonOperator {
             Just(ComparisonOperator::LessEqual),
             Just(ComparisonOperator::Greater),
             Just(ComparisonOperator::GreaterEqual),
-            Just(ComparisonOperator::Equal),
+            Just(ComparisonOperator::EqualEqual),
             Just(ComparisonOperator::BangEqual),
         ]
         .boxed()
@@ -34,7 +34,6 @@ impl Arbitrary for ComparisonOp {
                     ComparisonOperator::LessEqual => Kind::LessEqual,
                     ComparisonOperator::Greater => Kind::Greater,
                     ComparisonOperator::GreaterEqual => Kind::GreaterEqual,
-                    ComparisonOperator::Equal => Kind::Equals,
                     ComparisonOperator::EqualEqual => Kind::EqualEqual,
                     ComparisonOperator::BangEqual => Kind::BangEqual,
                 });

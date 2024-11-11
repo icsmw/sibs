@@ -1,3 +1,5 @@
+pub const PROPTEST_DEEP_FACTOR: u8 = 5;
+
 #[macro_export]
 macro_rules! test_node_reading {
     ($fn_name:ident, $element_ref:expr, $exp_count:literal) => {

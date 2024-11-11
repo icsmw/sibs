@@ -11,7 +11,6 @@ pub enum ComparisonOperator {
     LessEqual,
     Greater,
     GreaterEqual,
-    Equal,
     EqualEqual,
     BangEqual,
 }

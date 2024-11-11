@@ -12,7 +12,6 @@ impl ReadNode<ComparisonOp> for ComparisonOp {
             Kind::LessEqual => ComparisonOperator::LessEqual,
             Kind::Greater => ComparisonOperator::Greater,
             Kind::GreaterEqual => ComparisonOperator::GreaterEqual,
-            Kind::Equals => ComparisonOperator::Equal,
             Kind::EqualEqual => ComparisonOperator::EqualEqual,
             Kind::BangEqual => ComparisonOperator::BangEqual,
             _ => {

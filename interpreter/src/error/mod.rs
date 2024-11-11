@@ -17,6 +17,8 @@ pub enum E {
     MissedBinaryOperator,
     #[error("Missed comma")]
     MissedComma,
+    #[error("Missed semicolon")]
+    MissedSemicolon,
     #[error("Infinite number cannot be used")]
     InfiniteNumber,
     #[error("Invalid right side of assignation: {0}")]

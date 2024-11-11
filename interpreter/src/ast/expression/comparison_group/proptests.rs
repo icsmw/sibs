@@ -9,7 +9,7 @@ impl Arbitrary for ComparisonGroup {
 
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         (
-            if deep > 5 {
+            if deep > PROPTEST_DEEP_FACTOR {
                 prop::collection::vec(
                     prop::strategy::Union::new(vec![Comparison::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Expression(Expression::Comparison(v)))

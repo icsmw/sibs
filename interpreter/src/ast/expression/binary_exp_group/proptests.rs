@@ -9,7 +9,7 @@ impl Arbitrary for BinaryExpGroup {
 
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         (
-            if deep > 5 {
+            if deep > PROPTEST_DEEP_FACTOR {
                 prop::collection::vec(
                     prop::strategy::Union::new(vec![BinaryExp::arbitrary()
                         .prop_map(|v| Node::Expression(Expression::BinaryExp(v)))

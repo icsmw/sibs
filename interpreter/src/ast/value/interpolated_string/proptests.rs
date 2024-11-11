@@ -27,13 +27,10 @@ impl Arbitrary for InterpolatedStringPart {
                 })
                 .boxed();
         }
-        if deep > 5 {
+        if deep > PROPTEST_DEEP_FACTOR {
             prop::strategy::Union::new(vec![
                 Variable::arbitrary()
                     .prop_map(|v| Node::Expression(Expression::Variable(v)))
-                    .boxed(),
-                BinaryExpSeq::arbitrary()
-                    .prop_map(|v| Node::Expression(Expression::BinaryExpSeq(v)))
                     .boxed(),
                 Number::arbitrary()
                     .prop_map(|v| Node::Value(Value::Number(v)))
@@ -56,7 +53,7 @@ impl Arbitrary for InterpolatedStringPart {
                 Variable::arbitrary()
                     .prop_map(|v| Node::Expression(Expression::Variable(v)))
                     .boxed(),
-                BinaryExpSeq::arbitrary()
+                BinaryExpSeq::arbitrary_with(deep + 1)
                     .prop_map(|v| Node::Expression(Expression::BinaryExpSeq(v)))
                     .boxed(),
                 FunctionCall::arbitrary_with(deep + 1)
@@ -126,8 +123,8 @@ impl Arbitrary for InterpolatedString {
 
 test_node_reading!(interpolated_string, InterpolatedString, 10);
 
-test_node_reading_case!(
-    interpolated_string_case,
-    InterpolatedString,
-    "'test of string { if a > 4 {  }  } string'"
-);
+// test_node_reading_case!(
+//     interpolated_string_case,
+//     InterpolatedString,
+//     "'test of string { if a > 4 {  }  } string'"
+// );

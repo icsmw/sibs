@@ -27,13 +27,10 @@ impl Arbitrary for CommandPart {
                 })
                 .boxed();
         }
-        if deep > 5 {
+        if deep > PROPTEST_DEEP_FACTOR {
             prop::strategy::Union::new(vec![
                 Variable::arbitrary()
                     .prop_map(|v| Node::Expression(Expression::Variable(v)))
-                    .boxed(),
-                BinaryExpSeq::arbitrary()
-                    .prop_map(|v| Node::Expression(Expression::BinaryExpSeq(v)))
                     .boxed(),
                 Number::arbitrary()
                     .prop_map(|v| Node::Value(Value::Number(v)))
@@ -56,7 +53,7 @@ impl Arbitrary for CommandPart {
                 Variable::arbitrary()
                     .prop_map(|v| Node::Expression(Expression::Variable(v)))
                     .boxed(),
-                BinaryExpSeq::arbitrary()
+                BinaryExpSeq::arbitrary_with(deep + 1)
                     .prop_map(|v| Node::Expression(Expression::BinaryExpSeq(v)))
                     .boxed(),
                 Command::arbitrary_with(deep + 1)
