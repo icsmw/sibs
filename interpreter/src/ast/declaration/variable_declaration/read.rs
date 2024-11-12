@@ -10,53 +10,30 @@ impl ReadNode<VariableDeclaration> for VariableDeclaration {
         if !matches!(token.kind, Kind::Let) {
             return Ok(None);
         }
-        let Some(variable) = parser.token().cloned() else {
+        let Some(variable) =
+            Expression::try_read(parser, ExpressionId::Variable, nodes)?.map(Node::Expression)
+        else {
             return Err(E::MissedVariableDefinition);
         };
-        let Some(tk) = parser.token() else {
-            return Ok(Some(VariableDeclaration {
-                token,
-                variable,
-                r#type: None,
-                value: None,
-            }));
-        };
-        match tk.kind {
-            Kind::Colon => {
-                if let Some(node) =
-                    Declaration::try_read(parser, DeclarationId::VariableType, nodes)?
-                        .map(Node::Declaration)
-                {
-                    Ok(Some(VariableDeclaration {
-                        token,
-                        variable,
-                        r#type: Some(Box::new(node)),
-                        value: None,
-                    }))
-                } else {
-                    Err(E::MissedVariableTypeDefinition)
-                }
-            }
-            Kind::Equals => {
-                if let Some(node) = Statement::try_read(parser, StatementId::AssignedValue, nodes)?
-                    .map(Node::Statement)
-                {
-                    Ok(Some(VariableDeclaration {
-                        token,
-                        variable,
-                        r#type: None,
-                        value: Some(Box::new(node)),
-                    }))
-                } else {
-                    Err(E::InvalidAssignation(parser.to_string()))
-                }
-            }
-            _ => Ok(Some(VariableDeclaration {
-                token,
-                variable,
-                r#type: None,
-                value: None,
-            })),
-        }
+        let ty = Node::try_oneof(
+            parser,
+            nodes,
+            &[NodeReadTarget::Declaration(&[
+                DeclarationId::VariableTypeDeclaration,
+            ])],
+        )?
+        .map(Box::new);
+        let assignation = Node::try_oneof(
+            parser,
+            nodes,
+            &[NodeReadTarget::Statement(&[StatementId::AssignedValue])],
+        )?
+        .map(Box::new);
+        Ok(Some(VariableDeclaration {
+            token,
+            variable: Box::new(variable),
+            r#type: ty,
+            assignation,
+        }))
     }
 }

@@ -19,7 +19,6 @@ impl Arbitrary for Assignation {
         )
             .prop_map(move |(left, right)| Assignation {
                 left: Box::new(left),
-                token: Token::for_test(Kind::Equals),
                 right: Box::new(right),
             })
             .boxed()

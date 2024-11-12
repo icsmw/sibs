@@ -8,11 +8,12 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct AssignedValue {
+    token: Token,
     node: Box<Node>,
 }
 
 impl fmt::Display for AssignedValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.node)
+        write!(f, "{} {}", self.token, self.node)
     }
 }

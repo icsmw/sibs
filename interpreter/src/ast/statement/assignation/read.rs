@@ -9,20 +9,13 @@ impl ReadNode<Assignation> for Assignation {
         else {
             return Ok(None);
         };
-        let Some(token) = parser.token().cloned() else {
-            return Ok(None);
-        };
-        if !matches!(token.kind, Kind::Equals) {
-            return Ok(None);
-        };
         let Some(right) =
             Statement::try_read(parser, StatementId::AssignedValue, nodes)?.map(Node::Statement)
         else {
-            return Err(E::InvalidAssignation(parser.to_string()));
+            return Ok(None);
         };
         Ok(Some(Assignation {
             left: Box::new(left),
-            token,
             right: Box::new(right),
         }))
     }

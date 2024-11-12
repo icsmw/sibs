@@ -11,14 +11,19 @@ impl ReadNode<VariableTypeDeclaration> for VariableTypeDeclaration {
         }
         let mut types = Vec::new();
         loop {
-            let Some(node) = Declaration::try_read(parser, DeclarationId::VariableType, nodes)?
-                .map(Node::Declaration)
+            let Some(node) = Node::try_oneof(
+                parser,
+                nodes,
+                &[NodeReadTarget::Declaration(&[DeclarationId::VariableType])],
+            )?
             else {
                 break;
             };
             types.push(node);
+            let restore = parser.pin();
             if let Some(nx) = parser.token() {
                 if !matches!(nx.kind, Kind::VerticalBar) {
+                    restore(parser);
                     break;
                 }
             } else {

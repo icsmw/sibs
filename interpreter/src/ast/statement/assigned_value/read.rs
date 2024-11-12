@@ -4,6 +4,12 @@ use crate::*;
 
 impl ReadNode<AssignedValue> for AssignedValue {
     fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<AssignedValue>, E> {
+        let Some(token) = parser.token().cloned() else {
+            return Ok(None);
+        };
+        if !matches!(token.kind, Kind::Equals) {
+            return Ok(None);
+        };
         let Some(node) = Node::try_oneof(
             parser,
             nodes,
@@ -27,9 +33,10 @@ impl ReadNode<AssignedValue> for AssignedValue {
             ],
         )?
         else {
-            return Ok(None);
+            return Err(E::InvalidAssignation(parser.to_string()));
         };
         Ok(Some(AssignedValue {
+            token,
             node: Box::new(node),
         }))
     }
