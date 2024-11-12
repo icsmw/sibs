@@ -21,6 +21,8 @@ impl TryRead<Declaration, DeclarationId> for Declaration {
             DeclarationId::VariableType => {
                 VariableType::read(parser, nodes)?.map(Declaration::VariableType)
             }
+            DeclarationId::VariableTypeDeclaration => VariableTypeDeclaration::read(parser, nodes)?
+                .map(Declaration::VariableTypeDeclaration),
             DeclarationId::VariableVariants => {
                 VariableVariants::read(parser, nodes)?.map(Declaration::VariableVariants)
             }

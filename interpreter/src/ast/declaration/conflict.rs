@@ -6,6 +6,7 @@ impl ConflictResolver<DeclarationId> for DeclarationId {
         match self {
             Self::VariableDeclaration
             | Self::VariableType
+            | Self::VariableTypeDeclaration
             | Self::VariableVariants
             | Self::Closure => self.clone(),
         }
