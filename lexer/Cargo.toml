@@ -16,8 +16,8 @@ proptests = [
 ]
 
 [dependencies]
-thiserror = "1.0"
-enum_ids = "0.4"
+thiserror = "2.0"
+enum_ids = "0.5"
 proptest = { version = "1.4", optional = true }
 
 [dependencies.uuid]

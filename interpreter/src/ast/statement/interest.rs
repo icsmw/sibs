@@ -10,7 +10,7 @@ impl Interest for StatementId {
             Self::Loop => matches!(token.id(), KindId::Loop),
             Self::While => matches!(token.id(), KindId::While),
             Self::Each => matches!(token.id(), KindId::Each),
-            Self::Assignation | Self::Join | Self::OneOf => {
+            Self::Assignation | Self::AssignedValue | Self::Join | Self::OneOf => {
                 matches!(token.id(), KindId::Identifier)
             }
             Self::Optional => matches!(

@@ -15,28 +15,8 @@ impl ReadNode<Assignation> for Assignation {
         if !matches!(token.kind, Kind::Equals) {
             return Ok(None);
         };
-        let Some(right) = Node::try_oneof(
-            parser,
-            nodes,
-            &[
-                NodeReadTarget::Value(&[
-                    ValueId::Number,
-                    ValueId::Boolean,
-                    ValueId::PrimitiveString,
-                    ValueId::InterpolatedString,
-                    ValueId::Array,
-                ]),
-                NodeReadTarget::Statement(&[StatementId::If]),
-                NodeReadTarget::Expression(&[
-                    ExpressionId::Variable,
-                    ExpressionId::BinaryExpSeq,
-                    ExpressionId::ComparisonSeq,
-                    ExpressionId::FunctionCall,
-                    ExpressionId::Command,
-                    ExpressionId::TaskCall,
-                ]),
-            ],
-        )?
+        let Some(right) =
+            Statement::try_read(parser, StatementId::AssignedValue, nodes)?.map(Node::Statement)
         else {
             return Err(E::InvalidAssignation(parser.to_string()));
         };

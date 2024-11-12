@@ -1,0 +1,36 @@
+use lexer::Kind;
+
+use crate::*;
+
+impl ReadNode<AssignedValue> for AssignedValue {
+    fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<AssignedValue>, E> {
+        let Some(node) = Node::try_oneof(
+            parser,
+            nodes,
+            &[
+                NodeReadTarget::Value(&[
+                    ValueId::Number,
+                    ValueId::Boolean,
+                    ValueId::PrimitiveString,
+                    ValueId::InterpolatedString,
+                    ValueId::Array,
+                ]),
+                NodeReadTarget::Statement(&[StatementId::If]),
+                NodeReadTarget::Expression(&[
+                    ExpressionId::Variable,
+                    ExpressionId::BinaryExpSeq,
+                    ExpressionId::ComparisonSeq,
+                    ExpressionId::FunctionCall,
+                    ExpressionId::Command,
+                    ExpressionId::TaskCall,
+                ]),
+            ],
+        )?
+        else {
+            return Ok(None);
+        };
+        Ok(Some(AssignedValue {
+            node: Box::new(node),
+        }))
+    }
+}

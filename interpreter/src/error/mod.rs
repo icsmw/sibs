@@ -63,4 +63,16 @@ pub enum E {
     /// Optional
     #[error("In optional statement action is missed")]
     MissedActionInOptional,
+
+    /// VariableDeclaration
+    #[error("Expecting variable assignation after let")]
+    MissedVariableDefinition,
+    #[error("Expecting variable type definition")]
+    MissedVariableTypeDefinition,
+
+    /// VariableType
+    #[error("Expecting variable nested type definition")]
+    MissedNestedTypeDefinition,
+    #[error("Unknown type: {0}")]
+    UnknownType(String),
 }

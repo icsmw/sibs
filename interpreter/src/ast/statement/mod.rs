@@ -3,6 +3,7 @@ mod interest;
 mod read;
 
 mod assignation;
+mod assigned_value;
 mod block;
 mod r#break;
 mod each;
@@ -16,6 +17,7 @@ mod r#return;
 mod r#while;
 
 pub use assignation::*;
+pub use assigned_value::*;
 pub use block::*;
 pub use each::*;
 pub use join::*;
@@ -70,6 +72,8 @@ pub enum Statement {
     Each(Each),
     /// a = 1, a = func(), etc.
     Assignation(Assignation),
+    /// any value to assignate to variable
+    AssignedValue(AssignedValue),
     OneOf(OneOf),
     Join(Join),
 }

@@ -7,9 +7,7 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub struct VariableDeclaration {
     token: Token,
-    variable: Token,
-    r#type: Option<Box<Node>>,
-    value: Option<Box<Node>>,
+    node: Box<Node>,
 }
 
 impl fmt::Display for VariableDeclaration {

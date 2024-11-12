@@ -25,6 +25,9 @@ impl TryRead<Statement, StatementId> for Statement {
             StatementId::Assignation => {
                 Assignation::read(parser, nodes)?.map(Statement::Assignation)
             }
+            StatementId::AssignedValue => {
+                AssignedValue::read(parser, nodes)?.map(Statement::AssignedValue)
+            }
             StatementId::Optional => Optional::read(parser, nodes)?.map(Statement::Optional),
             StatementId::OneOf => OneOf::read(parser, nodes)?.map(Statement::OneOf),
             StatementId::Join => Join::read(parser, nodes)?.map(Statement::Join),
