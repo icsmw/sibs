@@ -75,4 +75,8 @@ pub enum E {
     MissedNestedTypeDefinition,
     #[error("Unknown type: {0}")]
     UnknownType(String),
+
+    //ArgumentDeclaration
+    #[error("Expecting argument type definition")]
+    MissedArgumentTypeDefinition,
 }

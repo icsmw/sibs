@@ -1,29 +1,24 @@
-use lexer::Kind;
-
 use crate::*;
 
-impl ReadNode<VariableDeclaration> for VariableDeclaration {
-    fn read(parser: &mut Parser) -> Result<Option<VariableDeclaration>, E> {
-        let Some(token) = parser.token().cloned() else {
-            return Ok(None);
-        };
-        if !matches!(token.kind, Kind::Let) {
-            return Ok(None);
-        }
-        let Some(token_ident) = parser.token() else {
-            return Err(E::MissedVariableDefinition);
-        };
-        if let Some(tk) = parser.token() {
-        } else {
-        };
-        let Some(node) =
-            Statement::try_read(parser, StatementId::Assignation)?.map(Node::Statement)
+impl ReadNode<ArgumentDeclaration> for ArgumentDeclaration {
+    fn read(parser: &mut Parser) -> Result<Option<ArgumentDeclaration>, E> {
+        let Some(variable) =
+            Expression::try_read(parser, ExpressionId::Variable)?.map(Node::Expression)
         else {
-            return Err(E::MissedVariableDefinition);
+            return Ok(None);
         };
-        Ok(Some(VariableDeclaration {
-            token,
-            node: Box::new(node),
+        let Some(ty) = Node::try_oneof(
+            parser,
+            &[NodeReadTarget::Declaration(&[
+                DeclarationId::VariableTypeDeclaration,
+            ])],
+        )?
+        .map(Box::new) else {
+            return Err(E::MissedArgumentTypeDefinition);
+        };
+        Ok(Some(ArgumentDeclaration {
+            variable: Box::new(variable),
+            r#type: ty,
         }))
     }
 }
