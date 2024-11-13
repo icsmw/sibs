@@ -1,6 +1,6 @@
 use crate::*;
 
-use lexer::{Kind, Token};
+use lexer::{Keyword, Kind, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for For {
@@ -50,8 +50,8 @@ impl Arbitrary for For {
                 index: Box::new(index),
                 elements: Box::new(elements),
                 block: Box::new(block),
-                token_for: Token::for_test(Kind::For),
-                token_in: Token::for_test(Kind::In),
+                token_for: Token::for_test(Kind::Keyword(Keyword::For)),
+                token_in: Token::for_test(Kind::Keyword(Keyword::In)),
             })
             .boxed()
     }

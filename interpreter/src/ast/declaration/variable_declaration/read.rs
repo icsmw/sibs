@@ -1,4 +1,4 @@
-use lexer::Kind;
+use lexer::{Keyword, Kind};
 
 use crate::*;
 
@@ -7,7 +7,7 @@ impl ReadNode<VariableDeclaration> for VariableDeclaration {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };
-        if !matches!(token.kind, Kind::Let) {
+        if !matches!(token.kind, Kind::Keyword(Keyword::Let)) {
             return Ok(None);
         }
         let Some(variable) =

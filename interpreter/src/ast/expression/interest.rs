@@ -22,15 +22,11 @@ impl Interest for ExpressionId {
             ),
             Self::Comparison => matches!(
                 token.id(),
-                KindId::Identifier | KindId::Number | KindId::True | KindId::False
+                KindId::Identifier | KindId::Number | KindId::Keyword
             ),
             Self::ComparisonSeq => matches!(
                 token.id(),
-                KindId::LeftParen
-                    | KindId::Identifier
-                    | KindId::Number
-                    | KindId::True
-                    | KindId::False
+                KindId::LeftParen | KindId::Identifier | KindId::Number | KindId::Keyword
             ),
             Self::ComparisonGroup | Self::BinaryExpGroup => matches!(token.id(), KindId::LeftParen),
             Self::Range => matches!(token.id(), KindId::Identifier | KindId::Number),

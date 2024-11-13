@@ -3,7 +3,7 @@ mod proptests;
 mod read;
 
 use crate::*;
-use lexer::{KindId, Token};
+use lexer::{Keyword, Token};
 use std::fmt;
 
 #[derive(Debug, Clone)]
@@ -21,10 +21,10 @@ impl fmt::Display for IfCase {
             "{}",
             match self {
                 Self::If(condition, block, _) => {
-                    format!("{} {condition} {block} ", KindId::If,)
+                    format!("{} {condition} {block} ", Keyword::If,)
                 }
                 Self::Else(block, _) => {
-                    format!("{} {block} ", KindId::Else,)
+                    format!("{} {block} ", Keyword::Else,)
                 }
             }
         )

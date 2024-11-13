@@ -9,6 +9,14 @@ proptest! {
         ..ProptestConfig::with_cases(500)
     })]
 
+    /// Tests the lexer with random keyword tokens.
+    #[test]
+    fn keyword(cases in proptest::collection::vec(gens::kind(KindId::Keyword), 10)) {
+        runners::test_tokens_by_kinds(cases.into_iter().flat_map(|knd| {
+            [vec![knd], vec![Kind::Whitespace(String::from(" "))]].concat()
+        }).collect::<Vec<Kind>>());
+    }
+
     /// Tests the lexer with random string tokens.
     #[test]
     fn string(cases in proptest::collection::vec(gens::kind(KindId::String), 100)) {

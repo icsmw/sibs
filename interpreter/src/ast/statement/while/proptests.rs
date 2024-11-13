@@ -1,6 +1,6 @@
 use crate::*;
 
-use lexer::{Kind, Token};
+use lexer::{Keyword, Kind, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for While {
@@ -20,7 +20,7 @@ impl Arbitrary for While {
             .prop_map(move |(comparison, block)| While {
                 comparison: Box::new(comparison),
                 block: Box::new(block),
-                token: Token::for_test(Kind::While),
+                token: Token::for_test(Kind::Keyword(Keyword::While)),
             })
             .boxed()
     }

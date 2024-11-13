@@ -1,6 +1,6 @@
 use crate::*;
 
-use lexer::{Kind, Token};
+use lexer::{Keyword, Kind, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for Each {
@@ -42,7 +42,7 @@ impl Arbitrary for Each {
                 index: Box::new(index),
                 elements: Box::new(elements),
                 block: Box::new(block),
-                token: Token::for_test(Kind::Each),
+                token: Token::for_test(Kind::Keyword(Keyword::Each)),
             })
             .boxed()
     }

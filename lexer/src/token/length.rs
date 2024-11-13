@@ -48,8 +48,7 @@ impl ConstantLength for KindId {
             | Self::Semicolon
             | Self::CR
             | Self::LF => Ok(1),
-            Self::If
-            | Self::EqualEqual
+            Self::EqualEqual
             | Self::BangEqual
             | Self::LessEqual
             | Self::GreaterEqual
@@ -63,18 +62,15 @@ impl ConstantLength for KindId {
             | Self::Arrow
             | Self::DoubleArrow
             | Self::Comment
-            | Self::CRLF
-            | Self::In => Ok(2),
-            Self::Meta | Self::For | Self::Let => Ok(3),
-            Self::Else | Self::Loop | Self::Each | Self::True | Self::Join => Ok(4),
-            Self::While | Self::False | Self::Break | Self::OneOf => Ok(5),
-            Self::Return => Ok(6),
+            | Self::CRLF => Ok(2),
+            Self::Meta => Ok(3),
             Self::Identifier
             | Self::Number
             | Self::String
             | Self::InterpolatedString
             | Self::Command
-            | Self::Whitespace => Err(E::NoConstantLength(self.clone())),
+            | Self::Whitespace
+            | Self::Keyword => Err(E::NoConstantLength(self.clone())),
         }
     }
 }

@@ -9,34 +9,8 @@ use std::fmt;
 #[enum_ids::enum_ids]
 #[derive(Debug, PartialEq, Clone)]
 pub enum Kind {
-    /// The `if` keyword.
-    If,
-    /// The `else` keyword.
-    Else,
-    /// The `while` keyword.
-    While,
-    /// The `loop` keyword.
-    Loop,
-    /// The `for` keyword.
-    For,
-    /// The `each` keyword.
-    Each,
-    /// The `in` keyword.
-    In,
-    /// The `return` keyword.
-    Return,
-    /// The `break` keyword.
-    Break,
-    /// The `let` keyword.
-    Let,
-    /// The `Join` keyword.
-    Join,
-    /// The `oneof` keyword.
-    OneOf,
-    /// The boolean literal `true`.
-    True,
-    /// The boolean literal `false`.
-    False,
+    /// The keyword.
+    Keyword(Keyword),
     /// An identifier consisting of a string.
     Identifier(String),
     /// A numeric literal represented as a floating-point number.
@@ -157,20 +131,7 @@ impl fmt::Display for Kind {
             f,
             "{}",
             match self {
-                Self::If => "if".to_owned(),
-                Self::Else => "else".to_owned(),
-                Self::While => "while".to_owned(),
-                Self::Loop => "loop".to_owned(),
-                Self::For => "for".to_owned(),
-                Self::Each => "each".to_owned(),
-                Self::Return => "return".to_owned(),
-                Self::Break => "break".to_owned(),
-                Self::Let => "let".to_owned(),
-                Self::In => "in".to_owned(),
-                Self::OneOf => "oneof".to_owned(),
-                Self::Join => "join".to_owned(),
-                Self::True => "true".to_owned(),
-                Self::False => "false".to_owned(),
+                Self::Keyword(s) => s.to_string(),
                 Self::Identifier(s) => s.clone(),
                 Self::Number(n) => n.to_string(),
                 Self::String(s) => format!("\"{s}\""),
@@ -250,20 +211,6 @@ impl fmt::Display for KindId {
             f,
             "{}",
             match self {
-                Self::If => "if".to_owned(),
-                Self::Else => "else".to_owned(),
-                Self::While => "while".to_owned(),
-                Self::Loop => "loop".to_owned(),
-                Self::For => "for".to_owned(),
-                Self::Each => "each".to_owned(),
-                Self::Return => "return".to_owned(),
-                Self::Break => "break".to_owned(),
-                Self::Let => "let".to_owned(),
-                Self::In => "in".to_owned(),
-                Self::OneOf => "oneof".to_owned(),
-                Self::Join => "join".to_owned(),
-                Self::True => "true".to_owned(),
-                Self::False => "false".to_owned(),
                 Self::SingleQuote => "'".to_owned(),
                 Self::DoubleQuote => "\"".to_owned(),
                 Self::Tilde => "~".to_owned(),
@@ -311,6 +258,7 @@ impl fmt::Display for KindId {
                 Self::CR => '\r'.to_string(),
                 Self::CRLF => "\r\n".to_owned(),
                 Self::Identifier
+                | Self::Keyword
                 | Self::Number
                 | Self::String
                 | Self::InterpolatedString
@@ -333,20 +281,6 @@ impl TryFrom<KindId> for Kind {
     /// have a corresponding `Kind` variant.
     fn try_from(id: KindId) -> Result<Self, Self::Error> {
         match id {
-            KindId::If => Ok(Kind::If),
-            KindId::Else => Ok(Kind::Else),
-            KindId::While => Ok(Kind::While),
-            KindId::Loop => Ok(Kind::Loop),
-            KindId::For => Ok(Kind::For),
-            KindId::Each => Ok(Kind::Each),
-            KindId::Return => Ok(Kind::Return),
-            KindId::Break => Ok(Kind::Break),
-            KindId::Let => Ok(Kind::Let),
-            KindId::In => Ok(Kind::In),
-            KindId::OneOf => Ok(Kind::OneOf),
-            KindId::Join => Ok(Kind::Join),
-            KindId::True => Ok(Kind::True),
-            KindId::False => Ok(Kind::False),
             KindId::SingleQuote => Ok(Kind::SingleQuote),
             KindId::DoubleQuote => Ok(Kind::DoubleQuote),
             KindId::Tilde => Ok(Kind::Tilde),
@@ -394,6 +328,7 @@ impl TryFrom<KindId> for Kind {
             KindId::EOF => Ok(Kind::EOF),
             KindId::BOF => Ok(Kind::BOF),
             KindId::Identifier
+            | KindId::Keyword
             | KindId::Number
             | KindId::String
             | KindId::Whitespace

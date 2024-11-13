@@ -1,6 +1,6 @@
 use crate::*;
 
-use lexer::{Kind, Token};
+use lexer::{Keyword, Kind, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for OneOf {
@@ -17,7 +17,7 @@ impl Arbitrary for OneOf {
         )
         .prop_map(move |commands| OneOf {
             commands,
-            token: Token::for_test(Kind::OneOf),
+            token: Token::for_test(Kind::Keyword(Keyword::OneOf)),
         })
         .boxed()
     }

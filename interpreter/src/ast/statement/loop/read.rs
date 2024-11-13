@@ -1,4 +1,4 @@
-use lexer::Kind;
+use lexer::{Keyword, Kind};
 
 use crate::*;
 
@@ -7,11 +7,10 @@ impl ReadNode<Loop> for Loop {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };
-        if !matches!(token.kind, Kind::Loop) {
+        if !matches!(token.kind, Kind::Keyword(Keyword::Loop)) {
             return Ok(None);
         }
-        let Some(block) =
-            Statement::try_oneof(parser, &[StatementId::Block])?.map(Node::Statement)
+        let Some(block) = Statement::try_oneof(parser, &[StatementId::Block])?.map(Node::Statement)
         else {
             return Err(E::MissedBlock);
         };

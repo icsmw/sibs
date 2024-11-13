@@ -18,21 +18,10 @@ impl Token {
     pub fn set_pos(&mut self, from: usize) -> usize {
         self.pos.from = from;
         match &mut self.kind {
-            Kind::If
-            | Kind::Else
-            | Kind::While
-            | Kind::Loop
-            | Kind::For
-            | Kind::Each
-            | Kind::Return
-            | Kind::Break
-            | Kind::Let
-            | Kind::In
-            | Kind::Join
-            | Kind::OneOf
-            | Kind::True
-            | Kind::False
-            | Kind::Question
+            Kind::Keyword(kw) => {
+                self.pos.to = from + kw.length();
+            }
+            Kind::Question
             | Kind::Dollar
             | Kind::At
             | Kind::Pound

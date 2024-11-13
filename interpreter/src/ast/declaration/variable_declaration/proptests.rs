@@ -1,5 +1,5 @@
 use crate::*;
-use lexer::{Kind, Token};
+use lexer::{Keyword, Kind, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for VariableDeclaration {
@@ -33,7 +33,7 @@ impl Arbitrary for VariableDeclaration {
                     } else {
                         None
                     },
-                    token: Token::for_test(Kind::Let),
+                    token: Token::for_test(Kind::Keyword(Keyword::Let)),
                 },
             )
             .boxed()

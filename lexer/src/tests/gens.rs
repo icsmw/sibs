@@ -24,6 +24,22 @@ pub fn rnd_kind_with(includes: Vec<KindId>) -> BoxedStrategy<Kind> {
     prop::strategy::Union::new(includes.into_iter().map(kind)).boxed()
 }
 
+/// Generates a `BoxedStrategy` with random `Kind` instance, including specified Keyword.
+///
+/// # Arguments
+///
+/// * `includes` - A vector of `KeywordId` instances to include from the generated strategies.
+///
+/// # Returns
+///
+/// A `BoxedStrategy` with random`Kind` instance.
+pub fn rnd_keyword_with(includes: Vec<KeywordId>) -> BoxedStrategy<Kind> {
+    prop::strategy::Union::new(includes.into_iter().map(keyword))
+        .boxed()
+        .prop_map(Kind::Keyword)
+        .boxed()
+}
+
 /// Generates a `BoxedStrategy` with random `Kind` instance, excluding specified exceptions.
 ///
 /// This function is used in property-based testing to create random sequences
@@ -57,23 +73,17 @@ pub fn rnd_kind_without(exceptions: Vec<KindId>) -> BoxedStrategy<Kind> {
 ///
 /// `BoxedStrategy<Kind>` instance corresponding to the provided `KindId`.
 pub fn kind(id: KindId) -> BoxedStrategy<Kind> {
-    // TODO: return only one Kind, not a vector
     match id {
-        KindId::If
-        | KindId::Else
-        | KindId::While
-        | KindId::Loop
-        | KindId::For
-        | KindId::Each
-        | KindId::Return
-        | KindId::Break
-        | KindId::Let
-        | KindId::In
-        | KindId::Join
-        | KindId::OneOf
-        | KindId::True
-        | KindId::False
-        | KindId::Question
+        KindId::Keyword => prop::strategy::Union::new(
+            KeywordId::as_vec()
+                .into_iter()
+                .map(|kw| Just(Into::<Keyword>::into(&kw)))
+                .collect::<Vec<Just<Keyword>>>(),
+        )
+        .boxed()
+        .prop_map(Kind::Keyword)
+        .boxed(),
+        KindId::Question
         | KindId::SingleQuote
         | KindId::DoubleQuote
         | KindId::Tilde
@@ -130,23 +140,10 @@ pub fn kind(id: KindId) -> BoxedStrategy<Kind> {
                         return false;
                     }
                 }
-                ![
-                    KindId::If.to_string(),
-                    KindId::Let.to_string(),
-                    KindId::Return.to_string(),
-                    KindId::Break.to_string(),
-                    KindId::While.to_string(),
-                    KindId::Else.to_string(),
-                    KindId::For.to_string(),
-                    KindId::Each.to_string(),
-                    KindId::Loop.to_string(),
-                    KindId::True.to_string(),
-                    KindId::False.to_string(),
-                    KindId::In.to_string(),
-                    KindId::Join.to_string(),
-                    KindId::OneOf.to_string(),
-                ]
-                .contains(s)
+                !KeywordId::as_vec()
+                    .into_iter()
+                    .map(|kw| Into::<Keyword>::into(&kw).to_string())
+                    .any(|kw| &kw == s)
             })
             .prop_map(Kind::Identifier)
             .boxed(),
@@ -258,6 +255,37 @@ pub fn kind(id: KindId) -> BoxedStrategy<Kind> {
                 ))
             })
             .boxed(),
+    }
+}
+
+/// Generates strategies for creating `Keyword` instances based on the given `KindId`.
+///
+/// This function maps a `KeywordId` to one or more `BoxedStrategy<Keyword>` instances,
+/// which are used in property-based testing to generate random `Keyword` tokens.
+///
+/// # Arguments
+///
+/// * `id` - The `KeywordId` for which to generate strategies.
+///
+/// # Returns
+///
+/// `BoxedStrategy<Keyword>` instance corresponding to the provided `KeywordId`.
+pub fn keyword(id: KeywordId) -> BoxedStrategy<Keyword> {
+    match id {
+        KeywordId::If => Just(Keyword::If).boxed(),
+        KeywordId::Else => Just(Keyword::Else).boxed(),
+        KeywordId::While => Just(Keyword::While).boxed(),
+        KeywordId::Loop => Just(Keyword::Loop).boxed(),
+        KeywordId::For => Just(Keyword::For).boxed(),
+        KeywordId::Each => Just(Keyword::Each).boxed(),
+        KeywordId::Return => Just(Keyword::Return).boxed(),
+        KeywordId::Break => Just(Keyword::Break).boxed(),
+        KeywordId::Let => Just(Keyword::Let).boxed(),
+        KeywordId::In => Just(Keyword::In).boxed(),
+        KeywordId::OneOf => Just(Keyword::OneOf).boxed(),
+        KeywordId::Join => Just(Keyword::Join).boxed(),
+        KeywordId::True => Just(Keyword::True).boxed(),
+        KeywordId::False => Just(Keyword::False).boxed(),
     }
 }
 

@@ -30,24 +30,9 @@ pub trait Interest {
 impl Interest for KindId {
     fn interest_in_char(&self, ch: &char) -> bool {
         match self {
-            Self::If
-            | Self::Else
-            | Self::While
-            | Self::Loop
-            | Self::For
-            | Self::Each
-            | Self::Return
-            | Self::Break
-            | Self::Let
-            | Self::In
-            | Self::Join
-            | Self::OneOf
-            | Self::True
-            | Self::False
-            | Self::EOF
-            | Self::BOF => false,
+            Self::EOF | Self::BOF => false,
             Self::Whitespace => ch.is_whitespace(),
-            Self::Identifier => ch.is_alphabetic(),
+            Self::Identifier | Self::Keyword => ch.is_alphabetic(),
             Self::Number => ch.is_alphanumeric(),
             Self::String => &'"' == ch,
             Self::InterpolatedString => &'\'' == ch,
@@ -103,20 +88,10 @@ impl Interest for KindId {
 
     fn interest_in_identifier(&self, ident: &str) -> bool {
         match self {
-            Self::If => "if" == ident,
-            Self::Else => "else" == ident,
-            Self::While => "while" == ident,
-            Self::Loop => "loop" == ident,
-            Self::For => "for" == ident,
-            Self::Each => "each" == ident,
-            Self::Return => "return" == ident,
-            Self::Break => "break" == ident,
-            Self::Let => "let" == ident,
-            Self::In => "in" == ident,
-            Self::Join => "join" == ident,
-            Self::OneOf => "oneof" == ident,
-            Self::True => "true" == ident,
-            Self::False => "false" == ident,
+            Self::Keyword => KeywordId::as_vec()
+                .into_iter()
+                .map(|kw| Into::<Keyword>::into(&kw).to_string())
+                .any(|s| s == ident),
             Self::Identifier => true,
             Self::Whitespace
             | Self::Number

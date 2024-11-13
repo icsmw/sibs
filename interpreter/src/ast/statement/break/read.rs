@@ -1,4 +1,4 @@
-use lexer::KindId;
+use lexer::{Keyword, Kind};
 
 use crate::*;
 
@@ -7,7 +7,7 @@ impl ReadNode<Break> for Break {
         let Some(tk) = parser.token() else {
             return Ok(None);
         };
-        if tk.id() != KindId::Break {
+        if !matches!(tk.kind, Kind::Keyword(Keyword::Break)) {
             return Ok(None);
         }
         Ok(Some(Break {

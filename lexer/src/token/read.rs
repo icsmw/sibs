@@ -120,24 +120,13 @@ impl Read for Token {
     fn try_read(lx: &mut Lexer, id: KindId, tks: &Tokens) -> Result<Option<Token>, E> {
         let from = lx.pos;
         match id {
-            KindId::If
-            | KindId::Else
-            | KindId::While
-            | KindId::Loop
-            | KindId::For
-            | KindId::Each
-            | KindId::Return
-            | KindId::Break
-            | KindId::Let
-            | KindId::In
-            | KindId::Join
-            | KindId::OneOf
-            | KindId::True
-            | KindId::False => Ok(if lx.read_identifier() == id.to_string() {
-                Some(Token::by_pos(id.try_into()?, &lx.uuid, from, lx.pos))
-            } else {
-                None
-            }),
+            KindId::Keyword => Ok(
+                if let Ok(kw) = TryInto::<Keyword>::try_into(lx.read_identifier()) {
+                    Some(Token::by_pos(Kind::Keyword(kw), &lx.uuid, from, lx.pos))
+                } else {
+                    None
+                },
+            ),
             KindId::Whitespace => {
                 let ws = lx.read_whitespace();
                 Ok(if ws.is_empty() {

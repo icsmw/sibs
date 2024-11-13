@@ -18,19 +18,7 @@ pub trait ConflictResolver {
 impl ConflictResolver for KindId {
     fn resolve_conflict(&self, id: &KindId) -> KindId {
         match self {
-            Self::Else
-            | Self::While
-            | Self::Loop
-            | Self::For
-            | Self::Each
-            | Self::Return
-            | Self::Break
-            | Self::Let
-            | Self::In
-            | Self::Join
-            | Self::OneOf
-            | Self::True
-            | Self::False
+            Self::Keyword
             | Self::String
             | Self::InterpolatedString
             | Self::Command
@@ -136,29 +124,8 @@ impl ConflictResolver for KindId {
                     id.clone()
                 }
             }
-            Self::If => {
-                if matches!(id, KindId::Identifier) {
-                    self.clone()
-                } else {
-                    id.clone()
-                }
-            }
             Self::Identifier => match id {
-                KindId::If
-                | KindId::Else
-                | KindId::While
-                | KindId::Loop
-                | KindId::For
-                | KindId::Each
-                | KindId::Return
-                | KindId::Break
-                | KindId::Let
-                | KindId::In
-                | KindId::Join
-                | KindId::OneOf
-                | KindId::True
-                | KindId::False
-                | KindId::Number => id.clone(),
+                KindId::Keyword | KindId::Number => id.clone(),
                 KindId::SingleQuote
                 | KindId::DoubleQuote
                 | KindId::Tilde

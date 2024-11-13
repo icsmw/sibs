@@ -1,4 +1,4 @@
-use lexer::Kind;
+use lexer::{Keyword, Kind};
 
 use crate::*;
 
@@ -7,7 +7,7 @@ impl ReadNode<While> for While {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };
-        if !matches!(token.kind, Kind::While) {
+        if !matches!(token.kind, Kind::Keyword(Keyword::While)) {
             return Ok(None);
         }
         let Some(comparison) =

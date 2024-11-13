@@ -1,4 +1,4 @@
-use lexer::Kind;
+use lexer::{Keyword, Kind};
 
 use crate::*;
 
@@ -6,10 +6,12 @@ impl ReadNode<Boolean> for Boolean {
     fn read(parser: &mut Parser) -> Result<Option<Boolean>, E> {
         if let Some(tk) = parser.token() {
             let node = Boolean {
-                inner: match tk.kind {
-                    Kind::True => true,
-                    Kind::False => false,
-                    _ => return Ok(None),
+                inner: if matches!(tk.kind, Kind::Keyword(Keyword::True)) {
+                    true
+                } else if matches!(tk.kind, Kind::Keyword(Keyword::False)) {
+                    false
+                } else {
+                    return Ok(None);
                 },
                 token: tk.clone(),
             };

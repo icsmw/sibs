@@ -1,6 +1,6 @@
 use crate::*;
 
-use lexer::{gens, KindId, Token};
+use lexer::{gens, KeywordId, Kind, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for Return {
@@ -9,10 +9,10 @@ impl Arbitrary for Return {
     type Strategy = BoxedStrategy<Self>;
 
     fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-        gens::kind(KindId::Return)
+        gens::keyword(KeywordId::Return)
             .boxed()
             .prop_map(move |knd| Return {
-                token: Token::for_test(knd),
+                token: Token::for_test(Kind::Keyword(knd)),
             })
             .boxed()
     }

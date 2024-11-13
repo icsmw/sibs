@@ -1,6 +1,6 @@
 use crate::*;
 
-use lexer::{Kind, Token};
+use lexer::{Keyword, Kind, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for Join {
@@ -17,7 +17,7 @@ impl Arbitrary for Join {
         )
         .prop_map(move |commands| Join {
             commands,
-            token: Token::for_test(Kind::Join),
+            token: Token::for_test(Kind::Keyword(Keyword::Join)),
         })
         .boxed()
     }

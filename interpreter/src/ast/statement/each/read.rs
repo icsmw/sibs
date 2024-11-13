@@ -1,4 +1,4 @@
-use lexer::{Kind, KindId};
+use lexer::{Keyword, Kind, KindId};
 
 use crate::*;
 
@@ -7,7 +7,7 @@ impl ReadNode<Each> for Each {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };
-        if !matches!(token.kind, Kind::Each) {
+        if !matches!(token.kind, Kind::Keyword(Keyword::Each)) {
             return Ok(None);
         }
         let Some(mut inner) = parser.between(KindId::LeftParen, KindId::RightParen)? else {

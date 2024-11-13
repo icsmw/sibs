@@ -1,4 +1,4 @@
-use lexer::KindId;
+use lexer::{Keyword, Kind};
 
 use crate::*;
 
@@ -8,19 +8,18 @@ impl ReadNode<If> for If {
         loop {
             let restore = parser.pin();
             if let Some(tk) = parser.token().cloned() {
-                match tk.id() {
-                    KindId::If => {
-                        let Some(cond) =
-                            Expression::try_read(parser, ExpressionId::ComparisonSeq)?
-                                .map(Node::Expression)
+                match tk.kind {
+                    Kind::Keyword(Keyword::If) => {
+                        let Some(cond) = Expression::try_read(parser, ExpressionId::ComparisonSeq)?
+                            .map(Node::Expression)
                         else {
                             return Err(E::MissedExpectation(
                                 tk.id().to_string(),
                                 ExpressionId::ComparisonSeq.to_string(),
                             ));
                         };
-                        let Some(blk) = Statement::try_read(parser, StatementId::Block)?
-                            .map(Node::Statement)
+                        let Some(blk) =
+                            Statement::try_read(parser, StatementId::Block)?.map(Node::Statement)
                         else {
                             return Err(E::MissedExpectation(
                                 tk.id().to_string(),
@@ -29,9 +28,9 @@ impl ReadNode<If> for If {
                         };
                         cases.push(IfCase::If(cond, blk, tk));
                     }
-                    KindId::Else => {
-                        let Some(blk) = Statement::try_read(parser, StatementId::Block)?
-                            .map(Node::Statement)
+                    Kind::Keyword(Keyword::Else) => {
+                        let Some(blk) =
+                            Statement::try_read(parser, StatementId::Block)?.map(Node::Statement)
                         else {
                             return Err(E::MissedExpectation(
                                 tk.id().to_string(),

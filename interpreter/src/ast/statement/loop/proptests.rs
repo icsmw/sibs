@@ -1,6 +1,6 @@
 use crate::*;
 
-use lexer::{Kind, Token};
+use lexer::{Keyword, Kind, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for Loop {
@@ -14,7 +14,7 @@ impl Arbitrary for Loop {
             .boxed()
             .prop_map(move |block| Loop {
                 block: Box::new(block),
-                token: Token::for_test(Kind::Loop),
+                token: Token::for_test(Kind::Keyword(Keyword::Loop)),
             })
             .boxed()
     }

@@ -1,6 +1,6 @@
 use crate::*;
 
-use lexer::{gens, Kind, KindId, Token};
+use lexer::{gens, Keyword, KeywordId, Kind, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for Boolean {
@@ -9,18 +9,21 @@ impl Arbitrary for Boolean {
     type Strategy = BoxedStrategy<Self>;
 
     fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-        gens::rnd_kind_with(vec![KindId::True, KindId::False])
-            .prop_filter_map("Expected: Kind::True | Kind::False", |knd| match knd {
-                Kind::True => Some(Boolean {
-                    inner: true,
-                    token: Token::for_test(Kind::True),
-                }),
-                Kind::False => Some(Boolean {
-                    inner: false,
-                    token: Token::for_test(Kind::False),
-                }),
-                _ => None,
-            })
+        gens::rnd_keyword_with(vec![KeywordId::True, KeywordId::False])
+            .prop_filter_map(
+                "Expected: KeywordId::True, KeywordId::False",
+                |knd| match knd {
+                    Kind::Keyword(Keyword::True) => Some(Boolean {
+                        inner: true,
+                        token: Token::for_test(Kind::Keyword(Keyword::True)),
+                    }),
+                    Kind::Keyword(Keyword::False) => Some(Boolean {
+                        inner: false,
+                        token: Token::for_test(Kind::Keyword(Keyword::False)),
+                    }),
+                    _ => None,
+                },
+            )
             .boxed()
     }
 }

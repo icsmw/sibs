@@ -1,6 +1,7 @@
 mod conflict;
 mod interest;
 mod intstring;
+mod keyword;
 mod kind;
 mod length;
 mod position;
@@ -10,6 +11,7 @@ mod tokens;
 pub use conflict::*;
 pub use interest::*;
 pub use intstring::*;
+pub use keyword::*;
 pub use kind::*;
 pub use length::*;
 pub use position::*;

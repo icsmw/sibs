@@ -1,6 +1,6 @@
 use crate::*;
 
-use lexer::{Kind, Token};
+use lexer::{Keyword, Kind, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for IfCase {
@@ -18,13 +18,15 @@ impl Arbitrary for IfCase {
                     .prop_map(|v| Node::Statement(Statement::Block(v)))
                     .boxed(),
             )
-                .prop_map(|(comp, blk)| IfCase::If(comp, blk, Token::for_test(Kind::If)))
+                .prop_map(|(comp, blk)| {
+                    IfCase::If(comp, blk, Token::for_test(Kind::Keyword(Keyword::If)))
+                })
                 .boxed()
         } else {
             Block::arbitrary_with(deep + 1)
                 .prop_map(|v| Node::Statement(Statement::Block(v)))
                 .boxed()
-                .prop_map(|blk| IfCase::Else(blk, Token::for_test(Kind::Else)))
+                .prop_map(|blk| IfCase::Else(blk, Token::for_test(Kind::Keyword(Keyword::Else))))
                 .boxed()
         }
     }
