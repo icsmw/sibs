@@ -83,4 +83,8 @@ pub enum E {
     //Closure
     #[error("Missed closure body")]
     MissedClosureBlock,
+
+    //FunctionDeclaration
+    #[error("Missed function name")]
+    MissedFnName,
 }

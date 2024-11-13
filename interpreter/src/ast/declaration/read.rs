@@ -11,6 +11,9 @@ impl Read<Declaration, DeclarationId> for Declaration {}
 impl TryRead<Declaration, DeclarationId> for Declaration {
     fn try_read(parser: &mut Parser, id: DeclarationId) -> Result<Option<Declaration>, E> {
         Ok(match id {
+            DeclarationId::FunctionDeclaration => {
+                FunctionDeclaration::read(parser)?.map(Declaration::FunctionDeclaration)
+            }
             DeclarationId::VariableDeclaration => {
                 VariableDeclaration::read(parser)?.map(Declaration::VariableDeclaration)
             }

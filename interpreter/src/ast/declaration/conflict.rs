@@ -6,6 +6,7 @@ impl ConflictResolver<DeclarationId> for DeclarationId {
         match self {
             Self::VariableDeclaration
             | Self::ArgumentDeclaration
+            | Self::FunctionDeclaration
             | Self::VariableType
             | Self::VariableTypeDeclaration
             | Self::VariableVariants
