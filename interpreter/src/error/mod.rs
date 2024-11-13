@@ -79,4 +79,8 @@ pub enum E {
     //ArgumentDeclaration
     #[error("Expecting argument type definition")]
     MissedArgumentTypeDefinition,
+
+    //Closure
+    #[error("Missed closure body")]
+    MissedClosureBlock,
 }
