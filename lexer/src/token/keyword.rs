@@ -31,6 +31,12 @@ pub enum Keyword {
     True,
     /// The boolean literal `false`.
     False,
+    /// The `fn` keyword.
+    Fn,
+    /// The `include` keyword.
+    Include,
+    /// The `mod` keyword.
+    Mod,
     /// The `str` type-keyword.
     Str,
     /// The `bool` type-keyword.
@@ -79,6 +85,9 @@ impl fmt::Display for Keyword {
                 Self::Let => "let".to_owned(),
                 Self::In => "in".to_owned(),
                 Self::OneOf => "oneof".to_owned(),
+                Self::Fn => "fn".to_owned(),
+                Self::Include => "include".to_owned(),
+                Self::Mod => "mod".to_owned(),
                 Self::Join => "join".to_owned(),
                 Self::True => "true".to_owned(),
                 Self::False => "false".to_owned(),
@@ -105,6 +114,9 @@ impl From<&KeywordId> for Keyword {
             KeywordId::Let => Keyword::Let,
             KeywordId::In => Keyword::In,
             KeywordId::OneOf => Keyword::OneOf,
+            KeywordId::Fn => Keyword::Fn,
+            KeywordId::Include => Keyword::Include,
+            KeywordId::Mod => Keyword::Mod,
             KeywordId::Join => Keyword::Join,
             KeywordId::True => Keyword::True,
             KeywordId::False => Keyword::False,
