@@ -31,6 +31,14 @@ pub enum Keyword {
     True,
     /// The boolean literal `false`.
     False,
+    /// The `str` type-keyword.
+    Str,
+    /// The `bool` type-keyword.
+    Bool,
+    /// The `num` type-keyword.
+    Num,
+    /// The `Vec` type-keyword.
+    Vec,
 }
 
 impl TryFrom<String> for Keyword {
@@ -74,6 +82,10 @@ impl fmt::Display for Keyword {
                 Self::Join => "join".to_owned(),
                 Self::True => "true".to_owned(),
                 Self::False => "false".to_owned(),
+                Self::Str => "str".to_owned(),
+                Self::Bool => "bool".to_owned(),
+                Self::Num => "num".to_owned(),
+                Self::Vec => "Vec".to_owned(),
             }
         )
     }
@@ -96,6 +108,10 @@ impl From<&KeywordId> for Keyword {
             KeywordId::Join => Keyword::Join,
             KeywordId::True => Keyword::True,
             KeywordId::False => Keyword::False,
+            KeywordId::Str => Keyword::Str,
+            KeywordId::Bool => Keyword::Bool,
+            KeywordId::Num => Keyword::Num,
+            KeywordId::Vec => Keyword::Vec,
         }
     }
 }

@@ -286,6 +286,10 @@ pub fn keyword(id: KeywordId) -> BoxedStrategy<Keyword> {
         KeywordId::Join => Just(Keyword::Join).boxed(),
         KeywordId::True => Just(Keyword::True).boxed(),
         KeywordId::False => Just(Keyword::False).boxed(),
+        KeywordId::Str => Just(Keyword::Str).boxed(),
+        KeywordId::Bool => Just(Keyword::Bool).boxed(),
+        KeywordId::Num => Just(Keyword::Num).boxed(),
+        KeywordId::Vec => Just(Keyword::Vec).boxed(),
     }
 }
 
