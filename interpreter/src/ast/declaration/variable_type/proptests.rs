@@ -1,21 +1,6 @@
 use crate::*;
-use lexer::{Kind, Token};
+use lexer::{gens, Keyword, KeywordId, Kind, Token};
 use proptest::prelude::*;
-
-impl Arbitrary for VariablePrimitiveType {
-    type Parameters = ();
-
-    type Strategy = BoxedStrategy<Self>;
-
-    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-        prop_oneof![
-            Just(VariablePrimitiveType::String),
-            Just(VariablePrimitiveType::Boolean),
-            Just(VariablePrimitiveType::Number)
-        ]
-        .boxed()
-    }
-}
 
 impl Arbitrary for VariableCompoundType {
     type Parameters = u8;
@@ -30,7 +15,10 @@ impl Arbitrary for VariableCompoundType {
             prop::strategy::Union::new(vec![Just(VariableCompoundTypeId::Vec)]),
         )
             .prop_map(|(ty, id)| match id {
-                VariableCompoundTypeId::Vec => VariableCompoundType::Vec(Box::new(ty)),
+                VariableCompoundTypeId::Vec => VariableCompoundType::Vec(
+                    Token::for_test(Kind::Keyword(Keyword::Vec)),
+                    Box::new(ty),
+                ),
             })
             .boxed()
     }
@@ -43,18 +31,20 @@ impl Arbitrary for VariableType {
 
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         if deep > 5 {
-            prop::strategy::Union::new(vec![VariablePrimitiveType::arbitrary()
-                .prop_map(VariableTypeDef::Primitive)
-                .boxed()])
+            prop::strategy::Union::new(vec![
+                gens::keyword(KeywordId::Str),
+                gens::keyword(KeywordId::Bool),
+                gens::keyword(KeywordId::Num),
+            ])
+            .prop_map(|kw| VariableTypeDef::Primitive(Token::for_test(Kind::Keyword(kw))))
+            .boxed()
         } else {
             prop::strategy::Union::new(vec![VariableCompoundType::arbitrary_with(deep + 1)
                 .prop_map(VariableTypeDef::Compound)
                 .boxed()])
+            .boxed()
         }
-        .prop_map(|ty| {
-            let token = Token::for_test(Kind::Identifier(ty.to_ident()));
-            VariableType { r#type: ty, token }
-        })
+        .prop_map(|ty| VariableType { r#type: ty })
         .boxed()
     }
 }
