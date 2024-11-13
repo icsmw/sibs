@@ -3,7 +3,7 @@ use lexer::KindId;
 use crate::*;
 
 impl ReadNode<ComparisonGroup> for ComparisonGroup {
-    fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<ComparisonGroup>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<ComparisonGroup>, E> {
         let Some(mut inner) = parser.between(KindId::LeftParen, KindId::RightParen)? else {
             return Ok(None);
         };
@@ -15,7 +15,6 @@ impl ReadNode<ComparisonGroup> for ComparisonGroup {
                 ExpressionId::LogicalOp,
                 ExpressionId::ComparisonGroup,
             ],
-            nodes,
         )?
         .map(Node::Expression)
         {

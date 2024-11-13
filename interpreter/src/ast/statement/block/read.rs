@@ -3,14 +3,14 @@ use lexer::{Kind, KindId};
 use crate::*;
 
 impl ReadNode<Block> for Block {
-    fn read(parser: &mut Parser, _nodes: &Nodes) -> Result<Option<Block>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<Block>, E> {
         let Some(mut inner) = parser.between(KindId::LeftBrace, KindId::RightBrace)? else {
             return Ok(None);
         };
         let mut nodes = Vec::new();
         while let Some(node) = Node::try_oneof(
             &mut inner,
-            &Nodes::empty(),
+            
             &[
                 NodeReadTarget::Statement(&[
                     StatementId::Assignation,

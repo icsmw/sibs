@@ -1,10 +1,9 @@
 use crate::*;
 
 impl ReadNode<Comparison> for Comparison {
-    fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<Comparison>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<Comparison>, E> {
         let Some(left) = Node::try_oneof(
             parser,
-            nodes,
             &[
                 NodeReadTarget::Value(&[
                     ValueId::Number,
@@ -19,13 +18,12 @@ impl ReadNode<Comparison> for Comparison {
             return Ok(None);
         };
         let Some(operator) =
-            Expression::try_read(parser, ExpressionId::ComparisonOp, nodes)?.map(Node::Expression)
+            Expression::try_read(parser, ExpressionId::ComparisonOp)?.map(Node::Expression)
         else {
             return Ok(None);
         };
         let Some(right) = Node::try_oneof(
             parser,
-            nodes,
             &[
                 NodeReadTarget::Value(&[
                     ValueId::Number,

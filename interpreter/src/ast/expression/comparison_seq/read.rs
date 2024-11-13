@@ -1,7 +1,7 @@
 use crate::*;
 
 impl ReadNode<ComparisonSeq> for ComparisonSeq {
-    fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<ComparisonSeq>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<ComparisonSeq>, E> {
         let mut collected = Vec::new();
         while let Some(node) = Expression::try_oneof(
             parser,
@@ -10,7 +10,6 @@ impl ReadNode<ComparisonSeq> for ComparisonSeq {
                 ExpressionId::LogicalOp,
                 ExpressionId::ComparisonGroup,
             ],
-            nodes,
         )?
         .map(Node::Expression)
         {

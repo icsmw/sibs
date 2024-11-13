@@ -3,14 +3,13 @@ use lexer::KindId;
 use crate::*;
 
 impl ReadNode<Array> for Array {
-    fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<Array>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<Array>, E> {
         let Some(mut inner) = parser.between(KindId::LeftBracket, KindId::RightBracket)? else {
             return Ok(None);
         };
         let mut els = Vec::new();
         while let Some(node) = Node::try_oneof(
             &mut inner,
-            nodes,
             &[
                 NodeReadTarget::Value(&[
                     ValueId::Number,

@@ -2,7 +2,7 @@ use crate::*;
 use lexer::{KindId, Token};
 
 impl Interest for ValueId {
-    fn intrested(&self, token: &Token, _nodes: &Nodes) -> bool {
+    fn intrested(&self, token: &Token) -> bool {
         match self {
             Self::InterpolatedString => matches!(token.id(), KindId::InterpolatedString),
             Self::PrimitiveString => matches!(token.id(), KindId::String),

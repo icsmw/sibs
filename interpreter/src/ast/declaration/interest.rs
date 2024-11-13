@@ -2,7 +2,7 @@ use crate::*;
 use lexer::{KindId, Token};
 
 impl Interest for DeclarationId {
-    fn intrested(&self, token: &Token, _nodes: &Nodes) -> bool {
+    fn intrested(&self, token: &Token) -> bool {
         match self {
             Self::VariableDeclaration | Self::VariableVariants => {
                 matches!(token.id(), KindId::Identifier)

@@ -3,7 +3,7 @@ use lexer::{Kind, KindId};
 use crate::*;
 
 impl ReadNode<Each> for Each {
-    fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<Each>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<Each>, E> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };
@@ -14,8 +14,7 @@ impl ReadNode<Each> for Each {
             return Ok(None);
         };
         let Some(el_ref) =
-            Expression::try_oneof(&mut inner, &[ExpressionId::Variable], &Nodes::empty())?
-                .map(Node::Expression)
+            Expression::try_oneof(&mut inner, &[ExpressionId::Variable])?.map(Node::Expression)
         else {
             return Err(E::MissedElementDeclarationInEach);
         };
@@ -25,8 +24,7 @@ impl ReadNode<Each> for Each {
             let _ = inner.token();
         }
         let Some(index_ref) =
-            Expression::try_oneof(&mut inner, &[ExpressionId::Variable], &Nodes::empty())?
-                .map(Node::Expression)
+            Expression::try_oneof(&mut inner, &[ExpressionId::Variable])?.map(Node::Expression)
         else {
             return Err(E::MissedIndexDeclarationInEach);
         };
@@ -37,7 +35,6 @@ impl ReadNode<Each> for Each {
         }
         let Some(elements) = Node::try_oneof(
             &mut inner,
-            &Nodes::empty(),
             &[
                 NodeReadTarget::Value(&[ValueId::Array]),
                 NodeReadTarget::Expression(&[ExpressionId::Variable, ExpressionId::FunctionCall]),
@@ -49,8 +46,7 @@ impl ReadNode<Each> for Each {
         if !inner.is_done() {
             return Err(E::UnrecognizedCode(inner.to_string()));
         };
-        let Some(block) =
-            Statement::try_oneof(parser, &[StatementId::Block], nodes)?.map(Node::Statement)
+        let Some(block) = Statement::try_oneof(parser, &[StatementId::Block])?.map(Node::Statement)
         else {
             return Err(E::MissedBlock);
         };

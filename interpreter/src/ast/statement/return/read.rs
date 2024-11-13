@@ -3,7 +3,7 @@ use lexer::KindId;
 use crate::*;
 
 impl ReadNode<Return> for Return {
-    fn read(parser: &mut Parser, _nodes: &Nodes) -> Result<Option<Return>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<Return>, E> {
         let Some(tk) = parser.token() else {
             return Ok(None);
         };

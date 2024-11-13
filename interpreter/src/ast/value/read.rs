@@ -9,18 +9,18 @@ impl AsVec<ValueId> for ValueId {
 impl Read<Value, ValueId> for Value {}
 
 impl TryRead<Value, ValueId> for Value {
-    fn try_read(parser: &mut Parser, id: ValueId, nodes: &Nodes) -> Result<Option<Value>, E> {
+    fn try_read(parser: &mut Parser, id: ValueId) -> Result<Option<Value>, E> {
         Ok(match id {
             ValueId::PrimitiveString => {
-                PrimitiveString::read(parser, nodes)?.map(Value::PrimitiveString)
+                PrimitiveString::read(parser)?.map(Value::PrimitiveString)
             }
             ValueId::InterpolatedString => {
-                InterpolatedString::read(parser, nodes)?.map(Value::InterpolatedString)
+                InterpolatedString::read(parser)?.map(Value::InterpolatedString)
             }
-            ValueId::Boolean => Boolean::read(parser, nodes)?.map(Value::Boolean),
-            ValueId::Number => Number::read(parser, nodes)?.map(Value::Number),
-            ValueId::Array => Array::read(parser, nodes)?.map(Value::Array),
-            ValueId::Error => Error::read(parser, nodes)?.map(Value::Error),
+            ValueId::Boolean => Boolean::read(parser)?.map(Value::Boolean),
+            ValueId::Number => Number::read(parser)?.map(Value::Number),
+            ValueId::Array => Array::read(parser)?.map(Value::Array),
+            ValueId::Error => Error::read(parser)?.map(Value::Error),
         })
     }
 }

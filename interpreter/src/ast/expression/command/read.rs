@@ -3,7 +3,7 @@ use lexer::{Kind, StringPart};
 use crate::*;
 
 impl ReadNode<Command> for Command {
-    fn read(parser: &mut Parser, _nodes: &Nodes) -> Result<Option<Command>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<Command>, E> {
         let Some(tk) = parser.token() else {
             return Ok(None);
         };
@@ -47,7 +47,6 @@ impl ReadNode<Command> for Command {
                     }
                     let Some(node) = Node::try_oneof(
                         &mut inner,
-                        &Nodes::empty(),
                         &[
                             NodeReadTarget::Value(&[
                                 ValueId::Number,

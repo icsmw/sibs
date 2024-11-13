@@ -3,7 +3,7 @@ use lexer::Kind;
 use crate::*;
 
 impl ReadNode<Loop> for Loop {
-    fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<Loop>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<Loop>, E> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };
@@ -11,7 +11,7 @@ impl ReadNode<Loop> for Loop {
             return Ok(None);
         }
         let Some(block) =
-            Statement::try_oneof(parser, &[StatementId::Block], nodes)?.map(Node::Statement)
+            Statement::try_oneof(parser, &[StatementId::Block])?.map(Node::Statement)
         else {
             return Err(E::MissedBlock);
         };

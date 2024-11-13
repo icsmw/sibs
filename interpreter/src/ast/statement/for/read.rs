@@ -3,7 +3,7 @@ use lexer::{Kind, KindId};
 use crate::*;
 
 impl ReadNode<For> for For {
-    fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<For>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<For>, E> {
         let Some(token_for) = parser.token().cloned() else {
             return Ok(None);
         };
@@ -14,8 +14,7 @@ impl ReadNode<For> for For {
             return Ok(None);
         };
         let Some(el_ref) =
-            Expression::try_oneof(&mut inner, &[ExpressionId::Variable], &Nodes::empty())?
-                .map(Node::Expression)
+            Expression::try_oneof(&mut inner, &[ExpressionId::Variable])?.map(Node::Expression)
         else {
             return Err(E::MissedElementDeclarationInFor);
         };
@@ -25,8 +24,7 @@ impl ReadNode<For> for For {
             let _ = inner.token();
         }
         let Some(index_ref) =
-            Expression::try_oneof(&mut inner, &[ExpressionId::Variable], &Nodes::empty())?
-                .map(Node::Expression)
+            Expression::try_oneof(&mut inner, &[ExpressionId::Variable])?.map(Node::Expression)
         else {
             return Err(E::MissedIndexDeclarationInFor);
         };
@@ -41,7 +39,6 @@ impl ReadNode<For> for For {
         }
         let Some(elements) = Node::try_oneof(
             parser,
-            &Nodes::empty(),
             &[
                 NodeReadTarget::Value(&[ValueId::Array]),
                 NodeReadTarget::Expression(&[
@@ -54,8 +51,7 @@ impl ReadNode<For> for For {
         else {
             return Err(E::FailRecognizeElementsInFor(parser.to_string()));
         };
-        let Some(block) =
-            Statement::try_oneof(parser, &[StatementId::Block], nodes)?.map(Node::Statement)
+        let Some(block) = Statement::try_oneof(parser, &[StatementId::Block])?.map(Node::Statement)
         else {
             return Err(E::MissedBlock);
         };

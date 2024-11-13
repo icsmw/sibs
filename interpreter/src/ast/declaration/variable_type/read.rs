@@ -2,7 +2,7 @@ use crate::*;
 use lexer::{Kind, KindId};
 
 impl ReadNode<VariableType> for VariableType {
-    fn read(parser: &mut Parser, _nodes: &Nodes) -> Result<Option<VariableType>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<VariableType>, E> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };
@@ -16,7 +16,7 @@ impl ReadNode<VariableType> for VariableType {
                 let Some(mut inner) = parser.between(KindId::Less, KindId::Greater)? else {
                     return Err(E::MissedVariableTypeDefinition);
                 };
-                let ty = VariableType::read(&mut inner, &Nodes::empty())?
+                let ty = VariableType::read(&mut inner)?
                     .ok_or(E::MissedVariableTypeDefinition)?;
                 if !inner.is_done() {
                     return Err(E::UnrecognizedCode(inner.to_string()));

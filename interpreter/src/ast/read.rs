@@ -12,43 +12,37 @@ pub enum NodeReadTarget<'a> {
 }
 
 impl Node {
-    pub fn try_oneof(
-        parser: &mut Parser,
-        nodes: &Nodes,
-        targets: &[NodeReadTarget],
-    ) -> Result<Option<Node>, E> {
+    pub fn try_oneof(parser: &mut Parser, targets: &[NodeReadTarget]) -> Result<Option<Node>, E> {
         let mut results = Vec::new();
         let reset = parser.pin();
         for target in targets {
             let drop = parser.pin();
             if let (Some(node), id) = match target {
                 NodeReadTarget::Statement(ids) => (
-                    Statement::try_oneof(parser, ids, nodes)?.map(Node::Statement),
+                    Statement::try_oneof(parser, ids)?.map(Node::Statement),
                     NodeId::Statement,
                 ),
                 NodeReadTarget::Expression(ids) => (
-                    Expression::try_oneof(parser, ids, nodes)?.map(Node::Expression),
+                    Expression::try_oneof(parser, ids)?.map(Node::Expression),
                     NodeId::Expression,
                 ),
                 NodeReadTarget::Declaration(ids) => (
-                    Declaration::try_oneof(parser, ids, nodes)?.map(Node::Declaration),
+                    Declaration::try_oneof(parser, ids)?.map(Node::Declaration),
                     NodeId::Declaration,
                 ),
                 NodeReadTarget::Value(ids) => (
-                    Value::try_oneof(parser, ids, nodes)?.map(Node::Value),
+                    Value::try_oneof(parser, ids)?.map(Node::Value),
                     NodeId::Value,
                 ),
                 NodeReadTarget::ControlFlowModifier(ids) => (
-                    ControlFlowModifier::try_oneof(parser, ids, nodes)?
-                        .map(Node::ControlFlowModifier),
+                    ControlFlowModifier::try_oneof(parser, ids)?.map(Node::ControlFlowModifier),
                     NodeId::ControlFlowModifier,
                 ),
-                NodeReadTarget::Root(ids) => (
-                    Root::try_oneof(parser, ids, nodes)?.map(Node::Root),
-                    NodeId::Root,
-                ),
+                NodeReadTarget::Root(ids) => {
+                    (Root::try_oneof(parser, ids)?.map(Node::Root), NodeId::Root)
+                }
                 NodeReadTarget::Miscellaneous(ids) => (
-                    Miscellaneous::try_oneof(parser, ids, nodes)?.map(Node::Miscellaneous),
+                    Miscellaneous::try_oneof(parser, ids)?.map(Node::Miscellaneous),
                     NodeId::Miscellaneous,
                 ),
             } {

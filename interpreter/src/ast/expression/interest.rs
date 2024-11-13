@@ -2,7 +2,7 @@ use crate::*;
 use lexer::{KindId, Token};
 
 impl Interest for ExpressionId {
-    fn intrested(&self, token: &Token, _nodes: &Nodes) -> bool {
+    fn intrested(&self, token: &Token) -> bool {
         match self {
             Self::Command => matches!(token.id(), KindId::Command),
             Self::Call => matches!(token.id(), KindId::Dot),

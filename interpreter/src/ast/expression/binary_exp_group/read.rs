@@ -2,7 +2,7 @@ use crate::*;
 use lexer::KindId;
 
 impl ReadNode<BinaryExpGroup> for BinaryExpGroup {
-    fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<BinaryExpGroup>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<BinaryExpGroup>, E> {
         let Some(mut inner) = parser.between(KindId::LeftParen, KindId::RightParen)? else {
             return Ok(None);
         };
@@ -14,7 +14,6 @@ impl ReadNode<BinaryExpGroup> for BinaryExpGroup {
                 ExpressionId::BinaryOp,
                 ExpressionId::BinaryExpGroup,
             ],
-            nodes,
         )?
         .map(Node::Expression)
         {

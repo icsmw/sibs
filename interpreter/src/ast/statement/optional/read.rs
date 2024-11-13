@@ -3,10 +3,9 @@ use lexer::Kind;
 use crate::*;
 
 impl ReadNode<Optional> for Optional {
-    fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<Optional>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<Optional>, E> {
         let Some(comparison) =
-            Expression::try_oneof(parser, &[ExpressionId::ComparisonSeq], nodes)?
-                .map(Node::Expression)
+            Expression::try_oneof(parser, &[ExpressionId::ComparisonSeq])?.map(Node::Expression)
         else {
             return Ok(None);
         };
@@ -18,7 +17,6 @@ impl ReadNode<Optional> for Optional {
         }
         let Some(action) = Node::try_oneof(
             parser,
-            nodes,
             &[
                 NodeReadTarget::Statement(&[
                     StatementId::Break,

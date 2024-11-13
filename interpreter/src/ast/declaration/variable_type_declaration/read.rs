@@ -2,7 +2,7 @@ use crate::*;
 use lexer::Kind;
 
 impl ReadNode<VariableTypeDeclaration> for VariableTypeDeclaration {
-    fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<VariableTypeDeclaration>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<VariableTypeDeclaration>, E> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };
@@ -13,7 +13,6 @@ impl ReadNode<VariableTypeDeclaration> for VariableTypeDeclaration {
         loop {
             let Some(node) = Node::try_oneof(
                 parser,
-                nodes,
                 &[NodeReadTarget::Declaration(&[DeclarationId::VariableType])],
             )?
             else {

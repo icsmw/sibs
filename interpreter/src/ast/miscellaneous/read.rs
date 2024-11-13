@@ -9,14 +9,10 @@ impl AsVec<MiscellaneousId> for MiscellaneousId {
 impl Read<Miscellaneous, MiscellaneousId> for Miscellaneous {}
 
 impl TryRead<Miscellaneous, MiscellaneousId> for Miscellaneous {
-    fn try_read(
-        parser: &mut Parser,
-        id: MiscellaneousId,
-        nodes: &Nodes,
-    ) -> Result<Option<Miscellaneous>, E> {
+    fn try_read(parser: &mut Parser, id: MiscellaneousId) -> Result<Option<Miscellaneous>, E> {
         Ok(match id {
-            MiscellaneousId::Comment => Comment::read(parser, nodes)?.map(Miscellaneous::Comment),
-            MiscellaneousId::Meta => Meta::read(parser, nodes)?.map(Miscellaneous::Meta),
+            MiscellaneousId::Comment => Comment::read(parser)?.map(Miscellaneous::Comment),
+            MiscellaneousId::Meta => Meta::read(parser)?.map(Miscellaneous::Meta),
         })
     }
 }

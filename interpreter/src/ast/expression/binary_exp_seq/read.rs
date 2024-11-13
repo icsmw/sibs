@@ -1,7 +1,7 @@
 use crate::*;
 
 impl ReadNode<BinaryExpSeq> for BinaryExpSeq {
-    fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<BinaryExpSeq>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<BinaryExpSeq>, E> {
         let mut collected = Vec::new();
         while let Some(node) = Expression::try_oneof(
             parser,
@@ -10,7 +10,6 @@ impl ReadNode<BinaryExpSeq> for BinaryExpSeq {
                 ExpressionId::BinaryOp,
                 ExpressionId::BinaryExpGroup,
             ],
-            nodes,
         )?
         .map(Node::Expression)
         {

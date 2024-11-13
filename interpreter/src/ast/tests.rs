@@ -17,7 +17,7 @@ macro_rules! test_node_reading {
                         let content = case.to_string();
                         let mut lx = lexer::Lexer::new(&content, 0);
                         let mut parser = $crate::Parser::new(lx.read(true).unwrap().tokens);
-                        let node = $element_ref::read(&mut parser, &$crate::Nodes::empty()).unwrap();
+                        let node = $element_ref::read(&mut parser).unwrap();
                         assert!(node.is_some());
                         assert_eq!(node.unwrap().to_string(), content);
                     }

@@ -3,7 +3,7 @@ use lexer::Kind;
 use crate::*;
 
 impl ReadNode<AssignedValue> for AssignedValue {
-    fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<AssignedValue>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<AssignedValue>, E> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };
@@ -12,7 +12,6 @@ impl ReadNode<AssignedValue> for AssignedValue {
         };
         let Some(node) = Node::try_oneof(
             parser,
-            nodes,
             &[
                 NodeReadTarget::Value(&[
                     ValueId::Number,

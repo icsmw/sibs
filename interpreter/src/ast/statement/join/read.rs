@@ -3,7 +3,7 @@ use lexer::{Kind, KindId};
 use crate::*;
 
 impl ReadNode<Join> for Join {
-    fn read(parser: &mut Parser, _nodes: &Nodes) -> Result<Option<Join>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<Join>, E> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };
@@ -15,8 +15,7 @@ impl ReadNode<Join> for Join {
         };
         let mut commands = Vec::new();
         while let Some(node) =
-            Expression::try_read(&mut inner, ExpressionId::Command, &Nodes::empty())?
-                .map(Node::Expression)
+            Expression::try_read(&mut inner, ExpressionId::Command)?.map(Node::Expression)
         {
             commands.push(node);
             let Some(tk) = inner.token() else {

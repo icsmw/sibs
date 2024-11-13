@@ -1,10 +1,9 @@
 use crate::*;
 
 impl ReadNode<BinaryExp> for BinaryExp {
-    fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<BinaryExp>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<BinaryExp>, E> {
         let Some(left) = Node::try_oneof(
             parser,
-            nodes,
             &[
                 NodeReadTarget::Value(&[ValueId::Number]),
                 NodeReadTarget::Expression(&[ExpressionId::Variable]),
@@ -14,13 +13,12 @@ impl ReadNode<BinaryExp> for BinaryExp {
             return Ok(None);
         };
         let Some(operator) =
-            Expression::try_read(parser, ExpressionId::BinaryOp, nodes)?.map(Node::Expression)
+            Expression::try_read(parser, ExpressionId::BinaryOp)?.map(Node::Expression)
         else {
             return Ok(None);
         };
         let Some(right) = Node::try_oneof(
             parser,
-            nodes,
             &[
                 NodeReadTarget::Value(&[ValueId::Number]),
                 NodeReadTarget::Expression(&[ExpressionId::Variable]),

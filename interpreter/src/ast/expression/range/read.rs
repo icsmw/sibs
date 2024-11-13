@@ -3,10 +3,9 @@ use lexer::Kind;
 use crate::*;
 
 impl ReadNode<Range> for Range {
-    fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<Range>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<Range>, E> {
         let Some(left) = Node::try_oneof(
             parser,
-            nodes,
             &[
                 NodeReadTarget::Value(&[ValueId::Number]),
                 NodeReadTarget::Expression(&[ExpressionId::Variable]),
@@ -22,7 +21,6 @@ impl ReadNode<Range> for Range {
         }
         let Some(right) = Node::try_oneof(
             parser,
-            nodes,
             &[
                 NodeReadTarget::Value(&[ValueId::Number]),
                 NodeReadTarget::Expression(&[ExpressionId::Variable]),

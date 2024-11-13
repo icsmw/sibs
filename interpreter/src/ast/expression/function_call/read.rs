@@ -3,7 +3,7 @@ use lexer::{Kind, KindId};
 use crate::*;
 
 impl ReadNode<FunctionCall> for FunctionCall {
-    fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<FunctionCall>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<FunctionCall>, E> {
         let mut reference = Vec::new();
         while let Some(tk) = parser.token() {
             if let Kind::Identifier(ident) = &tk.kind {
@@ -30,13 +30,12 @@ impl ReadNode<FunctionCall> for FunctionCall {
         let mut args = Vec::new();
         while let Some(node) = Node::try_oneof(
             &mut inner,
-            nodes,
             &[
                 NodeReadTarget::Value(&[
                     ValueId::Number,
                     ValueId::Boolean,
                     ValueId::PrimitiveString,
-                    ValueId::InterpolatedString
+                    ValueId::InterpolatedString,
                 ]),
                 NodeReadTarget::Expression(&[
                     ExpressionId::Variable,

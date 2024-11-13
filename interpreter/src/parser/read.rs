@@ -36,17 +36,17 @@ pub fn resolve_reading_conflicts<T: Clone, K: Display + Clone + PartialEq + Conf
     }
 }
 pub trait ReadNode<T> {
-    fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<T>, E>;
+    fn read(parser: &mut Parser) -> Result<Option<T>, E>;
 }
 
 pub trait TryRead<T: Clone, K: Display + Clone + PartialEq + ConflictResolver<K>> {
-    fn try_read(parser: &mut Parser, id: K, nodes: &Nodes) -> Result<Option<T>, E>;
-    fn try_oneof(parser: &mut Parser, ids: &[K], nodes: &Nodes) -> Result<Option<T>, E> {
+    fn try_read(parser: &mut Parser, id: K) -> Result<Option<T>, E>;
+    fn try_oneof(parser: &mut Parser, ids: &[K]) -> Result<Option<T>, E> {
         let mut results = Vec::new();
         let reset = parser.pin();
         for id in ids {
             let drop = parser.pin();
-            if let Some(el) = Self::try_read(parser, id.clone(), nodes)? {
+            if let Some(el) = Self::try_read(parser, id.clone())? {
                 results.push((parser.pos, el, id.to_owned()));
             }
             drop(parser);
@@ -65,7 +65,7 @@ pub trait Read<
     K: AsVec<K> + Interest + Display + Clone + PartialEq + ConflictResolver<K>,
 >
 {
-    fn read(parser: &mut Parser, nodes: &Nodes) -> Result<Option<T>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<T>, E> {
         let mut results = Vec::new();
         let reset = parser.pin();
         let Some(token) = parser.token() else {
@@ -73,11 +73,11 @@ pub trait Read<
         };
         let intrested = K::as_vec()
             .into_iter()
-            .filter(|k| k.intrested(token, nodes))
+            .filter(|k| k.intrested(token))
             .collect::<Vec<K>>();
         for id in intrested {
             let drop = parser.pin();
-            if let Some(el) = T::try_read(parser, id.clone(), nodes)? {
+            if let Some(el) = T::try_read(parser, id.clone())? {
                 results.push((parser.pos, el, id));
             }
             drop(parser);
