@@ -76,15 +76,19 @@ pub enum E {
     #[error("Unknown type: {0}")]
     UnknownType(String),
 
-    //ArgumentDeclaration
+    /// ArgumentDeclaration
     #[error("Expecting argument type definition")]
     MissedArgumentTypeDefinition,
 
-    //Closure
+    /// Closure
     #[error("Missed closure body")]
     MissedClosureBlock,
 
     //FunctionDeclaration
     #[error("Missed function name")]
     MissedFnName,
+
+    /// Module
+    #[error("Missed path to module")]
+    MissedModulePath,
 }
