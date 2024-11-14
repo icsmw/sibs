@@ -25,7 +25,15 @@ impl Parser {
 
     pub(crate) fn token(&mut self) -> Option<&Token> {
         while let Some(tk) = self.tokens.get(self.pos) {
-            if !matches!(tk.id(), KindId::Whitespace | KindId::BOF | KindId::EOF) {
+            if !matches!(
+                tk.id(),
+                KindId::Whitespace
+                    | KindId::BOF
+                    | KindId::EOF
+                    | KindId::LF
+                    | KindId::CR
+                    | KindId::CRLF
+            ) {
                 self.pos += 1;
                 return Some(tk);
             }

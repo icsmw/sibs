@@ -1,7 +1,15 @@
+use lexer::Kind;
+
 use crate::*;
 
 impl ReadNode<Comment> for Comment {
-    fn read(_parser: &mut Parser) -> Result<Option<Comment>, E> {
-        Ok(None)
+    fn read(parser: &mut Parser) -> Result<Option<Comment>, E> {
+        let Some(token) = parser.token().cloned() else {
+            return Ok(None);
+        };
+        if !matches!(token.kind, Kind::Comment(..)) {
+            return Ok(None);
+        }
+        Ok(Some(Comment { token }))
     }
 }

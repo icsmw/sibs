@@ -8,47 +8,51 @@ impl ReadNode<Block> for Block {
             return Ok(None);
         };
         let mut nodes = Vec::new();
-        while let Some(node) = Node::try_oneof(
-            &mut inner,
-            
-            &[
-                NodeReadTarget::Statement(&[
-                    StatementId::Assignation,
-                    StatementId::Break,
-                    StatementId::Return,
-                    StatementId::Each,
-                    StatementId::For,
-                    StatementId::If,
-                    StatementId::Join,
-                    StatementId::Loop,
-                    StatementId::OneOf,
-                    StatementId::Optional,
-                    StatementId::While,
-                ]),
-                NodeReadTarget::Expression(&[
-                    ExpressionId::Command,
-                    ExpressionId::FunctionCall,
-                    ExpressionId::TaskCall,
-                    ExpressionId::CompoundAssignments,
-                    ExpressionId::Variable,
-                ]),
-                NodeReadTarget::Value(&[
-                    ValueId::Boolean,
-                    ValueId::Number,
-                    ValueId::InterpolatedString,
-                    ValueId::PrimitiveString,
-                    ValueId::Array,
-                ]),
-            ],
-        )? {
-            nodes.push(node);
-            if let Some(tk) = inner.token() {
-                if !matches!(tk.kind, Kind::Semicolon) {
-                    return Err(E::MissedSemicolon);
+        loop {
+            'semicolons: loop {
+                if inner.is_next(KindId::Semicolon) {
+                    let _ = inner.token();
+                } else {
+                    break 'semicolons;
                 }
-            } else {
-                break;
             }
+            let Some(node) = Node::try_oneof(
+                &mut inner,
+                &[
+                    NodeReadTarget::Statement(&[
+                        StatementId::Assignation,
+                        StatementId::Break,
+                        StatementId::Return,
+                        StatementId::Each,
+                        StatementId::For,
+                        StatementId::If,
+                        StatementId::Join,
+                        StatementId::Loop,
+                        StatementId::OneOf,
+                        StatementId::Optional,
+                        StatementId::While,
+                    ]),
+                    NodeReadTarget::Expression(&[
+                        ExpressionId::Command,
+                        ExpressionId::FunctionCall,
+                        ExpressionId::TaskCall,
+                        ExpressionId::CompoundAssignments,
+                        ExpressionId::Variable,
+                    ]),
+                    NodeReadTarget::Value(&[
+                        ValueId::Boolean,
+                        ValueId::Number,
+                        ValueId::InterpolatedString,
+                        ValueId::PrimitiveString,
+                        ValueId::Array,
+                    ]),
+                    NodeReadTarget::Miscellaneous(&[MiscellaneousId::Comment]),
+                ],
+            )?
+            else {
+                break;
+            };
+            nodes.push(node);
         }
         if !inner.is_done() {
             Err(E::UnrecognizedCode(inner.to_string()))

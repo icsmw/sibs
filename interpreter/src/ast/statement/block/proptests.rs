@@ -44,6 +44,9 @@ impl Arbitrary for Block {
                     Return::arbitrary()
                         .prop_map(|v| Node::Statement(Statement::Return(v)))
                         .boxed(),
+                    Comment::arbitrary()
+                        .prop_map(|v| Node::Miscellaneous(Miscellaneous::Comment(v)))
+                        .boxed(),
                 ]),
                 1..5,
             )
@@ -113,6 +116,9 @@ impl Arbitrary for Block {
                     While::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Statement(Statement::While(v)))
                         .boxed(),
+                    Comment::arbitrary()
+                        .prop_map(|v| Node::Miscellaneous(Miscellaneous::Comment(v)))
+                        .boxed(),
                 ]),
                 1..5,
             )
@@ -127,5 +133,11 @@ test_node_reading!(block, Block, 10);
 // test_node_reading_case!(
 //     block_case,
 //     Block,
-//     "{ return ; break ; a = if a > 5 { v = 111 ; } else { a = 222 ; } ; l += 1 ; }"
+//     r#"{ return ; break ; a = 'str { if a > 5 {
+//         // commentA
+//         v = 111 ;
+//     } else {
+//         // commentB
+//         a = 222 ;
+//     } } str' ; l += 1 ; }"#
 // );
