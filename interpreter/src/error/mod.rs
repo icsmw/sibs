@@ -87,8 +87,22 @@ pub enum E {
     //FunctionDeclaration
     #[error("Missed function name")]
     MissedFnName,
+    #[error("Missed function body")]
+    MissedFnBlock,
+    #[error("Missed function argument")]
+    MissedFnArguments,
 
     /// Module
     #[error("Missed path to module")]
     MissedModulePath,
+
+    /// Task
+    #[error("Keyword private can be used only on task declaration")]
+    InvalidPrivateKeyUsage,
+    #[error("Missed task name")]
+    MissedTaskName,
+    #[error("Missed task body")]
+    MissedTaskBlock,
+    #[error("Missed task argument")]
+    MissedTaskArguments,
 }

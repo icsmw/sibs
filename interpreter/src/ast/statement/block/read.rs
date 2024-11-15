@@ -1,4 +1,4 @@
-use lexer::{Kind, KindId};
+use lexer::KindId;
 
 use crate::*;
 

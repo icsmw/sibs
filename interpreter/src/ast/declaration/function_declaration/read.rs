@@ -17,7 +17,7 @@ impl ReadNode<FunctionDeclaration> for FunctionDeclaration {
             return Err(E::MissedFnName);
         }
         let Some(mut inner) = parser.between(KindId::LeftParen, KindId::RightParen)? else {
-            return Ok(None);
+            return Err(E::MissedFnArguments);
         };
         let mut args = Vec::new();
         while let Some(arg) = Declaration::try_read(&mut inner, DeclarationId::ArgumentDeclaration)?
@@ -35,7 +35,7 @@ impl ReadNode<FunctionDeclaration> for FunctionDeclaration {
         }
         let Some(block) = Statement::try_read(parser, StatementId::Block)?.map(Node::Statement)
         else {
-            return Err(E::MissedClosureBlock);
+            return Err(E::MissedFnBlock);
         };
         Ok(Some(FunctionDeclaration {
             sig,
