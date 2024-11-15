@@ -45,6 +45,12 @@ pub enum Keyword {
     Num,
     /// The `Vec` type-keyword.
     Vec,
+    /// The `Private` keyword.
+    Private,
+    /// The `Task` keyword.
+    Task,
+    /// The `Component` keyword.
+    Component,
 }
 
 impl TryFrom<String> for Keyword {
@@ -95,6 +101,9 @@ impl fmt::Display for Keyword {
                 Self::Bool => "bool".to_owned(),
                 Self::Num => "num".to_owned(),
                 Self::Vec => "Vec".to_owned(),
+                Self::Private => "private".to_owned(),
+                Self::Task => "task".to_owned(),
+                Self::Component => "component".to_owned(),
             }
         )
     }
@@ -124,6 +133,9 @@ impl From<&KeywordId> for Keyword {
             KeywordId::Bool => Keyword::Bool,
             KeywordId::Num => Keyword::Num,
             KeywordId::Vec => Keyword::Vec,
+            KeywordId::Private => Keyword::Private,
+            KeywordId::Task => Keyword::Task,
+            KeywordId::Component => Keyword::Component,
         }
     }
 }
