@@ -47,6 +47,9 @@ impl Arbitrary for Block {
                     Comment::arbitrary()
                         .prop_map(|v| Node::Miscellaneous(Miscellaneous::Comment(v)))
                         .boxed(),
+                    VariableDeclaration::arbitrary_with(deep + 1)
+                        .prop_map(|v| Node::Declaration(Declaration::VariableDeclaration(v)))
+                        .boxed(),
                 ]),
                 1..5,
             )
@@ -118,6 +121,9 @@ impl Arbitrary for Block {
                         .boxed(),
                     Comment::arbitrary()
                         .prop_map(|v| Node::Miscellaneous(Miscellaneous::Comment(v)))
+                        .boxed(),
+                    VariableDeclaration::arbitrary_with(deep + 1)
+                        .prop_map(|v| Node::Declaration(Declaration::VariableDeclaration(v)))
                         .boxed(),
                 ]),
                 1..5,
