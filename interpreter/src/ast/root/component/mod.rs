@@ -12,7 +12,7 @@ pub struct Component {
     sig: Token,
     name: Token,
     path: String,
-    tasks: Vec<Node>,
+    nodes: Vec<Node>,
 }
 
 impl fmt::Display for Component {
@@ -26,7 +26,7 @@ impl fmt::Display for Component {
             self.path,
             Kind::RightParen,
             Kind::LeftBrace,
-            self.tasks
+            self.nodes
                 .iter()
                 .map(|t| t.to_string())
                 .collect::<Vec<String>>()

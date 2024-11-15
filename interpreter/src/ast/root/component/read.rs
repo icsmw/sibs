@@ -22,7 +22,7 @@ impl ReadNode<Component> for Component {
         let Some(mut inner) = parser.between(KindId::LeftBrace, KindId::RightBrace)? else {
             return Err(E::MissedComponentBlock);
         };
-        let mut tasks = Vec::new();
+        let mut nodes = Vec::new();
         loop {
             'semicolons: loop {
                 if inner.is_next(KindId::Semicolon) {
@@ -31,22 +31,32 @@ impl ReadNode<Component> for Component {
                     break 'semicolons;
                 }
             }
-            let Some(task) = Root::try_read(&mut inner, RootId::Task)?.map(Node::Root) else {
+            let Some(node) = Node::try_oneof(
+                &mut inner,
+                &[
+                    NodeReadTarget::Root(&[RootId::Task]),
+                    NodeReadTarget::Miscellaneous(&[
+                        MiscellaneousId::Comment,
+                        MiscellaneousId::Meta,
+                    ]),
+                ],
+            )?
+            else {
                 break;
             };
-            tasks.push(task);
+            nodes.push(node);
         }
         if !inner.is_done() {
             return Err(E::UnrecognizedCode(inner.to_string()));
         }
-        if tasks.is_empty() {
+        if nodes.is_empty() {
             return Err(E::NoTasksInComponent);
         }
         Ok(Some(Component {
             sig,
             name,
             path,
-            tasks,
+            nodes,
         }))
     }
 }

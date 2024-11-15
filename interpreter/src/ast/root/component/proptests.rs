@@ -12,14 +12,22 @@ impl Arbitrary for Component {
             gens::rnd_kind_with(vec![KindId::Identifier]),
             prop::collection::vec(gens::kind(KindId::Identifier), 1..5),
             prop::collection::vec(
-                Task::arbitrary_with(deep + 1)
-                    .prop_map(Root::Task)
-                    .prop_map(Node::Root)
-                    .boxed(),
+                prop::strategy::Union::new(vec![
+                    Task::arbitrary_with(deep + 1)
+                        .prop_map(Root::Task)
+                        .prop_map(Node::Root)
+                        .boxed(),
+                    Comment::arbitrary()
+                        .prop_map(|v| Node::Miscellaneous(Miscellaneous::Comment(v)))
+                        .boxed(),
+                    Meta::arbitrary()
+                        .prop_map(|v| Node::Miscellaneous(Miscellaneous::Meta(v)))
+                        .boxed(),
+                ]),
                 1..5,
             ),
         )
-            .prop_map(|(name, path, tasks)| Component {
+            .prop_map(|(name, path, nodes)| Component {
                 sig: Token::for_test(Kind::Keyword(Keyword::Component)),
                 name: Token::for_test(name),
                 path: path
@@ -27,7 +35,7 @@ impl Arbitrary for Component {
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
                     .join("/"),
-                tasks,
+                nodes,
             })
             .boxed()
     }
