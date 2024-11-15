@@ -1,12 +1,37 @@
+#[cfg(test)]
+mod proptests;
 mod read;
 
+use lexer::{Kind, Token};
 use std::fmt;
 
+use crate::*;
+
 #[derive(Debug, Clone)]
-pub struct Component {}
+pub struct Component {
+    sig: Token,
+    name: Token,
+    path: String,
+    tasks: Vec<Node>,
+}
 
 impl fmt::Display for Component {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "")
+        write!(
+            f,
+            "{} {} {} {} {} {} {} {}",
+            self.sig,
+            self.name,
+            Kind::LeftParen,
+            self.path,
+            Kind::RightParen,
+            Kind::LeftBrace,
+            self.tasks
+                .iter()
+                .map(|t| t.to_string())
+                .collect::<Vec<String>>()
+                .join(" "),
+            Kind::RightBrace
+        )
     }
 }

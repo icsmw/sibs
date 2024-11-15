@@ -1,6 +1,5 @@
-use lexer::{Keyword, Kind, KindId};
-
 use crate::*;
+use lexer::{Keyword, Kind, KindId};
 
 impl ReadNode<Task> for Task {
     fn read(parser: &mut Parser) -> Result<Option<Task>, E> {

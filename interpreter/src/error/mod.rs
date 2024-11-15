@@ -105,4 +105,14 @@ pub enum E {
     MissedTaskBlock,
     #[error("Missed task argument")]
     MissedTaskArguments,
+
+    /// Component
+    #[error("Missed component name")]
+    MissedComponentName,
+    #[error("Missed component body")]
+    MissedComponentBlock,
+    #[error("Missed component cwd")]
+    MissedComponentCWD,
+    #[error("No tasks in component")]
+    NoTasksInComponent,
 }
