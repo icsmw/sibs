@@ -17,6 +17,10 @@ impl Arbitrary for Component {
                         .prop_map(Root::Task)
                         .prop_map(Node::Root)
                         .boxed(),
+                    Gatekeeper::arbitrary_with(deep + 1)
+                        .prop_map(ControlFlowModifier::Gatekeeper)
+                        .prop_map(Node::ControlFlowModifier)
+                        .boxed(),
                     Comment::arbitrary()
                         .prop_map(|v| Node::Miscellaneous(Miscellaneous::Comment(v)))
                         .boxed(),

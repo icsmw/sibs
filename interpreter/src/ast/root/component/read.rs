@@ -34,6 +34,7 @@ impl ReadNode<Component> for Component {
             let Some(node) = Node::try_oneof(
                 &mut inner,
                 &[
+                    NodeReadTarget::ControlFlowModifier(&[ControlFlowModifierId::Gatekeeper]),
                     NodeReadTarget::Root(&[RootId::Task]),
                     NodeReadTarget::Miscellaneous(&[
                         MiscellaneousId::Comment,
