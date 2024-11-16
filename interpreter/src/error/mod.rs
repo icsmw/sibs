@@ -115,4 +115,16 @@ pub enum E {
     MissedComponentCWD,
     #[error("No tasks in component")]
     NoTasksInComponent,
+
+    /// Gatekeeper
+    #[error("No gatekeeper directive")]
+    NoGatekeeperDirective,
+
+    /// Skip
+    #[error("Skip directive without arguments")]
+    NoSkipDirectiveArgs,
+    #[error("Skip directive without task's arguments")]
+    NoSkipDirectiveTaskArgs,
+    #[error("Skip directive without function")]
+    NoSkipDirectiveFuncCall,
 }
