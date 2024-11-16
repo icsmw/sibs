@@ -26,7 +26,7 @@ impl ReadNode<Gatekeeper> for Gatekeeper {
                 let _ = inner.token();
             }
         }
-        if inner.is_done() {
+        if !inner.is_done() {
             return Err(E::UnrecognizedCode(inner.to_string()));
         }
         if nodes.is_empty() {

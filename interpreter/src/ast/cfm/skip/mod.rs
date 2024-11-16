@@ -7,7 +7,7 @@ use lexer::{Kind, Token};
 use std::fmt;
 
 #[derive(Debug, Clone)]
-enum SkipTaskArgument {
+pub enum SkipTaskArgument {
     Value(Node),
     Any,
 }

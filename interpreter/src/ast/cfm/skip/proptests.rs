@@ -2,8 +2,6 @@ use crate::*;
 use lexer::{Kind, Token};
 use proptest::prelude::*;
 
-use super::SkipTaskArgument;
-
 impl Arbitrary for SkipTaskArgument {
     type Parameters = u8;
 
