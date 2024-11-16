@@ -127,4 +127,8 @@ pub enum E {
     NoSkipDirectiveTaskArgs,
     #[error("Skip directive without function")]
     NoSkipDirectiveFuncCall,
+
+    /// Return
+    #[error("Invalid return value")]
+    InvalidReturnValue,
 }

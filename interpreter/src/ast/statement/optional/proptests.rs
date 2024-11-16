@@ -18,7 +18,7 @@ impl Arbitrary for Optional {
                     Break::arbitrary()
                         .prop_map(|v| Node::Statement(Statement::Break(v)))
                         .boxed(),
-                    Return::arbitrary()
+                    Return::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Statement(Statement::Return(v)))
                         .boxed(),
                 ])
@@ -36,7 +36,7 @@ impl Arbitrary for Optional {
                     Break::arbitrary()
                         .prop_map(|v| Node::Statement(Statement::Break(v)))
                         .boxed(),
-                    Return::arbitrary()
+                    Return::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Statement(Statement::Return(v)))
                         .boxed(),
                     Loop::arbitrary_with(deep + 1)

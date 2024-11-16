@@ -1,14 +1,14 @@
 use crate::*;
 
-use lexer::{ Kind, Token};
+use lexer::{Kind, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for Error {
-    type Parameters = ();
+    type Parameters = u8;
 
     type Strategy = BoxedStrategy<Self>;
 
-    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+    fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         prop::strategy::Union::new(vec![
             Variable::arbitrary()
                 .prop_map(|v| Node::Expression(Expression::Variable(v)))
@@ -18,6 +18,9 @@ impl Arbitrary for Error {
                 .boxed(),
             PrimitiveString::arbitrary()
                 .prop_map(|v| Node::Value(Value::PrimitiveString(v)))
+                .boxed(),
+            InterpolatedString::arbitrary_with(deep + 1)
+                .prop_map(|v| Node::Value(Value::InterpolatedString(v)))
                 .boxed(),
         ])
         .prop_map(move |node| Error {

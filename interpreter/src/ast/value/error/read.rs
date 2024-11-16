@@ -19,7 +19,11 @@ impl ReadNode<Error> for Error {
         let Some(node) = Node::try_oneof(
             &mut inner,
             &[
-                NodeReadTarget::Value(&[ValueId::Number, ValueId::PrimitiveString]),
+                NodeReadTarget::Value(&[
+                    ValueId::Number,
+                    ValueId::PrimitiveString,
+                    ValueId::InterpolatedString,
+                ]),
                 NodeReadTarget::Expression(&[ExpressionId::Variable]),
             ],
         )?

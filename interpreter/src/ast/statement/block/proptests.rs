@@ -41,9 +41,6 @@ impl Arbitrary for Block {
                     Break::arbitrary()
                         .prop_map(|v| Node::Statement(Statement::Break(v)))
                         .boxed(),
-                    Return::arbitrary()
-                        .prop_map(|v| Node::Statement(Statement::Return(v)))
-                        .boxed(),
                     Comment::arbitrary()
                         .prop_map(|v| Node::Miscellaneous(Miscellaneous::Comment(v)))
                         .boxed(),
@@ -92,7 +89,7 @@ impl Arbitrary for Block {
                     Break::arbitrary()
                         .prop_map(|v| Node::Statement(Statement::Break(v)))
                         .boxed(),
-                    Return::arbitrary()
+                    Return::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Statement(Statement::Return(v)))
                         .boxed(),
                     Each::arbitrary_with(deep + 1)

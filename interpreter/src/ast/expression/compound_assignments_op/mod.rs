@@ -2,7 +2,7 @@
 mod proptests;
 mod read;
 
-use lexer::Token;
+use lexer::{Kind, Token};
 use std::fmt;
 
 #[derive(Debug, Clone)]
@@ -13,14 +13,30 @@ pub enum CompoundAssignmentsOperator {
     SlashEqual,
 }
 
+impl fmt::Display for CompoundAssignmentsOperator {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                CompoundAssignmentsOperator::PlusEqual => Kind::PlusEqual,
+                CompoundAssignmentsOperator::MinusEqual => Kind::MinusEqual,
+                CompoundAssignmentsOperator::StarEqual => Kind::StarEqual,
+                CompoundAssignmentsOperator::SlashEqual => Kind::SlashEqual,
+            }
+        )
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct CompoundAssignmentsOp {
+    #[allow(dead_code)]
     token: Token,
     operator: CompoundAssignmentsOperator,
 }
 
 impl fmt::Display for CompoundAssignmentsOp {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.token)
+        write!(f, "{}", self.operator)
     }
 }
