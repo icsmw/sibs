@@ -22,7 +22,7 @@ impl ReadNode<Skip> for Skip {
         let Some((mut args_inner, ..)) =
             inner.between(KindId::LeftBracket, KindId::RightBracket)?
         else {
-            return Err(E::NoSkipDirectiveTaskArgs.link_from_current(&inner));
+            return Err(E::NoSkipDirectiveTaskArgs.link_until_end(&inner));
         };
         let mut args = Vec::new();
         loop {
@@ -50,7 +50,7 @@ impl ReadNode<Skip> for Skip {
             args.push(SkipTaskArgument::Value(node));
         }
         if !args_inner.is_done() {
-            return Err(E::UnrecognizedCode(args_inner.to_string()).link_from_current(&args_inner));
+            return Err(E::UnrecognizedCode(args_inner.to_string()).link_until_end(&args_inner));
         }
         if !inner.is_next(KindId::Comma) {
             return Err(E::MissedComma.link_by_current(&inner));
@@ -59,10 +59,10 @@ impl ReadNode<Skip> for Skip {
         let Some(func) =
             Expression::try_read(&mut inner, ExpressionId::FunctionCall)?.map(Node::Expression)
         else {
-            return Err(E::NoSkipDirectiveFuncCall.link_from_current(&inner));
+            return Err(E::NoSkipDirectiveFuncCall.link_until_end(&inner));
         };
         if !inner.is_done() {
-            return Err(E::UnrecognizedCode(inner.to_string()).link_from_current(&inner));
+            return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
         }
         Ok(Some(Skip {
             token,

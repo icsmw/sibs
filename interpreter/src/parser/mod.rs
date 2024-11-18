@@ -52,7 +52,7 @@ impl Parser {
         self.tokens.get(self.pos).or_else(|| self.tokens.last())
     }
 
-    pub(crate) fn from_current(&self) -> Option<(&Token, &Token)> {
+    pub(crate) fn until_end(&self) -> Option<(&Token, &Token)> {
         if let (Some(from), Some(to)) = (
             self.tokens.get(self.pos).or_else(|| self.tokens.last()),
             self.tokens.last(),

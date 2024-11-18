@@ -33,7 +33,7 @@ impl ReadNode<FunctionDeclaration> for FunctionDeclaration {
             }
         }
         if !inner.is_done() {
-            return Err(E::UnrecognizedCode(inner.to_string()).link_from_current(&inner));
+            return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
         }
         let Some(block) = Statement::try_read(parser, StatementId::Block)?.map(Node::Statement)
         else {

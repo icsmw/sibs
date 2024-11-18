@@ -68,11 +68,11 @@ impl ReadNode<InterpolatedString> for InterpolatedString {
                     )?
                     else {
                         return Err(E::NotSupportedStringInjection(inner.to_string())
-                            .link_from_current(&inner));
+                            .link_until_end(&inner));
                     };
                     if !inner.is_done() {
                         return Err(
-                            E::UnrecognizedCode(inner.to_string()).link_from_current(&inner)
+                            E::UnrecognizedCode(inner.to_string()).link_until_end(&inner)
                         );
                     }
                     nodes.push(InterpolatedStringPart::Expression(node));

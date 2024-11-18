@@ -50,7 +50,7 @@ impl ReadNode<Component> for Component {
             nodes.push(node);
         }
         if !inner.is_done() {
-            return Err(E::UnrecognizedCode(inner.to_string()).link_from_current(&inner));
+            return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
         }
         if nodes.is_empty() {
             return Err(E::NoTasksInComponent.link_with_token(&sig));

@@ -28,7 +28,7 @@ impl ReadNode<Join> for Join {
             }
         }
         if !inner.is_done() {
-            return Err(E::UnrecognizedCode(inner.to_string()).link_from_current(&inner));
+            return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
         };
         Ok(Some(Join {
             commands,

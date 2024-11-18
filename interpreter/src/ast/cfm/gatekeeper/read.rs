@@ -29,7 +29,7 @@ impl ReadNode<Gatekeeper> for Gatekeeper {
             }
         }
         if !inner.is_done() {
-            return Err(E::UnrecognizedCode(inner.to_string()).link_from_current(&inner));
+            return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
         }
         if nodes.is_empty() {
             return Err(E::NoGatekeeperDirective.link_with_token(&token));

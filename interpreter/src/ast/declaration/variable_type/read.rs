@@ -19,7 +19,7 @@ impl ReadNode<VariableType> for VariableType {
                 let ty = VariableType::read(&mut inner)?
                     .ok_or(E::MissedVariableTypeDefinition.link_with_token(&token))?;
                 if !inner.is_done() {
-                    return Err(E::UnrecognizedCode(inner.to_string()).link_from_current(&inner));
+                    return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
                 }
                 Ok(Some(VariableType {
                     r#type: VariableTypeDef::Compound(VariableCompoundType::Vec(

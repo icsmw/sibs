@@ -10,7 +10,7 @@ impl ReadNode<For> for For {
         if !matches!(token_for.kind, Kind::Keyword(Keyword::For)) {
             return Ok(None);
         }
-        let Some((mut inner, ..)) =  parser.between(KindId::LeftParen, KindId::RightParen)? else {
+        let Some((mut inner, ..)) = parser.between(KindId::LeftParen, KindId::RightParen)? else {
             return Ok(None);
         };
         let Some(el_ref) =
@@ -29,7 +29,7 @@ impl ReadNode<For> for For {
             return Err(E::MissedIndexDeclarationInFor.link_by_current(&inner));
         };
         if !inner.is_done() {
-            return Err(E::UnrecognizedCode(inner.to_string()).link_from_current(&inner));
+            return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
         };
         let Some(token_in) = parser.token().cloned() else {
             return Ok(None);

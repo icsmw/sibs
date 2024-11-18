@@ -57,7 +57,7 @@ impl ReadNode<FunctionCall> for FunctionCall {
             }
         }
         if !inner.is_done() {
-            Err(E::UnrecognizedCode(inner.to_string()).link_from_current(&inner))
+            Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner))
         } else {
             Ok(Some(FunctionCall {
                 args,

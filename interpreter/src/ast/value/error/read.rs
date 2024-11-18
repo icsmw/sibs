@@ -31,7 +31,7 @@ impl ReadNode<Error> for Error {
             return Err(E::MissedErrorMessage.link_with_token(&token));
         };
         if !inner.is_done() {
-            Err(E::UnrecognizedCode(inner.to_string()).link_from_current(&inner))
+            Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner))
         } else {
             Ok(Some(Error {
                 token,

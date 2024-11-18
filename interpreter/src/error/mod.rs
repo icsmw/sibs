@@ -31,10 +31,10 @@ impl<T: Clone + fmt::Display> LinkedErr<T> {
             e: err,
         }
     }
-    pub fn from_current(err: T, parser: &Parser) -> Self {
+    pub fn until_end(err: T, parser: &Parser) -> Self {
         Self {
             link: parser
-                .from_current()
+                .until_end()
                 .map(|tks| tks.into())
                 .unwrap_or(SrcLink::new(0, 0, &parser.src)),
             e: err,
@@ -190,8 +190,8 @@ impl E {
     pub fn link_by_current(self, parser: &Parser) -> LinkedErr<E> {
         LinkedErr::current(self, parser)
     }
-    pub fn link_from_current(self, parser: &Parser) -> LinkedErr<E> {
-        LinkedErr::from_current(self, parser)
+    pub fn link_until_end(self, parser: &Parser) -> LinkedErr<E> {
+        LinkedErr::until_end(self, parser)
     }
     pub fn link(self, link: &SrcLink) -> LinkedErr<E> {
         LinkedErr::by_link(self, link)
