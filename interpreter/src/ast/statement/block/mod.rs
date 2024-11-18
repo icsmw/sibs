@@ -3,7 +3,7 @@ mod link;
 mod proptests;
 mod read;
 
-use lexer::Kind;
+use lexer::{Kind, Token};
 
 use crate::*;
 use std::fmt;
@@ -11,6 +11,8 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub struct Block {
     pub nodes: Vec<Node>,
+    pub open: Token,
+    pub close: Token,
 }
 
 impl fmt::Display for Block {
@@ -18,7 +20,7 @@ impl fmt::Display for Block {
         write!(
             f,
             "{} {} {} {}",
-            Kind::LeftBrace,
+            self.open,
             self.nodes
                 .iter()
                 .map(|n| n.to_string())
@@ -29,7 +31,7 @@ impl fmt::Display for Block {
             } else {
                 Kind::Semicolon.to_string()
             },
-            Kind::RightBrace
+            self.close
         )
     }
 }

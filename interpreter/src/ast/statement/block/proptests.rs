@@ -1,5 +1,6 @@
 use crate::*;
 
+use lexer::{Kind, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for Block {
@@ -126,7 +127,11 @@ impl Arbitrary for Block {
                 1..5,
             )
         }
-        .prop_map(move |nodes| Block { nodes })
+        .prop_map(move |nodes| Block {
+            nodes,
+            open: Token::for_test(Kind::LeftBrace),
+            close: Token::for_test(Kind::RightBrace),
+        })
         .boxed()
     }
 }

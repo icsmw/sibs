@@ -4,7 +4,9 @@ use crate::*;
 
 impl ReadNode<Block> for Block {
     fn read(parser: &mut Parser) -> Result<Option<Block>, LinkedErr<E>> {
-        let Some((mut inner, ..)) =  parser.between(KindId::LeftBrace, KindId::RightBrace)? else {
+        let Some((mut inner, open, close)) =
+            parser.between(KindId::LeftBrace, KindId::RightBrace)?
+        else {
             return Ok(None);
         };
         let mut nodes = Vec::new();
@@ -58,7 +60,7 @@ impl ReadNode<Block> for Block {
         if !inner.is_done() {
             Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner))
         } else {
-            Ok(Some(Block { nodes }))
+            Ok(Some(Block { nodes, open, close }))
         }
     }
 }
