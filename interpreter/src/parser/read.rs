@@ -6,7 +6,10 @@ use std::fmt::Display;
 pub fn resolve_reading_conflicts<T: Clone, K: Display + Clone + PartialEq + ConflictResolver<K>>(
     mut results: Vec<(usize, T, K)>,
     parser: &mut Parser,
-) -> Result<Option<T>, LinkedErr<E>> {
+) -> Result<Option<T>, LinkedErr<E>>
+where
+    for<'a> SrcLink: From<&'a T>,
+{
     if let Some((n, (pos, tk, id))) = results.iter().enumerate().max_by_key(|(_, (a, ..))| a) {
         let conflicted = results
             .iter()
@@ -32,7 +35,12 @@ pub fn resolve_reading_conflicts<T: Clone, K: Display + Clone + PartialEq + Conf
                     .collect::<Vec<String>>()
                     .join(", "),
             )
-            .link(&SrcLink::default()))
+            .link(
+                &results
+                    .first()
+                    .map(|(_, n, _)| n.into())
+                    .unwrap_or_default(),
+            ))
         }
     } else {
         Ok(None)
@@ -42,7 +50,10 @@ pub trait ReadNode<T> {
     fn read(parser: &mut Parser) -> Result<Option<T>, LinkedErr<E>>;
 }
 
-pub trait TryRead<T: Clone, K: Display + Clone + PartialEq + ConflictResolver<K>> {
+pub trait TryRead<T: Clone, K: Display + Clone + PartialEq + ConflictResolver<K>>
+where
+    for<'a> SrcLink: From<&'a T>,
+{
     fn try_read(parser: &mut Parser, id: K) -> Result<Option<T>, LinkedErr<E>>;
     fn try_oneof(parser: &mut Parser, ids: &[K]) -> Result<Option<T>, LinkedErr<E>> {
         let mut results = Vec::new();
@@ -66,7 +77,8 @@ pub trait AsVec<T> {
 pub trait Read<
     T: Clone + TryRead<T, K>,
     K: AsVec<K> + Interest + Display + Clone + PartialEq + ConflictResolver<K>,
->
+> where
+    for<'a> SrcLink: From<&'a T>,
 {
     fn read(parser: &mut Parser) -> Result<Option<T>, LinkedErr<E>> {
         let mut results = Vec::new();
