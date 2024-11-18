@@ -3,7 +3,7 @@ use lexer::Kind;
 use crate::*;
 
 impl ReadNode<Range> for Range {
-    fn read(parser: &mut Parser) -> Result<Option<Range>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<Range>, LinkedErr<E>> {
         let Some(left) = Node::try_oneof(
             parser,
             &[

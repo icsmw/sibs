@@ -3,7 +3,7 @@ use lexer::{Keyword, Kind, KindId};
 use crate::*;
 
 impl ReadNode<Return> for Return {
-    fn read(parser: &mut Parser) -> Result<Option<Return>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<Return>, LinkedErr<E>> {
         let Some(tk) = parser.token().cloned() else {
             return Ok(None);
         };
@@ -33,7 +33,7 @@ impl ReadNode<Return> for Return {
                     ],
                 )?
                 .map(Box::new)
-                .ok_or(E::InvalidReturnValue)?,
+                .ok_or(E::InvalidReturnValue.link_with_token(&tk))?,
             )
         };
         Ok(Some(Return {

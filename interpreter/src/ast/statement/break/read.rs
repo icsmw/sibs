@@ -3,7 +3,7 @@ use lexer::{Keyword, Kind};
 use crate::*;
 
 impl ReadNode<Break> for Break {
-    fn read(parser: &mut Parser) -> Result<Option<Break>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<Break>, LinkedErr<E>> {
         let Some(tk) = parser.token() else {
             return Ok(None);
         };

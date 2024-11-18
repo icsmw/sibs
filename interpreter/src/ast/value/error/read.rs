@@ -3,7 +3,7 @@ use lexer::{Kind, KindId};
 use crate::*;
 
 impl ReadNode<Error> for Error {
-    fn read(parser: &mut Parser) -> Result<Option<Error>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<Error>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };
@@ -13,7 +13,7 @@ impl ReadNode<Error> for Error {
         if ident != "Error" {
             return Ok(None);
         }
-        let Some(mut inner) = parser.between(KindId::LeftParen, KindId::RightParen)? else {
+        let Some((mut inner, ..)) =  parser.between(KindId::LeftParen, KindId::RightParen)? else {
             return Ok(None);
         };
         let Some(node) = Node::try_oneof(
@@ -28,10 +28,10 @@ impl ReadNode<Error> for Error {
             ],
         )?
         else {
-            return Err(E::MissedErrorMessage);
+            return Err(E::MissedErrorMessage.link_with_token(&token));
         };
         if !inner.is_done() {
-            Err(E::UnrecognizedCode(inner.to_string()))
+            Err(E::UnrecognizedCode(inner.to_string()).link_from_current(&inner))
         } else {
             Ok(Some(Error {
                 token,

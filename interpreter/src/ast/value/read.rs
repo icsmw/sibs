@@ -9,11 +9,9 @@ impl AsVec<ValueId> for ValueId {
 impl Read<Value, ValueId> for Value {}
 
 impl TryRead<Value, ValueId> for Value {
-    fn try_read(parser: &mut Parser, id: ValueId) -> Result<Option<Value>, E> {
+    fn try_read(parser: &mut Parser, id: ValueId) -> Result<Option<Value>, LinkedErr<E>> {
         Ok(match id {
-            ValueId::PrimitiveString => {
-                PrimitiveString::read(parser)?.map(Value::PrimitiveString)
-            }
+            ValueId::PrimitiveString => PrimitiveString::read(parser)?.map(Value::PrimitiveString),
             ValueId::InterpolatedString => {
                 InterpolatedString::read(parser)?.map(Value::InterpolatedString)
             }

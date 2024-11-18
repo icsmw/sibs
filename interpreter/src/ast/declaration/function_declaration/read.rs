@@ -3,7 +3,7 @@ use lexer::{Keyword, Kind, KindId};
 use crate::*;
 
 impl ReadNode<FunctionDeclaration> for FunctionDeclaration {
-    fn read(parser: &mut Parser) -> Result<Option<FunctionDeclaration>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<FunctionDeclaration>, LinkedErr<E>> {
         let Some(sig) = parser.token().cloned() else {
             return Ok(None);
         };
@@ -11,13 +11,15 @@ impl ReadNode<FunctionDeclaration> for FunctionDeclaration {
             return Ok(None);
         }
         let Some(name) = parser.token().cloned() else {
-            return Err(E::MissedFnName);
+            return Err(E::MissedFnName.link_with_token(&sig));
         };
         if !matches!(name.kind, Kind::Identifier(..)) {
-            return Err(E::MissedFnName);
+            return Err(E::MissedFnName.link_with_token(&sig));
         }
-        let Some(mut inner) = parser.between(KindId::LeftParen, KindId::RightParen)? else {
-            return Err(E::MissedFnArguments);
+        let Some((mut inner, _, close_tk)) =
+            parser.between(KindId::LeftParen, KindId::RightParen)?
+        else {
+            return Err(E::MissedFnArguments.link_between(&sig, &name));
         };
         let mut args = Vec::new();
         while let Some(arg) = Declaration::try_read(&mut inner, DeclarationId::ArgumentDeclaration)?
@@ -26,16 +28,16 @@ impl ReadNode<FunctionDeclaration> for FunctionDeclaration {
             args.push(arg);
             if let Some(tk) = inner.token() {
                 if !matches!(tk.kind, Kind::Comma) {
-                    return Err(E::MissedComma);
+                    return Err(E::MissedComma.link_with_token(tk));
                 }
             }
         }
         if !inner.is_done() {
-            return Err(E::UnrecognizedCode(inner.to_string()));
+            return Err(E::UnrecognizedCode(inner.to_string()).link_from_current(&inner));
         }
         let Some(block) = Statement::try_read(parser, StatementId::Block)?.map(Node::Statement)
         else {
-            return Err(E::MissedFnBlock);
+            return Err(E::MissedFnBlock.link_between(&sig, &close_tk));
         };
         Ok(Some(FunctionDeclaration {
             sig,

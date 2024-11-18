@@ -1,4 +1,5 @@
 mod conflict;
+mod link;
 #[cfg(test)]
 mod proptests;
 mod read;

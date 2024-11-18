@@ -17,6 +17,8 @@ impl Arbitrary for OneOf {
         )
         .prop_map(move |commands| OneOf {
             commands,
+            open: Token::for_test(Kind::LeftParen),
+            close: Token::for_test(Kind::RightParen),
             token: Token::for_test(Kind::Keyword(Keyword::OneOf)),
         })
         .boxed()

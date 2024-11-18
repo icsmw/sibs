@@ -40,6 +40,8 @@ impl Arbitrary for Component {
                     .collect::<Vec<String>>()
                     .join("/"),
                 nodes,
+                open_bl: Token::for_test(Kind::LeftBrace),
+                close_bl: Token::for_test(Kind::RightBrace),
             })
             .boxed()
     }

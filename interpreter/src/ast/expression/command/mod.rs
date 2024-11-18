@@ -1,3 +1,4 @@
+mod link;
 #[cfg(test)]
 mod proptests;
 mod read;
@@ -32,6 +33,7 @@ impl fmt::Display for CommandPart {
 #[derive(Debug, Clone)]
 pub struct Command {
     nodes: Vec<CommandPart>,
+    token: Token,
 }
 
 impl fmt::Display for Command {

@@ -9,7 +9,7 @@ impl AsVec<ExpressionId> for ExpressionId {
 impl Read<Expression, ExpressionId> for Expression {}
 
 impl TryRead<Expression, ExpressionId> for Expression {
-    fn try_read(parser: &mut Parser, id: ExpressionId) -> Result<Option<Expression>, E> {
+    fn try_read(parser: &mut Parser, id: ExpressionId) -> Result<Option<Expression>, LinkedErr<E>> {
         Ok(match id {
             ExpressionId::Variable => Variable::read(parser)?.map(Expression::Variable),
             ExpressionId::Comparison => Comparison::read(parser)?.map(Expression::Comparison),

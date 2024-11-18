@@ -9,7 +9,10 @@ impl AsVec<DeclarationId> for DeclarationId {
 impl Read<Declaration, DeclarationId> for Declaration {}
 
 impl TryRead<Declaration, DeclarationId> for Declaration {
-    fn try_read(parser: &mut Parser, id: DeclarationId) -> Result<Option<Declaration>, E> {
+    fn try_read(
+        parser: &mut Parser,
+        id: DeclarationId,
+    ) -> Result<Option<Declaration>, LinkedErr<E>> {
         Ok(match id {
             DeclarationId::FunctionDeclaration => {
                 FunctionDeclaration::read(parser)?.map(Declaration::FunctionDeclaration)

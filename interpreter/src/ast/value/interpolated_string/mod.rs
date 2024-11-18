@@ -1,3 +1,4 @@
+mod link;
 #[cfg(test)]
 mod proptests;
 mod read;
@@ -32,6 +33,7 @@ impl fmt::Display for InterpolatedStringPart {
 #[derive(Debug, Clone)]
 pub struct InterpolatedString {
     nodes: Vec<InterpolatedStringPart>,
+    token: Token,
 }
 
 impl fmt::Display for InterpolatedString {

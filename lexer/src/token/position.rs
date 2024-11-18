@@ -2,7 +2,7 @@
 ///
 /// The `Position` struct holds the starting and ending indices,
 /// allowing for precise location tracking within the source code.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct Position {
     /// The starting index (inclusive).
     pub from: usize,

@@ -3,7 +3,7 @@ use lexer::{Keyword, Kind};
 use crate::*;
 
 impl ReadNode<Boolean> for Boolean {
-    fn read(parser: &mut Parser) -> Result<Option<Boolean>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<Boolean>, LinkedErr<E>> {
         if let Some(tk) = parser.token() {
             let node = Boolean {
                 inner: if matches!(tk.kind, Kind::Keyword(Keyword::True)) {

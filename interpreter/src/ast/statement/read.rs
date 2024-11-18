@@ -9,7 +9,7 @@ impl AsVec<StatementId> for StatementId {
 impl Read<Statement, StatementId> for Statement {}
 
 impl TryRead<Statement, StatementId> for Statement {
-    fn try_read(parser: &mut Parser, id: StatementId) -> Result<Option<Statement>, E> {
+    fn try_read(parser: &mut Parser, id: StatementId) -> Result<Option<Statement>, LinkedErr<E>> {
         Ok(match id {
             StatementId::Block => Block::read(parser)?.map(Statement::Block),
             StatementId::Break => Break::read(parser)?.map(Statement::Break),

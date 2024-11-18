@@ -1,5 +1,52 @@
-use lexer::KindId;
+use crate::*;
+use lexer::{KindId, SrcLink, Token};
+use std::fmt;
 use thiserror::Error;
+
+#[derive(Clone, Debug)]
+pub struct LinkedErr<T: Clone + fmt::Display> {
+    pub link: SrcLink,
+    pub e: T,
+}
+
+impl<T: Clone + fmt::Display> LinkedErr<T> {
+    pub fn token(err: T, token: &Token) -> Self {
+        Self {
+            link: token.into(),
+            e: err,
+        }
+    }
+    pub fn between(err: T, from: &Token, to: &Token) -> Self {
+        Self {
+            link: (from, to).into(),
+            e: err,
+        }
+    }
+    pub fn current(err: T, parser: &Parser) -> Self {
+        Self {
+            link: parser
+                .current()
+                .map(|tk| tk.into())
+                .unwrap_or(SrcLink::new(0, 0, &parser.src)),
+            e: err,
+        }
+    }
+    pub fn from_current(err: T, parser: &Parser) -> Self {
+        Self {
+            link: parser
+                .from_current()
+                .map(|tks| tks.into())
+                .unwrap_or(SrcLink::new(0, 0, &parser.src)),
+            e: err,
+        }
+    }
+    pub fn by_link(err: T, link: &SrcLink) -> Self {
+        Self {
+            link: link.to_owned(),
+            e: err,
+        }
+    }
+}
 
 #[derive(Error, Debug, Clone)]
 pub enum E {
@@ -131,4 +178,22 @@ pub enum E {
     /// Return
     #[error("Invalid return value")]
     InvalidReturnValue,
+}
+
+impl E {
+    pub fn link_with_token(self, token: &Token) -> LinkedErr<E> {
+        LinkedErr::token(self, token)
+    }
+    pub fn link_between(self, from: &Token, to: &Token) -> LinkedErr<E> {
+        LinkedErr::between(self, from, to)
+    }
+    pub fn link_by_current(self, parser: &Parser) -> LinkedErr<E> {
+        LinkedErr::current(self, parser)
+    }
+    pub fn link_from_current(self, parser: &Parser) -> LinkedErr<E> {
+        LinkedErr::from_current(self, parser)
+    }
+    pub fn link(self, link: &SrcLink) -> LinkedErr<E> {
+        LinkedErr::by_link(self, link)
+    }
 }

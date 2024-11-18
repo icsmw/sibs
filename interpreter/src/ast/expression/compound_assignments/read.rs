@@ -1,7 +1,7 @@
 use crate::*;
 
 impl ReadNode<CompoundAssignments> for CompoundAssignments {
-    fn read(parser: &mut Parser) -> Result<Option<CompoundAssignments>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<CompoundAssignments>, LinkedErr<E>> {
         let Some(left) =
             Expression::try_read(parser, ExpressionId::Variable)?.map(Node::Expression)
         else {

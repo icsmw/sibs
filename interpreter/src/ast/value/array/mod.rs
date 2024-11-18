@@ -1,14 +1,17 @@
+mod link;
 #[cfg(test)]
 mod proptests;
 mod read;
 
 use crate::*;
-use lexer::Kind;
+use lexer::{Kind, Token};
 use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct Array {
+    open: Token,
     els: Vec<Node>,
+    close: Token,
 }
 
 impl fmt::Display for Array {
@@ -16,13 +19,13 @@ impl fmt::Display for Array {
         write!(
             f,
             "{} {} {}",
-            Kind::LeftBracket,
+            self.open,
             self.els
                 .iter()
                 .map(|n| n.to_string())
                 .collect::<Vec<String>>()
                 .join(&format!(" {} ", Kind::Comma)),
-            Kind::RightBracket
+            self.close
         )
     }
 }

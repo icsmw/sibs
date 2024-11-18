@@ -3,7 +3,7 @@ use lexer::{Keyword, Kind};
 use crate::*;
 
 impl ReadNode<VariableDeclaration> for VariableDeclaration {
-    fn read(parser: &mut Parser) -> Result<Option<VariableDeclaration>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<VariableDeclaration>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };
@@ -13,7 +13,7 @@ impl ReadNode<VariableDeclaration> for VariableDeclaration {
         let Some(variable) =
             Expression::try_read(parser, ExpressionId::Variable)?.map(Node::Expression)
         else {
-            return Err(E::MissedVariableDefinition);
+            return Err(E::MissedVariableDefinition.link_with_token(&token));
         };
         let ty = Node::try_oneof(
             parser,

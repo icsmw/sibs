@@ -1,3 +1,4 @@
+mod link;
 #[cfg(test)]
 mod proptests;
 mod read;
@@ -30,7 +31,6 @@ impl fmt::Display for CompoundAssignmentsOperator {
 
 #[derive(Debug, Clone)]
 pub struct CompoundAssignmentsOp {
-    #[allow(dead_code)]
     token: Token,
     operator: CompoundAssignmentsOperator,
 }

@@ -1,5 +1,6 @@
 use crate::*;
 
+use lexer::{Kind, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for Accessor {
@@ -38,6 +39,8 @@ impl Arbitrary for Accessor {
         }
         .prop_map(move |node| Accessor {
             node: Box::new(node),
+            open: Token::for_test(Kind::LeftBracket),
+            close: Token::for_test(Kind::RightBracket),
         })
         .boxed()
     }

@@ -3,8 +3,8 @@ use lexer::{Kind, StringPart};
 use crate::*;
 
 impl ReadNode<Command> for Command {
-    fn read(parser: &mut Parser) -> Result<Option<Command>, E> {
-        let Some(tk) = parser.token() else {
+    fn read(parser: &mut Parser) -> Result<Option<Command>, LinkedErr<E>> {
+        let Some(tk) = parser.token().cloned() else {
             return Ok(None);
         };
         let Kind::Command(parts) = &tk.kind else {
@@ -29,7 +29,8 @@ impl ReadNode<Command> for Command {
                                 .map(|t| t.to_string())
                                 .collect::<Vec<String>>()
                                 .join(" "),
-                        ));
+                        )
+                        .link_with_token(&tk));
                     };
                     if !matches!(f.kind, Kind::LeftBrace) || !matches!(l.kind, Kind::RightBrace) {
                         return Err(E::NotSupportedStringInjection(
@@ -37,13 +38,14 @@ impl ReadNode<Command> for Command {
                                 .map(|t| t.to_string())
                                 .collect::<Vec<String>>()
                                 .join(" "),
-                        ));
+                        )
+                        .link_between(f, l));
                     }
-                    let _ = tks.remove(0);
-                    let _ = tks.remove(tks.len() - 1);
-                    let mut inner = Parser::new(tks);
+                    let l_br = tks.remove(0);
+                    let r_br = tks.remove(tks.len() - 1);
+                    let mut inner = Parser::new(tks, &parser.src);
                     if inner.is_done() {
-                        return Err(E::EmptyStringExpression);
+                        return Err(E::EmptyStringExpression.link_between(&l_br, &r_br));
                     }
                     let Some(node) = Node::try_oneof(
                         &mut inner,
@@ -65,10 +67,13 @@ impl ReadNode<Command> for Command {
                         ],
                     )?
                     else {
-                        return Err(E::NotSupportedStringInjection(inner.to_string()));
+                        return Err(E::NotSupportedStringInjection(inner.to_string())
+                            .link_from_current(&inner));
                     };
                     if !inner.is_done() {
-                        return Err(E::UnrecognizedCode(inner.to_string()));
+                        return Err(
+                            E::UnrecognizedCode(inner.to_string()).link_from_current(&inner)
+                        );
                     }
                     nodes.push(CommandPart::Expression(node));
                 }
@@ -77,9 +82,9 @@ impl ReadNode<Command> for Command {
         if let (Some(CommandPart::Open(..)), Some(CommandPart::Close(..))) =
             (nodes.first(), nodes.last())
         {
-            Ok(Some(Command { nodes }))
+            Ok(Some(Command { nodes, token: tk }))
         } else {
-            Err(E::InvalidString(tk.to_string()))
+            Err(E::InvalidString(tk.to_string()).link_with_token(&tk))
         }
     }
 }

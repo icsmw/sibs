@@ -1,3 +1,4 @@
+mod link;
 #[cfg(test)]
 mod proptests;
 mod read;
@@ -11,6 +12,8 @@ use crate::*;
 pub struct OneOf {
     commands: Vec<Node>,
     token: Token,
+    open: Token,
+    close: Token,
 }
 
 impl fmt::Display for OneOf {
@@ -19,13 +22,13 @@ impl fmt::Display for OneOf {
             f,
             "{} {} {} {}",
             self.token,
-            Kind::LeftParen,
+            self.open,
             self.commands
                 .iter()
                 .map(|c| c.to_string())
                 .collect::<Vec<String>>()
                 .join(&Kind::Comma.to_string()),
-            Kind::RightParen
+            self.close
         )
     }
 }

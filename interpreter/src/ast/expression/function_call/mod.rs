@@ -1,3 +1,4 @@
+mod link;
 #[cfg(test)]
 mod proptests;
 mod read;
@@ -11,6 +12,8 @@ use std::fmt;
 pub struct FunctionCall {
     pub args: Vec<Node>,
     pub reference: Vec<(String, Token)>,
+    pub open: Token,
+    pub close: Token
 }
 
 impl fmt::Display for FunctionCall {

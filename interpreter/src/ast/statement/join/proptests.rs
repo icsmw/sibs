@@ -16,6 +16,8 @@ impl Arbitrary for Join {
             1..5,
         )
         .prop_map(move |commands| Join {
+            open: Token::for_test(Kind::LeftParen),
+            close: Token::for_test(Kind::RightParen),
             commands,
             token: Token::for_test(Kind::Keyword(Keyword::Join)),
         })

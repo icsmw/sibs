@@ -1,7 +1,7 @@
 use crate::*;
 
 impl ReadNode<Comparison> for Comparison {
-    fn read(parser: &mut Parser) -> Result<Option<Comparison>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<Comparison>, LinkedErr<E>> {
         let Some(left) = Node::try_oneof(
             parser,
             &[

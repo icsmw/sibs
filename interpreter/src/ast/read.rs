@@ -12,7 +12,10 @@ pub enum NodeReadTarget<'a> {
 }
 
 impl Node {
-    pub fn try_oneof(parser: &mut Parser, targets: &[NodeReadTarget]) -> Result<Option<Node>, E> {
+    pub fn try_oneof(
+        parser: &mut Parser,
+        targets: &[NodeReadTarget],
+    ) -> Result<Option<Node>, LinkedErr<E>> {
         let mut results = Vec::new();
         let reset = parser.pin();
         for target in targets {

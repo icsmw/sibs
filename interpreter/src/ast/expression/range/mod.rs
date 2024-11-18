@@ -1,6 +1,7 @@
 use crate::*;
 use lexer::Kind;
 
+mod link;
 #[cfg(test)]
 mod proptests;
 mod read;

@@ -3,7 +3,7 @@ use lexer::{Keyword, Kind};
 use crate::*;
 
 impl ReadNode<Include> for Include {
-    fn read(parser: &mut Parser) -> Result<Option<Include>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<Include>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };
@@ -11,7 +11,7 @@ impl ReadNode<Include> for Include {
             return Ok(None);
         }
         let Some(node) = Value::try_read(parser, ValueId::PrimitiveString)?.map(Node::Value) else {
-            return Err(E::MissedModulePath);
+            return Err(E::MissedModulePath.link_with_token(&token));
         };
         Ok(Some(Include {
             token,

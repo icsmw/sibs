@@ -3,8 +3,8 @@ use lexer::KindId;
 use crate::*;
 
 impl ReadNode<Block> for Block {
-    fn read(parser: &mut Parser) -> Result<Option<Block>, E> {
-        let Some(mut inner) = parser.between(KindId::LeftBrace, KindId::RightBrace)? else {
+    fn read(parser: &mut Parser) -> Result<Option<Block>, LinkedErr<E>> {
+        let Some((mut inner, ..)) =  parser.between(KindId::LeftBrace, KindId::RightBrace)? else {
             return Ok(None);
         };
         let mut nodes = Vec::new();
@@ -56,7 +56,7 @@ impl ReadNode<Block> for Block {
             nodes.push(node);
         }
         if !inner.is_done() {
-            Err(E::UnrecognizedCode(inner.to_string()))
+            Err(E::UnrecognizedCode(inner.to_string()).link_from_current(&inner))
         } else {
             Ok(Some(Block { nodes }))
         }

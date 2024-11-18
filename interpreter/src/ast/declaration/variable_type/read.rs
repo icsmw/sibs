@@ -2,7 +2,7 @@ use crate::*;
 use lexer::{Keyword, Kind, KindId};
 
 impl ReadNode<VariableType> for VariableType {
-    fn read(parser: &mut Parser) -> Result<Option<VariableType>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<VariableType>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };
@@ -13,12 +13,13 @@ impl ReadNode<VariableType> for VariableType {
                 r#type: VariableTypeDef::Primitive(token),
             })),
             Kind::Keyword(Keyword::Vec) => {
-                let Some(mut inner) = parser.between(KindId::Less, KindId::Greater)? else {
-                    return Err(E::MissedVariableTypeDefinition);
+                let Some((mut inner, ..)) =  parser.between(KindId::Less, KindId::Greater)? else {
+                    return Err(E::MissedVariableTypeDefinition.link_with_token(&token));
                 };
-                let ty = VariableType::read(&mut inner)?.ok_or(E::MissedVariableTypeDefinition)?;
+                let ty = VariableType::read(&mut inner)?
+                    .ok_or(E::MissedVariableTypeDefinition.link_with_token(&token))?;
                 if !inner.is_done() {
-                    return Err(E::UnrecognizedCode(inner.to_string()));
+                    return Err(E::UnrecognizedCode(inner.to_string()).link_from_current(&inner));
                 }
                 Ok(Some(VariableType {
                     r#type: VariableTypeDef::Compound(VariableCompoundType::Vec(

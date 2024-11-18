@@ -1,0 +1,9 @@
+use lexer::SrcLink;
+
+use crate::*;
+
+impl From<&Boolean> for SrcLink {
+    fn from(node: &Boolean) -> Self {
+        (&node.token).into()
+    }
+}

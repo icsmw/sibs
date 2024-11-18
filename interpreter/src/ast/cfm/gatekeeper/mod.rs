@@ -1,3 +1,4 @@
+mod link;
 #[cfg(test)]
 mod proptests;
 mod read;
@@ -10,6 +11,8 @@ use std::fmt;
 pub struct Gatekeeper {
     token: Token,
     nodes: Vec<Node>,
+    open: Token,
+    close: Token,
 }
 
 impl fmt::Display for Gatekeeper {
@@ -18,13 +21,13 @@ impl fmt::Display for Gatekeeper {
             f,
             "{} {} {} {}",
             self.token,
-            Kind::LeftBracket,
+            self.open,
             self.nodes
                 .iter()
                 .map(|n| n.to_string())
                 .collect::<Vec<String>>()
                 .join(&format!(" {} ", Kind::Comma)),
-            Kind::RightBracket
+            self.close
         )
     }
 }

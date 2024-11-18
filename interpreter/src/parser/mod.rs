@@ -7,6 +7,7 @@ pub use conflict::*;
 pub use interest::*;
 pub use nodes::*;
 pub use read::*;
+use uuid::Uuid;
 
 use crate::*;
 use lexer::{KindId, Token};
@@ -16,11 +17,16 @@ use std::fmt;
 pub struct Parser {
     pub(crate) tokens: Vec<Token>,
     pub(crate) pos: usize,
+    pub(crate) src: Uuid,
 }
 
 impl Parser {
-    pub(crate) fn new(tokens: Vec<Token>) -> Self {
-        Self { tokens, pos: 0 }
+    pub(crate) fn new(tokens: Vec<Token>, src: &Uuid) -> Self {
+        Self {
+            tokens,
+            pos: 0,
+            src: *src,
+        }
     }
 
     pub(crate) fn token(&mut self) -> Option<&Token> {
@@ -40,6 +46,21 @@ impl Parser {
             self.pos += 1;
         }
         None
+    }
+
+    pub(crate) fn current(&self) -> Option<&Token> {
+        self.tokens.get(self.pos).or_else(|| self.tokens.last())
+    }
+
+    pub(crate) fn from_current(&self) -> Option<(&Token, &Token)> {
+        if let (Some(from), Some(to)) = (
+            self.tokens.get(self.pos).or_else(|| self.tokens.last()),
+            self.tokens.last(),
+        ) {
+            Some((from, to))
+        } else {
+            None
+        }
     }
 
     pub(crate) fn tokens(&mut self, nm: usize) -> Option<Vec<Token>> {
@@ -72,18 +93,22 @@ impl Parser {
         }
     }
 
-    pub(crate) fn between(&mut self, left: KindId, right: KindId) -> Result<Option<Parser>, E> {
-        let Some(tk) = self.token() else {
+    pub(crate) fn between(
+        &mut self,
+        left: KindId,
+        right: KindId,
+    ) -> Result<Option<(Parser, Token, Token)>, LinkedErr<E>> {
+        let Some(open_tk) = self.token().cloned() else {
             return Ok(None);
         };
-        if tk.id() != left {
+        if open_tk.id() != left {
             return Ok(None);
         }
         let mut tokens = Vec::new();
         let mut inside = 0;
-        let closed = loop {
+        let close_tk = loop {
             let Some(tk) = self.token() else {
-                break inside == 0;
+                break None;
             };
             if tk.id() == left {
                 inside += 1;
@@ -92,7 +117,7 @@ impl Parser {
             }
             if tk.id() == right {
                 if inside == 0 {
-                    break true;
+                    break Some(tk.to_owned());
                 } else {
                     inside -= 1;
                     tokens.push(tk.clone());
@@ -101,11 +126,10 @@ impl Parser {
             }
             tokens.push(tk.clone());
         };
-        if closed {
-            Ok(Some(Parser::new(tokens)))
-        } else {
-            Err(E::NoClosing(right))
-        }
+        let Some(close_tk) = close_tk else {
+            return Err(LinkedErr::token(E::NoClosing(right), &open_tk));
+        };
+        Ok(Some((Parser::new(tokens, &self.src), open_tk, close_tk)))
     }
 
     pub(crate) fn is_done(&mut self) -> bool {

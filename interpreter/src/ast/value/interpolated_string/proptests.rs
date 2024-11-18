@@ -1,3 +1,5 @@
+use std::vec;
+
 use crate::*;
 
 use lexer::{Kind, Token};
@@ -115,7 +117,10 @@ impl Arbitrary for InterpolatedString {
                 nodes.push(InterpolatedStringPart::Close(Token::for_test(
                     Kind::SingleQuote,
                 )));
-                InterpolatedString { nodes }
+                InterpolatedString {
+                    nodes,
+                    token: Token::for_test(Kind::InterpolatedString(vec![])),
+                }
             })
             .boxed()
     }

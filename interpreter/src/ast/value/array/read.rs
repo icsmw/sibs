@@ -3,8 +3,10 @@ use lexer::KindId;
 use crate::*;
 
 impl ReadNode<Array> for Array {
-    fn read(parser: &mut Parser) -> Result<Option<Array>, E> {
-        let Some(mut inner) = parser.between(KindId::LeftBracket, KindId::RightBracket)? else {
+    fn read(parser: &mut Parser) -> Result<Option<Array>, LinkedErr<E>> {
+        let Some((mut inner, open, close)) =
+            parser.between(KindId::LeftBracket, KindId::RightBracket)?
+        else {
             return Ok(None);
         };
         let mut els = Vec::new();
@@ -29,16 +31,16 @@ impl ReadNode<Array> for Array {
             els.push(node);
             if let Some(tk) = inner.token() {
                 if tk.id() != KindId::Comma {
-                    return Err(E::MissedComma);
+                    return Err(E::MissedComma.link_by_current(&inner));
                 }
             } else {
                 break;
             }
         }
         if !inner.is_done() {
-            Err(E::UnrecognizedCode(inner.to_string()))
+            Err(E::UnrecognizedCode(inner.to_string()).link_from_current(&inner))
         } else {
-            Ok(Some(Array { els }))
+            Ok(Some(Array { els, open, close }))
         }
     }
 }

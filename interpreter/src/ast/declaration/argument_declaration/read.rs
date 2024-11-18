@@ -1,7 +1,7 @@
 use crate::*;
 
 impl ReadNode<ArgumentDeclaration> for ArgumentDeclaration {
-    fn read(parser: &mut Parser) -> Result<Option<ArgumentDeclaration>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<ArgumentDeclaration>, LinkedErr<E>> {
         let Some(variable) =
             Expression::try_read(parser, ExpressionId::Variable)?.map(Node::Expression)
         else {
@@ -14,7 +14,7 @@ impl ReadNode<ArgumentDeclaration> for ArgumentDeclaration {
             ])],
         )?
         .map(Box::new) else {
-            return Err(E::MissedArgumentTypeDefinition);
+            return Err(E::MissedArgumentTypeDefinition.link(&(&variable).into()));
         };
         Ok(Some(ArgumentDeclaration {
             variable: Box::new(variable),

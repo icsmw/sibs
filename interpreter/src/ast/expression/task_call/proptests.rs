@@ -1,6 +1,6 @@
 use crate::*;
 
-use lexer::{gens, KindId, Token};
+use lexer::{gens, Kind, KindId, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for TaskCall {
@@ -55,6 +55,8 @@ impl Arbitrary for TaskCall {
                     .map(|knd| (knd.to_string(), Token::for_test(knd)))
                     .collect::<Vec<(String, Token)>>(),
                 args,
+                open: Token::for_test(Kind::LeftParen),
+                close: Token::for_test(Kind::RightParen),
             })
             .boxed()
     }

@@ -1,5 +1,6 @@
 use crate::*;
 
+use lexer::{Kind, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for Array {
@@ -60,7 +61,11 @@ impl Arbitrary for Array {
                 1..5,
             )
         }
-        .prop_map(move |els| Array { els })
+        .prop_map(move |els| Array {
+            els,
+            open: Token::for_test(Kind::LeftBracket),
+            close: Token::for_test(Kind::RightBracket),
+        })
         .boxed()
     }
 }

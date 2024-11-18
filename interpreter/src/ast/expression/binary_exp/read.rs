@@ -1,7 +1,7 @@
 use crate::*;
 
 impl ReadNode<BinaryExp> for BinaryExp {
-    fn read(parser: &mut Parser) -> Result<Option<BinaryExp>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<BinaryExp>, LinkedErr<E>> {
         let Some(left) = Node::try_oneof(
             parser,
             &[

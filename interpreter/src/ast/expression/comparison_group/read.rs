@@ -3,8 +3,8 @@ use lexer::KindId;
 use crate::*;
 
 impl ReadNode<ComparisonGroup> for ComparisonGroup {
-    fn read(parser: &mut Parser) -> Result<Option<ComparisonGroup>, E> {
-        let Some(mut inner) = parser.between(KindId::LeftParen, KindId::RightParen)? else {
+    fn read(parser: &mut Parser) -> Result<Option<ComparisonGroup>, LinkedErr<E>> {
+        let Some((mut inner, ..)) = parser.between(KindId::LeftParen, KindId::RightParen)? else {
             return Ok(None);
         };
         let mut collected = Vec::new();
@@ -21,18 +21,21 @@ impl ReadNode<ComparisonGroup> for ComparisonGroup {
             if let Node::Expression(Expression::LogicalOp(op)) = &node {
                 match collected.last() {
                     Some(Node::Expression(Expression::LogicalOp(prev))) => {
-                        return Err(E::UnexpectedLogicalOperator(prev.token.id()));
+                        return Err(E::UnexpectedLogicalOperator(prev.token.id())
+                            .link_with_token(&prev.token));
                     }
                     None => {
-                        return Err(E::UnexpectedLogicalOperator(op.token.id()));
+                        return Err(
+                            E::UnexpectedLogicalOperator(op.token.id()).link_with_token(&op.token)
+                        );
                     }
                     Some(_) => {}
                 }
             } else {
                 match collected.last() {
                     Some(Node::Expression(Expression::LogicalOp(..))) | None => {}
-                    Some(_) => {
-                        return Err(E::MissedLogicalOperator);
+                    Some(n) => {
+                        return Err(E::MissedLogicalOperator.link(&n.into()));
                     }
                 }
             }

@@ -9,7 +9,10 @@ impl AsVec<MiscellaneousId> for MiscellaneousId {
 impl Read<Miscellaneous, MiscellaneousId> for Miscellaneous {}
 
 impl TryRead<Miscellaneous, MiscellaneousId> for Miscellaneous {
-    fn try_read(parser: &mut Parser, id: MiscellaneousId) -> Result<Option<Miscellaneous>, E> {
+    fn try_read(
+        parser: &mut Parser,
+        id: MiscellaneousId,
+    ) -> Result<Option<Miscellaneous>, LinkedErr<E>> {
         Ok(match id {
             MiscellaneousId::Include => Include::read(parser)?.map(Miscellaneous::Include),
             MiscellaneousId::Module => Module::read(parser)?.map(Miscellaneous::Module),

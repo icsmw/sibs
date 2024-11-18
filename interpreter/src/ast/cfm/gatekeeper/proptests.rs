@@ -18,6 +18,8 @@ impl Arbitrary for Gatekeeper {
         .prop_map(|nodes| Gatekeeper {
             token: Token::for_test(Kind::Pound),
             nodes,
+            open: Token::for_test(Kind::LeftBracket),
+            close: Token::for_test(Kind::RightBracket),
         })
         .boxed()
     }

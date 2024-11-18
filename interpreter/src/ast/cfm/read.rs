@@ -12,7 +12,7 @@ impl TryRead<ControlFlowModifier, ControlFlowModifierId> for ControlFlowModifier
     fn try_read(
         parser: &mut Parser,
         id: ControlFlowModifierId,
-    ) -> Result<Option<ControlFlowModifier>, E> {
+    ) -> Result<Option<ControlFlowModifier>, LinkedErr<E>> {
         Ok(match id {
             ControlFlowModifierId::Gatekeeper => {
                 Gatekeeper::read(parser)?.map(ControlFlowModifier::Gatekeeper)

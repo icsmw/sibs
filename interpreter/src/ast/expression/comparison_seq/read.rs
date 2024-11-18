@@ -1,7 +1,7 @@
 use crate::*;
 
 impl ReadNode<ComparisonSeq> for ComparisonSeq {
-    fn read(parser: &mut Parser) -> Result<Option<ComparisonSeq>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<ComparisonSeq>, LinkedErr<E>> {
         let mut collected = Vec::new();
         while let Some(node) = Expression::try_oneof(
             parser,
@@ -16,18 +16,21 @@ impl ReadNode<ComparisonSeq> for ComparisonSeq {
             if let Node::Expression(Expression::LogicalOp(op)) = &node {
                 match collected.last() {
                     Some(Node::Expression(Expression::LogicalOp(prev))) => {
-                        return Err(E::UnexpectedLogicalOperator(prev.token.id()));
+                        return Err(E::UnexpectedLogicalOperator(prev.token.id())
+                            .link_with_token(&prev.token));
                     }
                     None => {
-                        return Err(E::UnexpectedLogicalOperator(op.token.id()));
+                        return Err(
+                            E::UnexpectedLogicalOperator(op.token.id()).link_with_token(&op.token)
+                        );
                     }
                     Some(_) => {}
                 }
             } else {
                 match collected.last() {
                     Some(Node::Expression(Expression::LogicalOp(..))) | None => {}
-                    Some(_) => {
-                        return Err(E::MissedLogicalOperator);
+                    Some(n) => {
+                        return Err(E::MissedLogicalOperator.link(&n.into()));
                     }
                 }
             }

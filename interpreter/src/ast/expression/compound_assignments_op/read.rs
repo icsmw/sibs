@@ -3,7 +3,7 @@ use lexer::Kind;
 use crate::*;
 
 impl ReadNode<CompoundAssignmentsOp> for CompoundAssignmentsOp {
-    fn read(parser: &mut Parser) -> Result<Option<CompoundAssignmentsOp>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<CompoundAssignmentsOp>, LinkedErr<E>> {
         let Some(tk) = parser.token() else {
             return Ok(None);
         };

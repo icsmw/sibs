@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod proptests;
 mod read;
+mod link;
 
 use lexer::Token;
 use std::fmt;

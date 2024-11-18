@@ -3,7 +3,7 @@ use lexer::{Keyword, Kind};
 use crate::*;
 
 impl ReadNode<If> for If {
-    fn read(parser: &mut Parser) -> Result<Option<If>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<If>, LinkedErr<E>> {
         let mut cases = Vec::new();
         loop {
             let restore = parser.pin();
@@ -16,7 +16,8 @@ impl ReadNode<If> for If {
                             return Err(E::MissedExpectation(
                                 tk.id().to_string(),
                                 ExpressionId::ComparisonSeq.to_string(),
-                            ));
+                            )
+                            .link_with_token(&tk));
                         };
                         let Some(blk) =
                             Statement::try_read(parser, StatementId::Block)?.map(Node::Statement)
@@ -24,7 +25,8 @@ impl ReadNode<If> for If {
                             return Err(E::MissedExpectation(
                                 tk.id().to_string(),
                                 StatementId::Block.to_string(),
-                            ));
+                            )
+                            .link_with_token(&tk));
                         };
                         cases.push(IfCase::If(cond, blk, tk));
                     }
@@ -35,7 +37,8 @@ impl ReadNode<If> for If {
                             return Err(E::MissedExpectation(
                                 tk.id().to_string(),
                                 StatementId::Block.to_string(),
-                            ));
+                            )
+                            .link_with_token(&tk));
                         };
                         cases.push(IfCase::Else(blk, tk));
                     }

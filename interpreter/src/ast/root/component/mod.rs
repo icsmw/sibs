@@ -1,3 +1,4 @@
+mod link;
 #[cfg(test)]
 mod proptests;
 mod read;
@@ -13,6 +14,8 @@ pub struct Component {
     name: Token,
     path: String,
     nodes: Vec<Node>,
+    open_bl: Token,
+    close_bl: Token,
 }
 
 impl fmt::Display for Component {
@@ -25,13 +28,13 @@ impl fmt::Display for Component {
             Kind::LeftParen,
             self.path,
             Kind::RightParen,
-            Kind::LeftBrace,
+            self.open_bl,
             self.nodes
                 .iter()
                 .map(|t| t.to_string())
                 .collect::<Vec<String>>()
                 .join(" "),
-            Kind::RightBrace
+            self.close_bl
         )
     }
 }

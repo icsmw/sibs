@@ -2,7 +2,7 @@ use crate::*;
 use lexer::Kind;
 
 impl ReadNode<VariableVariants> for VariableVariants {
-    fn read(parser: &mut Parser) -> Result<Option<VariableVariants>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<VariableVariants>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };

@@ -1,4 +1,5 @@
 use crate::*;
+use lexer::{Kind, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for Closure {
@@ -23,6 +24,8 @@ impl Arbitrary for Closure {
             .prop_map(|(args, block)| Closure {
                 block: Box::new(block),
                 args,
+                open: Token::for_test(Kind::LeftParen),
+                close: Token::for_test(Kind::RightParen),
             })
             .boxed()
     }

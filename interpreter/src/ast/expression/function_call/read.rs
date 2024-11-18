@@ -3,7 +3,7 @@ use lexer::{Kind, KindId};
 use crate::*;
 
 impl ReadNode<FunctionCall> for FunctionCall {
-    fn read(parser: &mut Parser) -> Result<Option<FunctionCall>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<FunctionCall>, LinkedErr<E>> {
         let mut reference = Vec::new();
         while let Some(tk) = parser.token() {
             if let Kind::Identifier(ident) = &tk.kind {
@@ -24,7 +24,9 @@ impl ReadNode<FunctionCall> for FunctionCall {
             }
             return Ok(None);
         }
-        let Some(mut inner) = parser.between(KindId::LeftParen, KindId::RightParen)? else {
+        let Some((mut inner, open, close)) =
+            parser.between(KindId::LeftParen, KindId::RightParen)?
+        else {
             return Ok(None);
         };
         let mut args = Vec::new();
@@ -48,16 +50,21 @@ impl ReadNode<FunctionCall> for FunctionCall {
             args.push(node);
             if let Some(tk) = inner.token() {
                 if tk.id() != KindId::Comma {
-                    return Err(E::MissedComma);
+                    return Err(E::MissedComma.link_with_token(&tk));
                 }
             } else {
                 break;
             }
         }
         if !inner.is_done() {
-            Err(E::UnrecognizedCode(inner.to_string()))
+            Err(E::UnrecognizedCode(inner.to_string()).link_from_current(&inner))
         } else {
-            Ok(Some(FunctionCall { args, reference }))
+            Ok(Some(FunctionCall {
+                args,
+                reference,
+                open,
+                close,
+            }))
         }
     }
 }

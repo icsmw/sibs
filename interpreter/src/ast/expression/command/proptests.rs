@@ -105,7 +105,10 @@ impl Arbitrary for Command {
                     }
                 }
                 nodes.push(CommandPart::Close(Token::for_test(Kind::Backtick)));
-                Command { nodes }
+                Command {
+                    nodes,
+                    token: Token::for_test(Kind::Command(vec![])),
+                }
             })
             .boxed()
     }

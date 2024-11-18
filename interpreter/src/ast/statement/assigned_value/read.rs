@@ -3,7 +3,7 @@ use lexer::Kind;
 use crate::*;
 
 impl ReadNode<AssignedValue> for AssignedValue {
-    fn read(parser: &mut Parser) -> Result<Option<AssignedValue>, E> {
+    fn read(parser: &mut Parser) -> Result<Option<AssignedValue>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };
@@ -32,7 +32,7 @@ impl ReadNode<AssignedValue> for AssignedValue {
             ],
         )?
         else {
-            return Err(E::InvalidAssignation(parser.to_string()));
+            return Err(E::InvalidAssignation(parser.to_string()).link_with_token(&token));
         };
         Ok(Some(AssignedValue {
             token,
