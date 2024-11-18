@@ -23,7 +23,7 @@ impl ReadNode<Task> for Task {
         if !matches!(name.kind, Kind::Identifier(..)) {
             return Err(E::MissedTaskName.link_with_token(&sig));
         }
-        let Some((mut inner, ..)) =  parser.between(KindId::LeftParen, KindId::RightParen)? else {
+        let Some((mut inner, ..)) = parser.between(KindId::LeftParen, KindId::RightParen)? else {
             return Err(E::MissedTaskArguments.link_with_token(&sig));
         };
         let mut args = Vec::new();
@@ -33,7 +33,7 @@ impl ReadNode<Task> for Task {
             args.push(arg);
             if let Some(tk) = inner.token() {
                 if !matches!(tk.kind, Kind::Comma) {
-                    return Err(E::MissedComma.link_with_token(&tk));
+                    return Err(E::MissedComma.link_with_token(tk));
                 }
             }
         }

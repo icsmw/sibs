@@ -11,6 +11,7 @@ pub use skip::*;
 
 #[enum_ids::enum_ids(derive = "Debug, PartialEq, Clone", display, display_from_value)]
 #[derive(Debug, Clone)]
+#[allow(clippy::large_enum_variant)]
 pub enum ControlFlowModifier {
     /// #[...]
     Gatekeeper(Gatekeeper),

@@ -3,7 +3,6 @@ use lexer::{Kind, KindId};
 use crate::*;
 
 use super::SkipTaskArgument;
-/// #[skip([task_args], func())]
 
 impl ReadNode<Skip> for Skip {
     fn read(parser: &mut Parser) -> Result<Option<Skip>, LinkedErr<E>> {

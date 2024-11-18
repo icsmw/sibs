@@ -50,7 +50,7 @@ impl ReadNode<FunctionCall> for FunctionCall {
             args.push(node);
             if let Some(tk) = inner.token() {
                 if tk.id() != KindId::Comma {
-                    return Err(E::MissedComma.link_with_token(&tk));
+                    return Err(E::MissedComma.link_with_token(tk));
                 }
             } else {
                 break;

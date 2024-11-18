@@ -1,7 +1,6 @@
 use lexer::{Kind, KindId};
 
 use crate::*;
-/// #[skip([task_args], func())]
 
 impl ReadNode<Gatekeeper> for Gatekeeper {
     fn read(parser: &mut Parser) -> Result<Option<Gatekeeper>, LinkedErr<E>> {

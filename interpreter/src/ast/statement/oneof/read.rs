@@ -24,7 +24,7 @@ impl ReadNode<OneOf> for OneOf {
                 continue;
             };
             if !matches!(tk.kind, Kind::Comma) {
-                return Err(E::MissedComma.link_with_token(&tk));
+                return Err(E::MissedComma.link_with_token(tk));
             }
         }
         if !inner.is_done() {
