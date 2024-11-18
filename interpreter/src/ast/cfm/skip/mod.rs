@@ -31,6 +31,8 @@ pub struct Skip {
     token: Token,
     args: Vec<SkipTaskArgument>,
     func: Box<Node>,
+    open: Token,
+    close: Token,
 }
 
 impl fmt::Display for Skip {
@@ -39,7 +41,7 @@ impl fmt::Display for Skip {
             f,
             "{} {} {} {} {} {} {} {}",
             self.token,
-            Kind::LeftParen,
+            self.open,
             Kind::LeftBracket,
             self.args
                 .iter()
@@ -49,7 +51,7 @@ impl fmt::Display for Skip {
             Kind::RightBracket,
             Kind::Comma,
             self.func,
-            Kind::RightParen
+            self.close
         )
     }
 }

@@ -15,7 +15,9 @@ impl ReadNode<Skip> for Skip {
         if ident != "skip" {
             return Ok(None);
         }
-        let Some((mut inner, ..)) = parser.between(KindId::LeftParen, KindId::RightParen)? else {
+        let Some((mut inner, open, close)) =
+            parser.between(KindId::LeftParen, KindId::RightParen)?
+        else {
             return Err(E::NoSkipDirectiveArgs.link_with_token(&token));
         };
         let Some((mut args_inner, ..)) =
@@ -67,6 +69,8 @@ impl ReadNode<Skip> for Skip {
             token,
             args,
             func: Box::new(func),
+            open,
+            close,
         }))
     }
 }

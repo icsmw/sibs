@@ -56,6 +56,8 @@ impl Arbitrary for Skip {
                 token: Token::for_test(Kind::Identifier(String::from("skip"))),
                 func: Box::new(func),
                 args,
+                open: Token::for_test(Kind::LeftParen),
+                close: Token::for_test(Kind::RightParen),
             })
             .boxed()
     }
