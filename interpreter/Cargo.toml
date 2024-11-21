@@ -6,24 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-console = "0.15"
-indicatif = "0.17"
-regex = "1.10"
-terminal_size = "0.4"
-thiserror = "2.0"
-tokio = { version = "1", features = ["rt", "rt-multi-thread", "process", "sync", "macros"] }
-tokio-stream = "0.1"
-tokio-util = { version = "0.7", features = ["codec"] }
-importer = { path = "../importer" }
-futures = "0.3"
-chrono = "0.4"
-bstorage = "0.2"
-serde = { version = "1.0", features = ["derive"] }
-blake3 = "1.5"
-fshasher = "0.3"
-hashbrown = "0.15"
 enum_ids = "0.5"
 lexer = { path = "../lexer" }
+thiserror = "2.0"
 
 [dependencies.uuid]
 version = "1.8"
@@ -36,8 +21,4 @@ features = [
 [dev-dependencies]
 lexer = { path = "../lexer", features = ["proptests"] }
 proptest = "1.4"
-env_logger = "0.11"
-log = "0.4"
-strum = "0.26"
-strum_macros = "0.26"
 paste = "1.0"
