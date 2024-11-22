@@ -19,7 +19,7 @@ impl ReadNode<Optional> for Optional {
         if !matches!(token.kind, Kind::DoubleArrow) {
             return Ok(None);
         }
-        let Some(action) = Node::try_oneof(
+        let action = Node::try_oneof(
             parser,
             &[
                 NodeReadTarget::Statement(&[
@@ -37,9 +37,7 @@ impl ReadNode<Optional> for Optional {
                 NodeReadTarget::Expression(&[ExpressionId::Command, ExpressionId::FunctionCall]),
             ],
         )?
-        else {
-            return Err(E::MissedActionInOptional.link_with_token(&token));
-        };
+        .ok_or_else(|| E::MissedActionInOptional.link_with_token(&token))?;
         Ok(Some(Optional {
             token,
             action: Box::new(action),

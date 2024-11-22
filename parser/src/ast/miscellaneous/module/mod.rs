@@ -14,9 +14,9 @@ impl ReadNode<Module> for Module {
         if !matches!(token.kind, Kind::Keyword(Keyword::Mod)) {
             return Ok(None);
         }
-        let Some(node) = Value::try_read(parser, ValueId::PrimitiveString)?.map(Node::Value) else {
-            return Err(E::MissedModulePath.link_with_token(&token));
-        };
+        let node = Value::try_read(parser, ValueId::PrimitiveString)?
+            .map(Node::Value)
+            .ok_or_else(|| E::MissedModulePath.link_with_token(&token))?;
         Ok(Some(Module {
             token,
             node: Box::new(node),

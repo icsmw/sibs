@@ -14,17 +14,16 @@ impl ReadNode<FunctionDeclaration> for FunctionDeclaration {
         if !matches!(sig.kind, Kind::Keyword(Keyword::Fn)) {
             return Ok(None);
         }
-        let Some(name) = parser.token().cloned() else {
-            return Err(E::MissedFnName.link_with_token(&sig));
-        };
+        let name = parser
+            .token()
+            .cloned()
+            .ok_or_else(|| E::MissedFnName.link_with_token(&sig))?;
         if !matches!(name.kind, Kind::Identifier(..)) {
             return Err(E::MissedFnName.link_with_token(&sig));
         }
-        let Some((mut inner, _, close_tk)) =
-            parser.between(KindId::LeftParen, KindId::RightParen)?
-        else {
-            return Err(E::MissedFnArguments.link_between(&sig, &name));
-        };
+        let (mut inner, _, close_tk) = parser
+            .between(KindId::LeftParen, KindId::RightParen)?
+            .ok_or_else(|| E::MissedFnArguments.link_between(&sig, &name))?;
         let mut args = Vec::new();
         while let Some(arg) = Declaration::try_read(&mut inner, DeclarationId::ArgumentDeclaration)?
             .map(Node::Declaration)
@@ -39,10 +38,9 @@ impl ReadNode<FunctionDeclaration> for FunctionDeclaration {
         if !inner.is_done() {
             return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
         }
-        let Some(block) = Statement::try_read(parser, StatementId::Block)?.map(Node::Statement)
-        else {
-            return Err(E::MissedFnBlock.link_between(&sig, &close_tk));
-        };
+        let block = Statement::try_read(parser, StatementId::Block)?
+            .map(Node::Statement)
+            .ok_or_else(|| E::MissedFnBlock.link_between(&sig, &close_tk))?;
         Ok(Some(FunctionDeclaration {
             sig,
             name,

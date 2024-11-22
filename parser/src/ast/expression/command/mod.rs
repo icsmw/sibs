@@ -51,7 +51,7 @@ impl ReadNode<Command> for Command {
                     if inner.is_done() {
                         return Err(E::EmptyStringExpression.link_between(&l_br, &r_br));
                     }
-                    let Some(node) = Node::try_oneof(
+                    let node = Node::try_oneof(
                         &mut inner,
                         &[
                             NodeReadTarget::Value(&[
@@ -70,10 +70,9 @@ impl ReadNode<Command> for Command {
                             ]),
                         ],
                     )?
-                    else {
-                        return Err(E::NotSupportedStringInjection(inner.to_string())
-                            .link_until_end(&inner));
-                    };
+                    .ok_or_else(|| {
+                        E::NotSupportedStringInjection(inner.to_string()).link_until_end(&inner)
+                    })?;
                     if !inner.is_done() {
                         return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
                     }

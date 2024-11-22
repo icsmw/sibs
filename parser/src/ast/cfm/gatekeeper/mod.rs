@@ -14,11 +14,10 @@ impl ReadNode<Gatekeeper> for Gatekeeper {
         if !matches!(token.kind, Kind::Pound) {
             return Ok(None);
         }
-        let Some((mut inner, open, close)) =
-            parser.between(KindId::LeftBracket, KindId::RightBracket)?
-        else {
-            return Err(E::NoGatekeeperDirective.link_with_token(&token));
-        };
+        let (mut inner, open, close) =
+            parser
+                .between(KindId::LeftBracket, KindId::RightBracket)?
+                .ok_or_else(|| E::NoGatekeeperDirective.link_with_token(&token))?;
         let mut nodes = Vec::new();
         while let Some(node) = Node::try_oneof(
             &mut inner,

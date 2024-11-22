@@ -17,43 +17,36 @@ impl ReadNode<Each> for Each {
         let Some((mut inner, ..)) = parser.between(KindId::LeftParen, KindId::RightParen)? else {
             return Ok(None);
         };
-        let Some(el_ref) =
-            Expression::try_oneof(&mut inner, &[ExpressionId::Variable])?.map(Node::Expression)
-        else {
-            return Err(E::MissedElementDeclarationInEach.link_with_token(&token));
-        };
+        let el_ref = Expression::try_oneof(&mut inner, &[ExpressionId::Variable])?
+            .map(Node::Expression)
+            .ok_or_else(|| E::MissedElementDeclarationInEach.link_with_token(&token))?;
         if !inner.is_next(KindId::Comma) {
             return Err(E::MissedComma.link_by_current(&inner));
         } else {
             let _ = inner.token();
         }
-        let Some(index_ref) =
-            Expression::try_oneof(&mut inner, &[ExpressionId::Variable])?.map(Node::Expression)
-        else {
-            return Err(E::MissedIndexDeclarationInEach.link_with_token(&token));
-        };
+        let index_ref = Expression::try_oneof(&mut inner, &[ExpressionId::Variable])?
+            .map(Node::Expression)
+            .ok_or_else(|| E::MissedIndexDeclarationInEach.link_with_token(&token))?;
         if !inner.is_next(KindId::Comma) {
             return Err(E::MissedComma.link_by_current(&inner));
         } else {
             let _ = inner.token();
         }
-        let Some(elements) = Node::try_oneof(
+        let elements = Node::try_oneof(
             &mut inner,
             &[
                 NodeReadTarget::Value(&[ValueId::Array]),
                 NodeReadTarget::Expression(&[ExpressionId::Variable, ExpressionId::FunctionCall]),
             ],
         )?
-        else {
-            return Err(E::FailRecognizeElementsInEach(inner.to_string()).link_until_end(&inner));
-        };
+        .ok_or_else(|| E::FailRecognizeElementsInEach(inner.to_string()).link_until_end(&inner))?;
         if !inner.is_done() {
             return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
         };
-        let Some(block) = Statement::try_oneof(parser, &[StatementId::Block])?.map(Node::Statement)
-        else {
-            return Err(E::MissedBlock.link_with_token(&token));
-        };
+        let block = Statement::try_oneof(parser, &[StatementId::Block])?
+            .map(Node::Statement)
+            .ok_or_else(|| E::MissedBlock.link_with_token(&token))?;
         Ok(Some(Each {
             token,
             element: Box::new(el_ref),

@@ -12,9 +12,10 @@ impl ReadNode<Task> for Task {
             return Ok(None);
         };
         let (sig, vis) = if matches!(token.kind, Kind::Keyword(Keyword::Private)) {
-            let Some(sig) = parser.token().cloned() else {
-                return Err(E::InvalidPrivateKeyUsage.link_with_token(&token));
-            };
+            let sig = parser
+                .token()
+                .cloned()
+                .ok_or_else(|| E::InvalidPrivateKeyUsage.link_with_token(&token))?;
             (sig, Some(token))
         } else {
             (token, None)
@@ -22,15 +23,16 @@ impl ReadNode<Task> for Task {
         if !matches!(sig.kind, Kind::Keyword(Keyword::Task)) {
             return Ok(None);
         }
-        let Some(name) = parser.token().cloned() else {
-            return Err(E::MissedTaskName.link_with_token(&sig));
-        };
+        let name = parser
+            .token()
+            .cloned()
+            .ok_or_else(|| E::MissedTaskName.link_with_token(&sig))?;
         if !matches!(name.kind, Kind::Identifier(..)) {
             return Err(E::MissedTaskName.link_with_token(&sig));
         }
-        let Some((mut inner, ..)) = parser.between(KindId::LeftParen, KindId::RightParen)? else {
-            return Err(E::MissedTaskArguments.link_with_token(&sig));
-        };
+        let (mut inner, ..) = parser
+            .between(KindId::LeftParen, KindId::RightParen)?
+            .ok_or_else(|| E::MissedTaskArguments.link_with_token(&sig))?;
         let mut args = Vec::new();
         while let Some(arg) = Declaration::try_read(&mut inner, DeclarationId::ArgumentDeclaration)?
             .map(Node::Declaration)
@@ -45,10 +47,9 @@ impl ReadNode<Task> for Task {
         if !inner.is_done() {
             return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
         }
-        let Some(block) = Statement::try_read(parser, StatementId::Block)?.map(Node::Statement)
-        else {
-            return Err(E::MissedTaskBlock.link_with_token(&sig));
-        };
+        let block = Statement::try_read(parser, StatementId::Block)?
+            .map(Node::Statement)
+            .ok_or_else(|| E::MissedTaskBlock.link_with_token(&sig))?;
         Ok(Some(Task {
             vis,
             sig,

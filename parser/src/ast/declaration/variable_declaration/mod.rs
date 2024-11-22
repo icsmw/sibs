@@ -14,11 +14,9 @@ impl ReadNode<VariableDeclaration> for VariableDeclaration {
         if !matches!(token.kind, Kind::Keyword(Keyword::Let)) {
             return Ok(None);
         }
-        let Some(variable) =
-            Expression::try_read(parser, ExpressionId::Variable)?.map(Node::Expression)
-        else {
-            return Err(E::MissedVariableDefinition.link_with_token(&token));
-        };
+        let variable = Expression::try_read(parser, ExpressionId::Variable)?
+            .map(Node::Expression)
+            .ok_or_else(|| E::MissedVariableDefinition.link_with_token(&token))?;
         let ty = Node::try_oneof(
             parser,
             &[NodeReadTarget::Declaration(&[

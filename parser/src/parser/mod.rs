@@ -127,9 +127,7 @@ impl Parser {
             }
             tokens.push(tk.clone());
         };
-        let Some(close_tk) = close_tk else {
-            return Err(LinkedErr::token(E::NoClosing(right), &open_tk));
-        };
+        let close_tk = close_tk.ok_or_else(|| LinkedErr::token(E::NoClosing(right), &open_tk))?;
         Ok(Some((Parser::new(tokens, &self.src), open_tk, close_tk)))
     }
 

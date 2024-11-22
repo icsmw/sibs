@@ -37,7 +37,7 @@ impl ReadNode<Return> for Return {
                     ],
                 )?
                 .map(Box::new)
-                .ok_or(E::InvalidReturnValue.link_with_token(&tk))?,
+                .ok_or_else(|| E::InvalidReturnValue.link_with_token(&tk))?,
             )
         };
         Ok(Some(Return {

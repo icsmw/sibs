@@ -20,7 +20,7 @@ impl ReadNode<Error> for Error {
         let Some((mut inner, ..)) = parser.between(KindId::LeftParen, KindId::RightParen)? else {
             return Ok(None);
         };
-        let Some(node) = Node::try_oneof(
+        let node = Node::try_oneof(
             &mut inner,
             &[
                 NodeReadTarget::Value(&[
@@ -31,9 +31,7 @@ impl ReadNode<Error> for Error {
                 NodeReadTarget::Expression(&[ExpressionId::Variable]),
             ],
         )?
-        else {
-            return Err(E::MissedErrorMessage.link_with_token(&token));
-        };
+        .ok_or_else(|| E::MissedErrorMessage.link_with_token(&token))?;
         if !inner.is_done() {
             Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner))
         } else {

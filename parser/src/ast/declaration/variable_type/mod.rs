@@ -18,11 +18,11 @@ impl ReadNode<VariableType> for VariableType {
                 r#type: VariableTypeDef::Primitive(token),
             })),
             Kind::Keyword(Keyword::Vec) => {
-                let Some((mut inner, ..)) = parser.between(KindId::Less, KindId::Greater)? else {
-                    return Err(E::MissedVariableTypeDefinition.link_with_token(&token));
-                };
+                let (mut inner, ..) = parser
+                    .between(KindId::Less, KindId::Greater)?
+                    .ok_or_else(|| E::MissedVariableTypeDefinition.link_with_token(&token))?;
                 let ty = VariableType::read(&mut inner)?
-                    .ok_or(E::MissedVariableTypeDefinition.link_with_token(&token))?;
+                    .ok_or_else(|| E::MissedVariableTypeDefinition.link_with_token(&token))?;
                 if !inner.is_done() {
                     return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
                 }

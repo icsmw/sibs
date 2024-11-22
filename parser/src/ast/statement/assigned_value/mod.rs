@@ -14,7 +14,7 @@ impl ReadNode<AssignedValue> for AssignedValue {
         if !matches!(token.kind, Kind::Equals) {
             return Ok(None);
         };
-        let Some(node) = Node::try_oneof(
+        let node = Node::try_oneof(
             parser,
             &[
                 NodeReadTarget::Value(&[
@@ -35,9 +35,7 @@ impl ReadNode<AssignedValue> for AssignedValue {
                 ]),
             ],
         )?
-        else {
-            return Err(E::InvalidAssignation(parser.to_string()).link_with_token(&token));
-        };
+        .ok_or_else(|| E::InvalidAssignation(parser.to_string()).link_with_token(&token))?;
         Ok(Some(AssignedValue {
             token,
             node: Box::new(node),
