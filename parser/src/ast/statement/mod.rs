@@ -1,6 +1,5 @@
 mod conflict;
 mod interest;
-mod link;
 
 mod assignation;
 mod assigned_value;
@@ -18,6 +17,7 @@ mod r#while;
 
 use crate::*;
 use asttree::*;
+use diagnostics::*;
 
 impl AsVec<StatementId> for StatementId {
     fn as_vec() -> Vec<StatementId> {

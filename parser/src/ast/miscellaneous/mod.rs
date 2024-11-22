@@ -1,6 +1,5 @@
 mod conflict;
 mod interest;
-mod link;
 
 mod comment;
 mod include;
@@ -9,6 +8,7 @@ mod module;
 
 use crate::*;
 use asttree::*;
+use diagnostics::*;
 
 impl AsVec<MiscellaneousId> for MiscellaneousId {
     fn as_vec() -> Vec<MiscellaneousId> {

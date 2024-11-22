@@ -1,12 +1,12 @@
 mod conflict;
 mod interest;
-mod link;
 
 mod gatekeeper;
 mod skip;
 
 use crate::*;
 use asttree::*;
+use diagnostics::*;
 
 impl AsVec<ControlFlowModifierId> for ControlFlowModifierId {
     fn as_vec() -> Vec<ControlFlowModifierId> {

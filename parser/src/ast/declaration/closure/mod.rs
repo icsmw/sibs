@@ -1,9 +1,9 @@
-mod link;
 #[cfg(test)]
 mod proptests;
 
 use crate::*;
 use asttree::*;
+use diagnostics::*;
 use lexer::{Kind, KindId};
 
 impl ReadNode<Closure> for Closure {

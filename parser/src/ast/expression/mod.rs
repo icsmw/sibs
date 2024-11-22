@@ -1,6 +1,5 @@
 mod conflict;
 mod interest;
-mod link;
 
 mod accessor;
 mod binary_exp;
@@ -23,6 +22,7 @@ mod variable;
 
 use crate::*;
 use asttree::*;
+use diagnostics::*;
 
 impl AsVec<ExpressionId> for ExpressionId {
     fn as_vec() -> Vec<ExpressionId> {

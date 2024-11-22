@@ -58,7 +58,6 @@ version = "0.1.0"
 dependencies = [
  "asttree",
  "lexer",
- "parser",
  "thiserror",
  "uuid",
 ]
@@ -204,6 +203,7 @@ name = "parser"
 version = "0.1.0"
 dependencies = [
  "asttree",
+ "diagnostics",
  "enum_ids",
  "lexer",
  "paste",

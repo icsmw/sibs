@@ -1,6 +1,5 @@
 mod conflict;
 mod interest;
-mod link;
 
 mod argument_declaration;
 mod closure;
@@ -12,6 +11,7 @@ mod variable_variants;
 
 use crate::*;
 use asttree::*;
+use diagnostics::*;
 
 impl AsVec<DeclarationId> for DeclarationId {
     fn as_vec() -> Vec<DeclarationId> {

@@ -1,9 +1,9 @@
-mod link;
 #[cfg(test)]
 mod proptests;
 
 use crate::*;
 use asttree::*;
+use diagnostics::*;
 
 impl ReadNode<ComparisonSeq> for ComparisonSeq {
     fn read(parser: &mut Parser) -> Result<Option<ComparisonSeq>, LinkedErr<E>> {

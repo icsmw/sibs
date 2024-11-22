@@ -1,5 +1,4 @@
 mod conflict;
-mod link;
 #[cfg(test)]
 mod tests;
 
@@ -13,7 +12,7 @@ mod value;
 
 use crate::*;
 use asttree::*;
-pub use link::*;
+use diagnostics::*;
 
 #[derive(Debug, Clone)]
 pub enum NodeReadTarget<'a> {

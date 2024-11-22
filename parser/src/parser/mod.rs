@@ -7,11 +7,12 @@ pub use conflict::*;
 pub use interest::*;
 pub use nodes::*;
 pub use read::*;
-use uuid::Uuid;
 
 use crate::*;
+use diagnostics::*;
 use lexer::{KindId, Token};
 use std::fmt;
+use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct Parser {
@@ -137,6 +138,25 @@ impl Parser {
         let is_done = self.token().is_none();
         restore(self);
         is_done
+    }
+
+    pub fn err_current(&self, err: E) -> LinkedErr<E> {
+        LinkedErr {
+            link: self
+                .current()
+                .map(|tk| tk.into())
+                .unwrap_or(SrcLink::new(0, 0, &self.src)),
+            e: err,
+        }
+    }
+    pub fn err_until_end(&self, err: E) -> LinkedErr<E> {
+        LinkedErr {
+            link: self
+                .until_end()
+                .map(|tks| tks.into())
+                .unwrap_or(SrcLink::new(0, 0, &self.src)),
+            e: err,
+        }
     }
 }
 

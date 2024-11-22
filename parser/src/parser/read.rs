@@ -1,4 +1,5 @@
 use crate::*;
+use diagnostics::*;
 use std::fmt::Display;
 
 pub fn resolve_reading_conflicts<T: Clone, K: Display + Clone + PartialEq + ConflictResolver<K>>(

@@ -1,6 +1,5 @@
 use crate::*;
 use lexer::Token;
-use uuid::Uuid;
 
 impl From<&Token> for SrcLink {
     fn from(token: &Token) -> Self {

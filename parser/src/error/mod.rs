@@ -1,52 +1,7 @@
 use crate::*;
+use diagnostics::*;
 use lexer::{KindId, Token};
-use std::fmt;
 use thiserror::Error;
-
-#[derive(Clone, Debug)]
-pub struct LinkedErr<T: Clone + fmt::Display> {
-    pub link: SrcLink,
-    pub e: T,
-}
-
-impl<T: Clone + fmt::Display> LinkedErr<T> {
-    pub fn token(err: T, token: &Token) -> Self {
-        Self {
-            link: token.into(),
-            e: err,
-        }
-    }
-    pub fn between(err: T, from: &Token, to: &Token) -> Self {
-        Self {
-            link: (from, to).into(),
-            e: err,
-        }
-    }
-    pub fn current(err: T, parser: &Parser) -> Self {
-        Self {
-            link: parser
-                .current()
-                .map(|tk| tk.into())
-                .unwrap_or(SrcLink::new(0, 0, &parser.src)),
-            e: err,
-        }
-    }
-    pub fn until_end(err: T, parser: &Parser) -> Self {
-        Self {
-            link: parser
-                .until_end()
-                .map(|tks| tks.into())
-                .unwrap_or(SrcLink::new(0, 0, &parser.src)),
-            e: err,
-        }
-    }
-    pub fn by_link(err: T, link: &SrcLink) -> Self {
-        Self {
-            link: link.to_owned(),
-            e: err,
-        }
-    }
-}
 
 #[derive(Error, Debug, Clone)]
 pub enum E {
@@ -188,10 +143,10 @@ impl E {
         LinkedErr::between(self, from, to)
     }
     pub fn link_by_current(self, parser: &Parser) -> LinkedErr<E> {
-        LinkedErr::current(self, parser)
+        parser.err_current(self)
     }
     pub fn link_until_end(self, parser: &Parser) -> LinkedErr<E> {
-        LinkedErr::until_end(self, parser)
+        parser.err_until_end(self)
     }
     pub fn link(self, link: &SrcLink) -> LinkedErr<E> {
         LinkedErr::by_link(self, link)

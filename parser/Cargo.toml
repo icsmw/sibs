@@ -9,6 +9,7 @@ edition = "2021"
 enum_ids = "0.5"
 lexer = { path = "../lexer" }
 asttree = { path = "../asttree" }
+diagnostics = { path = "../diagnostics" }
 thiserror = "2.0"
 
 [dependencies.uuid]

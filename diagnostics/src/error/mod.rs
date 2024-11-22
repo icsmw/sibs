@@ -1,6 +1,5 @@
 use crate::*;
 use lexer::Token;
-use parser::Parser;
 use std::fmt;
 
 #[derive(Clone, Debug)]
@@ -19,24 +18,6 @@ impl<T: Clone + fmt::Display> LinkedErr<T> {
     pub fn between(err: T, from: &Token, to: &Token) -> Self {
         Self {
             link: (from, to).into(),
-            e: err,
-        }
-    }
-    pub fn current(err: T, parser: &Parser) -> Self {
-        Self {
-            link: parser
-                .current()
-                .map(|tk| tk.into())
-                .unwrap_or(SrcLink::new(0, 0, &parser.src)),
-            e: err,
-        }
-    }
-    pub fn until_end(err: T, parser: &Parser) -> Self {
-        Self {
-            link: parser
-                .until_end()
-                .map(|tks| tks.into())
-                .unwrap_or(SrcLink::new(0, 0, &parser.src)),
             e: err,
         }
     }
