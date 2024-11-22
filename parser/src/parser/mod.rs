@@ -15,9 +15,9 @@ use std::fmt;
 
 #[derive(Debug)]
 pub struct Parser {
-    pub(crate) tokens: Vec<Token>,
-    pub(crate) pos: usize,
-    pub(crate) src: Uuid,
+    pub tokens: Vec<Token>,
+    pub pos: usize,
+    pub src: Uuid,
 }
 
 impl Parser {
@@ -48,11 +48,11 @@ impl Parser {
         None
     }
 
-    pub(crate) fn current(&self) -> Option<&Token> {
+    pub fn current(&self) -> Option<&Token> {
         self.tokens.get(self.pos).or_else(|| self.tokens.last())
     }
 
-    pub(crate) fn until_end(&self) -> Option<(&Token, &Token)> {
+    pub fn until_end(&self) -> Option<(&Token, &Token)> {
         if let (Some(from), Some(to)) = (
             self.tokens.get(self.pos).or_else(|| self.tokens.last()),
             self.tokens.last(),
