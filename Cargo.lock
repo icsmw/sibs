@@ -53,6 +53,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "common"
+version = "0.1.0"
+dependencies = [
+ "enum_ids",
+ "uuid",
+]
+
+[[package]]
 name = "diagnostics"
 version = "0.1.0"
 dependencies = [
@@ -352,9 +360,9 @@ name = "semantic"
 version = "0.1.0"
 dependencies = [
  "asttree",
+ "common",
  "diagnostics",
  "enum_ids",
- "parser",
  "thiserror",
  "uuid",
 ]

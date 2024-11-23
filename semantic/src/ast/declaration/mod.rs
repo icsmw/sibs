@@ -11,7 +11,15 @@ use asttree::*;
 use diagnostics::*;
 
 impl InferType for Declaration {
-    fn infer_type(&self, _tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
-        Ok(DataType::Empty)
+    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
+        match self {
+            Declaration::ArgumentDeclaration(n) => n.infer_type(tcx),
+            Declaration::Closure(n) => n.infer_type(tcx),
+            Declaration::FunctionDeclaration(n) => n.infer_type(tcx),
+            Declaration::VariableDeclaration(n) => n.infer_type(tcx),
+            Declaration::VariableType(n) => n.infer_type(tcx),
+            Declaration::VariableTypeDeclaration(n) => n.infer_type(tcx),
+            Declaration::VariableVariants(n) => n.infer_type(tcx),
+        }
     }
 }

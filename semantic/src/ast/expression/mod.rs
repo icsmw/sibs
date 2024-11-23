@@ -22,7 +22,26 @@ use asttree::*;
 use diagnostics::*;
 
 impl InferType for Expression {
-    fn infer_type(&self, _tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
-        Ok(DataType::Empty)
+    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
+        match self {
+            Expression::Accessor(n) => n.infer_type(tcx),
+            Expression::BinaryExp(n) => n.infer_type(tcx),
+            Expression::BinaryExpGroup(n) => n.infer_type(tcx),
+            Expression::BinaryExpSeq(n) => n.infer_type(tcx),
+            Expression::BinaryOp(n) => n.infer_type(tcx),
+            Expression::Call(n) => n.infer_type(tcx),
+            Expression::Command(n) => n.infer_type(tcx),
+            Expression::Comparison(n) => n.infer_type(tcx),
+            Expression::ComparisonGroup(n) => n.infer_type(tcx),
+            Expression::ComparisonOp(n) => n.infer_type(tcx),
+            Expression::ComparisonSeq(n) => n.infer_type(tcx),
+            Expression::CompoundAssignments(n) => n.infer_type(tcx),
+            Expression::CompoundAssignmentsOp(n) => n.infer_type(tcx),
+            Expression::FunctionCall(n) => n.infer_type(tcx),
+            Expression::LogicalOp(n) => n.infer_type(tcx),
+            Expression::Range(n) => n.infer_type(tcx),
+            Expression::TaskCall(n) => n.infer_type(tcx),
+            Expression::Variable(n) => n.infer_type(tcx),
+        }
     }
 }

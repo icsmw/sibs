@@ -5,5 +5,6 @@ members = [
     "asttree",
     "parser",
     "diagnostics",
-    "semantic"
+    "semantic",
+    "common"
 ]

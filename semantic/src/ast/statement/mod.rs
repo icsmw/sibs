@@ -17,7 +17,21 @@ use asttree::*;
 use diagnostics::*;
 
 impl InferType for Statement {
-    fn infer_type(&self, _tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
-        Ok(DataType::Empty)
+    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
+        match self {
+            Statement::Assignation(n) => n.infer_type(tcx),
+            Statement::AssignedValue(n) => n.infer_type(tcx),
+            Statement::Block(n) => n.infer_type(tcx),
+            Statement::Break(n) => n.infer_type(tcx),
+            Statement::Each(n) => n.infer_type(tcx),
+            Statement::For(n) => n.infer_type(tcx),
+            Statement::If(n) => n.infer_type(tcx),
+            Statement::Join(n) => n.infer_type(tcx),
+            Statement::Loop(n) => n.infer_type(tcx),
+            Statement::OneOf(n) => n.infer_type(tcx),
+            Statement::Optional(n) => n.infer_type(tcx),
+            Statement::Return(n) => n.infer_type(tcx),
+            Statement::While(n) => n.infer_type(tcx),
+        }
     }
 }

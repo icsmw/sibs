@@ -1,2 +1,0 @@
-join (:wrapper:prod, :self:prod, :self:build($mode), :self:build("dev"), :self:build("dev", "prod"), :self:build("dev", $prod));
-join (:a:a, :a:b);

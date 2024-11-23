@@ -1,4 +1,0 @@
-#(a)
-    @print {
-        print("Hello World!");
-    };

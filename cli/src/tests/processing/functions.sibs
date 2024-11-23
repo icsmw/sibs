@@ -1,5 +1,0 @@
-@test {
-    if !test::return_bool(false) {
-        true;
-    };
-};

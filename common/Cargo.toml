@@ -1,5 +1,5 @@
 [package]
-name = "semantic"
+name = "common"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,10 +7,6 @@ edition = "2021"
 
 [dependencies]
 enum_ids = "0.5"
-asttree = { path = "../asttree" }
-diagnostics = { path = "../diagnostics" }
-common = { path = "../common" }
-thiserror = "2.0"
 
 [dependencies.uuid]
 version = "1.8"

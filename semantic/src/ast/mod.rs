@@ -11,7 +11,15 @@ use asttree::*;
 use diagnostics::*;
 
 impl InferType for Node {
-    fn infer_type(&self, _tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
-        Ok(DataType::Empty)
+    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
+        match self {
+            Node::ControlFlowModifier(n) => n.infer_type(tcx),
+            Node::Declaration(n) => n.infer_type(tcx),
+            Node::Expression(n) => n.infer_type(tcx),
+            Node::Miscellaneous(n) => n.infer_type(tcx),
+            Node::Root(n) => n.infer_type(tcx),
+            Node::Statement(n) => n.infer_type(tcx),
+            Node::Value(n) => n.infer_type(tcx),
+        }
     }
 }

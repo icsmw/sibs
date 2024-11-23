@@ -1,5 +1,0 @@
-env::is_os(linux) -> "string";
-env::is_os(linux) -> print("hello");
-env::is_os(window) -> ("a"; "b");
-env::is_os(window) -> ("a"; :build("b"));
-env::is_os(window) -> (:build("a"); "b");

@@ -1,3 +1,0 @@
-first {};
-first {os window => "release{$version}-win.zip";}
-first ();

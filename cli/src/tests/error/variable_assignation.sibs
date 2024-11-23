@@ -1,3 +1,0 @@
-$var = not_valid_value;
-$var = {};
-$var = if $dev == "one" { env::is_os() };

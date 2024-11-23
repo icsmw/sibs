@@ -1,9 +1,0 @@
-@distribution{} { cd(); };
-@distribution# { cd(); };
-@%distribution { cd(); };
-@distri^bution { cd(); };
-@custom($input: {NULL}) { cd(); };
-@build($mode: dev , prod) { cd(); };
-@build_multi($mode: dev | prod; target: win | linux) { cd(); };
-@build_b($mode: dev | prod:; $target: win | linux; $input: {string}) { cd(); };
-@build_c($input_a: {string}; $mode: dev | prod; $target: win | linux; $input_b: {string}}) { cd(); };
