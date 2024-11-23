@@ -4,5 +4,6 @@ members = [
     "lexer", 
     "asttree",
     "parser",
-    "diagnostics"
+    "diagnostics",
+    "semantic"
 ]
