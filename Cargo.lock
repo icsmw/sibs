@@ -6,6 +6,7 @@ version = 3
 name = "asttree"
 version = "0.1.0"
 dependencies = [
+ "common",
  "enum_ids",
  "lexer",
  "proptest",
@@ -57,6 +58,7 @@ name = "common"
 version = "0.1.0"
 dependencies = [
  "enum_ids",
+ "thiserror",
  "uuid",
 ]
 
@@ -363,6 +365,7 @@ dependencies = [
  "common",
  "diagnostics",
  "enum_ids",
+ "lexer",
  "thiserror",
  "uuid",
 ]

@@ -1,9 +1,19 @@
 use crate::*;
-use diagnostics::*;
+
 use thiserror::Error;
 
 #[derive(Error, Debug, Clone)]
 pub enum E {
-    #[error("Next nodes are in conflict")]
-    NodesAreInConflict,
+    #[error("Token isn't bound to known DataType")]
+    TokenIsNotBoundToKnownDataType,
+    #[error("No variants are defined")]
+    NoVariantsAreDefined,
+    #[error("Variants have different types")]
+    VariantsHaveDiffTypes,
+    #[error("Types are dismatch: {0}")]
+    DismatchTypes(String),
+    #[error("Attempt to leave global scope")]
+    AttemptToLeaveGlobalScope,
+    #[error("Attempt to set type without scope")]
+    NoCurrentScope,
 }

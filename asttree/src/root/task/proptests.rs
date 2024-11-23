@@ -1,5 +1,4 @@
 use crate::*;
-use lexer::{gens, Keyword, Kind, KindId, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for Task {

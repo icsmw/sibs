@@ -1,7 +1,7 @@
 #[cfg(feature = "proptests")]
 mod proptests;
 
-use lexer::Token;
+use crate::*;
 use std::fmt;
 
 #[derive(Debug, Clone)]

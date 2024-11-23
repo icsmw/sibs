@@ -18,8 +18,7 @@ mod task_call;
 mod variable;
 
 use crate::*;
-use asttree::*;
-use diagnostics::*;
+
 
 impl InferType for Expression {
     fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {

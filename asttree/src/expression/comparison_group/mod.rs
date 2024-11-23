@@ -1,8 +1,6 @@
 #[cfg(feature = "proptests")]
 mod proptests;
 
-use lexer::Kind;
-
 use crate::*;
 use std::fmt;
 

@@ -1,6 +1,4 @@
 use crate::*;
-
-use lexer::{Kind, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for Call {

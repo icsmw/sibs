@@ -7,8 +7,6 @@ mod variable_type_declaration;
 mod variable_variants;
 
 use crate::*;
-use asttree::*;
-use diagnostics::*;
 
 impl InferType for Declaration {
     fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {

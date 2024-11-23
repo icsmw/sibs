@@ -16,6 +16,7 @@ impl ReadNode<ArgumentDeclaration> for ArgumentDeclaration {
             parser,
             &[NodeReadTarget::Declaration(&[
                 DeclarationId::VariableTypeDeclaration,
+                DeclarationId::VariableVariants,
             ])],
         )?
         .map(Box::new) else {

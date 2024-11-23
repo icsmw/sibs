@@ -1,5 +1,4 @@
 use crate::*;
-use lexer::{Kind, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for VariableVariants {
@@ -19,9 +18,9 @@ impl Arbitrary for VariableVariants {
             ]),
             1..5,
         )
-        .prop_map(|types| {
+        .prop_map(|variants| {
             let token = Token::for_test(Kind::Colon);
-            VariableVariants { types, token }
+            VariableVariants { variants, token }
         })
         .boxed()
     }

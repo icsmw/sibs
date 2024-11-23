@@ -2,7 +2,6 @@
 mod proptests;
 
 use crate::*;
-use lexer::{Kind, Token};
 use std::fmt;
 
 #[enum_ids::enum_ids(display_variant)]

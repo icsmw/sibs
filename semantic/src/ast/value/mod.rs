@@ -6,8 +6,7 @@ mod number;
 mod primitive_string;
 
 use crate::*;
-use asttree::*;
-use diagnostics::*;
+
 
 impl InferType for Value {
     fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {

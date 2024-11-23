@@ -21,7 +21,7 @@ pub enum Declaration {
     FunctionDeclaration(FunctionDeclaration),
     /// let a = 5; etc.
     VariableDeclaration(VariableDeclaration),
-    /// a: string, a: number, a: string[], a: unknown etc.
+    /// a: string, a: number, a: string[], a: unknown, a: 1 | 2 | 3, a: "one" | "two" etc.
     ArgumentDeclaration(ArgumentDeclaration),
     /// a: "one" | "two", a: 1 | 2 etc.
     VariableVariants(VariableVariants),

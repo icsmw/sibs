@@ -7,8 +7,6 @@ mod statement;
 mod value;
 
 use crate::*;
-use asttree::*;
-use diagnostics::*;
 
 impl InferType for Node {
     fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {

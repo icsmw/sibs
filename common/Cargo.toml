@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-enum_ids = { workspace = true }
-uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }
 
+enum_ids = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }

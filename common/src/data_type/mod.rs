@@ -1,16 +1,18 @@
-#[enum_ids::enum_ids]
+#[enum_ids::enum_ids(display_variant)]
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum DataType {
-    Empty,
+    Void,
     // Output(Output),
-    // SpawnStatus(SpawnStatus),
+    SpawnStatus,
     Range(Vec<DataType>),
-    Isize(isize),
-    F64(f64),
-    Bool(bool),
-    // PathBuf(PathBuf),
-    String(String),
-    Vec(Vec<DataType>),
-    Error(String),
-    // Closure(Uuid),
+    Isize,
+    F64,
+    Bool,
+    PathBuf,
+    String,
+    Vec(Box<DataType>),
+    Error,
+    Closure,
+    Variants(Box<DataType>),
+    Undefined,
 }

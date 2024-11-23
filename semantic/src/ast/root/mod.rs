@@ -2,8 +2,7 @@ mod component;
 mod task;
 
 use crate::*;
-use asttree::*;
-use diagnostics::*;
+
 
 impl InferType for Root {
     fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {

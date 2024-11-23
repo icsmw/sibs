@@ -1,6 +1,4 @@
 use crate::*;
-
-use lexer::{gens, KeywordId, Kind, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for Break {

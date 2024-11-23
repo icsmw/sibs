@@ -14,7 +14,7 @@ impl ReadNode<VariableVariants> for VariableVariants {
         if !matches!(token.kind, Kind::Colon) {
             return Ok(None);
         }
-        let mut types = Vec::new();
+        let mut variants = Vec::new();
         loop {
             let Some(node) = Node::try_oneof(
                 parser,
@@ -26,7 +26,7 @@ impl ReadNode<VariableVariants> for VariableVariants {
             else {
                 break;
             };
-            types.push(node);
+            variants.push(node);
             let restore = parser.pin();
             if let Some(nx) = parser.token() {
                 if !matches!(nx.kind, Kind::VerticalBar) {
@@ -37,10 +37,10 @@ impl ReadNode<VariableVariants> for VariableVariants {
                 break;
             }
         }
-        if types.is_empty() {
+        if variants.is_empty() {
             Ok(None)
         } else {
-            Ok(Some(VariableVariants { token, types }))
+            Ok(Some(VariableVariants { token, variants }))
         }
     }
 }

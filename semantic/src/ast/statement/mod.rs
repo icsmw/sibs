@@ -13,8 +13,7 @@ mod r#return;
 mod r#while;
 
 use crate::*;
-use asttree::*;
-use diagnostics::*;
+
 
 impl InferType for Statement {
     fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {

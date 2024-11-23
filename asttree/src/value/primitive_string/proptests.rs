@@ -1,6 +1,4 @@
 use crate::*;
-
-use lexer::{gens, Kind, KindId, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for PrimitiveString {

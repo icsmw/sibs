@@ -1,5 +1,4 @@
 use crate::*;
-use lexer::{gens, KindId, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for Meta {

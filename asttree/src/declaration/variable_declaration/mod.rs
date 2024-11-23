@@ -2,7 +2,6 @@
 mod proptests;
 
 use crate::*;
-use lexer::Token;
 use std::fmt;
 
 #[derive(Debug, Clone)]

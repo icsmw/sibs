@@ -1,6 +1,4 @@
 use crate::*;
-
-use lexer::{gens::kind, Kind, KindId, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for Variable {
@@ -9,7 +7,7 @@ impl Arbitrary for Variable {
     type Strategy = BoxedStrategy<Self>;
 
     fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-        kind(KindId::Identifier)
+        gens::kind(KindId::Identifier)
             .prop_filter_map("Expected: Kind::Identifier", |knd| {
                 if let Kind::Identifier(ident) = knd {
                     Some(Variable {

@@ -1,10 +1,8 @@
 #[cfg(feature = "proptests")]
 mod proptests;
 
-use lexer::{Kind, Token};
-use std::fmt;
-
 use crate::*;
+use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct Component {

@@ -14,6 +14,8 @@ pub use root::*;
 pub use statement::*;
 pub use value::*;
 
+pub(crate) use lexer::*;
+
 #[cfg(feature = "proptests")]
 pub const PROPTEST_DEEP_FACTOR: u8 = 5;
 

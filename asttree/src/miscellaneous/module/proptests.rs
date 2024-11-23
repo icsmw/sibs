@@ -1,5 +1,4 @@
 use crate::*;
-use lexer::{Keyword, Kind, Token};
 use proptest::prelude::*;
 
 impl Arbitrary for Module {

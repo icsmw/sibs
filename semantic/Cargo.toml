@@ -13,4 +13,5 @@ uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }
 
 asttree = { path = "../asttree" }
 diagnostics = { path = "../diagnostics" }
+lexer = { path = "../lexer" }
 common = { path = "../common" }
