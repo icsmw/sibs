@@ -6,14 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+
+thiserror = { workspace = true }
+uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }
+
 lexer = { path = "../lexer" }
 asttree = { path = "../asttree" }
-thiserror = "2.0"
-
-[dependencies.uuid]
-version = "1.8"
-features = [
-    "v4",                # Lets you generate random UUIDs
-    "fast-rng",          # Use a faster (but still sufficiently random) RNG
-    "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
-]

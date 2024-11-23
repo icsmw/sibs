@@ -16,17 +16,12 @@ proptests = [
 ]
 
 [dependencies]
-thiserror = "2.0"
-enum_ids = "0.5"
+
+thiserror = { workspace = true }
+enum_ids = { workspace = true }
+uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }
 proptest = { version = "1.4", optional = true }
 
-[dependencies.uuid]
-version = "1.8"
-features = [
-    "v4",                # Lets you generate random UUIDs
-    "fast-rng",          # Use a faster (but still sufficiently random) RNG
-    "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
-]
 
 [dev-dependencies]
 proptest = "1.4"
