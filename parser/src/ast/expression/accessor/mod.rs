@@ -35,6 +35,7 @@ impl ReadNode<Accessor> for Accessor {
             node: Box::new(node),
             open,
             close,
+            uuid: Uuid::new_v4(),
         }))
     }
 }

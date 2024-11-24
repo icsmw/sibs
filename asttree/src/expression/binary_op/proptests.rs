@@ -31,7 +31,11 @@ impl Arbitrary for BinaryOp {
                     BinaryOperator::Minus => Kind::Minus,
                     BinaryOperator::Plus => Kind::Plus,
                 });
-                BinaryOp { operator, token }
+                BinaryOp {
+                    operator,
+                    token,
+                    uuid: Uuid::new_v4(),
+                }
             })
             .boxed()
     }

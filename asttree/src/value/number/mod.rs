@@ -8,6 +8,7 @@ use std::fmt;
 pub struct Number {
     pub inner: f64,
     pub token: Token,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for Number {

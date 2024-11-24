@@ -16,6 +16,7 @@ impl ReadNode<Break> for Break {
         }
         Ok(Some(Break {
             token: tk.to_owned(),
+            uuid: Uuid::new_v4(),
         }))
     }
 }

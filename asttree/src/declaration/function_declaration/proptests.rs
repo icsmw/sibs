@@ -26,6 +26,7 @@ impl Arbitrary for FunctionDeclaration {
                 name: Token::for_test(name),
                 block: Box::new(block),
                 args,
+                uuid: Uuid::new_v4(),
             })
             .boxed()
     }

@@ -19,6 +19,7 @@ impl Arbitrary for While {
                 comparison: Box::new(comparison),
                 block: Box::new(block),
                 token: Token::for_test(Kind::Keyword(Keyword::While)),
+                uuid: Uuid::new_v4(),
             })
             .boxed()
     }

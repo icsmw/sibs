@@ -32,6 +32,7 @@ impl fmt::Display for IfCase {
 #[derive(Debug, Clone)]
 pub struct If {
     pub cases: Vec<IfCase>,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for If {

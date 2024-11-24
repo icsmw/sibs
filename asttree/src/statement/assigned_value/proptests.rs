@@ -65,6 +65,7 @@ impl Arbitrary for AssignedValue {
         .prop_map(move |node| AssignedValue {
             token: Token::for_test(Kind::Equals),
             node: Box::new(node),
+            uuid: Uuid::new_v4(),
         })
         .boxed()
     }

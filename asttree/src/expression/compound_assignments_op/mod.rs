@@ -31,6 +31,7 @@ impl fmt::Display for CompoundAssignmentsOperator {
 pub struct CompoundAssignmentsOp {
     pub token: Token,
     pub operator: CompoundAssignmentsOperator,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for CompoundAssignmentsOp {

@@ -15,6 +15,7 @@ impl ReadNode<Variable> for Variable {
             return Ok(Some(Variable {
                 ident: ident.clone(),
                 token: tk.to_owned(),
+                uuid: Uuid::new_v4(),
             }));
         }
         Ok(None)

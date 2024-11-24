@@ -36,6 +36,7 @@ impl ReadNode<Range> for Range {
         Ok(Some(Range {
             left: Box::new(left),
             right: Box::new(right),
+            uuid: Uuid::new_v4(),
         }))
     }
 }

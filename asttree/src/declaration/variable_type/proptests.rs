@@ -43,7 +43,10 @@ impl Arbitrary for VariableType {
                 .boxed()])
             .boxed()
         }
-        .prop_map(|ty| VariableType { r#type: ty })
+        .prop_map(|ty| VariableType {
+            r#type: ty,
+            uuid: Uuid::new_v4(),
+        })
         .boxed()
     }
 }

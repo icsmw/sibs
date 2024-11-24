@@ -36,6 +36,8 @@ pub use range::*;
 pub use task_call::*;
 pub use variable::*;
 
+use crate::*;
+
 #[enum_ids::enum_ids(derive = "Debug, PartialEq, Clone", display, display_from_value)]
 #[derive(Debug, Clone)]
 pub enum Expression {
@@ -75,4 +77,29 @@ pub enum Expression {
     Command(Command),
     /// :comp:task(args)
     TaskCall(TaskCall),
+}
+
+impl Expression {
+    pub fn uuid(&self) -> &Uuid {
+        match self {
+            Self::Accessor(n) => &n.uuid,
+            Self::BinaryExp(n) => &n.uuid,
+            Self::BinaryExpGroup(n) => &n.uuid,
+            Self::BinaryExpSeq(n) => &n.uuid,
+            Self::BinaryOp(n) => &n.uuid,
+            Self::Call(n) => &n.uuid,
+            Self::Command(n) => &n.uuid,
+            Self::Comparison(n) => &n.uuid,
+            Self::ComparisonGroup(n) => &n.uuid,
+            Self::ComparisonOp(n) => &n.uuid,
+            Self::ComparisonSeq(n) => &n.uuid,
+            Self::CompoundAssignments(n) => &n.uuid,
+            Self::CompoundAssignmentsOp(n) => &n.uuid,
+            Self::FunctionCall(n) => &n.uuid,
+            Self::LogicalOp(n) => &n.uuid,
+            Self::Range(n) => &n.uuid,
+            Self::TaskCall(n) => &n.uuid,
+            Self::Variable(n) => &n.uuid,
+        }
+    }
 }

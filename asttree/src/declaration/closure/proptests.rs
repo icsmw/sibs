@@ -25,6 +25,7 @@ impl Arbitrary for Closure {
                 args,
                 open: Token::for_test(Kind::LeftParen),
                 close: Token::for_test(Kind::RightParen),
+                uuid: Uuid::new_v4(),
             })
             .boxed()
     }

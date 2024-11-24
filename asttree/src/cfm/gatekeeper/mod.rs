@@ -10,6 +10,7 @@ pub struct Gatekeeper {
     pub nodes: Vec<Node>,
     pub open: Token,
     pub close: Token,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for Gatekeeper {

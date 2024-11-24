@@ -35,7 +35,11 @@ impl Arbitrary for ComparisonOp {
                     ComparisonOperator::EqualEqual => Kind::EqualEqual,
                     ComparisonOperator::BangEqual => Kind::BangEqual,
                 });
-                ComparisonOp { operator, token }
+                ComparisonOp {
+                    operator,
+                    token,
+                    uuid: Uuid::new_v4(),
+                }
             })
             .boxed()
     }

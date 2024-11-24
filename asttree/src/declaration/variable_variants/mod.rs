@@ -9,6 +9,7 @@ use std::fmt;
 pub struct VariableVariants {
     pub variants: Vec<Node>,
     pub token: Token,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for VariableVariants {

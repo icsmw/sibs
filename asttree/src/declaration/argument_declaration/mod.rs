@@ -8,6 +8,7 @@ use std::fmt;
 pub struct ArgumentDeclaration {
     pub variable: Box<Node>,
     pub r#type: Box<Node>,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for ArgumentDeclaration {

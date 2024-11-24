@@ -58,7 +58,10 @@ impl ReadNode<If> for If {
         if cases.is_empty() {
             Ok(None)
         } else {
-            Ok(Some(If { cases }))
+            Ok(Some(If {
+                cases,
+                uuid: Uuid::new_v4(),
+            }))
         }
     }
 }

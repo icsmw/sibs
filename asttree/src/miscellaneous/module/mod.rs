@@ -8,6 +8,7 @@ use std::fmt;
 pub struct Module {
     pub token: Token,
     pub node: Box<Node>,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for Module {

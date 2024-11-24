@@ -31,7 +31,11 @@ impl Arbitrary for CompoundAssignmentsOp {
                     CompoundAssignmentsOperator::SlashEqual => Kind::SlashEqual,
                     CompoundAssignmentsOperator::StarEqual => Kind::StarEqual,
                 });
-                CompoundAssignmentsOp { operator, token }
+                CompoundAssignmentsOp {
+                    operator,
+                    token,
+                    uuid: Uuid::new_v4(),
+                }
             })
             .boxed()
     }

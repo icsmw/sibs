@@ -39,6 +39,7 @@ impl ReadNode<OneOf> for OneOf {
             token,
             open,
             close,
+            uuid: Uuid::new_v4(),
         }))
     }
 }

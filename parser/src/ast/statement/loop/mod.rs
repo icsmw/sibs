@@ -20,6 +20,7 @@ impl ReadNode<Loop> for Loop {
         Ok(Some(Loop {
             token,
             block: Box::new(block),
+            uuid: Uuid::new_v4(),
         }))
     }
 }

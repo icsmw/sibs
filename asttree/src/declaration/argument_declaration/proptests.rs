@@ -26,6 +26,7 @@ impl Arbitrary for ArgumentDeclaration {
             .prop_map(|(variable, ty)| ArgumentDeclaration {
                 variable: Box::new(variable),
                 r#type: Box::new(ty),
+                uuid: Uuid::new_v4(),
             })
             .boxed()
     }

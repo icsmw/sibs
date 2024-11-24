@@ -8,6 +8,7 @@ use std::fmt;
 pub struct Loop {
     pub token: Token,
     pub block: Box<Node>,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for Loop {

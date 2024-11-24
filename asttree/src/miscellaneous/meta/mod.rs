@@ -6,6 +6,7 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub struct Meta {
     pub token: Token,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for Meta {

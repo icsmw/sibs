@@ -14,6 +14,9 @@ impl ReadNode<Meta> for Meta {
         if !matches!(token.kind, Kind::Meta(..)) {
             return Ok(None);
         }
-        Ok(Some(Meta { token }))
+        Ok(Some(Meta {
+            token,
+            uuid: Uuid::new_v4(),
+        }))
     }
 }

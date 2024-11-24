@@ -20,6 +20,7 @@ impl ReadNode<Include> for Include {
         Ok(Some(Include {
             token,
             node: Box::new(node),
+            uuid: Uuid::new_v4(),
         }))
     }
 }

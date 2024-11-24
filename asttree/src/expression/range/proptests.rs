@@ -29,6 +29,7 @@ impl Arbitrary for Range {
             .prop_map(move |(left, right)| Range {
                 left: Box::new(left),
                 right: Box::new(right),
+                uuid: Uuid::new_v4(),
             })
             .boxed()
     }

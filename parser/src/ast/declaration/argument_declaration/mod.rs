@@ -25,6 +25,7 @@ impl ReadNode<ArgumentDeclaration> for ArgumentDeclaration {
         Ok(Some(ArgumentDeclaration {
             variable: Box::new(variable),
             r#type: ty,
+            uuid: Uuid::new_v4(),
         }))
     }
 }

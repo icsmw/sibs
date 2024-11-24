@@ -25,6 +25,7 @@ impl ReadNode<ComparisonOp> for ComparisonOp {
         Ok(Some(ComparisonOp {
             token: tk.clone(),
             operator,
+            uuid: Uuid::new_v4(),
         }))
     }
 }

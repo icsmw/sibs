@@ -20,7 +20,11 @@ impl Arbitrary for VariableVariants {
         )
         .prop_map(|variants| {
             let token = Token::for_test(Kind::Colon);
-            VariableVariants { variants, token }
+            VariableVariants {
+                variants,
+                token,
+                uuid: Uuid::new_v4(),
+            }
         })
         .boxed()
     }

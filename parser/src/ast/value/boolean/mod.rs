@@ -18,6 +18,7 @@ impl ReadNode<Boolean> for Boolean {
                     return Ok(None);
                 },
                 token: tk.clone(),
+                uuid: Uuid::new_v4(),
             };
             return Ok(Some(node));
         }

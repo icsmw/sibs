@@ -9,6 +9,7 @@ pub struct Accessor {
     pub node: Box<Node>,
     pub open: Token,
     pub close: Token,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for Accessor {

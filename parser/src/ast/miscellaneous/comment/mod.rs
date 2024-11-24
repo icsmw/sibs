@@ -14,6 +14,9 @@ impl ReadNode<Comment> for Comment {
         if !matches!(token.kind, Kind::Comment(..)) {
             return Ok(None);
         }
-        Ok(Some(Comment { token }))
+        Ok(Some(Comment {
+            token,
+            uuid: Uuid::new_v4(),
+        }))
     }
 }

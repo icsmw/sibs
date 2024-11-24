@@ -64,7 +64,12 @@ impl ReadNode<Block> for Block {
         if !inner.is_done() {
             Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner))
         } else {
-            Ok(Some(Block { nodes, open, close }))
+            Ok(Some(Block {
+                nodes,
+                open,
+                close,
+                uuid: Uuid::new_v4(),
+            }))
         }
     }
 }

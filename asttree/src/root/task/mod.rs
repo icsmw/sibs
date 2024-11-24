@@ -11,6 +11,7 @@ pub struct Task {
     pub name: Token,
     pub args: Vec<Node>,
     pub block: Box<Node>,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for Task {

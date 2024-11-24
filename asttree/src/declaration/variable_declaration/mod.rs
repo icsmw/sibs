@@ -10,6 +10,7 @@ pub struct VariableDeclaration {
     pub variable: Box<Node>,
     pub r#type: Option<Box<Node>>,
     pub assignation: Option<Box<Node>>,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for VariableDeclaration {

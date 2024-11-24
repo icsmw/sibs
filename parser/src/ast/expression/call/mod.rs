@@ -22,6 +22,7 @@ impl ReadNode<Call> for Call {
         Ok(Some(Call {
             token,
             node: Box::new(node),
+            uuid: Uuid::new_v4(),
         }))
     }
 }

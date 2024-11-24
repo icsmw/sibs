@@ -9,6 +9,7 @@ pub struct Optional {
     pub comparison: Box<Node>,
     pub token: Token,
     pub action: Box<Node>,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for Optional {

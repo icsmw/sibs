@@ -46,6 +46,7 @@ impl ReadNode<FunctionDeclaration> for FunctionDeclaration {
             name,
             args,
             block: Box::new(block),
+            uuid: Uuid::new_v4(),
         }))
     }
 }

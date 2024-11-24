@@ -27,6 +27,7 @@ impl Arbitrary for Task {
                 sig: Token::for_test(Kind::Keyword(Keyword::Task)),
                 name: Token::for_test(name),
                 block: Box::new(block),
+                uuid: Uuid::new_v4(),
                 args,
             })
             .boxed()

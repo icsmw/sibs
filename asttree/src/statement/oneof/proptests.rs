@@ -18,6 +18,7 @@ impl Arbitrary for OneOf {
             open: Token::for_test(Kind::LeftParen),
             close: Token::for_test(Kind::RightParen),
             token: Token::for_test(Kind::Keyword(Keyword::OneOf)),
+            uuid: Uuid::new_v4(),
         })
         .boxed()
     }

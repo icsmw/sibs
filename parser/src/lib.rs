@@ -17,7 +17,7 @@ pub use read::*;
 use diagnostics::*;
 use lexer::{KindId, Token};
 use std::fmt;
-use uuid::Uuid;
+pub(crate) use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct Parser {

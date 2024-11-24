@@ -129,6 +129,7 @@ impl Arbitrary for Block {
             nodes,
             open: Token::for_test(Kind::LeftBrace),
             close: Token::for_test(Kind::RightBrace),
+            uuid: Uuid::new_v4(),
         })
         .boxed()
     }

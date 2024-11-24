@@ -48,7 +48,10 @@ impl ReadNode<ComparisonGroup> for ComparisonGroup {
         Ok(if collected.is_empty() || !inner.is_done() {
             None
         } else {
-            Some(ComparisonGroup { nodes: collected })
+            Some(ComparisonGroup {
+                nodes: collected,
+                uuid: Uuid::new_v4(),
+            })
         })
     }
 }

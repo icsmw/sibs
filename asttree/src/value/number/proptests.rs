@@ -13,6 +13,7 @@ impl Arbitrary for Number {
                     Some(Number {
                         inner: n.to_owned(),
                         token: Token::for_test(Kind::Number(n.to_owned())),
+                        uuid: Uuid::new_v4(),
                     })
                 } else {
                     None

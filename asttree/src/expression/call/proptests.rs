@@ -13,6 +13,7 @@ impl Arbitrary for Call {
             .prop_map(move |node| Call {
                 token: Token::for_test(Kind::Dot),
                 node: Box::new(node),
+                uuid: Uuid::new_v4(),
             })
             .boxed()
     }

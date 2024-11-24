@@ -53,6 +53,7 @@ impl ReadNode<Each> for Each {
             index: Box::new(index_ref),
             elements: Box::new(elements),
             block: Box::new(block),
+            uuid: Uuid::new_v4(),
         }))
     }
 }

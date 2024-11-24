@@ -24,6 +24,7 @@ impl Arbitrary for Error {
         .prop_map(move |node| Error {
             node: Box::new(node),
             token: Token::for_test(Kind::Identifier(String::from("Error"))),
+            uuid: Uuid::new_v4(),
         })
         .boxed()
     }

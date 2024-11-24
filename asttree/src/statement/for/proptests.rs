@@ -50,6 +50,7 @@ impl Arbitrary for For {
                 block: Box::new(block),
                 token_for: Token::for_test(Kind::Keyword(Keyword::For)),
                 token_in: Token::for_test(Kind::Keyword(Keyword::In)),
+                uuid: Uuid::new_v4(),
             })
             .boxed()
     }

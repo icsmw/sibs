@@ -21,6 +21,7 @@ impl ReadNode<CompoundAssignmentsOp> for CompoundAssignmentsOp {
         Ok(Some(CompoundAssignmentsOp {
             token: tk.clone(),
             operator,
+            uuid: Uuid::new_v4(),
         }))
     }
 }

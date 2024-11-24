@@ -35,6 +35,7 @@ impl ReadNode<Closure> for Closure {
             block: Box::new(block),
             open,
             close,
+            uuid: Uuid::new_v4(),
         }))
     }
 }

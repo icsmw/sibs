@@ -39,6 +39,7 @@ impl ReadNode<Join> for Join {
             token,
             open,
             close,
+            uuid: Uuid::new_v4(),
         }))
     }
 }

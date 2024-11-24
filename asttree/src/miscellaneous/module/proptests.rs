@@ -11,6 +11,7 @@ impl Arbitrary for Module {
             .prop_map(|node| Module {
                 token: Token::for_test(Kind::Keyword(Keyword::Mod)),
                 node: Box::new(Node::Value(Value::PrimitiveString(node))),
+                uuid: Uuid::new_v4(),
             })
             .boxed()
     }

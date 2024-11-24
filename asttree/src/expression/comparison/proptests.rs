@@ -87,6 +87,7 @@ impl Arbitrary for Comparison {
             left: Box::new(left),
             operator: Box::new(operator),
             right: Box::new(right),
+            uuid: Uuid::new_v4(),
         })
         .boxed()
     }

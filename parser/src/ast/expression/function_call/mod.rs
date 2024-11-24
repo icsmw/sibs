@@ -68,6 +68,7 @@ impl ReadNode<FunctionCall> for FunctionCall {
                 reference,
                 open,
                 close,
+                uuid: Uuid::new_v4(),
             }))
         }
     }

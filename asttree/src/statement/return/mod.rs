@@ -8,6 +8,7 @@ use std::fmt;
 pub struct Return {
     pub token: Token,
     pub node: Option<Box<Node>>,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for Return {

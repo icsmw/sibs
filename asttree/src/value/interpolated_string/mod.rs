@@ -31,6 +31,7 @@ impl fmt::Display for InterpolatedStringPart {
 pub struct InterpolatedString {
     pub nodes: Vec<InterpolatedStringPart>,
     pub token: Token,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for InterpolatedString {

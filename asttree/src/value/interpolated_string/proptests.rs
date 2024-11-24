@@ -118,6 +118,7 @@ impl Arbitrary for InterpolatedString {
                 InterpolatedString {
                     nodes,
                     token: Token::for_test(Kind::InterpolatedString(vec![])),
+                    uuid: Uuid::new_v4(),
                 }
             })
             .boxed()

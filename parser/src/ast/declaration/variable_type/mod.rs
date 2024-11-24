@@ -16,6 +16,7 @@ impl ReadNode<VariableType> for VariableType {
             | Kind::Keyword(Keyword::Str)
             | Kind::Keyword(Keyword::Num) => Ok(Some(VariableType {
                 r#type: VariableTypeDef::Primitive(token),
+                uuid: Uuid::new_v4(),
             })),
             Kind::Keyword(Keyword::Vec) => {
                 let (mut inner, ..) = parser
@@ -31,6 +32,7 @@ impl ReadNode<VariableType> for VariableType {
                         token,
                         Box::new(Node::Declaration(Declaration::VariableType(ty))),
                     )),
+                    uuid: Uuid::new_v4(),
                 }))
             }
             _ => Ok(None),

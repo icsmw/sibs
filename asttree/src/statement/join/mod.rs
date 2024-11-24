@@ -10,6 +10,7 @@ pub struct Join {
     pub token: Token,
     pub open: Token,
     pub close: Token,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for Join {

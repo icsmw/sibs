@@ -106,6 +106,7 @@ impl Arbitrary for Command {
                 Command {
                     nodes,
                     token: Token::for_test(Kind::Command(vec![])),
+                    uuid: Uuid::new_v4(),
                 }
             })
             .boxed()

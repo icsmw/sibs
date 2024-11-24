@@ -14,10 +14,12 @@ impl Arbitrary for Boolean {
                     Kind::Keyword(Keyword::True) => Some(Boolean {
                         inner: true,
                         token: Token::for_test(Kind::Keyword(Keyword::True)),
+                        uuid: Uuid::new_v4(),
                     }),
                     Kind::Keyword(Keyword::False) => Some(Boolean {
                         inner: false,
                         token: Token::for_test(Kind::Keyword(Keyword::False)),
+                        uuid: Uuid::new_v4(),
                     }),
                     _ => None,
                 },

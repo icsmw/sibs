@@ -39,6 +39,7 @@ impl ReadNode<AssignedValue> for AssignedValue {
         Ok(Some(AssignedValue {
             token,
             node: Box::new(node),
+            uuid: Uuid::new_v4(),
         }))
     }
 }

@@ -67,6 +67,7 @@ impl ReadNode<TaskCall> for TaskCall {
                 reference,
                 open,
                 close,
+                uuid: Uuid::new_v4(),
             }))
         }
     }

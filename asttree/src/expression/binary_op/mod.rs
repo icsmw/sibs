@@ -16,6 +16,7 @@ pub enum BinaryOperator {
 pub struct BinaryOp {
     pub token: Token,
     pub operator: BinaryOperator,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for BinaryOp {

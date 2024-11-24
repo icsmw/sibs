@@ -65,6 +65,7 @@ impl Arbitrary for Optional {
                 comparison: Box::new(comparison),
                 action: Box::new(action),
                 token: Token::for_test(Kind::DoubleArrow),
+                uuid: Uuid::new_v4(),
             })
             .boxed()
     }

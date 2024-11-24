@@ -10,6 +10,7 @@ pub struct Closure {
     pub block: Box<Node>,
     pub open: Token,
     pub close: Token,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for Closure {

@@ -21,6 +21,7 @@ impl ReadNode<BinaryOp> for BinaryOp {
         Ok(Some(BinaryOp {
             token: tk.clone(),
             operator,
+            uuid: Uuid::new_v4(),
         }))
     }
 }

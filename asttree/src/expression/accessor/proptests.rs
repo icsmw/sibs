@@ -39,6 +39,7 @@ impl Arbitrary for Accessor {
             node: Box::new(node),
             open: Token::for_test(Kind::LeftBracket),
             close: Token::for_test(Kind::RightBracket),
+            uuid: Uuid::new_v4(),
         })
         .boxed()
     }

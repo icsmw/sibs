@@ -9,6 +9,7 @@ pub struct Array {
     pub open: Token,
     pub els: Vec<Node>,
     pub close: Token,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for Array {

@@ -83,7 +83,11 @@ impl ReadNode<InterpolatedString> for InterpolatedString {
         if let (Some(InterpolatedStringPart::Open(..)), Some(InterpolatedStringPart::Close(..))) =
             (nodes.first(), nodes.last())
         {
-            Ok(Some(InterpolatedString { nodes, token: tk }))
+            Ok(Some(InterpolatedString {
+                nodes,
+                token: tk,
+                uuid: Uuid::new_v4(),
+            }))
         } else {
             Err(E::InvalidString(tk.to_string()).link_with_token(&tk))
         }

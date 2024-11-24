@@ -56,6 +56,7 @@ impl ReadNode<Task> for Task {
             name,
             args,
             block: Box::new(block),
+            uuid: Uuid::new_v4(),
         }))
     }
 }

@@ -4,6 +4,8 @@ mod skip;
 pub use gatekeeper::*;
 pub use skip::*;
 
+use crate::*;
+
 #[enum_ids::enum_ids(derive = "Debug, PartialEq, Clone", display, display_from_value)]
 #[derive(Debug, Clone)]
 #[allow(clippy::large_enum_variant)]
@@ -15,4 +17,13 @@ pub enum ControlFlowModifier {
     Gatekeeper(Gatekeeper),
     /// skip([task_args], func())
     Skip(Skip),
+}
+
+impl ControlFlowModifier {
+    pub fn uuid(&self) -> &Uuid {
+        match self {
+            Self::Gatekeeper(n) => &n.uuid,
+            Self::Skip(n) => &n.uuid,
+        }
+    }
 }

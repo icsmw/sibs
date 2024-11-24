@@ -9,6 +9,7 @@ pub struct While {
     pub token: Token,
     pub comparison: Box<Node>,
     pub block: Box<Node>,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for While {

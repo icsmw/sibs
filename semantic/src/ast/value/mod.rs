@@ -7,7 +7,6 @@ mod primitive_string;
 
 use crate::*;
 
-
 impl InferType for Value {
     fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
         match self {

@@ -18,6 +18,7 @@ impl ReadNode<Number> for Number {
             return Ok(Some(Number {
                 inner: inner.to_owned(),
                 token: tk.clone(),
+                uuid: Uuid::new_v4(),
             }));
         }
         Ok(None)

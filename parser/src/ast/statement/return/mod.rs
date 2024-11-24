@@ -43,6 +43,7 @@ impl ReadNode<Return> for Return {
         Ok(Some(Return {
             token: tk.to_owned(),
             node,
+            uuid: Uuid::new_v4(),
         }))
     }
 }

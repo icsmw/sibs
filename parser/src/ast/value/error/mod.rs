@@ -38,6 +38,7 @@ impl ReadNode<Error> for Error {
             Ok(Some(Error {
                 token,
                 node: Box::new(node),
+                uuid: Uuid::new_v4(),
             }))
         }
     }

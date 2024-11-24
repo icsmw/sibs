@@ -23,7 +23,11 @@ impl Arbitrary for LogicalOp {
                     LogicalOperator::And => Kind::And,
                     LogicalOperator::Or => Kind::Or,
                 });
-                LogicalOp { operator, token }
+                LogicalOp {
+                    operator,
+                    token,
+                    uuid: Uuid::new_v4(),
+                }
             })
             .boxed()
     }

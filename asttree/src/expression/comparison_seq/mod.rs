@@ -7,6 +7,7 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub struct ComparisonSeq {
     pub nodes: Vec<Node>,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for ComparisonSeq {

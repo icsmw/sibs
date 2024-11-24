@@ -10,6 +10,7 @@ impl Arbitrary for Meta {
         gens::kind(KindId::Meta)
             .prop_map(|kind| Meta {
                 token: Token::for_test(kind),
+                uuid: Uuid::new_v4(),
             })
             .boxed()
     }

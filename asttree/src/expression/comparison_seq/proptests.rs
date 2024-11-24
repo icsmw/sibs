@@ -34,7 +34,10 @@ impl Arbitrary for ComparisonSeq {
                     nodes.push(ops.remove(0));
                 }
                 nodes.remove(nodes.len() - 1);
-                ComparisonSeq { nodes }
+                ComparisonSeq {
+                    nodes,
+                    uuid: Uuid::new_v4(),
+                }
             })
             .boxed()
     }

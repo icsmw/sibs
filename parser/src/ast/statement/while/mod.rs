@@ -24,6 +24,7 @@ impl ReadNode<While> for While {
             token,
             comparison: Box::new(comparison),
             block: Box::new(block),
+            uuid: Uuid::new_v4(),
         }))
     }
 }

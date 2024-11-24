@@ -33,6 +33,7 @@ impl Arbitrary for VariableDeclaration {
                         None
                     },
                     token: Token::for_test(Kind::Keyword(Keyword::Let)),
+                    uuid: Uuid::new_v4(),
                 },
             )
             .boxed()

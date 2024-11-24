@@ -8,6 +8,7 @@ use std::fmt;
 pub struct Boolean {
     pub inner: bool,
     pub token: Token,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for Boolean {

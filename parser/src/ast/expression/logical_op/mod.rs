@@ -19,6 +19,7 @@ impl ReadNode<LogicalOp> for LogicalOp {
         Ok(Some(LogicalOp {
             token: tk.clone(),
             operator,
+            uuid: Uuid::new_v4(),
         }))
     }
 }

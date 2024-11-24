@@ -12,6 +12,7 @@ pub struct Component {
     pub nodes: Vec<Node>,
     pub open_bl: Token,
     pub close_bl: Token,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for Component {

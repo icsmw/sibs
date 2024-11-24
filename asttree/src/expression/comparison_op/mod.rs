@@ -18,6 +18,7 @@ pub enum ComparisonOperator {
 pub struct ComparisonOp {
     pub token: Token,
     pub operator: ComparisonOperator,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for ComparisonOp {

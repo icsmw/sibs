@@ -66,6 +66,7 @@ impl ReadNode<Component> for Component {
             nodes,
             open_bl,
             close_bl,
+            uuid: Uuid::new_v4(),
         }))
     }
 }

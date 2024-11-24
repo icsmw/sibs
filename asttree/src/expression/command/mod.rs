@@ -31,6 +31,7 @@ impl fmt::Display for CommandPart {
 pub struct Command {
     pub nodes: Vec<CommandPart>,
     pub token: Token,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for Command {

@@ -83,7 +83,11 @@ impl ReadNode<Command> for Command {
         if let (Some(CommandPart::Open(..)), Some(CommandPart::Close(..))) =
             (nodes.first(), nodes.last())
         {
-            Ok(Some(Command { nodes, token: tk }))
+            Ok(Some(Command {
+                nodes,
+                token: tk,
+                uuid: Uuid::new_v4(),
+            }))
         } else {
             Err(E::InvalidString(tk.to_string()).link_with_token(&tk))
         }

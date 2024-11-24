@@ -67,6 +67,7 @@ impl ReadNode<Skip> for Skip {
             func: Box::new(func),
             open,
             close,
+            uuid: Uuid::new_v4(),
         }))
     }
 }

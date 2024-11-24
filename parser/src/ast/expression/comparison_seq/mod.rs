@@ -44,7 +44,10 @@ impl ReadNode<ComparisonSeq> for ComparisonSeq {
         Ok(if collected.is_empty() {
             None
         } else {
-            Some(ComparisonSeq { nodes: collected })
+            Some(ComparisonSeq {
+                nodes: collected,
+                uuid: Uuid::new_v4(),
+            })
         })
     }
 }

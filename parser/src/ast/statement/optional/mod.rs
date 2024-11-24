@@ -42,6 +42,7 @@ impl ReadNode<Optional> for Optional {
             token,
             action: Box::new(action),
             comparison: Box::new(comparison),
+            uuid: Uuid::new_v4(),
         }))
     }
 }

@@ -43,7 +43,10 @@ impl Arbitrary for BinaryExpSeq {
                     nodes.push(ops.remove(0));
                 }
                 nodes.remove(nodes.len() - 1);
-                BinaryExpSeq { nodes }
+                BinaryExpSeq {
+                    nodes,
+                    uuid: Uuid::new_v4(),
+                }
             })
             .boxed()
     }

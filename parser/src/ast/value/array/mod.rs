@@ -44,7 +44,12 @@ impl ReadNode<Array> for Array {
         if !inner.is_done() {
             Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner))
         } else {
-            Ok(Some(Array { els, open, close }))
+            Ok(Some(Array {
+                els,
+                open,
+                close,
+                uuid: Uuid::new_v4(),
+            }))
         }
     }
 }

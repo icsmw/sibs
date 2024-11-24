@@ -37,7 +37,11 @@ impl ReadNode<VariableTypeDeclaration> for VariableTypeDeclaration {
         if types.is_empty() {
             Ok(None)
         } else {
-            Ok(Some(VariableTypeDeclaration { token, types }))
+            Ok(Some(VariableTypeDeclaration {
+                token,
+                types,
+                uuid: Uuid::new_v4(),
+            }))
         }
     }
 }

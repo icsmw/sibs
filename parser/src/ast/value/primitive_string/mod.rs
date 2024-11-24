@@ -15,6 +15,7 @@ impl ReadNode<PrimitiveString> for PrimitiveString {
             return Ok(Some(PrimitiveString {
                 inner: inner.to_owned(),
                 token: tk.clone(),
+                uuid: Uuid::new_v4(),
             }));
         }
         Ok(None)

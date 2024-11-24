@@ -8,6 +8,7 @@ use std::fmt;
 pub struct VariableTypeDeclaration {
     pub types: Vec<Node>,
     pub token: Token,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for VariableTypeDeclaration {

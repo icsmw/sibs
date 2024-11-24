@@ -41,6 +41,7 @@ impl Arbitrary for Each {
                 elements: Box::new(elements),
                 block: Box::new(block),
                 token: Token::for_test(Kind::Keyword(Keyword::Each)),
+                uuid: Uuid::new_v4(),
             })
             .boxed()
     }

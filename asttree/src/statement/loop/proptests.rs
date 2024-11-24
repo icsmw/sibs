@@ -13,6 +13,7 @@ impl Arbitrary for Loop {
             .prop_map(move |block| Loop {
                 block: Box::new(block),
                 token: Token::for_test(Kind::Keyword(Keyword::Loop)),
+                uuid: Uuid::new_v4(),
             })
             .boxed()
     }

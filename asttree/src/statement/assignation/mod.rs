@@ -8,6 +8,7 @@ use std::fmt;
 pub struct Assignation {
     pub left: Box<Node>,
     pub right: Box<Node>,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for Assignation {

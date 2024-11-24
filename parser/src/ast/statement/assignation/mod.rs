@@ -20,6 +20,7 @@ impl ReadNode<Assignation> for Assignation {
         Ok(Some(Assignation {
             left: Box::new(left),
             right: Box::new(right),
+            uuid: Uuid::new_v4(),
         }))
     }
 }

@@ -10,6 +10,7 @@ pub struct CompoundAssignments {
     pub left: Box<Node>,
     pub operator: Box<Node>,
     pub right: Box<Node>,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for CompoundAssignments {

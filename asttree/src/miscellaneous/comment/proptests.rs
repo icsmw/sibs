@@ -10,6 +10,7 @@ impl Arbitrary for Comment {
         gens::kind(KindId::Comment)
             .prop_map(|kind| Comment {
                 token: Token::for_test(kind),
+                uuid: Uuid::new_v4(),
             })
             .boxed()
     }

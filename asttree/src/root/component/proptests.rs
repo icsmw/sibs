@@ -41,6 +41,7 @@ impl Arbitrary for Component {
                 nodes,
                 open_bl: Token::for_test(Kind::LeftBrace),
                 close_bl: Token::for_test(Kind::RightBrace),
+                uuid: Uuid::new_v4(),
             })
             .boxed()
     }

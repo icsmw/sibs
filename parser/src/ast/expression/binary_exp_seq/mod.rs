@@ -44,7 +44,10 @@ impl ReadNode<BinaryExpSeq> for BinaryExpSeq {
         Ok(if collected.is_empty() {
             None
         } else {
-            Some(BinaryExpSeq { nodes: collected })
+            Some(BinaryExpSeq {
+                nodes: collected,
+                uuid: Uuid::new_v4(),
+            })
         })
     }
 }

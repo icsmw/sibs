@@ -8,6 +8,7 @@ use std::fmt;
 pub struct PrimitiveString {
     pub inner: String,
     pub token: Token,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for PrimitiveString {

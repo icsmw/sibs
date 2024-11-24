@@ -16,7 +16,11 @@ impl Arbitrary for VariableTypeDeclaration {
         )
         .prop_map(|types| {
             let token = Token::for_test(Kind::Colon);
-            VariableTypeDeclaration { types, token }
+            VariableTypeDeclaration {
+                types,
+                token,
+                uuid: Uuid::new_v4(),
+            }
         })
         .boxed()
     }

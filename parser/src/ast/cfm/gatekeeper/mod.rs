@@ -41,6 +41,7 @@ impl ReadNode<Gatekeeper> for Gatekeeper {
             nodes,
             open,
             close,
+            uuid: Uuid::new_v4(),
         }))
     }
 }

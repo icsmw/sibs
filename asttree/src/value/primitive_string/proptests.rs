@@ -13,6 +13,7 @@ impl Arbitrary for PrimitiveString {
                     Some(PrimitiveString {
                         inner,
                         token: Token::for_test(knd),
+                        uuid: Uuid::new_v4(),
                     })
                 } else {
                     None

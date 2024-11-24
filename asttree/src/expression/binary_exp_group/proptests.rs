@@ -43,7 +43,10 @@ impl Arbitrary for BinaryExpGroup {
                     nodes.push(ops.remove(0));
                 }
                 nodes.remove(nodes.len() - 1);
-                BinaryExpGroup { nodes }
+                BinaryExpGroup {
+                    nodes,
+                    uuid: Uuid::new_v4(),
+                }
             })
             .boxed()
     }

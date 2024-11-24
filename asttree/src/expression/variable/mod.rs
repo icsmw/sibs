@@ -8,6 +8,7 @@ use std::fmt;
 pub struct Variable {
     pub ident: String,
     pub token: Token,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for Variable {

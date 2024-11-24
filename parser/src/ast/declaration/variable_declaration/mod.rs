@@ -34,6 +34,7 @@ impl ReadNode<VariableDeclaration> for VariableDeclaration {
             variable: Box::new(variable),
             r#type: ty,
             assignation,
+            uuid: Uuid::new_v4(),
         }))
     }
 }

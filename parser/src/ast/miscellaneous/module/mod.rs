@@ -20,6 +20,7 @@ impl ReadNode<Module> for Module {
         Ok(Some(Module {
             token,
             node: Box::new(node),
+            uuid: Uuid::new_v4(),
         }))
     }
 }

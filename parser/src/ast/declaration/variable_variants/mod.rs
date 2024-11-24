@@ -40,7 +40,11 @@ impl ReadNode<VariableVariants> for VariableVariants {
         if variants.is_empty() {
             Ok(None)
         } else {
-            Ok(Some(VariableVariants { token, variants }))
+            Ok(Some(VariableVariants {
+                token,
+                variants,
+                uuid: Uuid::new_v4(),
+            }))
         }
     }
 }

@@ -12,6 +12,7 @@ pub struct For {
     pub index: Box<Node>,
     pub elements: Box<Node>,
     pub block: Box<Node>,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for For {

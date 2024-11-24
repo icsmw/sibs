@@ -19,6 +19,7 @@ impl Arbitrary for Gatekeeper {
             nodes,
             open: Token::for_test(Kind::LeftBracket),
             close: Token::for_test(Kind::RightBracket),
+            uuid: Uuid::new_v4(),
         })
         .boxed()
     }

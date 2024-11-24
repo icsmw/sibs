@@ -7,6 +7,7 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub struct Break {
     pub token: Token,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for Break {

@@ -18,6 +18,7 @@ impl Arbitrary for Join {
             close: Token::for_test(Kind::RightParen),
             commands,
             token: Token::for_test(Kind::Keyword(Keyword::Join)),
+            uuid: Uuid::new_v4(),
         })
         .boxed()
     }

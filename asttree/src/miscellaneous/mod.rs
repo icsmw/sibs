@@ -8,6 +8,8 @@ pub use include::*;
 pub use meta::*;
 pub use module::*;
 
+use crate::*;
+
 #[enum_ids::enum_ids(derive = "Debug, PartialEq, Clone", display, display_from_value)]
 #[derive(Debug, Clone)]
 pub enum Miscellaneous {
@@ -19,4 +21,15 @@ pub enum Miscellaneous {
     Meta(Meta),
     /// // comment
     Comment(Comment),
+}
+
+impl Miscellaneous {
+    pub fn uuid(&self) -> &Uuid {
+        match self {
+            Self::Comment(n) => &n.uuid,
+            Self::Include(n) => &n.uuid,
+            Self::Meta(n) => &n.uuid,
+            Self::Module(n) => &n.uuid,
+        }
+    }
 }

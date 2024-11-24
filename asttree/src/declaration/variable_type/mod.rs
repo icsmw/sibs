@@ -61,6 +61,7 @@ impl VariableTypeDef {
 #[derive(Debug, Clone)]
 pub struct VariableType {
     pub r#type: VariableTypeDef,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for VariableType {

@@ -48,7 +48,10 @@ impl ReadNode<BinaryExpGroup> for BinaryExpGroup {
         Ok(if collected.is_empty() || !inner.is_done() {
             None
         } else {
-            Some(BinaryExpGroup { nodes: collected })
+            Some(BinaryExpGroup {
+                nodes: collected,
+                uuid: Uuid::new_v4(),
+            })
         })
     }
 }

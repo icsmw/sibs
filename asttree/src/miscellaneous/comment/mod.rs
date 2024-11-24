@@ -7,6 +7,7 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub struct Comment {
     pub token: Token,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for Comment {

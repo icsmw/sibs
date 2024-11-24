@@ -14,6 +14,7 @@ pub enum LogicalOperator {
 pub struct LogicalOp {
     pub token: Token,
     pub operator: LogicalOperator,
+    pub uuid: Uuid,
 }
 
 impl fmt::Display for LogicalOp {

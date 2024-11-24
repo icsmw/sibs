@@ -18,6 +18,7 @@ impl Arbitrary for Assignation {
             .prop_map(move |(left, right)| Assignation {
                 left: Box::new(left),
                 right: Box::new(right),
+                uuid: Uuid::new_v4(),
             })
             .boxed()
     }

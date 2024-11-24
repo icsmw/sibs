@@ -14,6 +14,8 @@ pub use variable_type::*;
 pub use variable_type_declaration::*;
 pub use variable_variants::*;
 
+use crate::*;
+
 #[enum_ids::enum_ids(derive = "Debug, PartialEq, Clone", display, display_from_value)]
 #[derive(Debug, Clone)]
 pub enum Declaration {
@@ -31,4 +33,18 @@ pub enum Declaration {
     VariableTypeDeclaration(VariableTypeDeclaration),
     /// () { ... }; (a, b) { ... }; etc.
     Closure(Closure),
+}
+
+impl Declaration {
+    pub fn uuid(&self) -> &Uuid {
+        match self {
+            Self::ArgumentDeclaration(n) => &n.uuid,
+            Self::Closure(n) => &n.uuid,
+            Self::FunctionDeclaration(n) => &n.uuid,
+            Self::VariableDeclaration(n) => &n.uuid,
+            Self::VariableType(n) => &n.uuid,
+            Self::VariableTypeDeclaration(n) => &n.uuid,
+            Self::VariableVariants(n) => &n.uuid,
+        }
+    }
 }

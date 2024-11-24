@@ -49,7 +49,10 @@ impl Arbitrary for If {
                 if !lst.is_empty() {
                     cases.push(lst.remove(lst.len() - 1));
                 }
-                If { cases }
+                If {
+                    cases,
+                    uuid: Uuid::new_v4(),
+                }
             })
             .boxed()
     }

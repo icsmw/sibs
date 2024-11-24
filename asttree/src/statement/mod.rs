@@ -26,6 +26,8 @@ pub use r#loop::*;
 pub use r#return::*;
 pub use r#while::*;
 
+use crate::*;
+
 #[enum_ids::enum_ids(derive = "Debug, PartialEq, Clone", display, display_from_value)]
 #[derive(Debug, Clone)]
 pub enum Statement {
@@ -72,4 +74,24 @@ pub enum Statement {
     AssignedValue(AssignedValue),
     OneOf(OneOf),
     Join(Join),
+}
+
+impl Statement {
+    pub fn uuid(&self) -> &Uuid {
+        match self {
+            Self::Assignation(n) => &n.uuid,
+            Self::AssignedValue(n) => &n.uuid,
+            Self::Block(n) => &n.uuid,
+            Self::Break(n) => &n.uuid,
+            Self::Each(n) => &n.uuid,
+            Self::For(n) => &n.uuid,
+            Self::If(n) => &n.uuid,
+            Self::Join(n) => &n.uuid,
+            Self::Loop(n) => &n.uuid,
+            Self::OneOf(n) => &n.uuid,
+            Self::Optional(n) => &n.uuid,
+            Self::Return(n) => &n.uuid,
+            Self::While(n) => &n.uuid,
+        }
+    }
 }

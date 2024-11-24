@@ -13,6 +13,7 @@ impl Arbitrary for Variable {
                     Some(Variable {
                         ident: ident.to_owned(),
                         token: Token::for_test(Kind::Identifier(ident.to_owned())),
+                        uuid: Uuid::new_v4(),
                     })
                 } else {
                     None
