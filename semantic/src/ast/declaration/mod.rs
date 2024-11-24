@@ -21,3 +21,17 @@ impl InferType for Declaration {
         }
     }
 }
+
+impl Initialize for Declaration {
+    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
+        match self {
+            Declaration::ArgumentDeclaration(n) => n.initialize(tcx),
+            Declaration::Closure(n) => n.initialize(tcx),
+            Declaration::FunctionDeclaration(n) => n.initialize(tcx),
+            Declaration::VariableDeclaration(n) => n.initialize(tcx),
+            Declaration::VariableType(n) => n.initialize(tcx),
+            Declaration::VariableTypeDeclaration(n) => n.initialize(tcx),
+            Declaration::VariableVariants(n) => n.initialize(tcx),
+        }
+    }
+}

@@ -24,3 +24,16 @@ impl InferType for VariableDeclaration {
         }
     }
 }
+
+impl Initialize for VariableDeclaration {
+    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
+        self.variable.initialize(tcx)?;
+        if let Some(n) = self.assignation.as_ref() {
+            n.initialize(tcx)?;
+        }
+        if let Some(n) = self.r#type.as_ref() {
+            n.initialize(tcx)?;
+        }
+        Ok(())
+    }
+}

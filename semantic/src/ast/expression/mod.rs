@@ -19,7 +19,6 @@ mod variable;
 
 use crate::*;
 
-
 impl InferType for Expression {
     fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
         match self {
@@ -41,6 +40,31 @@ impl InferType for Expression {
             Expression::Range(n) => n.infer_type(tcx),
             Expression::TaskCall(n) => n.infer_type(tcx),
             Expression::Variable(n) => n.infer_type(tcx),
+        }
+    }
+}
+
+impl Initialize for Expression {
+    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
+        match self {
+            Expression::Accessor(n) => n.initialize(tcx),
+            Expression::BinaryExp(n) => n.initialize(tcx),
+            Expression::BinaryExpGroup(n) => n.initialize(tcx),
+            Expression::BinaryExpSeq(n) => n.initialize(tcx),
+            Expression::BinaryOp(n) => n.initialize(tcx),
+            Expression::Call(n) => n.initialize(tcx),
+            Expression::Command(n) => n.initialize(tcx),
+            Expression::Comparison(n) => n.initialize(tcx),
+            Expression::ComparisonGroup(n) => n.initialize(tcx),
+            Expression::ComparisonOp(n) => n.initialize(tcx),
+            Expression::ComparisonSeq(n) => n.initialize(tcx),
+            Expression::CompoundAssignments(n) => n.initialize(tcx),
+            Expression::CompoundAssignmentsOp(n) => n.initialize(tcx),
+            Expression::FunctionCall(n) => n.initialize(tcx),
+            Expression::LogicalOp(n) => n.initialize(tcx),
+            Expression::Range(n) => n.initialize(tcx),
+            Expression::TaskCall(n) => n.initialize(tcx),
+            Expression::Variable(n) => n.initialize(tcx),
         }
     }
 }

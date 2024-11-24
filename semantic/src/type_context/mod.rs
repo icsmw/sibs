@@ -1,12 +1,23 @@
+use uuid::Uuid;
+
 use crate::*;
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct TypeContext {
     pub scopes: Vec<HashMap<String, DataType>>,
+    pub annotations: Annotations,
 }
 
 impl TypeContext {
+    pub fn annotate(&mut self, uuid: &Uuid, dt: DataType) {
+        self.annotations.add(uuid, dt);
+    }
+
+    pub fn get_annotation(&mut self, uuid: &Uuid) -> Option<&DataType> {
+        self.annotations.lookup(uuid)
+    }
+
     pub fn enter(&mut self) {
         self.scopes.push(HashMap::new());
     }
@@ -29,9 +40,9 @@ impl TypeContext {
         }
     }
 
-    pub fn lookup(&self, name: &str) -> Option<&DataType> {
+    pub fn lookup<S: AsRef<str>>(&self, name: S) -> Option<&DataType> {
         for scope in self.scopes.iter().rev() {
-            if let Some(dt) = scope.get(name) {
+            if let Some(dt) = scope.get(name.as_ref()) {
                 return Some(dt);
             }
         }

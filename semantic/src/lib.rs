@@ -11,3 +11,7 @@ pub(crate) use type_context::*;
 pub trait InferType {
     fn infer_type(&self, _tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>>;
 }
+
+pub trait Initialize {
+    fn initialize(&self, _tcx: &mut TypeContext) -> Result<(), LinkedErr<E>>;
+}

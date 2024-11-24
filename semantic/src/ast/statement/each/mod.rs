@@ -5,3 +5,12 @@ impl InferType for Each {
         Ok(DataType::Void)
     }
 }
+
+impl Initialize for Each {
+    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
+        self.elements.initialize(tcx)?;
+        self.element.initialize(tcx)?;
+        self.index.initialize(tcx)?;
+        self.block.initialize(tcx)
+    }
+}

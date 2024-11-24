@@ -5,3 +5,10 @@ impl InferType for ArgumentDeclaration {
         self.r#type.infer_type(tcx)
     }
 }
+
+impl Initialize for ArgumentDeclaration {
+    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
+        self.r#type.initialize(tcx)?;
+        self.variable.initialize(tcx)
+    }
+}

@@ -21,3 +21,17 @@ impl InferType for Node {
         }
     }
 }
+
+impl Initialize for Node {
+    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
+        match self {
+            Node::ControlFlowModifier(n) => n.initialize(tcx),
+            Node::Declaration(n) => n.initialize(tcx),
+            Node::Expression(n) => n.initialize(tcx),
+            Node::Miscellaneous(n) => n.initialize(tcx),
+            Node::Root(n) => n.initialize(tcx),
+            Node::Statement(n) => n.initialize(tcx),
+            Node::Value(n) => n.initialize(tcx),
+        }
+    }
+}

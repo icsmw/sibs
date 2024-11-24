@@ -19,3 +19,16 @@ impl InferType for Value {
         }
     }
 }
+
+impl Initialize for Value {
+    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
+        match self {
+            Value::Array(n) => n.initialize(tcx),
+            Value::Boolean(n) => n.initialize(tcx),
+            Value::Error(n) => n.initialize(tcx),
+            Value::InterpolatedString(n) => n.initialize(tcx),
+            Value::Number(n) => n.initialize(tcx),
+            Value::PrimitiveString(n) => n.initialize(tcx),
+        }
+    }
+}

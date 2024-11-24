@@ -16,4 +16,8 @@ pub enum E {
     AttemptToLeaveGlobalScope,
     #[error("Attempt to set type without scope")]
     NoCurrentScope,
+    #[error("If statement doesn't have any blocks")]
+    InvalidIfStatement,
+    #[error("Variable isn't defined")]
+    VariableIsNotDefined,
 }

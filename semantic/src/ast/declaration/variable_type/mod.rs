@@ -35,3 +35,26 @@ impl InferType for VariableType {
         self.r#type.infer_type(tcx)
     }
 }
+
+impl Initialize for VariableCompoundType {
+    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
+        match self {
+            VariableCompoundType::Vec(_, n) => n.initialize(tcx),
+        }
+    }
+}
+
+impl Initialize for VariableTypeDef {
+    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
+        match self {
+            VariableTypeDef::Primitive(..) => Ok(()),
+            VariableTypeDef::Compound(ty) => ty.initialize(tcx),
+        }
+    }
+}
+
+impl Initialize for VariableType {
+    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
+        self.r#type.initialize(tcx)
+    }
+}
