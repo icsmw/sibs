@@ -14,8 +14,9 @@ pub use interest::*;
 pub use nodes::*;
 pub use read::*;
 
+use asttree::{Miscellaneous, MiscellaneousId, Node, RootId};
 use diagnostics::*;
-use lexer::{KindId, Token};
+use lexer::{KindId, Lexer, Token};
 use std::fmt;
 pub(crate) use uuid::Uuid;
 
@@ -27,7 +28,7 @@ pub struct Parser {
 }
 
 impl Parser {
-    pub(crate) fn new(tokens: Vec<Token>, src: &Uuid) -> Self {
+    pub fn new(tokens: Vec<Token>, src: &Uuid) -> Self {
         Self {
             tokens,
             pos: 0,

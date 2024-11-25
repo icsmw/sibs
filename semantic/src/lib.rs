@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 mod ast;
 mod error;
 mod type_context;

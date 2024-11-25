@@ -34,6 +34,65 @@ impl Initialize for VariableDeclaration {
         if let Some(n) = self.r#type.as_ref() {
             n.initialize(tcx)?;
         }
-        Ok(())
+        if let Node::Expression(Expression::Variable(variable)) = self.variable.as_ref() {
+            let ty = self.infer_type(tcx)?;
+            tcx.insert(&variable.ident, ty)
+                .map_err(|e| LinkedErr::by_link(e, &self.into()))?;
+            Ok(())
+        } else {
+            Err(LinkedErr::by_link(
+                E::UnexpectedNode(self.variable.id()),
+                &self.into(),
+            ))
+        }
     }
 }
+
+#[cfg(test)]
+test_success!(
+    variable_declaration_num_000,
+    Block,
+    r#"{ let a = 4; a = 5; }"#
+);
+
+#[cfg(test)]
+test_success!(
+    variable_declaration_num_001,
+    Block,
+    r#"{ let a: num = 4; a = 5; }"#
+);
+
+#[cfg(test)]
+test_success!(
+    variable_declaration_num_002,
+    Block,
+    r#"{ let a: num; a = 5; }"#
+);
+
+#[cfg(test)]
+test_success!(
+    variable_declaration_str_000,
+    Block,
+    r#"{ let a = "one"; a = "two"; }"#
+);
+
+#[cfg(test)]
+test_success!(
+    variable_declaration_str_001,
+    Block,
+    r#"{ let a: str = "one"; a = "two"; }"#
+);
+
+#[cfg(test)]
+test_success!(
+    variable_declaration_success_str_002,
+    Block,
+    r#"{ let a: str; a = "two"; }"#
+);
+
+// #[cfg(test)]
+// test_fail!(
+//     variable_declaration_fail_test_000,
+//     Block,
+//     r#"{ let a = 4; a = "f"; }"#
+// );

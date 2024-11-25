@@ -7,7 +7,8 @@ impl InferType for Token {
         match &self.kind {
             Kind::Number(..) => Ok(DataType::F64),
             Kind::Keyword(Keyword::Bool) => Ok(DataType::Bool),
-            Kind::String(..) => Ok(DataType::String),
+            Kind::Keyword(Keyword::Str) => Ok(DataType::Str),
+            Kind::Keyword(Keyword::Num) => Ok(DataType::F64),
             _ => Err(LinkedErr::token(E::TokenIsNotBoundToKnownDataType, self)),
         }
     }

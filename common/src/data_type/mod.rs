@@ -13,12 +13,14 @@ pub enum DataType {
     F64,
     Bool,
     PathBuf,
-    String,
+    Str,
     Vec(Box<DataType>),
     Error,
     Closure,
     Variants(Box<DataType>),
     Undefined,
+    /// bool | str
+    OneOf(Vec<DataType>),
 }
 
 impl DataType {

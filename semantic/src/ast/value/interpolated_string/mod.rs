@@ -2,7 +2,7 @@ use crate::*;
 
 impl InferType for InterpolatedString {
     fn infer_type(&self, _tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
-        Ok(DataType::String)
+        Ok(DataType::Str)
     }
 }
 

@@ -15,3 +15,7 @@ asttree = { path = "../asttree" }
 diagnostics = { path = "../diagnostics" }
 lexer = { path = "../lexer" }
 common = { path = "../common" }
+parser = { path = "../parser" }
+
+[dev-dependencies]
+paste = "1.0"

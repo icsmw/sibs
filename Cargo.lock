@@ -366,6 +366,8 @@ dependencies = [
  "diagnostics",
  "enum_ids",
  "lexer",
+ "parser",
+ "paste",
  "thiserror",
  "uuid",
 ]

@@ -8,4 +8,7 @@ impl Nodes {
     pub fn empty() -> Nodes {
         Self { nodes: Vec::new() }
     }
+    pub fn add(&mut self, node: Node) {
+        self.nodes.push(node);
+    }
 }
