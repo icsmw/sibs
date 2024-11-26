@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 use crate::*;
 
 impl InferType for Array {
@@ -30,6 +33,9 @@ impl InferType for Array {
 impl Initialize for Array {
     fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
         self.els.iter().try_for_each(|n| n.initialize(tcx))?;
-        Ok(())
+        self.els
+            .iter()
+            .try_for_each(|n| n.infer_type(tcx).map(|_| ()))?;
+        self.infer_type(tcx).map(|_| ())
     }
 }

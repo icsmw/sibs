@@ -3,7 +3,7 @@ macro_rules! test_success {
     ($fn_name:ident, $element_ref:expr, $content:literal) => {
         paste::item! {
                 #[test]
-                fn [< test_success $fn_name >]() {
+                fn [< test_success_ $fn_name >]() {
                     use parser::*;
                     use $crate::*;
                     let mut lx = lexer::Lexer::new($content, 0);
@@ -30,7 +30,7 @@ macro_rules! test_fail {
     ($fn_name:ident, $element_ref:expr, $content:literal) => {
         paste::item! {
                 #[test]
-                fn [< test_fail $fn_name >]() {
+                fn [< test_fail_ $fn_name >]() {
                     use parser::*;
                     use $crate::*;
                     let mut lx = lexer::Lexer::new($content, 0);

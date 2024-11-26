@@ -13,7 +13,8 @@ impl Initialize for Return {
     fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
         if let Some(n) = self.node.as_ref() {
             n.initialize(tcx)?;
+            n.infer_type(tcx).map(|_| ())?;
         }
-        Ok(())
+        self.infer_type(tcx).map(|_| ())
     }
 }

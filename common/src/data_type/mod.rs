@@ -24,12 +24,30 @@ pub enum DataType {
 }
 
 impl DataType {
-    pub fn compatible(&self, other: &DataType) -> bool {
-        if self == other {
+    pub fn reassignable(&self, right: &DataType) -> bool {
+        if matches!(right, Self::Undefined) {
+            return false;
+        }
+        if self == right {
+            return true;
+        }
+        if matches!(self, Self::Undefined) {
+            return true;
+        }
+        if let (DataType::Vec(left), DataType::Vec(right)) = (self, right) {
+            return left.reassignable(right);
+        }
+        match self {
+            Self::F64 | Self::Isize => matches!(right, DataType::F64 | DataType::Isize),
+            _ => false,
+        }
+    }
+    pub fn compatible(&self, right: &DataType) -> bool {
+        if self == right {
             return true;
         }
         match self {
-            Self::F64 | Self::Isize => matches!(other, DataType::F64 | DataType::Isize),
+            Self::F64 | Self::Isize => matches!(right, DataType::F64 | DataType::Isize),
             _ => false,
         }
     }

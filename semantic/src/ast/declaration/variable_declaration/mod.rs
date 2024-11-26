@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 use crate::*;
 
 impl InferType for VariableDeclaration {
@@ -47,52 +50,3 @@ impl Initialize for VariableDeclaration {
         }
     }
 }
-
-#[cfg(test)]
-test_success!(
-    variable_declaration_num_000,
-    Block,
-    r#"{ let a = 4; a = 5; }"#
-);
-
-#[cfg(test)]
-test_success!(
-    variable_declaration_num_001,
-    Block,
-    r#"{ let a: num = 4; a = 5; }"#
-);
-
-#[cfg(test)]
-test_success!(
-    variable_declaration_num_002,
-    Block,
-    r#"{ let a: num; a = 5; }"#
-);
-
-#[cfg(test)]
-test_success!(
-    variable_declaration_str_000,
-    Block,
-    r#"{ let a = "one"; a = "two"; }"#
-);
-
-#[cfg(test)]
-test_success!(
-    variable_declaration_str_001,
-    Block,
-    r#"{ let a: str = "one"; a = "two"; }"#
-);
-
-#[cfg(test)]
-test_success!(
-    variable_declaration_success_str_002,
-    Block,
-    r#"{ let a: str; a = "two"; }"#
-);
-
-// #[cfg(test)]
-// test_fail!(
-//     variable_declaration_fail_test_000,
-//     Block,
-//     r#"{ let a = 4; a = "f"; }"#
-// );

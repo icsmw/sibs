@@ -19,22 +19,23 @@ impl InferType for Assignation {
             ))?
             .clone();
         let right = self.right.infer_type(tcx)?;
-        if matches!(left, DataType::Undefined) {
+        if left.reassignable(&right) {
             tcx.insert(variable, right)
                 .map_err(|e| LinkedErr::by_link(e, &self.into()))?;
-        } else if !left.compatible(&right) {
-            return Err(LinkedErr::by_link(
+            Ok(DataType::Void)
+        } else {
+            Err(LinkedErr::by_link(
                 E::DismatchTypes(format!("{left}, {right}")),
                 &self.into(),
-            ));
+            ))
         }
-        Ok(DataType::Void)
     }
 }
 
 impl Initialize for Assignation {
     fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
         self.left.initialize(tcx)?;
-        self.right.initialize(tcx)
+        self.right.initialize(tcx)?;
+        self.infer_type(tcx).map(|_| ())
     }
 }
