@@ -14,9 +14,8 @@ pub use interest::*;
 pub use nodes::*;
 pub use read::*;
 
-use asttree::{Miscellaneous, MiscellaneousId, Node, RootId};
 use diagnostics::*;
-use lexer::{KindId, Lexer, Token};
+use lexer::{KindId, Token};
 use std::fmt;
 pub(crate) use uuid::Uuid;
 

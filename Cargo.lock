@@ -368,6 +368,7 @@ dependencies = [
  "lexer",
  "parser",
  "paste",
+ "proptest",
  "thiserror",
  "uuid",
 ]

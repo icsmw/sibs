@@ -1,4 +1,6 @@
 #[cfg(test)]
+mod proptests;
+#[cfg(test)]
 mod tests;
 
 use crate::*;
@@ -23,7 +25,7 @@ impl InferType for VariableDeclaration {
                 .map(|ty| ty.infer_type(tcx))
                 .or_else(|| self.assignation.as_ref().map(|ty| ty.infer_type(tcx)))
                 .transpose()?
-                .unwrap_or_else(|| DataType::Undefined))
+                .unwrap_or(DataType::Undefined))
         }
     }
 }

@@ -1,4 +1,4 @@
-use std::{fmt, path::Display};
+use std::fmt;
 
 #[enum_ids::enum_ids(display_variant)]
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
