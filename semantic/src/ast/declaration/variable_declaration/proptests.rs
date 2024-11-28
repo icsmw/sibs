@@ -1,8 +1,6 @@
 use crate::*;
-use ast::value;
 use asttree::*;
 use lexer::*;
-use parser::*;
 use proptest::prelude::*;
 use uuid::Uuid;
 
@@ -12,10 +10,10 @@ struct TypesTest {
     pub assignation: Node,
 }
 
-impl Into<Block> for TypesTest {
-    fn into(self) -> Block {
+impl From<TypesTest> for Block {
+    fn from(val: TypesTest) -> Self {
         Block {
-            nodes: vec![self.declaration.clone(), self.assignation.clone()],
+            nodes: vec![val.declaration.clone(), val.assignation.clone()],
             open: Token::for_test(Kind::LeftBrace),
             close: Token::for_test(Kind::RightBrace),
             uuid: Uuid::new_v4(),
