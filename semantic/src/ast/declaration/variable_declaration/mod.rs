@@ -18,6 +18,13 @@ impl InferType for VariableDeclaration {
             } else {
                 Ok(ty)
             }
+        } else if let Some(assig) = self.assignation.as_ref() {
+            let ty = assig.infer_type(tcx)?;
+            if matches!(ty, DataType::IndeterminateType) {
+                Err(LinkedErr::by_link(E::IndeterminateType, &(assig).into()))
+            } else {
+                Ok(ty)
+            }
         } else {
             Ok(self
                 .r#type
@@ -32,7 +39,6 @@ impl InferType for VariableDeclaration {
 
 impl Initialize for VariableDeclaration {
     fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
-        self.variable.initialize(tcx)?;
         if let Some(n) = self.assignation.as_ref() {
             n.initialize(tcx)?;
         }
@@ -43,6 +49,7 @@ impl Initialize for VariableDeclaration {
             let ty = self.infer_type(tcx)?;
             tcx.insert(&variable.ident, ty)
                 .map_err(|e| LinkedErr::by_link(e, &self.into()))?;
+            self.variable.initialize(tcx)?;
             Ok(())
         } else {
             Err(LinkedErr::by_link(

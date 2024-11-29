@@ -25,7 +25,10 @@ impl ReadNode<Block> for Block {
             let Some(node) = Node::try_oneof(
                 &mut inner,
                 &[
-                    NodeReadTarget::Declaration(&[DeclarationId::VariableDeclaration]),
+                    NodeReadTarget::Declaration(&[
+                        DeclarationId::VariableDeclaration,
+                        DeclarationId::FunctionDeclaration,
+                    ]),
                     NodeReadTarget::Statement(&[
                         StatementId::Assignation,
                         StatementId::Break,

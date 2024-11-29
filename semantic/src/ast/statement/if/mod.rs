@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 use crate::*;
 
 impl InferType for IfCase {
@@ -23,7 +26,7 @@ impl InferType for If {
             return Err(LinkedErr::by_link(E::InvalidIfStatement, &self.into()));
         };
         let first = &tys[0];
-        if tys.iter().all(|ty| ty == first) {
+        if tys.iter().all(|ty| first.compatible(ty)) {
             Ok(first.clone())
         } else {
             Ok(DataType::IndeterminateType)
@@ -34,7 +37,10 @@ impl InferType for If {
 impl Initialize for IfCase {
     fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
         match self {
-            IfCase::If(_, blk, ..) => blk.initialize(tcx),
+            IfCase::If(con, blk, ..) => {
+                con.initialize(tcx)?;
+                blk.initialize(tcx)
+            }
             IfCase::Else(blk, ..) => blk.initialize(tcx),
         }
     }
@@ -43,6 +49,6 @@ impl Initialize for IfCase {
 impl Initialize for If {
     fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
         self.cases.iter().try_for_each(|n| n.initialize(tcx))?;
-        Ok(())
+        self.infer_type(tcx).map(|_| ())
     }
 }

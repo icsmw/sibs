@@ -5,13 +5,13 @@ use proptest::prelude::*;
 use uuid::Uuid;
 
 #[derive(Debug)]
-struct TypesTest {
+struct TypesFromValue {
     pub declaration: Node,
     pub assignation: Node,
 }
 
-impl From<TypesTest> for Block {
-    fn from(val: TypesTest) -> Self {
+impl From<TypesFromValue> for Block {
+    fn from(val: TypesFromValue) -> Self {
         Block {
             nodes: vec![val.declaration.clone(), val.assignation.clone()],
             open: Token::for_test(Kind::LeftBrace),
@@ -21,7 +21,7 @@ impl From<TypesTest> for Block {
     }
 }
 
-impl Arbitrary for TypesTest {
+impl Arbitrary for TypesFromValue {
     type Parameters = ();
 
     type Strategy = BoxedStrategy<Self>;
@@ -64,19 +64,14 @@ impl Arbitrary for TypesTest {
                         ))),
                         uuid: Uuid::new_v4(),
                     },
-                    _ => VariableType {
-                        r#type: VariableTypeDef::Primitive(Token::for_test(Kind::Keyword(
-                            Keyword::Bool,
-                        ))),
-                        uuid: Uuid::new_v4(),
-                    },
+                    ty => panic!("Type isn't considered in test: {ty:?}"),
                 };
                 let value = Node::Statement(Statement::AssignedValue(AssignedValue {
                     token: Token::for_test(Kind::Equals),
                     node: Box::new(value.clone()),
                     uuid: Uuid::new_v4(),
                 }));
-                TypesTest {
+                TypesFromValue {
                     declaration: Node::Declaration(Declaration::VariableDeclaration(
                         VariableDeclaration {
                             token: Token::for_test(Kind::Keyword(Keyword::Let)),
@@ -110,7 +105,7 @@ proptest! {
     })]
 
     #[test]
-    fn test(cases in proptest::collection::vec(TypesTest::arbitrary(), 10)) {
+    fn test(cases in proptest::collection::vec(TypesFromValue::arbitrary(), 10)) {
         for case in cases.into_iter() {
             test_node_success( Node::Statement(Statement::Block(case.into())));
         }

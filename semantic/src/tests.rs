@@ -43,7 +43,6 @@ macro_rules! test_fail {
                     let node = $element_ref::read(&mut parser).expect("Node is parsed without errors").expect("Node is parsed");
                     let mut tcx = $crate::TypeContext::default();
                     assert!(node.initialize(&mut tcx).is_err());
-                    assert!(node.infer_type(&mut tcx).is_err());
             }
         }
     };

@@ -10,7 +10,9 @@ impl InferType for Variable {
 }
 
 impl Initialize for Variable {
-    fn initialize(&self, _tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
+    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
+        tcx.lookup(&self.ident)
+            .ok_or(LinkedErr::by_link(E::VariableIsNotDefined, &self.into()))?;
         Ok(())
     }
 }

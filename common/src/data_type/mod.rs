@@ -3,7 +3,7 @@ use std::fmt;
 #[enum_ids::enum_ids(display_variant)]
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum DataType {
-    /// Cabe be in If statement
+    /// Can be in If statement
     IndeterminateType,
     Void,
     // Output(Output),
@@ -39,6 +39,7 @@ impl DataType {
         }
         match self {
             Self::F64 | Self::Isize => matches!(right, DataType::F64 | DataType::Isize),
+            Self::OneOf(tys) => tys.iter().any(|ty| ty.compatible(right)),
             _ => false,
         }
     }
@@ -48,6 +49,7 @@ impl DataType {
         }
         match self {
             Self::F64 | Self::Isize => matches!(right, DataType::F64 | DataType::Isize),
+            Self::OneOf(tys) => tys.iter().any(|ty| ty.compatible(right)),
             _ => false,
         }
     }

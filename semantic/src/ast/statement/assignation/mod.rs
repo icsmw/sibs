@@ -19,6 +19,12 @@ impl InferType for Assignation {
             ))?
             .clone();
         let right = self.right.infer_type(tcx)?;
+        if matches!(right, DataType::IndeterminateType) {
+            return Err(LinkedErr::by_link(
+                E::IndeterminateType,
+                &(&self.left).into(),
+            ));
+        }
         if left.reassignable(&right) {
             tcx.insert(variable, right)
                 .map_err(|e| LinkedErr::by_link(e, &self.into()))?;

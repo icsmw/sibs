@@ -121,6 +121,9 @@ impl Arbitrary for Block {
                     VariableDeclaration::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Declaration(Declaration::VariableDeclaration(v)))
                         .boxed(),
+                    FunctionDeclaration::arbitrary_with(deep + 1)
+                        .prop_map(|v| Node::Declaration(Declaration::FunctionDeclaration(v)))
+                        .boxed(),
                 ]),
                 1..5,
             )

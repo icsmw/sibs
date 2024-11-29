@@ -12,6 +12,8 @@ pub enum E {
     VariantsHaveDiffTypes,
     #[error("Types are dismatch: {0}")]
     DismatchTypes(String),
+    #[error("Assignation can't be done with IndeterminateType")]
+    IndeterminateType,
     #[error("Attempt to leave global scope")]
     AttemptToLeaveGlobalScope,
     #[error("Attempt to set type without scope")]
