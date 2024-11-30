@@ -1,5 +1,8 @@
+use std::ops::RangeInclusive;
+
 use crate::*;
 
+use gens::gen_string;
 use proptest::prelude::*;
 
 impl Arbitrary for StringPart {
@@ -17,11 +20,10 @@ impl Arbitrary for StringPart {
     ///   and `sch` is the stop character used in the string.
     fn arbitrary_with((variant, sch): Self::Parameters) -> Self::Strategy {
         if variant == 0 {
-            (proptest::collection::vec(any::<char>(), 1..100), Just(sch))
-                .prop_map(|(chars, sch)| {
+            (gen_string(RangeInclusive::new(1, 100)), Just(sch))
+                .prop_map(|(str, sch)| {
                     StringPart::Literal(
-                        chars
-                            .into_iter()
+                        str.chars()
                             .map(|ch| {
                                 if ch == '{' || ch == '}' || ch == '\\' {
                                     "_".to_string()

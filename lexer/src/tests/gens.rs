@@ -1,5 +1,8 @@
+use std::{collections::btree_map::Range, ops::RangeInclusive};
+
 use crate::*;
 
+use prop::sample::SizeRange;
 use proptest::prelude::*;
 
 /// Generates a `BoxedStrategy` with random `Kind` instance,
@@ -58,6 +61,22 @@ pub fn rnd_kind_without(exceptions: Vec<KindId>) -> BoxedStrategy<Kind> {
         .filter(|id| !exceptions.contains(id))
         .collect::<Vec<KindId>>();
     prop::strategy::Union::new(includes.into_iter().map(kind)).boxed()
+}
+
+pub fn gen_string(range: RangeInclusive<usize>) -> BoxedStrategy<String> {
+    let debug = std::env::var("SIBS_DEBUG_PROPTEST")
+        .map(|v| {
+            let v = v.to_lowercase();
+            v == "true" || v == "on" || v == "1"
+        })
+        .unwrap_or(false);
+    if debug {
+        "[a-z][a-z0-9]*".prop_map(String::from).boxed()
+    } else {
+        proptest::collection::vec(any::<char>(), range)
+            .prop_map(|chars| chars.into_iter().collect::<String>())
+            .boxed()
+    }
 }
 
 /// Generates strategies for creating `Kind` instances based on the given `KindId`.
@@ -151,11 +170,10 @@ pub fn kind(id: KindId) -> BoxedStrategy<Kind> {
             .prop_filter("Finite f64", |x| x.is_finite())
             .prop_map(Kind::Number)
             .boxed(),
-        KindId::String => proptest::collection::vec(any::<char>(), 0..200)
-            .prop_map(|chars| {
+        KindId::String => gen_string(RangeInclusive::new(0, 200))
+            .prop_map(|str| {
                 Kind::String(
-                    chars
-                        .into_iter()
+                    str.chars()
                         .map(|ch| {
                             if ch == '"' {
                                 "\\\"".to_string()
@@ -221,12 +239,11 @@ pub fn kind(id: KindId) -> BoxedStrategy<Kind> {
                 parts.prop_map(Kind::Command).boxed()
             })
             .boxed(),
-        KindId::Comment => proptest::collection::vec(any::<char>(), 0..200)
-            .prop_map(|chars| {
+        KindId::Comment => gen_string(RangeInclusive::new(0, 200))
+            .prop_map(|str| {
                 Kind::Comment(format!(
                     "comment:{}",
-                    chars
-                        .into_iter()
+                    str.chars()
                         .map(|ch| {
                             if ch == '\n' || ch == '\r' || ch == '\\' {
                                 "_".to_string()
@@ -238,12 +255,11 @@ pub fn kind(id: KindId) -> BoxedStrategy<Kind> {
                 ))
             })
             .boxed(),
-        KindId::Meta => proptest::collection::vec(any::<char>(), 0..200)
-            .prop_map(|chars| {
+        KindId::Meta => gen_string(RangeInclusive::new(0, 200))
+            .prop_map(|str| {
                 Kind::Meta(format!(
                     "meta:{}",
-                    chars
-                        .into_iter()
+                    str.chars()
                         .map(|ch| {
                             if ch == '\n' || ch == '\r' || ch == '\\' {
                                 "_".to_string()

@@ -3,23 +3,19 @@ use asttree::*;
 
 impl ConflictResolver<ExpressionId> for ExpressionId {
     fn resolve_conflict(&self, id: &ExpressionId) -> ExpressionId {
-        // Variable and Comparison are in conflict
         match self {
-            Self::Variable => {
-                if matches!(id, ExpressionId::ComparisonSeq | Self::ComparisonGroup) {
-                    self.to_owned()
-                } else {
-                    id.to_owned()
-                }
-            }
-            Self::ComparisonSeq | Self::ComparisonGroup => {
-                if matches!(id, ExpressionId::Variable) {
+            Self::ComparisonSeq
+            | Self::ComparisonGroup
+            | Self::BinaryExpSeq
+            | Self::BinaryExpGroup => {
+                if matches!(id, Self::Variable) {
                     id.to_owned()
                 } else {
                     self.to_owned()
                 }
             }
-            Self::Comparison
+            Self::Variable
+            | Self::Comparison
             | Self::LogicalOp
             | Self::ComparisonOp
             | Self::Range
@@ -31,9 +27,7 @@ impl ConflictResolver<ExpressionId> for ExpressionId {
             | Self::Command
             | Self::TaskCall
             | Self::BinaryOp
-            | Self::BinaryExpGroup
-            | Self::BinaryExp
-            | Self::BinaryExpSeq => self.to_owned(),
+            | Self::BinaryExp => self.to_owned(),
         }
     }
 }

@@ -9,7 +9,7 @@ pub fn resolve_reading_conflicts<T: Clone, K: Display + Clone + PartialEq + Conf
 where
     for<'a> SrcLink: From<&'a T>,
 {
-    if let Some((n, (pos, tk, id))) = results.iter().enumerate().max_by_key(|(_, (a, ..))| a) {
+    if let Some((n, (pos, node, id))) = results.iter().enumerate().max_by_key(|(_, (a, ..))| a) {
         let conflicted = results
             .iter()
             .filter(|(p, _, oid)| p == pos && oid != id)
@@ -18,28 +18,34 @@ where
         if conflicted.is_empty() {
             parser.pos = *pos;
             Ok(Some(results.remove(n).1))
-        } else if let (Some((_, c_tk, c_id)), true) = (conflicted.first(), conflicted.len() == 1) {
-            parser.pos = *pos;
-            if &id.resolve_conflict(c_id) == id {
-                Ok(Some(tk.clone()))
-            } else {
-                Ok(Some(c_tk.clone()))
-            }
         } else {
-            Err(E::NodesAreInConflict(
-                results
-                    .iter()
-                    .filter(|(p, ..)| p == pos)
-                    .map(|(.., id)| id.to_string())
-                    .collect::<Vec<String>>()
-                    .join(", "),
-            )
-            .link(
-                &results
-                    .first()
-                    .map(|(_, n, _)| n.into())
-                    .unwrap_or_default(),
-            ))
+            let (mut resolved_node, mut resolved_id) = (node.clone(), id.clone());
+            let mut ignored = Vec::new();
+            for (_, node, id) in conflicted.iter() {
+                if &resolved_id.resolve_conflict(id) == id {
+                    if ignored.contains(&resolved_id) {
+                        return Err(E::NodesAreInConflict(
+                            results
+                                .iter()
+                                .filter(|(p, ..)| p == pos)
+                                .map(|(.., id)| id.to_string())
+                                .collect::<Vec<String>>()
+                                .join(", "),
+                        )
+                        .link(
+                            &results
+                                .first()
+                                .map(|(_, n, _)| n.into())
+                                .unwrap_or_default(),
+                        ));
+                    }
+                    ignored.push(resolved_id.clone());
+                    resolved_id = id.clone();
+                    resolved_node = node.clone();
+                }
+            }
+            parser.pos = *pos;
+            Ok(Some(resolved_node))
         }
     } else {
         Ok(None)

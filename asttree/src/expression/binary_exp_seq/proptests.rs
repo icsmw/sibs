@@ -11,14 +11,25 @@ impl Arbitrary for BinaryExpSeq {
         (
             if deep > PROPTEST_DEEP_FACTOR {
                 prop::collection::vec(
-                    prop::strategy::Union::new(vec![BinaryExp::arbitrary()
-                        .prop_map(|v| Node::Expression(Expression::BinaryExp(v)))
-                        .boxed()]),
+                    prop::strategy::Union::new(vec![
+                        Number::arbitrary()
+                            .prop_map(|v| Node::Value(Value::Number(v)))
+                            .boxed(),
+                        Variable::arbitrary()
+                            .prop_map(|v| Node::Expression(Expression::Variable(v)))
+                            .boxed(),
+                        BinaryExp::arbitrary()
+                            .prop_map(|v| Node::Expression(Expression::BinaryExp(v)))
+                            .boxed(),
+                    ]),
                     1..5,
                 )
             } else {
                 prop::collection::vec(
                     prop::strategy::Union::new(vec![
+                        Number::arbitrary()
+                            .prop_map(|v| Node::Value(Value::Number(v)))
+                            .boxed(),
                         BinaryExp::arbitrary()
                             .prop_map(|v| Node::Expression(Expression::BinaryExp(v)))
                             .boxed(),

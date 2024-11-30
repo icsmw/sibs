@@ -1,4 +1,7 @@
+use std::ops::RangeInclusive;
+
 use crate::*;
+use gens::gen_string;
 use proptest::prelude::*;
 
 impl Arbitrary for CommandPart {
@@ -8,11 +11,10 @@ impl Arbitrary for CommandPart {
 
     fn arbitrary_with((deep, lit): Self::Parameters) -> Self::Strategy {
         if lit {
-            return proptest::collection::vec(any::<char>(), 1..100)
-                .prop_map(|chars| {
+            return gen_string(RangeInclusive::new(1, 100))
+                .prop_map(|str| {
                     CommandPart::Literal(
-                        chars
-                            .into_iter()
+                        str.chars()
                             .map(|ch| {
                                 if ch == '{' || ch == '}' || ch == '\\' || ch == '`' {
                                     "_".to_string()

@@ -8,16 +8,19 @@ use diagnostics::*;
 impl ReadNode<BinaryExpSeq> for BinaryExpSeq {
     fn read(parser: &mut Parser) -> Result<Option<BinaryExpSeq>, LinkedErr<E>> {
         let mut collected = Vec::new();
-        while let Some(node) = Expression::try_oneof(
+
+        while let Some(node) = Node::try_oneof(
             parser,
             &[
-                ExpressionId::BinaryExp,
-                ExpressionId::BinaryOp,
-                ExpressionId::BinaryExpGroup,
+                NodeReadTarget::Value(&[ValueId::Number]),
+                NodeReadTarget::Expression(&[
+                    ExpressionId::Variable,
+                    ExpressionId::BinaryExp,
+                    ExpressionId::BinaryOp,
+                    ExpressionId::BinaryExpGroup,
+                ]),
             ],
-        )?
-        .map(Node::Expression)
-        {
+        )? {
             if let Node::Expression(Expression::BinaryOp(op)) = &node {
                 match collected.last() {
                     Some(Node::Expression(Expression::BinaryOp(prev))) => {
@@ -34,6 +37,13 @@ impl ReadNode<BinaryExpSeq> for BinaryExpSeq {
             } else {
                 match collected.last() {
                     Some(Node::Expression(Expression::BinaryOp(..))) | None => {}
+                    Some(Node::Expression(Expression::Variable(..))) => {
+                        if collected.len() == 1 {
+                            return Ok(None);
+                        } else {
+                            return Err(E::MissedBinaryOperator.link(&(&node).into()));
+                        }
+                    }
                     Some(n) => {
                         return Err(E::MissedBinaryOperator.link(&n.into()));
                     }
