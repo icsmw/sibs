@@ -2,7 +2,11 @@ use crate::*;
 
 impl InferType for ComparisonSeq {
     fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
-        for node in self.nodes.iter() {
+        for node in self
+            .nodes
+            .iter()
+            .filter(|n| !matches!(n, Node::Expression(Expression::LogicalOp(..))))
+        {
             let ty = node.infer_type(tcx)?;
             if !matches!(ty, DataType::Bool) {
                 return Err(LinkedErr::by_link(E::ExpectedBoolType(ty), &node.into()));

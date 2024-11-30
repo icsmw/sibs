@@ -1,8 +1,7 @@
-use std::{collections::btree_map::Range, ops::RangeInclusive};
+use std::ops::RangeInclusive;
 
 use crate::*;
 
-use prop::sample::SizeRange;
 use proptest::prelude::*;
 
 /// Generates a `BoxedStrategy` with random `Kind` instance,
@@ -63,14 +62,19 @@ pub fn rnd_kind_without(exceptions: Vec<KindId>) -> BoxedStrategy<Kind> {
     prop::strategy::Union::new(includes.into_iter().map(kind)).boxed()
 }
 
+/// Generates random string. Sensitive to SIBS_DEBUG_PROPTEST environment variable.
+/// In case of SIBS_DEBUG_PROPTEST = true, it will generate a random ASCII string instead
+/// completely random.
+///
+/// # Arguments
+///
+/// * `range` - The `RangeInclusive<usize>` to define min and max length of string.
+///
+/// # Returns
+///
+/// `BoxedStrategy<String>`
 pub fn gen_string(range: RangeInclusive<usize>) -> BoxedStrategy<String> {
-    let debug = std::env::var("SIBS_DEBUG_PROPTEST")
-        .map(|v| {
-            let v = v.to_lowercase();
-            v == "true" || v == "on" || v == "1"
-        })
-        .unwrap_or(false);
-    if debug {
+    if common::is_proptest_debug() {
         "[a-z][a-z0-9]*".prop_map(String::from).boxed()
     } else {
         proptest::collection::vec(any::<char>(), range)
