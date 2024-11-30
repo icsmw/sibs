@@ -53,6 +53,9 @@ impl DataType {
             _ => false,
         }
     }
+    pub fn numeric(&self) -> bool {
+        matches!(self, DataType::F64 | DataType::Isize)
+    }
 }
 
 impl fmt::Display for DataType {

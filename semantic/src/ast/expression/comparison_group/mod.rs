@@ -1,14 +1,22 @@
 use crate::*;
 
 impl InferType for ComparisonGroup {
-    fn infer_type(&self, _tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
-        Ok(DataType::Void)
+    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
+        let ty = self.node.infer_type(tcx)?;
+        if !matches!(ty, DataType::Bool) {
+            Err(LinkedErr::by_link(
+                E::ExpectedBoolType(ty),
+                &(&self.node).into(),
+            ))
+        } else {
+            Ok(ty)
+        }
     }
 }
 
 impl Initialize for ComparisonGroup {
     fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
-        self.nodes.iter().try_for_each(|n| n.initialize(tcx))?;
-        Ok(())
+        self.node.initialize(tcx)?;
+        self.infer_type(tcx).map(|_| ())
     }
 }

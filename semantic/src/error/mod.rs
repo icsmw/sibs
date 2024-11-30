@@ -26,4 +26,8 @@ pub enum E {
     UnexpectedNode(NodeId),
     #[error("Empty type declaration")]
     EmptyTypeDeclaration,
+    #[error("Expected bool type, but actual type is: {0}")]
+    ExpectedBoolType(DataType),
+    #[error("Expected numeric type, but actual type is: {0}")]
+    ExpectedNumericType(DataType),
 }
