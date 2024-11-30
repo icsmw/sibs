@@ -1,9 +1,16 @@
+#[cfg(test)]
+mod tests;
+
 use crate::*;
 
 impl InferType for BinaryExpSeq {
     fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
         let mut out = DataType::Isize;
-        for node in self.nodes.iter() {
+        for node in self
+            .nodes
+            .iter()
+            .filter(|n| !matches!(n, Node::Expression(Expression::BinaryOp(..))))
+        {
             let ty = node.infer_type(tcx)?;
             if !ty.numeric() {
                 return Err(LinkedErr::by_link(E::ExpectedNumericType(ty), &node.into()));
