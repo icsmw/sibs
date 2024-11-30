@@ -15,6 +15,7 @@ impl ReadNode<ComparisonGroup> for ComparisonGroup {
         while let Some(node) = Expression::try_oneof(
             &mut inner,
             &[
+                ExpressionId::Variable,
                 ExpressionId::Comparison,
                 ExpressionId::LogicalOp,
                 ExpressionId::ComparisonGroup,
@@ -38,6 +39,13 @@ impl ReadNode<ComparisonGroup> for ComparisonGroup {
             } else {
                 match collected.last() {
                     Some(Node::Expression(Expression::LogicalOp(..))) | None => {}
+                    Some(Node::Expression(Expression::Variable(..))) => {
+                        if collected.len() == 1 {
+                            return Ok(None);
+                        } else {
+                            return Err(E::MissedLogicalOperator.link(&(&node).into()));
+                        }
+                    }
                     Some(n) => {
                         return Err(E::MissedLogicalOperator.link(&n.into()));
                     }

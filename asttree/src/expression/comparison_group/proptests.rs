@@ -11,14 +11,22 @@ impl Arbitrary for ComparisonGroup {
         (
             if deep > PROPTEST_DEEP_FACTOR {
                 prop::collection::vec(
-                    prop::strategy::Union::new(vec![Comparison::arbitrary_with(deep + 1)
-                        .prop_map(|v| Node::Expression(Expression::Comparison(v)))
-                        .boxed()]),
+                    prop::strategy::Union::new(vec![
+                        Variable::arbitrary()
+                            .prop_map(|v| Node::Expression(Expression::Variable(v)))
+                            .boxed(),
+                        Comparison::arbitrary_with(deep + 1)
+                            .prop_map(|v| Node::Expression(Expression::Comparison(v)))
+                            .boxed(),
+                    ]),
                     1..5,
                 )
             } else {
                 prop::collection::vec(
                     prop::strategy::Union::new(vec![
+                        Variable::arbitrary()
+                            .prop_map(|v| Node::Expression(Expression::Variable(v)))
+                            .boxed(),
                         Comparison::arbitrary_with(deep + 1)
                             .prop_map(|v| Node::Expression(Expression::Comparison(v)))
                             .boxed(),

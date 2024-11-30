@@ -11,6 +11,7 @@ impl ReadNode<ComparisonSeq> for ComparisonSeq {
         while let Some(node) = Expression::try_oneof(
             parser,
             &[
+                ExpressionId::Variable,
                 ExpressionId::Comparison,
                 ExpressionId::LogicalOp,
                 ExpressionId::ComparisonGroup,
@@ -34,6 +35,13 @@ impl ReadNode<ComparisonSeq> for ComparisonSeq {
             } else {
                 match collected.last() {
                     Some(Node::Expression(Expression::LogicalOp(..))) | None => {}
+                    Some(Node::Expression(Expression::Variable(..))) => {
+                        if collected.len() == 1 {
+                            return Ok(None);
+                        } else {
+                            return Err(E::MissedLogicalOperator.link(&(&node).into()));
+                        }
+                    }
                     Some(n) => {
                         return Err(E::MissedLogicalOperator.link(&n.into()));
                     }

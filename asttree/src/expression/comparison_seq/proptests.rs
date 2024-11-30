@@ -11,6 +11,9 @@ impl Arbitrary for ComparisonSeq {
         (
             prop::collection::vec(
                 prop::strategy::Union::new(vec![
+                    Variable::arbitrary()
+                        .prop_map(|v| Node::Expression(Expression::Variable(v)))
+                        .boxed(),
                     Comparison::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Expression(Expression::Comparison(v)))
                         .boxed(),
