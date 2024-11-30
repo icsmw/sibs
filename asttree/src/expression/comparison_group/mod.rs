@@ -6,22 +6,14 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct ComparisonGroup {
-    pub nodes: Vec<Node>,
+    pub open: Token,
+    pub close: Token,
+    pub node: Box<Node>,
     pub uuid: Uuid,
 }
 
 impl fmt::Display for ComparisonGroup {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{} {} {}",
-            Kind::LeftParen,
-            self.nodes
-                .iter()
-                .map(|n| n.to_string())
-                .collect::<Vec<String>>()
-                .join(" "),
-            Kind::RightParen
-        )
+        write!(f, "{} {} {}", self.open, self.node, self.close)
     }
 }

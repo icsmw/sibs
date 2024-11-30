@@ -8,58 +8,25 @@ use lexer::KindId;
 
 impl ReadNode<ComparisonGroup> for ComparisonGroup {
     fn read(parser: &mut Parser) -> Result<Option<ComparisonGroup>, LinkedErr<E>> {
-        let Some((mut inner, ..)) = parser.between(KindId::LeftParen, KindId::RightParen)? else {
+        let Some((mut inner, open, close)) =
+            parser.between(KindId::LeftParen, KindId::RightParen)?
+        else {
             return Ok(None);
         };
-        let mut collected = Vec::new();
-        while let Some(node) = Expression::try_oneof(
-            &mut inner,
-            &[
-                ExpressionId::Variable,
-                ExpressionId::Comparison,
-                ExpressionId::LogicalOp,
-                ExpressionId::ComparisonGroup,
-            ],
-        )?
-        .map(Node::Expression)
-        {
-            if let Node::Expression(Expression::LogicalOp(op)) = &node {
-                match collected.last() {
-                    Some(Node::Expression(Expression::LogicalOp(prev))) => {
-                        return Err(E::UnexpectedLogicalOperator(prev.token.id())
-                            .link_with_token(&prev.token));
-                    }
-                    None => {
-                        return Err(
-                            E::UnexpectedLogicalOperator(op.token.id()).link_with_token(&op.token)
-                        );
-                    }
-                    Some(_) => {}
-                }
-            } else {
-                match collected.last() {
-                    Some(Node::Expression(Expression::LogicalOp(..))) | None => {}
-                    Some(Node::Expression(Expression::Variable(..))) => {
-                        if collected.len() == 1 {
-                            return Ok(None);
-                        } else {
-                            return Err(E::MissedLogicalOperator.link(&(&node).into()));
-                        }
-                    }
-                    Some(n) => {
-                        return Err(E::MissedLogicalOperator.link(&n.into()));
-                    }
-                }
-            }
-            collected.push(node);
-        }
-        Ok(if collected.is_empty() || !inner.is_done() {
-            None
-        } else {
+        let Some(node) = Expression::try_oneof(&mut inner, &[ExpressionId::ComparisonSeq])?
+            .map(Node::Expression)
+        else {
+            return Ok(None);
+        };
+        Ok(if inner.is_done() {
             Some(ComparisonGroup {
-                nodes: collected,
+                open,
+                close,
+                node: Box::new(node),
                 uuid: Uuid::new_v4(),
             })
+        } else {
+            None
         })
     }
 }
