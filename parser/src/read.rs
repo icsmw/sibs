@@ -110,3 +110,8 @@ pub trait Read<
         resolve_reading_conflicts(results, parser)
     }
 }
+
+pub trait ReadMetadata {
+    fn read_md_before(&mut self, parser: &mut Parser) -> Result<(), LinkedErr<E>>;
+    fn read_md_after(&mut self, parser: &mut Parser) -> Result<(), LinkedErr<E>>;
+}

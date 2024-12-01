@@ -22,14 +22,6 @@ impl Arbitrary for Component {
                         .prop_map(Node::ControlFlowModifier)
                         .prop_map(LinkedNode::from_node)
                         .boxed(),
-                    Comment::arbitrary()
-                        .prop_map(|v| Node::Miscellaneous(Miscellaneous::Comment(v)))
-                        .prop_map(LinkedNode::from_node)
-                        .boxed(),
-                    Meta::arbitrary()
-                        .prop_map(|v| Node::Miscellaneous(Miscellaneous::Meta(v)))
-                        .prop_map(LinkedNode::from_node)
-                        .boxed(),
                 ]),
                 1..5,
             ),

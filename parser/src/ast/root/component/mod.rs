@@ -42,10 +42,6 @@ impl ReadNode<Component> for Component {
                 &[
                     NodeReadTarget::ControlFlowModifier(&[ControlFlowModifierId::Gatekeeper]),
                     NodeReadTarget::Root(&[RootId::Task]),
-                    NodeReadTarget::Miscellaneous(&[
-                        MiscellaneousId::Comment,
-                        MiscellaneousId::Meta,
-                    ]),
                 ],
             )?
             else {

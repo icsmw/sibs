@@ -1,4 +1,5 @@
 mod conflict;
+mod metadata;
 #[cfg(test)]
 mod tests;
 
@@ -25,54 +26,64 @@ pub enum NodeReadTarget<'a> {
     Miscellaneous(&'a [MiscellaneousId]),
 }
 
+pub(crate) fn read_and_resolve_nodes(
+    parser: &mut Parser,
+    targets: &[NodeReadTarget],
+) -> Result<Option<Node>, LinkedErr<E>> {
+    let mut results = Vec::new();
+    let reset = parser.pin();
+    for target in targets {
+        let drop = parser.pin();
+        if let (Some(node), id) = match target {
+            NodeReadTarget::Statement(ids) => (
+                Statement::try_oneof(parser, ids)?.map(Node::Statement),
+                NodeId::Statement,
+            ),
+            NodeReadTarget::Expression(ids) => (
+                Expression::try_oneof(parser, ids)?.map(Node::Expression),
+                NodeId::Expression,
+            ),
+            NodeReadTarget::Declaration(ids) => (
+                Declaration::try_oneof(parser, ids)?.map(Node::Declaration),
+                NodeId::Declaration,
+            ),
+            NodeReadTarget::Value(ids) => (
+                Value::try_oneof(parser, ids)?.map(Node::Value),
+                NodeId::Value,
+            ),
+            NodeReadTarget::ControlFlowModifier(ids) => (
+                ControlFlowModifier::try_oneof(parser, ids)?.map(Node::ControlFlowModifier),
+                NodeId::ControlFlowModifier,
+            ),
+            NodeReadTarget::Root(ids) => {
+                (Root::try_oneof(parser, ids)?.map(Node::Root), NodeId::Root)
+            }
+            NodeReadTarget::Miscellaneous(ids) => (
+                Miscellaneous::try_oneof(parser, ids)?.map(Node::Miscellaneous),
+                NodeId::Miscellaneous,
+            ),
+        } {
+            results.push((parser.pos, node, id));
+        }
+        drop(parser);
+    }
+    reset(parser);
+    resolve_reading_conflicts(results, parser)
+}
+
 impl TryReadOneOf<LinkedNode, NodeReadTarget<'_>> for LinkedNode {
     fn try_oneof(
         parser: &mut Parser,
         targets: &[NodeReadTarget],
     ) -> Result<Option<LinkedNode>, LinkedErr<E>> {
-        let mut results = Vec::new();
-        let reset = parser.pin();
-        for target in targets {
-            let drop = parser.pin();
-            if let (Some(node), id) = match target {
-                NodeReadTarget::Statement(ids) => (
-                    Statement::try_oneof(parser, ids)?.map(Node::Statement),
-                    NodeId::Statement,
-                ),
-                NodeReadTarget::Expression(ids) => (
-                    Expression::try_oneof(parser, ids)?.map(Node::Expression),
-                    NodeId::Expression,
-                ),
-                NodeReadTarget::Declaration(ids) => (
-                    Declaration::try_oneof(parser, ids)?.map(Node::Declaration),
-                    NodeId::Declaration,
-                ),
-                NodeReadTarget::Value(ids) => (
-                    Value::try_oneof(parser, ids)?.map(Node::Value),
-                    NodeId::Value,
-                ),
-                NodeReadTarget::ControlFlowModifier(ids) => (
-                    ControlFlowModifier::try_oneof(parser, ids)?.map(Node::ControlFlowModifier),
-                    NodeId::ControlFlowModifier,
-                ),
-                NodeReadTarget::Root(ids) => {
-                    (Root::try_oneof(parser, ids)?.map(Node::Root), NodeId::Root)
-                }
-                NodeReadTarget::Miscellaneous(ids) => (
-                    Miscellaneous::try_oneof(parser, ids)?.map(Node::Miscellaneous),
-                    NodeId::Miscellaneous,
-                ),
-            } {
-                results.push((parser.pos, node, id));
-            }
-            drop(parser);
-        }
-        reset(parser);
-        Ok(
-            resolve_reading_conflicts(results, parser)?.map(|node| LinkedNode {
-                node,
-                md: Metadata {},
-            }),
-        )
+        let mut md = Metadata::default();
+        md.read_md_before(parser)?;
+        let node = read_and_resolve_nodes(parser, targets)?;
+        Ok(if let Some(node) = node {
+            md.read_md_after(parser)?;
+            Some(LinkedNode { node, md })
+        } else {
+            None
+        })
     }
 }

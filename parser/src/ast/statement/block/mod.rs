@@ -56,7 +56,6 @@ impl ReadNode<Block> for Block {
                         ValueId::PrimitiveString,
                         ValueId::Array,
                     ]),
-                    NodeReadTarget::Miscellaneous(&[MiscellaneousId::Comment]),
                 ],
             )?
             else {
