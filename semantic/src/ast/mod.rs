@@ -35,3 +35,15 @@ impl Initialize for Node {
         }
     }
 }
+
+impl InferType for LinkedNode {
+    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
+        self.node.infer_type(tcx)
+    }
+}
+
+impl Initialize for LinkedNode {
+    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
+        self.node.initialize(tcx)
+    }
+}

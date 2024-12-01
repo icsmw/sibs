@@ -8,7 +8,7 @@ impl InferType for ComparisonSeq {
         for node in self
             .nodes
             .iter()
-            .filter(|n| !matches!(n, Node::Expression(Expression::LogicalOp(..))))
+            .filter(|n| !matches!(n.node, Node::Expression(Expression::LogicalOp(..))))
         {
             let ty = node.infer_type(tcx)?;
             if !matches!(ty, DataType::Bool) {

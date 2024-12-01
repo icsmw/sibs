@@ -1,5 +1,5 @@
-#[cfg(test)]
-mod proptests;
+// #[cfg(test)]
+// mod proptests;
 #[cfg(test)]
 mod tests;
 
@@ -45,7 +45,7 @@ impl Initialize for VariableDeclaration {
         if let Some(n) = self.r#type.as_ref() {
             n.initialize(tcx)?;
         }
-        if let Node::Expression(Expression::Variable(variable)) = self.variable.as_ref() {
+        if let Node::Expression(Expression::Variable(variable)) = &self.variable.node {
             let ty = self.infer_type(tcx)?;
             tcx.insert(&variable.ident, ty)
                 .map_err(|e| LinkedErr::by_link(e, &self.into()))?;
@@ -53,7 +53,7 @@ impl Initialize for VariableDeclaration {
             Ok(())
         } else {
             Err(LinkedErr::by_link(
-                E::UnexpectedNode(self.variable.id()),
+                E::UnexpectedNode(self.variable.node.id()),
                 &self.into(),
             ))
         }

@@ -2,12 +2,11 @@ use crate::*;
 
 impl InferType for Assignation {
     fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
-        let variable = if let Node::Expression(Expression::Variable(variable)) = self.left.as_ref()
-        {
+        let variable = if let Node::Expression(Expression::Variable(variable)) = &self.left.node {
             variable.ident.to_owned()
         } else {
             return Err(LinkedErr::by_link(
-                E::UnexpectedNode(self.left.id()),
+                E::UnexpectedNode(self.left.node.id()),
                 &self.into(),
             ));
         };
