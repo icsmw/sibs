@@ -6,7 +6,7 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct VariableTypeDeclaration {
-    pub types: Vec<Node>,
+    pub types: Vec<LinkedNode>,
     pub token: Token,
     pub uuid: Uuid,
 }

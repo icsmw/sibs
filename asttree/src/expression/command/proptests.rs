@@ -76,6 +76,7 @@ impl Arbitrary for CommandPart {
                     .boxed(),
             ])
         }
+        .prop_map(LinkedNode::from_node)
         .prop_map(CommandPart::Expression)
         .boxed()
     }

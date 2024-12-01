@@ -9,8 +9,8 @@ pub struct Task {
     pub vis: Option<Token>,
     pub sig: Token,
     pub name: Token,
-    pub args: Vec<Node>,
-    pub block: Box<Node>,
+    pub args: Vec<LinkedNode>,
+    pub block: Box<LinkedNode>,
     pub uuid: Uuid,
 }
 

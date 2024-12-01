@@ -8,8 +8,8 @@ use std::fmt;
 pub struct FunctionDeclaration {
     pub sig: Token,
     pub name: Token,
-    pub args: Vec<Node>,
-    pub block: Box<Node>,
+    pub args: Vec<LinkedNode>,
+    pub block: Box<LinkedNode>,
     pub uuid: Uuid,
 }
 

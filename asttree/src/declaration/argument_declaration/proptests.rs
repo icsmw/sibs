@@ -11,6 +11,7 @@ impl Arbitrary for ArgumentDeclaration {
             Variable::arbitrary()
                 .prop_map(Expression::Variable)
                 .prop_map(Node::Expression)
+                .prop_map(LinkedNode::from_node)
                 .boxed(),
             prop::strategy::Union::new(vec![
                 VariableTypeDeclaration::arbitrary_with(deep + 1)
@@ -21,7 +22,8 @@ impl Arbitrary for ArgumentDeclaration {
                     .prop_map(Declaration::VariableVariants)
                     .prop_map(Node::Declaration)
                     .boxed(),
-            ]),
+            ])
+            .prop_map(LinkedNode::from_node),
         )
             .prop_map(|(variable, ty)| ArgumentDeclaration {
                 variable: Box::new(variable),

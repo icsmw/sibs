@@ -14,9 +14,11 @@ impl ReadNode<Include> for Include {
         if !matches!(token.kind, Kind::Keyword(Keyword::Mod)) {
             return Ok(None);
         }
-        let node = Value::try_read(parser, ValueId::PrimitiveString)?
-            .map(Node::Value)
-            .ok_or_else(|| E::MissedModulePath.link_with_token(&token))?;
+        let node = LinkedNode::try_oneof(
+            parser,
+            &[NodeReadTarget::Value(&[ValueId::PrimitiveString])],
+        )?
+        .ok_or_else(|| E::MissedModulePath.link_with_token(&token))?;
         Ok(Some(Include {
             token,
             node: Box::new(node),

@@ -14,12 +14,14 @@ impl ReadNode<While> for While {
         if !matches!(token.kind, Kind::Keyword(Keyword::While)) {
             return Ok(None);
         }
-        let comparison = Expression::try_oneof(parser, &[ExpressionId::ComparisonSeq])?
-            .map(Node::Expression)
-            .ok_or_else(|| E::MissedComparisonInWhile.link_with_token(&token))?;
-        let block = Statement::try_oneof(parser, &[StatementId::Block])?
-            .map(Node::Statement)
-            .ok_or_else(|| E::MissedBlock.link_with_token(&token))?;
+        let comparison = LinkedNode::try_oneof(
+            parser,
+            &[NodeReadTarget::Expression(&[ExpressionId::ComparisonSeq])],
+        )?
+        .ok_or_else(|| E::MissedComparisonInWhile.link_with_token(&token))?;
+        let block =
+            LinkedNode::try_oneof(parser, &[NodeReadTarget::Statement(&[StatementId::Block])])?
+                .ok_or_else(|| E::MissedBlock.link_with_token(&token))?;
         Ok(Some(While {
             token,
             comparison: Box::new(comparison),

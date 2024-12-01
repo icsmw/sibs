@@ -11,14 +11,17 @@ impl Arbitrary for VariableDeclaration {
             Variable::arbitrary()
                 .prop_map(Expression::Variable)
                 .prop_map(Node::Expression)
+                .prop_map(LinkedNode::from_node)
                 .boxed(),
             VariableTypeDeclaration::arbitrary_with(deep + 1)
                 .prop_map(Declaration::VariableTypeDeclaration)
                 .prop_map(Node::Declaration)
+                .prop_map(LinkedNode::from_node)
                 .boxed(),
             AssignedValue::arbitrary_with(deep + 1)
                 .prop_map(Statement::AssignedValue)
                 .prop_map(Node::Statement)
+                .prop_map(LinkedNode::from_node)
                 .boxed(),
             prop::strategy::Union::new(vec![Just(true), Just(false)]),
             prop::strategy::Union::new(vec![Just(true), Just(false)]),

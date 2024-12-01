@@ -37,7 +37,7 @@ impl ReadNode<Component> for Component {
                     break 'semicolons;
                 }
             }
-            let Some(node) = Node::try_oneof(
+            let Some(node) = LinkedNode::try_oneof(
                 &mut inner,
                 &[
                     NodeReadTarget::ControlFlowModifier(&[ControlFlowModifierId::Gatekeeper]),

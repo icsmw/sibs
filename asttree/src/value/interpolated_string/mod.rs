@@ -8,7 +8,7 @@ use std::fmt;
 pub enum InterpolatedStringPart {
     Open(Token),
     Literal(String),
-    Expression(Node),
+    Expression(LinkedNode),
     Close(Token),
 }
 

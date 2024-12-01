@@ -6,7 +6,7 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct OneOf {
-    pub commands: Vec<Node>,
+    pub commands: Vec<LinkedNode>,
     pub token: Token,
     pub open: Token,
     pub close: Token,

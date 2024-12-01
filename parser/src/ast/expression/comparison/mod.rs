@@ -7,7 +7,7 @@ use diagnostics::*;
 
 impl ReadNode<Comparison> for Comparison {
     fn read(parser: &mut Parser) -> Result<Option<Comparison>, LinkedErr<E>> {
-        let Some(left) = Node::try_oneof(
+        let Some(left) = LinkedNode::try_oneof(
             parser,
             &[
                 NodeReadTarget::Value(&[
@@ -22,12 +22,14 @@ impl ReadNode<Comparison> for Comparison {
         else {
             return Ok(None);
         };
-        let Some(operator) =
-            Expression::try_read(parser, ExpressionId::ComparisonOp)?.map(Node::Expression)
+        let Some(operator) = LinkedNode::try_oneof(
+            parser,
+            &[NodeReadTarget::Expression(&[ExpressionId::ComparisonOp])],
+        )?
         else {
             return Ok(None);
         };
-        let Some(right) = Node::try_oneof(
+        let Some(right) = LinkedNode::try_oneof(
             parser,
             &[
                 NodeReadTarget::Value(&[

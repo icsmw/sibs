@@ -25,11 +25,11 @@ pub enum NodeReadTarget<'a> {
     Miscellaneous(&'a [MiscellaneousId]),
 }
 
-impl TryReadOneOf<Node, NodeReadTarget<'_>> for Node {
+impl TryReadOneOf<LinkedNode, NodeReadTarget<'_>> for LinkedNode {
     fn try_oneof(
         parser: &mut Parser,
         targets: &[NodeReadTarget],
-    ) -> Result<Option<Node>, LinkedErr<E>> {
+    ) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         let mut results = Vec::new();
         let reset = parser.pin();
         for target in targets {
@@ -68,6 +68,11 @@ impl TryReadOneOf<Node, NodeReadTarget<'_>> for Node {
             drop(parser);
         }
         reset(parser);
-        resolve_reading_conflicts(results, parser)
+        Ok(
+            resolve_reading_conflicts(results, parser)?.map(|node| LinkedNode {
+                node,
+                md: Metadata {},
+            }),
+        )
     }
 }

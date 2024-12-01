@@ -35,6 +35,7 @@ impl Arbitrary for Accessor {
                     .boxed(),
             ])
         }
+        .prop_map(LinkedNode::from_node)
         .prop_map(move |node| Accessor {
             node: Box::new(node),
             open: Token::for_test(Kind::LeftBracket),

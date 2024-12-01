@@ -6,8 +6,8 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct Closure {
-    pub args: Vec<Node>,
-    pub block: Box<Node>,
+    pub args: Vec<LinkedNode>,
+    pub block: Box<LinkedNode>,
     pub open: Token,
     pub close: Token,
     pub uuid: Uuid,

@@ -6,10 +6,10 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub enum IfCase {
-    /// (Node::Expression::ComparisonSeq, Node::Statement::Block, Token)
-    If(Node, Node, Token),
-    /// (Node::Statement::Block, Token)
-    Else(Node, Token),
+    /// (LinkedNode::Expression::ComparisonSeq, LinkedNode::Statement::Block, Token)
+    If(LinkedNode, LinkedNode, Token),
+    /// (LinkedNode::Statement::Block, Token)
+    Else(LinkedNode, Token),
 }
 
 impl fmt::Display for IfCase {

@@ -10,9 +10,11 @@ impl Arbitrary for Each {
         (
             Variable::arbitrary()
                 .prop_map(|v| Node::Expression(Expression::Variable(v)))
+                .prop_map(LinkedNode::from_node)
                 .boxed(),
             Variable::arbitrary()
                 .prop_map(|v| Node::Expression(Expression::Variable(v)))
+                .prop_map(LinkedNode::from_node)
                 .boxed(),
             if deep > PROPTEST_DEEP_FACTOR {
                 prop::strategy::Union::new(vec![Variable::arbitrary()
@@ -30,9 +32,11 @@ impl Arbitrary for Each {
                         .prop_map(|v| Node::Expression(Expression::Variable(v)))
                         .boxed(),
                 ])
-            },
+            }
+            .prop_map(LinkedNode::from_node),
             Block::arbitrary_with(deep + 1)
                 .prop_map(|v| Node::Statement(Statement::Block(v)))
+                .prop_map(LinkedNode::from_node)
                 .boxed(),
         )
             .prop_map(move |(element, index, elements, block)| Each {

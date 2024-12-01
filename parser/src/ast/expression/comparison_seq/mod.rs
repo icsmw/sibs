@@ -7,20 +7,18 @@ use diagnostics::*;
 
 impl ReadNode<ComparisonSeq> for ComparisonSeq {
     fn read(parser: &mut Parser) -> Result<Option<ComparisonSeq>, LinkedErr<E>> {
-        let mut collected = Vec::new();
-        while let Some(node) = Expression::try_oneof(
+        let mut collected: Vec<LinkedNode> = Vec::new();
+        while let Some(node) = LinkedNode::try_oneof(
             parser,
-            &[
+            &[NodeReadTarget::Expression(&[
                 ExpressionId::Variable,
                 ExpressionId::Comparison,
                 ExpressionId::LogicalOp,
                 ExpressionId::ComparisonGroup,
-            ],
-        )?
-        .map(Node::Expression)
-        {
-            if let Node::Expression(Expression::LogicalOp(op)) = &node {
-                match collected.last() {
+            ])],
+        )? {
+            if let Node::Expression(Expression::LogicalOp(op)) = &(node.node) {
+                match collected.last().map(|n| &n.node) {
                     Some(Node::Expression(Expression::LogicalOp(prev))) => {
                         return Err(E::UnexpectedLogicalOperator(prev.token.id())
                             .link_with_token(&prev.token));
@@ -33,7 +31,7 @@ impl ReadNode<ComparisonSeq> for ComparisonSeq {
                     Some(_) => {}
                 }
             } else {
-                match collected.last() {
+                match collected.last().map(|n| &n.node) {
                     Some(Node::Expression(Expression::LogicalOp(..))) | None => {}
                     Some(Node::Expression(Expression::Variable(..))) => {
                         if collected.len() == 1 {

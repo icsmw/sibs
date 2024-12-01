@@ -8,8 +8,10 @@ use lexer::Kind;
 
 impl ReadNode<Optional> for Optional {
     fn read(parser: &mut Parser) -> Result<Option<Optional>, LinkedErr<E>> {
-        let Some(comparison) =
-            Expression::try_oneof(parser, &[ExpressionId::ComparisonSeq])?.map(Node::Expression)
+        let Some(comparison) = LinkedNode::try_oneof(
+            parser,
+            &[NodeReadTarget::Expression(&[ExpressionId::ComparisonSeq])],
+        )?
         else {
             return Ok(None);
         };
@@ -19,7 +21,7 @@ impl ReadNode<Optional> for Optional {
         if !matches!(token.kind, Kind::DoubleArrow) {
             return Ok(None);
         }
-        let action = Node::try_oneof(
+        let action = LinkedNode::try_oneof(
             parser,
             &[
                 NodeReadTarget::Statement(&[

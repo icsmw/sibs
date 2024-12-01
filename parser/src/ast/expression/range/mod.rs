@@ -8,7 +8,7 @@ use lexer::Kind;
 
 impl ReadNode<Range> for Range {
     fn read(parser: &mut Parser) -> Result<Option<Range>, LinkedErr<E>> {
-        let Some(left) = Node::try_oneof(
+        let Some(left) = LinkedNode::try_oneof(
             parser,
             &[
                 NodeReadTarget::Value(&[ValueId::Number]),
@@ -23,7 +23,7 @@ impl ReadNode<Range> for Range {
                 return Ok(None);
             }
         }
-        let Some(right) = Node::try_oneof(
+        let Some(right) = LinkedNode::try_oneof(
             parser,
             &[
                 NodeReadTarget::Value(&[ValueId::Number]),

@@ -11,6 +11,7 @@ impl Arbitrary for Gatekeeper {
             prop::strategy::Union::new(vec![Skip::arbitrary_with(deep + 1)
                 .prop_map(ControlFlowModifier::Skip)
                 .prop_map(Node::ControlFlowModifier)
+                .prop_map(LinkedNode::from_node)
                 .boxed()]),
             1..5,
         )

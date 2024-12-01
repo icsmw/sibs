@@ -36,3 +36,15 @@ impl From<&Box<Node>> for SrcLink {
         }
     }
 }
+
+impl From<&LinkedNode> for SrcLink {
+    fn from(node: &LinkedNode) -> Self {
+        (&node.node).into()
+    }
+}
+
+impl From<&Box<LinkedNode>> for SrcLink {
+    fn from(node: &Box<LinkedNode>) -> Self {
+        (&node.node).into()
+    }
+}

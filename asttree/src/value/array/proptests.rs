@@ -59,8 +59,8 @@ impl Arbitrary for Array {
                 1..5,
             )
         }
-        .prop_map(move |els| Array {
-            els,
+        .prop_map(|els| Array {
+            els: els.into_iter().map(LinkedNode::from_node).collect(),
             open: Token::for_test(Kind::LeftBracket),
             close: Token::for_test(Kind::RightBracket),
             uuid: Uuid::new_v4(),

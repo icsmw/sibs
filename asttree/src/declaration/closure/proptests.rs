@@ -12,12 +12,14 @@ impl Arbitrary for Closure {
                 ArgumentDeclaration::arbitrary_with(deep + 1)
                     .prop_map(Declaration::ArgumentDeclaration)
                     .prop_map(Node::Declaration)
+                    .prop_map(LinkedNode::from_node)
                     .boxed(),
                 1..5,
             ),
             Block::arbitrary_with(deep + 1)
                 .prop_map(Statement::Block)
                 .prop_map(Node::Statement)
+                .prop_map(LinkedNode::from_node)
                 .boxed(),
         )
             .prop_map(|(args, block)| Closure {

@@ -6,8 +6,8 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct Assignation {
-    pub left: Box<Node>,
-    pub right: Box<Node>,
+    pub left: Box<LinkedNode>,
+    pub right: Box<LinkedNode>,
     pub uuid: Uuid,
 }
 

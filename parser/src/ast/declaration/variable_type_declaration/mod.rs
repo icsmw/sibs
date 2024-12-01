@@ -16,7 +16,7 @@ impl ReadNode<VariableTypeDeclaration> for VariableTypeDeclaration {
         }
         let mut types = Vec::new();
         loop {
-            let Some(node) = Node::try_oneof(
+            let Some(node) = LinkedNode::try_oneof(
                 parser,
                 &[NodeReadTarget::Declaration(&[DeclarationId::VariableType])],
             )?

@@ -18,7 +18,7 @@ impl ReadNode<Return> for Return {
             None
         } else {
             Some(
-                Node::try_oneof(
+                LinkedNode::try_oneof(
                     parser,
                     &[
                         NodeReadTarget::Value(&[

@@ -9,7 +9,7 @@ impl Arbitrary for Join {
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         prop::collection::vec(
             Command::arbitrary_with(deep + 1)
-                .prop_map(|v| Node::Expression(Expression::Command(v)))
+                .prop_map(|v| LinkedNode::from_node(Node::Expression(Expression::Command(v))))
                 .boxed(),
             1..5,
         )

@@ -7,7 +7,7 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub struct Gatekeeper {
     pub token: Token,
-    pub nodes: Vec<Node>,
+    pub nodes: Vec<LinkedNode>,
     pub open: Token,
     pub close: Token,
     pub uuid: Uuid,

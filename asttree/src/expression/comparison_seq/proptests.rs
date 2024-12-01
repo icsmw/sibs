@@ -18,7 +18,8 @@ impl Arbitrary for ComparisonSeq {
                         Comparison::arbitrary_with(deep + 1)
                             .prop_map(|v| Node::Expression(Expression::Comparison(v)))
                             .boxed(),
-                    ]),
+                    ])
+                    .prop_map(LinkedNode::from_node),
                     1..5,
                 )
             } else {
@@ -33,13 +34,15 @@ impl Arbitrary for ComparisonSeq {
                         ComparisonGroup::arbitrary_with(deep + 1)
                             .prop_map(|v| Node::Expression(Expression::ComparisonGroup(v)))
                             .boxed(),
-                    ]),
+                    ])
+                    .prop_map(LinkedNode::from_node),
                     1..5,
                 )
             },
             prop::collection::vec(
                 LogicalOp::arbitrary_with(())
                     .prop_map(|v| Node::Expression(Expression::LogicalOp(v)))
+                    .prop_map(LinkedNode::from_node)
                     .boxed(),
                 5,
             ),

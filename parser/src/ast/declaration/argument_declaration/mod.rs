@@ -7,12 +7,14 @@ use diagnostics::*;
 
 impl ReadNode<ArgumentDeclaration> for ArgumentDeclaration {
     fn read(parser: &mut Parser) -> Result<Option<ArgumentDeclaration>, LinkedErr<E>> {
-        let Some(variable) =
-            Expression::try_read(parser, ExpressionId::Variable)?.map(Node::Expression)
+        let Some(variable) = LinkedNode::try_oneof(
+            parser,
+            &[NodeReadTarget::Expression(&[ExpressionId::Variable])],
+        )?
         else {
             return Ok(None);
         };
-        let Some(ty) = Node::try_oneof(
+        let Some(ty) = LinkedNode::try_oneof(
             parser,
             &[NodeReadTarget::Declaration(&[
                 DeclarationId::VariableTypeDeclaration,

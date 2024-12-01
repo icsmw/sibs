@@ -7,17 +7,23 @@ use diagnostics::*;
 
 impl ReadNode<CompoundAssignments> for CompoundAssignments {
     fn read(parser: &mut Parser) -> Result<Option<CompoundAssignments>, LinkedErr<E>> {
-        let Some(left) =
-            Expression::try_read(parser, ExpressionId::Variable)?.map(Node::Expression)
+        let Some(left) = LinkedNode::try_oneof(
+            parser,
+            &[NodeReadTarget::Expression(&[ExpressionId::Variable])],
+        )?
         else {
             return Ok(None);
         };
-        let Some(operator) = Expression::try_read(parser, ExpressionId::CompoundAssignmentsOp)?
-            .map(Node::Expression)
+        let Some(operator) = LinkedNode::try_oneof(
+            parser,
+            &[NodeReadTarget::Expression(&[
+                ExpressionId::CompoundAssignmentsOp,
+            ])],
+        )?
         else {
             return Ok(None);
         };
-        let Some(right) = Node::try_oneof(
+        let Some(right) = LinkedNode::try_oneof(
             parser,
             &[
                 NodeReadTarget::Value(&[ValueId::Number]),

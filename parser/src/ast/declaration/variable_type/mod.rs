@@ -30,7 +30,9 @@ impl ReadNode<VariableType> for VariableType {
                 Ok(Some(VariableType {
                     r#type: VariableTypeDef::Compound(VariableCompoundType::Vec(
                         token,
-                        Box::new(Node::Declaration(Declaration::VariableType(ty))),
+                        Box::new(LinkedNode::from_node(Node::Declaration(
+                            Declaration::VariableType(ty),
+                        ))),
                     )),
                     uuid: Uuid::new_v4(),
                 }))

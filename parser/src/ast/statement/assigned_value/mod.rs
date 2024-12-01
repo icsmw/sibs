@@ -14,7 +14,7 @@ impl ReadNode<AssignedValue> for AssignedValue {
         if !matches!(token.kind, Kind::Equals) {
             return Ok(None);
         };
-        let node = Node::try_oneof(
+        let node = LinkedNode::try_oneof(
             parser,
             &[
                 NodeReadTarget::Value(&[

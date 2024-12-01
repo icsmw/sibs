@@ -16,7 +16,7 @@ impl ReadNode<VariableVariants> for VariableVariants {
         }
         let mut variants = Vec::new();
         loop {
-            let Some(node) = Node::try_oneof(
+            let Some(node) = LinkedNode::try_oneof(
                 parser,
                 &[NodeReadTarget::Value(&[
                     ValueId::PrimitiveString,

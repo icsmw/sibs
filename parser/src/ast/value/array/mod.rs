@@ -14,7 +14,7 @@ impl ReadNode<Array> for Array {
             return Ok(None);
         };
         let mut els = Vec::new();
-        while let Some(node) = Node::try_oneof(
+        while let Some(node) = LinkedNode::try_oneof(
             &mut inner,
             &[
                 NodeReadTarget::Value(&[

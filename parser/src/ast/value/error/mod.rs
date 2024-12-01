@@ -20,7 +20,7 @@ impl ReadNode<Error> for Error {
         let Some((mut inner, ..)) = parser.between(KindId::LeftParen, KindId::RightParen)? else {
             return Ok(None);
         };
-        let node = Node::try_oneof(
+        let node = LinkedNode::try_oneof(
             &mut inner,
             &[
                 NodeReadTarget::Value(&[

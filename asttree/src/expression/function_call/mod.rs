@@ -6,7 +6,7 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct FunctionCall {
-    pub args: Vec<Node>,
+    pub args: Vec<LinkedNode>,
     pub reference: Vec<(String, Token)>,
     pub open: Token,
     pub close: Token,

@@ -34,7 +34,7 @@ impl ReadNode<Skip> for Skip {
                 let _ = args_inner.token();
                 continue;
             }
-            let Some(node) = Node::try_oneof(
+            let Some(node) = LinkedNode::try_oneof(
                 &mut args_inner,
                 &[NodeReadTarget::Value(&[
                     ValueId::Array,
@@ -55,9 +55,11 @@ impl ReadNode<Skip> for Skip {
             return Err(E::MissedComma.link_by_current(&inner));
         }
         let _ = inner.token();
-        let func = Expression::try_read(&mut inner, ExpressionId::FunctionCall)?
-            .map(Node::Expression)
-            .ok_or_else(|| E::NoSkipDirectiveFuncCall.link_until_end(&inner))?;
+        let func = LinkedNode::try_oneof(
+            &mut inner,
+            &[NodeReadTarget::Expression(&[ExpressionId::FunctionCall])],
+        )?
+        .ok_or_else(|| E::NoSkipDirectiveFuncCall.link_until_end(&inner))?;
         if !inner.is_done() {
             return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
         }

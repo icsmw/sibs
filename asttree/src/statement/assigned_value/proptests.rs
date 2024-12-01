@@ -62,6 +62,7 @@ impl Arbitrary for AssignedValue {
                     .boxed(),
             ])
         }
+        .prop_map(LinkedNode::from_node)
         .prop_map(move |node| AssignedValue {
             token: Token::for_test(Kind::Equals),
             node: Box::new(node),

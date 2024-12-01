@@ -7,8 +7,8 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub struct While {
     pub token: Token,
-    pub comparison: Box<Node>,
-    pub block: Box<Node>,
+    pub comparison: Box<LinkedNode>,
+    pub block: Box<LinkedNode>,
     pub uuid: Uuid,
 }
 

@@ -51,7 +51,7 @@ impl ReadNode<Command> for Command {
                     if inner.is_done() {
                         return Err(E::EmptyStringExpression.link_between(&l_br, &r_br));
                     }
-                    let node = Node::try_oneof(
+                    let node = LinkedNode::try_oneof(
                         &mut inner,
                         &[
                             NodeReadTarget::Value(&[

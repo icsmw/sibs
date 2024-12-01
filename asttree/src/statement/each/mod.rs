@@ -7,10 +7,10 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub struct Each {
     pub token: Token,
-    pub element: Box<Node>,
-    pub index: Box<Node>,
-    pub elements: Box<Node>,
-    pub block: Box<Node>,
+    pub element: Box<LinkedNode>,
+    pub index: Box<LinkedNode>,
+    pub elements: Box<LinkedNode>,
+    pub block: Box<LinkedNode>,
     pub uuid: Uuid,
 }
 

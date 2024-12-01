@@ -19,7 +19,7 @@ impl ReadNode<Gatekeeper> for Gatekeeper {
                 .between(KindId::LeftBracket, KindId::RightBracket)?
                 .ok_or_else(|| E::NoGatekeeperDirective.link_with_token(&token))?;
         let mut nodes = Vec::new();
-        while let Some(node) = Node::try_oneof(
+        while let Some(node) = LinkedNode::try_oneof(
             &mut inner,
             &[NodeReadTarget::ControlFlowModifier(&[
                 ControlFlowModifierId::Skip,

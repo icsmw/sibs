@@ -10,6 +10,7 @@ impl Arbitrary for Optional {
         (
             ComparisonSeq::arbitrary_with(deep + 1)
                 .prop_map(|v| Node::Expression(Expression::ComparisonSeq(v)))
+                .prop_map(LinkedNode::from_node)
                 .boxed(),
             if deep > PROPTEST_DEEP_FACTOR {
                 prop::strategy::Union::new(vec![
@@ -59,9 +60,10 @@ impl Arbitrary for Optional {
                         .prop_map(|v| Node::Statement(Statement::OneOf(v)))
                         .boxed(),
                 ])
-            },
+            }
+            .prop_map(LinkedNode::from_node),
         )
-            .prop_map(move |(comparison, action)| Optional {
+            .prop_map(|(comparison, action)| Optional {
                 comparison: Box::new(comparison),
                 action: Box::new(action),
                 token: Token::for_test(Kind::DoubleArrow),

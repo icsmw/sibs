@@ -6,7 +6,7 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub enum SkipTaskArgument {
-    Value(Node),
+    Value(LinkedNode),
     Any,
 }
 
@@ -27,7 +27,7 @@ impl fmt::Display for SkipTaskArgument {
 pub struct Skip {
     pub token: Token,
     pub args: Vec<SkipTaskArgument>,
-    pub func: Box<Node>,
+    pub func: Box<LinkedNode>,
     pub open: Token,
     pub close: Token,
     pub uuid: Uuid,

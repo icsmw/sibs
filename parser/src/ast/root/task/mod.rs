@@ -34,9 +34,12 @@ impl ReadNode<Task> for Task {
             .between(KindId::LeftParen, KindId::RightParen)?
             .ok_or_else(|| E::MissedTaskArguments.link_with_token(&sig))?;
         let mut args = Vec::new();
-        while let Some(arg) = Declaration::try_read(&mut inner, DeclarationId::ArgumentDeclaration)?
-            .map(Node::Declaration)
-        {
+        while let Some(arg) = LinkedNode::try_oneof(
+            &mut inner,
+            &[NodeReadTarget::Declaration(&[
+                DeclarationId::ArgumentDeclaration,
+            ])],
+        )? {
             args.push(arg);
             if let Some(tk) = inner.token() {
                 if !matches!(tk.kind, Kind::Comma) {
@@ -47,9 +50,9 @@ impl ReadNode<Task> for Task {
         if !inner.is_done() {
             return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
         }
-        let block = Statement::try_read(parser, StatementId::Block)?
-            .map(Node::Statement)
-            .ok_or_else(|| E::MissedTaskBlock.link_with_token(&sig))?;
+        let block =
+            LinkedNode::try_oneof(parser, &[NodeReadTarget::Statement(&[StatementId::Block])])?
+                .ok_or_else(|| E::MissedTaskBlock.link_with_token(&sig))?;
         Ok(Some(Task {
             vis,
             sig,

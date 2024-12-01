@@ -17,23 +17,27 @@ impl ReadNode<Each> for Each {
         let Some((mut inner, ..)) = parser.between(KindId::LeftParen, KindId::RightParen)? else {
             return Ok(None);
         };
-        let el_ref = Expression::try_oneof(&mut inner, &[ExpressionId::Variable])?
-            .map(Node::Expression)
-            .ok_or_else(|| E::MissedElementDeclarationInEach.link_with_token(&token))?;
+        let el_ref = LinkedNode::try_oneof(
+            &mut inner,
+            &[NodeReadTarget::Expression(&[ExpressionId::Variable])],
+        )?
+        .ok_or_else(|| E::MissedElementDeclarationInEach.link_with_token(&token))?;
         if !inner.is_next(KindId::Comma) {
             return Err(E::MissedComma.link_by_current(&inner));
         } else {
             let _ = inner.token();
         }
-        let index_ref = Expression::try_oneof(&mut inner, &[ExpressionId::Variable])?
-            .map(Node::Expression)
-            .ok_or_else(|| E::MissedIndexDeclarationInEach.link_with_token(&token))?;
+        let index_ref = LinkedNode::try_oneof(
+            &mut inner,
+            &[NodeReadTarget::Expression(&[ExpressionId::Variable])],
+        )?
+        .ok_or_else(|| E::MissedIndexDeclarationInEach.link_with_token(&token))?;
         if !inner.is_next(KindId::Comma) {
             return Err(E::MissedComma.link_by_current(&inner));
         } else {
             let _ = inner.token();
         }
-        let elements = Node::try_oneof(
+        let elements = LinkedNode::try_oneof(
             &mut inner,
             &[
                 NodeReadTarget::Value(&[ValueId::Array]),
@@ -44,9 +48,9 @@ impl ReadNode<Each> for Each {
         if !inner.is_done() {
             return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
         };
-        let block = Statement::try_oneof(parser, &[StatementId::Block])?
-            .map(Node::Statement)
-            .ok_or_else(|| E::MissedBlock.link_with_token(&token))?;
+        let block =
+            LinkedNode::try_oneof(parser, &[NodeReadTarget::Statement(&[StatementId::Block])])?
+                .ok_or_else(|| E::MissedBlock.link_with_token(&token))?;
         Ok(Some(Each {
             token,
             element: Box::new(el_ref),

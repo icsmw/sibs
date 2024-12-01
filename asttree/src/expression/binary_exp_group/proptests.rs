@@ -10,6 +10,7 @@ impl Arbitrary for BinaryExpGroup {
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         BinaryExpSeq::arbitrary_with(deep + 1)
             .prop_map(|v| Node::Expression(Expression::BinaryExpSeq(v)))
+            .prop_map(LinkedNode::from_node)
             .boxed()
             .prop_map(|node| BinaryExpGroup {
                 open: Token::for_test(Kind::LeftParen),

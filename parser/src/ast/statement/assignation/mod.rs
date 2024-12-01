@@ -7,13 +7,17 @@ use diagnostics::*;
 
 impl ReadNode<Assignation> for Assignation {
     fn read(parser: &mut Parser) -> Result<Option<Assignation>, LinkedErr<E>> {
-        let Some(left) =
-            Expression::try_oneof(parser, &[ExpressionId::Variable])?.map(Node::Expression)
+        let Some(left) = LinkedNode::try_oneof(
+            parser,
+            &[NodeReadTarget::Expression(&[ExpressionId::Variable])],
+        )?
         else {
             return Ok(None);
         };
-        let Some(right) =
-            Statement::try_read(parser, StatementId::AssignedValue)?.map(Node::Statement)
+        let Some(right) = LinkedNode::try_oneof(
+            parser,
+            &[NodeReadTarget::Statement(&[StatementId::AssignedValue])],
+        )?
         else {
             return Ok(None);
         };

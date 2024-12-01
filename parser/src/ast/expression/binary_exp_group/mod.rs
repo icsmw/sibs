@@ -13,8 +13,10 @@ impl ReadNode<BinaryExpGroup> for BinaryExpGroup {
         else {
             return Ok(None);
         };
-        let Some(node) =
-            Expression::try_oneof(&mut inner, &[ExpressionId::BinaryExpSeq])?.map(Node::Expression)
+        let Some(node) = LinkedNode::try_oneof(
+            &mut inner,
+            &[NodeReadTarget::Expression(&[ExpressionId::BinaryExpSeq])],
+        )?
         else {
             return Ok(None);
         };

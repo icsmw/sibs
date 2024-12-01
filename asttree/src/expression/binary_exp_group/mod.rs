@@ -8,7 +8,7 @@ use std::fmt;
 pub struct BinaryExpGroup {
     pub open: Token,
     pub close: Token,
-    pub node: Box<Node>,
+    pub node: Box<LinkedNode>,
     pub uuid: Uuid,
 }
 

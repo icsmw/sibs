@@ -8,7 +8,7 @@ use std::fmt;
 pub enum CommandPart {
     Open(Token),
     Literal(String),
-    Expression(Node),
+    Expression(LinkedNode),
     Close(Token),
 }
 

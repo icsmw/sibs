@@ -7,7 +7,7 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub struct Array {
     pub open: Token,
-    pub els: Vec<Node>,
+    pub els: Vec<LinkedNode>,
     pub close: Token,
     pub uuid: Uuid,
 }

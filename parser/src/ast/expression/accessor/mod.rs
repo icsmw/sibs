@@ -13,7 +13,7 @@ impl ReadNode<Accessor> for Accessor {
         else {
             return Ok(None);
         };
-        let Some(node) = Node::try_oneof(
+        let Some(node) = LinkedNode::try_oneof(
             &mut inner,
             &[
                 NodeReadTarget::Value(&[ValueId::Number]),

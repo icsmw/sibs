@@ -6,7 +6,7 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct Accessor {
-    pub node: Box<Node>,
+    pub node: Box<LinkedNode>,
     pub open: Token,
     pub close: Token,
     pub uuid: Uuid,

@@ -10,9 +10,11 @@ impl Arbitrary for Assignation {
         (
             Variable::arbitrary()
                 .prop_map(|v| Node::Expression(Expression::Variable(v)))
+                .prop_map(LinkedNode::from_node)
                 .boxed(),
             AssignedValue::arbitrary_with(deep + 1)
                 .prop_map(|v| Node::Statement(Statement::AssignedValue(v)))
+                .prop_map(LinkedNode::from_node)
                 .boxed(),
         )
             .prop_map(move |(left, right)| Assignation {

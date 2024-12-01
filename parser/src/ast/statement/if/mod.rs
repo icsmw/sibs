@@ -14,36 +14,42 @@ impl ReadNode<If> for If {
             if let Some(tk) = parser.token().cloned() {
                 match tk.kind {
                     Kind::Keyword(Keyword::If) => {
-                        let cond = Expression::try_read(parser, ExpressionId::ComparisonSeq)?
-                            .map(Node::Expression)
-                            .ok_or_else(|| {
-                                E::MissedExpectation(
-                                    tk.id().to_string(),
-                                    ExpressionId::ComparisonSeq.to_string(),
-                                )
-                                .link_with_token(&tk)
-                            })?;
-                        let blk = Statement::try_read(parser, StatementId::Block)?
-                            .map(Node::Statement)
-                            .ok_or_else(|| {
-                                E::MissedExpectation(
-                                    tk.id().to_string(),
-                                    StatementId::Block.to_string(),
-                                )
-                                .link_with_token(&tk)
-                            })?;
+                        let cond = LinkedNode::try_oneof(
+                            parser,
+                            &[NodeReadTarget::Expression(&[ExpressionId::ComparisonSeq])],
+                        )?
+                        .ok_or_else(|| {
+                            E::MissedExpectation(
+                                tk.id().to_string(),
+                                ExpressionId::ComparisonSeq.to_string(),
+                            )
+                            .link_with_token(&tk)
+                        })?;
+                        let blk = LinkedNode::try_oneof(
+                            parser,
+                            &[NodeReadTarget::Statement(&[StatementId::Block])],
+                        )?
+                        .ok_or_else(|| {
+                            E::MissedExpectation(
+                                tk.id().to_string(),
+                                StatementId::Block.to_string(),
+                            )
+                            .link_with_token(&tk)
+                        })?;
                         cases.push(IfCase::If(cond, blk, tk));
                     }
                     Kind::Keyword(Keyword::Else) => {
-                        let blk = Statement::try_read(parser, StatementId::Block)?
-                            .map(Node::Statement)
-                            .ok_or_else(|| {
-                                E::MissedExpectation(
-                                    tk.id().to_string(),
-                                    StatementId::Block.to_string(),
-                                )
-                                .link_with_token(&tk)
-                            })?;
+                        let blk = LinkedNode::try_oneof(
+                            parser,
+                            &[NodeReadTarget::Statement(&[StatementId::Block])],
+                        )?
+                        .ok_or_else(|| {
+                            E::MissedExpectation(
+                                tk.id().to_string(),
+                                StatementId::Block.to_string(),
+                            )
+                            .link_with_token(&tk)
+                        })?;
                         cases.push(IfCase::Else(blk, tk));
                     }
                     _ => {

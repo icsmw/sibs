@@ -6,9 +6,9 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct BinaryExp {
-    pub left: Box<Node>,
-    pub operator: Box<Node>,
-    pub right: Box<Node>,
+    pub left: Box<LinkedNode>,
+    pub operator: Box<LinkedNode>,
+    pub right: Box<LinkedNode>,
     pub uuid: Uuid,
 }
 

@@ -6,9 +6,9 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct Optional {
-    pub comparison: Box<Node>,
+    pub comparison: Box<LinkedNode>,
     pub token: Token,
-    pub action: Box<Node>,
+    pub action: Box<LinkedNode>,
     pub uuid: Uuid,
 }
 

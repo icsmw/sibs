@@ -7,7 +7,7 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub struct Loop {
     pub token: Token,
-    pub block: Box<Node>,
+    pub block: Box<LinkedNode>,
     pub uuid: Uuid,
 }
 

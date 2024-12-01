@@ -34,7 +34,7 @@ impl ReadNode<TaskCall> for TaskCall {
             return Ok(None);
         };
         let mut args = Vec::new();
-        while let Some(node) = Node::try_oneof(
+        while let Some(node) = LinkedNode::try_oneof(
             &mut inner,
             &[
                 NodeReadTarget::Value(&[

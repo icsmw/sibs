@@ -6,8 +6,8 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct ArgumentDeclaration {
-    pub variable: Box<Node>,
-    pub r#type: Box<Node>,
+    pub variable: Box<LinkedNode>,
+    pub r#type: Box<LinkedNode>,
     pub uuid: Uuid,
 }
 

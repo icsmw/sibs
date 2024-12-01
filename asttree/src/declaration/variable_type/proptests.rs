@@ -10,6 +10,7 @@ impl Arbitrary for VariableCompoundType {
         (
             VariableType::arbitrary_with(deep + 1)
                 .prop_map(|v| Node::Declaration(Declaration::VariableType(v)))
+                .prop_map(LinkedNode::from_node)
                 .boxed(),
             prop::strategy::Union::new(vec![Just(VariableCompoundTypeId::Vec)]),
         )

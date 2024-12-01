@@ -23,9 +23,11 @@ impl Arbitrary for Comparison {
                     PrimitiveString::arbitrary()
                         .prop_map(|v| Node::Value(Value::PrimitiveString(v)))
                         .boxed(),
-                ]),
+                ])
+                .prop_map(LinkedNode::from_node),
                 ComparisonOp::arbitrary()
                     .prop_map(|v| Node::Expression(Expression::ComparisonOp(v)))
+                    .prop_map(LinkedNode::from_node)
                     .boxed(),
                 prop::strategy::Union::new(vec![
                     Variable::arbitrary()
@@ -40,7 +42,8 @@ impl Arbitrary for Comparison {
                     PrimitiveString::arbitrary()
                         .prop_map(|v| Node::Value(Value::PrimitiveString(v)))
                         .boxed(),
-                ]),
+                ])
+                .prop_map(LinkedNode::from_node),
             )
         } else {
             (
@@ -60,9 +63,11 @@ impl Arbitrary for Comparison {
                     InterpolatedString::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Value(Value::InterpolatedString(v)))
                         .boxed(),
-                ]),
+                ])
+                .prop_map(LinkedNode::from_node),
                 ComparisonOp::arbitrary()
                     .prop_map(|v| Node::Expression(Expression::ComparisonOp(v)))
+                    .prop_map(LinkedNode::from_node)
                     .boxed(),
                 prop::strategy::Union::new(vec![
                     Variable::arbitrary()
@@ -80,7 +85,8 @@ impl Arbitrary for Comparison {
                     InterpolatedString::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Value(Value::InterpolatedString(v)))
                         .boxed(),
-                ]),
+                ])
+                .prop_map(LinkedNode::from_node),
             )
         }
         .prop_map(move |(left, operator, right)| Comparison {

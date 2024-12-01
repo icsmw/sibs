@@ -1,13 +1,12 @@
 #[cfg(feature = "proptests")]
 mod proptests;
 
-use crate::Node;
 use crate::*;
 use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct VariableVariants {
-    pub variants: Vec<Node>,
+    pub variants: Vec<LinkedNode>,
     pub token: Token,
     pub uuid: Uuid,
 }

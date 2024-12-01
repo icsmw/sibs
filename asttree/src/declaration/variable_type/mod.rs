@@ -7,7 +7,7 @@ use std::fmt;
 #[enum_ids::enum_ids(display_variant)]
 #[derive(Debug, Clone)]
 pub enum VariableCompoundType {
-    Vec(Token, Box<Node>),
+    Vec(Token, Box<LinkedNode>),
 }
 
 impl fmt::Display for VariableCompoundType {

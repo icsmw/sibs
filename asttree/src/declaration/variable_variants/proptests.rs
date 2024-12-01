@@ -15,7 +15,8 @@ impl Arbitrary for VariableVariants {
                 PrimitiveString::arbitrary()
                     .prop_map(|v| Node::Value(Value::PrimitiveString(v)))
                     .boxed(),
-            ]),
+            ])
+            .prop_map(LinkedNode::from_node),
             1..5,
         )
         .prop_map(|variants| {

@@ -14,9 +14,9 @@ impl ReadNode<Loop> for Loop {
         if !matches!(token.kind, Kind::Keyword(Keyword::Loop)) {
             return Ok(None);
         }
-        let block = Statement::try_oneof(parser, &[StatementId::Block])?
-            .map(Node::Statement)
-            .ok_or_else(|| E::MissedBlock.link_with_token(&token))?;
+        let block =
+            LinkedNode::try_oneof(parser, &[NodeReadTarget::Statement(&[StatementId::Block])])?
+                .ok_or_else(|| E::MissedBlock.link_with_token(&token))?;
         Ok(Some(Loop {
             token,
             block: Box::new(block),

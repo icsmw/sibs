@@ -10,6 +10,7 @@ impl Arbitrary for ComparisonGroup {
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         ComparisonSeq::arbitrary_with(deep + 1)
             .prop_map(|v| Node::Expression(Expression::ComparisonSeq(v)))
+            .prop_map(LinkedNode::from_node)
             .boxed()
             .prop_map(move |node| ComparisonGroup {
                 open: Token::for_test(Kind::LeftParen),

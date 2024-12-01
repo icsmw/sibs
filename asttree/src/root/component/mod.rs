@@ -9,7 +9,7 @@ pub struct Component {
     pub sig: Token,
     pub name: Token,
     pub path: String,
-    pub nodes: Vec<Node>,
+    pub nodes: Vec<LinkedNode>,
     pub open_bl: Token,
     pub close_bl: Token,
     pub uuid: Uuid,

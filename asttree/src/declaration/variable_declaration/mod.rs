@@ -7,9 +7,9 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub struct VariableDeclaration {
     pub token: Token,
-    pub variable: Box<Node>,
-    pub r#type: Option<Box<Node>>,
-    pub assignation: Option<Box<Node>>,
+    pub variable: Box<LinkedNode>,
+    pub r#type: Option<Box<LinkedNode>>,
+    pub assignation: Option<Box<LinkedNode>>,
     pub uuid: Uuid,
 }
 

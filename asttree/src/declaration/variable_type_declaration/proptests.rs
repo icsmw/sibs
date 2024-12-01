@@ -11,6 +11,7 @@ impl Arbitrary for VariableTypeDeclaration {
             VariableType::arbitrary_with(deep + 1)
                 .prop_map(Declaration::VariableType)
                 .prop_map(Node::Declaration)
+                .prop_map(LinkedNode::from_node)
                 .boxed(),
             1..5,
         )

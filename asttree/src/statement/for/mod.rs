@@ -8,10 +8,10 @@ use std::fmt;
 pub struct For {
     pub token_for: Token,
     pub token_in: Token,
-    pub element: Box<Node>,
-    pub index: Box<Node>,
-    pub elements: Box<Node>,
-    pub block: Box<Node>,
+    pub element: Box<LinkedNode>,
+    pub index: Box<LinkedNode>,
+    pub elements: Box<LinkedNode>,
+    pub block: Box<LinkedNode>,
     pub uuid: Uuid,
 }
 

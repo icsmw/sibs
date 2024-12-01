@@ -13,8 +13,10 @@ impl ReadNode<ComparisonGroup> for ComparisonGroup {
         else {
             return Ok(None);
         };
-        let Some(node) = Expression::try_oneof(&mut inner, &[ExpressionId::ComparisonSeq])?
-            .map(Node::Expression)
+        let Some(node) = LinkedNode::try_oneof(
+            &mut inner,
+            &[NodeReadTarget::Expression(&[ExpressionId::ComparisonSeq])],
+        )?
         else {
             return Ok(None);
         };

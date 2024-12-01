@@ -22,7 +22,7 @@ impl ReadNode<Block> for Block {
                     break 'semicolons;
                 }
             }
-            let Some(node) = Node::try_oneof(
+            let Some(node) = LinkedNode::try_oneof(
                 &mut inner,
                 &[
                     NodeReadTarget::Declaration(&[

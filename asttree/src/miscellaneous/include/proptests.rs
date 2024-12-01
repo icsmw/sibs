@@ -10,7 +10,9 @@ impl Arbitrary for Include {
         PrimitiveString::arbitrary()
             .prop_map(|node| Include {
                 token: Token::for_test(Kind::Keyword(Keyword::Mod)),
-                node: Box::new(Node::Value(Value::PrimitiveString(node))),
+                node: Box::new(LinkedNode::from_node(Node::Value(Value::PrimitiveString(
+                    node,
+                )))),
                 uuid: Uuid::new_v4(),
             })
             .boxed()

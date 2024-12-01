@@ -7,7 +7,7 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub struct Return {
     pub token: Token,
-    pub node: Option<Box<Node>>,
+    pub node: Option<Box<LinkedNode>>,
     pub uuid: Uuid,
 }
 

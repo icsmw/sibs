@@ -21,7 +21,8 @@ impl Arbitrary for Error {
                 .prop_map(|v| Node::Value(Value::InterpolatedString(v)))
                 .boxed(),
         ])
-        .prop_map(move |node| Error {
+        .prop_map(LinkedNode::from_node)
+        .prop_map(|node| Error {
             node: Box::new(node),
             token: Token::for_test(Kind::Identifier(String::from("Error"))),
             uuid: Uuid::new_v4(),

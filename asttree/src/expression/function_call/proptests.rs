@@ -21,7 +21,8 @@ impl Arbitrary for FunctionCall {
                         PrimitiveString::arbitrary()
                             .prop_map(|v| Node::Value(Value::PrimitiveString(v)))
                             .boxed(),
-                    ]),
+                    ])
+                    .prop_map(LinkedNode::from_node),
                     1..5,
                 )
             } else {
@@ -45,7 +46,8 @@ impl Arbitrary for FunctionCall {
                         FunctionCall::arbitrary_with(deep + 1)
                             .prop_map(|v| Node::Expression(Expression::FunctionCall(v)))
                             .boxed(),
-                    ]),
+                    ])
+                    .prop_map(LinkedNode::from_node),
                     1..5,
                 )
             },

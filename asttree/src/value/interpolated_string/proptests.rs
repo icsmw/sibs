@@ -76,6 +76,7 @@ impl Arbitrary for InterpolatedStringPart {
                     .boxed(),
             ])
         }
+        .prop_map(LinkedNode::from_node)
         .prop_map(InterpolatedStringPart::Expression)
         .boxed()
     }

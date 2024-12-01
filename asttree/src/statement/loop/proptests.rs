@@ -8,7 +8,7 @@ impl Arbitrary for Loop {
 
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         Block::arbitrary_with(deep + 1)
-            .prop_map(|v| Node::Statement(Statement::Block(v)))
+            .prop_map(|v| LinkedNode::from_node(Node::Statement(Statement::Block(v))))
             .boxed()
             .prop_map(move |block| Loop {
                 block: Box::new(block),

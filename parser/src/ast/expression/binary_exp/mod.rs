@@ -7,7 +7,7 @@ use diagnostics::*;
 
 impl ReadNode<BinaryExp> for BinaryExp {
     fn read(parser: &mut Parser) -> Result<Option<BinaryExp>, LinkedErr<E>> {
-        let Some(left) = Node::try_oneof(
+        let Some(left) = LinkedNode::try_oneof(
             parser,
             &[
                 NodeReadTarget::Value(&[ValueId::Number]),
@@ -17,12 +17,14 @@ impl ReadNode<BinaryExp> for BinaryExp {
         else {
             return Ok(None);
         };
-        let Some(operator) =
-            Expression::try_read(parser, ExpressionId::BinaryOp)?.map(Node::Expression)
+        let Some(operator) = LinkedNode::try_oneof(
+            parser,
+            &[NodeReadTarget::Expression(&[ExpressionId::BinaryOp])],
+        )?
         else {
             return Ok(None);
         };
-        let Some(right) = Node::try_oneof(
+        let Some(right) = LinkedNode::try_oneof(
             parser,
             &[
                 NodeReadTarget::Value(&[ValueId::Number]),
