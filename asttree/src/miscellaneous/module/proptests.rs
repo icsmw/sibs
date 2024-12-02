@@ -8,11 +8,12 @@ impl Arbitrary for Module {
 
     fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
         PrimitiveString::arbitrary()
+            .prop_flat_map(|node| {
+                LinkedNode::arbitrary_with(Node::Value(Value::PrimitiveString(node)))
+            })
             .prop_map(|node| Module {
                 token: Token::for_test(Kind::Keyword(Keyword::Mod)),
-                node: Box::new(LinkedNode::from_node(Node::Value(Value::PrimitiveString(
-                    node,
-                )))),
+                node: Box::new(node),
                 uuid: Uuid::new_v4(),
             })
             .boxed()

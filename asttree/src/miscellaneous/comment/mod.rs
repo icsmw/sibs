@@ -12,6 +12,6 @@ pub struct Comment {
 
 impl fmt::Display for Comment {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}{}{}", Kind::LF, self.token, Kind::LF)
+        write!(f, "{}", self.token)
     }
 }

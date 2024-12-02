@@ -17,10 +17,10 @@ impl Arbitrary for BinaryExp {
                     .prop_map(|v| Node::Value(Value::Number(v)))
                     .boxed(),
             ])
-            .prop_map(LinkedNode::from_node),
+            .prop_flat_map(LinkedNode::arbitrary_with),
             BinaryOp::arbitrary()
                 .prop_map(|v| Node::Expression(Expression::BinaryOp(v)))
-                .prop_map(LinkedNode::from_node)
+                .prop_flat_map(LinkedNode::arbitrary_with)
                 .boxed(),
             prop::strategy::Union::new(vec![
                 Variable::arbitrary()
@@ -30,7 +30,7 @@ impl Arbitrary for BinaryExp {
                     .prop_map(|v| Node::Value(Value::Number(v)))
                     .boxed(),
             ])
-            .prop_map(LinkedNode::from_node),
+            .prop_flat_map(LinkedNode::arbitrary_with),
         )
             .prop_map(move |(left, operator, right)| BinaryExp {
                 left: Box::new(left),

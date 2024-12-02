@@ -44,7 +44,7 @@ impl Arbitrary for Block {
                         .prop_map(|v| Node::Declaration(Declaration::VariableDeclaration(v)))
                         .boxed(),
                 ])
-                .prop_map(LinkedNode::from_node),
+                .prop_flat_map(LinkedNode::arbitrary_with),
                 1..5,
             )
         } else {
@@ -120,7 +120,7 @@ impl Arbitrary for Block {
                         .prop_map(|v| Node::Declaration(Declaration::FunctionDeclaration(v)))
                         .boxed(),
                 ])
-                .prop_map(LinkedNode::from_node),
+                .prop_flat_map(LinkedNode::arbitrary_with),
                 1..5,
             )
         }

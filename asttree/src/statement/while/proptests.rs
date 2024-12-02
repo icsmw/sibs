@@ -10,11 +10,11 @@ impl Arbitrary for While {
         (
             ComparisonSeq::arbitrary_with(deep + 1)
                 .prop_map(|v| Node::Expression(Expression::ComparisonSeq(v)))
-                .prop_map(LinkedNode::from_node)
+                .prop_flat_map(LinkedNode::arbitrary_with)
                 .boxed(),
             Block::arbitrary_with(deep + 1)
                 .prop_map(|v| Node::Statement(Statement::Block(v)))
-                .prop_map(LinkedNode::from_node)
+                .prop_flat_map(LinkedNode::arbitrary_with)
                 .boxed(),
         )
             .prop_map(move |(comparison, block)| While {

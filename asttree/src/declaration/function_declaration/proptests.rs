@@ -13,14 +13,14 @@ impl Arbitrary for FunctionDeclaration {
                 ArgumentDeclaration::arbitrary_with(deep + 1)
                     .prop_map(Declaration::ArgumentDeclaration)
                     .prop_map(Node::Declaration)
-                    .prop_map(LinkedNode::from_node)
+                    .prop_flat_map(LinkedNode::arbitrary_with)
                     .boxed(),
                 1..5,
             ),
             Block::arbitrary_with(deep + 1)
                 .prop_map(Statement::Block)
                 .prop_map(Node::Statement)
-                .prop_map(LinkedNode::from_node)
+                .prop_flat_map(LinkedNode::arbitrary_with)
                 .boxed(),
         )
             .prop_map(|(name, args, block)| FunctionDeclaration {

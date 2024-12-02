@@ -22,17 +22,18 @@ impl ReadNode<VariableType> for VariableType {
                 let (mut inner, ..) = parser
                     .between(KindId::Less, KindId::Greater)?
                     .ok_or_else(|| E::MissedVariableTypeDefinition.link_with_token(&token))?;
-                let ty = VariableType::read(&mut inner)?
-                    .ok_or_else(|| E::MissedVariableTypeDefinition.link_with_token(&token))?;
+                let ty = LinkedNode::try_oneof(
+                    &mut inner,
+                    &[NodeReadTarget::Declaration(&[DeclarationId::VariableType])],
+                )?
+                .ok_or_else(|| E::MissedVariableTypeDefinition.link_with_token(&token))?;
                 if !inner.is_done() {
                     return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
                 }
                 Ok(Some(VariableType {
                     r#type: VariableTypeDef::Compound(VariableCompoundType::Vec(
                         token,
-                        Box::new(LinkedNode::from_node(Node::Declaration(
-                            Declaration::VariableType(ty),
-                        ))),
+                        Box::new(ty),
                     )),
                     uuid: Uuid::new_v4(),
                 }))

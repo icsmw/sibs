@@ -22,7 +22,7 @@ impl Arbitrary for BinaryExpSeq {
                             .prop_map(|v| Node::Expression(Expression::BinaryExp(v)))
                             .boxed(),
                     ])
-                    .prop_map(LinkedNode::from_node),
+                    .prop_flat_map(LinkedNode::arbitrary_with),
                     1..5,
                 )
             } else {
@@ -38,14 +38,14 @@ impl Arbitrary for BinaryExpSeq {
                             .prop_map(|v| Node::Expression(Expression::BinaryExpGroup(v)))
                             .boxed(),
                     ])
-                    .prop_map(LinkedNode::from_node),
+                    .prop_flat_map(LinkedNode::arbitrary_with),
                     1..5,
                 )
             },
             prop::collection::vec(
                 BinaryOp::arbitrary_with(())
                     .prop_map(|v| Node::Expression(Expression::BinaryOp(v)))
-                    .prop_map(LinkedNode::from_node)
+                    .prop_flat_map(LinkedNode::arbitrary_with)
                     .boxed(),
                 5,
             ),

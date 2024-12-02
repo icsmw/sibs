@@ -9,7 +9,7 @@ impl Arbitrary for Call {
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         FunctionCall::arbitrary_with(deep + 1)
             .prop_map(|v| Node::Expression(Expression::FunctionCall(v)))
-            .prop_map(LinkedNode::from_node)
+            .prop_flat_map(LinkedNode::arbitrary_with)
             .boxed()
             .prop_map(move |node| Call {
                 token: Token::for_test(Kind::Dot),

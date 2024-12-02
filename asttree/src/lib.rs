@@ -35,6 +35,15 @@ pub enum Node {
     Miscellaneous(Miscellaneous),
 }
 
+impl Default for Node {
+    fn default() -> Self {
+        Node::Miscellaneous(Miscellaneous::Comment(Comment {
+            token: Token::for_test(Kind::Comment(String::from("DEFAULT NODE VALUE"))),
+            uuid: Uuid::new_v4(),
+        }))
+    }
+}
+
 impl Node {
     pub fn uuid(&self) -> &Uuid {
         match self {
@@ -66,6 +75,6 @@ impl LinkedNode {
 
 impl fmt::Display for LinkedNode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.node)
+        write!(f, "{}{}", self.md.meta_to_string(), self.node)
     }
 }

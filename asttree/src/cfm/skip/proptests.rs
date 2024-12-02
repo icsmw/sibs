@@ -11,28 +11,28 @@ impl Arbitrary for SkipTaskArgument {
             Boolean::arbitrary()
                 .prop_map(Value::Boolean)
                 .prop_map(Node::Value)
-                .prop_map(LinkedNode::from_node)
+                .prop_flat_map(LinkedNode::arbitrary_with)
                 .boxed()
                 .prop_map(SkipTaskArgument::Value)
                 .boxed(),
             Number::arbitrary()
                 .prop_map(Value::Number)
                 .prop_map(Node::Value)
-                .prop_map(LinkedNode::from_node)
+                .prop_flat_map(LinkedNode::arbitrary_with)
                 .boxed()
                 .prop_map(SkipTaskArgument::Value)
                 .boxed(),
             PrimitiveString::arbitrary()
                 .prop_map(Value::PrimitiveString)
                 .prop_map(Node::Value)
-                .prop_map(LinkedNode::from_node)
+                .prop_flat_map(LinkedNode::arbitrary_with)
                 .boxed()
                 .prop_map(SkipTaskArgument::Value)
                 .boxed(),
             Array::arbitrary_with(deep + 1)
                 .prop_map(Value::Array)
                 .prop_map(Node::Value)
-                .prop_map(LinkedNode::from_node)
+                .prop_flat_map(LinkedNode::arbitrary_with)
                 .boxed()
                 .prop_map(SkipTaskArgument::Value)
                 .boxed(),
@@ -53,7 +53,7 @@ impl Arbitrary for Skip {
             FunctionCall::arbitrary_with(deep + 1)
                 .prop_map(Expression::FunctionCall)
                 .prop_map(Node::Expression)
-                .prop_map(LinkedNode::from_node)
+                .prop_flat_map(LinkedNode::arbitrary_with)
                 .boxed(),
         )
             .prop_map(|(args, func)| Skip {

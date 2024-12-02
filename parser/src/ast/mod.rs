@@ -77,12 +77,14 @@ impl TryReadOneOf<LinkedNode, NodeReadTarget<'_>> for LinkedNode {
         targets: &[NodeReadTarget],
     ) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         let mut md = Metadata::default();
+        let reset = parser.pin();
         md.read_md_before(parser)?;
         let node = read_and_resolve_nodes(parser, targets)?;
         Ok(if let Some(node) = node {
             md.read_md_after(parser)?;
             Some(LinkedNode { node, md })
         } else {
+            reset(parser);
             None
         })
     }

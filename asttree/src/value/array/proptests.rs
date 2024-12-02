@@ -22,7 +22,8 @@ impl Arbitrary for Array {
                     PrimitiveString::arbitrary()
                         .prop_map(|v| Node::Value(Value::PrimitiveString(v)))
                         .boxed(),
-                ]),
+                ])
+                .prop_flat_map(LinkedNode::arbitrary_with),
                 1..5,
             )
         } else {
@@ -55,12 +56,13 @@ impl Arbitrary for Array {
                     InterpolatedString::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Value(Value::InterpolatedString(v)))
                         .boxed(),
-                ]),
+                ])
+                .prop_flat_map(LinkedNode::arbitrary_with),
                 1..5,
             )
         }
         .prop_map(|els| Array {
-            els: els.into_iter().map(LinkedNode::from_node).collect(),
+            els,
             open: Token::for_test(Kind::LeftBracket),
             close: Token::for_test(Kind::RightBracket),
             uuid: Uuid::new_v4(),

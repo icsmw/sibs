@@ -9,10 +9,14 @@ impl Arbitrary for For {
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         (
             Variable::arbitrary()
-                .prop_map(|v| LinkedNode::from_node(Node::Expression(Expression::Variable(v))))
+                .prop_flat_map(|v| {
+                    LinkedNode::arbitrary_with(Node::Expression(Expression::Variable(v)))
+                })
                 .boxed(),
             Variable::arbitrary()
-                .prop_map(|v| LinkedNode::from_node(Node::Expression(Expression::Variable(v))))
+                .prop_flat_map(|v| {
+                    LinkedNode::arbitrary_with(Node::Expression(Expression::Variable(v)))
+                })
                 .boxed(),
             if deep > PROPTEST_DEEP_FACTOR {
                 prop::strategy::Union::new(vec![
@@ -39,9 +43,9 @@ impl Arbitrary for For {
                         .boxed(),
                 ])
             }
-            .prop_map(LinkedNode::from_node),
+            .prop_flat_map(LinkedNode::arbitrary_with),
             Block::arbitrary_with(deep + 1)
-                .prop_map(|v| LinkedNode::from_node(Node::Statement(Statement::Block(v))))
+                .prop_flat_map(|v| LinkedNode::arbitrary_with(Node::Statement(Statement::Block(v))))
                 .boxed(),
         )
             .prop_map(move |(element, index, elements, block)| For {

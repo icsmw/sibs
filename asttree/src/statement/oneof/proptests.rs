@@ -9,7 +9,9 @@ impl Arbitrary for OneOf {
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         prop::collection::vec(
             Command::arbitrary_with(deep + 1)
-                .prop_map(|v| LinkedNode::from_node(Node::Expression(Expression::Command(v))))
+                .prop_flat_map(|v| {
+                    LinkedNode::arbitrary_with(Node::Expression(Expression::Command(v)))
+                })
                 .boxed(),
             1..5,
         )
