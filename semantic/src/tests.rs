@@ -1,6 +1,3 @@
-use crate::*;
-use asttree::Node;
-
 #[macro_export]
 macro_rules! test_success {
     ($fn_name:ident, $element_ref:expr, $content:literal) => {
@@ -46,18 +43,4 @@ macro_rules! test_fail {
             }
         }
     };
-}
-
-pub fn test_node_success(node: Node) {
-    let mut tcx = TypeContext::default();
-    let result = node.initialize(&mut tcx);
-    if let Err(err) = &result {
-        eprintln!("{err:?}");
-    }
-    assert!(result.is_ok());
-    let result = node.infer_type(&mut tcx);
-    if let Err(err) = &result {
-        eprintln!("{err:?}");
-    }
-    assert!(result.is_ok());
 }

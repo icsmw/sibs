@@ -2,7 +2,7 @@ use crate::*;
 use asttree::*;
 use proptest::prelude::*;
 
-test_node_reading!(block, Block, 10);
+test_node_reading!(Block, 10);
 
 // test_node_reading_case!(
 //     block_case,

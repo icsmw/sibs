@@ -2,4 +2,4 @@ use crate::*;
 use asttree::*;
 use proptest::prelude::*;
 
-test_node_reading!(binary_exp_seq, BinaryExpSeq, 10);
+test_node_reading!(BinaryExpSeq, 10);

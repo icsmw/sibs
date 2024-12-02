@@ -2,4 +2,4 @@ use crate::*;
 use asttree::*;
 use proptest::prelude::*;
 
-test_node_reading!(meta, Meta, 10);
+test_node_reading!(Meta, 10);

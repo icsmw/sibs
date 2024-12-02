@@ -2,4 +2,4 @@ use crate::*;
 use asttree::*;
 use proptest::prelude::*;
 
-test_node_reading!(oneof, OneOf, 10);
+test_node_reading!(OneOf, 10);

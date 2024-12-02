@@ -2,4 +2,4 @@ use crate::*;
 use asttree::*;
 use proptest::prelude::*;
 
-test_node_reading!(r#while, While, 10);
+test_node_reading!(While, 10);

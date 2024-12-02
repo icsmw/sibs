@@ -1,6 +1,6 @@
 #[macro_export]
 macro_rules! test_node_reading {
-    ($fn_name:ident, $element_ref:expr, $exp_count:literal) => {
+    ($element_ref:expr, $exp_count:literal) => {
         paste::item! {
 
             proptest! {
@@ -9,8 +9,9 @@ macro_rules! test_node_reading {
                     ..ProptestConfig::with_cases(500)
                 })]
 
+                #[allow(non_snake_case)]
                 #[test]
-                fn [< test_ $fn_name >](cases in proptest::collection::vec($element_ref::arbitrary(), $exp_count)) {
+                fn [< test_ $element_ref >](cases in proptest::collection::vec($element_ref::arbitrary(), $exp_count)) {
                     for case in cases.into_iter() {
                         let content = case.to_string();
                         let mut lx = lexer::Lexer::new(&content, 0);
