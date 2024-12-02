@@ -8,11 +8,16 @@ impl Arbitrary for LinkedNode {
 
     fn arbitrary_with(node: Self::Parameters) -> Self::Strategy {
         prop::collection::vec(
-            prop::strategy::Union::new(vec![Comment::arbitrary()
-                .prop_map(|v| Node::Miscellaneous(Miscellaneous::Comment(v)))
-                .boxed()])
+            prop::strategy::Union::new(vec![
+                Comment::arbitrary()
+                    .prop_map(|v| Node::Miscellaneous(Miscellaneous::Comment(v)))
+                    .boxed(),
+                Meta::arbitrary()
+                    .prop_map(|v| Node::Miscellaneous(Miscellaneous::Meta(v)))
+                    .boxed(),
+            ])
             .prop_map(LinkedNode::from_node),
-            0..2,
+            0..4,
         )
         .prop_map(move |meta| {
             let mut md = Metadata {

@@ -27,7 +27,8 @@ impl Metadata {
         }
     }
 
-    pub fn take_meta(&mut self, src: &mut LinkedNode) {
+    #[cfg(feature = "proptests")]
+    pub(crate) fn take_meta(&mut self, src: &mut LinkedNode) {
         self.meta.append(&mut src.md.meta);
     }
 }
