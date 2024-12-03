@@ -5,6 +5,7 @@ mod argument_declaration;
 mod closure;
 mod function_declaration;
 mod variable_declaration;
+mod variable_name;
 mod variable_type;
 mod variable_type_declaration;
 mod variable_variants;
@@ -46,6 +47,9 @@ impl TryRead<Declaration, DeclarationId> for Declaration {
                 VariableVariants::read(parser)?.map(Declaration::VariableVariants)
             }
             DeclarationId::Closure => Closure::read(parser)?.map(Declaration::Closure),
+            DeclarationId::VariableName => {
+                VariableName::read(parser)?.map(Declaration::VariableName)
+            }
         })
     }
 }

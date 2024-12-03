@@ -2,8 +2,7 @@ use crate::*;
 use asttree::*;
 
 impl ConflictResolver<DeclarationId> for DeclarationId {
-    fn resolve_conflict(&self, _id: &DeclarationId) -> DeclarationId {
-        // Variable and Comparing are in conflict
+    fn resolve_conflict(&self, id: &DeclarationId) -> DeclarationId {
         match self {
             Self::VariableDeclaration
             | Self::ArgumentDeclaration
@@ -12,6 +11,13 @@ impl ConflictResolver<DeclarationId> for DeclarationId {
             | Self::VariableTypeDeclaration
             | Self::VariableVariants
             | Self::Closure => self.clone(),
+            Self::VariableName => {
+                if matches!(id, DeclarationId::ArgumentDeclaration) {
+                    id.clone()
+                } else {
+                    self.clone()
+                }
+            }
         }
     }
 }

@@ -2,6 +2,7 @@ mod argument_declaration;
 mod closure;
 mod function_declaration;
 mod variable_declaration;
+mod variable_name;
 mod variable_type;
 mod variable_type_declaration;
 mod variable_variants;
@@ -19,6 +20,7 @@ impl From<&Declaration> for SrcLink {
             Declaration::VariableType(n) => n.into(),
             Declaration::VariableTypeDeclaration(n) => n.into(),
             Declaration::VariableVariants(n) => n.into(),
+            Declaration::VariableName(n) => n.into(),
         }
     }
 }

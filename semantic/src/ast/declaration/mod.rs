@@ -2,6 +2,7 @@ mod argument_declaration;
 mod closure;
 mod function_declaration;
 mod variable_declaration;
+mod variable_name;
 mod variable_type;
 mod variable_type_declaration;
 mod variable_variants;
@@ -18,6 +19,7 @@ impl InferType for Declaration {
             Declaration::VariableType(n) => n.infer_type(tcx),
             Declaration::VariableTypeDeclaration(n) => n.infer_type(tcx),
             Declaration::VariableVariants(n) => n.infer_type(tcx),
+            Declaration::VariableName(n) => n.infer_type(tcx),
         }
     }
 }
@@ -32,6 +34,7 @@ impl Initialize for Declaration {
             Declaration::VariableType(n) => n.initialize(tcx),
             Declaration::VariableTypeDeclaration(n) => n.initialize(tcx),
             Declaration::VariableVariants(n) => n.initialize(tcx),
+            Declaration::VariableName(n) => n.initialize(tcx),
         }
     }
 }

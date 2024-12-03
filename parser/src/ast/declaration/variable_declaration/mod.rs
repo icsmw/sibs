@@ -16,7 +16,7 @@ impl ReadNode<VariableDeclaration> for VariableDeclaration {
         }
         let variable = LinkedNode::try_oneof(
             parser,
-            &[NodeReadTarget::Expression(&[ExpressionId::Variable])],
+            &[NodeReadTarget::Declaration(&[DeclarationId::VariableName])],
         )?
         .ok_or_else(|| E::MissedVariableDefinition.link_with_token(&token))?;
         let ty = LinkedNode::try_oneof(

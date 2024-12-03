@@ -9,7 +9,7 @@ impl ReadNode<ArgumentDeclaration> for ArgumentDeclaration {
     fn read(parser: &mut Parser) -> Result<Option<ArgumentDeclaration>, LinkedErr<E>> {
         let Some(variable) = LinkedNode::try_oneof(
             parser,
-            &[NodeReadTarget::Expression(&[ExpressionId::Variable])],
+            &[NodeReadTarget::Declaration(&[DeclarationId::VariableName])],
         )?
         else {
             return Ok(None);
