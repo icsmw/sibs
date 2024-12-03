@@ -10,10 +10,12 @@ impl Arbitrary for Each {
         (
             Variable::arbitrary()
                 .prop_map(|v| Node::Expression(Expression::Variable(v)))
+                .prop_map(move |n| (n, deep + 1))
                 .prop_flat_map(LinkedNode::arbitrary_with)
                 .boxed(),
             Variable::arbitrary()
                 .prop_map(|v| Node::Expression(Expression::Variable(v)))
+                .prop_map(move |n| (n, deep + 1))
                 .prop_flat_map(LinkedNode::arbitrary_with)
                 .boxed(),
             if deep > PROPTEST_DEEP_FACTOR {
@@ -33,9 +35,11 @@ impl Arbitrary for Each {
                         .boxed(),
                 ])
             }
+            .prop_map(move |n| (n, deep + 1))
             .prop_flat_map(LinkedNode::arbitrary_with),
             Block::arbitrary_with(deep + 1)
                 .prop_map(|v| Node::Statement(Statement::Block(v)))
+                .prop_map(move |n| (n, deep + 1))
                 .prop_flat_map(LinkedNode::arbitrary_with)
                 .boxed(),
         )

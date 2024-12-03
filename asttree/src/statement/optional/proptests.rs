@@ -10,6 +10,7 @@ impl Arbitrary for Optional {
         (
             ComparisonSeq::arbitrary_with(deep + 1)
                 .prop_map(|v| Node::Expression(Expression::ComparisonSeq(v)))
+                .prop_map(move |n| (n, deep + 1))
                 .prop_flat_map(LinkedNode::arbitrary_with)
                 .boxed(),
             if deep > PROPTEST_DEEP_FACTOR {
@@ -61,6 +62,7 @@ impl Arbitrary for Optional {
                         .boxed(),
                 ])
             }
+            .prop_map(move |n| (n, deep + 1))
             .prop_flat_map(LinkedNode::arbitrary_with),
         )
             .prop_map(|(comparison, action)| Optional {

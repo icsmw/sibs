@@ -17,6 +17,7 @@ impl Arbitrary for Range {
                     .prop_map(|v| Node::Value(Value::Number(v)))
                     .boxed(),
             ])
+            .prop_map(move |n| (n, 1))
             .prop_flat_map(LinkedNode::arbitrary_with),
             prop::strategy::Union::new(vec![
                 Variable::arbitrary()
@@ -26,6 +27,7 @@ impl Arbitrary for Range {
                     .prop_map(|v| Node::Value(Value::Number(v)))
                     .boxed(),
             ])
+            .prop_map(move |n| (n, 1))
             .prop_flat_map(LinkedNode::arbitrary_with),
         )
             .prop_map(move |(left, right)| Range {

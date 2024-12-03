@@ -44,9 +44,11 @@ impl Arbitrary for Block {
                         .prop_map(|v| Node::Declaration(Declaration::VariableDeclaration(v)))
                         .boxed(),
                 ])
+                .prop_map(move |n| (n, deep + 1))
                 .prop_flat_map(LinkedNode::arbitrary_with),
                 1..5,
             )
+            .boxed()
         } else {
             prop::collection::vec(
                 prop::strategy::Union::new(vec![
@@ -120,9 +122,11 @@ impl Arbitrary for Block {
                         .prop_map(|v| Node::Declaration(Declaration::FunctionDeclaration(v)))
                         .boxed(),
                 ])
+                .prop_map(move |n| (n, deep + 1))
                 .prop_flat_map(LinkedNode::arbitrary_with),
                 1..5,
             )
+            .boxed()
         }
         .prop_map(move |nodes| Block {
             nodes,

@@ -21,6 +21,7 @@ impl Arbitrary for Error {
                 .prop_map(|v| Node::Value(Value::InterpolatedString(v)))
                 .boxed(),
         ])
+        .prop_map(move |n| (n, deep + 1))
         .prop_flat_map(LinkedNode::arbitrary_with)
         .prop_map(|node| Error {
             node: Box::new(node),

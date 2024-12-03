@@ -11,10 +11,12 @@ impl Arbitrary for CompoundAssignments {
         (
             Variable::arbitrary()
                 .prop_map(|v| Node::Expression(Expression::Variable(v)))
+                .prop_map(move |n| (n, deep + 1))
                 .prop_flat_map(LinkedNode::arbitrary_with)
                 .boxed(),
             CompoundAssignmentsOp::arbitrary()
                 .prop_map(|v| Node::Expression(Expression::CompoundAssignmentsOp(v)))
+                .prop_map(move |n| (n, deep + 1))
                 .prop_flat_map(LinkedNode::arbitrary_with)
                 .boxed(),
             if deep > PROPTEST_DEEP_FACTOR {
@@ -39,6 +41,7 @@ impl Arbitrary for CompoundAssignments {
                         .boxed(),
                 ])
             }
+            .prop_map(move |n| (n, deep + 1))
             .prop_flat_map(LinkedNode::arbitrary_with),
         )
             .prop_map(move |(left, operator, right)| CompoundAssignments {

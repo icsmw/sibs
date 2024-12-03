@@ -10,14 +10,14 @@ impl Arbitrary for IfCase {
         if target == 0 {
             (
                 ComparisonSeq::arbitrary_with(deep + 1)
-                    .prop_flat_map(|v| {
-                        LinkedNode::arbitrary_with(Node::Expression(Expression::ComparisonSeq(v)))
-                    })
+                    .prop_map(|n| Node::Expression(Expression::ComparisonSeq(n)))
+                    .prop_map(move |n| (n, deep + 1))
+                    .prop_flat_map(LinkedNode::arbitrary_with)
                     .boxed(),
                 Block::arbitrary_with(deep + 1)
-                    .prop_flat_map(|v| {
-                        LinkedNode::arbitrary_with(Node::Statement(Statement::Block(v)))
-                    })
+                    .prop_map(|n| Node::Statement(Statement::Block(n)))
+                    .prop_map(move |n| (n, deep + 1))
+                    .prop_flat_map(LinkedNode::arbitrary_with)
                     .boxed(),
             )
                 .prop_map(|(comp, blk)| {
@@ -26,7 +26,9 @@ impl Arbitrary for IfCase {
                 .boxed()
         } else {
             Block::arbitrary_with(deep + 1)
-                .prop_flat_map(|v| LinkedNode::arbitrary_with(Node::Statement(Statement::Block(v))))
+                .prop_map(|n| Node::Statement(Statement::Block(n)))
+                .prop_map(move |n| (n, deep + 1))
+                .prop_flat_map(LinkedNode::arbitrary_with)
                 .boxed()
                 .prop_map(|blk| IfCase::Else(blk, Token::for_test(Kind::Keyword(Keyword::Else))))
                 .boxed()

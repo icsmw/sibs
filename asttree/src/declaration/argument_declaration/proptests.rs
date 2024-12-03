@@ -11,6 +11,7 @@ impl Arbitrary for ArgumentDeclaration {
             Variable::arbitrary()
                 .prop_map(Expression::Variable)
                 .prop_map(Node::Expression)
+                .prop_map(move |n| (n, deep + 1))
                 .prop_flat_map(LinkedNode::arbitrary_with)
                 .boxed(),
             prop::strategy::Union::new(vec![
@@ -23,6 +24,7 @@ impl Arbitrary for ArgumentDeclaration {
                     .prop_map(Node::Declaration)
                     .boxed(),
             ])
+            .prop_map(move |n| (n, deep + 1))
             .prop_flat_map(LinkedNode::arbitrary_with),
         )
             .prop_map(|(variable, ty)| ArgumentDeclaration {

@@ -19,9 +19,11 @@ impl Arbitrary for ComparisonSeq {
                             .prop_map(|v| Node::Expression(Expression::Comparison(v)))
                             .boxed(),
                     ])
+                    .prop_map(move |n| (n, deep + 1))
                     .prop_flat_map(LinkedNode::arbitrary_with),
                     1..5,
                 )
+                .boxed()
             } else {
                 prop::collection::vec(
                     prop::strategy::Union::new(vec![
@@ -35,13 +37,16 @@ impl Arbitrary for ComparisonSeq {
                             .prop_map(|v| Node::Expression(Expression::ComparisonGroup(v)))
                             .boxed(),
                     ])
+                    .prop_map(move |n| (n, deep + 1))
                     .prop_flat_map(LinkedNode::arbitrary_with),
                     1..5,
                 )
+                .boxed()
             },
             prop::collection::vec(
                 LogicalOp::arbitrary_with(())
                     .prop_map(|v| Node::Expression(Expression::LogicalOp(v)))
+                    .prop_map(move |n| (n, deep + 1))
                     .prop_flat_map(LinkedNode::arbitrary_with)
                     .boxed(),
                 5,

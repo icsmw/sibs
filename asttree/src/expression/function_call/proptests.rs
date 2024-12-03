@@ -22,9 +22,11 @@ impl Arbitrary for FunctionCall {
                             .prop_map(|v| Node::Value(Value::PrimitiveString(v)))
                             .boxed(),
                     ])
+                    .prop_map(move |n| (n, deep + 1))
                     .prop_flat_map(LinkedNode::arbitrary_with),
                     1..5,
                 )
+                .boxed()
             } else {
                 prop::collection::vec(
                     prop::strategy::Union::new(vec![
@@ -47,9 +49,11 @@ impl Arbitrary for FunctionCall {
                             .prop_map(|v| Node::Expression(Expression::FunctionCall(v)))
                             .boxed(),
                     ])
+                    .prop_map(move |n| (n, deep + 1))
                     .prop_flat_map(LinkedNode::arbitrary_with),
                     1..5,
                 )
+                .boxed()
             },
         )
             .prop_map(move |(idents, args)| FunctionCall {

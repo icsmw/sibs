@@ -24,9 +24,11 @@ impl Arbitrary for Comparison {
                         .prop_map(|v| Node::Value(Value::PrimitiveString(v)))
                         .boxed(),
                 ])
+                .prop_map(move |n| (n, deep + 1))
                 .prop_flat_map(LinkedNode::arbitrary_with),
                 ComparisonOp::arbitrary()
                     .prop_map(|v| Node::Expression(Expression::ComparisonOp(v)))
+                    .prop_map(move |n| (n, deep + 1))
                     .prop_flat_map(LinkedNode::arbitrary_with)
                     .boxed(),
                 prop::strategy::Union::new(vec![
@@ -43,8 +45,10 @@ impl Arbitrary for Comparison {
                         .prop_map(|v| Node::Value(Value::PrimitiveString(v)))
                         .boxed(),
                 ])
+                .prop_map(move |n| (n, deep + 1))
                 .prop_flat_map(LinkedNode::arbitrary_with),
             )
+                .boxed()
         } else {
             (
                 prop::strategy::Union::new(vec![
@@ -64,9 +68,11 @@ impl Arbitrary for Comparison {
                         .prop_map(|v| Node::Value(Value::InterpolatedString(v)))
                         .boxed(),
                 ])
+                .prop_map(move |n| (n, deep + 1))
                 .prop_flat_map(LinkedNode::arbitrary_with),
                 ComparisonOp::arbitrary()
                     .prop_map(|v| Node::Expression(Expression::ComparisonOp(v)))
+                    .prop_map(move |n| (n, deep + 1))
                     .prop_flat_map(LinkedNode::arbitrary_with)
                     .boxed(),
                 prop::strategy::Union::new(vec![
@@ -86,8 +92,10 @@ impl Arbitrary for Comparison {
                         .prop_map(|v| Node::Value(Value::InterpolatedString(v)))
                         .boxed(),
                 ])
+                .prop_map(move |n| (n, deep + 1))
                 .prop_flat_map(LinkedNode::arbitrary_with),
             )
+                .boxed()
         }
         .prop_map(move |(left, operator, right)| Comparison {
             left: Box::new(left),

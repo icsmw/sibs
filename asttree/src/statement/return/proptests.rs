@@ -45,6 +45,7 @@ impl Arbitrary for Return {
                         .boxed(),
                 ])
             }
+            .prop_map(move |n| (n, deep + 1))
             .prop_flat_map(LinkedNode::arbitrary_with),
         )
         .prop_map(|node| Return {
