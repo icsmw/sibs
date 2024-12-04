@@ -45,7 +45,7 @@ impl Initialize for VariableDeclaration {
         if let Some(n) = self.r#type.as_ref() {
             n.initialize(tcx)?;
         }
-        if let Node::Expression(Expression::Variable(variable)) = &self.variable.node {
+        if let Node::Declaration(Declaration::VariableName(variable)) = &self.variable.node {
             let ty = self.infer_type(tcx)?;
             tcx.insert(&variable.ident, ty)
                 .map_err(|e| LinkedErr::by_link(e, &self.into()))?;

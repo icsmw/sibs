@@ -7,10 +7,20 @@ use std::collections::HashMap;
 pub struct TypeContext {
     pub scopes: HashMap<Uuid, HashMap<String, DataType>>,
     pub location: Vec<Uuid>,
+    pub parent: Option<DataType>,
     // pub annotations: Annotations,
 }
 
 impl TypeContext {
+    pub fn set_parent_ty(&mut self, ty: DataType) {
+        self.parent = Some(ty);
+    }
+    pub fn get_parent_ty(&self) -> Option<&DataType> {
+        self.parent.as_ref()
+    }
+    pub fn drop_parent_ty(&mut self) {
+        self.parent = None;
+    }
     // pub fn annotate(&mut self, uuid: &Uuid, dt: DataType) {
     //     self.annotations.add(uuid, dt);
     // }

@@ -28,7 +28,7 @@ impl ReadNode<Accessor> for Accessor {
         else {
             return Ok(None);
         };
-        if !parser.is_done() {
+        if !inner.is_done() {
             return Ok(None);
         }
         Ok(Some(Accessor {

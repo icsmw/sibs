@@ -30,4 +30,8 @@ pub enum E {
     ExpectedBoolType(DataType),
     #[error("Expected numeric type, but actual type is: {0}")]
     ExpectedNumericType(DataType),
+    #[error("Accessor can be used only on parent value")]
+    AccessorWithoutParent,
+    #[error("Accessor cannot be used with: {0}")]
+    AccessorOnWrongType(DataType),
 }

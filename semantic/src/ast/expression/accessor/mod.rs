@@ -5,14 +5,30 @@ use crate::*;
 
 impl InferType for Accessor {
     fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
-        let ty = self.node.infer_type(tcx)?;
-        if !ty.numeric() {
+        let Some(pty) = tcx.get_parent_ty().cloned() else {
+            return Err(LinkedErr::by_link(E::AccessorWithoutParent, &self.into()));
+        };
+        if !matches!(pty, DataType::Vec(..)) {
             return Err(LinkedErr::by_link(
-                E::ExpectedNumericType(ty),
-                &(&self.node).into(),
+                E::AccessorOnWrongType(pty.to_owned()),
+                &self.into(),
             ));
         }
-        Ok(DataType::Void)
+        if let DataType::Vec(inner_ty) = pty {
+            let ty = self.node.infer_type(tcx)?;
+            if !ty.numeric() {
+                return Err(LinkedErr::by_link(
+                    E::ExpectedNumericType(ty),
+                    &(&self.node).into(),
+                ));
+            }
+            Ok(*inner_ty.to_owned())
+        } else {
+            Err(LinkedErr::by_link(
+                E::AccessorOnWrongType(pty.to_owned()),
+                &self.into(),
+            ))
+        }
     }
 }
 

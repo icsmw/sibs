@@ -1,8 +1,12 @@
 use crate::*;
 use diagnostics::*;
+use fmt::Debug;
 use std::fmt::Display;
 
-pub fn resolve_reading_conflicts<T: Clone, K: Display + Clone + PartialEq + ConflictResolver<K>>(
+pub fn resolve_reading_conflicts<
+    T: Clone + Debug,
+    K: Display + Clone + PartialEq + ConflictResolver<K>,
+>(
     mut results: Vec<(usize, T, K)>,
     parser: &mut Parser,
 ) -> Result<Option<T>, LinkedErr<E>>
@@ -55,7 +59,7 @@ pub trait ReadNode<T> {
     fn read(parser: &mut Parser) -> Result<Option<T>, LinkedErr<E>>;
 }
 
-pub trait TryRead<T: Clone, K: Display + Clone + PartialEq + ConflictResolver<K>>
+pub trait TryRead<T: Clone + Debug, K: Display + Clone + PartialEq + ConflictResolver<K>>
 where
     for<'a> SrcLink: From<&'a T>,
 {
@@ -66,11 +70,25 @@ where
         for id in ids {
             let drop = parser.pin();
             if let Some(el) = Self::try_read(parser, id.clone())? {
+                // TODO: parser pos should not be considered because it might be read with PPM,
+                // which should be ignored to resolve conflicts correctly.
+                // Each node should safe start pos and finish pos. SrcLink should depend on it, but not on
+                // calculated values.
                 results.push((parser.pos, el, id.to_owned()));
             }
             drop(parser);
         }
         reset(parser);
+        // if results.len() > 1 {
+        //     println!(
+        //         ">>>>>>>>>>>>>>>>>>>>>>>: {}",
+        //         results
+        //             .iter()
+        //             .map(|(n, t, k)| format!("\n{n}: {k}\n{t:?}"))
+        //             .collect::<Vec<String>>()
+        //             .join("\n")
+        //     );
+        // }
         resolve_reading_conflicts(results, parser)
     }
 }
@@ -84,7 +102,7 @@ pub trait AsVec<T> {
 }
 
 pub trait Read<
-    T: Clone + TryRead<T, K>,
+    T: Clone + Debug + TryRead<T, K>,
     K: AsVec<K> + Interest + Display + Clone + PartialEq + ConflictResolver<K>,
 > where
     for<'a> SrcLink: From<&'a T>,

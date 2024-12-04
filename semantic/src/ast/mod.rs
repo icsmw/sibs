@@ -38,7 +38,13 @@ impl Initialize for Node {
 
 impl InferType for LinkedNode {
     fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
-        self.node.infer_type(tcx)
+        let mut ty = self.node.infer_type(tcx)?;
+        for ppm in self.md.ppm.iter() {
+            tcx.set_parent_ty(ty);
+            ty = ppm.infer_type(tcx)?;
+        }
+        tcx.drop_parent_ty();
+        Ok(ty)
     }
 }
 

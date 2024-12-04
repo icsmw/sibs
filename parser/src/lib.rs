@@ -15,7 +15,7 @@ pub use nodes::*;
 pub use read::*;
 
 use diagnostics::*;
-use lexer::{KindId, Token};
+pub(crate) use lexer::{KindId, Position, Token};
 use std::fmt;
 pub(crate) use uuid::Uuid;
 
@@ -89,6 +89,16 @@ impl Parser {
         }
         false
     }
+
+    // pub(crate) fn get_pos(&mut self) -> Position {
+    //     let restore = self.pin();
+    //     let pos = self
+    //         .token()
+    //         .map(|tk| Position::from(tk))
+    //         .unwrap_or_else(|| Position::new(self.pos, self.pos));
+    //     restore(self);
+    //     pos
+    // }
 
     pub(crate) fn pin(&mut self) -> impl Fn(&mut Parser) -> usize {
         let pos = self.pos;
