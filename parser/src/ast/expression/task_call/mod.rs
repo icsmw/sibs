@@ -2,9 +2,6 @@
 mod proptests;
 
 use crate::*;
-use asttree::*;
-use diagnostics::*;
-use lexer::{Kind, KindId};
 
 impl ReadNode<TaskCall> for TaskCall {
     fn read(parser: &mut Parser) -> Result<Option<TaskCall>, LinkedErr<E>> {

@@ -1,5 +1,5 @@
-use lexer::Token;
+use crate::*;
 
-pub trait Interest {
+pub(crate) trait Interest {
     fn intrested(&self, token: &Token) -> bool;
 }

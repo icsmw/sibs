@@ -2,9 +2,6 @@
 mod proptests;
 
 use crate::*;
-use asttree::*;
-use diagnostics::*;
-use lexer::{Kind, StringPart};
 
 impl ReadNode<InterpolatedString> for InterpolatedString {
     fn read(parser: &mut Parser) -> Result<Option<InterpolatedString>, LinkedErr<E>> {

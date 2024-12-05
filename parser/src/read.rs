@@ -3,7 +3,7 @@ use diagnostics::*;
 use fmt::Debug;
 use std::fmt::Display;
 
-pub fn resolve_reading_conflicts<
+pub(crate) fn resolve_reading_conflicts<
     T: Clone + Debug,
     K: Display + Clone + PartialEq + ConflictResolver<K>,
 >(
@@ -59,7 +59,7 @@ pub trait ReadNode<T> {
     fn read(parser: &mut Parser) -> Result<Option<T>, LinkedErr<E>>;
 }
 
-pub trait TryRead<T: Clone + Debug, K: Display + Clone + PartialEq + ConflictResolver<K>>
+pub(crate) trait TryRead<T: Clone + Debug, K: Display + Clone + PartialEq + ConflictResolver<K>>
 where
     for<'a> SrcLink: From<&'a T>,
 {
@@ -101,7 +101,7 @@ pub trait AsVec<T> {
     fn as_vec() -> Vec<T>;
 }
 
-pub trait Read<
+pub(crate) trait Read<
     T: Clone + Debug + TryRead<T, K>,
     K: AsVec<K> + Interest + Display + Clone + PartialEq + ConflictResolver<K>,
 > where
@@ -129,7 +129,7 @@ pub trait Read<
     }
 }
 
-pub trait ReadMetadata {
+pub(crate) trait ReadMetadata {
     fn read_md_before(&mut self, parser: &mut Parser) -> Result<(), LinkedErr<E>>;
     fn read_md_after(&mut self, parser: &mut Parser) -> Result<(), LinkedErr<E>>;
 }

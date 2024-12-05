@@ -9,8 +9,6 @@ mod number;
 mod primitive_string;
 
 use crate::*;
-use asttree::*;
-use diagnostics::*;
 
 impl AsVec<ValueId> for ValueId {
     fn as_vec() -> Vec<ValueId> {

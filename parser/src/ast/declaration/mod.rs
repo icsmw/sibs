@@ -11,8 +11,6 @@ mod variable_type_declaration;
 mod variable_variants;
 
 use crate::*;
-use asttree::*;
-use diagnostics::*;
 
 impl AsVec<DeclarationId> for DeclarationId {
     fn as_vec() -> Vec<DeclarationId> {

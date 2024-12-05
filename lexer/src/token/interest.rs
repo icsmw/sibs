@@ -3,7 +3,7 @@ use crate::*;
 /// Trait defining methods to determine if a character or identifier is of interest to a specific token kind.
 ///
 /// This is used by the lexer to decide whether to consume characters or identifiers based on the current token kind.
-pub trait Interest {
+pub(crate) trait Interest {
     /// Checks if the given character is relevant for the token kind.
     ///
     /// # Arguments

@@ -35,6 +35,7 @@ pub enum Node {
     Miscellaneous(Miscellaneous),
 }
 
+#[cfg(feature = "proptests")]
 impl Default for Node {
     fn default() -> Self {
         Node::Miscellaneous(Miscellaneous::Comment(Comment {

@@ -5,8 +5,6 @@ mod component;
 mod task;
 
 use crate::*;
-use asttree::*;
-use diagnostics::*;
 
 impl AsVec<RootId> for RootId {
     fn as_vec() -> Vec<RootId> {

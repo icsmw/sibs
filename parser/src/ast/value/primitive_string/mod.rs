@@ -2,9 +2,6 @@
 mod proptests;
 
 use crate::*;
-use asttree::*;
-use diagnostics::*;
-use lexer::Kind;
 
 impl ReadNode<PrimitiveString> for PrimitiveString {
     fn read(parser: &mut Parser) -> Result<Option<PrimitiveString>, LinkedErr<E>> {

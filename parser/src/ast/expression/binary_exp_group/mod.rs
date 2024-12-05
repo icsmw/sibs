@@ -2,9 +2,6 @@
 mod proptests;
 
 use crate::*;
-use asttree::*;
-use diagnostics::*;
-use lexer::KindId;
 
 impl ReadNode<BinaryExpGroup> for BinaryExpGroup {
     fn read(parser: &mut Parser) -> Result<Option<BinaryExpGroup>, LinkedErr<E>> {

@@ -2,8 +2,6 @@
 mod proptests;
 
 use crate::*;
-use asttree::*;
-use diagnostics::*;
 
 impl ReadNode<Comparison> for Comparison {
     fn read(parser: &mut Parser) -> Result<Option<Comparison>, LinkedErr<E>> {

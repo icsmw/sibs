@@ -5,7 +5,7 @@ use crate::*;
 /// This trait is implemented for token kinds that have a fixed length representation.
 /// For tokens like identifiers, numbers, or strings, which can vary in length,
 /// the `length` method will return an error.
-pub trait ConstantLength {
+pub(crate) trait ConstantLength {
     /// Returns the constant length of the token.
     ///
     /// # Errors

@@ -1,3 +1,3 @@
-pub trait ConflictResolver<K> {
+pub(crate) trait ConflictResolver<K> {
     fn resolve_conflict(&self, id: &K) -> K;
 }

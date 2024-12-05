@@ -12,13 +12,13 @@ proptests = [
 
 [dependencies]
 
-thiserror = { workspace = true }
+thiserror.workspace = true
 uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }
 proptest = { version = "1.4", optional = true }
-enum_ids = { workspace = true }
+enum_ids.workspace = true
 
 lexer = { path = "../lexer" }
 common = { path = "../common" }
 
 [dev-dependencies]
-proptest = "1.4"
+proptest.workspace = true

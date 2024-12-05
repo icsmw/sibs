@@ -1,5 +1,4 @@
 use crate::*;
-use asttree::*;
 
 impl ConflictResolver<ValueId> for ValueId {
     fn resolve_conflict(&self, _id: &ValueId) -> ValueId {

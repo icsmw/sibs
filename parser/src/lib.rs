@@ -9,13 +9,14 @@ mod interest;
 mod nodes;
 mod read;
 
-pub use conflict::*;
-pub use interest::*;
+pub(crate) use conflict::*;
+pub(crate) use interest::*;
 pub use nodes::*;
 pub use read::*;
 
-use diagnostics::*;
-pub(crate) use lexer::{KindId, Position, Token};
+pub(crate) use asttree::*;
+pub(crate) use diagnostics::*;
+pub(crate) use lexer::*;
 use std::fmt;
 pub(crate) use uuid::Uuid;
 

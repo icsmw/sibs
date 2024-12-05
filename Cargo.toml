@@ -13,7 +13,5 @@ members = [
 enum_ids = "0.5"
 thiserror = "2.0"
 uuid = "1.8"
-
-[workspace.dev-dependencies]
 proptest = "1.4"
 paste = "1.0"

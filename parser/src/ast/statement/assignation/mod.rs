@@ -2,8 +2,6 @@
 mod proptests;
 
 use crate::*;
-use asttree::*;
-use diagnostics::*;
 
 impl ReadNode<Assignation> for Assignation {
     fn read(parser: &mut Parser) -> Result<Option<Assignation>, LinkedErr<E>> {

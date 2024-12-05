@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 
-thiserror = { workspace = true }
+thiserror.workspace = true
 uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }
 
 lexer = { path = "../lexer" }

@@ -2,8 +2,6 @@
 mod proptests;
 
 use crate::*;
-use asttree::*;
-use diagnostics::*;
 
 impl ReadNode<BinaryExp> for BinaryExp {
     fn read(parser: &mut Parser) -> Result<Option<BinaryExp>, LinkedErr<E>> {

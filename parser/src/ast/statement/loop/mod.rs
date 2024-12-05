@@ -2,9 +2,6 @@
 mod proptests;
 
 use crate::*;
-use asttree::*;
-use diagnostics::*;
-use lexer::{Keyword, Kind};
 
 impl ReadNode<Loop> for Loop {
     fn read(parser: &mut Parser) -> Result<Option<Loop>, LinkedErr<E>> {

@@ -1,5 +1,4 @@
 use crate::*;
-use asttree::*;
 
 impl ConflictResolver<MiscellaneousId> for MiscellaneousId {
     fn resolve_conflict(&self, _id: &MiscellaneousId) -> MiscellaneousId {

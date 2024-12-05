@@ -4,7 +4,7 @@ use crate::*;
 ///
 /// This trait defines a method for determining the correct `KindId` when there is
 /// a potential conflict between two token kinds.
-pub trait ConflictResolver {
+pub(crate) trait ConflictResolver {
     /// Resolves a conflict between `self` and another `KindId`.
     ///
     /// Returns the appropriate `KindId` based on conflict resolution rules.

@@ -4,7 +4,7 @@ use crate::*;
 ///
 /// This trait defines methods for reading tokens from a lexer,
 /// both general (`read`) and specific (`try_read`) based on `KindId`.
-pub trait Read {
+pub(crate) trait Read {
     /// Reads the next token from the lexer.
     ///
     /// # Arguments

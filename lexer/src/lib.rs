@@ -3,7 +3,8 @@ pub mod error;
 mod tests;
 
 mod token;
-pub use error::*;
+pub use error::E as LexerErr;
+pub(crate) use error::*;
 #[cfg(any(test, feature = "proptests"))]
 pub use tests::*;
 pub use token::*;

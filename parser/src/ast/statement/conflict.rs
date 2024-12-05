@@ -1,5 +1,4 @@
 use crate::*;
-use asttree::*;
 
 impl ConflictResolver<StatementId> for StatementId {
     fn resolve_conflict(&self, _id: &StatementId) -> StatementId {

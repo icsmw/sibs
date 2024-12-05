@@ -2,9 +2,6 @@
 mod proptests;
 
 use crate::*;
-use asttree::*;
-use diagnostics::*;
-use lexer::Kind;
 
 impl ReadNode<VariableName> for VariableName {
     fn read(parser: &mut Parser) -> Result<Option<VariableName>, LinkedErr<E>> {

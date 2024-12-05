@@ -16,8 +16,6 @@ mod r#return;
 mod r#while;
 
 use crate::*;
-use asttree::*;
-use diagnostics::*;
 
 impl AsVec<StatementId> for StatementId {
     fn as_vec() -> Vec<StatementId> {

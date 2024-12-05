@@ -1,6 +1,4 @@
 use crate::*;
-use asttree::*;
-use lexer::{Keyword, Kind, KindId, Token};
 
 impl Interest for MiscellaneousId {
     fn intrested(&self, token: &Token) -> bool {

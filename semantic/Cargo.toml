@@ -7,8 +7,8 @@ edition = "2021"
 
 [dependencies]
 
-enum_ids = { workspace = true }
-thiserror = { workspace = true }
+enum_ids.workspace = true
+thiserror.workspace = true
 uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }
 
 asttree = { path = "../asttree" }
@@ -20,5 +20,5 @@ parser = { path = "../parser" }
 [dev-dependencies]
 lexer = { path = "../lexer", features = ["proptests"] }
 asttree = { path = "../asttree", features = ["proptests"] }
-proptest = "1.4"
-paste = "1.0"
+proptest.workspace = true
+paste.workspace = true

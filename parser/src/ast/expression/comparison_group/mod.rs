@@ -2,9 +2,6 @@
 mod proptests;
 
 use crate::*;
-use asttree::*;
-use diagnostics::*;
-use lexer::KindId;
 
 impl ReadNode<ComparisonGroup> for ComparisonGroup {
     fn read(parser: &mut Parser) -> Result<Option<ComparisonGroup>, LinkedErr<E>> {

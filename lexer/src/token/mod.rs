@@ -8,14 +8,14 @@ mod position;
 mod read;
 mod tokens;
 
-pub use conflict::*;
-pub use interest::*;
+pub(crate) use conflict::*;
+pub(crate) use interest::*;
 pub use intstring::*;
 pub use keyword::*;
 pub use kind::*;
-pub use length::*;
+pub(crate) use length::*;
 pub use position::*;
-pub use read::*;
+pub(crate) use read::*;
 pub use tokens::*;
 
 use std::{cmp::PartialEq, fmt};

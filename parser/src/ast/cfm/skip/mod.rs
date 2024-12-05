@@ -2,9 +2,6 @@
 mod proptests;
 
 use crate::*;
-use asttree::*;
-use diagnostics::*;
-use lexer::{Kind, KindId};
 
 impl ReadNode<Skip> for Skip {
     fn read(parser: &mut Parser) -> Result<Option<Skip>, LinkedErr<E>> {

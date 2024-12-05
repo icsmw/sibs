@@ -2,8 +2,6 @@
 mod proptests;
 
 use crate::*;
-use asttree::*;
-use diagnostics::*;
 
 impl ReadNode<ArgumentDeclaration> for ArgumentDeclaration {
     fn read(parser: &mut Parser) -> Result<Option<ArgumentDeclaration>, LinkedErr<E>> {
