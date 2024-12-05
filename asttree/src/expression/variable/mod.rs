@@ -16,3 +16,9 @@ impl fmt::Display for Variable {
         write!(f, "{}", self.token)
     }
 }
+
+impl From<Variable> for Node {
+    fn from(val: Variable) -> Self {
+        Node::Expression(Expression::Variable(val))
+    }
+}

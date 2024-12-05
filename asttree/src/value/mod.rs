@@ -37,3 +37,9 @@ impl Value {
         }
     }
 }
+
+impl From<Value> for Node {
+    fn from(val: Value) -> Self {
+        Node::Value(val)
+    }
+}

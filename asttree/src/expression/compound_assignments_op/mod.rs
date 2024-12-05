@@ -39,3 +39,9 @@ impl fmt::Display for CompoundAssignmentsOp {
         write!(f, "{}", self.operator)
     }
 }
+
+impl From<CompoundAssignmentsOp> for Node {
+    fn from(val: CompoundAssignmentsOp) -> Self {
+        Node::Expression(Expression::CompoundAssignmentsOp(val))
+    }
+}

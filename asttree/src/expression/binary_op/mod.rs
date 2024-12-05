@@ -24,3 +24,9 @@ impl fmt::Display for BinaryOp {
         write!(f, "{}", self.token)
     }
 }
+
+impl From<BinaryOp> for Node {
+    fn from(val: BinaryOp) -> Self {
+        Node::Expression(Expression::BinaryOp(val))
+    }
+}

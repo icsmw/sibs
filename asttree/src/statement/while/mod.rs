@@ -17,3 +17,9 @@ impl fmt::Display for While {
         write!(f, "{} {} {}", self.token, self.comparison, self.block)
     }
 }
+
+impl From<While> for Node {
+    fn from(val: While) -> Self {
+        Node::Statement(Statement::While(val))
+    }
+}

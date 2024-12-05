@@ -69,3 +69,9 @@ impl fmt::Display for VariableType {
         write!(f, "{}", self.r#type)
     }
 }
+
+impl From<VariableType> for Node {
+    fn from(val: VariableType) -> Self {
+        Node::Declaration(Declaration::VariableType(val))
+    }
+}

@@ -15,3 +15,9 @@ impl fmt::Display for Break {
         write!(f, "{}", self.token)
     }
 }
+
+impl From<Break> for Node {
+    fn from(val: Break) -> Self {
+        Node::Statement(Statement::Break(val))
+    }
+}

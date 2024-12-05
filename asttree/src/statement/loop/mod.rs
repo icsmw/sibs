@@ -16,3 +16,9 @@ impl fmt::Display for Loop {
         write!(f, "{} {}", self.token, self.block)
     }
 }
+
+impl From<Loop> for Node {
+    fn from(val: Loop) -> Self {
+        Node::Statement(Statement::Loop(val))
+    }
+}

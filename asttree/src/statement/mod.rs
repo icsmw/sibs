@@ -95,3 +95,9 @@ impl Statement {
         }
     }
 }
+
+impl From<Statement> for Node {
+    fn from(val: Statement) -> Self {
+        Node::Statement(val)
+    }
+}

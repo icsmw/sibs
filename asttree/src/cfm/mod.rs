@@ -27,3 +27,9 @@ impl ControlFlowModifier {
         }
     }
 }
+
+impl From<ControlFlowModifier> for Node {
+    fn from(val: ControlFlowModifier) -> Self {
+        Node::ControlFlowModifier(val)
+    }
+}

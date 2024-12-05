@@ -16,3 +16,9 @@ impl fmt::Display for Module {
         write!(f, "{} {}", self.token, self.node)
     }
 }
+
+impl From<Module> for Node {
+    fn from(val: Module) -> Self {
+        Node::Miscellaneous(Miscellaneous::Module(val))
+    }
+}

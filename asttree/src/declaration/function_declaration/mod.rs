@@ -31,3 +31,9 @@ impl fmt::Display for FunctionDeclaration {
         )
     }
 }
+
+impl From<FunctionDeclaration> for Node {
+    fn from(val: FunctionDeclaration) -> Self {
+        Node::Declaration(Declaration::FunctionDeclaration(val))
+    }
+}

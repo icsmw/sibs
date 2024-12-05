@@ -29,3 +29,9 @@ impl fmt::Display for Join {
         )
     }
 }
+
+impl From<Join> for Node {
+    fn from(val: Join) -> Self {
+        Node::Statement(Statement::Join(val))
+    }
+}

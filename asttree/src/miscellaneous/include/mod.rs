@@ -16,3 +16,9 @@ impl fmt::Display for Include {
         write!(f, "{} {}", self.token, self.node)
     }
 }
+
+impl From<Include> for Node {
+    fn from(val: Include) -> Self {
+        Node::Miscellaneous(Miscellaneous::Include(val))
+    }
+}

@@ -16,3 +16,9 @@ impl fmt::Display for PrimitiveString {
         write!(f, "{}", self.token)
     }
 }
+
+impl From<PrimitiveString> for Node {
+    fn from(val: PrimitiveString) -> Self {
+        Node::Value(Value::PrimitiveString(val))
+    }
+}

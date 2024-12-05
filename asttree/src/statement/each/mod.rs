@@ -31,3 +31,9 @@ impl fmt::Display for Each {
         )
     }
 }
+
+impl From<Each> for Node {
+    fn from(val: Each) -> Self {
+        Node::Statement(Statement::Each(val))
+    }
+}

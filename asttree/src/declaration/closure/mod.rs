@@ -29,3 +29,9 @@ impl fmt::Display for Closure {
         )
     }
 }
+
+impl From<Closure> for Node {
+    fn from(val: Closure) -> Self {
+        Node::Declaration(Declaration::Closure(val))
+    }
+}

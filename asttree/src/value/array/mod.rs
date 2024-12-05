@@ -27,3 +27,9 @@ impl fmt::Display for Array {
         )
     }
 }
+
+impl From<Array> for Node {
+    fn from(val: Array) -> Self {
+        Node::Value(Value::Array(val))
+    }
+}

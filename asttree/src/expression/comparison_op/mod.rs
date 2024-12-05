@@ -26,3 +26,9 @@ impl fmt::Display for ComparisonOp {
         write!(f, "{}", self.token)
     }
 }
+
+impl From<ComparisonOp> for Node {
+    fn from(val: ComparisonOp) -> Self {
+        Node::Expression(Expression::ComparisonOp(val))
+    }
+}

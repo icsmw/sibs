@@ -17,3 +17,9 @@ impl fmt::Display for BinaryExpGroup {
         write!(f, "{} {} {}", self.open, self.node, self.close)
     }
 }
+
+impl From<BinaryExpGroup> for Node {
+    fn from(val: BinaryExpGroup) -> Self {
+        Node::Expression(Expression::BinaryExpGroup(val))
+    }
+}

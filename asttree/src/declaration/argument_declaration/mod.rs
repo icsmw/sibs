@@ -16,3 +16,9 @@ impl fmt::Display for ArgumentDeclaration {
         write!(f, "{} {}", self.variable, self.r#type)
     }
 }
+
+impl From<ArgumentDeclaration> for Node {
+    fn from(val: ArgumentDeclaration) -> Self {
+        Node::Declaration(Declaration::ArgumentDeclaration(val))
+    }
+}

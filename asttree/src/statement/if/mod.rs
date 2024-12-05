@@ -48,3 +48,9 @@ impl fmt::Display for If {
         )
     }
 }
+
+impl From<If> for Node {
+    fn from(val: If) -> Self {
+        Node::Statement(Statement::If(val))
+    }
+}

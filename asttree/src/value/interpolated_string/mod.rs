@@ -47,3 +47,9 @@ impl fmt::Display for InterpolatedString {
         )
     }
 }
+
+impl From<InterpolatedString> for Node {
+    fn from(val: InterpolatedString) -> Self {
+        Node::Value(Value::InterpolatedString(val))
+    }
+}

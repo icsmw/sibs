@@ -36,3 +36,9 @@ impl fmt::Display for Task {
         )
     }
 }
+
+impl From<Task> for Node {
+    fn from(val: Task) -> Self {
+        Node::Root(Root::Task(val))
+    }
+}

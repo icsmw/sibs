@@ -18,3 +18,9 @@ impl fmt::Display for CompoundAssignments {
         write!(f, "{} {} {}", self.left, self.operator, self.right)
     }
 }
+
+impl From<CompoundAssignments> for Node {
+    fn from(val: CompoundAssignments) -> Self {
+        Node::Expression(Expression::CompoundAssignments(val))
+    }
+}

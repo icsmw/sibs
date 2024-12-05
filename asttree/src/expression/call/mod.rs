@@ -16,3 +16,9 @@ impl fmt::Display for Call {
         write!(f, "{}{}", self.token, self.node)
     }
 }
+
+impl From<Call> for Node {
+    fn from(val: Call) -> Self {
+        Node::Expression(Expression::Call(val))
+    }
+}

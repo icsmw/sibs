@@ -17,3 +17,9 @@ impl fmt::Display for ComparisonGroup {
         write!(f, "{} {} {}", self.open, self.node, self.close)
     }
 }
+
+impl From<ComparisonGroup> for Node {
+    fn from(val: ComparisonGroup) -> Self {
+        Node::Expression(Expression::ComparisonGroup(val))
+    }
+}

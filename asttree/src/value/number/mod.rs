@@ -16,3 +16,9 @@ impl fmt::Display for Number {
         write!(f, "{}", self.token)
     }
 }
+
+impl From<Number> for Node {
+    fn from(val: Number) -> Self {
+        Node::Value(Value::Number(val))
+    }
+}

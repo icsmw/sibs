@@ -17,3 +17,9 @@ impl fmt::Display for Accessor {
         write!(f, "{} {} {}", self.open, self.node, self.close)
     }
 }
+
+impl From<Accessor> for Node {
+    fn from(val: Accessor) -> Self {
+        Node::Expression(Expression::Accessor(val))
+    }
+}

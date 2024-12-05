@@ -17,3 +17,9 @@ impl fmt::Display for BinaryExp {
         write!(f, "{} {} {}", self.left, self.operator, self.right)
     }
 }
+
+impl From<BinaryExp> for Node {
+    fn from(val: BinaryExp) -> Self {
+        Node::Expression(Expression::BinaryExp(val))
+    }
+}

@@ -31,3 +31,9 @@ impl fmt::Display for VariableDeclaration {
         )
     }
 }
+
+impl From<VariableDeclaration> for Node {
+    fn from(val: VariableDeclaration) -> Self {
+        Node::Declaration(Declaration::VariableDeclaration(val))
+    }
+}

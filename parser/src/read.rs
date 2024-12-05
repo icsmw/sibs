@@ -58,7 +58,7 @@ pub trait ReadNode<T> {
 }
 
 pub(crate) trait TryRead<
-    T: Clone + Debug,
+    T: Clone + Debug + Into<Node>,
     K: Display + Clone + Interest + PartialEq + ConflictResolver<K>,
 > where
     for<'a> SrcLink: From<&'a T>,
@@ -108,7 +108,7 @@ pub trait AsVec<T> {
 }
 
 pub(crate) trait Read<
-    T: Clone + Debug + TryRead<T, K>,
+    T: Clone + Debug + Into<Node> + TryRead<T, K>,
     K: AsVec<K> + Interest + Display + Clone + PartialEq + ConflictResolver<K>,
 > where
     for<'a> SrcLink: From<&'a T>,

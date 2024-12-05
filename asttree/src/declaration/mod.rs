@@ -53,3 +53,9 @@ impl Declaration {
         }
     }
 }
+
+impl From<Declaration> for Node {
+    fn from(val: Declaration) -> Self {
+        Node::Declaration(val)
+    }
+}

@@ -29,3 +29,9 @@ impl fmt::Display for OneOf {
         )
     }
 }
+
+impl From<OneOf> for Node {
+    fn from(val: OneOf) -> Self {
+        Node::Statement(Statement::OneOf(val))
+    }
+}

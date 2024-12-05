@@ -32,3 +32,9 @@ impl fmt::Display for Block {
         )
     }
 }
+
+impl From<Block> for Node {
+    fn from(val: Block) -> Self {
+        Node::Statement(Statement::Block(val))
+    }
+}

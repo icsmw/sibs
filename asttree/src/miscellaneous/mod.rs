@@ -33,3 +33,9 @@ impl Miscellaneous {
         }
     }
 }
+
+impl From<Miscellaneous> for Node {
+    fn from(val: Miscellaneous) -> Self {
+        Node::Miscellaneous(val)
+    }
+}

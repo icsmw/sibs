@@ -16,3 +16,9 @@ impl fmt::Display for Boolean {
         write!(f, "{}", self.token)
     }
 }
+
+impl From<Boolean> for Node {
+    fn from(val: Boolean) -> Self {
+        Node::Value(Value::Boolean(val))
+    }
+}

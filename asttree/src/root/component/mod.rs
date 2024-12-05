@@ -35,3 +35,9 @@ impl fmt::Display for Component {
         )
     }
 }
+
+impl From<Component> for Node {
+    fn from(val: Component) -> Self {
+        Node::Root(Root::Component(val))
+    }
+}

@@ -23,3 +23,9 @@ impl fmt::Display for BinaryExpSeq {
         )
     }
 }
+
+impl From<BinaryExpSeq> for Node {
+    fn from(val: BinaryExpSeq) -> Self {
+        Node::Expression(Expression::BinaryExpSeq(val))
+    }
+}

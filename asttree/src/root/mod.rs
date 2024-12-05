@@ -24,3 +24,9 @@ impl Root {
         }
     }
 }
+
+impl From<Root> for Node {
+    fn from(val: Root) -> Self {
+        Node::Root(val)
+    }
+}

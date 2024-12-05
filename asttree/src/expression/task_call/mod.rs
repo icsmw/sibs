@@ -34,3 +34,9 @@ impl fmt::Display for TaskCall {
         )
     }
 }
+
+impl From<TaskCall> for Node {
+    fn from(val: TaskCall) -> Self {
+        Node::Expression(Expression::TaskCall(val))
+    }
+}

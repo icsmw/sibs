@@ -16,3 +16,9 @@ impl fmt::Display for AssignedValue {
         write!(f, "{} {}", self.token, self.node)
     }
 }
+
+impl From<AssignedValue> for Node {
+    fn from(val: AssignedValue) -> Self {
+        Node::Statement(Statement::AssignedValue(val))
+    }
+}

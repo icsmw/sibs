@@ -32,3 +32,9 @@ impl fmt::Display for For {
         )
     }
 }
+
+impl From<For> for Node {
+    fn from(val: For) -> Self {
+        Node::Statement(Statement::For(val))
+    }
+}

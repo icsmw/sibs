@@ -47,3 +47,9 @@ impl fmt::Display for Command {
         )
     }
 }
+
+impl From<Command> for Node {
+    fn from(val: Command) -> Self {
+        Node::Expression(Expression::Command(val))
+    }
+}

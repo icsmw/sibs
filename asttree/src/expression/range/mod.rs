@@ -16,3 +16,9 @@ impl fmt::Display for Range {
         write!(f, "{} {} {}", self.left, Kind::DotDot, self.right)
     }
 }
+
+impl From<Range> for Node {
+    fn from(val: Range) -> Self {
+        Node::Expression(Expression::Range(val))
+    }
+}

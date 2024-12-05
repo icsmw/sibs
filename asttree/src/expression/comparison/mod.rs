@@ -17,3 +17,9 @@ impl fmt::Display for Comparison {
         write!(f, "{} {} {}", self.left, self.operator, self.right)
     }
 }
+
+impl From<Comparison> for Node {
+    fn from(val: Comparison) -> Self {
+        Node::Expression(Expression::Comparison(val))
+    }
+}

@@ -15,3 +15,9 @@ impl fmt::Display for Comment {
         write!(f, "{}", self.token)
     }
 }
+
+impl From<Comment> for Node {
+    fn from(val: Comment) -> Self {
+        Node::Miscellaneous(Miscellaneous::Comment(val))
+    }
+}

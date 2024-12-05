@@ -16,3 +16,9 @@ impl fmt::Display for Assignation {
         write!(f, "{} {}", self.left, self.right)
     }
 }
+
+impl From<Assignation> for Node {
+    fn from(val: Assignation) -> Self {
+        Node::Statement(Statement::Assignation(val))
+    }
+}

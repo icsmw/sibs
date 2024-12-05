@@ -14,3 +14,9 @@ impl fmt::Display for Meta {
         write!(f, "{}{}{}", Kind::LF, self.token, Kind::LF)
     }
 }
+
+impl From<Meta> for Node {
+    fn from(val: Meta) -> Self {
+        Node::Miscellaneous(Miscellaneous::Meta(val))
+    }
+}

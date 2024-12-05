@@ -17,3 +17,9 @@ impl fmt::Display for Optional {
         write!(f, "{} {} {}", self.comparison, self.token, self.action)
     }
 }
+
+impl From<Optional> for Node {
+    fn from(val: Optional) -> Self {
+        Node::Statement(Statement::Optional(val))
+    }
+}

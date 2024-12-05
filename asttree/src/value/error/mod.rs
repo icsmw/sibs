@@ -22,3 +22,9 @@ impl fmt::Display for Error {
         )
     }
 }
+
+impl From<Error> for Node {
+    fn from(val: Error) -> Self {
+        Node::Value(Value::Error(val))
+    }
+}

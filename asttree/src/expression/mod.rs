@@ -103,3 +103,9 @@ impl Expression {
         }
     }
 }
+
+impl From<Expression> for Node {
+    fn from(val: Expression) -> Self {
+        Node::Expression(val)
+    }
+}

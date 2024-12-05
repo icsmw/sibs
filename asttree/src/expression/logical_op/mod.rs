@@ -22,3 +22,9 @@ impl fmt::Display for LogicalOp {
         write!(f, "{}", self.token)
     }
 }
+
+impl From<LogicalOp> for Node {
+    fn from(val: LogicalOp) -> Self {
+        Node::Expression(Expression::LogicalOp(val))
+    }
+}

@@ -29,3 +29,9 @@ impl fmt::Display for Gatekeeper {
         )
     }
 }
+
+impl From<Gatekeeper> for Node {
+    fn from(val: Gatekeeper) -> Self {
+        Node::ControlFlowModifier(ControlFlowModifier::Gatekeeper(val))
+    }
+}

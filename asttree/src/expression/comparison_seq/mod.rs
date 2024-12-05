@@ -23,3 +23,9 @@ impl fmt::Display for ComparisonSeq {
         )
     }
 }
+
+impl From<ComparisonSeq> for Node {
+    fn from(val: ComparisonSeq) -> Self {
+        Node::Expression(Expression::ComparisonSeq(val))
+    }
+}

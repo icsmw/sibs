@@ -53,3 +53,9 @@ impl fmt::Display for Skip {
         )
     }
 }
+
+impl From<Skip> for Node {
+    fn from(val: Skip) -> Self {
+        Node::ControlFlowModifier(ControlFlowModifier::Skip(val))
+    }
+}

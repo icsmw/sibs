@@ -33,3 +33,9 @@ impl fmt::Display for FunctionCall {
         )
     }
 }
+
+impl From<FunctionCall> for Node {
+    fn from(val: FunctionCall) -> Self {
+        Node::Expression(Expression::FunctionCall(val))
+    }
+}

@@ -24,3 +24,9 @@ impl fmt::Display for Return {
         )
     }
 }
+
+impl From<Return> for Node {
+    fn from(val: Return) -> Self {
+        Node::Statement(Statement::Return(val))
+    }
+}
