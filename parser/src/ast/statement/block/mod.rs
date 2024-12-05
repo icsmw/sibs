@@ -52,6 +52,7 @@ impl ReadNode<Block> for Block {
                         ValueId::InterpolatedString,
                         ValueId::PrimitiveString,
                         ValueId::Array,
+                        ValueId::Error,
                     ]),
                 ],
             )?

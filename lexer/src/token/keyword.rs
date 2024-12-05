@@ -51,11 +51,13 @@ pub enum Keyword {
     Task,
     /// The `Component` keyword.
     Component,
+    /// The `Error` keyword
+    Error,
 }
 
 impl TryFrom<String> for Keyword {
     type Error = ();
-    fn try_from(value: String) -> Result<Self, Self::Error> {
+    fn try_from(value: String) -> Result<Self, <Keyword as TryFrom<String>>::Error> {
         KeywordId::as_vec()
             .into_iter()
             .find(|kw| Into::<Keyword>::into(kw).to_string() == value)
@@ -104,6 +106,7 @@ impl fmt::Display for Keyword {
                 Self::Private => "private".to_owned(),
                 Self::Task => "task".to_owned(),
                 Self::Component => "component".to_owned(),
+                Self::Error => "Error".to_owned(),
             }
         )
     }
@@ -136,6 +139,7 @@ impl From<&KeywordId> for Keyword {
             KeywordId::Private => Keyword::Private,
             KeywordId::Task => Keyword::Task,
             KeywordId::Component => Keyword::Component,
+            KeywordId::Error => Keyword::Error,
         }
     }
 }

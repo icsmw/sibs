@@ -9,6 +9,8 @@ pub struct Error {
     pub token: Token,
     pub node: Box<LinkedNode>,
     pub uuid: Uuid,
+    pub open: Token,
+    pub close: Token,
 }
 
 impl fmt::Display for Error {
@@ -16,10 +18,7 @@ impl fmt::Display for Error {
         write!(
             f,
             "{} {} {} {}",
-            self.token,
-            Kind::LeftParen,
-            self.node,
-            Kind::RightParen
+            self.token, self.open, self.node, self.close
         )
     }
 }

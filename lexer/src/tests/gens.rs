@@ -316,6 +316,7 @@ pub fn keyword(id: KeywordId) -> BoxedStrategy<Keyword> {
         KeywordId::Private => Just(Keyword::Private).boxed(),
         KeywordId::Task => Just(Keyword::Task).boxed(),
         KeywordId::Component => Just(Keyword::Component).boxed(),
+        KeywordId::Error => Just(Keyword::Error).boxed(),
     }
 }
 

@@ -91,6 +91,13 @@ impl Parser {
         false
     }
 
+    pub(crate) fn next(&mut self) -> Option<Token> {
+        let restore = self.pin();
+        let tk = self.token().cloned();
+        restore(self);
+        tk
+    }
+
     // pub(crate) fn get_pos(&mut self) -> Position {
     //     let restore = self.pin();
     //     let pos = self

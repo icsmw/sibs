@@ -4,49 +4,60 @@ impl Interest for ExpressionId {
     fn intrested(&self, token: &Token) -> bool {
         match self {
             Self::Command => matches!(token.id(), KindId::Command),
-            Self::Call => matches!(token.id(), KindId::Dot),
-            Self::Accessor => matches!(token.id(), KindId::LeftBracket),
+            Self::Call => matches!(token.kind, Kind::Dot),
+            Self::Accessor => matches!(token.kind, Kind::LeftBracket),
             Self::Variable | Self::FunctionCall | Self::CompoundAssignments => {
                 matches!(token.id(), KindId::Identifier)
             }
-            Self::LogicalOp => matches!(token.id(), KindId::And | KindId::Or),
+            Self::LogicalOp => matches!(token.kind, Kind::And | Kind::Or),
             Self::ComparisonOp => matches!(
-                token.id(),
-                KindId::Less
-                    | KindId::LessEqual
-                    | KindId::Greater
-                    | KindId::GreaterEqual
-                    | KindId::EqualEqual
-                    | KindId::BangEqual
+                token.kind,
+                Kind::Less
+                    | Kind::LessEqual
+                    | Kind::Greater
+                    | Kind::GreaterEqual
+                    | Kind::EqualEqual
+                    | Kind::BangEqual
             ),
             Self::Comparison => matches!(
-                token.id(),
-                KindId::Identifier | KindId::Number | KindId::Keyword
+                token.kind,
+                Kind::Identifier(..)
+                    | Kind::Number(..)
+                    | Kind::String(..)
+                    | Kind::InterpolatedString(..)
+                    | Kind::Keyword(Keyword::True)
+                    | Kind::Keyword(Keyword::False)
             ),
             Self::ComparisonSeq => matches!(
-                token.id(),
-                KindId::LeftParen | KindId::Identifier | KindId::Number | KindId::Keyword
+                token.kind,
+                Kind::LeftParen
+                    | Kind::Identifier(..)
+                    | Kind::Number(..)
+                    | Kind::String(..)
+                    | Kind::InterpolatedString(..)
+                    | Kind::Keyword(Keyword::True)
+                    | Kind::Keyword(Keyword::False)
             ),
-            Self::ComparisonGroup | Self::BinaryExpGroup => matches!(token.id(), KindId::LeftParen),
+            Self::ComparisonGroup | Self::BinaryExpGroup => matches!(token.kind, Kind::LeftParen),
             Self::Range => matches!(token.id(), KindId::Identifier | KindId::Number),
-            Self::CompoundAssignmentsOp => {
+            Self::BinaryOp => {
                 matches!(
-                    token.id(),
-                    KindId::PlusEqual | KindId::MinusEqual | KindId::StarEqual | KindId::SlashEqual
+                    token.kind,
+                    Kind::Plus | Kind::Minus | Kind::Star | Kind::Slash
                 )
             }
+            Self::BinaryExp => matches!(token.id(), KindId::Identifier | KindId::Number),
             Self::BinaryExpSeq => matches!(
                 token.id(),
                 KindId::Identifier | KindId::Number | KindId::LeftParen
             ),
-            Self::BinaryExp => matches!(token.id(), KindId::Identifier | KindId::Number),
-            Self::BinaryOp => {
+            Self::CompoundAssignmentsOp => {
                 matches!(
-                    token.id(),
-                    KindId::Plus | KindId::Minus | KindId::Star | KindId::Slash
+                    token.kind,
+                    Kind::PlusEqual | Kind::MinusEqual | Kind::StarEqual | Kind::SlashEqual
                 )
             }
-            Self::TaskCall => matches!(token.id(), KindId::Colon),
+            Self::TaskCall => matches!(token.kind, Kind::Colon),
         }
     }
 }

@@ -55,6 +55,9 @@ impl Arbitrary for Block {
                     Number::arbitrary()
                         .prop_map(|v| Node::Value(Value::Number(v)))
                         .boxed(),
+                    Error::arbitrary_with(deep + 1)
+                        .prop_map(|v| Node::Value(Value::Error(v)))
+                        .boxed(),
                     Boolean::arbitrary()
                         .prop_map(|v| Node::Value(Value::Boolean(v)))
                         .boxed(),

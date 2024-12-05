@@ -8,7 +8,6 @@ impl Interest for DeclarationId {
             }
             Self::FunctionDeclaration => matches!(token.kind, Kind::Keyword(Keyword::Fn)),
             Self::VariableDeclaration => matches!(token.kind, Kind::Keyword(Keyword::Let)),
-            Self::VariableVariants => matches!(token.kind, Kind::String(..) | Kind::Number(..)),
             Self::VariableType => matches!(
                 token.kind,
                 Kind::Keyword(Keyword::Str)
@@ -16,7 +15,9 @@ impl Interest for DeclarationId {
                     | Kind::Keyword(Keyword::Num)
                     | Kind::Keyword(Keyword::Vec)
             ),
-            Self::VariableTypeDeclaration => matches!(token.kind, Kind::Colon),
+            Self::VariableTypeDeclaration | Self::VariableVariants => {
+                matches!(token.kind, Kind::Colon)
+            }
             Self::Closure => matches!(token.kind, Kind::LeftParen),
         }
     }

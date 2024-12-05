@@ -6,9 +6,12 @@ impl Interest for ValueId {
             Self::InterpolatedString => matches!(token.id(), KindId::InterpolatedString),
             Self::PrimitiveString => matches!(token.id(), KindId::String),
             Self::Number => matches!(token.id(), KindId::Number),
-            Self::Boolean => matches!(token.id(), KindId::Keyword),
+            Self::Boolean => matches!(
+                token.kind,
+                Kind::Keyword(Keyword::False) | Kind::Keyword(Keyword::True)
+            ),
             Self::Array => matches!(token.id(), KindId::LeftBracket),
-            Self::Error => matches!(token.id(), KindId::Identifier),
+            Self::Error => matches!(token.kind, Kind::Keyword(Keyword::Error)),
         }
     }
 }

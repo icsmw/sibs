@@ -8,13 +8,12 @@ impl ReadNode<Error> for Error {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };
-        let Kind::Identifier(ident) = &token.kind else {
-            return Ok(None);
-        };
-        if ident != "Error" {
+        if !matches!(token.kind, Kind::Keyword(Keyword::Error)) {
             return Ok(None);
         }
-        let Some((mut inner, ..)) = parser.between(KindId::LeftParen, KindId::RightParen)? else {
+        let Some((mut inner, open, close)) =
+            parser.between(KindId::LeftParen, KindId::RightParen)?
+        else {
             return Ok(None);
         };
         let node = LinkedNode::try_oneof(
@@ -36,6 +35,8 @@ impl ReadNode<Error> for Error {
                 token,
                 node: Box::new(node),
                 uuid: Uuid::new_v4(),
+                open,
+                close,
             }))
         }
     }

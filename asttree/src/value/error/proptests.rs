@@ -25,8 +25,10 @@ impl Arbitrary for Error {
         .prop_flat_map(LinkedNode::arbitrary_with)
         .prop_map(|node| Error {
             node: Box::new(node),
-            token: Token::for_test(Kind::Identifier(String::from("Error"))),
+            token: Token::for_test(Kind::Keyword(Keyword::Error)),
             uuid: Uuid::new_v4(),
+            open: Token::for_test(Kind::LeftParen),
+            close: Token::for_test(Kind::RightParen),
         })
         .boxed()
     }

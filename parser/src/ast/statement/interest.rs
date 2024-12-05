@@ -3,21 +3,31 @@ use crate::*;
 impl Interest for StatementId {
     fn intrested(&self, token: &Token) -> bool {
         match self {
-            Self::Break => matches!(token.id(), KindId::Keyword),
-            Self::Return => matches!(token.id(), KindId::Keyword),
-            Self::For => matches!(token.id(), KindId::Keyword),
-            Self::Loop => matches!(token.id(), KindId::Keyword),
-            Self::While => matches!(token.id(), KindId::Keyword),
-            Self::Each => matches!(token.id(), KindId::Keyword),
-            Self::Assignation | Self::AssignedValue | Self::Join | Self::OneOf => {
+            Self::Join => matches!(token.kind, Kind::Keyword(Keyword::Join)),
+            Self::OneOf => matches!(token.kind, Kind::Keyword(Keyword::OneOf)),
+            Self::Break => matches!(token.kind, Kind::Keyword(Keyword::Break)),
+            Self::Return => matches!(token.kind, Kind::Keyword(Keyword::Return)),
+            Self::For => matches!(token.kind, Kind::Keyword(Keyword::For)),
+            Self::Loop => matches!(token.kind, Kind::Keyword(Keyword::Loop)),
+            Self::While => matches!(token.kind, Kind::Keyword(Keyword::While)),
+            Self::Each => matches!(token.kind, Kind::Keyword(Keyword::Each)),
+            Self::If => matches!(token.kind, Kind::Keyword(Keyword::If)),
+            Self::Block => matches!(token.kind, Kind::LeftBrace),
+            Self::Assignation => {
                 matches!(token.id(), KindId::Identifier)
             }
+            Self::AssignedValue => matches!(token.kind, Kind::Equals),
+            // Same as for Expression::ComparisonSeq
             Self::Optional => matches!(
-                token.id(),
-                KindId::LeftParen | KindId::Identifier | KindId::Number | KindId::Keyword
+                token.kind,
+                Kind::LeftParen
+                    | Kind::Identifier(..)
+                    | Kind::Number(..)
+                    | Kind::String(..)
+                    | Kind::InterpolatedString(..)
+                    | Kind::Keyword(Keyword::True)
+                    | Kind::Keyword(Keyword::False)
             ),
-            Self::Block => matches!(token.id(), KindId::LeftBrace),
-            Self::If => matches!(token.id(), KindId::Keyword),
         }
     }
 }

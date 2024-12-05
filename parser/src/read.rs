@@ -1,7 +1,5 @@
 use crate::*;
-use diagnostics::*;
-use fmt::Debug;
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
 
 pub(crate) fn resolve_reading_conflicts<
     T: Clone + Debug,
@@ -59,15 +57,23 @@ pub trait ReadNode<T> {
     fn read(parser: &mut Parser) -> Result<Option<T>, LinkedErr<E>>;
 }
 
-pub(crate) trait TryRead<T: Clone + Debug, K: Display + Clone + PartialEq + ConflictResolver<K>>
-where
+pub(crate) trait TryRead<
+    T: Clone + Debug,
+    K: Display + Clone + Interest + PartialEq + ConflictResolver<K>,
+> where
     for<'a> SrcLink: From<&'a T>,
 {
     fn try_read(parser: &mut Parser, id: K) -> Result<Option<T>, LinkedErr<E>>;
     fn try_oneof(parser: &mut Parser, ids: &[K]) -> Result<Option<T>, LinkedErr<E>> {
         let mut results = Vec::new();
+        let Some(next) = parser.next() else {
+            return Ok(None);
+        };
         let reset = parser.pin();
         for id in ids {
+            if !id.intrested(&next) {
+                continue;
+            }
             let drop = parser.pin();
             if let Some(el) = Self::try_read(parser, id.clone())? {
                 // TODO: parser pos should not be considered because it might be read with PPM,
