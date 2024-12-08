@@ -3,6 +3,21 @@ mod proptests;
 
 use crate::*;
 
+impl Interest for Optional {
+    fn intrested(token: &Token) -> bool {
+        matches!(
+            token.kind,
+            Kind::LeftParen
+                | Kind::Identifier(..)
+                | Kind::Number(..)
+                | Kind::String(..)
+                | Kind::InterpolatedString(..)
+                | Kind::Keyword(Keyword::True)
+                | Kind::Keyword(Keyword::False)
+        )
+    }
+}
+
 impl ReadNode<Optional> for Optional {
     fn read(parser: &mut Parser) -> Result<Option<Optional>, LinkedErr<E>> {
         let Some(comparison) = LinkedNode::try_oneof(

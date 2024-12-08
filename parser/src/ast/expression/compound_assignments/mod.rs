@@ -3,6 +3,12 @@ mod proptests;
 
 use crate::*;
 
+impl Interest for CompoundAssignments {
+    fn intrested(token: &Token) -> bool {
+        matches!(token.kind, Kind::Identifier(..))
+    }
+}
+
 impl ReadNode<CompoundAssignments> for CompoundAssignments {
     fn read(parser: &mut Parser) -> Result<Option<CompoundAssignments>, LinkedErr<E>> {
         let Some(left) = LinkedNode::try_oneof(

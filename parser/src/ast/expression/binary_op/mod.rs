@@ -3,6 +3,15 @@ mod proptests;
 
 use crate::*;
 
+impl Interest for BinaryOp {
+    fn intrested(token: &Token) -> bool {
+        matches!(
+            token.kind,
+            Kind::Plus | Kind::Minus | Kind::Star | Kind::Slash
+        )
+    }
+}
+
 impl ReadNode<BinaryOp> for BinaryOp {
     fn read(parser: &mut Parser) -> Result<Option<BinaryOp>, LinkedErr<E>> {
         let Some(tk) = parser.token() else {

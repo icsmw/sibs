@@ -12,7 +12,7 @@ impl Arbitrary for Include {
             .prop_map(move |n| (n, 1))
             .prop_flat_map(LinkedNode::arbitrary_with)
             .prop_map(|node| Include {
-                token: Token::for_test(Kind::Keyword(Keyword::Mod)),
+                token: Token::for_test(Kind::Keyword(Keyword::Include)),
                 node: Box::new(node),
                 uuid: Uuid::new_v4(),
             })

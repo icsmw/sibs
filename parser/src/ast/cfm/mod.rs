@@ -1,5 +1,4 @@
 mod conflict;
-mod interest;
 
 mod gatekeeper;
 mod skip;
@@ -12,18 +11,14 @@ impl AsVec<ControlFlowModifierId> for ControlFlowModifierId {
     }
 }
 
-impl Read<ControlFlowModifier, ControlFlowModifierId> for ControlFlowModifier {}
-
 impl TryRead<ControlFlowModifier, ControlFlowModifierId> for ControlFlowModifier {
     fn try_read(
         parser: &mut Parser,
         id: ControlFlowModifierId,
-    ) -> Result<Option<ControlFlowModifier>, LinkedErr<E>> {
+    ) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         Ok(match id {
-            ControlFlowModifierId::Gatekeeper => {
-                Gatekeeper::read(parser)?.map(ControlFlowModifier::Gatekeeper)
-            }
-            ControlFlowModifierId::Skip => Skip::read(parser)?.map(ControlFlowModifier::Skip),
+            ControlFlowModifierId::Gatekeeper => Gatekeeper::read_as_linked(parser)?,
+            ControlFlowModifierId::Skip => Skip::read_as_linked(parser)?,
         })
     }
 }

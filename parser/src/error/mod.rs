@@ -41,6 +41,8 @@ pub enum E {
     MissedExpectation(String, String),
     #[error("Expected block, but it's missed")]
     MissedBlock,
+    #[error("Probably parse has been modified in middle of parsing")]
+    UnexpectedEmptyParser,
 
     /// Each
     #[error("In each statement declaration of element variable is missed")]

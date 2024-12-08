@@ -3,6 +3,12 @@ mod proptests;
 
 use crate::*;
 
+impl Interest for FunctionCall {
+    fn intrested(token: &Token) -> bool {
+        matches!(token.kind, Kind::Identifier(..))
+    }
+}
+
 impl ReadNode<FunctionCall> for FunctionCall {
     fn read(parser: &mut Parser) -> Result<Option<FunctionCall>, LinkedErr<E>> {
         let mut reference = Vec::new();

@@ -3,6 +3,12 @@ mod proptests;
 
 use crate::*;
 
+impl Interest for BinaryExpGroup {
+    fn intrested(token: &Token) -> bool {
+        matches!(token.kind, Kind::LeftParen)
+    }
+}
+
 impl ReadNode<BinaryExpGroup> for BinaryExpGroup {
     fn read(parser: &mut Parser) -> Result<Option<BinaryExpGroup>, LinkedErr<E>> {
         let Some((mut inner, open, close)) =

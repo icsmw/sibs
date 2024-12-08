@@ -1,5 +1,4 @@
 mod conflict;
-mod interest;
 
 mod accessor;
 mod binary_exp;
@@ -28,40 +27,27 @@ impl AsVec<ExpressionId> for ExpressionId {
     }
 }
 
-impl Read<Expression, ExpressionId> for Expression {}
-
 impl TryRead<Expression, ExpressionId> for Expression {
-    fn try_read(parser: &mut Parser, id: ExpressionId) -> Result<Option<Expression>, LinkedErr<E>> {
+    fn try_read(parser: &mut Parser, id: ExpressionId) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         Ok(match id {
-            ExpressionId::Variable => Variable::read(parser)?.map(Expression::Variable),
-            ExpressionId::Comparison => Comparison::read(parser)?.map(Expression::Comparison),
-            ExpressionId::ComparisonSeq => {
-                ComparisonSeq::read(parser)?.map(Expression::ComparisonSeq)
-            }
-            ExpressionId::ComparisonGroup => {
-                ComparisonGroup::read(parser)?.map(Expression::ComparisonGroup)
-            }
-            ExpressionId::LogicalOp => LogicalOp::read(parser)?.map(Expression::LogicalOp),
-            ExpressionId::ComparisonOp => ComparisonOp::read(parser)?.map(Expression::ComparisonOp),
-            ExpressionId::Range => Range::read(parser)?.map(Expression::Range),
-            ExpressionId::BinaryExpGroup => {
-                BinaryExpGroup::read(parser)?.map(Expression::BinaryExpGroup)
-            }
-            ExpressionId::BinaryExp => BinaryExp::read(parser)?.map(Expression::BinaryExp),
-            ExpressionId::BinaryExpSeq => BinaryExpSeq::read(parser)?.map(Expression::BinaryExpSeq),
-            ExpressionId::BinaryOp => BinaryOp::read(parser)?.map(Expression::BinaryOp),
-            ExpressionId::Call => Call::read(parser)?.map(Expression::Call),
-            ExpressionId::Accessor => Accessor::read(parser)?.map(Expression::Accessor),
-            ExpressionId::FunctionCall => FunctionCall::read(parser)?.map(Expression::FunctionCall),
-
-            ExpressionId::CompoundAssignments => {
-                CompoundAssignments::read(parser)?.map(Expression::CompoundAssignments)
-            }
-            ExpressionId::CompoundAssignmentsOp => {
-                CompoundAssignmentsOp::read(parser)?.map(Expression::CompoundAssignmentsOp)
-            }
-            ExpressionId::Command => Command::read(parser)?.map(Expression::Command),
-            ExpressionId::TaskCall => TaskCall::read(parser)?.map(Expression::TaskCall),
+            ExpressionId::Variable => Variable::read_as_linked(parser)?,
+            ExpressionId::Comparison => Comparison::read_as_linked(parser)?,
+            ExpressionId::ComparisonSeq => ComparisonSeq::read_as_linked(parser)?,
+            ExpressionId::ComparisonGroup => ComparisonGroup::read_as_linked(parser)?,
+            ExpressionId::LogicalOp => LogicalOp::read_as_linked(parser)?,
+            ExpressionId::ComparisonOp => ComparisonOp::read_as_linked(parser)?,
+            ExpressionId::Range => Range::read_as_linked(parser)?,
+            ExpressionId::BinaryExpGroup => BinaryExpGroup::read_as_linked(parser)?,
+            ExpressionId::BinaryExp => BinaryExp::read_as_linked(parser)?,
+            ExpressionId::BinaryExpSeq => BinaryExpSeq::read_as_linked(parser)?,
+            ExpressionId::BinaryOp => BinaryOp::read_as_linked(parser)?,
+            ExpressionId::Call => Call::read_as_linked(parser)?,
+            ExpressionId::Accessor => Accessor::read_as_linked(parser)?,
+            ExpressionId::FunctionCall => FunctionCall::read_as_linked(parser)?,
+            ExpressionId::CompoundAssignments => CompoundAssignments::read_as_linked(parser)?,
+            ExpressionId::CompoundAssignmentsOp => CompoundAssignmentsOp::read_as_linked(parser)?,
+            ExpressionId::Command => Command::read_as_linked(parser)?,
+            ExpressionId::TaskCall => TaskCall::read_as_linked(parser)?,
         })
     }
 }

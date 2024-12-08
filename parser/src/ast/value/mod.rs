@@ -1,5 +1,4 @@
 mod conflict;
-mod interest;
 
 mod array;
 mod boolean;
@@ -16,19 +15,15 @@ impl AsVec<ValueId> for ValueId {
     }
 }
 
-impl Read<Value, ValueId> for Value {}
-
 impl TryRead<Value, ValueId> for Value {
-    fn try_read(parser: &mut Parser, id: ValueId) -> Result<Option<Value>, LinkedErr<E>> {
+    fn try_read(parser: &mut Parser, id: ValueId) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         Ok(match id {
-            ValueId::PrimitiveString => PrimitiveString::read(parser)?.map(Value::PrimitiveString),
-            ValueId::InterpolatedString => {
-                InterpolatedString::read(parser)?.map(Value::InterpolatedString)
-            }
-            ValueId::Boolean => Boolean::read(parser)?.map(Value::Boolean),
-            ValueId::Number => Number::read(parser)?.map(Value::Number),
-            ValueId::Array => Array::read(parser)?.map(Value::Array),
-            ValueId::Error => Error::read(parser)?.map(Value::Error),
+            ValueId::PrimitiveString => PrimitiveString::read_as_linked(parser)?,
+            ValueId::InterpolatedString => InterpolatedString::read_as_linked(parser)?,
+            ValueId::Boolean => Boolean::read_as_linked(parser)?,
+            ValueId::Number => Number::read_as_linked(parser)?,
+            ValueId::Array => Array::read_as_linked(parser)?,
+            ValueId::Error => Error::read_as_linked(parser)?,
         })
     }
 }

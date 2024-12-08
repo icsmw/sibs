@@ -1,5 +1,4 @@
 mod conflict;
-mod interest;
 
 mod argument_declaration;
 mod closure;
@@ -18,36 +17,22 @@ impl AsVec<DeclarationId> for DeclarationId {
     }
 }
 
-impl Read<Declaration, DeclarationId> for Declaration {}
-
 impl TryRead<Declaration, DeclarationId> for Declaration {
     fn try_read(
         parser: &mut Parser,
         id: DeclarationId,
-    ) -> Result<Option<Declaration>, LinkedErr<E>> {
+    ) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         Ok(match id {
-            DeclarationId::FunctionDeclaration => {
-                FunctionDeclaration::read(parser)?.map(Declaration::FunctionDeclaration)
-            }
-            DeclarationId::VariableDeclaration => {
-                VariableDeclaration::read(parser)?.map(Declaration::VariableDeclaration)
-            }
-            DeclarationId::ArgumentDeclaration => {
-                ArgumentDeclaration::read(parser)?.map(Declaration::ArgumentDeclaration)
-            }
-            DeclarationId::VariableType => {
-                VariableType::read(parser)?.map(Declaration::VariableType)
-            }
+            DeclarationId::FunctionDeclaration => FunctionDeclaration::read_as_linked(parser)?,
+            DeclarationId::VariableDeclaration => VariableDeclaration::read_as_linked(parser)?,
+            DeclarationId::ArgumentDeclaration => ArgumentDeclaration::read_as_linked(parser)?,
+            DeclarationId::VariableType => VariableType::read_as_linked(parser)?,
             DeclarationId::VariableTypeDeclaration => {
-                VariableTypeDeclaration::read(parser)?.map(Declaration::VariableTypeDeclaration)
+                VariableTypeDeclaration::read_as_linked(parser)?
             }
-            DeclarationId::VariableVariants => {
-                VariableVariants::read(parser)?.map(Declaration::VariableVariants)
-            }
-            DeclarationId::Closure => Closure::read(parser)?.map(Declaration::Closure),
-            DeclarationId::VariableName => {
-                VariableName::read(parser)?.map(Declaration::VariableName)
-            }
+            DeclarationId::VariableVariants => VariableVariants::read_as_linked(parser)?,
+            DeclarationId::Closure => Closure::read_as_linked(parser)?,
+            DeclarationId::VariableName => VariableName::read_as_linked(parser)?,
         })
     }
 }

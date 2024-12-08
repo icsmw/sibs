@@ -3,6 +3,12 @@ mod proptests;
 
 use crate::*;
 
+impl Interest for If {
+    fn intrested(token: &Token) -> bool {
+        matches!(token.kind, Kind::Keyword(Keyword::If))
+    }
+}
+
 impl ReadNode<If> for If {
     fn read(parser: &mut Parser) -> Result<Option<If>, LinkedErr<E>> {
         let mut cases = Vec::new();

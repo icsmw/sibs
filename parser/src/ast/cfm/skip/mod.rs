@@ -3,6 +3,12 @@ mod proptests;
 
 use crate::*;
 
+impl Interest for Skip {
+    fn intrested(token: &Token) -> bool {
+        matches!(token.id(), KindId::Identifier)
+    }
+}
+
 impl ReadNode<Skip> for Skip {
     fn read(parser: &mut Parser) -> Result<Option<Skip>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {

@@ -1,5 +1,4 @@
 mod conflict;
-mod interest;
 
 mod comment;
 mod include;
@@ -14,18 +13,16 @@ impl AsVec<MiscellaneousId> for MiscellaneousId {
     }
 }
 
-impl Read<Miscellaneous, MiscellaneousId> for Miscellaneous {}
-
 impl TryRead<Miscellaneous, MiscellaneousId> for Miscellaneous {
     fn try_read(
         parser: &mut Parser,
         id: MiscellaneousId,
-    ) -> Result<Option<Miscellaneous>, LinkedErr<E>> {
+    ) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         Ok(match id {
-            MiscellaneousId::Include => Include::read(parser)?.map(Miscellaneous::Include),
-            MiscellaneousId::Module => Module::read(parser)?.map(Miscellaneous::Module),
-            MiscellaneousId::Comment => Comment::read(parser)?.map(Miscellaneous::Comment),
-            MiscellaneousId::Meta => Meta::read(parser)?.map(Miscellaneous::Meta),
+            MiscellaneousId::Include => Include::read_as_linked(parser)?,
+            MiscellaneousId::Module => Module::read_as_linked(parser)?,
+            MiscellaneousId::Comment => Comment::read_as_linked(parser)?,
+            MiscellaneousId::Meta => Meta::read_as_linked(parser)?,
         })
     }
 }

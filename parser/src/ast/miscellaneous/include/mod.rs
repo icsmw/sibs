@@ -3,12 +3,18 @@ mod proptests;
 
 use crate::*;
 
+impl Interest for Include {
+    fn intrested(token: &Token) -> bool {
+        matches!(token.kind, Kind::Keyword(Keyword::Include))
+    }
+}
+
 impl ReadNode<Include> for Include {
     fn read(parser: &mut Parser) -> Result<Option<Include>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };
-        if !matches!(token.kind, Kind::Keyword(Keyword::Mod)) {
+        if !matches!(token.kind, Kind::Keyword(Keyword::Include)) {
             return Ok(None);
         }
         let node = LinkedNode::try_oneof(

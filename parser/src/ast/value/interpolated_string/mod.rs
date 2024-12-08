@@ -3,6 +3,12 @@ mod proptests;
 
 use crate::*;
 
+impl Interest for InterpolatedString {
+    fn intrested(token: &Token) -> bool {
+        matches!(token.kind, Kind::InterpolatedString(..))
+    }
+}
+
 impl ReadNode<InterpolatedString> for InterpolatedString {
     fn read(parser: &mut Parser) -> Result<Option<InterpolatedString>, LinkedErr<E>> {
         let Some(tk) = parser.token().cloned() else {

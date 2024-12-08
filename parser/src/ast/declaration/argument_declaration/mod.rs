@@ -3,6 +3,12 @@ mod proptests;
 
 use crate::*;
 
+impl Interest for ArgumentDeclaration {
+    fn intrested(token: &Token) -> bool {
+        matches!(token.kind, Kind::Identifier(..))
+    }
+}
+
 impl ReadNode<ArgumentDeclaration> for ArgumentDeclaration {
     fn read(parser: &mut Parser) -> Result<Option<ArgumentDeclaration>, LinkedErr<E>> {
         let Some(variable) = LinkedNode::try_oneof(

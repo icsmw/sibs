@@ -7,12 +7,11 @@ test_node_reading!(Block, 10);
 //     block_case,
 //     Block,
 //     r#"{
-//     // comment
-//     return ; break ; a = 'str { if a > 5 {
-//         // commentA
-//         v = 111 ;
-//     } else {
-//         // commentB
-//         a = 222 ;
-//     } } str' ; l += 1 ; // comment }"#
+//         let a = 4;
+//         Error(
+//             /// Hello
+//             // comment
+//             "aaa"
+//         );
+//     }"#
 // );

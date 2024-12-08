@@ -3,6 +3,12 @@ mod proptests;
 
 use crate::*;
 
+impl Interest for Comment {
+    fn intrested(token: &Token) -> bool {
+        matches!(token.kind, Kind::Comment(..))
+    }
+}
+
 impl ReadNode<Comment> for Comment {
     fn read(parser: &mut Parser) -> Result<Option<Comment>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {

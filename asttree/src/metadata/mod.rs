@@ -7,9 +7,14 @@ use crate::*;
 pub struct Metadata {
     pub ppm: Vec<LinkedNode>,
     pub meta: Vec<LinkedNode>,
+    pub pos: Position,
 }
 
 impl Metadata {
+    pub fn merge(&mut self, md: Metadata) {
+        self.meta = md.meta;
+        self.ppm = md.ppm;
+    }
     pub fn meta_to_string(&self) -> String {
         if self.meta.is_empty() {
             String::new()

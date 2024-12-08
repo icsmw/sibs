@@ -3,6 +3,12 @@ mod proptests;
 
 use crate::*;
 
+impl Interest for Command {
+    fn intrested(token: &Token) -> bool {
+        matches!(token.id(), KindId::Command)
+    }
+}
+
 impl ReadNode<Command> for Command {
     fn read(parser: &mut Parser) -> Result<Option<Command>, LinkedErr<E>> {
         let Some(tk) = parser.token().cloned() else {

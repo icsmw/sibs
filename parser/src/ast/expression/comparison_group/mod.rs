@@ -3,6 +3,12 @@ mod proptests;
 
 use crate::*;
 
+impl Interest for ComparisonGroup {
+    fn intrested(token: &Token) -> bool {
+        matches!(token.kind, Kind::LeftParen)
+    }
+}
+
 impl ReadNode<ComparisonGroup> for ComparisonGroup {
     fn read(parser: &mut Parser) -> Result<Option<ComparisonGroup>, LinkedErr<E>> {
         let Some((mut inner, open, close)) =

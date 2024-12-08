@@ -3,6 +3,12 @@ mod proptests;
 
 use crate::*;
 
+impl Interest for Range {
+    fn intrested(token: &Token) -> bool {
+        matches!(token.kind, Kind::Identifier(..) | Kind::Number(..))
+    }
+}
+
 impl ReadNode<Range> for Range {
     fn read(parser: &mut Parser) -> Result<Option<Range>, LinkedErr<E>> {
         let Some(left) = LinkedNode::try_oneof(

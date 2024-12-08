@@ -3,6 +3,12 @@ mod proptests;
 
 use crate::*;
 
+impl Interest for Variable {
+    fn intrested(token: &Token) -> bool {
+        matches!(token.kind, Kind::Identifier(..))
+    }
+}
+
 impl ReadNode<Variable> for Variable {
     fn read(parser: &mut Parser) -> Result<Option<Variable>, LinkedErr<E>> {
         if let Some(tk) = parser.token() {

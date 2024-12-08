@@ -3,6 +3,15 @@ mod proptests;
 
 use crate::*;
 
+impl Interest for BinaryExpSeq {
+    fn intrested(token: &Token) -> bool {
+        matches!(
+            token.id(),
+            KindId::Identifier | KindId::Number | KindId::LeftParen
+        )
+    }
+}
+
 impl ReadNode<BinaryExpSeq> for BinaryExpSeq {
     fn read(parser: &mut Parser) -> Result<Option<BinaryExpSeq>, LinkedErr<E>> {
         let mut collected: Vec<LinkedNode> = Vec::new();

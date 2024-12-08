@@ -3,6 +3,12 @@ mod proptests;
 
 use crate::*;
 
+impl Interest for Accessor {
+    fn intrested(token: &Token) -> bool {
+        matches!(token.kind, Kind::LeftBracket)
+    }
+}
+
 impl ReadNode<Accessor> for Accessor {
     fn read(parser: &mut Parser) -> Result<Option<Accessor>, LinkedErr<E>> {
         let Some((mut inner, open, close)) =

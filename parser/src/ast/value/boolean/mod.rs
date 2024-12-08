@@ -3,6 +3,15 @@ mod proptests;
 
 use crate::*;
 
+impl Interest for Boolean {
+    fn intrested(token: &Token) -> bool {
+        matches!(
+            token.kind,
+            Kind::Keyword(Keyword::True) | Kind::Keyword(Keyword::False)
+        )
+    }
+}
+
 impl ReadNode<Boolean> for Boolean {
     fn read(parser: &mut Parser) -> Result<Option<Boolean>, LinkedErr<E>> {
         if let Some(tk) = parser.token() {

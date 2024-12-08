@@ -3,6 +3,12 @@ mod proptests;
 
 use crate::*;
 
+impl Interest for Number {
+    fn intrested(token: &Token) -> bool {
+        matches!(token.kind, Kind::Number(..))
+    }
+}
+
 impl ReadNode<Number> for Number {
     fn read(parser: &mut Parser) -> Result<Option<Number>, LinkedErr<E>> {
         if let Some(tk) = parser.token() {

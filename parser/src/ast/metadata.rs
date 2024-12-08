@@ -1,18 +1,23 @@
-use asttree::{ExpressionId, LinkedNode, Metadata, MiscellaneousId};
+use asttree::{ExpressionId, LinkedNode, Metadata};
 
 use crate::*;
 
 impl ReadMetadata for Metadata {
     fn read_md_before(&mut self, parser: &mut Parser) -> Result<(), LinkedErr<E>> {
         self.meta = Vec::new();
-        while let Some(node) = read_and_resolve_nodes(
-            parser,
-            &[NodeReadTarget::Miscellaneous(&[
-                MiscellaneousId::Comment,
-                MiscellaneousId::Meta,
-            ])],
-        )? {
-            self.meta.push(LinkedNode::from_node(node));
+        loop {
+            let drop = parser.pin();
+            if let Some(node) = Meta::read(parser)? {
+                self.meta.push(LinkedNode::from_node(node.into()));
+                continue;
+            }
+            drop(parser);
+            if let Some(node) = Comment::read(parser)? {
+                self.meta.push(LinkedNode::from_node(node.into()));
+                continue;
+            }
+            drop(parser);
+            break;
         }
         Ok(())
     }

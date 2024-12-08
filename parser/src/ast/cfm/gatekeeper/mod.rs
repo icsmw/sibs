@@ -3,6 +3,12 @@ mod proptests;
 
 use crate::*;
 
+impl Interest for Gatekeeper {
+    fn intrested(token: &Token) -> bool {
+        matches!(token.kind, Kind::Pound)
+    }
+}
+
 impl ReadNode<Gatekeeper> for Gatekeeper {
     fn read(parser: &mut Parser) -> Result<Option<Gatekeeper>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {

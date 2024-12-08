@@ -3,6 +3,12 @@ mod proptests;
 
 use crate::*;
 
+impl Interest for PrimitiveString {
+    fn intrested(token: &Token) -> bool {
+        matches!(token.kind, Kind::String(..))
+    }
+}
+
 impl ReadNode<PrimitiveString> for PrimitiveString {
     fn read(parser: &mut Parser) -> Result<Option<PrimitiveString>, LinkedErr<E>> {
         if let Some(tk) = parser.token() {
