@@ -50,11 +50,11 @@ impl ReadNode<ComparisonSeq> for ComparisonSeq {
                         if collected.len() == 1 {
                             return Ok(None);
                         } else {
-                            return Err(E::MissedLogicalOperator.link(&(&node).into()));
+                            return Err(E::MissedLogicalOperator.link(&node));
                         }
                     }
-                    Some(n) => {
-                        return Err(E::MissedLogicalOperator.link(&n.into()));
+                    Some(_) => {
+                        return Err(E::MissedLogicalOperator.link(&node));
                     }
                 }
             }

@@ -14,18 +14,13 @@ impl InferType for Array {
             return Ok(DataType::Vec(Box::new(DataType::Undefined)));
         }
         let first = &tys[0];
-        if tys.iter().all(|ty| ty == first) {
-            Ok(DataType::Vec(Box::new(first.clone())))
-        } else {
-            Err(LinkedErr::by_link(
-                E::DismatchTypes(
-                    tys.iter()
-                        .map(|ty| ty.id().to_string())
-                        .collect::<Vec<String>>()
-                        .join(", "),
-                ),
-                &self.into(),
+        if let Some((n, ty)) = tys.iter().enumerate().find(|(_, ty)| ty != &first) {
+            Err(LinkedErr::by_node(
+                E::DismatchTypes(format!("{first} and {ty}")),
+                &self.els[n],
             ))
+        } else {
+            Ok(DataType::Vec(Box::new(first.clone())))
         }
     }
 }

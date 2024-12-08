@@ -166,7 +166,7 @@ impl Parser {
             link: self
                 .current()
                 .map(|tk| tk.into())
-                .unwrap_or(SrcLink::new(0, 0, &self.src)),
+                .unwrap_or(LinkedPosition::new(0, 0, &self.src)),
             e: err,
         }
     }
@@ -175,7 +175,7 @@ impl Parser {
             link: self
                 .until_end()
                 .map(|tks| tks.into())
-                .unwrap_or(SrcLink::new(0, 0, &self.src)),
+                .unwrap_or(LinkedPosition::new(0, 0, &self.src)),
             e: err,
         }
     }

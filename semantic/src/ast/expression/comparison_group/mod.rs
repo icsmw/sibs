@@ -4,10 +4,7 @@ impl InferType for ComparisonGroup {
     fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
         let ty = self.node.infer_type(tcx)?;
         if !matches!(ty, DataType::Bool) {
-            Err(LinkedErr::by_link(
-                E::ExpectedBoolType(ty),
-                &(&self.node).into(),
-            ))
+            Err(LinkedErr::by_node(E::ExpectedBoolType(ty), &self.node))
         } else {
             Ok(ty)
         }

@@ -5,14 +5,16 @@ impl InferType for BinaryExp {
         let left = self.left.infer_type(tcx)?;
         let right = self.right.infer_type(tcx)?;
         if !left.numeric() {
-            Err(LinkedErr::by_link(
+            Err(LinkedErr::between_nodes(
                 E::ExpectedNumericType(left),
-                &self.into(),
+                &self.left,
+                &self.right,
             ))
         } else if !right.numeric() {
-            Err(LinkedErr::by_link(
+            Err(LinkedErr::between_nodes(
                 E::ExpectedNumericType(right),
-                &self.into(),
+                &self.left,
+                &self.right,
             ))
         } else {
             Ok(

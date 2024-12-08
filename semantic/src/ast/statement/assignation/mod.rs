@@ -5,33 +5,29 @@ impl InferType for Assignation {
         let variable = if let Node::Expression(Expression::Variable(variable)) = &self.left.node {
             variable.ident.to_owned()
         } else {
-            return Err(LinkedErr::by_link(
+            return Err(LinkedErr::between_nodes(
                 E::UnexpectedNode(self.left.node.id()),
-                &self.into(),
+                &self.left,
+                &self.right,
             ));
         };
         let left = tcx
             .lookup(&variable)
-            .ok_or(LinkedErr::by_link(
-                E::VariableIsNotDefined,
-                &(&self.left).into(),
-            ))?
+            .ok_or(LinkedErr::by_node(E::VariableIsNotDefined, &self.left))?
             .clone();
         let right = self.right.infer_type(tcx)?;
         if matches!(right, DataType::IndeterminateType) {
-            return Err(LinkedErr::by_link(
-                E::IndeterminateType,
-                &(&self.left).into(),
-            ));
+            return Err(LinkedErr::by_node(E::IndeterminateType, &self.left));
         }
         if left.reassignable(&right) {
             tcx.insert(variable, right)
-                .map_err(|e| LinkedErr::by_link(e, &self.into()))?;
+                .map_err(|e| LinkedErr::between_nodes(e, &self.left, &self.right))?;
             Ok(DataType::Void)
         } else {
-            Err(LinkedErr::by_link(
+            Err(LinkedErr::between_nodes(
                 E::DismatchTypes(format!("{left}, {right}")),
-                &self.into(),
+                &self.left,
+                &self.right,
             ))
         }
     }

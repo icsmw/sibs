@@ -150,7 +150,10 @@ impl E {
     pub fn link_until_end(self, parser: &Parser) -> LinkedErr<E> {
         parser.err_until_end(self)
     }
-    pub fn link(self, link: &SrcLink) -> LinkedErr<E> {
-        LinkedErr::by_link(self, link)
+    pub fn link(self, node: &LinkedNode) -> LinkedErr<E> {
+        LinkedErr::by_node(self, node)
+    }
+    pub fn unlinked(self) -> LinkedErr<E> {
+        LinkedErr::unlinked(self)
     }
 }

@@ -7,7 +7,7 @@ use crate::*;
 pub struct Metadata {
     pub ppm: Vec<LinkedNode>,
     pub meta: Vec<LinkedNode>,
-    pub pos: Position,
+    pub link: SrcLink,
 }
 
 impl Metadata {

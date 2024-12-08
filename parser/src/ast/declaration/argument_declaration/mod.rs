@@ -26,7 +26,7 @@ impl ReadNode<ArgumentDeclaration> for ArgumentDeclaration {
             ])],
         )?
         .map(Box::new) else {
-            return Err(E::MissedArgumentTypeDefinition.link(&(&variable).into()));
+            return Err(E::MissedArgumentTypeDefinition.link(&variable));
         };
         Ok(Some(ArgumentDeclaration {
             variable: Box::new(variable),

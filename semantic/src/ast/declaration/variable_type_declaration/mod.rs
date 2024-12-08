@@ -8,7 +8,7 @@ impl InferType for VariableTypeDeclaration {
             .map(|n| n.infer_type(tcx))
             .collect::<Result<Vec<_>, _>>()?;
         if tys.is_empty() {
-            Err(LinkedErr::by_link(E::EmptyTypeDeclaration, &self.into()))
+            Err(LinkedErr::unlinked(E::EmptyTypeDeclaration))
         } else if tys.len() == 1 {
             Ok(tys[0].clone())
         } else {

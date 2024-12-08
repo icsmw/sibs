@@ -12,13 +12,14 @@ impl Initialize for ArgumentDeclaration {
         if let Node::Declaration(Declaration::VariableName(variable)) = &self.variable.node {
             let ty = self.infer_type(tcx)?;
             tcx.insert(&variable.ident, ty)
-                .map_err(|e| LinkedErr::by_link(e, &self.into()))?;
+                .map_err(|err| LinkedErr::between_nodes(err, &self.variable, &self.r#type))?;
             self.variable.initialize(tcx)?;
             Ok(())
         } else {
-            Err(LinkedErr::by_link(
+            Err(LinkedErr::between_nodes(
                 E::UnexpectedNode(self.variable.node.id()),
-                &self.into(),
+                &self.variable,
+                &self.r#type,
             ))
         }
     }

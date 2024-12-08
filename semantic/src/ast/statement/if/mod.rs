@@ -23,7 +23,7 @@ impl InferType for If {
             .map(|n| n.infer_type(tcx))
             .collect::<Result<Vec<_>, _>>()?;
         if tys.is_empty() {
-            return Err(LinkedErr::by_link(E::InvalidIfStatement, &self.into()));
+            return Err(LinkedErr::unlinked(E::InvalidIfStatement));
         };
         let first = &tys[0];
         if tys.iter().all(|ty| first.compatible(ty)) {

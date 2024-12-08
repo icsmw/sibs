@@ -8,8 +8,7 @@ impl InferType for FunctionDeclaration {
         let mut tcx = TypeContext::default();
         tcx.enter(&self.uuid);
         let ty = self.block.infer_type(&mut tcx)?;
-        tcx.leave()
-            .map_err(|e| LinkedErr::by_link(e, &self.into()))?;
+        tcx.leave().map_err(LinkedErr::unlinked)?;
         Ok(ty)
     }
 }
@@ -19,6 +18,6 @@ impl Initialize for FunctionDeclaration {
         tcx.enter(&self.uuid);
         self.args.iter().try_for_each(|n| n.initialize(tcx))?;
         self.block.initialize(tcx)?;
-        tcx.leave().map_err(|e| LinkedErr::by_link(e, &self.into()))
+        tcx.leave().map_err(LinkedErr::unlinked)
     }
 }

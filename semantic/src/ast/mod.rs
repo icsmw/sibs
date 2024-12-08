@@ -38,18 +38,41 @@ impl Initialize for Node {
 
 impl InferType for LinkedNode {
     fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
-        let mut ty = self.node.infer_type(tcx)?;
-        for ppm in self.md.ppm.iter() {
-            tcx.set_parent_ty(ty);
-            ty = ppm.infer_type(tcx)?;
+        fn infer_type(
+            node: &Node,
+            md: &Metadata,
+            tcx: &mut TypeContext,
+        ) -> Result<DataType, LinkedErr<E>> {
+            let mut ty = node.infer_type(tcx)?;
+            for ppm in md.ppm.iter() {
+                tcx.set_parent_ty(ty);
+                ty = ppm.infer_type(tcx)?;
+            }
+            tcx.drop_parent_ty();
+            Ok(ty)
         }
-        tcx.drop_parent_ty();
-        Ok(ty)
+        match infer_type(&self.node, &self.md, tcx) {
+            Err(mut err) => {
+                if err.is_unlinked() {
+                    err.relink(self);
+                }
+                Err(err)
+            }
+            Ok(ty) => Ok(ty),
+        }
     }
 }
 
 impl Initialize for LinkedNode {
     fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
-        self.node.initialize(tcx)
+        match self.node.initialize(tcx) {
+            Err(mut err) => {
+                if err.is_unlinked() {
+                    err.relink(self);
+                }
+                Err(err)
+            }
+            Ok(ty) => Ok(ty),
+        }
     }
 }

@@ -8,13 +8,13 @@ pub(crate) fn resolve_conflicts<K: Display + Clone + PartialEq + ConflictResolve
     let Some((n, (ppos, node, id))) = results
         .iter()
         .enumerate()
-        .max_by_key(|(_, (_, n, ..))| n.md.pos.to)
+        .max_by_key(|(_, (_, n, ..))| n.md.link.exto())
     else {
         return Ok(None);
     };
     let conflicted = results
         .iter()
-        .filter(|(_, n, oid)| n.md.pos.to == node.md.pos.to && oid != id)
+        .filter(|(_, n, oid)| n.md.link.exto() == node.md.link.exto() && oid != id)
         .cloned()
         .collect::<Vec<(usize, LinkedNode, K)>>();
     if conflicted.is_empty() {
@@ -25,20 +25,19 @@ pub(crate) fn resolve_conflicts<K: Display + Clone + PartialEq + ConflictResolve
     let mut ignored = Vec::new();
     for (pos, cnode, id) in conflicted.iter() {
         if &resolved_id.resolve_conflict(id) == id && ignored.contains(id) {
-            return Err(E::NodesAreInConflict(
+            let err = E::NodesAreInConflict(
                 results
                     .iter()
-                    .filter(|(_, n, ..)| n.md.pos.to == node.md.pos.to)
+                    .filter(|(_, n, ..)| n.md.link.exto() == node.md.link.exto())
                     .map(|(.., id)| id.to_string())
                     .collect::<Vec<String>>()
                     .join(", "),
-            )
-            .link(
-                &results
-                    .first()
-                    .map(|(_, n, _)| n.into())
-                    .unwrap_or_default(),
-            ));
+            );
+            return Err(if let Some((_, node, _)) = results.first() {
+                err.link(node)
+            } else {
+                err.unlinked()
+            });
         } else if &resolved_id.resolve_conflict(id) == id {
             ignored.push(resolved_id);
             resolved_id = id.clone();
@@ -69,7 +68,7 @@ pub trait ReadNode<T: Clone + Debug + Into<Node>>: Interest {
         let Some(current) = parser.current() else {
             return Err(LinkedErr::token(E::UnexpectedEmptyParser, &next));
         };
-        linked.md.pos = Position::new(next.pos.from, current.pos.to);
+        linked.md.link.set_expos(&next, current);
         linked.md.merge(md);
         Ok(Some(linked))
     }
@@ -78,8 +77,7 @@ pub trait ReadNode<T: Clone + Debug + Into<Node>>: Interest {
 pub(crate) trait TryRead<
     T: Clone + Debug + Into<Node>,
     K: Display + Clone + PartialEq + ConflictResolver<K>,
-> where
-    for<'a> SrcLink: From<&'a T>,
+>
 {
     fn try_read(parser: &mut Parser, id: K) -> Result<Option<LinkedNode>, LinkedErr<E>>;
     fn try_oneof(parser: &mut Parser, ids: &[K]) -> Result<Option<LinkedNode>, LinkedErr<E>> {

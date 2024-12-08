@@ -7,13 +7,14 @@ use crate::*;
 
 impl InferType for VariableDeclaration {
     fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
-        if let (Some(ty), Some(assig)) = (self.r#type.as_ref(), self.assignation.as_ref()) {
-            let ty = ty.infer_type(tcx)?;
-            let assig = assig.infer_type(tcx)?;
+        if let (Some(n_ty), Some(n_assig)) = (self.r#type.as_ref(), self.assignation.as_ref()) {
+            let ty = n_ty.infer_type(tcx)?;
+            let assig = n_assig.infer_type(tcx)?;
             if ty != assig {
-                Err(LinkedErr::by_link(
+                Err(LinkedErr::between_nodes(
                     E::DismatchTypes(format!("{}, {}", ty.id(), assig.id())),
-                    &self.into(),
+                    n_ty,
+                    n_assig,
                 ))
             } else {
                 Ok(ty)
@@ -21,7 +22,7 @@ impl InferType for VariableDeclaration {
         } else if let Some(assig) = self.assignation.as_ref() {
             let ty = assig.infer_type(tcx)?;
             if matches!(ty, DataType::IndeterminateType) {
-                Err(LinkedErr::by_link(E::IndeterminateType, &(assig).into()))
+                Err(LinkedErr::by_node(E::IndeterminateType, assig))
             } else {
                 Ok(ty)
             }
@@ -48,14 +49,13 @@ impl Initialize for VariableDeclaration {
         if let Node::Declaration(Declaration::VariableName(variable)) = &self.variable.node {
             let ty = self.infer_type(tcx)?;
             tcx.insert(&variable.ident, ty)
-                .map_err(|e| LinkedErr::by_link(e, &self.into()))?;
+                .map_err(|err| LinkedErr::by_node(err, &self.variable))?;
             self.variable.initialize(tcx)?;
             Ok(())
         } else {
-            Err(LinkedErr::by_link(
-                E::UnexpectedNode(self.variable.node.id()),
-                &self.into(),
-            ))
+            Err(LinkedErr::unlinked(E::UnexpectedNode(
+                self.variable.node.id(),
+            )))
         }
     }
 }

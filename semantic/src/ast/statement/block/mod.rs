@@ -9,7 +9,7 @@ impl InferType for Block {
             .map(|n| n.infer_type(tcx))
             .unwrap_or_else(|| Ok(DataType::Void))?;
         tcx.leave()
-            .map_err(|e| LinkedErr::by_link(e, &self.into()))?;
+            .map_err(|err| LinkedErr::between(err, &self.open, &self.close))?;
         Ok(ty)
     }
 }
@@ -19,7 +19,7 @@ impl Initialize for Block {
         tcx.enter(&self.uuid);
         self.nodes.iter().try_for_each(|n| n.initialize(tcx))?;
         tcx.leave()
-            .map_err(|e| LinkedErr::by_link(e, &self.into()))?;
+            .map_err(|err| LinkedErr::between(err, &self.open, &self.close))?;
         Ok(())
     }
 }

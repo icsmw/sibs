@@ -12,7 +12,7 @@ impl InferType for ComparisonSeq {
         {
             let ty = node.infer_type(tcx)?;
             if !matches!(ty, DataType::Bool) {
-                return Err(LinkedErr::by_link(E::ExpectedBoolType(ty), &node.into()));
+                return Err(LinkedErr::by_node(E::ExpectedBoolType(ty), node));
             }
         }
         Ok(DataType::Bool)

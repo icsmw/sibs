@@ -47,11 +47,11 @@ impl ReadNode<BinaryExpSeq> for BinaryExpSeq {
                         if collected.len() == 1 {
                             return Ok(None);
                         } else {
-                            return Err(E::MissedBinaryOperator.link(&(&node).into()));
+                            return Err(E::MissedBinaryOperator.link(&node));
                         }
                     }
-                    Some(n) => {
-                        return Err(E::MissedBinaryOperator.link(&n.into()));
+                    Some(_) => {
+                        return Err(E::MissedBinaryOperator.link(&node));
                     }
                 }
             }

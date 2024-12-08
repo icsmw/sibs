@@ -137,7 +137,7 @@ impl Arbitrary for LinkedNode {
                     let mut md = Metadata {
                         ppm: Vec::new(),
                         meta,
-                        pos: Position::default(),
+                        link: SrcLink::default(),
                     };
                     let mut node = node.clone();
                     resolve_meta(&mut node, &mut md);
@@ -165,7 +165,7 @@ impl Arbitrary for LinkedNode {
                     let mut md = Metadata {
                         ppm,
                         meta,
-                        pos: Position::default(),
+                        link: SrcLink::default(),
                     };
                     let mut node = node.clone();
                     resolve_meta(&mut node, &mut md);

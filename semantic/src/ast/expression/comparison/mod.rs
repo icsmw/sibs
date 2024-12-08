@@ -5,9 +5,10 @@ impl InferType for Comparison {
         let left = self.left.infer_type(tcx)?;
         let right = self.right.infer_type(tcx)?;
         if !left.compatible(&right) {
-            Err(LinkedErr::by_link(
+            Err(LinkedErr::between_nodes(
                 E::DismatchTypes(format!("{left}, {right}")),
-                &self.into(),
+                &self.left,
+                &self.right,
             ))
         } else {
             Ok(DataType::Bool)
