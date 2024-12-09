@@ -14,6 +14,8 @@ pub enum E {
     DismatchTypes(String),
     #[error("Assignation can't be done with IndeterminateType")]
     IndeterminateType,
+    #[error("Cannot find not assigned type, not annotated type")]
+    MissedAssignedAndAnnotatedType,
     #[error("Attempt to leave global scope")]
     AttemptToLeaveGlobalScope,
     #[error("Attempt to set type without scope")]

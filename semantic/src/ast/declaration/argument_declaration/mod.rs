@@ -11,7 +11,7 @@ impl Initialize for ArgumentDeclaration {
         self.r#type.initialize(tcx)?;
         if let Node::Declaration(Declaration::VariableName(variable)) = &self.variable.node {
             let ty = self.infer_type(tcx)?;
-            tcx.insert(&variable.ident, ty)
+            tcx.insert(&variable.ident, EntityType::new(Some(ty.clone()), Some(ty)))
                 .map_err(|err| LinkedErr::between_nodes(err, &self.variable, &self.r#type))?;
             self.variable.initialize(tcx)?;
             Ok(())

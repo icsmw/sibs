@@ -3,7 +3,9 @@ use std::fmt;
 #[enum_ids::enum_ids(display_variant)]
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum DataType {
-    /// Can be in If statement
+    /// Can be in If statement. Reflects the fact that the resulting type cannot
+    /// be cast to a single type. For example, the branches of an if condition
+    /// return different types.
     IndeterminateType,
     Void,
     // Output(Output),
