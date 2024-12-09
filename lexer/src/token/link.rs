@@ -5,6 +5,10 @@ use uuid::Uuid;
 ///
 /// The `SrcLink` struct holds the starting and ending indices,
 /// allowing for precise location tracking within the source code.
+///
+/// Note. Not `pos`, not `expos` doesn't include metadata (meta or
+/// comments). `pos` - includes node at itself without ppm; `expos` -
+/// includes node and its ppm.
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct SrcLink {
     /// The position of node as itself.
