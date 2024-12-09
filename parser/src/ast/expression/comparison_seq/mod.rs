@@ -60,6 +60,11 @@ impl ReadNode<ComparisonSeq> for ComparisonSeq {
             }
             collected.push(node);
         }
+        if let Some(node) = collected.last() {
+            if matches!(node.node, Node::Expression(Expression::LogicalOp(..))) {
+                return Err(E::MissedConditionArgument.link(node));
+            }
+        }
         Ok(if collected.is_empty() {
             None
         } else {

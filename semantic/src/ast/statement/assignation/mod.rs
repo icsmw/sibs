@@ -30,7 +30,6 @@ impl InferType for Assignation {
             .map_err(|e| LinkedErr::between_nodes(e, &self.left, &self.right))?;
             Ok(DataType::Void)
         } else {
-            println!(">>>>>>>>>>>>>>>>>> 00000");
             Err(LinkedErr::between_nodes(
                 E::DismatchTypes(format!("{annot}, {right}")),
                 &self.left,

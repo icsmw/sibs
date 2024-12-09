@@ -15,8 +15,12 @@ pub enum E {
     UnexpectedBinaryOperator(KindId),
     #[error("Missed logical operator && or ||")]
     MissedLogicalOperator,
+    #[error("Missed condition argument after operator && or ||")]
+    MissedConditionArgument,
     #[error("Missed binary operator -, +, *, /")]
     MissedBinaryOperator,
+    #[error("Missed binary argument after operator -, +, *, /")]
+    MissedBinaryArgument,
     #[error("Missed comma")]
     MissedComma,
     #[error("Missed semicolon")]

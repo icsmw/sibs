@@ -57,6 +57,11 @@ impl ReadNode<BinaryExpSeq> for BinaryExpSeq {
             }
             collected.push(node);
         }
+        if let Some(node) = collected.last() {
+            if matches!(node.node, Node::Expression(Expression::BinaryOp(..))) {
+                return Err(E::MissedBinaryArgument.link(node));
+            }
+        }
         Ok(if collected.is_empty() {
             None
         } else {

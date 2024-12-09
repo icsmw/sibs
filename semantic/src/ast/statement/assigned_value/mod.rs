@@ -8,6 +8,7 @@ impl InferType for AssignedValue {
 
 impl Initialize for AssignedValue {
     fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
-        self.node.initialize(tcx)
+        self.node.initialize(tcx)?;
+        self.infer_type(tcx).map(|_| ())
     }
 }
