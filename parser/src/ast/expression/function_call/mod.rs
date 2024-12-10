@@ -5,13 +5,23 @@ use crate::*;
 
 impl Interest for FunctionCall {
     fn intrested(token: &Token) -> bool {
-        matches!(token.kind, Kind::Identifier(..))
+        matches!(token.kind, Kind::Identifier(..) | Kind::Bang)
     }
 }
 
 impl ReadNode<FunctionCall> for FunctionCall {
     fn read(parser: &mut Parser) -> Result<Option<FunctionCall>, LinkedErr<E>> {
         let mut reference = Vec::new();
+        let restore = parser.pin();
+        let Some(token) = parser.token().cloned() else {
+            return Ok(None);
+        };
+        let negation = if matches!(token.kind, Kind::Bang) {
+            Some(token)
+        } else {
+            restore(parser);
+            None
+        };
         while let Some(tk) = parser.token() {
             if let Kind::Identifier(ident) = &tk.kind {
                 reference.push((ident.to_owned(), tk.clone()));
@@ -71,6 +81,7 @@ impl ReadNode<FunctionCall> for FunctionCall {
                 reference,
                 open,
                 close,
+                negation,
                 uuid: Uuid::new_v4(),
             }))
         }

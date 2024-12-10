@@ -11,13 +11,18 @@ pub struct FunctionCall {
     pub open: Token,
     pub close: Token,
     pub uuid: Uuid,
+    pub negation: Option<Token>,
 }
 
 impl fmt::Display for FunctionCall {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{} {} {} {}",
+            "{}{} {} {} {}",
+            self.negation
+                .as_ref()
+                .map(|tk| format!("{tk} "))
+                .unwrap_or_default(),
             self.reference
                 .iter()
                 .map(|(s, _)| s.to_owned())

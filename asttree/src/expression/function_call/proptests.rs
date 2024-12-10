@@ -9,6 +9,7 @@ impl Arbitrary for FunctionCall {
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         (
             prop::collection::vec(gens::kind(KindId::Identifier).boxed(), 1..5),
+            prop::strategy::Union::new(vec![Just(Some(Token::for_test(Kind::Bang))), Just(None)]),
             if deep > PROPTEST_DEEP_FACTOR {
                 prop::collection::vec(
                     prop::strategy::Union::new(vec![
@@ -56,7 +57,7 @@ impl Arbitrary for FunctionCall {
                 .boxed()
             },
         )
-            .prop_map(move |(idents, args)| FunctionCall {
+            .prop_map(move |(idents, negation, args)| FunctionCall {
                 reference: idents
                     .into_iter()
                     .map(|knd| (knd.to_string(), Token::for_test(knd)))
@@ -64,6 +65,7 @@ impl Arbitrary for FunctionCall {
                 args,
                 open: Token::for_test(Kind::LeftParen),
                 close: Token::for_test(Kind::RightParen),
+                negation,
                 uuid: Uuid::new_v4(),
             })
             .boxed()

@@ -5,7 +5,7 @@ use crate::*;
 
 impl Interest for Skip {
     fn intrested(token: &Token) -> bool {
-        matches!(token.id(), KindId::Identifier)
+        matches!(token.kind, Kind::Identifier(..))
     }
 }
 
