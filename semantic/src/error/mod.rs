@@ -24,6 +24,8 @@ pub enum E {
     InvalidIfStatement,
     #[error("Variable isn't defined")]
     VariableIsNotDefined,
+    #[error("Nagation condition can be used only with bool types")]
+    NegationToNotBool,
     #[error("Unexpected node: {0}")]
     UnexpectedNode(NodeId),
     #[error("Empty type declaration")]

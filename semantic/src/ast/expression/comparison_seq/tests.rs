@@ -36,6 +36,11 @@ test_success!(
     r#"{ let a = 4; let b = 5; let c = true; let d = if c || a == b { a; } if a == b { a; } else { b; }; }"#
 );
 
+test_success!(
+    comparison_seq_006,
+    Block,
+    r#"{ let a = true; let b = 5; let c = true; if c || !a { a; } if !c { a; } else { b; }; }"#
+);
 
 test_fail!(
     comparison_seq_000,
@@ -47,4 +52,18 @@ test_fail!(
     comparison_seq_001,
     Block,
     r#"{ let a = 4; let b = 5; let c = if a > b { "a"; } else { 5; }; }"#
+);
+
+test_fail!(comparison_seq_002, Block, r#"{ let a = 5; if !a { a; }; }"#);
+
+test_fail!(
+    comparison_seq_003,
+    Block,
+    r#"{ let a = "5"; if !a { a; }; }"#
+);
+
+test_fail!(
+    comparison_seq_004,
+    Block,
+    r#"{ let a = [true]; if !a { a; }; }"#
 );

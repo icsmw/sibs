@@ -6,7 +6,16 @@ impl InferType for Variable {
             .lookup(&self.ident)
             .ok_or(LinkedErr::token(E::VariableIsNotDefined, &self.token))?;
         if let Some(ty) = ety.assigned.as_ref() {
-            Ok(ty.to_owned())
+            if let (Some(negation), false) = (self.negation.as_ref(), matches!(ty, DataType::Bool))
+            {
+                Err(LinkedErr::between(
+                    E::NegationToNotBool,
+                    negation,
+                    &self.token,
+                ))
+            } else {
+                Ok(ty.to_owned())
+            }
         } else {
             Err(LinkedErr::token(E::VariableIsNotDefined, &self.token))
         }
