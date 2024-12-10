@@ -5,7 +5,7 @@ use crate::*;
 
 impl Interest for Assignation {
     fn intrested(token: &Token) -> bool {
-        matches!(token.kind, Kind::Identifier(..))
+        matches!(token.kind, Kind::Identifier(..) | Kind::Bang)
     }
 }
 

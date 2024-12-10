@@ -13,6 +13,7 @@ impl Interest for Comparison {
                 | Kind::InterpolatedString(..)
                 | Kind::Keyword(Keyword::True)
                 | Kind::Keyword(Keyword::False)
+                | Kind::Bang
         )
     }
 }

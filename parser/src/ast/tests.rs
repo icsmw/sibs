@@ -54,8 +54,8 @@ macro_rules! test_node_reading {
                         let mut lx = lexer::Lexer::new(&content, 0);
                         let mut parser = $crate::Parser::new(lx.read(true).unwrap().tokens, &lx.uuid);
                         let node = $element_ref::read_as_linked(&mut parser);
-                        if node.is_err() {
-                            eprintln!("fail with:\n{content}\n{}", "=".repeat(100));
+                        if let Err(err) = &node {
+                            eprintln!("fail with:\nErr:{err:?}\n{content}\n{}", "=".repeat(100));
                         }
                         assert!(node.is_ok());
                         let node = node.unwrap();

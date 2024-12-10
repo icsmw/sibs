@@ -5,22 +5,31 @@ use crate::*;
 
 impl Interest for Variable {
     fn intrested(token: &Token) -> bool {
-        matches!(token.kind, Kind::Identifier(..))
+        matches!(token.kind, Kind::Identifier(..) | Kind::Bang)
     }
 }
 
 impl ReadNode<Variable> for Variable {
     fn read(parser: &mut Parser) -> Result<Option<Variable>, LinkedErr<E>> {
-        if let Some(tk) = parser.token() {
-            let Kind::Identifier(ident) = &tk.kind else {
+        let Some(token) = parser.token().cloned() else {
+            return Ok(None);
+        };
+        let (token, negation) = if matches!(token.kind, Kind::Bang) {
+            let Some(next) = parser.token().cloned() else {
                 return Ok(None);
             };
-            return Ok(Some(Variable {
-                ident: ident.clone(),
-                token: tk.to_owned(),
-                uuid: Uuid::new_v4(),
-            }));
-        }
-        Ok(None)
+            (next, Some(token))
+        } else {
+            (token, None)
+        };
+        let Kind::Identifier(ident) = &token.kind else {
+            return Ok(None);
+        };
+        Ok(Some(Variable {
+            ident: ident.clone(),
+            negation,
+            token,
+            uuid: Uuid::new_v4(),
+        }))
     }
 }

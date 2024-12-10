@@ -8,9 +8,9 @@ impl Arbitrary for ArgumentDeclaration {
 
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         (
-            Variable::arbitrary()
-                .prop_map(Expression::Variable)
-                .prop_map(Node::Expression)
+            VariableName::arbitrary()
+                .prop_map(Declaration::VariableName)
+                .prop_map(Node::Declaration)
                 .prop_map(move |n| (n, deep + 1))
                 .prop_flat_map(LinkedNode::arbitrary_with)
                 .boxed(),

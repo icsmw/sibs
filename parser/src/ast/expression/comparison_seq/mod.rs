@@ -14,6 +14,7 @@ impl Interest for ComparisonSeq {
                 | Kind::InterpolatedString(..)
                 | Kind::Keyword(Keyword::True)
                 | Kind::Keyword(Keyword::False)
+                | Kind::Bang
         )
     }
 }

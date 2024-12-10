@@ -5,7 +5,10 @@ use crate::*;
 
 impl Interest for Range {
     fn intrested(token: &Token) -> bool {
-        matches!(token.kind, Kind::Identifier(..) | Kind::Number(..))
+        matches!(
+            token.kind,
+            Kind::Identifier(..) | Kind::Number(..) | Kind::Bang
+        )
     }
 }
 

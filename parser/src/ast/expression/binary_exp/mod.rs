@@ -5,7 +5,10 @@ use crate::*;
 
 impl Interest for BinaryExp {
     fn intrested(token: &Token) -> bool {
-        matches!(token.id(), KindId::Identifier | KindId::Number)
+        matches!(
+            token.kind,
+            Kind::Identifier(..) | Kind::Number(..) | Kind::Bang
+        )
     }
 }
 

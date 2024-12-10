@@ -6,8 +6,8 @@ use crate::*;
 impl Interest for BinaryExpSeq {
     fn intrested(token: &Token) -> bool {
         matches!(
-            token.id(),
-            KindId::Identifier | KindId::Number | KindId::LeftParen
+            token.kind,
+            Kind::Identifier(..) | Kind::Number(..) | Kind::LeftParen | Kind::Bang
         )
     }
 }
