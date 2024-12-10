@@ -1,24 +1,22 @@
+#[cfg(test)]
+mod tests;
+
 use crate::*;
 
 impl InferType for BinaryExpGroup {
-    fn infer_type(&self, _tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
-        // let ty = self.node.infer_type(tcx)?;
-        // if !matches!(ty, DataType::Bool) {
-        //     Err(LinkedErr::by_link(
-        //         E::ExpectedNumericType(ty),
-        //         &(&self.node).into(),
-        //     ))
-        // } else {
-        //     Ok(ty)
-        // }
-        Ok(DataType::Void)
+    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
+        let ty = self.node.infer_type(tcx)?;
+        if !ty.numeric() {
+            Err(LinkedErr::by_node(E::ExpectedNumericType(ty), &self.node))
+        } else {
+            Ok(ty)
+        }
     }
 }
 
 impl Initialize for BinaryExpGroup {
-    fn initialize(&self, _tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
-        // self.node.initialize(tcx)?;
-        // self.infer_type(tcx).map(|_| ())
-        Ok(())
+    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
+        self.node.initialize(tcx)?;
+        self.infer_type(tcx).map(|_| ())
     }
 }
