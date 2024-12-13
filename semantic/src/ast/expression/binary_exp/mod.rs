@@ -20,13 +20,7 @@ impl InferType for BinaryExp {
                 &self.right,
             ))
         } else {
-            Ok(
-                if matches!(left, DataType::F64) | matches!(right, DataType::F64) {
-                    DataType::F64
-                } else {
-                    DataType::Isize
-                },
-            )
+            Ok(DataType::Num)
         }
     }
 }

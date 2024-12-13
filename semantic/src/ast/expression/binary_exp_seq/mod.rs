@@ -5,7 +5,6 @@ use crate::*;
 
 impl InferType for BinaryExpSeq {
     fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
-        let mut out = DataType::Isize;
         for node in self
             .nodes
             .iter()
@@ -15,11 +14,8 @@ impl InferType for BinaryExpSeq {
             if !ty.numeric() {
                 return Err(LinkedErr::by_node(E::ExpectedNumericType(ty), node));
             }
-            if matches!(ty, DataType::F64) {
-                out = ty;
-            }
         }
-        Ok(out)
+        Ok(DataType::Num)
     }
 }
 

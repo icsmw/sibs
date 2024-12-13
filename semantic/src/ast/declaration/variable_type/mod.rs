@@ -5,10 +5,10 @@ use lexer::{Keyword, Kind, Token};
 impl InferType for Token {
     fn infer_type(&self, _tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
         match &self.kind {
-            Kind::Number(..) => Ok(DataType::F64),
+            Kind::Number(..) => Ok(DataType::Num),
             Kind::Keyword(Keyword::Bool) => Ok(DataType::Bool),
             Kind::Keyword(Keyword::Str) => Ok(DataType::Str),
-            Kind::Keyword(Keyword::Num) => Ok(DataType::F64),
+            Kind::Keyword(Keyword::Num) => Ok(DataType::Num),
             _ => Err(LinkedErr::token(E::TokenIsNotBoundToKnownDataType, self)),
         }
     }

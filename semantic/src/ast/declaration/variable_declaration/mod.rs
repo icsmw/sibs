@@ -16,10 +16,7 @@ impl InferType for VariableDeclaration {
         let Some(ty) = tcx.lookup(&variable.ident) else {
             return Ok(DataType::IndeterminateType);
         };
-        Ok(ty
-            .assigned
-            .clone()
-            .unwrap_or_else(|| DataType::IndeterminateType))
+        Ok(ty.assigned.clone().unwrap_or(DataType::IndeterminateType))
     }
 }
 
