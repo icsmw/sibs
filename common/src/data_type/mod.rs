@@ -8,11 +8,9 @@ pub enum DataType {
     /// return different types.
     IndeterminateType,
     Void,
-    // Output(Output),
-    SpawnStatus,
+    ExecuteResult,
     Range,
-    Isize,
-    F64,
+    Num,
     Bool,
     PathBuf,
     Str,
@@ -23,6 +21,8 @@ pub enum DataType {
     Undefined,
     /// bool | str
     OneOf(Vec<DataType>),
+    Optional(Box<DataType>),
+    Repeated(Box<DataType>),
 }
 
 impl DataType {
@@ -40,7 +40,7 @@ impl DataType {
             return left.reassignable(right);
         }
         match self {
-            Self::F64 | Self::Isize => matches!(right, DataType::F64 | DataType::Isize),
+            Self::Num => matches!(right, DataType::Num),
             Self::OneOf(tys) => tys.iter().any(|ty| ty.compatible(right)),
             _ => false,
         }
@@ -50,13 +50,13 @@ impl DataType {
             return true;
         }
         match self {
-            Self::F64 | Self::Isize => matches!(right, DataType::F64 | DataType::Isize),
+            Self::Num => matches!(right, DataType::Num),
             Self::OneOf(tys) => tys.iter().any(|ty| ty.compatible(right)),
             _ => false,
         }
     }
     pub fn numeric(&self) -> bool {
-        matches!(self, DataType::F64 | DataType::Isize)
+        matches!(self, DataType::Num)
     }
 }
 

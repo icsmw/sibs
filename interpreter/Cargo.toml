@@ -1,0 +1,25 @@
+[package]
+name = "interpreter"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+enum_ids.workspace = true
+thiserror.workspace = true
+uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }
+
+asttree = { path = "../asttree" }
+diagnostics = { path = "../diagnostics" }
+lexer = { path = "../lexer" }
+common = { path = "../common" }
+parser = { path = "../parser" }
+boxed = { path = "../support/boxed" }
+
+[dev-dependencies]
+lexer = { path = "../lexer", features = ["proptests"] }
+asttree = { path = "../asttree", features = ["proptests"] }
+proptest.workspace = true
+paste.workspace = true
