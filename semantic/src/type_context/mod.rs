@@ -1,7 +1,6 @@
-use uuid::Uuid;
-
 use crate::*;
 use std::collections::HashMap;
+use uuid::Uuid;
 
 #[derive(Debug, Default, Clone)]
 pub struct EntityType {
