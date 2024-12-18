@@ -3,6 +3,11 @@ pub mod error;
 mod tests;
 
 mod token;
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
+
 pub use error::E as LexerErr;
 pub(crate) use error::*;
 #[cfg(any(test, feature = "proptests"))]
@@ -190,30 +195,52 @@ impl<'a> Lexer<'a> {
     /// If `new_file` is `true`, it inserts a `BOF` (beginning of file) token at the start
     /// and an `EOF` (end of file) token at the end.
     ///
-    /// # Arguments
-    ///
-    /// * `new_file` - Indicates whether to treat the input as a new file.
-    ///
     /// # Returns
     ///
     /// * `Ok(Tokens)` containing the parsed tokens.
     /// * `Err(E)` if an error occurs during lexing.
-    pub fn read(&mut self, new_file: bool) -> Result<Tokens, E> {
-        let mut tokens = if new_file {
-            Tokens::with(vec![Token::by_pos(Kind::BOF, &self.uuid, 0, 0)])
-        } else {
-            Tokens::default()
-        };
+    pub fn read(&mut self) -> Result<Tokens, E> {
+        let mut tokens = Tokens::with(vec![Token::by_pos(Kind::BOF, &self.uuid, 0, 0)]);
         while let Some(tk) = Token::read(self, &tokens)? {
             tokens.add(tk);
         }
         if !self.completed() {
             Err(E::FailRecognizeContent(self.pos))
         } else {
-            if new_file {
-                tokens.add(Token::by_pos(Kind::EOF, &self.uuid, self.pos, self.pos));
-            }
+            tokens.add(Token::by_pos(Kind::EOF, &self.uuid, self.pos, self.pos));
             Ok(tokens)
         }
+    }
+}
+
+pub struct BoundLexer {
+    pub filename: PathBuf,
+    pub cwd: PathBuf,
+    pub tokens: Vec<Token>,
+    pub uuid: Uuid,
+}
+
+impl BoundLexer {
+    pub fn new<P: AsRef<Path>>(filename: P) -> Result<Self, E> {
+        let filename = filename.as_ref().to_path_buf();
+        if !filename.exists() {
+            return Err(E::FileNotFound(filename));
+        }
+        let Some(cwd) = filename.parent().map(|cwd| cwd.to_path_buf()) else {
+            return Err(E::NoCwdFolder(filename));
+        };
+        let content =
+            fs::read_to_string(&filename).map_err(|e| E::FailToReadFile(filename.clone(), e))?;
+        let mut lexer = Lexer::new(&content, 0);
+        let tokens = lexer.read()?.tokens;
+        Ok(Self {
+            filename,
+            cwd,
+            tokens,
+            uuid: Uuid::new_v4(),
+        })
+    }
+    pub fn inner(self) -> (PathBuf, PathBuf, Vec<Token>, Uuid) {
+        (self.filename, self.cwd, self.tokens, self.uuid)
     }
 }

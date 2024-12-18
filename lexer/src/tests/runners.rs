@@ -160,7 +160,7 @@ pub fn test_tokens_by_kinds(kinds: Vec<Kind>) {
         ));
     }
     let mut lx = Lexer::new(&origin, 0);
-    match lx.read(true) {
+    match lx.read() {
         Ok(tokens) => {
             let restored = tokens
                 .iter()

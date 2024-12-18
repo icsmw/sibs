@@ -50,7 +50,7 @@ impl ReadNode<Command> for Command {
                     }
                     let l_br = tks.remove(0);
                     let r_br = tks.remove(tks.len() - 1);
-                    let mut inner = Parser::new(tks, &parser.src);
+                    let mut inner = parser.inherit(tks);
                     if inner.is_done() {
                         return Err(E::EmptyStringExpression.link_between(&l_br, &r_br));
                     }

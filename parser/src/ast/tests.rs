@@ -15,7 +15,7 @@ macro_rules! test_selfnode_reading {
                     for case in cases.into_iter() {
                         let content = case.to_string();
                         let mut lx = lexer::Lexer::new(&content, 0);
-                        let mut parser = $crate::Parser::new(lx.read(true).unwrap().tokens, &lx.uuid);
+                        let mut parser = $crate::Parser::unbound(lx.read().unwrap().tokens);
                         let node = $element_ref::read(&mut parser);
                         if node.is_err() {
                             eprintln!("fail with:\n{content}\n{}", "=".repeat(100));
@@ -52,7 +52,7 @@ macro_rules! test_node_reading {
                     for case in cases.into_iter() {
                         let content = case.to_string();
                         let mut lx = lexer::Lexer::new(&content, 0);
-                        let mut parser = $crate::Parser::new(lx.read(true).unwrap().tokens, &lx.uuid);
+                        let mut parser = $crate::Parser::unbound(lx.read().unwrap().tokens);
                         let node = $element_ref::read_as_linked(&mut parser);
                         if let Err(err) = &node {
                             eprintln!("fail with:\nErr:{err:?}\n{content}\n{}", "=".repeat(100));

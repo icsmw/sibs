@@ -17,22 +17,49 @@ pub use read::*;
 pub(crate) use asttree::*;
 pub(crate) use diagnostics::*;
 pub(crate) use lexer::*;
-use std::fmt;
+use std::{
+    fmt,
+    path::{Path, PathBuf},
+};
 pub(crate) use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct Parser {
     pub tokens: Vec<Token>,
-    pub pos: usize,
-    pub src: Uuid,
+    pub(crate) pos: usize,
+    pub(crate) src: Uuid,
+    pub(crate) filename: Option<PathBuf>,
+    pub(crate) cwd: Option<PathBuf>,
 }
 
 impl Parser {
-    pub fn new(tokens: Vec<Token>, src: &Uuid) -> Self {
+    pub fn unbound(tokens: Vec<Token>) -> Self {
         Self {
             tokens,
             pos: 0,
-            src: *src,
+            src: Uuid::new_v4(),
+            filename: None,
+            cwd: None,
+        }
+    }
+    pub fn new<P: AsRef<Path>>(filename: P) -> Result<Self, E> {
+        let (filename, cwd, tokens, src) = BoundLexer::new(filename.as_ref())?.inner();
+        Ok(Self {
+            tokens,
+            pos: 0,
+            src,
+            filename: Some(filename),
+            cwd: Some(cwd),
+        })
+    }
+
+    pub(crate) fn inherit(&self, tokens: Vec<Token>) -> Self {
+        Self {
+            tokens,
+            pos: 0,
+            src: self.src,
+            filename: self.filename.clone(),
+            cwd: self.cwd.clone(),
         }
     }
 
@@ -55,11 +82,11 @@ impl Parser {
         None
     }
 
-    pub fn current(&self) -> Option<&Token> {
+    pub(crate) fn current(&self) -> Option<&Token> {
         self.tokens.get(self.pos).or_else(|| self.tokens.last())
     }
 
-    pub fn until_end(&self) -> Option<(&Token, &Token)> {
+    pub(crate) fn until_end(&self) -> Option<(&Token, &Token)> {
         if let (Some(from), Some(to)) = (
             self.tokens.get(self.pos).or_else(|| self.tokens.last()),
             self.tokens.last(),
@@ -97,16 +124,6 @@ impl Parser {
         restore(self);
         tk
     }
-
-    // pub(crate) fn get_pos(&mut self) -> Position {
-    //     let restore = self.pin();
-    //     let pos = self
-    //         .token()
-    //         .map(|tk| Position::from(tk))
-    //         .unwrap_or_else(|| Position::new(self.pos, self.pos));
-    //     restore(self);
-    //     pos
-    // }
 
     pub(crate) fn pin(&mut self) -> impl Fn(&mut Parser) -> usize {
         let pos = self.pos;
@@ -151,7 +168,7 @@ impl Parser {
             tokens.push(tk.clone());
         };
         let close_tk = close_tk.ok_or_else(|| LinkedErr::token(E::NoClosing(right), &open_tk))?;
-        Ok(Some((Parser::new(tokens, &self.src), open_tk, close_tk)))
+        Ok(Some((self.inherit(tokens), open_tk, close_tk)))
     }
 
     pub(crate) fn is_done(&mut self) -> bool {
@@ -161,7 +178,7 @@ impl Parser {
         is_done
     }
 
-    pub fn err_current(&self, err: E) -> LinkedErr<E> {
+    pub(crate) fn err_current(&self, err: E) -> LinkedErr<E> {
         LinkedErr {
             link: self
                 .current()
@@ -170,7 +187,7 @@ impl Parser {
             e: err,
         }
     }
-    pub fn err_until_end(&self, err: E) -> LinkedErr<E> {
+    pub(crate) fn err_until_end(&self, err: E) -> LinkedErr<E> {
         LinkedErr {
             link: self
                 .until_end()

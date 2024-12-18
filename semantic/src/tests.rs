@@ -7,8 +7,7 @@ macro_rules! test_success {
                 use parser::*;
                 use $crate::*;
                 let mut lx = lexer::Lexer::new($content, 0);
-                let tokens = lx.read(true).unwrap().tokens;
-                let mut parser = Parser::new(tokens, &lx.uuid);
+                let mut parser = Parser::unbound(lx.read().unwrap().tokens);
                 let node = $element_ref::read(&mut parser).expect("Node is parsed without errors").expect("Node is parsed");
                 let mut tcx = $crate::TypeContext::default();
                 let result = node.initialize(&mut tcx);
@@ -35,8 +34,7 @@ macro_rules! test_fail {
                     use parser::*;
                     use $crate::*;
                     let mut lx = lexer::Lexer::new($content, 0);
-                    let tokens = lx.read(true).unwrap().tokens;
-                    let mut parser = Parser::new(tokens, &lx.uuid);
+                    let mut parser = Parser::unbound(lx.read().unwrap().tokens);
                     let node = $element_ref::read(&mut parser).expect("Node is parsed without errors").expect("Node is parsed");
                     let mut tcx = $crate::TypeContext::default();
                     assert!(node.initialize(&mut tcx).is_err());

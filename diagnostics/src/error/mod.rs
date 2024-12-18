@@ -3,12 +3,12 @@ use lexer::{LinkedPosition, Token};
 use std::fmt;
 
 #[derive(Clone, Debug)]
-pub struct LinkedErr<T: Clone + fmt::Display> {
+pub struct LinkedErr<T: fmt::Display> {
     pub link: LinkedPosition,
     pub e: T,
 }
 
-impl<T: Clone + fmt::Display> LinkedErr<T> {
+impl<T: fmt::Display> LinkedErr<T> {
     pub fn token(err: T, token: &Token) -> Self {
         Self {
             link: token.into(),

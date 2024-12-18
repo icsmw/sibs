@@ -1,13 +1,26 @@
 use thiserror::Error;
 
 use crate::*;
+use std::io;
 
 /// Represents the possible errors that can occur during lexing.
 ///
 /// This enum defines various error types that may be encountered
 /// while processing tokens in the lexer.
-#[derive(Error, Debug, Clone)]
+#[derive(Error, Debug)]
 pub enum E {
+    /// Cannot find a given file to lexing
+    #[error("Cannot detect cwd folder for: {0}")]
+    NoCwdFolder(PathBuf),
+
+    /// Cannot find a given file to lexing
+    #[error("File not found: {0}")]
+    FileNotFound(PathBuf),
+
+    /// Cannot find a given file to lexing
+    #[error("Fail to read file \"{0}\"; error: {1}")]
+    FailToReadFile(PathBuf, io::Error),
+
     /// Error indicating a token does not have a constant length.
     #[error("Token {0} doesn't have constant length")]
     NoConstantLength(KindId),

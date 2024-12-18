@@ -1,9 +1,9 @@
 use crate::*;
 use diagnostics::*;
-use lexer::{KindId, Token};
+use lexer::{KindId, LexerErr, Token};
 use thiserror::Error;
 
-#[derive(Error, Debug, Clone)]
+#[derive(Error, Debug)]
 pub enum E {
     #[error("Next nodes are in conflict: {0}")]
     NodesAreInConflict(String),
@@ -139,6 +139,16 @@ pub enum E {
     /// Return
     #[error("Invalid return value")]
     InvalidReturnValue,
+
+    /// Lexer error
+    #[error("Lexer error: {0}")]
+    LexerErr(LexerErr),
+}
+
+impl From<LexerErr> for E {
+    fn from(err: LexerErr) -> Self {
+        Self::LexerErr(err)
+    }
 }
 
 impl E {
