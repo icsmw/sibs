@@ -3,6 +3,8 @@ mod conflict;
 mod argument_declaration;
 mod closure;
 mod function_declaration;
+mod include_declaration;
+mod module_declaration;
 mod variable_declaration;
 mod variable_name;
 mod variable_type;
@@ -23,6 +25,8 @@ impl TryRead<Declaration, DeclarationId> for Declaration {
         id: DeclarationId,
     ) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         Ok(match id {
+            DeclarationId::ModuleDeclaration => ModuleDeclaration::read_as_linked(parser)?,
+            DeclarationId::IncludeDeclaration => IncludeDeclaration::read_as_linked(parser)?,
             DeclarationId::FunctionDeclaration => FunctionDeclaration::read_as_linked(parser)?,
             DeclarationId::VariableDeclaration => VariableDeclaration::read_as_linked(parser)?,
             DeclarationId::ArgumentDeclaration => ArgumentDeclaration::read_as_linked(parser)?,

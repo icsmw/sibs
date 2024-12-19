@@ -1,6 +1,8 @@
 mod argument_declaration;
 mod closure;
 mod function_declaration;
+mod include_declaration;
+mod module_declaration;
 mod variable_declaration;
 mod variable_name;
 mod variable_type;
@@ -10,6 +12,8 @@ mod variable_variants;
 pub use argument_declaration::*;
 pub use closure::*;
 pub use function_declaration::*;
+pub use include_declaration::*;
+pub use module_declaration::*;
 pub use variable_declaration::*;
 pub use variable_name::*;
 pub use variable_type::*;
@@ -21,6 +25,10 @@ use crate::*;
 #[enum_ids::enum_ids(derive = "Debug, PartialEq, Clone", display, display_from_value)]
 #[derive(Debug, Clone)]
 pub enum Declaration {
+    /// include "path_to_scenario"
+    IncludeDeclaration(IncludeDeclaration),
+    /// mod "path_to_module"
+    ModuleDeclaration(ModuleDeclaration),
     /// fn name() { ... }; fn name(a, b) { ... }; etc.
     FunctionDeclaration(FunctionDeclaration),
     /// let a = 5; etc.
@@ -42,6 +50,8 @@ pub enum Declaration {
 impl Declaration {
     pub fn uuid(&self) -> &Uuid {
         match self {
+            Self::IncludeDeclaration(n) => &n.uuid,
+            Self::ModuleDeclaration(n) => &n.uuid,
             Self::ArgumentDeclaration(n) => &n.uuid,
             Self::Closure(n) => &n.uuid,
             Self::FunctionDeclaration(n) => &n.uuid,

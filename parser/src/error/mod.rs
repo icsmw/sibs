@@ -103,6 +103,8 @@ pub enum E {
     /// Module
     #[error("Missed path to module")]
     MissedModulePath,
+    #[error("Missed body of module")]
+    MissedModuleBody,
 
     /// Task
     #[error("Keyword private can be used only on task declaration")]

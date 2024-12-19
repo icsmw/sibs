@@ -1,7 +1,11 @@
+mod anchor;
 mod component;
+mod module;
 mod task;
 
+pub use anchor::*;
 pub use component::*;
+pub use module::*;
 pub use task::*;
 
 use crate::*;
@@ -10,6 +14,10 @@ use crate::*;
 #[derive(Debug, Clone)]
 #[allow(clippy::large_enum_variant)]
 pub enum Root {
+    /// The root document to start parsing
+    Anchor(Anchor),
+    /// Functions module
+    Module(Module),
     /// component name() { ... }, component name(pwd) { ... }
     Component(Component),
     /// task name() { ... }, private task name(arg: string, ...) { ... }
@@ -19,6 +27,8 @@ pub enum Root {
 impl Root {
     pub fn uuid(&self) -> &Uuid {
         match self {
+            Self::Anchor(n) => &n.uuid,
+            Self::Module(n) => &n.uuid,
             Self::Component(n) => &n.uuid,
             Self::Task(n) => &n.uuid,
         }
