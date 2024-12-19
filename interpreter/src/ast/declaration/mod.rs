@@ -1,6 +1,8 @@
 mod argument_declaration;
 mod closure;
 mod function_declaration;
+mod include_declaration;
+mod module_declaration;
 mod variable_declaration;
 mod variable_name;
 mod variable_type;
@@ -20,6 +22,8 @@ impl Interpret for Declaration {
             Declaration::VariableTypeDeclaration(n) => n.interpret(rt),
             Declaration::VariableVariants(n) => n.interpret(rt),
             Declaration::VariableName(n) => n.interpret(rt),
+            Declaration::ModuleDeclaration(n) => n.interpret(rt),
+            Declaration::IncludeDeclaration(n) => n.interpret(rt),
         }
     }
 }

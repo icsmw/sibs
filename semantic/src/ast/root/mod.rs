@@ -1,4 +1,6 @@
+mod anchor;
 mod component;
+mod module;
 mod task;
 
 use crate::*;
@@ -8,6 +10,8 @@ impl InferType for Root {
         match self {
             Root::Task(n) => n.infer_type(tcx),
             Root::Component(n) => n.infer_type(tcx),
+            Root::Module(n) => n.infer_type(tcx),
+            Root::Anchor(n) => n.infer_type(tcx),
         }
     }
 }
@@ -17,6 +21,8 @@ impl Initialize for Root {
         match self {
             Root::Task(n) => n.initialize(tcx),
             Root::Component(n) => n.initialize(tcx),
+            Root::Module(n) => n.initialize(tcx),
+            Root::Anchor(n) => n.initialize(tcx),
         }
     }
 }

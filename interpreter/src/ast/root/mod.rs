@@ -1,4 +1,6 @@
+mod anchor;
 mod component;
+mod module;
 mod task;
 
 use crate::*;
@@ -8,6 +10,8 @@ impl Interpret for Root {
         match self {
             Root::Task(n) => n.interpret(rt),
             Root::Component(n) => n.interpret(rt),
+            Root::Module(n) => n.interpret(rt),
+            Root::Anchor(n) => n.interpret(rt),
         }
     }
 }

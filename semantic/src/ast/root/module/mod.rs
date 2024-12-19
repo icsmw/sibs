@@ -1,13 +1,16 @@
 use crate::*;
 
-impl InferType for Include {
+impl InferType for Module {
     fn infer_type(&self, _tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
         Ok(DataType::Void)
     }
 }
 
-impl Initialize for Include {
+impl Initialize for Module {
     fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
-        self.node.initialize(tcx)
+        for node in self.nodes.iter() {
+            node.initialize(tcx)?;
+        }
+        self.infer_type(tcx).map(|_| ())
     }
 }
