@@ -9,6 +9,18 @@ impl Interest for IncludeDeclaration {
     }
 }
 
+impl GetFilename for IncludeDeclaration {
+    fn get_filename(&self) -> Result<PathBuf, E> {
+        let Node::Value(Value::PrimitiveString(val)) = &self.node.node else {
+            return Err(E::UnexpectedType(
+                ValueId::PrimitiveString.to_string(),
+                self.node.node.id().to_string(),
+            ));
+        };
+        Ok(PathBuf::from(&val.inner))
+    }
+}
+
 impl ReadNode<IncludeDeclaration> for IncludeDeclaration {
     fn read(parser: &mut Parser) -> Result<Option<IncludeDeclaration>, LinkedErr<E>> {
         let Some(sig) = parser.token().cloned() else {

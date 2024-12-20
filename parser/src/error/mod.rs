@@ -47,6 +47,16 @@ pub enum E {
     MissedBlock,
     #[error("Probably parse has been modified in middle of parsing")]
     UnexpectedEmptyParser,
+    #[error("File \"{0}\" not found")]
+    FileNotFound(String),
+    #[error("Exptected type: {0}; but actual is: {1}")]
+    UnexpectedType(String, String),
+    #[error("Parent path isn't available; using \"include from ...\" and \"mod from ...\" isn't possible")]
+    NoParentPath,
+    #[error("File reading error: {0:?}")]
+    FileReading(#[from] std::io::Error),
+    #[error("Fail to find \"{0}\" in attached content")]
+    FailToFindNode(String),
 
     /// Each
     #[error("In each statement declaration of element variable is missed")]

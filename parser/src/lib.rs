@@ -7,11 +7,13 @@ pub use error::*;
 mod conflict;
 mod interest;
 mod nodes;
+mod paths;
 mod read;
 
 pub(crate) use conflict::*;
 pub(crate) use interest::*;
 pub use nodes::*;
+pub(crate) use paths::*;
 pub use read::*;
 
 pub(crate) use asttree::*;

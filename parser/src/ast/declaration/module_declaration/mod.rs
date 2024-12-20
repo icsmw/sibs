@@ -9,6 +9,18 @@ impl Interest for ModuleDeclaration {
     }
 }
 
+impl GetFilename for ModuleDeclaration {
+    fn get_filename(&self) -> Result<PathBuf, E> {
+        let Node::Value(Value::PrimitiveString(val)) = &self.node.node else {
+            return Err(E::UnexpectedType(
+                ValueId::PrimitiveString.to_string(),
+                self.node.node.id().to_string(),
+            ));
+        };
+        Ok(PathBuf::from(&val.inner))
+    }
+}
+
 impl ReadNode<ModuleDeclaration> for ModuleDeclaration {
     fn read(parser: &mut Parser) -> Result<Option<ModuleDeclaration>, LinkedErr<E>> {
         let Some(sig) = parser.token().cloned() else {
