@@ -27,6 +27,21 @@ fn read_file<N: GetFilename>(parser: &mut Parser, node: &N) -> Result<Parser, E>
     Parser::new(filename)
 }
 
+#[cfg(any(not(test), all(test, feature = "io_tests")))]
+fn get_inner<N: GetFilename>(
+    parser: &mut Parser,
+    node: &N,
+    linked: &LinkedNode,
+    target: RootId,
+) -> Result<LinkedNode, LinkedErr<E>> {
+    let mut inner = read_file(parser, node).map_err(|e| e.link(linked))?;
+    let Some(node) = LinkedNode::try_oneof(&mut inner, &[NodeReadTarget::Root(&[target.clone()])])?
+    else {
+        return Err(E::FailToFindNode(target.to_string()).link(linked));
+    };
+    Ok(node)
+}
+
 impl ReadNode<Anchor> for Anchor {
     fn read(parser: &mut Parser) -> Result<Option<Anchor>, LinkedErr<E>> {
         let mut nodes = Vec::new();
@@ -54,26 +69,12 @@ impl ReadNode<Anchor> for Anchor {
 
             #[cfg(any(not(test), all(test, feature = "io_tests")))]
             {
-                if let Node::Declaration(Declaration::IncludeDeclaration(incl)) = &node.node {
-                    let mut inner = read_file(parser, incl).map_err(|e| e.link(&node))?;
-                    let Some(node) = LinkedNode::try_oneof(
-                        &mut inner,
-                        &[NodeReadTarget::Root(&[RootId::Anchor])],
-                    )?
-                    else {
-                        return Err(E::FailToFindNode(RootId::Anchor.to_string()).link(&node));
-                    };
-                    nodes.push(node);
-                } else if let Node::Declaration(Declaration::ModuleDeclaration(incl)) = &node.node {
-                    let mut inner = read_file(parser, incl).map_err(|e| e.link(&node))?;
-                    let Some(node) = LinkedNode::try_oneof(
-                        &mut inner,
-                        &[NodeReadTarget::Root(&[RootId::Module])],
-                    )?
-                    else {
-                        return Err(E::FailToFindNode(RootId::Module.to_string()).link(&node));
-                    };
-                    nodes.push(node);
+                if let Node::Declaration(Declaration::IncludeDeclaration(inn_node)) = &node.node {
+                    nodes.push(get_inner(parser, inn_node, &node, RootId::Anchor)?);
+                } else if let Node::Declaration(Declaration::ModuleDeclaration(inn_node)) =
+                    &node.node
+                {
+                    nodes.push(get_inner(parser, inn_node, &node, RootId::Module)?);
                 }
             }
             nodes.push(node);
