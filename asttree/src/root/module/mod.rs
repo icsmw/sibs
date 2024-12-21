@@ -14,6 +14,16 @@ pub struct Module {
     pub uuid: Uuid,
 }
 
+impl Module {
+    pub fn get_name(&self) -> Option<&str> {
+        if let Kind::Identifier(name) = &self.name.kind {
+            Some(name)
+        } else {
+            None
+        }
+    }
+}
+
 impl fmt::Display for Module {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

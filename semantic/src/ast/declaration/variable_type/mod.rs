@@ -3,7 +3,7 @@ use crate::*;
 use lexer::{Keyword, Kind, Token};
 
 impl InferType for Token {
-    fn infer_type(&self, _tcx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, _scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
         match &self.kind {
             Kind::Number(..) => Ok(DataType::Num),
             Kind::Keyword(Keyword::Bool) => Ok(DataType::Bool),

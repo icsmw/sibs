@@ -25,6 +25,12 @@ pub enum DataType {
     Repeated(Box<DataType>),
 }
 
+impl Default for DataType {
+    fn default() -> Self {
+        Self::Void
+    }
+}
+
 impl DataType {
     pub fn reassignable(&self, right: &DataType) -> bool {
         if matches!(right, Self::Undefined) {

@@ -13,6 +13,16 @@ pub struct FunctionDeclaration {
     pub uuid: Uuid,
 }
 
+impl FunctionDeclaration {
+    pub fn get_name(&self) -> Option<&str> {
+        if let Kind::Identifier(name) = &self.name.kind {
+            Some(name)
+        } else {
+            None
+        }
+    }
+}
+
 impl fmt::Display for FunctionDeclaration {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

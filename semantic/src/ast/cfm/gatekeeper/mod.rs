@@ -1,7 +1,7 @@
 use crate::*;
 
 impl InferType for Gatekeeper {
-    fn infer_type(&self, _tcx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, _scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
         Ok(DataType::Void)
     }
 }

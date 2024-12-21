@@ -40,4 +40,8 @@ pub enum E {
     AccessorOnWrongType(DataType),
     #[error("Function \"{0}\" already exists")]
     FuncExists(String),
+    #[error("Invalid module name; cannot recognize")]
+    InvalidModuleName,
+    #[error("Invalid function name; cannot recognize")]
+    InvalidFnName,
 }

@@ -3,7 +3,7 @@ use crate::*;
 #[derive(Debug, Default)]
 pub struct Fns {
     pub path: Vec<String>,
-    pub funcs: HashMap<String, Uuid>,
+    pub funcs: HashMap<String, FnEntity>,
 }
 
 impl Fns {
@@ -13,7 +13,7 @@ impl Fns {
     pub fn leave(&mut self) {
         let _ = self.path.pop();
     }
-    pub fn add<S: AsRef<str>>(&mut self, fn_name: S, uuid: &Uuid) -> Result<(), E> {
+    pub fn add<S: AsRef<str>>(&mut self, fn_name: S, entity: FnEntity) -> Result<(), E> {
         let path = self.path.join("::");
         let name = format!(
             "{path}{}{}",
@@ -23,7 +23,7 @@ impl Fns {
         if self.funcs.contains_key(&name) {
             return Err(E::FuncExists(name));
         }
-        self.funcs.insert(name, *uuid);
+        self.funcs.insert(name, entity);
         Ok(())
     }
 }

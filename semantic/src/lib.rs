@@ -15,9 +15,9 @@ pub(crate) use std::collections::HashMap;
 pub(crate) use uuid::Uuid;
 
 pub trait InferType {
-    fn infer_type(&self, _tcx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>>;
+    fn infer_type(&self, _scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>>;
 }
 
 pub trait Initialize {
-    fn initialize(&self, _tcx: &mut SemanticCx) -> Result<(), LinkedErr<E>>;
+    fn initialize(&self, _scx: &mut SemanticCx) -> Result<(), LinkedErr<E>>;
 }
