@@ -4,19 +4,19 @@ mod meta;
 use crate::*;
 
 impl InferType for Miscellaneous {
-    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
         match self {
-            Miscellaneous::Comment(n) => n.infer_type(tcx),
-            Miscellaneous::Meta(n) => n.infer_type(tcx),
+            Miscellaneous::Comment(n) => n.infer_type(scx),
+            Miscellaneous::Meta(n) => n.infer_type(scx),
         }
     }
 }
 
 impl Initialize for Miscellaneous {
-    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
+    fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         match self {
-            Miscellaneous::Comment(n) => n.initialize(tcx),
-            Miscellaneous::Meta(n) => n.initialize(tcx),
+            Miscellaneous::Comment(n) => n.initialize(scx),
+            Miscellaneous::Meta(n) => n.initialize(scx),
         }
     }
 }

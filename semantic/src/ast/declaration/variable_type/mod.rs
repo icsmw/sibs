@@ -3,7 +3,7 @@ use crate::*;
 use lexer::{Keyword, Kind, Token};
 
 impl InferType for Token {
-    fn infer_type(&self, _tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, _tcx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
         match &self.kind {
             Kind::Number(..) => Ok(DataType::Num),
             Kind::Keyword(Keyword::Bool) => Ok(DataType::Bool),
@@ -15,47 +15,47 @@ impl InferType for Token {
 }
 
 impl InferType for VariableCompoundType {
-    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
         match self {
-            VariableCompoundType::Vec(_, n) => Ok(DataType::Vec(Box::new(n.infer_type(tcx)?))),
+            VariableCompoundType::Vec(_, n) => Ok(DataType::Vec(Box::new(n.infer_type(scx)?))),
         }
     }
 }
 
 impl InferType for VariableTypeDef {
-    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
         match self {
-            VariableTypeDef::Primitive(tk) => tk.infer_type(tcx),
-            VariableTypeDef::Compound(ty) => ty.infer_type(tcx),
+            VariableTypeDef::Primitive(tk) => tk.infer_type(scx),
+            VariableTypeDef::Compound(ty) => ty.infer_type(scx),
         }
     }
 }
 
 impl InferType for VariableType {
-    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
-        self.r#type.infer_type(tcx)
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+        self.r#type.infer_type(scx)
     }
 }
 
 impl Initialize for VariableCompoundType {
-    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
+    fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         match self {
-            VariableCompoundType::Vec(_, n) => n.initialize(tcx),
+            VariableCompoundType::Vec(_, n) => n.initialize(scx),
         }
     }
 }
 
 impl Initialize for VariableTypeDef {
-    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
+    fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         match self {
             VariableTypeDef::Primitive(..) => Ok(()),
-            VariableTypeDef::Compound(ty) => ty.initialize(tcx),
+            VariableTypeDef::Compound(ty) => ty.initialize(scx),
         }
     }
 }
 
 impl Initialize for VariableType {
-    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
-        self.r#type.initialize(tcx)
+    fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.r#type.initialize(scx)
     }
 }

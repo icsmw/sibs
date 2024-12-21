@@ -4,8 +4,8 @@ mod tests;
 use crate::*;
 
 impl InferType for Accessor {
-    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
-        let Some(pty) = tcx.get_parent_ty().cloned() else {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+        let Some(pty) = scx.tys.parent.get().cloned() else {
             return Err(LinkedErr::between(
                 E::AccessorWithoutParent,
                 &self.open,
@@ -20,7 +20,7 @@ impl InferType for Accessor {
             ));
         }
         if let DataType::Vec(inner_ty) = pty {
-            let ty = self.node.infer_type(tcx)?;
+            let ty = self.node.infer_type(scx)?;
             if !ty.numeric() {
                 return Err(LinkedErr::by_node(E::ExpectedNumericType(ty), &self.node));
             }
@@ -36,8 +36,8 @@ impl InferType for Accessor {
 }
 
 impl Initialize for Accessor {
-    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
-        self.node.initialize(tcx)?;
-        self.infer_type(tcx).map(|_| ())
+    fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.node.initialize(scx)?;
+        self.infer_type(scx).map(|_| ())
     }
 }

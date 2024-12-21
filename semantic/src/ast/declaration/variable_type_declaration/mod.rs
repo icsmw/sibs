@@ -1,11 +1,11 @@
 use crate::*;
 
 impl InferType for VariableTypeDeclaration {
-    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
         let tys = self
             .types
             .iter()
-            .map(|n| n.infer_type(tcx))
+            .map(|n| n.infer_type(scx))
             .collect::<Result<Vec<_>, _>>()?;
         if tys.is_empty() {
             Err(LinkedErr::unlinked(E::EmptyTypeDeclaration))
@@ -18,8 +18,8 @@ impl InferType for VariableTypeDeclaration {
 }
 
 impl Initialize for VariableTypeDeclaration {
-    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
-        self.types.iter().try_for_each(|n| n.initialize(tcx))?;
+    fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.types.iter().try_for_each(|n| n.initialize(scx))?;
         Ok(())
     }
 }

@@ -4,11 +4,11 @@ mod tests;
 use crate::*;
 
 impl InferType for Array {
-    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
         let tys = self
             .els
             .iter()
-            .map(|n| n.infer_type(tcx))
+            .map(|n| n.infer_type(scx))
             .collect::<Result<Vec<_>, _>>()?;
         if tys.is_empty() {
             return Ok(DataType::Vec(Box::new(DataType::Undefined)));
@@ -26,11 +26,11 @@ impl InferType for Array {
 }
 
 impl Initialize for Array {
-    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
-        self.els.iter().try_for_each(|n| n.initialize(tcx))?;
+    fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.els.iter().try_for_each(|n| n.initialize(scx))?;
         self.els
             .iter()
-            .try_for_each(|n| n.infer_type(tcx).map(|_| ()))?;
-        self.infer_type(tcx).map(|_| ())
+            .try_for_each(|n| n.infer_type(scx).map(|_| ()))?;
+        self.infer_type(scx).map(|_| ())
     }
 }

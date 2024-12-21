@@ -1,8 +1,9 @@
 use crate::*;
 
 impl InferType for Variable {
-    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
-        let ety = tcx
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+        let ety = scx
+            .tys
             .lookup(&self.ident)
             .ok_or(LinkedErr::token(E::VariableIsNotDefined, &self.token))?;
         if let Some(ty) = ety.assigned.as_ref() {
@@ -23,8 +24,9 @@ impl InferType for Variable {
 }
 
 impl Initialize for Variable {
-    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
-        tcx.lookup(&self.ident)
+    fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        scx.tys
+            .lookup(&self.ident)
             .ok_or(LinkedErr::token(E::VariableIsNotDefined, &self.token))?;
         Ok(())
     }

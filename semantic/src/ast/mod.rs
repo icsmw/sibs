@@ -9,49 +9,49 @@ mod value;
 use crate::*;
 
 impl InferType for Node {
-    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
         match self {
-            Node::ControlFlowModifier(n) => n.infer_type(tcx),
-            Node::Declaration(n) => n.infer_type(tcx),
-            Node::Expression(n) => n.infer_type(tcx),
-            Node::Miscellaneous(n) => n.infer_type(tcx),
-            Node::Root(n) => n.infer_type(tcx),
-            Node::Statement(n) => n.infer_type(tcx),
-            Node::Value(n) => n.infer_type(tcx),
+            Node::ControlFlowModifier(n) => n.infer_type(scx),
+            Node::Declaration(n) => n.infer_type(scx),
+            Node::Expression(n) => n.infer_type(scx),
+            Node::Miscellaneous(n) => n.infer_type(scx),
+            Node::Root(n) => n.infer_type(scx),
+            Node::Statement(n) => n.infer_type(scx),
+            Node::Value(n) => n.infer_type(scx),
         }
     }
 }
 
 impl Initialize for Node {
-    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
+    fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         match self {
-            Node::ControlFlowModifier(n) => n.initialize(tcx),
-            Node::Declaration(n) => n.initialize(tcx),
-            Node::Expression(n) => n.initialize(tcx),
-            Node::Miscellaneous(n) => n.initialize(tcx),
-            Node::Root(n) => n.initialize(tcx),
-            Node::Statement(n) => n.initialize(tcx),
-            Node::Value(n) => n.initialize(tcx),
+            Node::ControlFlowModifier(n) => n.initialize(scx),
+            Node::Declaration(n) => n.initialize(scx),
+            Node::Expression(n) => n.initialize(scx),
+            Node::Miscellaneous(n) => n.initialize(scx),
+            Node::Root(n) => n.initialize(scx),
+            Node::Statement(n) => n.initialize(scx),
+            Node::Value(n) => n.initialize(scx),
         }
     }
 }
 
 impl InferType for LinkedNode {
-    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
         fn infer_type(
             node: &Node,
             md: &Metadata,
-            tcx: &mut TypeContext,
+            scx: &mut SemanticCx,
         ) -> Result<DataType, LinkedErr<E>> {
-            let mut ty = node.infer_type(tcx)?;
+            let mut ty = node.infer_type(scx)?;
             for ppm in md.ppm.iter() {
-                tcx.set_parent_ty(ty);
-                ty = ppm.infer_type(tcx)?;
+                scx.tys.parent.set(ty);
+                ty = ppm.infer_type(scx)?;
             }
-            tcx.drop_parent_ty();
+            scx.tys.parent.drop();
             Ok(ty)
         }
-        match infer_type(&self.node, &self.md, tcx) {
+        match infer_type(&self.node, &self.md, scx) {
             Err(mut err) => {
                 if err.is_unlinked() {
                     err.relink(self);
@@ -64,8 +64,8 @@ impl InferType for LinkedNode {
 }
 
 impl Initialize for LinkedNode {
-    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
-        match self.node.initialize(tcx) {
+    fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        match self.node.initialize(scx) {
             Err(mut err) => {
                 if err.is_unlinked() {
                     err.relink(self);

@@ -38,4 +38,6 @@ pub enum E {
     AccessorWithoutParent,
     #[error("Accessor cannot be used with: {0}")]
     AccessorOnWrongType(DataType),
+    #[error("Function \"{0}\" already exists")]
+    FuncExists(String),
 }

@@ -1,7 +1,7 @@
 use crate::*;
 
 impl InferType for Assignation {
-    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
         let variable = if let Node::Expression(Expression::Variable(variable)) = &self.left.node {
             variable.ident.to_owned()
         } else {
@@ -11,11 +11,12 @@ impl InferType for Assignation {
                 &self.right,
             ));
         };
-        let left = tcx
+        let left = scx
+            .tys
             .lookup(&variable)
             .cloned()
             .ok_or(LinkedErr::by_node(E::VariableIsNotDefined, &self.left))?;
-        let right = self.right.infer_type(tcx)?;
+        let right = self.right.infer_type(scx)?;
         if matches!(right, DataType::IndeterminateType) {
             return Err(LinkedErr::by_node(E::IndeterminateType, &self.right));
         }
@@ -23,11 +24,12 @@ impl InferType for Assignation {
             return Err(LinkedErr::by_node(E::IndeterminateType, &self.left));
         };
         if annot.reassignable(&right) {
-            tcx.insert(
-                variable,
-                EntityType::new(Some(right), Some(annot.to_owned())),
-            )
-            .map_err(|e| LinkedErr::between_nodes(e, &self.left, &self.right))?;
+            scx.tys
+                .insert(
+                    variable,
+                    EntityType::new(Some(right), Some(annot.to_owned())),
+                )
+                .map_err(|e| LinkedErr::between_nodes(e, &self.left, &self.right))?;
             Ok(DataType::Void)
         } else {
             Err(LinkedErr::between_nodes(
@@ -40,9 +42,9 @@ impl InferType for Assignation {
 }
 
 impl Initialize for Assignation {
-    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
-        self.left.initialize(tcx)?;
-        self.right.initialize(tcx)?;
-        self.infer_type(tcx).map(|_| ())
+    fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.left.initialize(scx)?;
+        self.right.initialize(scx)?;
+        self.infer_type(scx).map(|_| ())
     }
 }

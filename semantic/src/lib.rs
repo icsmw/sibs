@@ -2,19 +2,22 @@
 mod tests;
 
 mod ast;
+mod context;
 mod error;
-mod type_context;
 
 pub(crate) use asttree::*;
 pub(crate) use common::*;
+pub(crate) use context::*;
 pub(crate) use diagnostics::*;
 pub(crate) use error::*;
-pub(crate) use type_context::*;
+
+pub(crate) use std::collections::HashMap;
+pub(crate) use uuid::Uuid;
 
 pub trait InferType {
-    fn infer_type(&self, _tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>>;
+    fn infer_type(&self, _tcx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>>;
 }
 
 pub trait Initialize {
-    fn initialize(&self, _tcx: &mut TypeContext) -> Result<(), LinkedErr<E>>;
+    fn initialize(&self, _tcx: &mut SemanticCx) -> Result<(), LinkedErr<E>>;
 }

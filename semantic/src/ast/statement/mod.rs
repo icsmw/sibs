@@ -15,41 +15,41 @@ mod r#while;
 use crate::*;
 
 impl InferType for Statement {
-    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
         match self {
-            Statement::Assignation(n) => n.infer_type(tcx),
-            Statement::AssignedValue(n) => n.infer_type(tcx),
-            Statement::Block(n) => n.infer_type(tcx),
-            Statement::Break(n) => n.infer_type(tcx),
-            Statement::Each(n) => n.infer_type(tcx),
-            Statement::For(n) => n.infer_type(tcx),
-            Statement::If(n) => n.infer_type(tcx),
-            Statement::Join(n) => n.infer_type(tcx),
-            Statement::Loop(n) => n.infer_type(tcx),
-            Statement::OneOf(n) => n.infer_type(tcx),
-            Statement::Optional(n) => n.infer_type(tcx),
-            Statement::Return(n) => n.infer_type(tcx),
-            Statement::While(n) => n.infer_type(tcx),
+            Statement::Assignation(n) => n.infer_type(scx),
+            Statement::AssignedValue(n) => n.infer_type(scx),
+            Statement::Block(n) => n.infer_type(scx),
+            Statement::Break(n) => n.infer_type(scx),
+            Statement::Each(n) => n.infer_type(scx),
+            Statement::For(n) => n.infer_type(scx),
+            Statement::If(n) => n.infer_type(scx),
+            Statement::Join(n) => n.infer_type(scx),
+            Statement::Loop(n) => n.infer_type(scx),
+            Statement::OneOf(n) => n.infer_type(scx),
+            Statement::Optional(n) => n.infer_type(scx),
+            Statement::Return(n) => n.infer_type(scx),
+            Statement::While(n) => n.infer_type(scx),
         }
     }
 }
 
 impl Initialize for Statement {
-    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
+    fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         match self {
-            Statement::Assignation(n) => n.initialize(tcx),
-            Statement::AssignedValue(n) => n.initialize(tcx),
-            Statement::Block(n) => n.initialize(tcx),
-            Statement::Break(n) => n.initialize(tcx),
-            Statement::Each(n) => n.initialize(tcx),
-            Statement::For(n) => n.initialize(tcx),
-            Statement::If(n) => n.initialize(tcx),
-            Statement::Join(n) => n.initialize(tcx),
-            Statement::Loop(n) => n.initialize(tcx),
-            Statement::OneOf(n) => n.initialize(tcx),
-            Statement::Optional(n) => n.initialize(tcx),
-            Statement::Return(n) => n.initialize(tcx),
-            Statement::While(n) => n.initialize(tcx),
+            Statement::Assignation(n) => n.initialize(scx),
+            Statement::AssignedValue(n) => n.initialize(scx),
+            Statement::Block(n) => n.initialize(scx),
+            Statement::Break(n) => n.initialize(scx),
+            Statement::Each(n) => n.initialize(scx),
+            Statement::For(n) => n.initialize(scx),
+            Statement::If(n) => n.initialize(scx),
+            Statement::Join(n) => n.initialize(scx),
+            Statement::Loop(n) => n.initialize(scx),
+            Statement::OneOf(n) => n.initialize(scx),
+            Statement::Optional(n) => n.initialize(scx),
+            Statement::Return(n) => n.initialize(scx),
+            Statement::While(n) => n.initialize(scx),
         }
     }
 }

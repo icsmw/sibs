@@ -6,14 +6,14 @@ mod tests;
 use crate::*;
 
 impl InferType for VariableDeclaration {
-    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
         let Node::Declaration(Declaration::VariableName(variable)) = &self.variable.node else {
             return Err(LinkedErr::by_node(
                 E::UnexpectedNode(self.variable.node.id()),
                 &self.variable,
             ));
         };
-        let Some(ty) = tcx.lookup(&variable.ident) else {
+        let Some(ty) = scx.tys.lookup(&variable.ident) else {
             return Ok(DataType::IndeterminateType);
         };
         Ok(ty.assigned.clone().unwrap_or(DataType::IndeterminateType))
@@ -21,14 +21,14 @@ impl InferType for VariableDeclaration {
 }
 
 impl Initialize for VariableDeclaration {
-    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
+    fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         if let Some(n) = self.assignation.as_ref() {
-            n.initialize(tcx)?;
+            n.initialize(scx)?;
         }
         if let Some(n) = self.r#type.as_ref() {
-            n.initialize(tcx)?;
+            n.initialize(scx)?;
         }
-        self.variable.initialize(tcx)?;
+        self.variable.initialize(scx)?;
         let Node::Declaration(Declaration::VariableName(variable)) = &self.variable.node else {
             return Err(LinkedErr::by_node(
                 E::UnexpectedNode(self.variable.node.id()),
@@ -36,8 +36,8 @@ impl Initialize for VariableDeclaration {
             ));
         };
         if let (Some(n_ty), Some(n_assig)) = (self.r#type.as_ref(), self.assignation.as_ref()) {
-            let annot = n_ty.infer_type(tcx)?;
-            let assig = n_assig.infer_type(tcx)?;
+            let annot = n_ty.infer_type(scx)?;
+            let assig = n_assig.infer_type(scx)?;
             if annot != assig {
                 return Err(LinkedErr::between_nodes(
                     E::DismatchTypes(format!("{}, {}", annot.id(), assig.id())),
@@ -45,31 +45,35 @@ impl Initialize for VariableDeclaration {
                     n_assig,
                 ));
             }
-            tcx.insert(&variable.ident, EntityType::new(Some(assig), Some(annot)))
+            scx.tys
+                .insert(&variable.ident, EntityType::new(Some(assig), Some(annot)))
                 .map_err(|err| LinkedErr::by_node(err, &self.variable))?;
         } else if let Some(node) = self.assignation.as_ref() {
-            let assig = node.infer_type(tcx)?;
+            let assig = node.infer_type(scx)?;
             if matches!(assig, DataType::IndeterminateType) {
                 return Err(LinkedErr::by_node(E::IndeterminateType, node));
             }
-            tcx.insert(
-                &variable.ident,
-                EntityType::new(Some(assig.clone()), Some(assig)),
-            )
-            .map_err(|err| LinkedErr::by_node(err, &self.variable))?;
+            scx.tys
+                .insert(
+                    &variable.ident,
+                    EntityType::new(Some(assig.clone()), Some(assig)),
+                )
+                .map_err(|err| LinkedErr::by_node(err, &self.variable))?;
         } else if let Some(node) = self.r#type.as_ref() {
-            let annot = node.infer_type(tcx)?;
+            let annot = node.infer_type(scx)?;
             if matches!(annot, DataType::IndeterminateType) {
                 return Err(LinkedErr::by_node(E::IndeterminateType, node));
             }
-            tcx.insert(&variable.ident, EntityType::new(None, Some(annot)))
+            scx.tys
+                .insert(&variable.ident, EntityType::new(None, Some(annot)))
                 .map_err(|err| LinkedErr::by_node(err, &self.variable))?;
         } else {
-            tcx.insert(
-                &variable.ident,
-                EntityType::new(None, Some(DataType::Undefined)),
-            )
-            .map_err(|err| LinkedErr::by_node(err, &self.variable))?;
+            scx.tys
+                .insert(
+                    &variable.ident,
+                    EntityType::new(None, Some(DataType::Undefined)),
+                )
+                .map_err(|err| LinkedErr::by_node(err, &self.variable))?;
         }
         Ok(())
     }

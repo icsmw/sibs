@@ -1,11 +1,11 @@
 use crate::*;
 
 impl InferType for VariableVariants {
-    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
         let tys = self
             .variants
             .iter()
-            .map(|n| n.infer_type(tcx))
+            .map(|n| n.infer_type(scx))
             .collect::<Result<Vec<_>, _>>()?;
         if tys.is_empty() {
             return Err(LinkedErr::unlinked(E::NoVariantsAreDefined));
@@ -25,8 +25,8 @@ impl InferType for VariableVariants {
 }
 
 impl Initialize for VariableVariants {
-    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
-        self.variants.iter().try_for_each(|n| n.initialize(tcx))?;
+    fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.variants.iter().try_for_each(|n| n.initialize(scx))?;
         Ok(())
     }
 }

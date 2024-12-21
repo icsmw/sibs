@@ -1,23 +1,23 @@
 use crate::*;
 
 impl InferType for Skip {
-    fn infer_type(&self, _tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, _tcx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
         Ok(DataType::Void)
     }
 }
 
 impl Initialize for SkipTaskArgument {
-    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
+    fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         match self {
-            Self::Value(n) => n.initialize(tcx),
+            Self::Value(n) => n.initialize(scx),
             Self::Any => Ok(()),
         }
     }
 }
 
 impl Initialize for Skip {
-    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
-        self.args.iter().try_for_each(|n| n.initialize(tcx))?;
-        self.func.initialize(tcx)
+    fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.args.iter().try_for_each(|n| n.initialize(scx))?;
+        self.func.initialize(scx)
     }
 }

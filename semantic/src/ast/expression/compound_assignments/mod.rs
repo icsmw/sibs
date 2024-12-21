@@ -4,9 +4,9 @@ mod tests;
 use crate::*;
 
 impl InferType for CompoundAssignments {
-    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
-        let left = self.left.infer_type(tcx)?;
-        let right = self.right.infer_type(tcx)?;
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+        let left = self.left.infer_type(scx)?;
+        let right = self.right.infer_type(scx)?;
         if !left.numeric() {
             Err(LinkedErr::by_node(E::ExpectedNumericType(left), &self.left))
         } else if !right.numeric() {
@@ -27,10 +27,10 @@ impl InferType for CompoundAssignments {
 }
 
 impl Initialize for CompoundAssignments {
-    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
-        self.left.initialize(tcx)?;
-        self.operator.initialize(tcx)?;
-        self.right.initialize(tcx)?;
-        self.infer_type(tcx).map(|_| ())
+    fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.left.initialize(scx)?;
+        self.operator.initialize(scx)?;
+        self.right.initialize(scx)?;
+        self.infer_type(scx).map(|_| ())
     }
 }

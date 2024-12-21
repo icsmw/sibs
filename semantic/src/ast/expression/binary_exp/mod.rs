@@ -4,9 +4,9 @@ mod tests;
 use crate::*;
 
 impl InferType for BinaryExp {
-    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
-        let left = self.left.infer_type(tcx)?;
-        let right = self.right.infer_type(tcx)?;
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+        let left = self.left.infer_type(scx)?;
+        let right = self.right.infer_type(scx)?;
         if !left.numeric() {
             Err(LinkedErr::between_nodes(
                 E::ExpectedNumericType(left),
@@ -26,10 +26,10 @@ impl InferType for BinaryExp {
 }
 
 impl Initialize for BinaryExp {
-    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
-        self.left.initialize(tcx)?;
-        self.operator.initialize(tcx)?;
-        self.right.initialize(tcx)?;
-        self.infer_type(tcx).map(|_| ())
+    fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.left.initialize(scx)?;
+        self.operator.initialize(scx)?;
+        self.right.initialize(scx)?;
+        self.infer_type(scx).map(|_| ())
     }
 }

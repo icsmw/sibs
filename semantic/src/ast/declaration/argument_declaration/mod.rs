@@ -1,19 +1,20 @@
 use crate::*;
 
 impl InferType for ArgumentDeclaration {
-    fn infer_type(&self, tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
-        self.r#type.infer_type(tcx)
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+        self.r#type.infer_type(scx)
     }
 }
 
 impl Initialize for ArgumentDeclaration {
-    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
-        self.r#type.initialize(tcx)?;
+    fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.r#type.initialize(scx)?;
         if let Node::Declaration(Declaration::VariableName(variable)) = &self.variable.node {
-            let ty = self.infer_type(tcx)?;
-            tcx.insert(&variable.ident, EntityType::new(Some(ty.clone()), Some(ty)))
+            let ty = self.infer_type(scx)?;
+            scx.tys
+                .insert(&variable.ident, EntityType::new(Some(ty.clone()), Some(ty)))
                 .map_err(|err| LinkedErr::between_nodes(err, &self.variable, &self.r#type))?;
-            self.variable.initialize(tcx)?;
+            self.variable.initialize(scx)?;
             Ok(())
         } else {
             Err(LinkedErr::between_nodes(

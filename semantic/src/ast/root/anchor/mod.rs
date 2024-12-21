@@ -1,16 +1,16 @@
 use crate::*;
 
 impl InferType for Anchor {
-    fn infer_type(&self, _tcx: &mut TypeContext) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, _tcx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
         Ok(DataType::Void)
     }
 }
 
 impl Initialize for Anchor {
-    fn initialize(&self, tcx: &mut TypeContext) -> Result<(), LinkedErr<E>> {
+    fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         for node in self.nodes.iter() {
-            node.initialize(tcx)?;
+            node.initialize(scx)?;
         }
-        self.infer_type(tcx).map(|_| ())
+        self.infer_type(scx).map(|_| ())
     }
 }

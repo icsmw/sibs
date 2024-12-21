@@ -1,39 +1,13 @@
 use crate::*;
-use std::collections::HashMap;
-use uuid::Uuid;
-
-#[derive(Debug, Default, Clone)]
-pub struct EntityType {
-    pub assigned: Option<DataType>,
-    pub annotated: Option<DataType>,
-}
-
-impl EntityType {
-    pub fn new(assigned: Option<DataType>, annotated: Option<DataType>) -> Self {
-        Self {
-            assigned,
-            annotated,
-        }
-    }
-}
 
 #[derive(Debug, Default)]
-pub struct TypeContext {
+pub struct Types {
     pub scopes: HashMap<Uuid, HashMap<String, EntityType>>,
     pub location: Vec<Uuid>,
-    pub parent: Option<DataType>,
+    pub parent: Parent,
 }
 
-impl TypeContext {
-    pub fn set_parent_ty(&mut self, ty: DataType) {
-        self.parent = Some(ty);
-    }
-    pub fn get_parent_ty(&self) -> Option<&DataType> {
-        self.parent.as_ref()
-    }
-    pub fn drop_parent_ty(&mut self) {
-        self.parent = None;
-    }
+impl Types {
     pub fn enter(&mut self, uuid: &Uuid) {
         self.scopes.entry(*uuid).or_default();
         self.location.push(*uuid);

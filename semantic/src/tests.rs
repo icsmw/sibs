@@ -9,13 +9,13 @@ macro_rules! test_success {
                 let mut lx = lexer::Lexer::new($content, 0);
                 let mut parser = Parser::unbound(lx.read().unwrap().tokens);
                 let node = $element_ref::read(&mut parser).expect("Node is parsed without errors").expect("Node is parsed");
-                let mut tcx = $crate::TypeContext::default();
-                let result = node.initialize(&mut tcx);
+                let mut scx = $crate::SemanticCx::default();
+                let result = node.initialize(&mut scx);
                 if let Err(err) = &result {
                     eprintln!("{err:?}");
                 }
                 assert!(result.is_ok());
-                let result = node.infer_type(&mut tcx);
+                let result = node.infer_type(&mut scx);
                 if let Err(err) = &result {
                     eprintln!("{err:?}");
                 }
@@ -36,8 +36,8 @@ macro_rules! test_fail {
                     let mut lx = lexer::Lexer::new($content, 0);
                     let mut parser = Parser::unbound(lx.read().unwrap().tokens);
                     let node = $element_ref::read(&mut parser).expect("Node is parsed without errors").expect("Node is parsed");
-                    let mut tcx = $crate::TypeContext::default();
-                    assert!(node.initialize(&mut tcx).is_err());
+                    let mut scx = $crate::SemanticCx::default();
+                    assert!(node.initialize(&mut scx).is_err());
             }
         }
     };
