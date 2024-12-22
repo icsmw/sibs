@@ -159,19 +159,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
-name = "funcs"
-version = "0.1.0"
-dependencies = [
- "asttree",
- "common",
- "diagnostics",
- "enum_ids",
- "lexer",
- "thiserror",
- "uuid",
-]
-
-[[package]]
 name = "futures-core"
 version = "0.3.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -235,6 +222,7 @@ dependencies = [
  "parser",
  "paste",
  "proptest",
+ "runtime",
  "thiserror",
  "tokio",
  "tokio-util",
@@ -482,6 +470,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 
 [[package]]
+name = "runtime"
+version = "0.1.0"
+dependencies = [
+ "asttree",
+ "common",
+ "diagnostics",
+ "enum_ids",
+ "lexer",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
 name = "rustc-demangle"
 version = "0.1.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -530,6 +535,7 @@ dependencies = [
  "parser",
  "paste",
  "proptest",
+ "runtime",
  "thiserror",
  "uuid",
 ]

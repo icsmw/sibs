@@ -1,5 +1,5 @@
 [package]
-name = "funcs"
+name = "runtime"
 version = "0.1.0"
 edition = "2021"
 
@@ -10,10 +10,12 @@ edition = "2021"
 enum_ids.workspace = true
 thiserror.workspace = true
 uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }
+tokio-util.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
 
-lexer = { path = "../lexer" }
 asttree = { path = "../asttree" }
-common = { path = "../common" }
 diagnostics = { path = "../diagnostics" }
-
-[dev-dependencies]
+lexer = { path = "../lexer" }
+common = { path = "../common" }

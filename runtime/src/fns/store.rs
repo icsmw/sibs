@@ -21,7 +21,7 @@ impl Fns {
             fn_name.as_ref()
         );
         if self.funcs.contains_key(&name) {
-            return Err(E::FuncExists(name));
+            return Err(E::FuncAlreadyRegistered(name));
         }
         self.funcs.insert(name, entity);
         Ok(())

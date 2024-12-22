@@ -6,8 +6,8 @@ members = [
     "parser",
     "diagnostics",
     "semantic",
-    "funcs",
     "interpreter",
+    "runtime",
     "common",
     "support/boxed"
 ]

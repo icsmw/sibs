@@ -1,7 +1,6 @@
-mod fns;
 mod types;
 
-pub(crate) use fns::*;
+use crate::*;
 pub(crate) use types::*;
 
 #[derive(Debug, Default)]

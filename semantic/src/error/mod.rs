@@ -44,4 +44,6 @@ pub enum E {
     InvalidModuleName,
     #[error("Invalid function name; cannot recognize")]
     InvalidFnName,
+    #[error("Fail to declare fn; error:{0}")]
+    FnDeclarationError(String),
 }
