@@ -18,3 +18,12 @@ impl Initialize for Return {
         self.infer_type(scx).map(|_| ())
     }
 }
+
+impl Finalization for Return {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        if let Some(n) = self.node.as_ref() {
+            n.finalize(scx)?;
+        }
+        Ok(())
+    }
+}

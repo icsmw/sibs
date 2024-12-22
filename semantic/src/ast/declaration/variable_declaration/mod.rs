@@ -78,3 +78,15 @@ impl Initialize for VariableDeclaration {
         Ok(())
     }
 }
+
+impl Finalization for VariableDeclaration {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        if let Some(n) = self.r#type.as_ref() {
+            n.finalize(scx)?;
+        }
+        if let Some(n) = self.assignation.as_ref() {
+            n.finalize(scx)?;
+        }
+        self.variable.finalize(scx)
+    }
+}

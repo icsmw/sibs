@@ -11,3 +11,9 @@ impl Initialize for PrimitiveString {
         Ok(())
     }
 }
+
+impl Finalization for PrimitiveString {
+    fn finalize(&self, _scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        Ok(())
+    }
+}

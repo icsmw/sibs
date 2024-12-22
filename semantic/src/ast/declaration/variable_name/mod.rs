@@ -11,3 +11,9 @@ impl Initialize for VariableName {
         Ok(())
     }
 }
+
+impl Finalization for VariableName {
+    fn finalize(&self, _scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        Ok(())
+    }
+}

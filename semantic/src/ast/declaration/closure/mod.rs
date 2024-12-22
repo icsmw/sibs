@@ -12,3 +12,10 @@ impl Initialize for Closure {
         self.block.initialize(scx)
     }
 }
+
+impl Finalization for Closure {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.args.iter().try_for_each(|n| n.finalize(scx))?;
+        self.block.finalize(scx)
+    }
+}

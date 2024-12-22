@@ -23,3 +23,10 @@ impl Initialize for VariableTypeDeclaration {
         Ok(())
     }
 }
+
+impl Finalization for VariableTypeDeclaration {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.types.iter().try_for_each(|n| n.finalize(scx))?;
+        Ok(())
+    }
+}

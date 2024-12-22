@@ -20,3 +20,12 @@ impl Initialize for ControlFlowModifier {
         }
     }
 }
+
+impl Finalization for ControlFlowModifier {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        match self {
+            ControlFlowModifier::Gatekeeper(n) => n.finalize(scx),
+            ControlFlowModifier::Skip(n) => n.finalize(scx),
+        }
+    }
+}

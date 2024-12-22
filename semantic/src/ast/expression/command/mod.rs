@@ -16,9 +16,26 @@ impl Initialize for CommandPart {
     }
 }
 
+impl Finalization for CommandPart {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        if let CommandPart::Expression(n) = self {
+            n.finalize(scx)
+        } else {
+            Ok(())
+        }
+    }
+}
+
 impl Initialize for Command {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         self.nodes.iter().try_for_each(|n| n.initialize(scx))?;
+        Ok(())
+    }
+}
+
+impl Finalization for Command {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.nodes.iter().try_for_each(|n| n.finalize(scx))?;
         Ok(())
     }
 }

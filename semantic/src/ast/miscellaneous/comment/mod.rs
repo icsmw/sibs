@@ -11,3 +11,9 @@ impl Initialize for Comment {
         Ok(())
     }
 }
+
+impl Finalization for Comment {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        Ok(())
+    }
+}

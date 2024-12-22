@@ -34,3 +34,10 @@ impl Initialize for Array {
         self.infer_type(scx).map(|_| ())
     }
 }
+
+impl Finalization for Array {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.els.iter().try_for_each(|n| n.finalize(scx))?;
+        Ok(())
+    }
+}

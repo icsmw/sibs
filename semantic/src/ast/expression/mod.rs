@@ -68,3 +68,28 @@ impl Initialize for Expression {
         }
     }
 }
+
+impl Finalization for Expression {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        match self {
+            Expression::Accessor(n) => n.finalize(scx),
+            Expression::BinaryExp(n) => n.finalize(scx),
+            Expression::BinaryExpGroup(n) => n.finalize(scx),
+            Expression::BinaryExpSeq(n) => n.finalize(scx),
+            Expression::BinaryOp(n) => n.finalize(scx),
+            Expression::Call(n) => n.finalize(scx),
+            Expression::Command(n) => n.finalize(scx),
+            Expression::Comparison(n) => n.finalize(scx),
+            Expression::ComparisonGroup(n) => n.finalize(scx),
+            Expression::ComparisonOp(n) => n.finalize(scx),
+            Expression::ComparisonSeq(n) => n.finalize(scx),
+            Expression::CompoundAssignments(n) => n.finalize(scx),
+            Expression::CompoundAssignmentsOp(n) => n.finalize(scx),
+            Expression::FunctionCall(n) => n.finalize(scx),
+            Expression::LogicalOp(n) => n.finalize(scx),
+            Expression::Range(n) => n.finalize(scx),
+            Expression::TaskCall(n) => n.finalize(scx),
+            Expression::Variable(n) => n.finalize(scx),
+        }
+    }
+}

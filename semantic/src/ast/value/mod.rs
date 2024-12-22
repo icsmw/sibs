@@ -32,3 +32,16 @@ impl Initialize for Value {
         }
     }
 }
+
+impl Finalization for Value {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        match self {
+            Value::Array(n) => n.finalize(scx),
+            Value::Boolean(n) => n.finalize(scx),
+            Value::Error(n) => n.finalize(scx),
+            Value::InterpolatedString(n) => n.finalize(scx),
+            Value::Number(n) => n.finalize(scx),
+            Value::PrimitiveString(n) => n.finalize(scx),
+        }
+    }
+}

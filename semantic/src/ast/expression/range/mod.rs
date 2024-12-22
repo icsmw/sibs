@@ -12,3 +12,10 @@ impl Initialize for Range {
         self.right.initialize(scx)
     }
 }
+
+impl Finalization for Range {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.left.finalize(scx)?;
+        self.right.finalize(scx)
+    }
+}

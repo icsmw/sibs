@@ -11,3 +11,9 @@ impl Initialize for BinaryOp {
         Ok(())
     }
 }
+
+impl Finalization for BinaryOp {
+    fn finalize(&self, _scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        Ok(())
+    }
+}

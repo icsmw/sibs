@@ -53,3 +53,23 @@ impl Initialize for Statement {
         }
     }
 }
+
+impl Finalization for Statement {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        match self {
+            Statement::Assignation(n) => n.finalize(scx),
+            Statement::AssignedValue(n) => n.finalize(scx),
+            Statement::Block(n) => n.finalize(scx),
+            Statement::Break(n) => n.finalize(scx),
+            Statement::Each(n) => n.finalize(scx),
+            Statement::For(n) => n.finalize(scx),
+            Statement::If(n) => n.finalize(scx),
+            Statement::Join(n) => n.finalize(scx),
+            Statement::Loop(n) => n.finalize(scx),
+            Statement::OneOf(n) => n.finalize(scx),
+            Statement::Optional(n) => n.finalize(scx),
+            Statement::Return(n) => n.finalize(scx),
+            Statement::While(n) => n.finalize(scx),
+        }
+    }
+}

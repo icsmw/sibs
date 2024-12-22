@@ -11,3 +11,9 @@ impl Initialize for LogicalOp {
         Ok(())
     }
 }
+
+impl Finalization for LogicalOp {
+    fn finalize(&self, _scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        Ok(())
+    }
+}

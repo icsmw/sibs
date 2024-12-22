@@ -11,3 +11,9 @@ impl Initialize for Call {
         self.node.initialize(scx)
     }
 }
+
+impl Finalization for Call {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.node.finalize(scx)
+    }
+}

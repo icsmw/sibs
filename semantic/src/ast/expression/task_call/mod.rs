@@ -12,3 +12,10 @@ impl Initialize for TaskCall {
         Ok(())
     }
 }
+
+impl Finalization for TaskCall {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.args.iter().try_for_each(|n| n.finalize(scx))?;
+        Ok(())
+    }
+}

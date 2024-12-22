@@ -14,3 +14,12 @@ impl Initialize for Anchor {
         self.infer_type(scx).map(|_| ())
     }
 }
+
+impl Finalization for Anchor {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        for node in self.nodes.iter() {
+            node.finalize(scx)?;
+        }
+        Ok(())
+    }
+}

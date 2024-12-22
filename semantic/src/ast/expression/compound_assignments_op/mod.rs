@@ -11,3 +11,9 @@ impl Initialize for CompoundAssignmentsOp {
         Ok(())
     }
 }
+
+impl Finalization for CompoundAssignmentsOp {
+    fn finalize(&self, _scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        Ok(())
+    }
+}

@@ -36,6 +36,20 @@ impl Initialize for Node {
     }
 }
 
+impl Finalization for Node {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        match self {
+            Node::ControlFlowModifier(n) => n.finalize(scx),
+            Node::Declaration(n) => n.finalize(scx),
+            Node::Expression(n) => n.finalize(scx),
+            Node::Miscellaneous(n) => n.finalize(scx),
+            Node::Root(n) => n.finalize(scx),
+            Node::Statement(n) => n.finalize(scx),
+            Node::Value(n) => n.finalize(scx),
+        }
+    }
+}
+
 impl InferType for LinkedNode {
     fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
         fn infer_type(
@@ -74,5 +88,11 @@ impl Initialize for LinkedNode {
             }
             Ok(ty) => Ok(ty),
         }
+    }
+}
+
+impl Finalization for LinkedNode {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.node.finalize(scx)
     }
 }

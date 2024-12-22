@@ -11,3 +11,9 @@ impl Initialize for Break {
         Ok(())
     }
 }
+
+impl Finalization for Break {
+    fn finalize(&self, _scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        Ok(())
+    }
+}

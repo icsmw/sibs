@@ -11,3 +11,9 @@ impl Initialize for Loop {
         self.block.initialize(scx)
     }
 }
+
+impl Finalization for Loop {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.block.finalize(scx)
+    }
+}

@@ -12,3 +12,10 @@ impl Initialize for Task {
         self.block.initialize(scx)
     }
 }
+
+impl Finalization for Task {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.args.iter().try_for_each(|n| n.finalize(scx))?;
+        self.block.finalize(scx)
+    }
+}

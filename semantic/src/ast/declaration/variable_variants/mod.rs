@@ -30,3 +30,10 @@ impl Initialize for VariableVariants {
         Ok(())
     }
 }
+
+impl Finalization for VariableVariants {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.variants.iter().try_for_each(|n| n.finalize(scx))?;
+        Ok(())
+    }
+}

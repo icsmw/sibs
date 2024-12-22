@@ -11,3 +11,9 @@ impl Initialize for Number {
         Ok(())
     }
 }
+
+impl Finalization for Number {
+    fn finalize(&self, _scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        Ok(())
+    }
+}

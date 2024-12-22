@@ -41,3 +41,9 @@ impl Initialize for Accessor {
         self.infer_type(scx).map(|_| ())
     }
 }
+
+impl Finalization for Accessor {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.node.finalize(scx)
+    }
+}

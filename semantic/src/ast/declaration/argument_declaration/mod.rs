@@ -25,3 +25,10 @@ impl Initialize for ArgumentDeclaration {
         }
     }
 }
+
+impl Finalization for ArgumentDeclaration {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.r#type.finalize(scx)?;
+        self.variable.finalize(scx)
+    }
+}

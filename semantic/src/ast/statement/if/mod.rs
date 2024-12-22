@@ -46,9 +46,28 @@ impl Initialize for IfCase {
     }
 }
 
+impl Finalization for IfCase {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        match self {
+            IfCase::If(con, blk, ..) => {
+                con.finalize(scx)?;
+                blk.finalize(scx)
+            }
+            IfCase::Else(blk, ..) => blk.finalize(scx),
+        }
+    }
+}
+
 impl Initialize for If {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         self.cases.iter().try_for_each(|n| n.initialize(scx))?;
         self.infer_type(scx).map(|_| ())
+    }
+}
+
+impl Finalization for If {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.cases.iter().try_for_each(|n| n.finalize(scx))?;
+        Ok(())
     }
 }

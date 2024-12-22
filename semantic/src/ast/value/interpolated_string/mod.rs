@@ -16,9 +16,26 @@ impl Initialize for InterpolatedStringPart {
     }
 }
 
+impl Finalization for InterpolatedStringPart {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        if let InterpolatedStringPart::Expression(n) = self {
+            n.finalize(scx)
+        } else {
+            Ok(())
+        }
+    }
+}
+
 impl Initialize for InterpolatedString {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         self.nodes.iter().try_for_each(|n| n.initialize(scx))?;
+        Ok(())
+    }
+}
+
+impl Finalization for InterpolatedString {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.nodes.iter().try_for_each(|n| n.finalize(scx))?;
         Ok(())
     }
 }

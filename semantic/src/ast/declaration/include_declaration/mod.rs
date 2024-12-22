@@ -11,3 +11,9 @@ impl Initialize for IncludeDeclaration {
         self.node.initialize(scx)
     }
 }
+
+impl Finalization for IncludeDeclaration {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.node.finalize(scx)
+    }
+}

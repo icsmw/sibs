@@ -50,3 +50,15 @@ impl Initialize for FunctionDeclaration {
         Ok(())
     }
 }
+
+impl Finalization for FunctionDeclaration {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        scx.tys.enter(&self.uuid);
+        self.args.iter().try_for_each(|n| n.finalize(scx))?;
+        self.block.finalize(scx)?;
+        scx.tys
+            .leave()
+            .map_err(|err| LinkedErr::between(err, &self.sig, &self.name))?;
+        Ok(())
+    }
+}

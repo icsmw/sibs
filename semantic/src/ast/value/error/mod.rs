@@ -11,3 +11,9 @@ impl Initialize for Error {
         self.node.initialize(scx)
     }
 }
+
+impl Finalization for Error {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.node.finalize(scx)
+    }
+}

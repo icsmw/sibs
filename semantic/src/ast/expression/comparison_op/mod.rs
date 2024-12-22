@@ -11,3 +11,9 @@ impl Initialize for ComparisonOp {
         Ok(())
     }
 }
+
+impl Finalization for ComparisonOp {
+    fn finalize(&self, _scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        Ok(())
+    }
+}

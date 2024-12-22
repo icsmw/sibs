@@ -45,6 +45,14 @@ impl Initialize for VariableCompoundType {
     }
 }
 
+impl Finalization for VariableCompoundType {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        match self {
+            VariableCompoundType::Vec(_, n) => n.finalize(scx),
+        }
+    }
+}
+
 impl Initialize for VariableTypeDef {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         match self {
@@ -54,8 +62,23 @@ impl Initialize for VariableTypeDef {
     }
 }
 
+impl Finalization for VariableTypeDef {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        match self {
+            VariableTypeDef::Primitive(..) => Ok(()),
+            VariableTypeDef::Compound(ty) => ty.finalize(scx),
+        }
+    }
+}
+
 impl Initialize for VariableType {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         self.r#type.initialize(scx)
+    }
+}
+
+impl Finalization for VariableType {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.r#type.finalize(scx)
     }
 }

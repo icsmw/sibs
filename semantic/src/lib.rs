@@ -22,3 +22,9 @@ pub trait InferType {
 pub trait Initialize {
     fn initialize(&self, _scx: &mut SemanticCx) -> Result<(), LinkedErr<E>>;
 }
+
+pub trait Finalization {
+    fn finalize(&self, _scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        Ok(())
+    }
+}

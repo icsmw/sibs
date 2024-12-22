@@ -11,3 +11,9 @@ impl Initialize for Boolean {
         Ok(())
     }
 }
+
+impl Finalization for Boolean {
+    fn finalize(&self, _scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        Ok(())
+    }
+}

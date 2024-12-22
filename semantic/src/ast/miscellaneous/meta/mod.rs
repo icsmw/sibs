@@ -11,3 +11,9 @@ impl Initialize for Meta {
         Ok(())
     }
 }
+
+impl Finalization for Meta {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        Ok(())
+    }
+}

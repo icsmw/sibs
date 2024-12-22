@@ -20,3 +20,9 @@ impl Initialize for ComparisonGroup {
         self.infer_type(scx).map(|_| ())
     }
 }
+
+impl Finalization for ComparisonGroup {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.node.finalize(scx)
+    }
+}

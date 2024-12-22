@@ -12,3 +12,10 @@ impl Initialize for While {
         self.block.initialize(scx)
     }
 }
+
+impl Finalization for While {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.comparison.finalize(scx)?;
+        self.block.finalize(scx)
+    }
+}

@@ -12,3 +12,10 @@ impl Initialize for OneOf {
         Ok(())
     }
 }
+
+impl Finalization for OneOf {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.commands.iter().try_for_each(|n| n.finalize(scx))?;
+        Ok(())
+    }
+}

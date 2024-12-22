@@ -12,3 +12,10 @@ impl Initialize for FunctionCall {
         Ok(())
     }
 }
+
+impl Finalization for FunctionCall {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.args.iter().try_for_each(|n| n.finalize(scx))?;
+        Ok(())
+    }
+}

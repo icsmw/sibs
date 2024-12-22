@@ -24,3 +24,11 @@ impl Initialize for Comparison {
         self.infer_type(scx).map(|_| ())
     }
 }
+
+impl Finalization for Comparison {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.left.finalize(scx)?;
+        self.operator.finalize(scx)?;
+        self.right.finalize(scx)
+    }
+}

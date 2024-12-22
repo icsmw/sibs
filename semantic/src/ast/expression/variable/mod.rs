@@ -31,3 +31,9 @@ impl Initialize for Variable {
         Ok(())
     }
 }
+
+impl Finalization for Variable {
+    fn finalize(&self, _scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        Ok(())
+    }
+}

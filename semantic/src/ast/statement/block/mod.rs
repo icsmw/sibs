@@ -25,3 +25,14 @@ impl Initialize for Block {
         Ok(())
     }
 }
+
+impl Finalization for Block {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        scx.tys.enter(&self.uuid);
+        self.nodes.iter().try_for_each(|n| n.finalize(scx))?;
+        scx.tys
+            .leave()
+            .map_err(|err| LinkedErr::between(err, &self.open, &self.close))?;
+        Ok(())
+    }
+}

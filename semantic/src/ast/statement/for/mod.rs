@@ -14,3 +14,12 @@ impl Initialize for For {
         self.block.initialize(scx)
     }
 }
+
+impl Finalization for For {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.elements.finalize(scx)?;
+        self.element.finalize(scx)?;
+        self.index.finalize(scx)?;
+        self.block.finalize(scx)
+    }
+}

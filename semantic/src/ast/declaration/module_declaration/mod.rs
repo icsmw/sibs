@@ -11,3 +11,9 @@ impl Initialize for ModuleDeclaration {
         self.node.initialize(scx)
     }
 }
+
+impl Finalization for ModuleDeclaration {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.node.finalize(scx)
+    }
+}

@@ -20,3 +20,12 @@ impl Initialize for Miscellaneous {
         }
     }
 }
+
+impl Finalization for Miscellaneous {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        match self {
+            Miscellaneous::Comment(n) => n.finalize(scx),
+            Miscellaneous::Meta(n) => n.finalize(scx),
+        }
+    }
+}

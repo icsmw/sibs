@@ -44,3 +44,20 @@ impl Initialize for Declaration {
         }
     }
 }
+
+impl Finalization for Declaration {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        match self {
+            Declaration::ArgumentDeclaration(n) => n.finalize(scx),
+            Declaration::Closure(n) => n.finalize(scx),
+            Declaration::FunctionDeclaration(n) => n.finalize(scx),
+            Declaration::VariableDeclaration(n) => n.finalize(scx),
+            Declaration::VariableType(n) => n.finalize(scx),
+            Declaration::VariableTypeDeclaration(n) => n.finalize(scx),
+            Declaration::VariableVariants(n) => n.finalize(scx),
+            Declaration::VariableName(n) => n.finalize(scx),
+            Declaration::ModuleDeclaration(n) => n.finalize(scx),
+            Declaration::IncludeDeclaration(n) => n.finalize(scx),
+        }
+    }
+}

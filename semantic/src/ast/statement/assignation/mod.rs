@@ -48,3 +48,10 @@ impl Initialize for Assignation {
         self.infer_type(scx).map(|_| ())
     }
 }
+
+impl Finalization for Assignation {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.left.finalize(scx)?;
+        self.right.finalize(scx)
+    }
+}

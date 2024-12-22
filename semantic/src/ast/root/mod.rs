@@ -26,3 +26,14 @@ impl Initialize for Root {
         }
     }
 }
+
+impl Finalization for Root {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        match self {
+            Root::Task(n) => n.finalize(scx),
+            Root::Component(n) => n.finalize(scx),
+            Root::Module(n) => n.finalize(scx),
+            Root::Anchor(n) => n.finalize(scx),
+        }
+    }
+}

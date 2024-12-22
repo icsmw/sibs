@@ -12,3 +12,10 @@ impl Initialize for Optional {
         self.action.initialize(scx)
     }
 }
+
+impl Finalization for Optional {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.comparison.finalize(scx)?;
+        self.action.finalize(scx)
+    }
+}

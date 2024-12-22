@@ -33,3 +33,11 @@ impl Initialize for BinaryExp {
         self.infer_type(scx).map(|_| ())
     }
 }
+
+impl Finalization for BinaryExp {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        self.left.finalize(scx)?;
+        self.operator.finalize(scx)?;
+        self.right.finalize(scx)
+    }
+}
