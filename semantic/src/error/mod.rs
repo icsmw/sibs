@@ -46,4 +46,8 @@ pub enum E {
     InvalidFnName,
     #[error("Fail to declare fn; error:{0}")]
     FnDeclarationError(String),
+    #[error("Function \"{0}\" not found")]
+    FnNotFound(String),
+    #[error("Function \"{0}\" expect {1} arguments; got: {2}")]
+    FnArgsNumberDismatch(String, usize, usize),
 }

@@ -27,7 +27,7 @@ impl InferType for Assignation {
             scx.tys
                 .insert(
                     variable,
-                    EntityType::new(Some(right), Some(annot.to_owned())),
+                    TypeEntity::new(Some(right), Some(annot.to_owned())),
                 )
                 .map_err(|e| LinkedErr::between_nodes(e, &self.left, &self.right))?;
             Ok(DataType::Void)

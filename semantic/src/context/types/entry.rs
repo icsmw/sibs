@@ -1,12 +1,12 @@
 use crate::*;
 
 #[derive(Debug, Default, Clone)]
-pub struct EntityType {
+pub struct TypeEntity {
     pub assigned: Option<DataType>,
     pub annotated: Option<DataType>,
 }
 
-impl EntityType {
+impl TypeEntity {
     pub fn new(assigned: Option<DataType>, annotated: Option<DataType>) -> Self {
         Self {
             assigned,

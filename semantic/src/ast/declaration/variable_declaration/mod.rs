@@ -46,7 +46,7 @@ impl Initialize for VariableDeclaration {
                 ));
             }
             scx.tys
-                .insert(&variable.ident, EntityType::new(Some(assig), Some(annot)))
+                .insert(&variable.ident, TypeEntity::new(Some(assig), Some(annot)))
                 .map_err(|err| LinkedErr::by_node(err, &self.variable))?;
         } else if let Some(node) = self.assignation.as_ref() {
             let assig = node.infer_type(scx)?;
@@ -56,7 +56,7 @@ impl Initialize for VariableDeclaration {
             scx.tys
                 .insert(
                     &variable.ident,
-                    EntityType::new(Some(assig.clone()), Some(assig)),
+                    TypeEntity::new(Some(assig.clone()), Some(assig)),
                 )
                 .map_err(|err| LinkedErr::by_node(err, &self.variable))?;
         } else if let Some(node) = self.r#type.as_ref() {
@@ -65,13 +65,13 @@ impl Initialize for VariableDeclaration {
                 return Err(LinkedErr::by_node(E::IndeterminateType, node));
             }
             scx.tys
-                .insert(&variable.ident, EntityType::new(None, Some(annot)))
+                .insert(&variable.ident, TypeEntity::new(None, Some(annot)))
                 .map_err(|err| LinkedErr::by_node(err, &self.variable))?;
         } else {
             scx.tys
                 .insert(
                     &variable.ident,
-                    EntityType::new(None, Some(DataType::Undefined)),
+                    TypeEntity::new(None, Some(DataType::Undefined)),
                 )
                 .map_err(|err| LinkedErr::by_node(err, &self.variable))?;
         }

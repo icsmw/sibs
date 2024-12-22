@@ -14,6 +14,16 @@ pub struct FunctionCall {
     pub negation: Option<Token>,
 }
 
+impl FunctionCall {
+    pub fn get_name(&self) -> String {
+        self.reference
+            .iter()
+            .map(|(n, _)| n.to_owned())
+            .collect::<Vec<String>>()
+            .join("::")
+    }
+}
+
 impl fmt::Display for FunctionCall {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

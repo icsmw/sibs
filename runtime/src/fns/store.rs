@@ -26,4 +26,7 @@ impl Fns {
         self.funcs.insert(name, entity);
         Ok(())
     }
+    pub fn lookup<S: AsRef<str>>(&self, fullname: S) -> Option<&FnEntity> {
+        self.funcs.get(fullname.as_ref())
+    }
 }

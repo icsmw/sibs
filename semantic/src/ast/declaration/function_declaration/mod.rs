@@ -4,10 +4,9 @@ mod tests;
 use crate::*;
 
 impl InferType for FunctionDeclaration {
-    fn infer_type(&self, _scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
-        let mut scx = SemanticCx::default();
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
         scx.tys.enter(&self.uuid);
-        let ty = self.block.infer_type(&mut scx)?;
+        let ty = self.block.infer_type(scx)?;
         scx.tys
             .leave()
             .map_err(|err| LinkedErr::between(err, &self.sig, &self.name))?;

@@ -2,7 +2,7 @@ use crate::*;
 
 #[derive(Debug, Default)]
 pub struct Types {
-    pub scopes: HashMap<Uuid, HashMap<String, EntityType>>,
+    pub scopes: HashMap<Uuid, HashMap<String, TypeEntity>>,
     pub location: Vec<Uuid>,
     pub parent: Parent,
 }
@@ -20,7 +20,7 @@ impl Types {
             Err(E::AttemptToLeaveGlobalScope)
         }
     }
-    pub fn insert<S: AsRef<str>>(&mut self, name: S, edt: EntityType) -> Result<(), E> {
+    pub fn insert<S: AsRef<str>>(&mut self, name: S, edt: TypeEntity) -> Result<(), E> {
         if let Some(uuid) = self.location.last() {
             if let Some(sc) = self.scopes.get_mut(uuid) {
                 sc.insert(name.as_ref().to_owned(), edt);
@@ -29,7 +29,7 @@ impl Types {
         }
         Err(E::NoCurrentScope)
     }
-    pub fn lookup<S: AsRef<str>>(&self, name: S) -> Option<&EntityType> {
+    pub fn lookup<S: AsRef<str>>(&self, name: S) -> Option<&TypeEntity> {
         for uuid in self.location.iter().rev() {
             if let Some(edt) = self.scopes.get(uuid)?.get(name.as_ref()) {
                 return Some(edt);
