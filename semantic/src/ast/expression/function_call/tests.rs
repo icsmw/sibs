@@ -64,11 +64,16 @@ test_success!(
             fn recurstion(a: num, b: bool) {
                 aaa::bbb::recurstion(a, b);
             };
-            fn recurstion_if(a: num, b: bool) {
+            fn recurstion_if_else(a: num, b: bool) {
                 if a == 2 {
                     aaa::bbb::recurstion_if(a, b);
                 } else {
                     5
+                }
+            };
+            fn recurstion_if(a: num, b: bool) {
+                if a == 2 {
+                    aaa::bbb::recurstion_if_else(a, b);
                 }
             };
         };
@@ -97,8 +102,25 @@ test_fail!(
     "#
 );
 
-test_finalize_fail!(
-    function_call_000,
+test_fail!(
+    function_call_001,
+    Anchor,
+    r#"
+    mod test {
+        fn get_num(a: num, b: bool) {
+            a;
+        };
+    };
+    component my_component() { 
+        task task_a() {
+            let r: str = test::not_exit_fn(1, true);
+        }
+    };
+    "#
+);
+
+test_fail!(
+    function_call_002,
     Anchor,
     r#"
     mod test {
@@ -114,8 +136,8 @@ test_finalize_fail!(
     "#
 );
 
-test_finalize_fail!(
-    function_call_001,
+test_fail!(
+    function_call_003,
     Anchor,
     r#"
     mod test {

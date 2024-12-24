@@ -42,7 +42,7 @@ test_success!(
     }"#
 );
 
-test_finalize_fail!(
+test_fail!(
     function_declaration_000,
     Block,
     r#"{
