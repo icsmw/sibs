@@ -16,6 +16,8 @@ pub enum E {
 
     #[error("Function \"{0}\" has been registred already")]
     FuncAlreadyRegistered(String),
+    #[error("Function \"{0}\" not found")]
+    FuncNotFound(String),
 }
 
 impl From<oneshot::error::RecvError> for E {

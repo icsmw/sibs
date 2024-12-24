@@ -29,11 +29,13 @@ impl Initialize for FunctionDeclaration {
                 link: n_arg.md.link.clone(),
             });
         }
-        self.block.initialize(scx)?;
         let entity = FnEntity {
             name: name.to_owned(),
             args,
-            result: self.infer_type(scx)?,
+            result: match self.infer_type(scx) {
+                Ok(ty) => ty,
+                Err(_err) => DataType::Recursion(self.uuid),
+            },
             body: FnBody::Node(*self.block.clone()),
         };
         scx.tys
@@ -46,6 +48,18 @@ impl Initialize for FunctionDeclaration {
                 &self.name,
             )
         })?;
+        scx.tys.enter(&self.uuid);
+        let ty = self.infer_type(scx)?;
+        scx.fns.set_result_ty(name, ty).map_err(|err| {
+            LinkedErr::between(
+                E::FnDeclarationError(err.to_string()),
+                &self.sig,
+                &self.name,
+            )
+        })?;
+        scx.tys
+            .leave()
+            .map_err(|err| LinkedErr::between(err, &self.sig, &self.name))?;
         Ok(())
     }
 }
@@ -54,6 +68,9 @@ impl Finalization for FunctionDeclaration {
     fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         scx.tys.enter(&self.uuid);
         self.args.iter().try_for_each(|n| n.finalize(scx))?;
+        // Initialization of fn's block cannot be done in the scope of `Initialize` because
+        // it might fall into recursion
+        self.block.initialize(scx)?;
         self.block.finalize(scx)?;
         scx.tys
             .leave()

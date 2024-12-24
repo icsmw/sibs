@@ -50,4 +50,6 @@ pub enum E {
     FnNotFound(String),
     #[error("Function \"{0}\" expect {1} arguments; got: {2}")]
     FnArgsNumberDismatch(String, usize, usize),
+    #[error("Fail to infer type of function \"{0}\"")]
+    FailInferFnResultType(String),
 }

@@ -4,8 +4,16 @@ mod tests;
 use crate::*;
 
 impl InferType for FunctionCall {
-    fn infer_type(&self, _scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
-        Ok(DataType::Void)
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+        let name = self.get_name();
+        let Some(entity) = scx.fns.lookup(&name) else {
+            return Err(LinkedErr::between(
+                E::FnNotFound(name),
+                self.reference.first().map(|(_, t)| t).unwrap_or(&self.open),
+                &self.close,
+            ));
+        };
+        Ok(entity.result.clone())
     }
 }
 
