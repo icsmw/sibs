@@ -26,12 +26,16 @@ impl Initialize for FunctionCall {
 
 impl Finalization for FunctionCall {
     fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        let p_ty = scx.tys.parent.get().cloned();
         self.args.iter().try_for_each(|n| n.finalize(scx))?;
-        let tys = self
+        let mut tys = self
             .args
             .iter()
             .map(|n| n.infer_type(scx))
             .collect::<Result<Vec<_>, _>>()?;
+        if let Some(ty) = p_ty {
+            tys.insert(0, ty);
+        }
         let name = self.get_name();
         let tk_from = self.reference.first().map(|(_, t)| t).unwrap_or(&self.open);
         let Some(entity) = scx.fns.lookup(&name) else {

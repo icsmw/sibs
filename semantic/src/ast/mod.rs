@@ -79,20 +79,65 @@ impl InferType for LinkedNode {
 
 impl Initialize for LinkedNode {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
-        match self.node.initialize(scx) {
+        self.node.initialize(scx)
+        // fn initialize(
+        //     node: &Node,
+        //     md: &Metadata,
+        //     scx: &mut SemanticCx,
+        // ) -> Result<(), LinkedErr<E>> {
+        //     let mut ty = node.infer_type(scx)?;
+        //     for ppm in md.ppm.iter() {
+        //         scx.tys.parent.set(ty);
+        //         ppm.initialize(scx)?;
+        //         ty = ppm.infer_type(scx)?;
+        //     }
+        //     scx.tys.parent.drop();
+        //     Ok(())
+        // }
+        // match initialize(&self.node, &self.md, scx) {
+        //     Err(mut err) => {
+        //         if err.is_unlinked() {
+        //             err.relink(self);
+        //         }
+        //         Err(err)
+        //     }
+        //     Ok(_) => Ok(()),
+        // }
+    }
+}
+
+impl Finalization for LinkedNode {
+    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        fn initialize_and_finalize(
+            node: &Node,
+            md: &Metadata,
+            scx: &mut SemanticCx,
+        ) -> Result<(), LinkedErr<E>> {
+            if md.ppm.is_empty() {
+                return Ok(());
+            }
+            let mut ty = node.infer_type(scx)?;
+            for ppm in md.ppm.iter() {
+                scx.tys.parent.set(ty);
+                ppm.initialize(scx)?;
+                ppm.finalize(scx)?;
+                ty = ppm.infer_type(scx)?;
+            }
+            scx.tys.parent.drop();
+            Ok(())
+        }
+        match initialize_and_finalize(&self.node, &self.md, scx) {
             Err(mut err) => {
                 if err.is_unlinked() {
                     err.relink(self);
                 }
                 Err(err)
             }
-            Ok(ty) => Ok(ty),
+            Ok(_) => {
+                self.node.finalize(scx)?;
+                Ok(())
+            }
         }
-    }
-}
-
-impl Finalization for LinkedNode {
-    fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
-        self.node.finalize(scx)
+        // Ok(())
     }
 }

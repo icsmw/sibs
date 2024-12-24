@@ -37,8 +37,9 @@ impl InferType for Accessor {
 
 impl Initialize for Accessor {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
-        self.node.initialize(scx)?;
-        self.infer_type(scx).map(|_| ())
+        self.node.initialize(scx)
+        // self.node.initialize(scx)?;
+        // self.infer_type(scx).map(|_| ())
     }
 }
 

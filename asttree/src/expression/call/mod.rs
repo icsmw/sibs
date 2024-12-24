@@ -11,6 +11,22 @@ pub struct Call {
     pub uuid: Uuid,
 }
 
+impl Call {
+    pub fn get_name(&self) -> Option<String> {
+        let Node::Expression(Expression::FunctionCall(fn_call)) = &self.node.node else {
+            return None;
+        };
+        Some(fn_call.get_name())
+    }
+    pub fn get_fn(&self) -> Option<&FunctionCall> {
+        if let Node::Expression(Expression::FunctionCall(fn_call)) = &self.node.node {
+            Some(fn_call)
+        } else {
+            None
+        }
+    }
+}
+
 impl fmt::Display for Call {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}{}", self.token, self.node)

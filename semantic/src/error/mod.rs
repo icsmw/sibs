@@ -36,6 +36,10 @@ pub enum E {
     ExpectedNumericType(DataType),
     #[error("Accessor can be used only on parent value")]
     AccessorWithoutParent,
+    #[error("Call bound function can be used only on parent value")]
+    CallWithoutParent,
+    #[error("Cannot find fn call ast-node")]
+    NoFnCallNodeFound,
     #[error("Accessor cannot be used with: {0}")]
     AccessorOnWrongType(DataType),
     #[error("Function \"{0}\" already exists")]

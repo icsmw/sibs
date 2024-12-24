@@ -1,8 +1,17 @@
+#[cfg(test)]
+mod tests;
+
 use crate::*;
 
 impl InferType for Call {
-    fn infer_type(&self, _scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
-        Ok(DataType::Void)
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+        let Some(name) = self.get_name() else {
+            return Err(LinkedErr::by_node(E::NoFnCallNodeFound, &self.node));
+        };
+        let Some(entity) = scx.fns.lookup(&name) else {
+            return Err(LinkedErr::by_node(E::FnNotFound(name), &self.node));
+        };
+        Ok(entity.result.clone())
     }
 }
 
@@ -14,6 +23,10 @@ impl Initialize for Call {
 
 impl Finalization for Call {
     fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
-        self.node.finalize(scx)
+        if scx.tys.parent.get().is_none() {
+            return Err(LinkedErr::by_node(E::CallWithoutParent, &self.node));
+        };
+        self.node.finalize(scx)?;
+        Ok(())
     }
 }
