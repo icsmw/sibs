@@ -22,8 +22,8 @@ pub enum E {
     NoCurrentScope,
     #[error("If statement doesn't have any blocks")]
     InvalidIfStatement,
-    #[error("Variable isn't defined")]
-    VariableIsNotDefined,
+    #[error("Variable \"{0}\" isn't defined")]
+    VariableIsNotDefined(String),
     #[error("Nagation condition can be used only with bool types")]
     NegationToNotBool,
     #[error("Unexpected node: {0}")]

@@ -67,18 +67,18 @@ test_success!(
     Anchor,
     r#"
     mod aaa {
-        fn sum(a: num, b: num) {
-            a + b;
+        fn sum(a111: num, b: num) {
+           let c = a111 + b;
+           c;
         };
         mod bbb {
             fn diff(a: num, b: num) {
                 a - b;
             };
             fn main() {
-                let a = 5;
-                a.aaa::sum(10);
-                a.diff(10)
-                a.aaa::bbb::diff(10)
+                a111.aaa::sum(10);
+                a111.diff(10)
+                a111.aaa::bbb::diff(10)
             };
         };
     };

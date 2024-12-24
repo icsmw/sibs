@@ -15,7 +15,10 @@ impl InferType for Assignation {
             .tys
             .lookup(&variable)
             .cloned()
-            .ok_or(LinkedErr::by_node(E::VariableIsNotDefined, &self.left))?;
+            .ok_or(LinkedErr::by_node(
+                E::VariableIsNotDefined(variable.clone()),
+                &self.left,
+            ))?;
         let right = self.right.infer_type(scx)?;
         if matches!(right, DataType::IndeterminateType) {
             return Err(LinkedErr::by_node(E::IndeterminateType, &self.right));
