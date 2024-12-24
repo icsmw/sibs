@@ -34,6 +34,9 @@ impl Arbitrary for Block {
                     CompoundAssignments::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Expression(Expression::CompoundAssignments(v)))
                         .boxed(),
+                    BinaryExpSeq::arbitrary_with(deep + 1)
+                        .prop_map(|v| Node::Expression(Expression::BinaryExpSeq(v)))
+                        .boxed(),
                     Assignation::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Statement(Statement::Assignation(v)))
                         .boxed(),
@@ -84,6 +87,9 @@ impl Arbitrary for Block {
                         .boxed(),
                     CompoundAssignments::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Expression(Expression::CompoundAssignments(v)))
+                        .boxed(),
+                    BinaryExpSeq::arbitrary_with(deep + 1)
+                        .prop_map(|v| Node::Expression(Expression::BinaryExpSeq(v)))
                         .boxed(),
                     Assignation::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Statement(Statement::Assignation(v)))
