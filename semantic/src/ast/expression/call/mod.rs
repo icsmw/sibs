@@ -23,7 +23,14 @@ impl Initialize for Call {
 
 impl Finalization for Call {
     fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
-        if scx.tys.parent.get().is_none() {
+        if scx
+            .tys
+            .get()
+            .map_err(|err| LinkedErr::by_node(err, &self.node))?
+            .parent
+            .get()
+            .is_none()
+        {
             return Err(LinkedErr::by_node(E::CallWithoutParent, &self.node));
         };
         self.node.finalize(scx)?;

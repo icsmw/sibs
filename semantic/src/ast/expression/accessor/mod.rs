@@ -5,7 +5,14 @@ use crate::*;
 
 impl InferType for Accessor {
     fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
-        let Some(pty) = scx.tys.parent.get().cloned() else {
+        let Some(pty) = scx
+            .tys
+            .get()
+            .map_err(|err| LinkedErr::between(err, &self.open, &self.close))?
+            .parent
+            .get()
+            .cloned()
+        else {
             return Err(LinkedErr::between(
                 E::AccessorWithoutParent,
                 &self.open,
@@ -38,8 +45,6 @@ impl InferType for Accessor {
 impl Initialize for Accessor {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         self.node.initialize(scx)
-        // self.node.initialize(scx)?;
-        // self.infer_type(scx).map(|_| ())
     }
 }
 

@@ -14,6 +14,7 @@ impl InferType for Assignation {
         let left = scx
             .tys
             .lookup(&variable)
+            .map_err(|err| LinkedErr::by_node(err, &self.left))?
             .cloned()
             .ok_or(LinkedErr::by_node(
                 E::VariableIsNotDefined(variable.clone()),

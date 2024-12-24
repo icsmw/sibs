@@ -11,11 +11,15 @@ impl Initialize for Module {
         let Some(name) = self.get_name() else {
             return Err(LinkedErr::token(E::InvalidModuleName, &self.sig));
         };
+        scx.tys.open(&self.uuid);
         scx.fns.enter(name);
         for node in self.nodes.iter() {
             node.initialize(scx)?;
         }
         scx.fns.leave();
+        scx.tys
+            .close()
+            .map_err(|err| LinkedErr::token(err, &self.name))?;
         self.infer_type(scx).map(|_| ())
     }
 }
@@ -25,11 +29,15 @@ impl Finalization for Module {
         let Some(name) = self.get_name() else {
             return Err(LinkedErr::token(E::InvalidModuleName, &self.sig));
         };
+        scx.tys.open(&self.uuid);
         scx.fns.enter(name);
         for node in self.nodes.iter() {
             node.finalize(scx)?;
         }
         scx.fns.leave();
+        scx.tys
+            .close()
+            .map_err(|err| LinkedErr::token(err, &self.name))?;
         Ok(())
     }
 }

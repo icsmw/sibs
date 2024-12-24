@@ -5,7 +5,9 @@ use crate::*;
 
 impl InferType for FunctionDeclaration {
     fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
-        scx.tys.enter(&self.uuid);
+        scx.tys
+            .enter(&self.uuid)
+            .map_err(|err| LinkedErr::token(err, &self.sig))?;
         let ty = self.block.infer_type(scx)?;
         scx.tys
             .leave()
@@ -19,7 +21,9 @@ impl Initialize for FunctionDeclaration {
         let Some(name) = self.get_name() else {
             return Err(LinkedErr::token(E::InvalidFnName, &self.sig));
         };
-        scx.tys.enter(&self.uuid);
+        scx.tys
+            .enter(&self.uuid)
+            .map_err(|err| LinkedErr::token(err, &self.sig))?;
         self.args.iter().try_for_each(|n| n.initialize(scx))?;
         let mut args = Vec::new();
         for n_arg in self.args.iter() {
@@ -48,18 +52,6 @@ impl Initialize for FunctionDeclaration {
                 &self.name,
             )
         })?;
-        // scx.tys.enter(&self.uuid);
-        // let ty = self.infer_type(scx)?;
-        // scx.fns.set_result_ty(name, ty).map_err(|err| {
-        //     LinkedErr::between(
-        //         E::FnDeclarationError(err.to_string()),
-        //         &self.sig,
-        //         &self.name,
-        //     )
-        // })?;
-        // scx.tys
-        //     .leave()
-        //     .map_err(|err| LinkedErr::between(err, &self.sig, &self.name))?;
         Ok(())
     }
 }
@@ -69,7 +61,9 @@ impl Finalization for FunctionDeclaration {
         let Some(name) = self.get_name() else {
             return Err(LinkedErr::token(E::InvalidFnName, &self.sig));
         };
-        scx.tys.enter(&self.uuid);
+        scx.tys
+            .enter(&self.uuid)
+            .map_err(|err| LinkedErr::token(err, &self.sig))?;
         self.args.iter().try_for_each(|n| n.finalize(scx))?;
         // Initialization of fn's block cannot be done in the scope of `Initialize` because
         // it might fall into recursion

@@ -13,7 +13,11 @@ impl InferType for VariableDeclaration {
                 &self.variable,
             ));
         };
-        let Some(ty) = scx.tys.lookup(&variable.ident) else {
+        let Some(ty) = scx
+            .tys
+            .lookup(&variable.ident)
+            .map_err(|err| LinkedErr::by_node(err, &self.variable))?
+        else {
             return Ok(DataType::IndeterminateType);
         };
         Ok(ty.assigned.clone().unwrap_or(DataType::IndeterminateType))

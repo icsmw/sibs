@@ -18,8 +18,14 @@ pub enum E {
     MissedAssignedAndAnnotatedType,
     #[error("Attempt to leave global scope")]
     AttemptToLeaveGlobalScope,
-    #[error("Attempt to set type without scope")]
-    NoCurrentScope,
+    #[error("Attempt to leave root scope's level")]
+    AttemptToLeaveRootScopeLevel,
+    #[error("Attempt to set type without root scope's level")]
+    NoCurrentScopeLevel,
+    #[error("No root scope found")]
+    NoRootScope,
+    #[error("Fail to find scope {0}")]
+    FailToFindScope(Uuid),
     #[error("If statement doesn't have any blocks")]
     InvalidIfStatement,
     #[error("Variable \"{0}\" isn't defined")]

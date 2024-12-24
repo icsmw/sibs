@@ -80,7 +80,7 @@ test_success!(
     };
     component my_component() { 
         task task_a() {
-            let t = aaa::bbb::get_bool(a, b);
+            let t = aaa::bbb::get_bool(5, true);
         }
     };
     "#

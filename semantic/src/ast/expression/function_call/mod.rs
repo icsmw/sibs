@@ -26,7 +26,14 @@ impl Initialize for FunctionCall {
 
 impl Finalization for FunctionCall {
     fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
-        let p_ty = scx.tys.parent.get().cloned();
+        let tk_from = self.reference.first().map(|(_, t)| t).unwrap_or(&self.open);
+        let p_ty = scx
+            .tys
+            .get()
+            .map_err(|err| LinkedErr::between(err, tk_from, &self.close))?
+            .parent
+            .get()
+            .cloned();
         self.args.iter().try_for_each(|n| n.finalize(scx))?;
         let mut tys = self
             .args
@@ -37,7 +44,6 @@ impl Finalization for FunctionCall {
             tys.insert(0, ty);
         }
         let name = self.get_name();
-        let tk_from = self.reference.first().map(|(_, t)| t).unwrap_or(&self.open);
         let Some(entity) = scx.fns.lookup(&name) else {
             return Err(LinkedErr::between(
                 E::FnNotFound(name),
