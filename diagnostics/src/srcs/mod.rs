@@ -16,6 +16,12 @@ impl CodeSource {
             Self::File(filename) => fs::read_to_string(filename)?,
         })
     }
+    pub fn sig(&self) -> Option<String> {
+        match self {
+            Self::Content(_) => None,
+            Self::File(filename) => Some(filename.to_string_lossy().to_string()),
+        }
+    }
 }
 
 pub struct CodeSources {
@@ -30,13 +36,13 @@ impl CodeSources {
         from: usize,
         to: usize,
     ) -> Result<String, io::Error> {
-        let Some(src) = self.sources.get(scr_uuid) else {
+        let Some(code_src) = self.sources.get(scr_uuid) else {
             return Err(io::Error::new(
                 io::ErrorKind::NotFound,
                 format!("Fail to get content of {scr_uuid}"),
             ));
         };
-        let src = src.content()?;
+        let src = code_src.content()?;
         let num_rate = src.split('\n').count().to_string().len() + 1;
         let from_ln = &src[0..from]
             .split('\n')
@@ -102,8 +108,11 @@ impl CodeSources {
             })
             .collect::<Vec<String>>();
         Ok(format!(
-            "file: {}\n{}",
-            "no file",
+            "{}{}",
+            code_src
+                .sig()
+                .map(|filename| format!("file: {filename}\n"))
+                .unwrap_or_default(),
             report[(error_first_ln.min(if error_first_ln >= REPORT_LN_AROUND {
                 error_first_ln - REPORT_LN_AROUND
             } else {
@@ -115,7 +124,7 @@ impl CodeSources {
 }
 
 #[test]
-fn test() -> Result<(), io::Error> {
+fn test_sl() -> Result<(), io::Error> {
     let mut sources = HashMap::new();
     let uuid = Uuid::new_v4();
     sources.insert(
@@ -134,6 +143,30 @@ fn test() -> Result<(), io::Error> {
     );
     let srcs = CodeSources { sources };
     let msg = srcs.err(&uuid, String::from("test"), 3, 3 + 4)?;
+    println!("{msg}");
+    Ok(())
+}
+
+#[test]
+fn test_ml() -> Result<(), io::Error> {
+    let mut sources = HashMap::new();
+    let uuid = Uuid::new_v4();
+    sources.insert(
+        uuid,
+        CodeSource::Content(
+            r#"fn test() {
+    let a = 4 + 5;
+    b - c;
+    if c > 100 {
+        exit;
+    }
+}
+    "#
+            .to_string(),
+        ),
+    );
+    let srcs = CodeSources { sources };
+    let msg = srcs.err(&uuid, String::from("test"), 15, 50)?;
     println!("{msg}");
     Ok(())
 }
