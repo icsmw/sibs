@@ -20,8 +20,10 @@ pub(crate) use asttree::*;
 pub(crate) use diagnostics::*;
 pub(crate) use lexer::*;
 use std::{
-    fmt,
+    cell::RefCell,
+    fmt::{self, Display},
     path::{Path, PathBuf},
+    rc::Rc,
 };
 pub(crate) use uuid::Uuid;
 
@@ -32,16 +34,18 @@ pub struct Parser {
     pub(crate) src: Uuid,
     pub(crate) filename: Option<PathBuf>,
     pub(crate) cwd: Option<PathBuf>,
+    pub(crate) srcs: Rc<RefCell<CodeSources>>,
 }
 
 impl Parser {
-    pub fn unbound(tokens: Vec<Token>) -> Self {
+    pub fn unbound<S: AsRef<str>>(tokens: Vec<Token>, src: &Uuid, content: S) -> Self {
         Self {
             tokens,
             pos: 0,
-            src: Uuid::new_v4(),
+            src: *src,
             filename: None,
             cwd: None,
+            srcs: Rc::new(RefCell::new(CodeSources::unbound(content, src))),
         }
     }
     pub fn new<P: AsRef<Path>>(filename: P) -> Result<Self, E> {
@@ -50,9 +54,26 @@ impl Parser {
             tokens,
             pos: 0,
             src,
-            filename: Some(filename),
+            filename: Some(filename.clone()),
+            srcs: Rc::new(RefCell::new(CodeSources::bound(filename, &src))),
             cwd: Some(cwd),
         })
+    }
+    pub fn new_child<P: AsRef<Path>>(&mut self, filename: P) -> Result<Self, E> {
+        let (filename, cwd, tokens, src) = BoundLexer::new(filename.as_ref())?.inner();
+        self.srcs.borrow_mut().add_file_src(&filename, &src);
+        Ok(Self {
+            tokens,
+            pos: 0,
+            src,
+            filename: Some(filename.clone()),
+            srcs: self.srcs.clone(),
+            cwd: Some(cwd),
+        })
+    }
+
+    pub fn report_err<T: Display>(&self, err: &LinkedErr<T>) -> Result<String, E> {
+        self.srcs.borrow().err(err).map_err(E::IOError)
     }
 
     pub(crate) fn inherit(&self, tokens: Vec<Token>) -> Self {
@@ -61,6 +82,7 @@ impl Parser {
             pos: 0,
             src: self.src,
             filename: self.filename.clone(),
+            srcs: self.srcs.clone(),
             cwd: self.cwd.clone(),
         }
     }

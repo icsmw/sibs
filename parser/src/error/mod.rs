@@ -1,3 +1,5 @@
+use std::io;
+
 use crate::*;
 use diagnostics::*;
 use lexer::{KindId, LexerErr, Token};
@@ -57,6 +59,8 @@ pub enum E {
     FileReading(#[from] std::io::Error),
     #[error("Fail to find \"{0}\" in attached content")]
     FailToFindNode(String),
+    #[error("IO Error: {0}")]
+    IOError(io::Error),
 
     /// Each
     #[error("In each statement declaration of element variable is missed")]

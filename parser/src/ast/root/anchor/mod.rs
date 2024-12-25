@@ -24,7 +24,7 @@ fn read_file<N: GetFilename>(parser: &mut Parser, node: &N) -> Result<Parser, E>
     if !filename.exists() {
         return Err(E::FileNotFound(filename.to_string_lossy().to_string()));
     }
-    Parser::new(filename)
+    parser.new_child(filename)
 }
 
 #[cfg(any(not(test), all(test, feature = "io_tests")))]

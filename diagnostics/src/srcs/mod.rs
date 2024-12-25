@@ -1,45 +1,68 @@
 use console::Style;
-use std::{collections::HashMap, fs, io, path::PathBuf};
+use std::{
+    collections::HashMap,
+    fmt::Display,
+    fs, io,
+    path::{Path, PathBuf},
+};
 use uuid::Uuid;
+
+use crate::LinkedErr;
 
 const REPORT_LN_AROUND: usize = 6;
 
+#[derive(Debug)]
 pub enum CodeSource {
-    Content(String),
+    Inline(String),
     File(PathBuf),
 }
 
 impl CodeSource {
     pub fn content(&self) -> Result<String, io::Error> {
         Ok(match self {
-            Self::Content(c) => c.to_owned(),
+            Self::Inline(c) => c.to_owned(),
             Self::File(filename) => fs::read_to_string(filename)?,
         })
     }
     pub fn sig(&self) -> Option<String> {
         match self {
-            Self::Content(_) => None,
+            Self::Inline(_) => None,
             Self::File(filename) => Some(filename.to_string_lossy().to_string()),
         }
     }
 }
 
+#[derive(Debug, Default)]
 pub struct CodeSources {
     pub sources: HashMap<Uuid, CodeSource>,
 }
 
 impl CodeSources {
-    pub fn err<S: AsRef<str>>(
-        self,
-        scr_uuid: &Uuid,
-        msg: S,
-        from: usize,
-        to: usize,
-    ) -> Result<String, io::Error> {
-        let Some(code_src) = self.sources.get(scr_uuid) else {
+    pub fn bound<P: AsRef<Path>>(filename: P, uuid: &Uuid) -> Self {
+        let mut sources = HashMap::new();
+        sources.insert(*uuid, CodeSource::File(filename.as_ref().to_path_buf()));
+        Self { sources }
+    }
+    pub fn unbound<S: AsRef<str>>(content: S, uuid: &Uuid) -> Self {
+        let mut sources = HashMap::new();
+        sources.insert(*uuid, CodeSource::Inline(content.as_ref().to_owned()));
+        Self { sources }
+    }
+    pub fn add_file_src<P: AsRef<Path>>(&mut self, filename: P, uuid: &Uuid) {
+        self.sources
+            .insert(*uuid, CodeSource::File(filename.as_ref().to_path_buf()));
+    }
+    pub fn add_inline_src<S: AsRef<str>>(&mut self, content: S, uuid: &Uuid) {
+        self.sources
+            .insert(*uuid, CodeSource::Inline(content.as_ref().to_owned()));
+    }
+    pub fn err<T: Display>(&self, err: &LinkedErr<T>) -> Result<String, io::Error> {
+        let from = err.link.from;
+        let to = err.link.to;
+        let Some(code_src) = self.sources.get(&err.link.src) else {
             return Err(io::Error::new(
                 io::ErrorKind::NotFound,
-                format!("Fail to get content of {scr_uuid}"),
+                format!("Fail to get content of {}", err.link.src),
             ));
         };
         let src = code_src.content()?;
@@ -69,7 +92,7 @@ impl CodeSources {
             })
             .collect::<Vec<usize>>();
         if error_lns.is_empty() {
-            return Ok(format!("{}\n", msg.as_ref()));
+            return Ok(format!("{}\n", err.e));
         }
         cursor = 0;
         let error_first_ln = *error_lns.first().unwrap_or(&0);
@@ -90,17 +113,12 @@ impl CodeSources {
                             "{}{filler}│ {ln}\n{offset}{}\n{offset}{}\n",
                             i + 1,
                             style.apply_to("^".repeat(to - from)),
-                            msg.as_ref()
+                            err.e
                         )
                     } else if error_last_ln != i {
                         format!("{}{filler}{} {ln}", i + 1, style.apply_to(">"))
                     } else {
-                        format!(
-                            "{}{filler}{} {ln}\n{}\n",
-                            i + 1,
-                            style.apply_to(">"),
-                            msg.as_ref()
-                        )
+                        format!("{}{filler}{} {ln}\n{}\n", i + 1, style.apply_to(">"), err.e)
                     }
                 } else {
                     format!("{}{filler}│ {ln}", i + 1)
@@ -129,7 +147,7 @@ fn test_sl() -> Result<(), io::Error> {
     let uuid = Uuid::new_v4();
     sources.insert(
         uuid,
-        CodeSource::Content(
+        CodeSource::Inline(
             r#"fn test() {
     let a = 4 + 5;
     b - c;
@@ -142,7 +160,10 @@ fn test_sl() -> Result<(), io::Error> {
         ),
     );
     let srcs = CodeSources { sources };
-    let msg = srcs.err(&uuid, String::from("test"), 3, 3 + 4)?;
+    let msg = srcs.err(&LinkedErr {
+        e: String::from("Test Error Messaging"),
+        link: lexer::LinkedPosition::new(3, 3 + 4, &uuid),
+    })?;
     println!("{msg}");
     Ok(())
 }
@@ -153,7 +174,7 @@ fn test_ml() -> Result<(), io::Error> {
     let uuid = Uuid::new_v4();
     sources.insert(
         uuid,
-        CodeSource::Content(
+        CodeSource::Inline(
             r#"fn test() {
     let a = 4 + 5;
     b - c;
@@ -166,7 +187,10 @@ fn test_ml() -> Result<(), io::Error> {
         ),
     );
     let srcs = CodeSources { sources };
-    let msg = srcs.err(&uuid, String::from("test"), 15, 50)?;
+    let msg = srcs.err(&LinkedErr {
+        e: String::from("Test Error Messaging"),
+        link: lexer::LinkedPosition::new(15, 50, &uuid),
+    })?;
     println!("{msg}");
     Ok(())
 }
