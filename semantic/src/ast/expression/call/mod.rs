@@ -28,8 +28,7 @@ impl Finalization for Call {
             .get()
             .map_err(|err| LinkedErr::by_node(err, &self.node))?
             .parent
-            .get()
-            .is_none()
+            .is_empty()
         {
             return Err(LinkedErr::by_node(E::CallWithoutParent, &self.node));
         };

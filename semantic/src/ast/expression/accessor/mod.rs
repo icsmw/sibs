@@ -7,11 +7,10 @@ impl InferType for Accessor {
     fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
         let Some(pty) = scx
             .tys
-            .get()
+            .get_mut()
             .map_err(|err| LinkedErr::between(err, &self.open, &self.close))?
             .parent
-            .get()
-            .cloned()
+            .withdraw()
         else {
             return Err(LinkedErr::between(
                 E::AccessorWithoutParent,

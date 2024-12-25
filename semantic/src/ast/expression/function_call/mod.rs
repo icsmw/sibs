@@ -29,11 +29,10 @@ impl Finalization for FunctionCall {
         let tk_from = self.reference.first().map(|(_, t)| t).unwrap_or(&self.open);
         let p_ty = scx
             .tys
-            .get()
+            .get_mut()
             .map_err(|err| LinkedErr::between(err, tk_from, &self.close))?
             .parent
-            .get()
-            .cloned();
+            .withdraw();
         self.args.iter().try_for_each(|n| n.finalize(scx))?;
         let mut tys = self
             .args
