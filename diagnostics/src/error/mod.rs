@@ -52,11 +52,9 @@ impl<T: fmt::Display> LinkedErr<T> {
             link: LinkedPosition::default(),
         }
     }
-
     pub fn is_unlinked(&self) -> bool {
         self.link.from == 0 && self.link.from == self.link.to
     }
-
     pub fn relink(&mut self, node: &LinkedNode) {
         self.link = (&node.md.link).into();
     }

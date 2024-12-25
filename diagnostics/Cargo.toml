@@ -9,6 +9,7 @@ edition = "2021"
 
 thiserror.workspace = true
 uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }
+console.workspace = true
 
 lexer = { path = "../lexer" }
 asttree = { path = "../asttree" }
