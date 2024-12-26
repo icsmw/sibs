@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::*;
 
 #[derive(Debug)]
@@ -14,5 +12,5 @@ pub enum Demand {
     LeaveScope(oneshot::Sender<Result<(), E>>),
     SetVariableValue(String, RtValue, oneshot::Sender<Result<(), E>>),
     GetVariableValue(String, oneshot::Sender<Result<Option<Arc<RtValue>>, E>>),
-    Destroy,
+    Destroy(oneshot::Sender<()>),
 }

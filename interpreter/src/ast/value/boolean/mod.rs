@@ -3,6 +3,13 @@ use crate::*;
 impl Interpret for Boolean {
     #[boxed]
     fn interpret(&self, _rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
-        Ok(RtValue::Void)
+        if let Kind::Keyword(kw) = &self.token.kind {
+            if matches!(kw, Keyword::True) {
+                return Ok(RtValue::Bool(true));
+            } else if matches!(kw, Keyword::False) {
+                return Ok(RtValue::Bool(false));
+            }
+        }
+        Err(LinkedErr::token(E::FailExtractValue, &self.token))
     }
 }

@@ -21,3 +21,10 @@ impl Interpret for Node {
         }
     }
 }
+
+impl Interpret for LinkedNode {
+    #[boxed]
+    fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
+        self.node.interpret(rt).await
+    }
+}

@@ -27,7 +27,7 @@ impl RtScope {
             while let Some(demand) = rx.recv().await {
                 match demand {
                     Demand::OpenScope(uuid, tx) => {
-                        chk_send!(
+                        chk_send_err!(
                             {
                                 scopes.open(&uuid);
                                 tx.send(())
@@ -36,34 +36,35 @@ impl RtScope {
                         );
                     }
                     Demand::CloseScope(tx) => {
-                        chk_send!(tx.send(scopes.close()), DemandId::CloseScope);
+                        chk_send_err!(tx.send(scopes.close()), DemandId::CloseScope);
                     }
                     Demand::SetParentValue(vl, tx) => {
-                        chk_send!(tx.send(scopes.set_parent_vl(vl)), DemandId::SetParentValue);
+                        chk_send_err!(tx.send(scopes.set_parent_vl(vl)), DemandId::SetParentValue);
                     }
                     Demand::WithdrawParentValue(tx) => {
-                        chk_send!(
+                        chk_send_err!(
                             tx.send(scopes.withdraw_parent_vl()),
                             DemandId::WithdrawParentValue
                         );
                     }
                     Demand::DropParentValue(tx) => {
-                        chk_send!(tx.send(scopes.drop_parent_vl()), DemandId::DropParentValue);
+                        chk_send_err!(tx.send(scopes.drop_parent_vl()), DemandId::DropParentValue);
                     }
                     Demand::EnterScope(uuid, tx) => {
-                        chk_send!(tx.send(scopes.enter(&uuid)), DemandId::EnterScope);
+                        chk_send_err!(tx.send(scopes.enter(&uuid)), DemandId::EnterScope);
                     }
                     Demand::LeaveScope(tx) => {
-                        chk_send!(tx.send(scopes.leave()), DemandId::EnterScope);
+                        chk_send_err!(tx.send(scopes.leave()), DemandId::EnterScope);
                     }
                     Demand::SetVariableValue(name, vl, tx) => {
-                        chk_send!(tx.send(scopes.insert(name, vl)), DemandId::SetVariableValue);
+                        chk_send_err!(tx.send(scopes.insert(name, vl)), DemandId::SetVariableValue);
                     }
                     Demand::GetVariableValue(name, tx) => {
-                        chk_send!(tx.send(scopes.lookup(name)), DemandId::GetVariableValue);
+                        chk_send_err!(tx.send(scopes.lookup(name)), DemandId::GetVariableValue);
                     }
-                    Demand::Destroy => {
+                    Demand::Destroy(tx) => {
                         tracing::info!("got shutdown signal");
+                        chk_send_err!(tx.send(()), DemandId::Destroy);
                         break;
                     }
                 }
@@ -127,5 +128,11 @@ impl RtScope {
         self.tx
             .send(Demand::GetVariableValue(name.as_ref().to_owned(), tx))?;
         rx.await?
+    }
+
+    pub async fn destroy(&self) -> Result<(), E> {
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(Demand::Destroy(tx))?;
+        Ok(rx.await?)
     }
 }

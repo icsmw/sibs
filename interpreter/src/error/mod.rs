@@ -13,6 +13,12 @@ pub enum E {
     RecvError,
     #[error("Fail to send message")]
     SendError,
+    #[error("Fail extract value")]
+    FailExtractValue,
+    #[error("Invalid value type; expected \"{0}\"")]
+    InvalidValueType(String),
+    #[error("Some values cannot be converted into string")]
+    CannotBeConvertedToString,
 }
 
 impl From<oneshot::error::RecvError> for E {
