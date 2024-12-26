@@ -4,7 +4,7 @@ mod proptests;
 use crate::*;
 use std::fmt;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum BinaryOperator {
     Plus,
     Minus,

@@ -2,8 +2,8 @@ mod ast;
 mod error;
 
 pub use ast::*;
-pub use error::*;
-
+pub use error::E as ParserError;
+pub(crate) use error::*;
 mod conflict;
 mod interest;
 mod nodes;

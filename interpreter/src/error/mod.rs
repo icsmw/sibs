@@ -19,6 +19,16 @@ pub enum E {
     InvalidValueType(String),
     #[error("Some values cannot be converted into string")]
     CannotBeConvertedToString,
+    #[error("Missed binary operator")]
+    MissedBinaryOperator,
+    #[error("Runtime error: {0}")]
+    RuntimeError(RtError),
+}
+
+impl From<RtError> for E {
+    fn from(err: RtError) -> Self {
+        Self::RuntimeError(err)
+    }
 }
 
 impl From<oneshot::error::RecvError> for E {

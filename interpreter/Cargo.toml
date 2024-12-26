@@ -16,6 +16,7 @@ tracing-subscriber.workspace = true
 
 asttree = { path = "../asttree" }
 diagnostics = { path = "../diagnostics" }
+semantic = { path = "../semantic" }
 lexer = { path = "../lexer" }
 common = { path = "../common" }
 parser = { path = "../parser" }

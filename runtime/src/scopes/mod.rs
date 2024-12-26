@@ -86,31 +86,31 @@ impl RtScope {
         rx.await?
     }
 
-    pub async fn drop_parent_ty(&mut self) -> Result<(), E> {
+    pub async fn drop_parent_ty(&self) -> Result<(), E> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(Demand::DropParentValue(tx))?;
         rx.await?
     }
 
-    pub async fn open(&mut self, uuid: &Uuid) -> Result<(), E> {
+    pub async fn open(&self, uuid: &Uuid) -> Result<(), E> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(Demand::OpenScope(*uuid, tx))?;
         Ok(rx.await?)
     }
 
-    pub async fn close(&mut self) -> Result<(), E> {
+    pub async fn close(&self) -> Result<(), E> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(Demand::CloseScope(tx))?;
         rx.await?
     }
 
-    pub async fn enter(&mut self, uuid: &Uuid) -> Result<(), E> {
+    pub async fn enter(&self, uuid: &Uuid) -> Result<(), E> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(Demand::EnterScope(*uuid, tx))?;
         rx.await?
     }
 
-    pub async fn leave(&mut self) -> Result<(), E> {
+    pub async fn leave(&self) -> Result<(), E> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(Demand::LeaveScope(tx))?;
         rx.await?

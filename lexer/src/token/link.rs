@@ -51,9 +51,11 @@ impl SrcLink {
 
     pub fn set_pos(&mut self, from: &Token, to: &Token) {
         self.pos = Position::new(from.pos.from, to.pos.to);
+        self.src = from.src;
     }
 
     pub fn set_expos(&mut self, from: &Token, to: &Token) {
         self.expos = Position::new(from.pos.from, to.pos.to);
+        self.src = from.src;
     }
 }
