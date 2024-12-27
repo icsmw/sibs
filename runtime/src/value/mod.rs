@@ -16,6 +16,7 @@ pub enum RtValue {
     Closure,
     BinaryOperator(BinaryOperator),
     ComparisonOperator(ComparisonOperator),
+    LogicalOperator(LogicalOperator),
 }
 
 impl RtValue {
@@ -25,7 +26,8 @@ impl RtValue {
             | Self::Error
             | Self::Closure
             | Self::BinaryOperator(..)
-            | Self::ComparisonOperator(..) => None,
+            | Self::ComparisonOperator(..)
+            | Self::LogicalOperator(..) => None,
             Self::Bool(v) => Some(v.to_string()),
             Self::Num(v) => Some(v.to_string()),
             Self::Str(v) => Some(v),
@@ -50,4 +52,31 @@ impl RtValue {
             }
         }
     }
+
+    pub fn into_eq_ord(self) -> Option<RtValueEqOrd> {
+        match self {
+            Self::Num(v) => Some(RtValueEqOrd::Num(v)),
+            Self::Bool(v) => Some(RtValueEqOrd::Bool(v)),
+            Self::PathBuf(v) => Some(RtValueEqOrd::PathBuf(v)),
+            Self::Str(v) => Some(RtValueEqOrd::Str(v)),
+            Self::BinaryOperator(..)
+            | Self::LogicalOperator(..)
+            | Self::Closure
+            | Self::ComparisonOperator(..)
+            | Self::Error
+            | Self::ExecuteResult
+            | Self::Range(..)
+            | Self::Vec(..)
+            | Self::Void => None,
+        }
+    }
+}
+
+#[enum_ids::enum_ids(display_variant)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
+pub enum RtValueEqOrd {
+    Num(f64),
+    Bool(bool),
+    PathBuf(PathBuf),
+    Str(String),
 }

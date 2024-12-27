@@ -23,6 +23,14 @@ pub enum E {
     MissedBinaryOperator,
     #[error("Runtime error: {0}")]
     RuntimeError(RtError),
+    #[error("Value cannot be compared")]
+    NotComparableValue,
+    #[error("Values cannot be compared, because of different type")]
+    DifferentTypeOfValues,
+    #[error("Invalid ComparisonSeq; cannot get the first value")]
+    InvalidComparisonSeq,
+    #[error("Invalid If statement; cannot get the final condition")]
+    InvalidIfStatement,
 }
 
 impl From<RtError> for E {
