@@ -55,6 +55,9 @@ impl Arbitrary for Comparison {
                     Variable::arbitrary()
                         .prop_map(|v| Node::Expression(Expression::Variable(v)))
                         .boxed(),
+                    FunctionCall::arbitrary_with(PROPTEST_DEEP_FACTOR + 1)
+                        .prop_map(|v| Node::Expression(Expression::FunctionCall(v)))
+                        .boxed(),
                     Boolean::arbitrary()
                         .prop_map(|v| Node::Value(Value::Boolean(v)))
                         .boxed(),
@@ -78,6 +81,9 @@ impl Arbitrary for Comparison {
                 prop::strategy::Union::new(vec![
                     Variable::arbitrary()
                         .prop_map(|v| Node::Expression(Expression::Variable(v)))
+                        .boxed(),
+                    FunctionCall::arbitrary_with(PROPTEST_DEEP_FACTOR + 1)
+                        .prop_map(|v| Node::Expression(Expression::FunctionCall(v)))
                         .boxed(),
                     Boolean::arbitrary()
                         .prop_map(|v| Node::Value(Value::Boolean(v)))

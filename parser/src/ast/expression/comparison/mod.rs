@@ -29,7 +29,7 @@ impl ReadNode<Comparison> for Comparison {
                     ValueId::PrimitiveString,
                     ValueId::InterpolatedString,
                 ]),
-                NodeReadTarget::Expression(&[ExpressionId::Variable]),
+                NodeReadTarget::Expression(&[ExpressionId::Variable, ExpressionId::FunctionCall]),
             ],
         )?
         else {
@@ -51,7 +51,7 @@ impl ReadNode<Comparison> for Comparison {
                     ValueId::PrimitiveString,
                     ValueId::InterpolatedString,
                 ]),
-                NodeReadTarget::Expression(&[ExpressionId::Variable]),
+                NodeReadTarget::Expression(&[ExpressionId::Variable, ExpressionId::FunctionCall]),
             ],
         )?
         else {

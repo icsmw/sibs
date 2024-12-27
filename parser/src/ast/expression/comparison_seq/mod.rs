@@ -26,6 +26,7 @@ impl ReadNode<ComparisonSeq> for ComparisonSeq {
             parser,
             &[NodeReadTarget::Expression(&[
                 ExpressionId::Variable,
+                ExpressionId::FunctionCall,
                 ExpressionId::Comparison,
                 ExpressionId::LogicalOp,
                 ExpressionId::ComparisonGroup,

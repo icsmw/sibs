@@ -15,12 +15,17 @@ pub enum RtValue {
     Error,
     Closure,
     BinaryOperator(BinaryOperator),
+    ComparisonOperator(ComparisonOperator),
 }
 
 impl RtValue {
     pub fn as_string(self) -> Option<String> {
         match self {
-            Self::ExecuteResult | Self::Error | Self::Closure | Self::BinaryOperator(..) => None,
+            Self::ExecuteResult
+            | Self::Error
+            | Self::Closure
+            | Self::BinaryOperator(..)
+            | Self::ComparisonOperator(..) => None,
             Self::Bool(v) => Some(v.to_string()),
             Self::Num(v) => Some(v.to_string()),
             Self::Str(v) => Some(v),
