@@ -21,7 +21,6 @@ impl ReadNode<BinaryExpSeq> for BinaryExpSeq {
                 NodeReadTarget::Value(&[ValueId::Number]),
                 NodeReadTarget::Expression(&[
                     ExpressionId::Variable,
-                    ExpressionId::BinaryExp,
                     ExpressionId::BinaryOp,
                     ExpressionId::BinaryExpGroup,
                 ]),
@@ -60,6 +59,39 @@ impl ReadNode<BinaryExpSeq> for BinaryExpSeq {
         if let Some(node) = collected.last() {
             if matches!(node.node, Node::Expression(Expression::BinaryOp(..))) {
                 return Err(E::MissedBinaryArgument.link(node));
+            }
+        }
+        let mut index = None;
+        let mut finish = false;
+        while !finish {
+            for (n, node) in collected.iter().enumerate() {
+                if let Node::Expression(Expression::BinaryOp(op)) = &node.node {
+                    if matches!(op.operator, BinaryOperator::Slash | BinaryOperator::Star) {
+                        index = Some(n);
+                        break;
+                    }
+                }
+            }
+            if let Some(n) = index.take() {
+                let right = collected.remove(n + 1);
+                let operator = collected.remove(n);
+                let left = collected.remove(n - 1);
+                let from = left.md.link.pos.from;
+                let to = right.md.link.pos.to;
+                let src = left.md.link.src;
+                let node = BinaryExp {
+                    left: Box::new(left),
+                    right: Box::new(right),
+                    operator: Box::new(operator),
+                    uuid: Uuid::new_v4(),
+                };
+                let mut expr = LinkedNode::from_node(Node::Expression(Expression::BinaryExp(node)));
+                expr.md.link.pos.from = from;
+                expr.md.link.pos.to = to;
+                expr.md.link.src = src;
+                collected.insert(n - 1, expr);
+            } else {
+                finish = true;
             }
         }
         Ok(if collected.is_empty() {
