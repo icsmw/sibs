@@ -21,6 +21,7 @@ impl ReadNode<BinaryExpSeq> for BinaryExpSeq {
                 NodeReadTarget::Value(&[ValueId::Number]),
                 NodeReadTarget::Expression(&[
                     ExpressionId::Variable,
+                    ExpressionId::FunctionCall,
                     ExpressionId::BinaryOp,
                     ExpressionId::BinaryExpGroup,
                 ]),

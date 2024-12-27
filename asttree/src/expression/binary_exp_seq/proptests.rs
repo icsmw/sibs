@@ -33,6 +33,9 @@ impl Arbitrary for BinaryExpSeq {
                         Number::arbitrary()
                             .prop_map(|v| Node::Value(Value::Number(v)))
                             .boxed(),
+                        FunctionCall::arbitrary_with(PROPTEST_DEEP_FACTOR + 1)
+                            .prop_map(|v| Node::Expression(Expression::FunctionCall(v)))
+                            .boxed(),
                         BinaryExp::arbitrary()
                             .prop_map(|v| Node::Expression(Expression::BinaryExp(v)))
                             .boxed(),

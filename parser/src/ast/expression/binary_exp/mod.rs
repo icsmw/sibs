@@ -18,7 +18,7 @@ impl ReadNode<BinaryExp> for BinaryExp {
             parser,
             &[
                 NodeReadTarget::Value(&[ValueId::Number]),
-                NodeReadTarget::Expression(&[ExpressionId::Variable]),
+                NodeReadTarget::Expression(&[ExpressionId::Variable, ExpressionId::FunctionCall]),
             ],
         )?
         else {
@@ -35,7 +35,7 @@ impl ReadNode<BinaryExp> for BinaryExp {
             parser,
             &[
                 NodeReadTarget::Value(&[ValueId::Number]),
-                NodeReadTarget::Expression(&[ExpressionId::Variable]),
+                NodeReadTarget::Expression(&[ExpressionId::Variable, ExpressionId::FunctionCall]),
             ],
         )?
         else {

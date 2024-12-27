@@ -10,6 +10,9 @@ impl Arbitrary for BinaryExp {
     fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
         (
             prop::strategy::Union::new(vec![
+                FunctionCall::arbitrary_with(PROPTEST_DEEP_FACTOR + 1)
+                    .prop_map(|v| Node::Expression(Expression::FunctionCall(v)))
+                    .boxed(),
                 Variable::arbitrary()
                     .prop_map(|v| Node::Expression(Expression::Variable(v)))
                     .boxed(),
@@ -25,6 +28,9 @@ impl Arbitrary for BinaryExp {
                 .prop_flat_map(LinkedNode::arbitrary_with)
                 .boxed(),
             prop::strategy::Union::new(vec![
+                FunctionCall::arbitrary_with(PROPTEST_DEEP_FACTOR + 1)
+                    .prop_map(|v| Node::Expression(Expression::FunctionCall(v)))
+                    .boxed(),
                 Variable::arbitrary()
                     .prop_map(|v| Node::Expression(Expression::Variable(v)))
                     .boxed(),
