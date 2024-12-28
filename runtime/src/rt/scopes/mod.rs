@@ -116,7 +116,7 @@ impl RtScope {
         rx.await?
     }
 
-    pub async fn insert<S: AsRef<str>>(&mut self, name: S, vl: RtValue) -> Result<(), E> {
+    pub async fn insert<S: AsRef<str>>(&self, name: S, vl: RtValue) -> Result<(), E> {
         let (tx, rx) = oneshot::channel();
         self.tx
             .send(Demand::SetVariableValue(name.as_ref().to_owned(), vl, tx))?;

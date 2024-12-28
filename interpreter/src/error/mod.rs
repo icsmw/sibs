@@ -17,6 +17,8 @@ pub enum E {
     FailExtractValue,
     #[error("Invalid value type; expected \"{0}\"")]
     InvalidValueType(String),
+    #[error("Value type cannot be cast to public DataType")]
+    NotPublicValueType,
     #[error("Some values cannot be converted into string")]
     CannotBeConvertedToString,
     #[error("Missed binary operator")]
@@ -31,6 +33,12 @@ pub enum E {
     InvalidComparisonSeq,
     #[error("Invalid If statement; cannot get the final condition")]
     InvalidIfStatement,
+    #[error("Fail to infer type")]
+    FailInferType,
+    #[error("Unexpected node: {0}")]
+    UnexpectedNode(NodeId),
+    #[error("Undefined variable: {0}")]
+    UndefinedVariable(String),
 }
 
 impl From<RtError> for E {

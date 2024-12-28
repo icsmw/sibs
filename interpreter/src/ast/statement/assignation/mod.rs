@@ -1,8 +1,25 @@
+#[cfg(test)]
+mod tests;
+
 use crate::*;
 
 impl Interpret for Assignation {
     #[boxed]
-    fn interpret(&self, _rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
+        let variable = if let Node::Expression(Expression::Variable(variable)) = &self.left.node {
+            variable.ident.to_owned()
+        } else {
+            return Err(LinkedErr::by_node(
+                E::UnexpectedNode(self.left.node.id()),
+                &self.left,
+            ));
+        };
+        let vl = self.right.interpret(rt.clone()).await?;
+        chk_ty(&self.left, &vl, &rt).await?;
+        rt.scopes
+            .insert(&variable, vl)
+            .await
+            .map_err(|err| LinkedErr::by_node(err.into(), &self.right))?;
         Ok(RtValue::Void)
     }
 }

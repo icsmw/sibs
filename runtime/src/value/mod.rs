@@ -1,3 +1,5 @@
+use tracing_subscriber::registry::Data;
+
 use crate::*;
 
 /// Runtime Value
@@ -49,6 +51,30 @@ impl RtValue {
                             .join(", "),
                     )
                 }
+            }
+        }
+    }
+
+    pub fn as_ty(&self) -> Option<DataType> {
+        match self {
+            Self::Num(..) => Some(DataType::Num),
+            Self::Bool(..) => Some(DataType::Bool),
+            Self::PathBuf(..) => Some(DataType::PathBuf),
+            Self::Str(..) => Some(DataType::Str),
+            Self::Range(..) => Some(DataType::Range),
+            Self::Error => Some(DataType::Error),
+            Self::ExecuteResult => Some(DataType::ExecuteResult),
+            Self::Closure => Some(DataType::Closure),
+            Self::Void => Some(DataType::Void),
+            Self::Vec(els) => {
+                if let Some(el) = els.first() {
+                    el.as_ty().map(|ty| DataType::Vec(Box::new(ty)))
+                } else {
+                    Some(DataType::Vec(Box::new(DataType::Undefined)))
+                }
+            }
+            Self::BinaryOperator(..) | Self::LogicalOperator(..) | Self::ComparisonOperator(..) => {
+                None
             }
         }
     }

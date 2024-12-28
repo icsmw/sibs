@@ -5,10 +5,9 @@ impl InferType for Assignation {
         let variable = if let Node::Expression(Expression::Variable(variable)) = &self.left.node {
             variable.ident.to_owned()
         } else {
-            return Err(LinkedErr::between_nodes(
+            return Err(LinkedErr::by_node(
                 E::UnexpectedNode(self.left.node.id()),
                 &self.left,
-                &self.right,
             ));
         };
         let left = scx
