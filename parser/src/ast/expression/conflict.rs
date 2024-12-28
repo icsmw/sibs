@@ -7,7 +7,7 @@ impl ConflictResolver<ExpressionId> for ExpressionId {
             | Self::ComparisonGroup
             | Self::BinaryExpSeq
             | Self::BinaryExpGroup => {
-                if matches!(id, Self::Variable) {
+                if matches!(id, Self::Variable | Self::FunctionCall) {
                     id.to_owned()
                 } else {
                     self.to_owned()

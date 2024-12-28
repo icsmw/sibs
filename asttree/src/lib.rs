@@ -45,8 +45,12 @@ impl Default for Node {
     }
 }
 
-impl Node {
-    pub fn uuid(&self) -> &Uuid {
+pub trait Identification {
+    fn uuid(&self) -> &Uuid;
+}
+
+impl Identification for Node {
+    fn uuid(&self) -> &Uuid {
         match self {
             Self::Statement(n) => n.uuid(),
             Self::Expression(n) => n.uuid(),
@@ -71,6 +75,12 @@ impl LinkedNode {
             node,
             md: Metadata::default(),
         }
+    }
+}
+
+impl Identification for LinkedNode {
+    fn uuid(&self) -> &Uuid {
+        self.node.uuid()
     }
 }
 

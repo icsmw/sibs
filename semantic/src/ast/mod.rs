@@ -121,6 +121,11 @@ impl Finalization for LinkedNode {
             md: &Metadata,
             scx: &mut SemanticCx,
         ) -> Result<(), LinkedErr<E>> {
+            // println!(">>>>>>>>>>>>>>>:({}): {:?}", node.uuid(), scx.tys);
+            // let _ = node.initialize(scx);
+            // let _ = node.finalize(scx);
+            // let mut ty = node.infer_type(scx)?;
+            // scx.register(node.uuid(), &ty);
             if md.ppm.is_empty() {
                 return Ok(());
             }
@@ -134,6 +139,7 @@ impl Finalization for LinkedNode {
                 ppm.initialize(scx)?;
                 ppm.finalize(scx)?;
                 ty = ppm.infer_type(scx)?;
+                scx.register(ppm.uuid(), &ty);
             }
             scx.tys
                 .get_mut()
