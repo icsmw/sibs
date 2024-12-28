@@ -12,8 +12,8 @@ test_success!(
     };
     component my_component() {
         task task_a() {
-            let a = 5;
-            a.test::sum(10);
+            let aaa = 5;
+            aaa.test::sum(10);
         }
     };
     "#

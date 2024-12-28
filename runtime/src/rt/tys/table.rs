@@ -12,4 +12,7 @@ impl TypesTable {
     pub fn set(&mut self, uuid: &Uuid, ty: DataType) {
         self.tys.insert(*uuid, ty);
     }
+    pub fn has(&self, uuid: &Uuid) -> bool {
+        self.tys.contains_key(uuid)
+    }
 }

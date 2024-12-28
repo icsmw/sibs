@@ -1,18 +1,14 @@
 mod error;
 mod fns;
 mod rt;
-mod scopes;
 mod ty;
-mod tys;
 mod utils;
 mod value;
 
 pub(crate) use error::*;
 pub use fns::*;
 pub use rt::*;
-pub use scopes::*;
 pub use ty::*;
-pub use tys::*;
 pub use utils::*;
 pub use value::*;
 

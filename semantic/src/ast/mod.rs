@@ -138,6 +138,7 @@ impl Finalization for LinkedNode {
                     .set(ty);
                 ppm.initialize(scx)?;
                 ppm.finalize(scx)?;
+                scx.register(ppm.uuid(), &DataType::IndeterminateType);
                 ty = ppm.infer_type(scx)?;
                 scx.register(ppm.uuid(), &ty);
             }
@@ -157,6 +158,13 @@ impl Finalization for LinkedNode {
             }
             Ok(_) => {
                 self.node.finalize(scx)?;
+                if !matches!(
+                    self.node,
+                    Node::Expression(Expression::Accessor(..))
+                        | Node::Expression(Expression::Call(..))
+                ) {
+                    scx.by_node(&self.node)?;
+                }
                 Ok(())
             }
         }
