@@ -37,6 +37,12 @@ impl Arbitrary for Block {
                     BinaryExpSeq::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Expression(Expression::BinaryExpSeq(v)))
                         .boxed(),
+                    ComparisonSeq::arbitrary_with(deep + 1)
+                        .prop_map(|v| Node::Expression(Expression::ComparisonSeq(v)))
+                        .boxed(),
+                    Comparison::arbitrary_with(deep + 1)
+                        .prop_map(|v| Node::Expression(Expression::Comparison(v)))
+                        .boxed(),
                     Assignation::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Statement(Statement::Assignation(v)))
                         .boxed(),

@@ -42,9 +42,16 @@ test_value_expectation!(
     "{ let a = 2; a = 5; if a == 5 { a } else { 0 } }"
 );
 
-// test_value_expectation!(
-//     assignation_006,
-//     Block,
-//     RtValue::Bool(true),
-//     "{ let a = 2; a = 5; a == 5; }"
-// );
+test_value_expectation!(
+    assignation_006,
+    Block,
+    RtValue::Bool(true),
+    "{ let a = 2; a = 5; a == 5; }"
+);
+
+test_value_expectation!(
+    assignation_007,
+    Block,
+    RtValue::Bool(true),
+    "{ let a = 2; a = 4; let b = 1; a == 5 || b == 1; }"
+);

@@ -52,6 +52,8 @@ impl ReadNode<Block> for Block {
                         ExpressionId::CompoundAssignments,
                         ExpressionId::Variable,
                         ExpressionId::BinaryExpSeq,
+                        ExpressionId::ComparisonSeq,
+                        ExpressionId::Comparison,
                     ]),
                     NodeReadTarget::Value(&[
                         ValueId::Boolean,
