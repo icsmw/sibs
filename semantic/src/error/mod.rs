@@ -54,6 +54,8 @@ pub enum E {
     InvalidModuleName,
     #[error("Invalid function name; cannot recognize")]
     InvalidFnName,
+    #[error("Invalid function argument; cannot recognize")]
+    InvalidFnArg,
     #[error("Fail to declare fn; error:{0}")]
     FnDeclarationError(String),
     #[error("Function \"{0}\" not found")]
@@ -62,4 +64,8 @@ pub enum E {
     FnArgsNumberDismatch(String, usize, usize),
     #[error("Fail to infer type of function \"{0}\"")]
     FailInferFnResultType(String),
+    #[error("Function \"{0}\" has been registred already")]
+    FuncAlreadyRegistered(String),
+    #[error("Function \"{0}\" not found")]
+    FuncNotFound(String),
 }

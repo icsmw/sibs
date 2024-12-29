@@ -88,29 +88,6 @@ impl InferType for LinkedNode {
 impl Initialize for LinkedNode {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         self.node.initialize(scx)
-        // fn initialize(
-        //     node: &Node,
-        //     md: &Metadata,
-        //     scx: &mut SemanticCx,
-        // ) -> Result<(), LinkedErr<E>> {
-        //     let mut ty = node.infer_type(scx)?;
-        //     for ppm in md.ppm.iter() {
-        //         scx.tys.parent.set(ty);
-        //         ppm.initialize(scx)?;
-        //         ty = ppm.infer_type(scx)?;
-        //     }
-        //     scx.tys.parent.drop();
-        //     Ok(())
-        // }
-        // match initialize(&self.node, &self.md, scx) {
-        //     Err(mut err) => {
-        //         if err.is_unlinked() {
-        //             err.relink(self);
-        //         }
-        //         Err(err)
-        //     }
-        //     Ok(_) => Ok(()),
-        // }
     }
 }
 
@@ -121,11 +98,6 @@ impl Finalization for LinkedNode {
             md: &Metadata,
             scx: &mut SemanticCx,
         ) -> Result<(), LinkedErr<E>> {
-            // println!(">>>>>>>>>>>>>>>:({}): {:?}", node.uuid(), scx.tys);
-            // let _ = node.initialize(scx);
-            // let _ = node.finalize(scx);
-            // let mut ty = node.infer_type(scx)?;
-            // scx.register(node.uuid(), &ty);
             if md.ppm.is_empty() {
                 return Ok(());
             }

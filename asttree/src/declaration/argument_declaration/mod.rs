@@ -11,6 +11,15 @@ pub struct ArgumentDeclaration {
     pub uuid: Uuid,
 }
 
+impl ArgumentDeclaration {
+    pub fn get_var_name(&self) -> Option<String> {
+        if let Node::Declaration(Declaration::VariableName(n)) = &self.variable.node {
+            Some(n.ident.clone())
+        } else {
+            None
+        }
+    }
+}
 impl fmt::Display for ArgumentDeclaration {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} {}", self.variable, self.r#type)

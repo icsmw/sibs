@@ -1,9 +1,7 @@
 mod api;
-mod table;
 
 use crate::*;
 use api::*;
-pub use table::*;
 use tokio::spawn;
 use uuid::Uuid;
 

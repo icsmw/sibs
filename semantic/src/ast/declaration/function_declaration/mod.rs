@@ -27,20 +27,28 @@ impl Initialize for FunctionDeclaration {
         self.args.iter().try_for_each(|n| n.initialize(scx))?;
         let mut args = Vec::new();
         for n_arg in self.args.iter() {
+            let Node::Declaration(Declaration::ArgumentDeclaration(arg_dec)) = &n_arg.node else {
+                return Err(LinkedErr::by_node(E::InvalidFnArg, n_arg));
+            };
+            let Some(ident) = arg_dec.get_var_name() else {
+                return Err(LinkedErr::by_node(E::InvalidFnArg, n_arg));
+            };
             let ty = n_arg.infer_type(scx)?;
             args.push(FnArgDeclaration {
                 ty,
+                ident,
                 link: n_arg.md.link.clone(),
             });
         }
         let entity = FnEntity {
+            uuid: self.uuid,
             name: name.to_owned(),
             args,
             result: match self.infer_type(scx) {
                 Ok(ty) => ty,
                 Err(_err) => DataType::Recursion(self.uuid),
             },
-            body: FnBody::Node(*self.block.clone()),
+            node: *self.block.clone(),
         };
         scx.tys
             .leave()

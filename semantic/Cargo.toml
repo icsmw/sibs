@@ -16,7 +16,6 @@ diagnostics = { path = "../diagnostics" }
 lexer = { path = "../lexer" }
 common = { path = "../common" }
 parser = { path = "../parser" }
-runtime = { path = "../runtime" }
 
 [dev-dependencies]
 lexer = { path = "../lexer", features = ["proptests"] }

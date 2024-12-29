@@ -23,8 +23,6 @@ pub enum E {
     CannotBeConvertedToString,
     #[error("Missed binary operator")]
     MissedBinaryOperator,
-    #[error("Runtime error: {0}")]
-    RuntimeError(RtError),
     #[error("Value cannot be compared")]
     NotComparableValue,
     #[error("Values cannot be compared, because of different type")]
@@ -39,12 +37,23 @@ pub enum E {
     UnexpectedNode(NodeId),
     #[error("Undefined variable: {0}")]
     UndefinedVariable(String),
-}
+    #[error("Attempt to leave root scope's level")]
+    AttemptToLeaveRootScopeLevel,
+    #[error("Attempt to set type without root scope's level")]
+    NoCurrentScopeLevel,
+    #[error("No root scope found")]
+    NoRootScope,
+    #[error("Fail to find scope {0}")]
+    FailToFindScope(Uuid),
 
-impl From<RtError> for E {
-    fn from(err: RtError) -> Self {
-        Self::RuntimeError(err)
-    }
+    #[error("Function \"{0}\" has been registred already")]
+    FuncAlreadyRegistered(String),
+    #[error("Function \"{0}\" not found")]
+    FuncNotFound(String),
+    #[error("Invalid function argument")]
+    InvalidFnArgument,
+    #[error("Node \"{0}\" doesn't have linked functions")]
+    NoLinkedFunctions(Uuid),
 }
 
 impl From<oneshot::error::RecvError> for E {

@@ -21,7 +21,6 @@ lexer = { path = "../lexer" }
 common = { path = "../common" }
 parser = { path = "../parser" }
 boxed = { path = "../support/boxed" }
-runtime = { path = "../runtime" }
 
 [dev-dependencies]
 lexer = { path = "../lexer", features = ["proptests"] }

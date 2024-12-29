@@ -1,7 +1,10 @@
+mod fns;
 mod types;
 
 use crate::*;
+pub use fns::*;
 pub(crate) use types::*;
+pub use types::{DataType, DataTypeId, TypesTable};
 
 #[derive(Debug, Default)]
 pub struct SemanticCx {

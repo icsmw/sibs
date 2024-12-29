@@ -4,6 +4,10 @@ use crate::*;
 pub struct Fns {
     pub path: Vec<String>,
     pub funcs: HashMap<String, FnEntity>,
+    /// Collected calls table
+    /// * `{ Uuid }` - caller's node uuid;
+    /// * `{ String }` - function's name;
+    links: HashMap<Uuid, String>,
 }
 
 impl Fns {
@@ -29,16 +33,37 @@ impl Fns {
         en.result = ty;
         Ok(())
     }
-    pub fn lookup<S: AsRef<str>>(&self, fn_name: S) -> Option<&FnEntity> {
-        self.funcs
-            .get(fn_name.as_ref())
-            .or_else(|| self.funcs.get(self.fullname(fn_name).as_str()))
+    pub fn lookup<S: AsRef<str>>(&mut self, fn_name: S, caller: &Uuid) -> Option<&FnEntity> {
+        let name = self.link(fn_name, caller)?;
+        self.funcs.get(&name)
     }
     pub fn get_mut<S: AsRef<str>>(&mut self, fn_name: S) -> Option<&mut FnEntity> {
         if self.funcs.contains_key(fn_name.as_ref()) {
             self.funcs.get_mut(fn_name.as_ref())
         } else {
             self.funcs.get_mut(self.fullname(&fn_name).as_str())
+        }
+    }
+    pub fn lookup_by_caller(&self, caller: &Uuid) -> Option<&FnEntity> {
+        let name = self.links.get(caller)?;
+        self.funcs.get(name)
+    }
+
+    fn link<S: AsRef<str>>(&mut self, fn_name: S, caller: &Uuid) -> Option<String> {
+        if let Some(name) = if self.funcs.contains_key(fn_name.as_ref()) {
+            Some(fn_name.as_ref().to_owned())
+        } else if self
+            .funcs
+            .contains_key(self.fullname(fn_name.as_ref()).as_str())
+        {
+            Some(self.fullname(fn_name))
+        } else {
+            None
+        } {
+            self.links.insert(*caller, name.clone());
+            Some(name)
+        } else {
+            None
         }
     }
 
