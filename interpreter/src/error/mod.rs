@@ -54,6 +54,8 @@ pub enum E {
     InvalidFnArgument,
     #[error("Invalid function argument type")]
     InvalidFnArgumentType,
+    #[error("Calling function on parent without value")]
+    NoParentValueToCallFn,
     #[error("Function argument type dismatch; expected: {0}")]
     FnArgumentTypeDismatch(String),
     #[error("Node \"{0}\" doesn't have linked functions")]

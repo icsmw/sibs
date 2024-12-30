@@ -74,19 +74,19 @@ impl RtScope {
         Self { tx }
     }
 
-    pub async fn set_parent_ty(&self, vl: RtValue) -> Result<(), E> {
+    pub async fn set_parent_vl(&self, vl: RtValue) -> Result<(), E> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(Demand::SetParentValue(vl, tx))?;
         rx.await?
     }
 
-    pub async fn withdraw_parent_ty(&self) -> Result<Option<RtValue>, E> {
+    pub async fn withdraw_parent_vl(&self) -> Result<Option<RtValue>, E> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(Demand::WithdrawParentValue(tx))?;
         rx.await?
     }
 
-    pub async fn drop_parent_ty(&self) -> Result<(), E> {
+    pub async fn drop_parent_vl(&self) -> Result<(), E> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(Demand::DropParentValue(tx))?;
         rx.await?

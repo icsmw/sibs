@@ -6,8 +6,6 @@ mod root;
 mod statement;
 mod value;
 
-use std::{pin::Pin, sync::Arc};
-
 use crate::*;
 
 impl Interpret for Node {
@@ -27,6 +25,18 @@ impl Interpret for Node {
 impl Interpret for LinkedNode {
     #[boxed]
     fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
-        self.node.interpret(rt).await
+        let mut vl = self.node.interpret(rt.clone()).await?;
+        for ppm in self.md.ppm.iter() {
+            rt.scopes
+                .set_parent_vl(vl)
+                .await
+                .map_err(|err| LinkedErr::by_link(err, (&self.md.link).into()))?;
+            vl = ppm.interpret(rt.clone()).await?;
+        }
+        rt.scopes
+            .drop_parent_vl()
+            .await
+            .map_err(|err| LinkedErr::by_link(err, (&self.md.link).into()))?;
+        Ok(vl)
     }
 }
