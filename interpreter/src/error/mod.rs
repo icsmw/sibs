@@ -52,8 +52,17 @@ pub enum E {
     FuncNotFound(String),
     #[error("Invalid function argument")]
     InvalidFnArgument,
+    #[error("Invalid function argument type")]
+    InvalidFnArgumentType,
+    #[error("Function argument type dismatch; expected: {0}")]
+    FnArgumentTypeDismatch(String),
     #[error("Node \"{0}\" doesn't have linked functions")]
     NoLinkedFunctions(Uuid),
+
+    #[error("Component \"{0}\" doesn't exist")]
+    CompNotFound(String),
+    #[error("Task \"{0}\" on component \"{1}\" doesn't exist")]
+    TaskNotFound(String, String),
 }
 
 impl From<oneshot::error::RecvError> for E {

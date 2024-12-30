@@ -15,6 +15,21 @@ pub struct Component {
     pub uuid: Uuid,
 }
 
+impl Component {
+    pub fn get_name(&self) -> String {
+        self.name.to_string()
+    }
+    pub fn get_task<S: AsRef<str>>(&self, name: S) -> Option<&LinkedNode> {
+        self.nodes.iter().find(|n| {
+            if let Node::Root(Root::Task(task)) = &n.node {
+                name.as_ref() == task.get_name()
+            } else {
+                false
+            }
+        })
+    }
+}
+
 impl fmt::Display for Component {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

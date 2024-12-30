@@ -1,8 +1,10 @@
 mod api;
+mod context;
 mod fns;
 mod scopes;
 mod tys;
 
+pub use context::*;
 pub use fns::*;
 pub use scopes::*;
 pub use tys::*;
@@ -15,22 +17,25 @@ pub struct Runtime {
     pub scopes: RtScope,
     pub tys: RtTypes,
     pub fns: RtFns,
+    pub cx: RtContext,
     tx: UnboundedSender<Demand>,
 }
 
 impl Runtime {
     #[tracing::instrument]
-    pub fn new(tys: TypesTable, fns: Fns) -> Self {
+    pub fn new(params: RtParameters, tys: TypesTable, fns: Fns) -> Self {
         let (tx, mut rx) = unbounded_channel();
         let inst = Self {
             tx,
             scopes: RtScope::new(),
             tys: RtTypes::new(tys),
             fns: RtFns::new(fns),
+            cx: RtContext::new(params),
         };
         let scopes = inst.scopes.clone();
         let tys = inst.tys.clone();
-        let fns: RtFns = inst.fns.clone();
+        let fns = inst.fns.clone();
+        let cx = inst.cx.clone();
         spawn(async move {
             tracing::info!("init demand's listener");
             if let Some(demand) = rx.recv().await {
@@ -40,6 +45,7 @@ impl Runtime {
                         chk_err!(scopes.destroy().await);
                         chk_err!(tys.destroy().await);
                         chk_err!(fns.destroy().await);
+                        chk_err!(cx.destroy().await);
                         chk_send_err!(tx.send(()), DemandId::Destroy);
                     }
                 }

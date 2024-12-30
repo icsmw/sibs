@@ -5,7 +5,7 @@ pub async fn chk_ty(node: &LinkedNode, vl: &RtValue, rt: &Runtime) -> Result<(),
         .tys
         .get_ty(node.uuid())
         .await
-        .map_err(|err| LinkedErr::by_node(err.into(), node))?
+        .map_err(|err| LinkedErr::by_node(err, node))?
     else {
         return Err(LinkedErr::by_node(E::FailInferType, node));
     };

@@ -19,7 +19,7 @@ impl Interpret for Assignation {
         rt.scopes
             .insert(&variable, vl)
             .await
-            .map_err(|err| LinkedErr::by_node(err.into(), &self.right))?;
+            .map_err(|err| LinkedErr::by_node(err, &self.right))?;
         Ok(RtValue::Void)
     }
 }

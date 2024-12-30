@@ -29,7 +29,7 @@ macro_rules! test_value_expectation {
                     eprintln!("{}", parser.report_err(err).expect("Reporting error"));
                 }
                 assert!(result.is_ok());
-                let rt = Runtime::new(scx.table, scx.fns);
+                let rt = Runtime::new(RtParameters::default(), scx.table, scx.fns);
                 let vl = node.interpret(rt.clone()).await;
                 if let Err(err) = &vl {
                     eprintln!("{err:?}");

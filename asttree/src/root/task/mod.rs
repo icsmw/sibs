@@ -14,6 +14,12 @@ pub struct Task {
     pub uuid: Uuid,
 }
 
+impl Task {
+    pub fn get_name(&self) -> String {
+        self.name.to_string()
+    }
+}
+
 impl fmt::Display for Task {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

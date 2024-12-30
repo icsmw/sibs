@@ -21,37 +21,50 @@ impl RtFns {
                     Demand::Execute(uuid, rt, args, tx) => {
                         let Some(fn_entity) = fns.lookup_by_caller(&uuid) else {
                             chk_send_err!(
-                                { tx.send(Err(E::NoLinkedFunctions(uuid))) },
+                                { tx.send(Err(LinkedErr::unlinked(E::NoLinkedFunctions(uuid)))) },
                                 DemandId::Execute
                             );
                             continue;
                         };
                         if let Err(err) = rt.scopes.enter(&fn_entity.uuid).await {
-                            chk_send_err!({ tx.send(Err(err)) }, DemandId::Execute);
+                            chk_send_err!(
+                                { tx.send(Err(LinkedErr::by_node(err, &fn_entity.node))) },
+                                DemandId::Execute
+                            );
                             continue;
                         }
                         let mut err = None;
                         for (n, vl) in args.into_iter().enumerate() {
                             let Some(decl) = fn_entity.args.get(n) else {
-                                err = Some(E::InvalidFnArgument);
+                                err =
+                                    Some(LinkedErr::by_node(E::InvalidFnArgument, &fn_entity.node));
                                 break;
                             };
                             let Some(vl_ty) = vl.as_ty() else {
-                                err = Some(E::InvalidFnArgument);
+                                err = Some(LinkedErr::by_link(
+                                    E::InvalidFnArgumentType,
+                                    (&decl.link).into(),
+                                ));
                                 break;
                             };
                             if !decl.ty.compatible(&vl_ty) {
-                                err = Some(E::InvalidFnArgument);
+                                err = Some(LinkedErr::by_link(
+                                    E::FnArgumentTypeDismatch(decl.ty.to_string()),
+                                    (&decl.link).into(),
+                                ));
                                 break;
                             }
-                            if let Err(e) = rt.scopes.insert(&fn_entity.name, vl).await {
-                                err = Some(e);
+                            if let Err(e) = rt.scopes.insert(&decl.ident, vl).await {
+                                err = Some(LinkedErr::by_link(e, (&decl.link).into()));
                                 break;
                             }
                         }
                         if let Some(err) = err.take() {
                             if let Err(err) = rt.scopes.leave().await {
-                                chk_send_err!({ tx.send(Err(err)) }, DemandId::Execute);
+                                chk_send_err!(
+                                    { tx.send(Err(LinkedErr::by_node(err, &fn_entity.node))) },
+                                    DemandId::Execute
+                                );
                                 continue;
                             }
                             chk_send_err!({ tx.send(Err(err)) }, DemandId::Execute);
@@ -59,10 +72,13 @@ impl RtFns {
                         }
                         let result = fn_entity.node.interpret(rt.clone()).await;
                         if let Err(err) = rt.scopes.leave().await {
-                            chk_send_err!({ tx.send(Err(err)) }, DemandId::Execute);
+                            chk_send_err!(
+                                { tx.send(Err(LinkedErr::by_node(err, &fn_entity.node))) },
+                                DemandId::Execute
+                            );
                             continue;
                         }
-                        // chk_send_err!({ tx.send(result) }, DemandId::Execute);
+                        chk_send_err!({ tx.send(result) }, DemandId::Execute);
                     }
                     Demand::Destroy(tx) => {
                         tracing::info!("got shutdown signal");
@@ -99,10 +115,12 @@ impl RtFns {
         uuid: &Uuid,
         rt: Runtime,
         args: Vec<RtValue>,
-    ) -> Result<RtValue, E> {
+    ) -> Result<RtValue, LinkedErr<E>> {
         let (tx, rx) = oneshot::channel();
-        self.tx.send(Demand::Execute(*uuid, rt, args, tx))?;
-        rx.await?
+        self.tx
+            .send(Demand::Execute(*uuid, rt, args, tx))
+            .map_err(|e| LinkedErr::unlinked(e.into()))?;
+        rx.await.map_err(|e| LinkedErr::unlinked(e.into()))?
     }
 
     pub async fn destroy(&self) -> Result<(), E> {

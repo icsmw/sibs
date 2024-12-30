@@ -20,7 +20,7 @@ impl Interpret for VariableDeclaration {
             rt.scopes
                 .insert(&variable, vl)
                 .await
-                .map_err(|err| LinkedErr::by_node(err.into(), node))?;
+                .map_err(|err| LinkedErr::by_node(err, node))?;
         }
         Ok(RtValue::Void)
     }
