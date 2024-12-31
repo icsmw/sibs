@@ -22,7 +22,7 @@ impl RtScope {
     pub fn new() -> Self {
         let (tx, mut rx) = unbounded_channel();
         spawn(async move {
-            let mut scopes = Scopes::default();
+            let mut scopes = VlScopes::default();
             tracing::info!("init demand's listener");
             while let Some(demand) = rx.recv().await {
                 match demand {

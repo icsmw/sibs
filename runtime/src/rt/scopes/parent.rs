@@ -1,11 +1,11 @@
 use crate::*;
 
 #[derive(Debug, Default)]
-pub struct Parent {
+pub struct RtParent {
     pub vl: Option<RtValue>,
 }
 
-impl Parent {
+impl RtParent {
     pub fn set(&mut self, vl: RtValue) {
         self.vl = Some(vl);
     }

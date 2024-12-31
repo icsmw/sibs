@@ -19,7 +19,7 @@ impl Initialize for Module {
         scx.fns.leave();
         scx.tys
             .close()
-            .map_err(|err| LinkedErr::token(err, &self.name))?;
+            .map_err(|err| LinkedErr::token(err.into(), &self.name))?;
         self.infer_type(scx).map(|_| ())
     }
 }
@@ -37,7 +37,7 @@ impl Finalization for Module {
         scx.fns.leave();
         scx.tys
             .close()
-            .map_err(|err| LinkedErr::token(err, &self.name))?;
+            .map_err(|err| LinkedErr::token(err.into(), &self.name))?;
         Ok(())
     }
 }

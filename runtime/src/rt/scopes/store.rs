@@ -3,12 +3,12 @@ use std::sync::Arc;
 use crate::*;
 
 #[derive(Debug)]
-pub struct Scopes {
-    pub scopes: HashMap<Uuid, Scope>,
+pub struct VlScopes {
+    pub scopes: HashMap<Uuid, VlScope>,
     pub location: Vec<Uuid>,
 }
 
-impl Scopes {
+impl VlScopes {
     pub fn open(&mut self, uuid: &Uuid) {
         self.scopes.entry(*uuid).or_default();
         self.location.push(*uuid);
@@ -45,14 +45,14 @@ impl Scopes {
     pub fn lookup<S: AsRef<str>>(&self, name: S) -> Result<Option<Arc<RtValue>>, E> {
         Ok(self.get()?.lookup(name))
     }
-    fn get(&self) -> Result<&Scope, E> {
+    fn get(&self) -> Result<&VlScope, E> {
         if let Some(sc) = self.location.last() {
             self.scopes.get(sc).ok_or(E::FailToFindScope(*sc))
         } else {
             Err(E::NoRootScope)
         }
     }
-    fn get_mut(&mut self) -> Result<&mut Scope, E> {
+    fn get_mut(&mut self) -> Result<&mut VlScope, E> {
         if let Some(sc) = self.location.last() {
             self.scopes.get_mut(sc).ok_or(E::FailToFindScope(*sc))
         } else {
@@ -61,11 +61,11 @@ impl Scopes {
     }
 }
 
-impl Default for Scopes {
+impl Default for VlScopes {
     fn default() -> Self {
         let root = Uuid::new_v4();
         let mut scopes = HashMap::new();
-        scopes.insert(root, Scope::default());
+        scopes.insert(root, VlScope::default());
         Self {
             scopes,
             location: vec![root],

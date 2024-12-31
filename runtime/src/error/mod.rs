@@ -60,6 +60,8 @@ pub enum E {
     FnArgumentTypeDismatch(String),
     #[error("Node \"{0}\" doesn't have linked functions")]
     NoLinkedFunctions(Uuid),
+    #[error("Function \"{0}\" isn't inited")]
+    NotInitedFunction(String),
 
     #[error("Component \"{0}\" doesn't exist")]
     CompNotFound(String),

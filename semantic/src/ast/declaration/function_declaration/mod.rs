@@ -7,11 +7,11 @@ impl InferType for FunctionDeclaration {
     fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
         scx.tys
             .enter(&self.uuid)
-            .map_err(|err| LinkedErr::token(err, &self.sig))?;
+            .map_err(|err| LinkedErr::token(err.into(), &self.sig))?;
         let ty = self.block.infer_type(scx)?;
         scx.tys
             .leave()
-            .map_err(|err| LinkedErr::between(err, &self.sig, &self.name))?;
+            .map_err(|err| LinkedErr::between(err.into(), &self.sig, &self.name))?;
         Ok(ty)
     }
 }
@@ -23,7 +23,7 @@ impl Initialize for FunctionDeclaration {
         };
         scx.tys
             .enter(&self.uuid)
-            .map_err(|err| LinkedErr::token(err, &self.sig))?;
+            .map_err(|err| LinkedErr::token(err.into(), &self.sig))?;
         self.args.iter().try_for_each(|n| n.initialize(scx))?;
         let mut args = Vec::new();
         for n_arg in self.args.iter() {
@@ -48,11 +48,11 @@ impl Initialize for FunctionDeclaration {
                 Ok(ty) => ty,
                 Err(_err) => DataType::Recursion(self.uuid),
             },
-            node: *self.block.clone(),
+            body: FnBody::Node(*self.block.clone()),
         };
         scx.tys
             .leave()
-            .map_err(|err| LinkedErr::between(err, &self.sig, &self.name))?;
+            .map_err(|err| LinkedErr::between(err.into(), &self.sig, &self.name))?;
         scx.fns.add(name, entity).map_err(|err| {
             LinkedErr::between(
                 E::FnDeclarationError(err.to_string()),
@@ -71,7 +71,7 @@ impl Finalization for FunctionDeclaration {
         };
         scx.tys
             .enter(&self.uuid)
-            .map_err(|err| LinkedErr::token(err, &self.sig))?;
+            .map_err(|err| LinkedErr::token(err.into(), &self.sig))?;
         self.args.iter().try_for_each(|n| n.finalize(scx))?;
         // Initialization of fn's block cannot be done in the scope of `Initialize` because
         // it might fall into recursion
@@ -87,7 +87,7 @@ impl Finalization for FunctionDeclaration {
         })?;
         scx.tys
             .leave()
-            .map_err(|err| LinkedErr::between(err, &self.sig, &self.name))?;
+            .map_err(|err| LinkedErr::between(err.into(), &self.sig, &self.name))?;
         Ok(())
     }
 }

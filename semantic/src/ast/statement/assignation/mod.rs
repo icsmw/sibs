@@ -13,7 +13,7 @@ impl InferType for Assignation {
         let left = scx
             .tys
             .lookup(&variable)
-            .map_err(|err| LinkedErr::by_node(err, &self.left))?
+            .map_err(|err| LinkedErr::by_node(err.into(), &self.left))?
             .cloned()
             .ok_or(LinkedErr::by_node(
                 E::VariableIsNotDefined(variable.clone()),
@@ -32,7 +32,7 @@ impl InferType for Assignation {
                     variable,
                     TypeEntity::new(Some(right), Some(annot.to_owned())),
                 )
-                .map_err(|e| LinkedErr::between_nodes(e, &self.left, &self.right))?;
+                .map_err(|err| LinkedErr::between_nodes(err.into(), &self.left, &self.right))?;
             Ok(DataType::Void)
         } else {
             Err(LinkedErr::between_nodes(

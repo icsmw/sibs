@@ -16,7 +16,7 @@ impl InferType for VariableDeclaration {
         let Some(ty) = scx
             .tys
             .lookup(&variable.ident)
-            .map_err(|err| LinkedErr::by_node(err, &self.variable))?
+            .map_err(|err| LinkedErr::by_node(err.into(), &self.variable))?
         else {
             return Ok(DataType::IndeterminateType);
         };
@@ -51,7 +51,7 @@ impl Initialize for VariableDeclaration {
             }
             scx.tys
                 .insert(&variable.ident, TypeEntity::new(Some(assig), Some(annot)))
-                .map_err(|err| LinkedErr::by_node(err, &self.variable))?;
+                .map_err(|err| LinkedErr::by_node(err.into(), &self.variable))?;
         } else if let Some(node) = self.assignation.as_ref() {
             let assig = node.infer_type(scx)?;
             if matches!(assig, DataType::IndeterminateType) {
@@ -62,7 +62,7 @@ impl Initialize for VariableDeclaration {
                     &variable.ident,
                     TypeEntity::new(Some(assig.clone()), Some(assig)),
                 )
-                .map_err(|err| LinkedErr::by_node(err, &self.variable))?;
+                .map_err(|err| LinkedErr::by_node(err.into(), &self.variable))?;
         } else if let Some(node) = self.r#type.as_ref() {
             let annot = node.infer_type(scx)?;
             if matches!(annot, DataType::IndeterminateType) {
@@ -70,14 +70,14 @@ impl Initialize for VariableDeclaration {
             }
             scx.tys
                 .insert(&variable.ident, TypeEntity::new(None, Some(annot)))
-                .map_err(|err| LinkedErr::by_node(err, &self.variable))?;
+                .map_err(|err| LinkedErr::by_node(err.into(), &self.variable))?;
         } else {
             scx.tys
                 .insert(
                     &variable.ident,
                     TypeEntity::new(None, Some(DataType::Undefined)),
                 )
-                .map_err(|err| LinkedErr::by_node(err, &self.variable))?;
+                .map_err(|err| LinkedErr::by_node(err.into(), &self.variable))?;
         }
         Ok(())
     }

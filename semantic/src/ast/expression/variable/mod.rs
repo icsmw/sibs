@@ -5,7 +5,7 @@ impl InferType for Variable {
         let ety = scx
             .tys
             .lookup(&self.ident)
-            .map_err(|err| LinkedErr::token(err, &self.token))?
+            .map_err(|err| LinkedErr::token(err.into(), &self.token))?
             .ok_or(LinkedErr::token(
                 E::VariableIsNotDefined(self.ident.clone()),
                 &self.token,
@@ -34,7 +34,7 @@ impl Initialize for Variable {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         scx.tys
             .lookup(&self.ident)
-            .map_err(|err| LinkedErr::token(err, &self.token))?
+            .map_err(|err| LinkedErr::token(err.into(), &self.token))?
             .ok_or(LinkedErr::token(
                 E::VariableIsNotDefined(self.ident.clone()),
                 &self.token,

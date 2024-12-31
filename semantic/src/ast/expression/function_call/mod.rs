@@ -30,7 +30,7 @@ impl Finalization for FunctionCall {
         let p_ty = scx
             .tys
             .get_mut()
-            .map_err(|err| LinkedErr::between(err, tk_from, &self.close))?
+            .map_err(|err| LinkedErr::between(err.into(), tk_from, &self.close))?
             .parent
             .withdraw();
         self.args.iter().try_for_each(|n| n.finalize(scx))?;

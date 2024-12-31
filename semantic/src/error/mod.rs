@@ -68,4 +68,12 @@ pub enum E {
     FuncAlreadyRegistered(String),
     #[error("Function \"{0}\" not found")]
     FuncNotFound(String),
+    #[error("Runtime error: {0}")]
+    RtError(RtError),
+}
+
+impl From<RtError> for E {
+    fn from(err: RtError) -> Self {
+        Self::RtError(err)
+    }
 }

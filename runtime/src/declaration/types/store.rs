@@ -1,12 +1,12 @@
 use crate::*;
 
 #[derive(Debug)]
-pub struct Types {
-    pub scopes: HashMap<Uuid, Scope>,
+pub struct TyStore {
+    pub scopes: HashMap<Uuid, TyScope>,
     pub location: Vec<Uuid>,
 }
 
-impl Types {
+impl TyStore {
     pub fn open(&mut self, uuid: &Uuid) {
         self.scopes.entry(*uuid).or_default();
         self.location.push(*uuid);
@@ -32,14 +32,14 @@ impl Types {
     pub fn lookup<S: AsRef<str>>(&self, name: S) -> Result<Option<&TypeEntity>, E> {
         Ok(self.get()?.lookup(name))
     }
-    pub fn get(&self) -> Result<&Scope, E> {
+    pub fn get(&self) -> Result<&TyScope, E> {
         if let Some(sc) = self.location.last() {
             self.scopes.get(sc).ok_or(E::FailToFindScope(*sc))
         } else {
             Err(E::NoRootScope)
         }
     }
-    pub fn get_mut(&mut self) -> Result<&mut Scope, E> {
+    pub fn get_mut(&mut self) -> Result<&mut TyScope, E> {
         if let Some(sc) = self.location.last() {
             self.scopes.get_mut(sc).ok_or(E::FailToFindScope(*sc))
         } else {
@@ -48,11 +48,11 @@ impl Types {
     }
 }
 
-impl Default for Types {
+impl Default for TyStore {
     fn default() -> Self {
         let root = Uuid::new_v4();
         let mut scopes = HashMap::new();
-        scopes.insert(root, Scope::default());
+        scopes.insert(root, TyScope::default());
         Self {
             scopes,
             location: vec![root],

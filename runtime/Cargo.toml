@@ -1,5 +1,5 @@
 [package]
-name = "interpreter"
+name = "runtime"
 version = "0.1.0"
 edition = "2021"
 
@@ -16,15 +16,8 @@ tracing-subscriber.workspace = true
 
 asttree = { path = "../asttree" }
 diagnostics = { path = "../diagnostics" }
-semantic = { path = "../semantic" }
 lexer = { path = "../lexer" }
 common = { path = "../common" }
 parser = { path = "../parser" }
-runtime = { path = "../runtime" }
-boxed = { path = "../support/boxed" }
 
 [dev-dependencies]
-lexer = { path = "../lexer", features = ["proptests"] }
-asttree = { path = "../asttree", features = ["proptests"] }
-proptest.workspace = true
-paste.workspace = true

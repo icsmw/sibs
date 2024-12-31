@@ -6,7 +6,7 @@ impl InferType for Task {
         let ty = self.block.infer_type(scx)?;
         scx.tys
             .close()
-            .map_err(|err| LinkedErr::token(err, &self.name))?;
+            .map_err(|err| LinkedErr::token(err.into(), &self.name))?;
         Ok(ty)
     }
 }
@@ -18,7 +18,7 @@ impl Initialize for Task {
         self.block.initialize(scx)?;
         scx.tys
             .close()
-            .map_err(|err| LinkedErr::token(err, &self.name))?;
+            .map_err(|err| LinkedErr::token(err.into(), &self.name))?;
         Ok(())
     }
 }
@@ -30,7 +30,7 @@ impl Finalization for Task {
         self.block.finalize(scx)?;
         scx.tys
             .close()
-            .map_err(|err| LinkedErr::token(err, &self.name))?;
+            .map_err(|err| LinkedErr::token(err.into(), &self.name))?;
         Ok(())
     }
 }

@@ -26,7 +26,7 @@ impl Finalization for Call {
         if scx
             .tys
             .get()
-            .map_err(|err| LinkedErr::by_node(err, &self.node))?
+            .map_err(|err| LinkedErr::by_node(err.into(), &self.node))?
             .parent
             .is_empty()
         {

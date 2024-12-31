@@ -1,15 +1,13 @@
-use std::sync::Arc;
-
 use crate::*;
 
 #[derive(Debug, Default)]
-pub struct Scope {
-    pub levels: HashMap<Uuid, HashMap<String, Arc<RtValue>>>,
+pub struct TyScope {
+    pub levels: HashMap<Uuid, HashMap<String, TypeEntity>>,
     pub location: Vec<Uuid>,
-    pub parent: Parent,
+    pub parent: TyParent,
 }
 
-impl Scope {
+impl TyScope {
     pub fn enter(&mut self, uuid: &Uuid) {
         self.levels.entry(*uuid).or_default();
         self.location.push(*uuid);
@@ -22,19 +20,19 @@ impl Scope {
             Err(E::AttemptToLeaveRootScopeLevel)
         }
     }
-    pub fn insert<S: AsRef<str>>(&mut self, name: S, vl: RtValue) -> Result<(), E> {
+    pub fn insert<S: AsRef<str>>(&mut self, name: S, edt: TypeEntity) -> Result<(), E> {
         if let Some(uuid) = self.location.last() {
             if let Some(sc) = self.levels.get_mut(uuid) {
-                sc.insert(name.as_ref().to_owned(), Arc::new(vl));
+                sc.insert(name.as_ref().to_owned(), edt);
                 return Ok(());
             }
         }
         Err(E::NoCurrentScopeLevel)
     }
-    pub fn lookup<S: AsRef<str>>(&self, name: S) -> Option<Arc<RtValue>> {
+    pub fn lookup<S: AsRef<str>>(&self, name: S) -> Option<&TypeEntity> {
         for uuid in self.location.iter().rev() {
-            if let Some(vl) = self.levels.get(uuid)?.get(name.as_ref()) {
-                return Some(vl.clone());
+            if let Some(edt) = self.levels.get(uuid)?.get(name.as_ref()) {
+                return Some(edt);
             }
         }
         None

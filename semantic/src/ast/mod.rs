@@ -61,14 +61,14 @@ impl InferType for LinkedNode {
             for ppm in md.ppm.iter() {
                 scx.tys
                     .get_mut()
-                    .map_err(|err| LinkedErr::by_node(err, ppm))?
+                    .map_err(|err| LinkedErr::by_node(err.into(), ppm))?
                     .parent
                     .set(ty);
                 ty = ppm.infer_type(scx)?;
             }
             scx.tys
                 .get_mut()
-                .map_err(|err| LinkedErr::by_pos(err, &(&md.link).into()))?
+                .map_err(|err| LinkedErr::by_pos(err.into(), &(&md.link).into()))?
                 .parent
                 .drop();
             Ok(ty)
@@ -105,7 +105,7 @@ impl Finalization for LinkedNode {
             for ppm in md.ppm.iter() {
                 scx.tys
                     .get_mut()
-                    .map_err(|err| LinkedErr::by_node(err, ppm))?
+                    .map_err(|err| LinkedErr::by_node(err.into(), ppm))?
                     .parent
                     .set(ty);
                 ppm.initialize(scx)?;
@@ -116,7 +116,7 @@ impl Finalization for LinkedNode {
             }
             scx.tys
                 .get_mut()
-                .map_err(|err| LinkedErr::by_pos(err, &(&md.link).into()))?
+                .map_err(|err| LinkedErr::by_pos(err.into(), &(&md.link).into()))?
                 .parent
                 .drop();
             Ok(())

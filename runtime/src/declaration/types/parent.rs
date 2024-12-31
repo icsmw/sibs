@@ -1,11 +1,11 @@
 use crate::*;
 
 #[derive(Debug, Default)]
-pub struct Parent {
+pub struct TyParent {
     pub ty: Option<DataType>,
 }
 
-impl Parent {
+impl TyParent {
     pub fn set(&mut self, ty: DataType) {
         self.ty = Some(ty);
     }

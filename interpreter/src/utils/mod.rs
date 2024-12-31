@@ -21,3 +21,30 @@ pub async fn chk_ty(node: &LinkedNode, vl: &RtValue, rt: &Runtime) -> Result<(),
         Ok(())
     }
 }
+
+pub(crate) fn into_rt_fns(mut fns: Fns) -> Fns {
+    fns.funcs = fns
+        .funcs
+        .into_iter()
+        .map(|(k, mut v)| {
+            v.body = node_into_exec(v.body);
+            (k, v)
+        })
+        .collect();
+    fns
+}
+fn node_into_exec(body: FnBody) -> FnBody {
+    match body {
+        FnBody::Executor(md, ex) => FnBody::Executor(md, ex),
+        FnBody::Node(node) => {
+            let meta = node.md.clone();
+            let func = move |rt: Runtime| -> RtPinnedResult<LinkedErr<E>> {
+                Box::pin({
+                    let node = node.clone();
+                    async move { node.interpret(rt).await }
+                })
+            };
+            FnBody::Executor(meta, Box::new(func))
+        }
+    }
+}

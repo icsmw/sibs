@@ -8,7 +8,7 @@ impl InferType for Accessor {
         let Some(pty) = scx
             .tys
             .get_mut()
-            .map_err(|err| LinkedErr::between(err, &self.open, &self.close))?
+            .map_err(|err| LinkedErr::between(err.into(), &self.open, &self.close))?
             .parent
             .withdraw()
         else {

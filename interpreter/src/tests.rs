@@ -29,7 +29,11 @@ macro_rules! test_value_expectation {
                     eprintln!("{}", parser.report_err(err).expect("Reporting error"));
                 }
                 assert!(result.is_ok());
-                let rt = Runtime::new(RtParameters::default(), scx.table, scx.fns);
+                let rt = Runtime::new(
+                    RtParameters::default(),
+                    scx.table,
+                    into_rt_fns(scx.fns),
+                );
                 let vl = node.interpret(rt.clone()).await;
                 if let Err(err) = &vl {
                     eprintln!("{err:?}");
@@ -56,6 +60,8 @@ macro_rules! test_task_results {
             #[tokio::test]
             async fn [< test_value_expectation_ $fn_name >]() {
                 use $crate::*;
+                use std::path::PathBuf;
+
                 let mut lx = lexer::Lexer::new(&$content, 0);
                 let mut parser = Parser::unbound(lx.read().unwrap().tokens, &lx.uuid, $content);
                 let node = Anchor::read(&mut parser);
@@ -84,7 +90,7 @@ macro_rules! test_task_results {
                 let rt = Runtime::new(
                     RtParameters::new($component_name, $task_name, Vec::new(), PathBuf::new()),
                     scx.table,
-                    scx.fns,
+                    into_rt_fns(scx.fns),
                 );
                 let vl = node.interpret(rt.clone()).await;
                 if let Err(err) = &vl {
