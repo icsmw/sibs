@@ -14,6 +14,7 @@ macro_rules! test_value_expectation {
                 let node = node.expect("Node is parsed without errors")
                     .expect("Node is parsed");
                 let mut scx = SemanticCx::default();
+                functions::register(&mut scx.fns.efns).expect("functions are registred");
                 let result = node.initialize(&mut scx);
                 if let Err(err) = &result {
                     eprintln!("{}", parser.report_err(err).expect("Reporting error"));
@@ -72,6 +73,7 @@ macro_rules! test_task_results {
                     .expect("Node is parsed without errors")
                     .expect("Node is parsed");
                 let mut scx = SemanticCx::default();
+                functions::register(&mut scx.fns.efns).expect("functions are registred");
                 let result = node.initialize(&mut scx);
                 if let Err(err) = &result {
                     eprintln!("{}", parser.report_err(err).expect("Reporting error"));

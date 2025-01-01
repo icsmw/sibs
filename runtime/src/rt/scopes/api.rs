@@ -3,8 +3,8 @@ use crate::*;
 #[derive(Debug)]
 #[enum_ids::enum_ids(display)]
 pub enum Demand {
-    SetParentValue(RtValue, oneshot::Sender<Result<(), E>>),
-    WithdrawParentValue(oneshot::Sender<Result<Option<RtValue>, E>>),
+    SetParentValue(ParentValue, oneshot::Sender<Result<(), E>>),
+    WithdrawParentValue(oneshot::Sender<Result<Option<ParentValue>, E>>),
     DropParentValue(oneshot::Sender<Result<(), E>>),
     OpenScope(Uuid, oneshot::Sender<()>),
     CloseScope(oneshot::Sender<Result<(), E>>),

@@ -1,10 +1,8 @@
-mod console;
-mod math;
+mod sum;
 
 use crate::*;
 
 pub fn register(efns: &mut EFns) -> Result<(), E> {
-    console::register(efns)?;
-    math::register(efns)?;
+    import_embedded_fn!(efns, sum);
     Ok(())
 }

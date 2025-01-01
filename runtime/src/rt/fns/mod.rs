@@ -65,7 +65,7 @@ impl RtFns {
         &self,
         uuid: &Uuid,
         rt: Runtime,
-        args: Vec<RtValue>,
+        args: Vec<FnArgValue>,
     ) -> Result<RtValue, LinkedErr<E>> {
         let (tx, rx) = oneshot::channel();
         self.tx

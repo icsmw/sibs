@@ -35,7 +35,11 @@ impl<'a> FnEntity<'a> {
             Self::EFn(en) => en.args.iter().collect::<Vec<&DataType>>(),
         }
     }
-    pub async fn execute(&self, rt: Runtime, args: Vec<RtValue>) -> Result<RtValue, LinkedErr<E>> {
+    pub async fn execute(
+        &self,
+        rt: Runtime,
+        args: Vec<FnArgValue>,
+    ) -> Result<RtValue, LinkedErr<E>> {
         match self {
             Self::UFn(en) => en.execute(rt, args).await,
             Self::EFn(en) => en.execute(rt, args).await,

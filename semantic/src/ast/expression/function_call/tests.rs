@@ -86,6 +86,12 @@ test_success!(
     "#
 );
 
+test_success!(
+    embedded_function_call_000,
+    Block,
+    r#"{ console::print("Hello"); }"#
+);
+
 test_fail!(
     function_call_000,
     Anchor,

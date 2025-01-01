@@ -250,6 +250,7 @@ dependencies = [
  "common",
  "diagnostics",
  "enum_ids",
+ "functions",
  "lexer",
  "parser",
  "paste",

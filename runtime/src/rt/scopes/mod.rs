@@ -5,7 +5,7 @@ mod store;
 
 use crate::*;
 use api::*;
-pub(crate) use parent::*;
+pub use parent::*;
 pub(crate) use scope::*;
 use std::sync::Arc;
 pub(crate) use store::*;
@@ -74,13 +74,13 @@ impl RtScope {
         Self { tx }
     }
 
-    pub async fn set_parent_vl(&self, vl: RtValue) -> Result<(), E> {
+    pub async fn set_parent_vl(&self, vl: ParentValue) -> Result<(), E> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(Demand::SetParentValue(vl, tx))?;
         rx.await?
     }
 
-    pub async fn withdraw_parent_vl(&self) -> Result<Option<RtValue>, E> {
+    pub async fn withdraw_parent_vl(&self) -> Result<Option<ParentValue>, E> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(Demand::WithdrawParentValue(tx))?;
         rx.await?

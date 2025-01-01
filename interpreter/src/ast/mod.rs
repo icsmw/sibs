@@ -26,12 +26,14 @@ impl Interpret for LinkedNode {
     #[boxed]
     fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
         let mut vl = self.node.interpret(rt.clone()).await?;
+        let mut linked_node = self;
         for ppm in self.md.ppm.iter() {
             rt.scopes
-                .set_parent_vl(vl)
+                .set_parent_vl(ParentValue::by_node(vl, linked_node))
                 .await
                 .map_err(|err| LinkedErr::by_link(err, (&self.md.link).into()))?;
             vl = ppm.interpret(rt.clone()).await?;
+            linked_node = ppm;
         }
         rt.scopes
             .drop_parent_vl()

@@ -35,7 +35,11 @@ pub struct UserFnEntity {
 }
 
 impl UserFnEntity {
-    pub async fn execute(&self, rt: Runtime, args: Vec<RtValue>) -> Result<RtValue, LinkedErr<E>> {
+    pub async fn execute(
+        &self,
+        rt: Runtime,
+        args: Vec<FnArgValue>,
+    ) -> Result<RtValue, LinkedErr<E>> {
         let FnBody::Executor(md, exec) = &self.body else {
             return Err(LinkedErr::unlinked(E::NotInitedFunction(
                 self.name.to_owned(),
@@ -45,27 +49,27 @@ impl UserFnEntity {
             return Err(LinkedErr::by_link(err, (&md.link).into()));
         }
         let mut err = None;
-        for (n, vl) in args.into_iter().enumerate() {
+        for (n, arg_vl) in args.into_iter().enumerate() {
             let Some(decl) = self.args.get(n) else {
                 err = Some(LinkedErr::by_link(E::InvalidFnArgument, (&md.link).into()));
                 break;
             };
-            let Some(vl_ty) = vl.as_ty() else {
+            let Some(vl_ty) = arg_vl.value.as_ty() else {
                 err = Some(LinkedErr::by_link(
                     E::InvalidFnArgumentType,
-                    (&decl.link).into(),
+                    (&arg_vl.link).into(),
                 ));
                 break;
             };
             if !decl.ty.compatible(&vl_ty) {
                 err = Some(LinkedErr::by_link(
                     E::FnArgumentTypeDismatch(decl.ty.to_string()),
-                    (&decl.link).into(),
+                    (&arg_vl.link).into(),
                 ));
                 break;
             }
-            if let Err(e) = rt.scopes.insert(&decl.ident, vl).await {
-                err = Some(LinkedErr::by_link(e, (&decl.link).into()));
+            if let Err(e) = rt.scopes.insert(&decl.ident, arg_vl.value).await {
+                err = Some(LinkedErr::by_link(e, (&arg_vl.link).into()));
                 break;
             }
         }

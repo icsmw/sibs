@@ -4,8 +4,6 @@ mod tests;
 mod ast;
 mod context;
 mod error;
-#[cfg(test)]
-mod test;
 
 pub(crate) use asttree::*;
 pub use context::*;

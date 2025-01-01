@@ -6,7 +6,7 @@ pub enum Demand {
     Execute(
         Uuid,
         Runtime,
-        Vec<RtValue>,
+        Vec<FnArgValue>,
         oneshot::Sender<Result<RtValue, LinkedErr<E>>>,
     ),
     Destroy(oneshot::Sender<()>),

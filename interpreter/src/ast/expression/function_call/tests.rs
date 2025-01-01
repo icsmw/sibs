@@ -19,3 +19,10 @@ test_task_results!(
     };
     "#
 );
+
+test_value_expectation!(
+    embedded_function_call_000,
+    Block,
+    RtValue::Num(10.0),
+    "{ math::sum(5, 5); }"
+);

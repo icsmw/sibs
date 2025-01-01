@@ -21,6 +21,7 @@ lexer = { path = "../lexer" }
 common = { path = "../common" }
 parser = { path = "../parser" }
 runtime = { path = "../runtime" }
+functions = { path = "../functions" }
 boxed = { path = "../support/boxed" }
 
 [dev-dependencies]

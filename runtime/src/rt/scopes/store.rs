@@ -21,11 +21,11 @@ impl VlScopes {
             Err(E::AttemptToLeaveGlobalScope)
         }
     }
-    pub fn set_parent_vl(&mut self, vl: RtValue) -> Result<(), E> {
+    pub fn set_parent_vl(&mut self, vl: ParentValue) -> Result<(), E> {
         self.get_mut()?.parent.set(vl);
         Ok(())
     }
-    pub fn withdraw_parent_vl(&mut self) -> Result<Option<RtValue>, E> {
+    pub fn withdraw_parent_vl(&mut self) -> Result<Option<ParentValue>, E> {
         Ok(self.get_mut()?.parent.withdraw())
     }
     pub fn drop_parent_vl(&mut self) -> Result<(), E> {

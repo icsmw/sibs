@@ -72,6 +72,12 @@ test_success!(
     "#
 );
 
+test_success!(
+    embedded_fn_call_000,
+    Block,
+    r#"{ let a = "Hello"; a.console::print(); }"#
+);
+
 test_fail!(
     call_000,
     Anchor,
