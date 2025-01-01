@@ -10,10 +10,8 @@ impl Fns {
     pub fn lookup<S: AsRef<str>>(&mut self, name: S, caller: &Uuid) -> Option<FnEntity<'_>> {
         if let Some(entity) = self.ufns.lookup(name.as_ref(), caller) {
             Some(FnEntity::UFn(entity))
-        } else if let Some(entity) = self.efns.lookup(name, caller) {
-            Some(FnEntity::EFn(entity))
         } else {
-            None
+            self.efns.lookup(name, caller).map(FnEntity::EFn)
         }
     }
     pub fn lookup_by_caller(&self, caller: &Uuid) -> Option<FnEntity<'_>> {

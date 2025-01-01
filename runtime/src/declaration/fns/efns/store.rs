@@ -2,7 +2,6 @@ use crate::*;
 
 #[derive(Debug, Default)]
 pub struct EFns {
-    pub path: Vec<String>,
     pub funcs: HashMap<String, EmbeddedFnEntity>,
     /// Collected calls table
     /// * `{ Uuid }` - caller's node uuid;
@@ -23,7 +22,7 @@ impl EFns {
         fn_name: S,
         caller: &Uuid,
     ) -> Option<&EmbeddedFnEntity> {
-        let name = self.link(fn_name, caller)?;
+        let name = self.link(fn_name.as_ref(), caller)?;
         self.funcs.get(&name)
     }
     pub fn lookup_by_caller(&self, caller: &Uuid) -> Option<&EmbeddedFnEntity> {

@@ -1,6 +1,6 @@
 use crate::*;
 
-declare_embedded_fn!(Vec::new(), DataType::Void);
+declare_embedded_fn!(vec![DataType::Str], DataType::Void);
 
 #[boxed]
 pub fn executor(args: Vec<EmbeddedFnArg>, _rt: Runtime) -> RtPinnedResult<'static, LinkedErr<E>> {

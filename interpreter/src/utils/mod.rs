@@ -22,8 +22,9 @@ pub async fn chk_ty(node: &LinkedNode, vl: &RtValue, rt: &Runtime) -> Result<(),
     }
 }
 
-pub(crate) fn into_rt_fns(mut fns: Fns) -> Fns {
-    fns.funcs = fns
+pub(crate) fn into_rt_ufns(mut fns: Fns) -> Fns {
+    fns.ufns.funcs = fns
+        .ufns
         .funcs
         .into_iter()
         .map(|(k, mut v)| {

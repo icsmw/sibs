@@ -8,7 +8,7 @@ impl InferType for FunctionCall {
         let name = self.get_name();
         if let Some(entity) = scx.fns.lookup(&name, &self.uuid) {
             Ok(entity.result_ty().clone())
-        } else if let Some(entity) = scx.efns.lookup(&name, &self.uuid) {
+        } else if let Some(entity) = scx.fns.efns.lookup(&name, &self.uuid) {
             Ok(entity.result.clone())
         } else {
             Err(LinkedErr::between(
