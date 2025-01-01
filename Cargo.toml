@@ -9,6 +9,7 @@ members = [
     "interpreter",
     "common",
     "runtime",
+    "functions",
     "support/boxed"
 ]
 

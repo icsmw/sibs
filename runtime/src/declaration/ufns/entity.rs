@@ -4,11 +4,12 @@ use asttree::LinkedNode;
 
 use crate::*;
 
-pub type ExecutorFn = Box<dyn Fn(Runtime) -> RtPinnedResult<'static, LinkedErr<E>> + Send + Sync>;
+pub type UserFnExecutor =
+    Box<dyn Fn(Runtime) -> RtPinnedResult<'static, LinkedErr<E>> + Send + Sync>;
 
 pub enum FnBody {
     Node(LinkedNode),
-    Executor(Metadata, ExecutorFn),
+    Executor(Metadata, UserFnExecutor),
 }
 
 impl Debug for FnBody {
@@ -25,10 +26,10 @@ impl Debug for FnBody {
 }
 
 #[derive(Debug)]
-pub struct FnEntity {
+pub struct UserFnEntity {
     pub uuid: Uuid,
     pub name: String,
-    pub args: Vec<FnArgDeclaration>,
+    pub args: Vec<UserFnArgDeclaration>,
     pub result: DataType,
     pub body: FnBody,
 }

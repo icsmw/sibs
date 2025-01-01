@@ -4,6 +4,7 @@ use crate::*;
 pub struct SemanticCx {
     pub tys: TyStore,
     pub fns: Fns,
+    pub efns: EFns,
     pub table: TypesTable,
 }
 

@@ -33,6 +33,7 @@ pub(crate) fn into_rt_fns(mut fns: Fns) -> Fns {
         .collect();
     fns
 }
+
 fn node_into_exec(body: FnBody) -> FnBody {
     match body {
         FnBody::Executor(md, ex) => FnBody::Executor(md, ex),
