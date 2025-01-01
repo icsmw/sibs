@@ -11,7 +11,7 @@ impl InferType for Call {
         let Some(entity) = scx.fns.lookup(&name, &self.uuid) else {
             return Err(LinkedErr::by_node(E::FnNotFound(name), &self.node));
         };
-        Ok(entity.result.clone())
+        Ok(entity.result_ty().clone())
     }
 }
 

@@ -34,13 +34,13 @@ impl Initialize for FunctionDeclaration {
                 return Err(LinkedErr::by_node(E::InvalidFnArg, n_arg));
             };
             let ty = n_arg.infer_type(scx)?;
-            args.push(FnArgDeclaration {
+            args.push(UserFnArgDeclaration {
                 ty,
                 ident,
                 link: n_arg.md.link.clone(),
             });
         }
-        let entity = FnEntity {
+        let entity = UserFnEntity {
             uuid: self.uuid,
             name: name.to_owned(),
             args,
@@ -53,7 +53,7 @@ impl Initialize for FunctionDeclaration {
         scx.tys
             .leave()
             .map_err(|err| LinkedErr::between(err.into(), &self.sig, &self.name))?;
-        scx.fns.add(name, entity).map_err(|err| {
+        scx.fns.ufns.add(name, entity).map_err(|err| {
             LinkedErr::between(
                 E::FnDeclarationError(err.to_string()),
                 &self.sig,
@@ -78,7 +78,7 @@ impl Finalization for FunctionDeclaration {
         self.block.initialize(scx)?;
         self.block.finalize(scx)?;
         let ty = self.infer_type(scx)?;
-        scx.fns.set_result_ty(name, ty).map_err(|err| {
+        scx.fns.ufns.set_result_ty(name, ty).map_err(|err| {
             LinkedErr::between(
                 E::FnDeclarationError(err.to_string()),
                 &self.sig,

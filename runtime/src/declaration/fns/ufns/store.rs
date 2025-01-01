@@ -1,16 +1,16 @@
 use crate::*;
 
 #[derive(Debug, Default)]
-pub struct Fns {
+pub struct UFns {
     pub path: Vec<String>,
     pub funcs: HashMap<String, UserFnEntity>,
     /// Collected calls table
     /// * `{ Uuid }` - caller's node uuid;
     /// * `{ String }` - function's name;
-    links: HashMap<Uuid, String>,
+    pub links: HashMap<Uuid, String>,
 }
 
-impl Fns {
+impl UFns {
     pub fn enter<S: AsRef<str>>(&mut self, mod_name: S) {
         self.path.push(mod_name.as_ref().to_owned());
     }

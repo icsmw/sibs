@@ -7,7 +7,7 @@ pub struct EFns {
     /// Collected calls table
     /// * `{ Uuid }` - caller's node uuid;
     /// * `{ String }` - function's name;
-    links: HashMap<Uuid, String>,
+    pub links: HashMap<Uuid, String>,
 }
 
 impl EFns {

@@ -7,7 +7,7 @@ impl InferType for FunctionCall {
     fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
         let name = self.get_name();
         if let Some(entity) = scx.fns.lookup(&name, &self.uuid) {
-            Ok(entity.result.clone())
+            Ok(entity.result_ty().clone())
         } else if let Some(entity) = scx.efns.lookup(&name, &self.uuid) {
             Ok(entity.result.clone())
         } else {
@@ -53,17 +53,18 @@ impl Finalization for FunctionCall {
                 &self.close,
             ));
         };
-        if tys.len() != entity.args.len() {
+        let fn_args = entity.args_tys();
+        if tys.len() != fn_args.len() {
             return Err(LinkedErr::between(
-                E::FnArgsNumberDismatch(name, entity.args.len(), tys.len()),
+                E::FnArgsNumberDismatch(name, fn_args.len(), tys.len()),
                 tk_from,
                 &self.close,
             ));
         }
-        for (ty, declaration) in tys.iter().zip(entity.args.iter()) {
-            if !ty.compatible(&declaration.ty) {
+        for (ty, dec_ty) in tys.iter().zip(fn_args.iter()) {
+            if !ty.compatible(dec_ty) {
                 return Err(LinkedErr::between(
-                    E::DismatchTypes(format!("{} and {ty}", declaration.ty)),
+                    E::DismatchTypes(format!("{} and {ty}", dec_ty)),
                     tk_from,
                     &self.close,
                 ));

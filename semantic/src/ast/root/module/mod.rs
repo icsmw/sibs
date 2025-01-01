@@ -12,11 +12,11 @@ impl Initialize for Module {
             return Err(LinkedErr::token(E::InvalidModuleName, &self.sig));
         };
         scx.tys.open(&self.uuid);
-        scx.fns.enter(name);
+        scx.fns.ufns.enter(name);
         for node in self.nodes.iter() {
             node.initialize(scx)?;
         }
-        scx.fns.leave();
+        scx.fns.ufns.leave();
         scx.tys
             .close()
             .map_err(|err| LinkedErr::token(err.into(), &self.name))?;
@@ -30,11 +30,11 @@ impl Finalization for Module {
             return Err(LinkedErr::token(E::InvalidModuleName, &self.sig));
         };
         scx.tys.open(&self.uuid);
-        scx.fns.enter(name);
+        scx.fns.ufns.enter(name);
         for node in self.nodes.iter() {
             node.finalize(scx)?;
         }
-        scx.fns.leave();
+        scx.fns.ufns.leave();
         scx.tys
             .close()
             .map_err(|err| LinkedErr::token(err.into(), &self.name))?;

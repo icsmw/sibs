@@ -17,3 +17,9 @@ pub struct EmbeddedFnEntity {
     pub result: DataType,
     pub exec: ExecutorEmbeddedFn,
 }
+
+impl EmbeddedFnEntity {
+    pub async fn execute(&self, rt: Runtime, args: Vec<RtValue>) -> Result<RtValue, LinkedErr<E>> {
+        Ok(RtValue::Void)
+    }
+}

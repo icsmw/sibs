@@ -26,72 +26,10 @@ impl RtFns {
                             );
                             continue;
                         };
-                        let FnBody::Executor(md, exec) = &fn_entity.body else {
-                            chk_send_err!(
-                                {
-                                    tx.send(Err(LinkedErr::unlinked(E::NotInitedFunction(
-                                        fn_entity.name.to_owned(),
-                                    ))))
-                                },
-                                DemandId::Execute
-                            );
-                            continue;
-                        };
-                        if let Err(err) = rt.scopes.enter(&fn_entity.uuid).await {
-                            chk_send_err!(
-                                { tx.send(Err(LinkedErr::by_link(err, (&md.link).into()))) },
-                                DemandId::Execute
-                            );
-                            continue;
-                        }
-                        let mut err = None;
-                        for (n, vl) in args.into_iter().enumerate() {
-                            let Some(decl) = fn_entity.args.get(n) else {
-                                err = Some(LinkedErr::by_link(
-                                    E::InvalidFnArgument,
-                                    (&md.link).into(),
-                                ));
-                                break;
-                            };
-                            let Some(vl_ty) = vl.as_ty() else {
-                                err = Some(LinkedErr::by_link(
-                                    E::InvalidFnArgumentType,
-                                    (&decl.link).into(),
-                                ));
-                                break;
-                            };
-                            if !decl.ty.compatible(&vl_ty) {
-                                err = Some(LinkedErr::by_link(
-                                    E::FnArgumentTypeDismatch(decl.ty.to_string()),
-                                    (&decl.link).into(),
-                                ));
-                                break;
-                            }
-                            if let Err(e) = rt.scopes.insert(&decl.ident, vl).await {
-                                err = Some(LinkedErr::by_link(e, (&decl.link).into()));
-                                break;
-                            }
-                        }
-                        if let Some(err) = err.take() {
-                            if let Err(err) = rt.scopes.leave().await {
-                                chk_send_err!(
-                                    { tx.send(Err(LinkedErr::by_link(err, (&md.link).into()))) },
-                                    DemandId::Execute
-                                );
-                                continue;
-                            }
-                            chk_send_err!({ tx.send(Err(err)) }, DemandId::Execute);
-                            continue;
-                        }
-                        let result = exec(rt.clone()).await;
-                        if let Err(err) = rt.scopes.leave().await {
-                            chk_send_err!(
-                                { tx.send(Err(LinkedErr::by_link(err, (&md.link).into()))) },
-                                DemandId::Execute
-                            );
-                            continue;
-                        }
-                        chk_send_err!({ tx.send(result) }, DemandId::Execute);
+                        chk_send_err!(
+                            tx.send(fn_entity.execute(rt, args).await),
+                            DemandId::Execute
+                        );
                     }
                     Demand::Destroy(tx) => {
                         tracing::info!("got shutdown signal");
