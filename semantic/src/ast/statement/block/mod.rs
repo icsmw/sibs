@@ -1,7 +1,7 @@
 use crate::*;
 
 impl InferType for Block {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         scx.tys
             .enter(&self.uuid)
             .map_err(|err| LinkedErr::between(err.into(), &self.open, &self.close))?;
@@ -9,7 +9,7 @@ impl InferType for Block {
             .nodes
             .last()
             .map(|n| n.infer_type(scx))
-            .unwrap_or_else(|| Ok(DataType::Void))?;
+            .unwrap_or_else(|| Ok(DeterminatedTy::Void.into()))?;
         scx.tys
             .leave()
             .map_err(|err| LinkedErr::between(err.into(), &self.open, &self.close))?;

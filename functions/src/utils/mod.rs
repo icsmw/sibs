@@ -55,10 +55,10 @@ macro_rules! declare_embedded_fn {
             pub fn fullname() -> String {
                 get_fullname(module_path!())
             }
-            pub fn args() -> Vec<DataType> {
+            pub fn args() -> Vec<Ty> {
                 $args
             }
-            pub fn returning() -> DataType {
+            pub fn returning() -> DeterminatedTy {
                 $returning
             }
         }

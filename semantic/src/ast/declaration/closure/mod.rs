@@ -1,7 +1,7 @@
 use crate::*;
 
 impl InferType for Closure {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         self.block.infer_type(scx)
     }
 }

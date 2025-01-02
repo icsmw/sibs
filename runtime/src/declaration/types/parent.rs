@@ -2,14 +2,14 @@ use crate::*;
 
 #[derive(Debug, Default)]
 pub struct TyParent {
-    pub ty: Option<DataType>,
+    pub ty: Option<Ty>,
 }
 
 impl TyParent {
-    pub fn set(&mut self, ty: DataType) {
+    pub fn set(&mut self, ty: Ty) {
         self.ty = Some(ty);
     }
-    pub fn withdraw(&mut self) -> Option<DataType> {
+    pub fn withdraw(&mut self) -> Option<Ty> {
         self.ty.take()
     }
     pub fn is_empty(&self) -> bool {

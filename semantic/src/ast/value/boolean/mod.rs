@@ -1,8 +1,8 @@
 use crate::*;
 
 impl InferType for Boolean {
-    fn infer_type(&self, _scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
-        Ok(DataType::Bool)
+    fn infer_type(&self, _scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
+        Ok(DeterminatedTy::Bool.into())
     }
 }
 

@@ -4,12 +4,12 @@ mod tests;
 use crate::*;
 
 impl InferType for FunctionCall {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         let name = self.get_name();
         if let Some(entity) = scx.fns.lookup(&name, &self.uuid) {
-            Ok(entity.result_ty().clone())
+            Ok(entity.result_ty())
         } else if let Some(entity) = scx.fns.efns.lookup(&name, &self.uuid) {
-            Ok(entity.result.clone())
+            Ok(Ty::Determinated(entity.result.clone()))
         } else {
             Err(LinkedErr::between(
                 E::FnNotFound(name),

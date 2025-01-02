@@ -1,7 +1,7 @@
 use crate::*;
 
 impl InferType for Variable {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         let ety = scx
             .tys
             .lookup(&self.ident)
@@ -11,8 +11,7 @@ impl InferType for Variable {
                 &self.token,
             ))?;
         if let Some(ty) = ety.assigned.as_ref() {
-            if let (Some(negation), false) = (self.negation.as_ref(), matches!(ty, DataType::Bool))
-            {
+            if let (Some(negation), false) = (self.negation.as_ref(), ty.bool()) {
                 Err(LinkedErr::between(
                     E::NegationToNotBool,
                     negation,

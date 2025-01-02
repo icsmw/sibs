@@ -4,7 +4,7 @@ mod meta;
 use crate::*;
 
 impl InferType for Miscellaneous {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         match self {
             Miscellaneous::Comment(n) => n.infer_type(scx),
             Miscellaneous::Meta(n) => n.infer_type(scx),

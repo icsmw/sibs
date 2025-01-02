@@ -4,7 +4,7 @@ mod tests;
 use crate::*;
 
 impl InferType for FunctionDeclaration {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         scx.tys
             .enter(&self.uuid)
             .map_err(|err| LinkedErr::token(err.into(), &self.sig))?;
@@ -46,7 +46,7 @@ impl Initialize for FunctionDeclaration {
             args,
             result: match self.infer_type(scx) {
                 Ok(ty) => ty,
-                Err(_err) => DataType::Recursion(self.uuid),
+                Err(_err) => DeterminatedTy::Recursion(self.uuid).into(),
             },
             body: FnBody::Node(*self.block.clone()),
         };

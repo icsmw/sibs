@@ -6,7 +6,7 @@ mod tests;
 use crate::*;
 
 impl InferType for VariableDeclaration {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         let Node::Declaration(Declaration::VariableName(variable)) = &self.variable.node else {
             return Err(LinkedErr::by_node(
                 E::UnexpectedNode(self.variable.node.id()),
@@ -18,9 +18,9 @@ impl InferType for VariableDeclaration {
             .lookup(&variable.ident)
             .map_err(|err| LinkedErr::by_node(err.into(), &self.variable))?
         else {
-            return Ok(DataType::IndeterminateType);
+            return Ok(Ty::Indeterminated);
         };
-        Ok(ty.assigned.clone().unwrap_or(DataType::IndeterminateType))
+        Ok(ty.assigned.clone().unwrap_or(Ty::Indeterminated))
     }
 }
 
@@ -54,7 +54,7 @@ impl Initialize for VariableDeclaration {
                 .map_err(|err| LinkedErr::by_node(err.into(), &self.variable))?;
         } else if let Some(node) = self.assignation.as_ref() {
             let assig = node.infer_type(scx)?;
-            if matches!(assig, DataType::IndeterminateType) {
+            if matches!(assig, Ty::Indeterminated) {
                 return Err(LinkedErr::by_node(E::IndeterminateType, node));
             }
             scx.tys
@@ -65,7 +65,7 @@ impl Initialize for VariableDeclaration {
                 .map_err(|err| LinkedErr::by_node(err.into(), &self.variable))?;
         } else if let Some(node) = self.r#type.as_ref() {
             let annot = node.infer_type(scx)?;
-            if matches!(annot, DataType::IndeterminateType) {
+            if matches!(annot, Ty::Indeterminated) {
                 return Err(LinkedErr::by_node(E::IndeterminateType, node));
             }
             scx.tys
@@ -73,10 +73,7 @@ impl Initialize for VariableDeclaration {
                 .map_err(|err| LinkedErr::by_node(err.into(), &self.variable))?;
         } else {
             scx.tys
-                .insert(
-                    &variable.ident,
-                    TypeEntity::new(None, Some(DataType::Undefined)),
-                )
+                .insert(&variable.ident, TypeEntity::new(None, Some(Ty::Undefined)))
                 .map_err(|err| LinkedErr::by_node(err.into(), &self.variable))?;
         }
         Ok(())

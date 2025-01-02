@@ -20,7 +20,7 @@ mod variable;
 use crate::*;
 
 impl InferType for Expression {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         match self {
             Expression::Accessor(n) => n.infer_type(scx),
             Expression::BinaryExp(n) => n.infer_type(scx),

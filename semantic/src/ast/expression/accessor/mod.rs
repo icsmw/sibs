@@ -4,7 +4,7 @@ mod tests;
 use crate::*;
 
 impl InferType for Accessor {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         let Some(pty) = scx
             .tys
             .get_mut()
@@ -18,19 +18,24 @@ impl InferType for Accessor {
                 &self.close,
             ));
         };
-        if !matches!(pty, DataType::Vec(..)) {
+        let dpty = pty.determinated().ok_or(LinkedErr::between(
+            E::FailInferDeterminatedType(pty.clone()),
+            &self.open,
+            &self.close,
+        ))?;
+        if !matches!(dpty, DeterminatedTy::Vec(..)) {
             return Err(LinkedErr::between(
                 E::AccessorOnWrongType(pty.to_owned()),
                 &self.open,
                 &self.close,
             ));
         }
-        if let DataType::Vec(inner_ty) = pty {
+        if let DeterminatedTy::Vec(Some(inner_ty)) = dpty {
             let ty = self.node.infer_type(scx)?;
             if !ty.numeric() {
                 return Err(LinkedErr::by_node(E::ExpectedNumericType(ty), &self.node));
             }
-            Ok(*inner_ty.to_owned())
+            Ok((*inner_ty.to_owned()).into())
         } else {
             Err(LinkedErr::between(
                 E::AccessorOnWrongType(pty.to_owned()),

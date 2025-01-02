@@ -6,7 +6,7 @@ mod task;
 use crate::*;
 
 impl InferType for Root {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         match self {
             Root::Task(n) => n.infer_type(scx),
             Root::Component(n) => n.infer_type(scx),

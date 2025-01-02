@@ -1,8 +1,8 @@
 use crate::*;
 
 impl InferType for Number {
-    fn infer_type(&self, _scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
-        Ok(DataType::Num)
+    fn infer_type(&self, _scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
+        Ok(DeterminatedTy::Num.into())
     }
 }
 

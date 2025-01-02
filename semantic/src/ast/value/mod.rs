@@ -8,7 +8,7 @@ mod primitive_string;
 use crate::*;
 
 impl InferType for Value {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         match self {
             Value::Array(n) => n.infer_type(scx),
             Value::Boolean(n) => n.infer_type(scx),

@@ -3,27 +3,34 @@ use crate::*;
 use lexer::{Keyword, Kind, Token};
 
 impl InferType for Token {
-    fn infer_type(&self, _scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, _scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         match &self.kind {
-            Kind::Number(..) => Ok(DataType::Num),
-            Kind::Keyword(Keyword::Bool) => Ok(DataType::Bool),
-            Kind::Keyword(Keyword::Str) => Ok(DataType::Str),
-            Kind::Keyword(Keyword::Num) => Ok(DataType::Num),
-            _ => Err(LinkedErr::token(E::TokenIsNotBoundToKnownDataType, self)),
+            Kind::Number(..) => Ok(DeterminatedTy::Num.into()),
+            Kind::Keyword(Keyword::Bool) => Ok(DeterminatedTy::Bool.into()),
+            Kind::Keyword(Keyword::Str) => Ok(DeterminatedTy::Str.into()),
+            Kind::Keyword(Keyword::Num) => Ok(DeterminatedTy::Num.into()),
+            _ => Err(LinkedErr::token(E::TokenIsNotBoundToKnownTy, self)),
         }
     }
 }
 
 impl InferType for VariableCompoundType {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         match self {
-            VariableCompoundType::Vec(_, n) => Ok(DataType::Vec(Box::new(n.infer_type(scx)?))),
+            VariableCompoundType::Vec(tk, n) => {
+                let inner = n.infer_type(scx)?;
+                let inner = inner
+                    .determinated()
+                    .cloned()
+                    .ok_or(LinkedErr::token(E::FailInferDeterminatedType(inner), tk))?;
+                Ok(DeterminatedTy::Vec(Some(Box::new(inner))).into())
+            }
         }
     }
 }
 
 impl InferType for VariableTypeDef {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         match self {
             VariableTypeDef::Primitive(tk) => tk.infer_type(scx),
             VariableTypeDef::Compound(ty) => ty.infer_type(scx),
@@ -32,7 +39,7 @@ impl InferType for VariableTypeDef {
 }
 
 impl InferType for VariableType {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         self.r#type.infer_type(scx)
     }
 }

@@ -25,7 +25,7 @@ impl UFns {
         self.funcs.insert(name, entity);
         Ok(())
     }
-    pub fn set_result_ty<S: AsRef<str>>(&mut self, fn_name: S, ty: DataType) -> Result<(), E> {
+    pub fn set_result_ty<S: AsRef<str>>(&mut self, fn_name: S, ty: Ty) -> Result<(), E> {
         let name = self.fullname(fn_name);
         let Some(en) = self.funcs.get_mut(&name) else {
             return Err(E::FuncNotFound(name));

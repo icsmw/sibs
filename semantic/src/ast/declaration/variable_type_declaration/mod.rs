@@ -1,18 +1,27 @@
 use crate::*;
 
 impl InferType for VariableTypeDeclaration {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         let tys = self
             .types
             .iter()
             .map(|n| n.infer_type(scx))
             .collect::<Result<Vec<_>, _>>()?;
         if tys.is_empty() {
-            Err(LinkedErr::unlinked(E::EmptyTypeDeclaration))
+            Err(LinkedErr::token(E::EmptyTypeDeclaration, &self.token))
         } else if tys.len() == 1 {
             Ok(tys[0].clone())
         } else {
-            Ok(DataType::OneOf(tys))
+            let tys = tys
+                .into_iter()
+                .map(|ty| {
+                    ty.determinated().cloned().ok_or(LinkedErr::token(
+                        E::FailInferDeterminatedType(ty.clone()),
+                        &self.token,
+                    ))
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            Ok(Ty::OneOf(tys))
         }
     }
 }

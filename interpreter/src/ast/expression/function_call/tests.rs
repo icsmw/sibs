@@ -26,3 +26,10 @@ test_value_expectation!(
     RtValue::Num(10.0),
     "{ math::sum(5, 5); }"
 );
+
+test_value_expectation!(
+    embedded_function_call_001,
+    Block,
+    RtValue::Void,
+    r#"{ console::print("Hello"); }"#
+);

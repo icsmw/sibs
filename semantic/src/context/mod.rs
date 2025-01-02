@@ -17,7 +17,7 @@ impl SemanticCx {
         self.table.set(node.uuid(), ty);
         Ok(())
     }
-    pub fn register(&mut self, uuid: &Uuid, ty: &DataType) {
+    pub fn register(&mut self, uuid: &Uuid, ty: &Ty) {
         self.table.set(uuid, ty.clone());
     }
 }

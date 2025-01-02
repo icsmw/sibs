@@ -19,3 +19,10 @@ test_task_results!(
     };
     "#
 );
+
+test_value_expectation!(
+    embedded_fn_call_000,
+    Block,
+    RtValue::Num(10.0),
+    "{ let a = 5; a.math::sum(5); }"
+);

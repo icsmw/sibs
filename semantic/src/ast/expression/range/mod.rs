@@ -1,8 +1,8 @@
 use crate::*;
 
 impl InferType for Range {
-    fn infer_type(&self, _scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
-        Ok(DataType::Range)
+    fn infer_type(&self, _scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
+        Ok(DeterminatedTy::Range.into())
     }
 }
 

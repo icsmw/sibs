@@ -9,7 +9,7 @@ impl Interpret for Variable {
             .scopes
             .lookup(&self.ident)
             .await
-            .map_err(|err| LinkedErr::token(err.into(), &self.token))?
+            .map_err(|err| LinkedErr::token(err, &self.token))?
             .ok_or(LinkedErr::token(
                 E::UndefinedVariable(self.ident.clone()),
                 &self.token,

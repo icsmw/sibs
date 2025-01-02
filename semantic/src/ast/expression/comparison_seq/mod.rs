@@ -4,18 +4,18 @@ mod tests;
 use crate::*;
 
 impl InferType for ComparisonSeq {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         for node in self
             .nodes
             .iter()
             .filter(|n| !matches!(n.node, Node::Expression(Expression::LogicalOp(..))))
         {
             let ty = node.infer_type(scx)?;
-            if !matches!(ty, DataType::Bool) {
+            if !ty.bool() {
                 return Err(LinkedErr::by_node(E::ExpectedBoolType(ty), node));
             }
         }
-        Ok(DataType::Bool)
+        Ok(DeterminatedTy::Bool.into())
     }
 }
 

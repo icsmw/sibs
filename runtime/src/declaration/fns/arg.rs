@@ -2,7 +2,7 @@ use crate::*;
 
 #[derive(Debug)]
 pub enum FnArgDeclaration {
-    EFn(DataType),
+    EFn(Ty),
     UFn(UserFnArgDeclaration),
 }
 

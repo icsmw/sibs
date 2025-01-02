@@ -12,7 +12,7 @@ mod variable_variants;
 use crate::*;
 
 impl InferType for Declaration {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         match self {
             Declaration::ArgumentDeclaration(n) => n.infer_type(scx),
             Declaration::Closure(n) => n.infer_type(scx),

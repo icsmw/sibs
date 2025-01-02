@@ -30,7 +30,7 @@ pub struct UserFnEntity {
     pub uuid: Uuid,
     pub name: String,
     pub args: Vec<UserFnArgDeclaration>,
-    pub result: DataType,
+    pub result: Ty,
     pub body: FnBody,
 }
 

@@ -14,7 +14,7 @@ pub(crate) use runtime::*;
 pub(crate) use uuid::Uuid;
 
 pub trait InferType {
-    fn infer_type(&self, _scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>>;
+    fn infer_type(&self, _scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>>;
 }
 
 pub trait Initialize {

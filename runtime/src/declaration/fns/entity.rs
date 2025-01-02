@@ -19,20 +19,16 @@ impl<'a> FnEntity<'a> {
             Self::EFn(en) => &en.uuid,
         }
     }
-    pub fn result_ty(&self) -> &DataType {
+    pub fn result_ty(&self) -> Ty {
         match self {
-            Self::UFn(en) => &en.result,
-            Self::EFn(en) => &en.result,
+            Self::UFn(en) => en.result.clone(),
+            Self::EFn(en) => Ty::Determinated(en.result.clone()),
         }
     }
-    pub fn args_tys(&self) -> Vec<&DataType> {
+    pub fn args_tys(&self) -> Vec<&Ty> {
         match self {
-            Self::UFn(en) => en
-                .args
-                .iter()
-                .map(|arg| &arg.ty)
-                .collect::<Vec<&DataType>>(),
-            Self::EFn(en) => en.args.iter().collect::<Vec<&DataType>>(),
+            Self::UFn(en) => en.args.iter().map(|arg| &arg.ty).collect::<Vec<&Ty>>(),
+            Self::EFn(en) => en.args.iter().collect::<Vec<&Ty>>(),
         }
     }
     pub async fn execute(

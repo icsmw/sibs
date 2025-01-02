@@ -4,7 +4,7 @@ mod tests;
 use crate::*;
 
 impl InferType for BinaryExpGroup {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         let ty = self.node.infer_type(scx)?;
         if !ty.numeric() {
             Err(LinkedErr::by_node(E::ExpectedNumericType(ty), &self.node))

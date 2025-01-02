@@ -4,7 +4,7 @@ mod tests;
 use crate::*;
 
 impl InferType for BinaryExpSeq {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         for node in self
             .nodes
             .iter()
@@ -15,7 +15,7 @@ impl InferType for BinaryExpSeq {
                 return Err(LinkedErr::by_node(E::ExpectedNumericType(ty), node));
             }
         }
-        Ok(DataType::Num)
+        Ok(DeterminatedTy::Num.into())
     }
 }
 

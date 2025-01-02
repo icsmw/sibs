@@ -1,7 +1,7 @@
 use crate::*;
 
 impl InferType for Comparison {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         let left = self.left.infer_type(scx)?;
         let right = self.right.infer_type(scx)?;
         if !left.compatible(&right) {
@@ -11,7 +11,7 @@ impl InferType for Comparison {
                 &self.right,
             ))
         } else {
-            Ok(DataType::Bool)
+            Ok(DeterminatedTy::Bool.into())
         }
     }
 }

@@ -17,7 +17,7 @@ pub enum E {
     FailExtractValue,
     #[error("Invalid value type; expected \"{0}\"")]
     InvalidValueType(String),
-    #[error("Value type cannot be cast to public DataType")]
+    #[error("Value type cannot be cast to public Ty")]
     NotPublicValueType,
     #[error("Some values cannot be converted into string")]
     CannotBeConvertedToString,

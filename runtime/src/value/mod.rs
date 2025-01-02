@@ -53,22 +53,26 @@ impl RtValue {
         }
     }
 
-    pub fn as_ty(&self) -> Option<DataType> {
+    pub fn as_ty(&self) -> Option<Ty> {
         match self {
-            Self::Num(..) => Some(DataType::Num),
-            Self::Bool(..) => Some(DataType::Bool),
-            Self::PathBuf(..) => Some(DataType::PathBuf),
-            Self::Str(..) => Some(DataType::Str),
-            Self::Range(..) => Some(DataType::Range),
-            Self::Error => Some(DataType::Error),
-            Self::ExecuteResult => Some(DataType::ExecuteResult),
-            Self::Closure => Some(DataType::Closure),
-            Self::Void => Some(DataType::Void),
+            Self::Num(..) => Some(DeterminatedTy::Num.into()),
+            Self::Bool(..) => Some(DeterminatedTy::Bool.into()),
+            Self::PathBuf(..) => Some(DeterminatedTy::PathBuf.into()),
+            Self::Str(..) => Some(DeterminatedTy::Str.into()),
+            Self::Range(..) => Some(DeterminatedTy::Range.into()),
+            Self::Error => Some(DeterminatedTy::Error.into()),
+            Self::ExecuteResult => Some(DeterminatedTy::ExecuteResult.into()),
+            Self::Closure => Some(DeterminatedTy::Closure.into()),
+            Self::Void => Some(DeterminatedTy::Void.into()),
             Self::Vec(els) => {
                 if let Some(el) = els.first() {
-                    el.as_ty().map(|ty| DataType::Vec(Box::new(ty)))
+                    if let Some(Ty::Determinated(ty)) = el.as_ty() {
+                        Some(DeterminatedTy::Vec(Some(Box::new(ty))).into())
+                    } else {
+                        None
+                    }
                 } else {
-                    Some(DataType::Vec(Box::new(DataType::Undefined)))
+                    Some(DeterminatedTy::Vec(None).into())
                 }
             }
             Self::BinaryOperator(..) | Self::LogicalOperator(..) | Self::ComparisonOperator(..) => {

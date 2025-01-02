@@ -1,7 +1,7 @@
 use crate::*;
 
 impl InferType for ArgumentDeclaration {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         self.r#type.infer_type(scx)
     }
 }

@@ -15,7 +15,7 @@ mod r#while;
 use crate::*;
 
 impl InferType for Statement {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         match self {
             Statement::Assignation(n) => n.infer_type(scx),
             Statement::AssignedValue(n) => n.infer_type(scx),

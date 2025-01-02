@@ -1,8 +1,8 @@
 use crate::*;
 
 impl InferType for Each {
-    fn infer_type(&self, _scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
-        Ok(DataType::Void)
+    fn infer_type(&self, _scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
+        Ok(DeterminatedTy::Void.into())
     }
 }
 

@@ -10,8 +10,6 @@ pub(crate) use diagnostics::*;
 pub(crate) use lexer::{Keyword, Kind};
 pub(crate) use runtime::error::E;
 pub(crate) use runtime::*;
-pub(crate) use runtime::*;
-pub(crate) use semantic::*;
 pub(crate) use utils::*;
 
 #[cfg(test)]

@@ -4,7 +4,7 @@ mod tests;
 use crate::*;
 
 impl InferType for BinaryExp {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         let left = self.left.infer_type(scx)?;
         let right = self.right.infer_type(scx)?;
         if !left.numeric() {
@@ -20,7 +20,7 @@ impl InferType for BinaryExp {
                 &self.right,
             ))
         } else {
-            Ok(DataType::Num)
+            Ok(DeterminatedTy::Num.into())
         }
     }
 }

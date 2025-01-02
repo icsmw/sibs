@@ -33,7 +33,7 @@ impl RtTypes {
         Self { tx }
     }
 
-    pub async fn get_ty(&self, uuid: &Uuid) -> Result<Option<DataType>, E> {
+    pub async fn get_ty(&self, uuid: &Uuid) -> Result<Option<Ty>, E> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(Demand::Get(*uuid, tx))?;
         Ok(rx.await?)

@@ -1,11 +1,11 @@
 use crate::*;
 
 impl InferType for Return {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         self.node
             .as_ref()
             .map(|n| n.infer_type(scx))
-            .unwrap_or_else(|| Ok(DataType::Void))
+            .unwrap_or_else(|| Ok(DeterminatedTy::Void.into()))
     }
 }
 

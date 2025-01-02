@@ -4,23 +4,26 @@ mod tests;
 use crate::*;
 
 impl InferType for Array {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         let tys = self
             .els
             .iter()
             .map(|n| n.infer_type(scx))
             .collect::<Result<Vec<_>, _>>()?;
         if tys.is_empty() {
-            return Ok(DataType::Vec(Box::new(DataType::Undefined)));
+            return Ok(DeterminatedTy::Vec(None).into());
         }
-        let first = &tys[0];
-        if let Some((n, ty)) = tys.iter().enumerate().find(|(_, ty)| ty != &first) {
+        let first = tys[0].determinated().cloned().ok_or(LinkedErr::by_node(
+            E::FailInferDeterminatedType(tys[0].clone()),
+            &self.els[0],
+        ))?;
+        if let Some((n, ty)) = tys.iter().enumerate().find(|(_, ty)| !ty.equal(&first)) {
             Err(LinkedErr::by_node(
                 E::DismatchTypes(format!("{first} and {ty}")),
                 &self.els[n],
             ))
         } else {
-            Ok(DataType::Vec(Box::new(first.clone())))
+            Ok(DeterminatedTy::Vec(Some(Box::new(first))).into())
         }
     }
 }

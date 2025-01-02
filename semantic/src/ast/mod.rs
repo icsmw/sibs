@@ -9,7 +9,7 @@ mod value;
 use crate::*;
 
 impl InferType for Node {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         match self {
             Node::ControlFlowModifier(n) => n.infer_type(scx),
             Node::Declaration(n) => n.infer_type(scx),
@@ -51,12 +51,12 @@ impl Finalization for Node {
 }
 
 impl InferType for LinkedNode {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         fn infer_type(
             node: &Node,
             md: &Metadata,
             scx: &mut SemanticCx,
-        ) -> Result<DataType, LinkedErr<E>> {
+        ) -> Result<Ty, LinkedErr<E>> {
             let mut ty = node.infer_type(scx)?;
             for ppm in md.ppm.iter() {
                 scx.tys
@@ -110,7 +110,7 @@ impl Finalization for LinkedNode {
                     .set(ty);
                 ppm.initialize(scx)?;
                 ppm.finalize(scx)?;
-                scx.register(ppm.uuid(), &DataType::IndeterminateType);
+                scx.register(ppm.uuid(), &Ty::Indeterminated);
                 ty = ppm.infer_type(scx)?;
                 scx.register(ppm.uuid(), &ty);
             }

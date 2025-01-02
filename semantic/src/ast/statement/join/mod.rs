@@ -1,8 +1,8 @@
 use crate::*;
 
 impl InferType for Join {
-    fn infer_type(&self, _scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
-        Ok(DataType::Vec(Box::new(DataType::ExecuteResult)))
+    fn infer_type(&self, _scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
+        Ok(DeterminatedTy::Vec(Some(Box::new(DeterminatedTy::ExecuteResult))).into())
     }
 }
 

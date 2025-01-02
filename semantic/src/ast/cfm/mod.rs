@@ -4,7 +4,7 @@ mod skip;
 use crate::*;
 
 impl InferType for ControlFlowModifier {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         match self {
             ControlFlowModifier::Gatekeeper(n) => n.infer_type(scx),
             ControlFlowModifier::Skip(n) => n.infer_type(scx),

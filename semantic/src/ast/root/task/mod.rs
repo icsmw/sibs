@@ -1,7 +1,7 @@
 use crate::*;
 
 impl InferType for Task {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<DataType, LinkedErr<E>> {
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         scx.tys.open(&self.uuid);
         let ty = self.block.infer_type(scx)?;
         scx.tys
