@@ -22,7 +22,7 @@ impl<'a> FnEntity<'a> {
     pub fn result_ty(&self) -> Ty {
         match self {
             Self::UFn(en) => en.result.clone(),
-            Self::EFn(en) => Ty::Determinated(en.result.clone()),
+            Self::EFn(en) => Ty::Determined(en.result.clone()),
         }
     }
     pub fn args_tys(&self) -> Vec<&Ty> {

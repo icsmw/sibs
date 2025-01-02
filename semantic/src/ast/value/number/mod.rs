@@ -2,7 +2,7 @@ use crate::*;
 
 impl InferType for Number {
     fn infer_type(&self, _scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
-        Ok(DeterminatedTy::Num.into())
+        Ok(DeterminedTy::Num.into())
     }
 }
 

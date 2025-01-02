@@ -8,7 +8,7 @@ pub struct EmbeddedFnEntity {
     pub fullname: String,
     pub name: String,
     pub args: Vec<Ty>,
-    pub result: DeterminatedTy,
+    pub result: DeterminedTy,
     pub exec: ExecutorEmbeddedFn,
 }
 

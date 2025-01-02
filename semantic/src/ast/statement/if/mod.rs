@@ -15,7 +15,7 @@ impl InferType for IfCase {
 impl InferType for If {
     fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         if !self.cases.iter().any(|c| matches!(c, IfCase::Else(..))) {
-            return Ok(Ty::Indeterminated);
+            return Ok(Ty::Indeterminate);
         }
         let tys = self
             .cases
@@ -29,7 +29,7 @@ impl InferType for If {
         if tys.iter().all(|ty| first.compatible(ty)) {
             Ok(first.clone())
         } else {
-            Ok(Ty::Indeterminated)
+            Ok(Ty::Indeterminate)
         }
     }
 }

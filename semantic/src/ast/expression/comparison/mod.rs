@@ -11,7 +11,7 @@ impl InferType for Comparison {
                 &self.right,
             ))
         } else {
-            Ok(DeterminatedTy::Bool.into())
+            Ok(DeterminedTy::Bool.into())
         }
     }
 }

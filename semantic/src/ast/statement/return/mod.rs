@@ -5,7 +5,7 @@ impl InferType for Return {
         self.node
             .as_ref()
             .map(|n| n.infer_type(scx))
-            .unwrap_or_else(|| Ok(DeterminatedTy::Void.into()))
+            .unwrap_or_else(|| Ok(DeterminedTy::Void.into()))
     }
 }
 

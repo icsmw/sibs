@@ -5,10 +5,10 @@ use lexer::{Keyword, Kind, Token};
 impl InferType for Token {
     fn infer_type(&self, _scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         match &self.kind {
-            Kind::Number(..) => Ok(DeterminatedTy::Num.into()),
-            Kind::Keyword(Keyword::Bool) => Ok(DeterminatedTy::Bool.into()),
-            Kind::Keyword(Keyword::Str) => Ok(DeterminatedTy::Str.into()),
-            Kind::Keyword(Keyword::Num) => Ok(DeterminatedTy::Num.into()),
+            Kind::Number(..) => Ok(DeterminedTy::Num.into()),
+            Kind::Keyword(Keyword::Bool) => Ok(DeterminedTy::Bool.into()),
+            Kind::Keyword(Keyword::Str) => Ok(DeterminedTy::Str.into()),
+            Kind::Keyword(Keyword::Num) => Ok(DeterminedTy::Num.into()),
             _ => Err(LinkedErr::token(E::TokenIsNotBoundToKnownTy, self)),
         }
     }
@@ -22,8 +22,8 @@ impl InferType for VariableCompoundType {
                 let inner = inner
                     .determinated()
                     .cloned()
-                    .ok_or(LinkedErr::token(E::FailInferDeterminatedType(inner), tk))?;
-                Ok(DeterminatedTy::Vec(Some(Box::new(inner))).into())
+                    .ok_or(LinkedErr::token(E::FailInferDeterminedType(inner), tk))?;
+                Ok(DeterminedTy::Vec(Some(Box::new(inner))).into())
             }
         }
     }

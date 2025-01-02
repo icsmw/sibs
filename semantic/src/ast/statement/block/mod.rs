@@ -9,7 +9,7 @@ impl InferType for Block {
             .nodes
             .last()
             .map(|n| n.infer_type(scx))
-            .unwrap_or_else(|| Ok(DeterminatedTy::Void.into()))?;
+            .unwrap_or_else(|| Ok(DeterminedTy::Void.into()))?;
         scx.tys
             .leave()
             .map_err(|err| LinkedErr::between(err.into(), &self.open, &self.close))?;

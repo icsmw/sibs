@@ -59,7 +59,7 @@ pub enum E {
     #[error("Fail to declare fn; error:{0}")]
     FnDeclarationError(String),
     #[error("Fail to infer determinated type from: {0}")]
-    FailInferDeterminatedType(Ty),
+    FailInferDeterminedType(Ty),
     #[error("Function \"{0}\" not found")]
     FnNotFound(String),
     #[error("Function \"{0}\" expect {1} arguments; got: {2}")]

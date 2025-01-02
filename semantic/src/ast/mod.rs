@@ -110,7 +110,7 @@ impl Finalization for LinkedNode {
                     .set(ty);
                 ppm.initialize(scx)?;
                 ppm.finalize(scx)?;
-                scx.register(ppm.uuid(), &Ty::Indeterminated);
+                scx.register(ppm.uuid(), &Ty::Indeterminate);
                 ty = ppm.infer_type(scx)?;
                 scx.register(ppm.uuid(), &ty);
             }

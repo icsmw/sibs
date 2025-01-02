@@ -9,7 +9,7 @@ impl InferType for FunctionCall {
         if let Some(entity) = scx.fns.lookup(&name, &self.uuid) {
             Ok(entity.result_ty())
         } else if let Some(entity) = scx.fns.efns.lookup(&name, &self.uuid) {
-            Ok(Ty::Determinated(entity.result.clone()))
+            Ok(Ty::Determined(entity.result.clone()))
         } else {
             Err(LinkedErr::between(
                 E::FnNotFound(name),

@@ -2,7 +2,7 @@ use crate::*;
 
 impl InferType for OneOf {
     fn infer_type(&self, _scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
-        Ok(DeterminatedTy::ExecuteResult.into())
+        Ok(DeterminedTy::ExecuteResult.into())
     }
 }
 

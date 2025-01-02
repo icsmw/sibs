@@ -55,24 +55,24 @@ impl RtValue {
 
     pub fn as_ty(&self) -> Option<Ty> {
         match self {
-            Self::Num(..) => Some(DeterminatedTy::Num.into()),
-            Self::Bool(..) => Some(DeterminatedTy::Bool.into()),
-            Self::PathBuf(..) => Some(DeterminatedTy::PathBuf.into()),
-            Self::Str(..) => Some(DeterminatedTy::Str.into()),
-            Self::Range(..) => Some(DeterminatedTy::Range.into()),
-            Self::Error => Some(DeterminatedTy::Error.into()),
-            Self::ExecuteResult => Some(DeterminatedTy::ExecuteResult.into()),
-            Self::Closure => Some(DeterminatedTy::Closure.into()),
-            Self::Void => Some(DeterminatedTy::Void.into()),
+            Self::Num(..) => Some(DeterminedTy::Num.into()),
+            Self::Bool(..) => Some(DeterminedTy::Bool.into()),
+            Self::PathBuf(..) => Some(DeterminedTy::PathBuf.into()),
+            Self::Str(..) => Some(DeterminedTy::Str.into()),
+            Self::Range(..) => Some(DeterminedTy::Range.into()),
+            Self::Error => Some(DeterminedTy::Error.into()),
+            Self::ExecuteResult => Some(DeterminedTy::ExecuteResult.into()),
+            Self::Closure => Some(DeterminedTy::Closure.into()),
+            Self::Void => Some(DeterminedTy::Void.into()),
             Self::Vec(els) => {
                 if let Some(el) = els.first() {
-                    if let Some(Ty::Determinated(ty)) = el.as_ty() {
-                        Some(DeterminatedTy::Vec(Some(Box::new(ty))).into())
+                    if let Some(Ty::Determined(ty)) = el.as_ty() {
+                        Some(DeterminedTy::Vec(Some(Box::new(ty))).into())
                     } else {
                         None
                     }
                 } else {
-                    Some(DeterminatedTy::Vec(None).into())
+                    Some(DeterminedTy::Vec(None).into())
                 }
             }
             Self::BinaryOperator(..) | Self::LogicalOperator(..) | Self::ComparisonOperator(..) => {

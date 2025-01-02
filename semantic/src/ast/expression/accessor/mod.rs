@@ -19,18 +19,18 @@ impl InferType for Accessor {
             ));
         };
         let dpty = pty.determinated().ok_or(LinkedErr::between(
-            E::FailInferDeterminatedType(pty.clone()),
+            E::FailInferDeterminedType(pty.clone()),
             &self.open,
             &self.close,
         ))?;
-        if !matches!(dpty, DeterminatedTy::Vec(..)) {
+        if !matches!(dpty, DeterminedTy::Vec(..)) {
             return Err(LinkedErr::between(
                 E::AccessorOnWrongType(pty.to_owned()),
                 &self.open,
                 &self.close,
             ));
         }
-        if let DeterminatedTy::Vec(Some(inner_ty)) = dpty {
+        if let DeterminedTy::Vec(Some(inner_ty)) = dpty {
             let ty = self.node.infer_type(scx)?;
             if !ty.numeric() {
                 return Err(LinkedErr::by_node(E::ExpectedNumericType(ty), &self.node));

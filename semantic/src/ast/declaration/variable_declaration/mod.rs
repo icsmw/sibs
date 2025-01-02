@@ -18,9 +18,9 @@ impl InferType for VariableDeclaration {
             .lookup(&variable.ident)
             .map_err(|err| LinkedErr::by_node(err.into(), &self.variable))?
         else {
-            return Ok(Ty::Indeterminated);
+            return Ok(Ty::Indeterminate);
         };
-        Ok(ty.assigned.clone().unwrap_or(Ty::Indeterminated))
+        Ok(ty.assigned.clone().unwrap_or(Ty::Indeterminate))
     }
 }
 
@@ -54,7 +54,7 @@ impl Initialize for VariableDeclaration {
                 .map_err(|err| LinkedErr::by_node(err.into(), &self.variable))?;
         } else if let Some(node) = self.assignation.as_ref() {
             let assig = node.infer_type(scx)?;
-            if matches!(assig, Ty::Indeterminated) {
+            if matches!(assig, Ty::Indeterminate) {
                 return Err(LinkedErr::by_node(E::IndeterminateType, node));
             }
             scx.tys
@@ -65,7 +65,7 @@ impl Initialize for VariableDeclaration {
                 .map_err(|err| LinkedErr::by_node(err.into(), &self.variable))?;
         } else if let Some(node) = self.r#type.as_ref() {
             let annot = node.infer_type(scx)?;
-            if matches!(annot, Ty::Indeterminated) {
+            if matches!(annot, Ty::Indeterminate) {
                 return Err(LinkedErr::by_node(E::IndeterminateType, node));
             }
             scx.tys

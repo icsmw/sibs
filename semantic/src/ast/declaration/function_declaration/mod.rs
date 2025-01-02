@@ -46,7 +46,7 @@ impl Initialize for FunctionDeclaration {
             args,
             result: match self.infer_type(scx) {
                 Ok(ty) => ty,
-                Err(_err) => DeterminatedTy::Recursion(self.uuid).into(),
+                Err(_err) => DeterminedTy::Recursion(self.uuid).into(),
             },
             body: FnBody::Node(*self.block.clone()),
         };

@@ -21,7 +21,7 @@ impl InferType for CompoundAssignments {
                 &self.right,
             ))
         } else {
-            Ok(DeterminatedTy::Void.into())
+            Ok(DeterminedTy::Void.into())
         }
     }
 }

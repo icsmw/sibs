@@ -11,10 +11,10 @@ impl InferType for Array {
             .map(|n| n.infer_type(scx))
             .collect::<Result<Vec<_>, _>>()?;
         if tys.is_empty() {
-            return Ok(DeterminatedTy::Vec(None).into());
+            return Ok(DeterminedTy::Vec(None).into());
         }
         let first = tys[0].determinated().cloned().ok_or(LinkedErr::by_node(
-            E::FailInferDeterminatedType(tys[0].clone()),
+            E::FailInferDeterminedType(tys[0].clone()),
             &self.els[0],
         ))?;
         if let Some((n, ty)) = tys.iter().enumerate().find(|(_, ty)| !ty.equal(&first)) {
@@ -23,7 +23,7 @@ impl InferType for Array {
                 &self.els[n],
             ))
         } else {
-            Ok(DeterminatedTy::Vec(Some(Box::new(first))).into())
+            Ok(DeterminedTy::Vec(Some(Box::new(first))).into())
         }
     }
 }

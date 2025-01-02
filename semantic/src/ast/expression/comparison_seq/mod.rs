@@ -15,7 +15,7 @@ impl InferType for ComparisonSeq {
                 return Err(LinkedErr::by_node(E::ExpectedBoolType(ty), node));
             }
         }
-        Ok(DeterminatedTy::Bool.into())
+        Ok(DeterminedTy::Bool.into())
     }
 }
 

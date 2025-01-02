@@ -15,7 +15,7 @@ impl InferType for BinaryExpSeq {
                 return Err(LinkedErr::by_node(E::ExpectedNumericType(ty), node));
             }
         }
-        Ok(DeterminatedTy::Num.into())
+        Ok(DeterminedTy::Num.into())
     }
 }
 

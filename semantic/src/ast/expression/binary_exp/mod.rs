@@ -20,7 +20,7 @@ impl InferType for BinaryExp {
                 &self.right,
             ))
         } else {
-            Ok(DeterminatedTy::Num.into())
+            Ok(DeterminedTy::Num.into())
         }
     }
 }

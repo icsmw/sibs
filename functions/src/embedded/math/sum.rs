@@ -1,9 +1,6 @@
 use crate::*;
 
-declare_embedded_fn!(
-    vec![Ty::Determinated(DeterminatedTy::Num)],
-    DeterminatedTy::Num
-);
+declare_embedded_fn!(vec![Ty::Repeated(DeterminedTy::Num)], DeterminedTy::Num);
 
 #[boxed]
 pub fn executor(args: Vec<FnArgValue>, _rt: Runtime) -> RtPinnedResult<'static, LinkedErr<E>> {

@@ -16,7 +16,7 @@ impl InferType for VariableTypeDeclaration {
                 .into_iter()
                 .map(|ty| {
                     ty.determinated().cloned().ok_or(LinkedErr::token(
-                        E::FailInferDeterminatedType(ty.clone()),
+                        E::FailInferDeterminedType(ty.clone()),
                         &self.token,
                     ))
                 })

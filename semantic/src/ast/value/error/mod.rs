@@ -2,7 +2,7 @@ use crate::*;
 
 impl InferType for Error {
     fn infer_type(&self, _scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
-        Ok(DeterminatedTy::Error.into())
+        Ok(DeterminedTy::Error.into())
     }
 }
 

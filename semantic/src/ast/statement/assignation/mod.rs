@@ -20,7 +20,7 @@ impl InferType for Assignation {
                 &self.left,
             ))?;
         let right = self.right.infer_type(scx)?;
-        if matches!(right, Ty::Indeterminated) {
+        if matches!(right, Ty::Indeterminate) {
             return Err(LinkedErr::by_node(E::IndeterminateType, &self.right));
         }
         let Some(annot) = left.annotated.as_ref() else {
@@ -33,7 +33,7 @@ impl InferType for Assignation {
                     TypeEntity::new(Some(right), Some(annot.to_owned())),
                 )
                 .map_err(|err| LinkedErr::between_nodes(err.into(), &self.left, &self.right))?;
-            Ok(DeterminatedTy::Void.into())
+            Ok(DeterminedTy::Void.into())
         } else {
             Err(LinkedErr::between_nodes(
                 E::DismatchTypes(format!("{annot}, {right}")),

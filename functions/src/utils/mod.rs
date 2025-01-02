@@ -58,7 +58,7 @@ macro_rules! declare_embedded_fn {
             pub fn args() -> Vec<Ty> {
                 $args
             }
-            pub fn returning() -> DeterminatedTy {
+            pub fn returning() -> DeterminedTy {
                 $returning
             }
         }
