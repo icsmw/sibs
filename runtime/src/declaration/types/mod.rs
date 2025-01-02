@@ -132,16 +132,21 @@ pub enum DeterminedTy {
     Vec(Option<Box<DeterminedTy>>),
     Error,
     Closure,
+    Any,
 }
 
 impl DeterminedTy {
     pub fn compatible(&self, right: &DeterminedTy) -> bool {
         if let (DeterminedTy::Vec(left), DeterminedTy::Vec(right)) = (self, right) {
             if let (Some(left), Some(right)) = (left, right) {
-                left == right
+                left.compatible(right)
             } else {
                 left.is_none() && right.is_some()
             }
+        } else if matches!(right, DeterminedTy::Any) {
+            false
+        } else if matches!(self, DeterminedTy::Any) {
+            true
         } else {
             self == right
         }

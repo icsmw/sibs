@@ -70,6 +70,10 @@ pub enum E {
     FuncAlreadyRegistered(String),
     #[error("Function \"{0}\" not found")]
     FuncNotFound(String),
+    #[error("Function has multiple arguments with type Repeated. Only one repeated argument can be defined (at the end)")]
+    MultipleRepeatedFnArgs,
+    #[error("Function has determined argument after optional. Determined arguments cannot follow Optional arguments")]
+    DeterminedFnArgAfterOptional,
     #[error("Runtime error: {0}")]
     RtError(RtError),
 }
