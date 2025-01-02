@@ -11,6 +11,7 @@ pub struct EFns {
 
 impl EFns {
     pub fn add<S: AsRef<str>>(&mut self, fn_name: S, entity: EmbeddedFnEntity) -> Result<(), E> {
+        entity.verify()?;
         if self.funcs.contains_key(fn_name.as_ref()) {
             return Err(E::FuncAlreadyRegistered(fn_name.as_ref().to_owned()));
         }

@@ -67,6 +67,11 @@ pub enum E {
     CompNotFound(String),
     #[error("Task \"{0}\" on component \"{1}\" doesn't exist")]
     TaskNotFound(String, String),
+
+    #[error("Function has been declared multiple arguments with type Repeated. Only one repeated argument can be defined (at the end)")]
+    MultipleRepeatedFnArgsDeclared,
+    #[error("Repeated argument can be defined only once at the end")]
+    NotLastRepeatedFnArg,
 }
 
 impl From<oneshot::error::RecvError> for E {

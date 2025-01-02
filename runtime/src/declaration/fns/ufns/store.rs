@@ -18,6 +18,7 @@ impl UFns {
         let _ = self.path.pop();
     }
     pub fn add<S: AsRef<str>>(&mut self, fn_name: S, entity: UserFnEntity) -> Result<(), E> {
+        entity.verify()?;
         let name = self.fullname(fn_name);
         if self.funcs.contains_key(&name) {
             return Err(E::FuncAlreadyRegistered(name));
