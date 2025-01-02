@@ -20,7 +20,7 @@ impl InferType for VariableCompoundType {
             VariableCompoundType::Vec(tk, n) => {
                 let inner = n.infer_type(scx)?;
                 let inner = inner
-                    .determinated()
+                    .determined()
                     .cloned()
                     .ok_or(LinkedErr::token(E::FailInferDeterminedType(inner), tk))?;
                 Ok(DeterminedTy::Vec(Some(Box::new(inner))).into())

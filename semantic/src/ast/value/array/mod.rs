@@ -13,7 +13,7 @@ impl InferType for Array {
         if tys.is_empty() {
             return Ok(DeterminedTy::Vec(None).into());
         }
-        let first = tys[0].determinated().cloned().ok_or(LinkedErr::by_node(
+        let first = tys[0].determined().cloned().ok_or(LinkedErr::by_node(
             E::FailInferDeterminedType(tys[0].clone()),
             &self.els[0],
         ))?;

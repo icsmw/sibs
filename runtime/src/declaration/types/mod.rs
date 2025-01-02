@@ -81,7 +81,7 @@ impl Ty {
     pub fn bool(&self) -> bool {
         matches!(self, Ty::Determined(DeterminedTy::Bool))
     }
-    pub fn determinated(&self) -> Option<&DeterminedTy> {
+    pub fn determined(&self) -> Option<&DeterminedTy> {
         match self {
             Self::Indeterminate
             | Self::Undefined

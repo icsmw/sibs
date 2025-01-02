@@ -18,7 +18,7 @@ impl InferType for Accessor {
                 &self.close,
             ));
         };
-        let dpty = pty.determinated().ok_or(LinkedErr::between(
+        let dpty = pty.determined().ok_or(LinkedErr::between(
             E::FailInferDeterminedType(pty.clone()),
             &self.open,
             &self.close,
