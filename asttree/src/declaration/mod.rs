@@ -1,4 +1,5 @@
 mod argument_declaration;
+mod closure_declaration;
 mod function_declaration;
 mod include_declaration;
 mod module_declaration;
@@ -9,6 +10,7 @@ mod variable_type_declaration;
 mod variable_variants;
 
 pub use argument_declaration::*;
+pub use closure_declaration::*;
 pub use function_declaration::*;
 pub use include_declaration::*;
 pub use module_declaration::*;
@@ -35,12 +37,14 @@ pub enum Declaration {
     ArgumentDeclaration(ArgumentDeclaration),
     /// a: "one" | "two", a: 1 | 2 etc.
     VariableVariants(VariableVariants),
-    /// string, number, Vec<string>, unknown etc.
+    /// str, num, Vec<str>, unknown etc.
     VariableType(VariableType),
-    /// a: string, a: number, a: string[], a: unknown etc.
+    /// a: str, a: numr, a: string[], a: unknown etc.
     VariableTypeDeclaration(VariableTypeDeclaration),
     /// Name of variable, which is used only in declaration.
     VariableName(VariableName),
+    /// ex: |a: num|: num
+    ClosureDeclaration(ClosureDeclaration),
 }
 
 impl Declaration {
@@ -55,6 +59,7 @@ impl Declaration {
             Self::VariableTypeDeclaration(n) => &n.uuid,
             Self::VariableVariants(n) => &n.uuid,
             Self::VariableName(n) => &n.uuid,
+            Self::ClosureDeclaration(n) => &n.uuid,
         }
     }
 }

@@ -107,6 +107,8 @@ pub enum E {
     /// Closure
     #[error("Missed closure body")]
     MissedClosureBlock,
+    #[error("Missed closure return type")]
+    MissedClosureReturnType,
 
     //FunctionDeclaration
     #[error("Missed function name")]

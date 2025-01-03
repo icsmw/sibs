@@ -10,7 +10,8 @@ impl ConflictResolver<DeclarationId> for DeclarationId {
             | Self::FunctionDeclaration
             | Self::VariableType
             | Self::VariableTypeDeclaration
-            | Self::VariableVariants => self.clone(),
+            | Self::VariableVariants
+            | Self::ClosureDeclaration => self.clone(),
             Self::VariableName => {
                 if matches!(id, DeclarationId::ArgumentDeclaration) {
                     id.clone()

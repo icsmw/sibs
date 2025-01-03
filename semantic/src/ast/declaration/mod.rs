@@ -1,4 +1,5 @@
 mod argument_declaration;
+mod closure_declaration;
 mod function_declaration;
 mod include_declaration;
 mod module_declaration;
@@ -22,6 +23,7 @@ impl InferType for Declaration {
             Declaration::VariableName(n) => n.infer_type(scx),
             Declaration::ModuleDeclaration(n) => n.infer_type(scx),
             Declaration::IncludeDeclaration(n) => n.infer_type(scx),
+            Declaration::ClosureDeclaration(n) => n.infer_type(scx),
         }
     }
 }
@@ -38,6 +40,7 @@ impl Initialize for Declaration {
             Declaration::VariableName(n) => n.initialize(scx),
             Declaration::ModuleDeclaration(n) => n.initialize(scx),
             Declaration::IncludeDeclaration(n) => n.initialize(scx),
+            Declaration::ClosureDeclaration(n) => n.initialize(scx),
         }
     }
 }
@@ -54,6 +57,7 @@ impl Finalization for Declaration {
             Declaration::VariableName(n) => n.finalize(scx),
             Declaration::ModuleDeclaration(n) => n.finalize(scx),
             Declaration::IncludeDeclaration(n) => n.finalize(scx),
+            Declaration::ClosureDeclaration(n) => n.finalize(scx),
         }
     }
 }
