@@ -80,13 +80,12 @@ macro_rules! test_node_reading_case {
         paste::item! {
                 #[test]
                 fn [< test_ $fn_name >]() {
-                    let mut lx = lexer::Lexer::new($content, 0);
-                    let tokens = lx.read(true).unwrap().tokens;
-                    let mut parser = $crate::Parser::new(tokens, &lx.uuid);
+                    let mut lx = lexer::Lexer::new(&$content, 0);
+                    let mut parser = $crate::Parser::unbound(lx.read().unwrap().tokens, &lx.uuid, &$content);
                     let node = $element_ref::read_as_linked(&mut parser);
                     if let Err(err) = &node {
                         eprintln!("{}",parser.report_err(err).expect("Reporting error"));
-                        eprintln!("fail with:\nErr:{err:?}\n{content}\n{}", "=".repeat(100));
+                        eprintln!("fail with:\nErr:{err:?}\n{}\n{}", $content, "=".repeat(100));
                     }
                     assert!(node.is_ok());
                     let node = node.unwrap();

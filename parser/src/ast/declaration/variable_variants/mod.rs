@@ -18,6 +18,7 @@ impl ReadNode<VariableVariants> for VariableVariants {
             return Ok(None);
         }
         let mut variants = Vec::new();
+        let mut vbar = None;
         loop {
             let Some(node) = LinkedNode::try_oneof(
                 parser,
@@ -29,6 +30,7 @@ impl ReadNode<VariableVariants> for VariableVariants {
             else {
                 break;
             };
+            vbar = None;
             variants.push(node);
             let restore = parser.pin();
             if let Some(nx) = parser.token() {
@@ -36,9 +38,13 @@ impl ReadNode<VariableVariants> for VariableVariants {
                     restore(parser);
                     break;
                 }
+                vbar = Some(restore);
             } else {
                 break;
             }
+        }
+        if let Some(restore) = vbar {
+            restore(parser);
         }
         if variants.is_empty() {
             Ok(None)

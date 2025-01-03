@@ -27,8 +27,8 @@ impl Arbitrary for Closure {
             .prop_map(|(args, block)| Closure {
                 block: Box::new(block),
                 args,
-                open: Token::for_test(Kind::LeftParen),
-                close: Token::for_test(Kind::RightParen),
+                open: Token::for_test(Kind::VerticalBar),
+                close: Token::for_test(Kind::VerticalBar),
                 uuid: Uuid::new_v4(),
             })
             .boxed()

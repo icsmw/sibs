@@ -1,7 +1,6 @@
 mod conflict;
 
 mod argument_declaration;
-mod closure;
 mod function_declaration;
 mod include_declaration;
 mod module_declaration;
@@ -35,7 +34,6 @@ impl TryRead<Declaration, DeclarationId> for Declaration {
                 VariableTypeDeclaration::read_as_linked(parser)?
             }
             DeclarationId::VariableVariants => VariableVariants::read_as_linked(parser)?,
-            DeclarationId::Closure => Closure::read_as_linked(parser)?,
             DeclarationId::VariableName => VariableName::read_as_linked(parser)?,
         })
     }

@@ -25,6 +25,8 @@ pub enum E {
     MissedBinaryArgument,
     #[error("Missed comma")]
     MissedComma,
+    #[error("Missed closing vertical bar")]
+    MissedClosingBar,
     #[error("Missed semicolon")]
     MissedSemicolon,
     #[error("Infinite number cannot be used")]

@@ -18,6 +18,7 @@ impl ReadNode<VariableTypeDeclaration> for VariableTypeDeclaration {
             return Ok(None);
         }
         let mut types = Vec::new();
+        let mut vbar = None;
         loop {
             let Some(node) = LinkedNode::try_oneof(
                 parser,
@@ -26,6 +27,7 @@ impl ReadNode<VariableTypeDeclaration> for VariableTypeDeclaration {
             else {
                 break;
             };
+            vbar = None;
             types.push(node);
             let restore = parser.pin();
             if let Some(nx) = parser.token() {
@@ -33,9 +35,13 @@ impl ReadNode<VariableTypeDeclaration> for VariableTypeDeclaration {
                     restore(parser);
                     break;
                 }
+                vbar = Some(restore);
             } else {
                 break;
             }
+        }
+        if let Some(restore) = vbar {
+            restore(parser);
         }
         if types.is_empty() {
             Ok(None)

@@ -1,5 +1,4 @@
 mod argument_declaration;
-mod closure;
 mod function_declaration;
 mod include_declaration;
 mod module_declaration;
@@ -10,7 +9,6 @@ mod variable_type_declaration;
 mod variable_variants;
 
 pub use argument_declaration::*;
-pub use closure::*;
 pub use function_declaration::*;
 pub use include_declaration::*;
 pub use module_declaration::*;
@@ -43,8 +41,6 @@ pub enum Declaration {
     VariableTypeDeclaration(VariableTypeDeclaration),
     /// Name of variable, which is used only in declaration.
     VariableName(VariableName),
-    /// () { ... }; (a, b) { ... }; etc.
-    Closure(Closure),
 }
 
 impl Declaration {
@@ -53,7 +49,6 @@ impl Declaration {
             Self::IncludeDeclaration(n) => &n.uuid,
             Self::ModuleDeclaration(n) => &n.uuid,
             Self::ArgumentDeclaration(n) => &n.uuid,
-            Self::Closure(n) => &n.uuid,
             Self::FunctionDeclaration(n) => &n.uuid,
             Self::VariableDeclaration(n) => &n.uuid,
             Self::VariableType(n) => &n.uuid,

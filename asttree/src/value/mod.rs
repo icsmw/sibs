@@ -1,5 +1,6 @@
 mod array;
 mod boolean;
+mod closure;
 mod error;
 mod interpolated_string;
 mod number;
@@ -7,6 +8,7 @@ mod primitive_string;
 
 pub use array::*;
 pub use boolean::*;
+pub use closure::*;
 pub use error::*;
 pub use interpolated_string::*;
 pub use number::*;
@@ -23,6 +25,7 @@ pub enum Value {
     Array(Array),
     InterpolatedString(InterpolatedString),
     PrimitiveString(PrimitiveString),
+    Closure(Closure),
 }
 
 impl Value {
@@ -34,6 +37,7 @@ impl Value {
             Self::Array(n) => &n.uuid,
             Self::InterpolatedString(n) => &n.uuid,
             Self::PrimitiveString(n) => &n.uuid,
+            Self::Closure(n) => &n.uuid,
         }
     }
 }

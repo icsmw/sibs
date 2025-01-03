@@ -2,6 +2,7 @@ mod conflict;
 
 mod array;
 mod boolean;
+mod closure;
 mod error;
 mod interpolated_string;
 mod number;
@@ -24,6 +25,7 @@ impl TryRead<Value, ValueId> for Value {
             ValueId::Number => Number::read_as_linked(parser)?,
             ValueId::Array => Array::read_as_linked(parser)?,
             ValueId::Error => Error::read_as_linked(parser)?,
+            ValueId::Closure => Closure::read_as_linked(parser)?,
         })
     }
 }
