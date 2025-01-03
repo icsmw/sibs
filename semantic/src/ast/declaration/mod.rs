@@ -1,5 +1,4 @@
 mod argument_declaration;
-mod closure;
 mod function_declaration;
 mod include_declaration;
 mod module_declaration;
@@ -15,7 +14,6 @@ impl InferType for Declaration {
     fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         match self {
             Declaration::ArgumentDeclaration(n) => n.infer_type(scx),
-            Declaration::Closure(n) => n.infer_type(scx),
             Declaration::FunctionDeclaration(n) => n.infer_type(scx),
             Declaration::VariableDeclaration(n) => n.infer_type(scx),
             Declaration::VariableType(n) => n.infer_type(scx),
@@ -32,7 +30,6 @@ impl Initialize for Declaration {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         match self {
             Declaration::ArgumentDeclaration(n) => n.initialize(scx),
-            Declaration::Closure(n) => n.initialize(scx),
             Declaration::FunctionDeclaration(n) => n.initialize(scx),
             Declaration::VariableDeclaration(n) => n.initialize(scx),
             Declaration::VariableType(n) => n.initialize(scx),
@@ -49,7 +46,6 @@ impl Finalization for Declaration {
     fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         match self {
             Declaration::ArgumentDeclaration(n) => n.finalize(scx),
-            Declaration::Closure(n) => n.finalize(scx),
             Declaration::FunctionDeclaration(n) => n.finalize(scx),
             Declaration::VariableDeclaration(n) => n.finalize(scx),
             Declaration::VariableType(n) => n.finalize(scx),

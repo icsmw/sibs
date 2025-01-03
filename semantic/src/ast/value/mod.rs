@@ -1,5 +1,6 @@
 mod array;
 mod boolean;
+mod closure;
 mod error;
 mod interpolated_string;
 mod number;
@@ -16,6 +17,7 @@ impl InferType for Value {
             Value::InterpolatedString(n) => n.infer_type(scx),
             Value::Number(n) => n.infer_type(scx),
             Value::PrimitiveString(n) => n.infer_type(scx),
+            Value::Closure(n) => n.infer_type(scx),
         }
     }
 }
@@ -29,6 +31,7 @@ impl Initialize for Value {
             Value::InterpolatedString(n) => n.initialize(scx),
             Value::Number(n) => n.initialize(scx),
             Value::PrimitiveString(n) => n.initialize(scx),
+            Value::Closure(n) => n.initialize(scx),
         }
     }
 }
@@ -42,6 +45,7 @@ impl Finalization for Value {
             Value::InterpolatedString(n) => n.finalize(scx),
             Value::Number(n) => n.finalize(scx),
             Value::PrimitiveString(n) => n.finalize(scx),
+            Value::Closure(n) => n.finalize(scx),
         }
     }
 }

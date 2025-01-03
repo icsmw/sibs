@@ -26,6 +26,7 @@ impl ReadNode<AssignedValue> for AssignedValue {
                     ValueId::PrimitiveString,
                     ValueId::InterpolatedString,
                     ValueId::Array,
+                    ValueId::Closure,
                 ]),
                 NodeReadTarget::Statement(&[StatementId::If]),
                 NodeReadTarget::Expression(&[

@@ -4,6 +4,7 @@ use crate::*;
 pub struct Fns {
     pub efns: EFns,
     pub ufns: UFns,
+    pub cfns: CFns,
 }
 
 impl Fns {
@@ -22,5 +23,8 @@ impl Fns {
         } else {
             None
         }
+    }
+    pub fn lookup_by_uuid(&mut self, uuid: &Uuid) -> Option<FnEntity<'_>> {
+        self.cfns.lookup(uuid).map(FnEntity::CFn)
     }
 }

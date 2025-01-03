@@ -39,6 +39,9 @@ impl Arbitrary for AssignedValue {
                 Array::arbitrary_with(deep + 1)
                     .prop_map(|v| Node::Value(Value::Array(v)))
                     .boxed(),
+                Closure::arbitrary_with(deep + 1)
+                    .prop_map(|v| Node::Value(Value::Closure(v)))
+                    .boxed(),
                 FunctionCall::arbitrary_with(deep + 1)
                     .prop_map(|v| Node::Expression(Expression::FunctionCall(v)))
                     .boxed(),

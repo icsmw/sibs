@@ -48,8 +48,12 @@ pub enum E {
 
     #[error("Function \"{0}\" has been registred already")]
     FuncAlreadyRegistered(String),
+    #[error("Closure \"{0}\" has been registred already")]
+    ClosureAlreadyRegistered(Uuid),
     #[error("Function \"{0}\" not found")]
     FuncNotFound(String),
+    #[error("Closure \"{0}\" not found")]
+    ClosureNotFound(Uuid),
     #[error("Invalid function argument")]
     InvalidFnArgument,
     #[error("Invalid function argument type")]
@@ -62,6 +66,8 @@ pub enum E {
     NoLinkedFunctions(Uuid),
     #[error("Function \"{0}\" isn't inited")]
     NotInitedFunction(String),
+    #[error("Closure \"{0}\" isn't inited")]
+    NotInitedClosure(Uuid),
 
     #[error("Component \"{0}\" doesn't exist")]
     CompNotFound(String),
