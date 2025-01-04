@@ -10,6 +10,7 @@ pub type UserFnExecutor =
 pub enum FnBody {
     Node(LinkedNode),
     Executor(Metadata, UserFnExecutor),
+    Declaration,
 }
 
 impl Debug for FnBody {
@@ -20,6 +21,7 @@ impl Debug for FnBody {
             match self {
                 Self::Node(n) => format!("FnBody::Node({n:?})"),
                 Self::Executor(..) => "FnBody::Executor(..)".to_owned(),
+                Self::Declaration => "FnBody::Declaration".to_owned(),
             }
         )
     }

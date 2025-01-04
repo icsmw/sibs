@@ -1,11 +1,11 @@
 use crate::*;
 
-// test_success!(
-//     closure_declaration_000,
-//     Block,
-//     r#"{
-//         let cb = |a: num| { a + a; };
-//         let cb = |a: num, b: str| { a + a; };
-//         let cb = |a: Vec<num>, b: num| { a[b]; };
-//     }"#
-// );
+test_success!(
+    closure_declaration_000,
+    Block,
+    r#"{
+        fn test(a: num, cb: |n: num|: num, c: num) {
+            let b = 5;
+        }
+    }"#
+);

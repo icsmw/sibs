@@ -8,6 +8,7 @@ use std::fmt;
 pub struct ClosureDeclaration {
     pub args: Vec<LinkedNode>,
     pub ty: Box<LinkedNode>,
+    pub token: Token,
     pub open: Token,
     pub close: Token,
     pub uuid: Uuid,
@@ -17,7 +18,8 @@ impl fmt::Display for ClosureDeclaration {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{} {} {} {}",
+            "{} {} {} {} {}",
+            self.token,
             self.open,
             self.args
                 .iter()

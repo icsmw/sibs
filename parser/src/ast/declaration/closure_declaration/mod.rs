@@ -5,12 +5,18 @@ use crate::*;
 
 impl Interest for ClosureDeclaration {
     fn intrested(token: &Token) -> bool {
-        matches!(token.kind, Kind::VerticalBar)
+        matches!(token.kind, Kind::Colon)
     }
 }
 
 impl ReadNode<ClosureDeclaration> for ClosureDeclaration {
     fn read(parser: &mut Parser) -> Result<Option<ClosureDeclaration>, LinkedErr<E>> {
+        let Some(token) = parser.token().cloned() else {
+            return Ok(None);
+        };
+        if !matches!(token.kind, Kind::Colon) {
+            return Ok(None);
+        }
         let Some(open) = parser.token().cloned() else {
             return Ok(None);
         };
@@ -47,6 +53,7 @@ impl ReadNode<ClosureDeclaration> for ClosureDeclaration {
         )?
         .ok_or_else(|| E::MissedClosureReturnType.link_between(&open, &close))?;
         Ok(Some(ClosureDeclaration {
+            token,
             args,
             ty: Box::new(ty),
             open,

@@ -25,6 +25,7 @@ impl Arbitrary for ClosureDeclaration {
                 .boxed(),
         )
             .prop_map(|(args, ty)| ClosureDeclaration {
+                token: Token::for_test(Kind::Colon),
                 ty: Box::new(ty),
                 args,
                 open: Token::for_test(Kind::VerticalBar),
