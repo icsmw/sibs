@@ -13,7 +13,7 @@ pub enum RtValue {
     Str(String),
     Vec(Vec<RtValue>),
     Error,
-    Closure,
+    Closure(Uuid),
     BinaryOperator(BinaryOperator),
     ComparisonOperator(ComparisonOperator),
     LogicalOperator(LogicalOperator),
@@ -24,7 +24,7 @@ impl RtValue {
         match self {
             Self::ExecuteResult
             | Self::Error
-            | Self::Closure
+            | Self::Closure(..)
             | Self::BinaryOperator(..)
             | Self::ComparisonOperator(..)
             | Self::LogicalOperator(..) => None,
@@ -62,7 +62,7 @@ impl RtValue {
             Self::Range(..) => Some(DeterminedTy::Range.into()),
             Self::Error => Some(DeterminedTy::Error.into()),
             Self::ExecuteResult => Some(DeterminedTy::ExecuteResult.into()),
-            Self::Closure => Some(DeterminedTy::Closure.into()),
+            Self::Closure(uuid) => Some(DeterminedTy::Closure(*uuid).into()),
             Self::Void => Some(DeterminedTy::Void.into()),
             Self::Vec(els) => {
                 if let Some(el) = els.first() {
@@ -89,7 +89,7 @@ impl RtValue {
             Self::Str(v) => Some(RtValueEqOrd::Str(v)),
             Self::BinaryOperator(..)
             | Self::LogicalOperator(..)
-            | Self::Closure
+            | Self::Closure(..)
             | Self::ComparisonOperator(..)
             | Self::Error
             | Self::ExecuteResult

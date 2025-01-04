@@ -4,8 +4,8 @@ mod tests;
 use crate::*;
 
 impl InferType for ClosureDeclaration {
-    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
-        self.ty.infer_type(scx)
+    fn infer_type(&self, _scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
+        Ok(Ty::Determined(DeterminedTy::Closure(self.uuid)))
     }
 }
 
@@ -33,7 +33,7 @@ impl Initialize for ClosureDeclaration {
         let entity = ClosureFnEntity {
             uuid: self.uuid,
             args,
-            result: match self.infer_type(scx) {
+            result: match self.ty.infer_type(scx) {
                 Ok(ty) => ty,
                 Err(_err) => DeterminedTy::Recursion(self.uuid).into(),
             },

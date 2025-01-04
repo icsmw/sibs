@@ -131,7 +131,7 @@ pub enum DeterminedTy {
     Str,
     Vec(Option<Box<DeterminedTy>>),
     Error,
-    Closure,
+    Closure(Uuid),
     Any,
 }
 

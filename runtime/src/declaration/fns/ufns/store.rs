@@ -34,7 +34,11 @@ impl UFns {
         en.result = ty;
         Ok(())
     }
-    pub fn lookup<S: AsRef<str>>(&mut self, fn_name: S, caller: &Uuid) -> Option<&UserFnEntity> {
+    pub(crate) fn lookup<S: AsRef<str>>(
+        &mut self,
+        fn_name: S,
+        caller: &Uuid,
+    ) -> Option<&UserFnEntity> {
         let name = self.link(fn_name, caller)?;
         self.funcs.get(&name)
     }
@@ -45,7 +49,7 @@ impl UFns {
             self.funcs.get_mut(self.fullname(&fn_name).as_str())
         }
     }
-    pub fn lookup_by_caller(&self, caller: &Uuid) -> Option<&UserFnEntity> {
+    pub(crate) fn lookup_by_caller(&self, caller: &Uuid) -> Option<&UserFnEntity> {
         let name = self.links.get(caller)?;
         self.funcs.get(name)
     }

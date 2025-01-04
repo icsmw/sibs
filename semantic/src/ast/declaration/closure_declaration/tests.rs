@@ -6,6 +6,7 @@ test_success!(
     r#"{
         fn test(a: num, cb: |n: num|: num, c: num) {
             let b = 5;
+            cb(a);
         }
     }"#
 );

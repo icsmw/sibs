@@ -8,6 +8,28 @@ pub struct SemanticCx {
 }
 
 impl SemanticCx {
+    pub fn lookup_fn<S: AsRef<str>>(
+        &mut self,
+        name: S,
+        caller: &Uuid,
+    ) -> Result<Option<FnEntity<'_>>, E> {
+        let uuid = if let Some(ty) = self.tys.lookup(name.as_ref())? {
+            if let Some(Ty::Determined(DeterminedTy::Closure(uuid))) = &ty.assigned {
+                Some(*uuid)
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+        if let Some(uuid) = uuid {
+            return Ok(self.fns.lookup_by_uuid(&uuid));
+        }
+        if let Some(entity) = self.fns.lookup(name.as_ref(), caller) {
+            return Ok(Some(entity));
+        }
+        Ok(None)
+    }
     pub fn by_node<N: InferType + Identification>(&mut self, node: &N) -> Result<(), LinkedErr<E>> {
         if self.table.has(node.uuid()) {
             // It's PPM and it's already registred

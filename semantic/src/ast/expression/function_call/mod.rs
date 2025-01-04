@@ -6,10 +6,14 @@ use crate::*;
 impl InferType for FunctionCall {
     fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         let name = self.get_name();
-        if let Some(entity) = scx.fns.lookup(&name, &self.uuid) {
+        if let Some(entity) = scx.lookup_fn(&name, &self.uuid).map_err(|err| {
+            LinkedErr::between(
+                err,
+                self.reference.first().map(|(_, t)| t).unwrap_or(&self.open),
+                &self.close,
+            )
+        })? {
             Ok(entity.result_ty())
-        } else if let Some(entity) = scx.fns.efns.lookup(&name, &self.uuid) {
-            Ok(Ty::Determined(entity.result.clone()))
         } else {
             Err(LinkedErr::between(
                 E::FnNotFound(name),
@@ -46,7 +50,10 @@ impl Finalization for FunctionCall {
             tys.insert(0, ty);
         }
         let name = self.get_name();
-        let Some(entity) = scx.fns.lookup(&name, &self.uuid) else {
+        let Some(entity) = scx
+            .lookup_fn(&name, &self.uuid)
+            .map_err(|err| LinkedErr::between(err, tk_from, &self.close))?
+        else {
             return Err(LinkedErr::between(
                 E::FnNotFound(name),
                 tk_from,

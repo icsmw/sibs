@@ -18,7 +18,7 @@ impl EFns {
         self.funcs.insert(fn_name.as_ref().to_owned(), entity);
         Ok(())
     }
-    pub fn lookup<S: AsRef<str>>(
+    pub(crate) fn lookup<S: AsRef<str>>(
         &mut self,
         fn_name: S,
         caller: &Uuid,
@@ -26,7 +26,7 @@ impl EFns {
         let name = self.link(fn_name.as_ref(), caller)?;
         self.funcs.get(&name)
     }
-    pub fn lookup_by_caller(&self, caller: &Uuid) -> Option<&EmbeddedFnEntity> {
+    pub(crate) fn lookup_by_caller(&self, caller: &Uuid) -> Option<&EmbeddedFnEntity> {
         let name = self.links.get(caller)?;
         self.funcs.get(name)
     }
