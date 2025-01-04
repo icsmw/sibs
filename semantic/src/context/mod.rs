@@ -14,7 +14,7 @@ impl SemanticCx {
         caller: &Uuid,
     ) -> Result<Option<FnEntity<'_>>, E> {
         let uuid = if let Some(ty) = self.tys.lookup(name.as_ref())? {
-            if let Some(Ty::Determined(DeterminedTy::Closure(uuid))) = &ty.assigned {
+            if let Some(Ty::Determined(DeterminedTy::Closure(uuid, ..))) = &ty.assigned {
                 Some(*uuid)
             } else {
                 None

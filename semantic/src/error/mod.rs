@@ -70,6 +70,8 @@ pub enum E {
     FuncAlreadyRegistered(String),
     #[error("Function \"{0}\" not found")]
     FuncNotFound(String),
+    #[error("Closure isn't \"{0}\" inited")]
+    ClosureNotInited(Uuid),
     #[error("Function has multiple arguments with type Repeated. Only one repeated argument can be defined (at the end)")]
     MultipleRepeatedFnArgs,
 

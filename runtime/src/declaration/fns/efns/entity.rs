@@ -36,6 +36,7 @@ impl EmbeddedFnEntity {
         &self,
         rt: Runtime,
         args: Vec<FnArgValue>,
+        _fns: &Fns,
     ) -> Result<RtValue, LinkedErr<E>> {
         (self.exec)(args, rt).await
     }

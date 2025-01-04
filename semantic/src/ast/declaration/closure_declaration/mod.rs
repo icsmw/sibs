@@ -4,8 +4,18 @@ mod tests;
 use crate::*;
 
 impl InferType for ClosureDeclaration {
-    fn infer_type(&self, _scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
-        Ok(Ty::Determined(DeterminedTy::Closure(self.uuid)))
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
+        let Some((args, out)) = scx.fns.cfns.get_ty(&self.uuid) else {
+            return Err(LinkedErr::between(
+                E::ClosureNotInited(self.uuid),
+                &self.open,
+                &self.close,
+            ));
+        };
+        Ok(Ty::Determined(DeterminedTy::Closure(
+            self.uuid,
+            Some((args, Box::new(out))),
+        )))
     }
 }
 
@@ -61,7 +71,7 @@ impl Finalization for ClosureDeclaration {
         self.args.iter().try_for_each(|n| n.finalize(scx))?;
         self.ty.initialize(scx)?;
         self.ty.finalize(scx)?;
-        let ty = self.infer_type(scx)?;
+        let ty = self.ty.infer_type(scx)?;
         scx.fns.cfns.set_result_ty(&self.uuid, ty).map_err(|err| {
             LinkedErr::between(
                 E::FnDeclarationError(err.to_string()),

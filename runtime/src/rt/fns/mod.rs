@@ -27,7 +27,7 @@ impl RtFns {
                             continue;
                         };
                         chk_send_err!(
-                            tx.send(fn_entity.execute(rt, args).await),
+                            tx.send(fn_entity.execute(rt, args, &fns).await),
                             DemandId::Execute
                         );
                     }

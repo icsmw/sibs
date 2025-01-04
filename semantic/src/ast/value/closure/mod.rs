@@ -4,8 +4,18 @@ mod tests;
 use crate::*;
 
 impl InferType for Closure {
-    fn infer_type(&self, _scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
-        Ok(Ty::Determined(DeterminedTy::Closure(self.uuid)))
+    fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
+        let Some((args, out)) = scx.fns.cfns.get_ty(&self.uuid) else {
+            return Err(LinkedErr::between(
+                E::ClosureNotInited(self.uuid),
+                &self.open,
+                &self.close,
+            ));
+        };
+        Ok(Ty::Determined(DeterminedTy::Closure(
+            self.uuid,
+            Some((args, Box::new(out))),
+        )))
     }
 }
 

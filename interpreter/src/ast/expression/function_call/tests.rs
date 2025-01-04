@@ -44,3 +44,31 @@ test_value_expectation!(
         a;
     }"#
 );
+
+test_value_expectation!(
+    closure_function_call_001,
+    Block,
+    RtValue::Num(15.0),
+    r#"{
+        fn sum(a: num, b: num) {
+            a + b;
+        }
+        let cb = |n: num| { n * 2;};
+        let a = sum(5, cb(5));
+        a;
+    }"#
+);
+
+test_value_expectation!(
+    closure_function_call_002,
+    Block,
+    RtValue::Num(15.0),
+    r#"{
+        fn sum(a: num, b: num, cb: |n: num|: num) {
+            a + b + cb(5);
+        }
+        let cb = |n: num| { n * 2;};
+        let a = sum(5, 5, cb);
+        a;
+    }"#
+);

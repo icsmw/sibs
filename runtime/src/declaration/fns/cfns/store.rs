@@ -33,6 +33,18 @@ impl CFns {
         let uuid = self.links.get(caller)?;
         self.funcs.get(uuid)
     }
+    pub fn get_ty(&self, uuid: &Uuid) -> Option<(Vec<Ty>, Ty)> {
+        self.funcs.get(uuid).map(|en| {
+            (
+                en.args
+                    .iter()
+                    .map(|arg| arg.ty.clone())
+                    .collect::<Vec<Ty>>(),
+                en.result.clone(),
+            )
+        })
+    }
+
     fn link(&mut self, cl_uuid: &Uuid, caller: &Uuid) -> Option<Uuid> {
         if !self.funcs.contains_key(cl_uuid) {
             None

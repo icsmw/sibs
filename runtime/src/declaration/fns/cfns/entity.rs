@@ -38,6 +38,7 @@ impl ClosureFnEntity {
         &self,
         rt: Runtime,
         args: Vec<FnArgValue>,
+        _fns: &Fns,
     ) -> Result<RtValue, LinkedErr<E>> {
         let FnBody::Executor(md, exec) = &self.body else {
             return Err(LinkedErr::unlinked(E::NotInitedClosure(self.uuid)));

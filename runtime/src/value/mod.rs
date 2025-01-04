@@ -62,7 +62,7 @@ impl RtValue {
             Self::Range(..) => Some(DeterminedTy::Range.into()),
             Self::Error => Some(DeterminedTy::Error.into()),
             Self::ExecuteResult => Some(DeterminedTy::ExecuteResult.into()),
-            Self::Closure(uuid) => Some(DeterminedTy::Closure(*uuid).into()),
+            Self::Closure(uuid) => Some(DeterminedTy::Closure(*uuid, None).into()),
             Self::Void => Some(DeterminedTy::Void.into()),
             Self::Vec(els) => {
                 if let Some(el) = els.first() {

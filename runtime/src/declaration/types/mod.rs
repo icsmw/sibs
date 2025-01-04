@@ -131,7 +131,7 @@ pub enum DeterminedTy {
     Str,
     Vec(Option<Box<DeterminedTy>>),
     Error,
-    Closure(Uuid),
+    Closure(Uuid, Option<(Vec<Ty>, Box<Ty>)>),
     Any,
 }
 
@@ -143,6 +143,10 @@ impl DeterminedTy {
             } else {
                 left.is_none() && right.is_some()
             }
+        } else if let (DeterminedTy::Closure(l_uuid, left), DeterminedTy::Closure(r_uuid, right)) =
+            (self, right)
+        {
+            l_uuid == r_uuid || left == right
         } else if matches!(right, DeterminedTy::Any) {
             false
         } else if matches!(self, DeterminedTy::Any) {
@@ -174,7 +178,7 @@ impl fmt::Display for DeterminedTy {
                         .unwrap_or("undefined".to_string())
                 ),
                 Self::Error => "Error".to_owned(),
-                Self::Closure(uuid) => format!("Closure({uuid})"),
+                Self::Closure(uuid, ..) => format!("Closure({uuid})"),
                 Self::Any => "Any".to_owned(),
             }
         )

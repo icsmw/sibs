@@ -64,7 +64,9 @@ impl UserFnEntity {
         &self,
         rt: Runtime,
         args: Vec<FnArgValue>,
+        fns: &Fns,
     ) -> Result<RtValue, LinkedErr<E>> {
+        println!(">>>>>>>>>>>>>>>>>>>>>>>>> FNS EXECUTE: start");
         let FnBody::Executor(md, exec) = &self.body else {
             return Err(LinkedErr::unlinked(E::NotInitedFunction(
                 self.name.to_owned(),
@@ -85,6 +87,18 @@ impl UserFnEntity {
                     (&arg_vl.link).into(),
                 ));
                 break;
+            };
+            let vl_ty = if let Ty::Determined(DeterminedTy::Closure(uuid, ..)) = vl_ty {
+                let Some((args, out)) = fns.cfns.get_ty(&uuid) else {
+                    err = Some(LinkedErr::by_link(
+                        E::ClosureNotFound(uuid),
+                        (&arg_vl.link).into(),
+                    ));
+                    break;
+                };
+                Ty::Determined(DeterminedTy::Closure(uuid, Some((args, Box::new(out)))))
+            } else {
+                vl_ty
             };
             if !decl.ty.compatible(&vl_ty) {
                 err = Some(LinkedErr::by_link(
@@ -108,6 +122,7 @@ impl UserFnEntity {
         if let Err(err) = rt.scopes.leave().await {
             return Err(LinkedErr::by_link(err, (&md.link).into()));
         }
+        println!(">>>>>>>>>>>>>>>>>>>>>>>>> FNS EXECUTE: finish");
         result
     }
 }
