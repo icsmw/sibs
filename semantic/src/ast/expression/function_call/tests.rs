@@ -140,6 +140,15 @@ test_fail!(
 );
 
 test_fail!(
+    closure_function_call_003,
+    Block,
+    r#"{
+        let cb = |a:num| { a + 5; };
+        let b:str = cb(10);
+    }"#
+);
+
+test_fail!(
     function_call_000,
     Anchor,
     r#"

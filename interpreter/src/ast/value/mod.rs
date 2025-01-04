@@ -1,5 +1,6 @@
 mod array;
 mod boolean;
+mod closure;
 mod error;
 mod interpolated_string;
 mod number;
@@ -16,6 +17,7 @@ impl Interpret for Value {
             Value::InterpolatedString(n) => n.interpret(rt),
             Value::Number(n) => n.interpret(rt),
             Value::PrimitiveString(n) => n.interpret(rt),
+            Value::Closure(n) => n.interpret(rt),
         }
     }
 }

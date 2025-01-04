@@ -32,6 +32,15 @@ pub(crate) fn into_rt_ufns(mut fns: Fns) -> Fns {
             (k, v)
         })
         .collect();
+    fns.cfns.funcs = fns
+        .cfns
+        .funcs
+        .into_iter()
+        .map(|(k, mut v)| {
+            v.body = node_into_exec(v.body);
+            (k, v)
+        })
+        .collect();
     fns
 }
 
@@ -48,5 +57,6 @@ fn node_into_exec(body: FnBody) -> FnBody {
             };
             FnBody::Executor(meta, Box::new(func))
         }
+        FnBody::Declaration => FnBody::Declaration,
     }
 }

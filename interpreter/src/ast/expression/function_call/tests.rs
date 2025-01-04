@@ -33,3 +33,14 @@ test_value_expectation!(
     RtValue::Void,
     r#"{ console::print("Hello"); }"#
 );
+
+test_value_expectation!(
+    closure_function_call_000,
+    Block,
+    RtValue::Num(10.0),
+    r#"{
+        let cb = |n: num| { n * 2;};
+        let a = cb(5);
+        a;
+    }"#
+);

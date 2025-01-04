@@ -63,7 +63,7 @@ impl Finalization for Closure {
         // it might fall into recursion
         self.block.initialize(scx)?;
         self.block.finalize(scx)?;
-        let ty = self.infer_type(scx)?;
+        let ty = self.block.infer_type(scx)?;
         scx.fns.cfns.set_result_ty(&self.uuid, ty).map_err(|err| {
             LinkedErr::between(
                 E::FnDeclarationError(err.to_string()),

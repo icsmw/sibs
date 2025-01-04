@@ -20,11 +20,13 @@ impl Fns {
             self.ufns.funcs.get(name).map(FnEntity::UFn)
         } else if let Some(name) = self.efns.links.get(caller) {
             self.efns.funcs.get(name).map(FnEntity::EFn)
+        } else if let Some(uuid) = self.cfns.links.get(caller) {
+            self.cfns.funcs.get(uuid).map(FnEntity::CFn)
         } else {
             None
         }
     }
-    pub fn lookup_by_uuid(&mut self, uuid: &Uuid) -> Option<FnEntity<'_>> {
-        self.cfns.lookup(uuid).map(FnEntity::CFn)
+    pub fn lookup_by_uuid(&mut self, uuid: &Uuid, caller: &Uuid) -> Option<FnEntity<'_>> {
+        self.cfns.lookup(uuid, caller).map(FnEntity::CFn)
     }
 }

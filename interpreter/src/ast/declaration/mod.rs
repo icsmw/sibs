@@ -1,5 +1,5 @@
 mod argument_declaration;
-mod closure;
+mod closure_declaration;
 mod function_declaration;
 mod include_declaration;
 mod module_declaration;
@@ -15,7 +15,7 @@ impl Interpret for Declaration {
     fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
         match self {
             Declaration::ArgumentDeclaration(n) => n.interpret(rt),
-            Declaration::Closure(n) => n.interpret(rt),
+            Declaration::ClosureDeclaration(n) => n.interpret(rt),
             Declaration::FunctionDeclaration(n) => n.interpret(rt),
             Declaration::VariableDeclaration(n) => n.interpret(rt),
             Declaration::VariableType(n) => n.interpret(rt),

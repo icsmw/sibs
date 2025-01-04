@@ -23,7 +23,7 @@ impl SemanticCx {
             None
         };
         if let Some(uuid) = uuid {
-            return Ok(self.fns.lookup_by_uuid(&uuid));
+            return Ok(self.fns.lookup_by_uuid(&uuid, caller));
         }
         if let Some(entity) = self.fns.lookup(name.as_ref(), caller) {
             return Ok(Some(entity));

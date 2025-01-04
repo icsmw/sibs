@@ -60,7 +60,7 @@ impl ClosureFnEntity {
             };
             if !decl.ty.compatible(&vl_ty) {
                 err = Some(LinkedErr::by_link(
-                    E::FnArgumentTypeDismatch(decl.ty.to_string()),
+                    E::FnArgumentTypeDismatch(format!("{} vs {vl_ty}", decl.ty)),
                     (&arg_vl.link).into(),
                 ));
                 break;
