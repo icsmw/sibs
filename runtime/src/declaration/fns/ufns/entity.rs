@@ -66,7 +66,6 @@ impl UserFnEntity {
         args: Vec<FnArgValue>,
         fns: &Fns,
     ) -> Result<RtValue, LinkedErr<E>> {
-        println!(">>>>>>>>>>>>>>>>>>>>>>>>> FNS EXECUTE: start");
         let FnBody::Executor(md, exec) = &self.body else {
             return Err(LinkedErr::unlinked(E::NotInitedFunction(
                 self.name.to_owned(),
@@ -122,7 +121,6 @@ impl UserFnEntity {
         if let Err(err) = rt.scopes.leave().await {
             return Err(LinkedErr::by_link(err, (&md.link).into()));
         }
-        println!(">>>>>>>>>>>>>>>>>>>>>>>>> FNS EXECUTE: finish");
         result
     }
 }

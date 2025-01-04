@@ -1,6 +1,8 @@
 #[cfg(test)]
 mod tests;
 
+use std::ops::Deref;
+
 use crate::*;
 
 impl Interpret for FunctionCall {
@@ -18,6 +20,17 @@ impl Interpret for FunctionCall {
         for n in self.args.iter() {
             args.push(FnArgValue::by_node(n.interpret(rt.clone()).await?, n));
         }
-        rt.clone().fns.execute(&self.uuid, rt, args).await
+        let uuid = if let Some(RtValue::Closure(uuid)) = rt
+            .scopes
+            .lookup(self.get_name())
+            .await
+            .map_err(|err| LinkedErr::between(err, &self.open, &self.close))?
+            .as_deref()
+        {
+            *uuid
+        } else {
+            self.uuid
+        };
+        rt.clone().fns.execute(&uuid, rt, args).await
     }
 }

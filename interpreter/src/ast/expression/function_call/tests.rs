@@ -62,7 +62,7 @@ test_value_expectation!(
 test_value_expectation!(
     closure_function_call_002,
     Block,
-    RtValue::Num(15.0),
+    RtValue::Num(20.0),
     r#"{
         fn sum(a: num, b: num, cb: |n: num|: num) {
             a + b + cb(5);

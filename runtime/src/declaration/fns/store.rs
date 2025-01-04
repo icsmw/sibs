@@ -29,4 +29,40 @@ impl Fns {
     pub fn lookup_by_uuid(&mut self, uuid: &Uuid, caller: &Uuid) -> Option<FnEntity<'_>> {
         self.cfns.lookup(uuid, caller).map(FnEntity::CFn)
     }
+    pub fn lookup_closure(&self, uuid: &Uuid) -> Option<FnEntity<'_>> {
+        self.cfns.funcs.get(uuid).map(FnEntity::CFn)
+    }
+    /// Asynchronously executes a function in the runtime with the given parameters.
+    ///
+    /// # Arguments
+    ///
+    /// * `uuid` - A reference to a `Uuid` of caller node.
+    /// * `rt` - The runtime environment in which the function will be executed.
+    /// * `args` - A vector of `RtValue` containing the arguments to pass to the function.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing either:
+    /// * `RtValue` - The result of the executed function.
+    /// * `E` - An error if the function execution fails.
+    ///
+    /// # Errors
+    ///
+    /// This function returns an error if:
+    /// * Sending the execution demand to the runtime fails.
+    /// * Awaiting the response from the runtime fails.
+    pub async fn execute(
+        &self,
+        uuid: &Uuid,
+        rt: Runtime,
+        args: Vec<FnArgValue>,
+    ) -> Result<RtValue, LinkedErr<E>> {
+        let Some(fn_entity) = self
+            .lookup_by_caller(uuid)
+            .or_else(|| self.lookup_closure(uuid))
+        else {
+            return Err(LinkedErr::unlinked(E::NoLinkedFunctions(*uuid)));
+        };
+        fn_entity.execute(rt, args, self).await
+    }
 }
