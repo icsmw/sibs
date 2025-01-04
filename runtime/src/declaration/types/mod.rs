@@ -155,6 +155,28 @@ impl DeterminedTy {
 
 impl fmt::Display for DeterminedTy {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.id())
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Recursion(uuid) => format!("Recursion({uuid})"),
+                Self::Void => "Void".to_owned(),
+                Self::ExecuteResult => "ExecuteResult".to_owned(),
+                Self::Range => "Range".to_owned(),
+                Self::Num => "Num".to_owned(),
+                Self::Bool => "Bool".to_owned(),
+                Self::PathBuf => "PathBuf".to_owned(),
+                Self::Str => "Str".to_owned(),
+                Self::Vec(ty) => format!(
+                    "Vec<{}>",
+                    ty.as_ref()
+                        .map(|ty| ty.to_string())
+                        .unwrap_or("undefined".to_string())
+                ),
+                Self::Error => "Error".to_owned(),
+                Self::Closure(uuid) => format!("Closure({uuid})"),
+                Self::Any => "Any".to_owned(),
+            }
+        )
     }
 }

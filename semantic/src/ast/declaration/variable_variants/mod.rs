@@ -16,7 +16,7 @@ impl InferType for VariableVariants {
         } else {
             Err(LinkedErr::unlinked(E::DismatchTypes(
                 tys.iter()
-                    .map(|ty| ty.id().to_string())
+                    .map(|ty| ty.to_string())
                     .collect::<Vec<String>>()
                     .join(", "),
             )))

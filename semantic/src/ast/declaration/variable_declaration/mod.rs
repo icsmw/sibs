@@ -44,7 +44,7 @@ impl Initialize for VariableDeclaration {
             let assig = n_assig.infer_type(scx)?;
             if annot != assig {
                 return Err(LinkedErr::between_nodes(
-                    E::DismatchTypes(format!("{}, {}", annot.id(), assig.id())),
+                    E::DismatchTypes(format!("{}, {}", annot, assig)),
                     n_ty,
                     n_assig,
                 ));

@@ -101,6 +101,44 @@ test_success!(
     }"#
 );
 
+test_success!(
+    closure_function_call_001,
+    Block,
+    r#"{
+        let cb = |a:num| { a + 5; };
+        let c = 5;
+        let b:num = cb(c);
+    }"#
+);
+
+test_fail!(
+    closure_function_call_000,
+    Block,
+    r#"{
+        let cb = |a:num| { a + 5; };
+        let b:str = cb(10);
+    }"#
+);
+
+test_fail!(
+    closure_function_call_001,
+    Block,
+    r#"{
+        let cb = |a:num| { a + 5; };
+        let b:str = cb("10");
+    }"#
+);
+
+test_fail!(
+    closure_function_call_002,
+    Block,
+    r#"{
+        let cb = |a:num| { a + 5; };
+        let c = "str";
+        let b:str = cb(c);
+    }"#
+);
+
 test_fail!(
     function_call_000,
     Anchor,
