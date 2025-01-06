@@ -2,7 +2,7 @@ use crate::*;
 
 use thiserror::Error;
 
-#[derive(Error, Debug, Clone)]
+#[derive(Error, Debug)]
 pub enum E {
     #[error("Token isn't bound to known Ty")]
     TokenIsNotBoundToKnownTy,

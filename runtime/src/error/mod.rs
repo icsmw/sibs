@@ -1,7 +1,8 @@
 use crate::*;
+use std::io;
 use thiserror::Error;
 
-#[derive(Error, Debug, Clone)]
+#[derive(Error, Debug)]
 pub enum E {
     #[error("Attempt to leave global scope")]
     AttemptToLeaveGlobalScope,
@@ -82,6 +83,15 @@ pub enum E {
     MultipleRepeatedFnArgsDeclared,
     #[error("Repeated argument can be defined only once at the end")]
     NotLastRepeatedFnArg,
+
+    #[error("IO Error: {0}")]
+    IO(io::Error),
+}
+
+impl From<io::Error> for E {
+    fn from(err: io::Error) -> Self {
+        E::IO(err)
+    }
 }
 
 impl From<oneshot::error::RecvError> for E {
