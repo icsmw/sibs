@@ -41,10 +41,11 @@ impl<'a> FnEntity<'a> {
         rt: Runtime,
         args: Vec<FnArgValue>,
         fns: &Fns,
+        caller: &SrcLink,
     ) -> Result<RtValue, LinkedErr<E>> {
         match self {
             Self::UFn(en) => en.execute(rt, args, fns).await,
-            Self::EFn(en) => en.execute(rt, args, fns).await,
+            Self::EFn(en) => en.execute(rt, args, fns, caller).await,
             Self::CFn(en) => en.execute(rt, args, fns).await,
         }
     }

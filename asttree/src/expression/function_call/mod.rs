@@ -22,6 +22,21 @@ impl FunctionCall {
             .collect::<Vec<String>>()
             .join("::")
     }
+    pub fn get_src(&self) -> Option<SrcLink> {
+        if let Some((_, ft)) = self.reference.first() {
+            let pos = Position {
+                from: ft.pos.from,
+                to: self.close.pos.to,
+            };
+            Some(SrcLink {
+                pos: pos.clone(),
+                expos: pos,
+                src: ft.src,
+            })
+        } else {
+            None
+        }
+    }
 }
 
 impl fmt::Display for FunctionCall {

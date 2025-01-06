@@ -15,6 +15,8 @@ pub enum E {
     SendError,
     #[error("Fail extract value")]
     FailExtractValue,
+    #[error("Fail get src link")]
+    FailGetSrcLink,
     #[error("Invalid value type; expected \"{0}\"")]
     InvalidValueType(String),
     #[error("Value type cannot be cast to public Ty")]

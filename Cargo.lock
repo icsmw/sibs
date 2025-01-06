@@ -185,6 +185,7 @@ dependencies = [
  "boxed",
  "diagnostics",
  "importer",
+ "lexer",
  "paste",
  "runtime",
  "thiserror",

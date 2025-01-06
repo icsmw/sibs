@@ -56,6 +56,7 @@ impl Fns {
         uuid: &Uuid,
         rt: Runtime,
         args: Vec<FnArgValue>,
+        caller: &SrcLink,
     ) -> Result<RtValue, LinkedErr<E>> {
         let Some(fn_entity) = self
             .lookup_by_caller(uuid)
@@ -63,6 +64,6 @@ impl Fns {
         else {
             return Err(LinkedErr::unlinked(E::NoLinkedFunctions(*uuid)));
         };
-        fn_entity.execute(rt, args, self).await
+        fn_entity.execute(rt, args, self, caller).await
     }
 }

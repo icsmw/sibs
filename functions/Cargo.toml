@@ -13,5 +13,6 @@ runtime = { path = "../runtime" }
 boxed = { path = "../support/boxed" }
 importer = { path = "../support/importer" }
 diagnostics = { path = "../diagnostics" }
+lexer = { path = "../lexer" }
 paste.workspace = true
 
