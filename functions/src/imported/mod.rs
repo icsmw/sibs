@@ -1,11 +1,8 @@
-use std::path::PathBuf;
+mod fs;
 
 use crate::*;
 
 pub fn register(efns: &mut EFns) -> Result<(), E> {
-    #[import(fs)]
-    fn create_dir(path: PathBuf) -> Result<(), E> {
-        Ok(std::fs::create_dir(path)?)
-    }
+    fs::register(efns)?;
     Ok(())
 }

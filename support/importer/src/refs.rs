@@ -33,7 +33,7 @@ pub fn get_ty(ty: &Type) -> Result<TokenStream, String> {
                         };
                         let inner_ref = get_ty_by_ident(inner_ident)?;
                         Ok(quote! {
-                            DeterminedTy::Vec(Box::new(#inner_ref))
+                            DeterminedTy::Vec(Some(Box::new(#inner_ref)))
                         })
                     }
                     "HashMap" => {

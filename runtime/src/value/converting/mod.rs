@@ -1,4 +1,5 @@
 mod primitive;
+mod vec;
 
 use crate::*;
 

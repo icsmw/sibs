@@ -524,6 +524,7 @@ dependencies = [
  "enum_ids",
  "lexer",
  "parser",
+ "paste",
  "thiserror",
  "tokio",
  "tokio-util",

@@ -1,5 +1,5 @@
 use crate::*;
-use std::io;
+use std::{io, time::SystemTimeError};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -84,13 +84,21 @@ pub enum E {
     #[error("Repeated argument can be defined only once at the end")]
     NotLastRepeatedFnArg,
 
-    #[error("IO Error: {0}")]
+    #[error("IO error: {0}")]
     IO(io::Error),
+    #[error("System time error: {0}")]
+    SysTime(SystemTimeError),
 }
 
 impl From<io::Error> for E {
     fn from(err: io::Error) -> Self {
         E::IO(err)
+    }
+}
+
+impl From<SystemTimeError> for E {
+    fn from(err: SystemTimeError) -> Self {
+        E::SysTime(err)
     }
 }
 
