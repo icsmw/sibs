@@ -66,6 +66,17 @@ impl TryFrom<String> for Keyword {
     }
 }
 
+impl TryFrom<&str> for Keyword {
+    type Error = ();
+    fn try_from(value: &str) -> Result<Self, <Keyword as TryFrom<&str>>::Error> {
+        KeywordId::as_vec()
+            .into_iter()
+            .find(|kw| Into::<Keyword>::into(kw).to_string() == value)
+            .map(|kw| Into::<Keyword>::into(&kw))
+            .ok_or(())
+    }
+}
+
 impl Keyword {
     pub fn length(&self) -> usize {
         self.to_string().len()

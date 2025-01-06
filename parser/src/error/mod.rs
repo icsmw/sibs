@@ -64,6 +64,10 @@ pub enum E {
     #[error("IO Error: {0}")]
     IOError(io::Error),
 
+    /// Call
+    #[error("Missed expression after dot")]
+    MissedCallExpression,
+
     /// Each
     #[error("In each statement declaration of element variable is missed")]
     MissedElementDeclarationInEach,
@@ -91,8 +95,13 @@ pub enum E {
     /// VariableDeclaration
     #[error("Expecting variable assignation after let")]
     MissedVariableDefinition,
+    #[error("Expecting variable name after let")]
+    MissedVariableName,
     #[error("Expecting variable type definition")]
     MissedVariableTypeDefinition,
+
+    #[error("Keyword cannot be used here")]
+    KeywordUsing,
 
     /// VariableType
     #[error("Expecting variable nested type definition")]
@@ -110,7 +119,7 @@ pub enum E {
     #[error("Missed closure return type")]
     MissedClosureReturnType,
 
-    //FunctionDeclaration
+    /// FunctionDeclaration
     #[error("Missed function name")]
     MissedFnName,
     #[error("Missed function body")]

@@ -88,6 +88,9 @@ pub enum E {
     IO(io::Error),
     #[error("System time error: {0}")]
     SysTime(SystemTimeError),
+
+    #[error("Fn {0} is using keyword: {1}")]
+    FnUsesKeyword(String, String),
 }
 
 impl From<io::Error> for E {

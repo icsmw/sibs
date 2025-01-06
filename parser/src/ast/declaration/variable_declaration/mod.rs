@@ -17,6 +17,14 @@ impl ReadNode<VariableDeclaration> for VariableDeclaration {
         if !matches!(token.kind, Kind::Keyword(Keyword::Let)) {
             return Ok(None);
         }
+        let restore = parser.pin();
+        let Some(next) = parser.token() else {
+            return Err(LinkedErr::token(E::MissedVariableName, &token));
+        };
+        if matches!(next.kind, Kind::Keyword(..)) {
+            return Err(LinkedErr::token(E::KeywordUsing, next));
+        }
+        restore(parser);
         let variable = LinkedNode::try_oneof(
             parser,
             &[NodeReadTarget::Declaration(&[DeclarationId::VariableName])],

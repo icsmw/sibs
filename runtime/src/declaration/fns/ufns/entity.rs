@@ -37,7 +37,7 @@ pub struct UserFnEntity {
 }
 
 impl UserFnEntity {
-    pub fn verify(&self) -> Result<(), E> {
+    pub fn verify<S: AsRef<str>>(&self, fullname: S) -> Result<(), E> {
         if self
             .args
             .iter()
@@ -58,7 +58,18 @@ impl UserFnEntity {
                 }
             }
         }
-        Ok(())
+        if let Some(keyword) = fullname
+            .as_ref()
+            .split("::")
+            .find(|p| Keyword::try_from(*p).is_ok())
+        {
+            Err(E::FnUsesKeyword(
+                fullname.as_ref().to_owned(),
+                keyword.to_owned(),
+            ))
+        } else {
+            Ok(())
+        }
     }
     pub async fn execute(
         &self,

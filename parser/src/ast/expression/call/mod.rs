@@ -17,6 +17,14 @@ impl ReadNode<Call> for Call {
         if !matches!(token.kind, Kind::Dot) {
             return Ok(None);
         }
+        let restore = parser.pin();
+        let Some(next) = parser.token() else {
+            return Err(LinkedErr::token(E::MissedCallExpression, &token));
+        };
+        if matches!(next.kind, Kind::Keyword(..)) {
+            return Err(LinkedErr::token(E::KeywordUsing, next));
+        }
+        restore(parser);
         let Some(node) = LinkedNode::try_oneof(
             parser,
             &[NodeReadTarget::Expression(&[ExpressionId::FunctionCall])],

@@ -17,6 +17,14 @@ impl ReadNode<FunctionDeclaration> for FunctionDeclaration {
         if !matches!(sig.kind, Kind::Keyword(Keyword::Fn)) {
             return Ok(None);
         }
+        let restore = parser.pin();
+        let Some(next) = parser.token() else {
+            return Err(LinkedErr::token(E::MissedFnName, &sig));
+        };
+        if matches!(next.kind, Kind::Keyword(..)) {
+            return Err(LinkedErr::token(E::KeywordUsing, next));
+        }
+        restore(parser);
         let name = parser
             .token()
             .cloned()

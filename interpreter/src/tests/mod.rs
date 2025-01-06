@@ -1,3 +1,5 @@
+mod efns;
+
 #[macro_export]
 macro_rules! test_value_expectation {
     ($fn_name:ident, $element_ref:expr, $expectation:expr, $content:literal) => {

@@ -9,10 +9,11 @@ edition = "2021"
 
 thiserror.workspace = true
 uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }
+paste.workspace = true
+
 runtime = { path = "../runtime" }
 boxed = { path = "../support/boxed" }
 importer = { path = "../support/importer" }
 diagnostics = { path = "../diagnostics" }
 lexer = { path = "../lexer" }
-paste.workspace = true
 

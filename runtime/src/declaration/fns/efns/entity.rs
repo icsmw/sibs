@@ -31,7 +31,18 @@ impl EmbeddedFnEntity {
                 }
             }
         }
-        Ok(())
+        if let Some(keyword) = self
+            .fullname
+            .split("::")
+            .find(|p| Keyword::try_from(*p).is_ok())
+        {
+            Err(E::FnUsesKeyword(
+                self.fullname.to_owned(),
+                keyword.to_owned(),
+            ))
+        } else {
+            Ok(())
+        }
     }
     pub async fn execute(
         &self,
