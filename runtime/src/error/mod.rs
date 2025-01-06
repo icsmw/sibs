@@ -45,6 +45,8 @@ pub enum E {
     NoRootScope,
     #[error("Fail to find scope {0}")]
     FailToFindScope(Uuid),
+    #[error("Cannot convert \"{0}\" into \"{0}\"")]
+    FailCovertToRsType(String, String),
 
     #[error("Function \"{0}\" has been registred already")]
     FuncAlreadyRegistered(String),

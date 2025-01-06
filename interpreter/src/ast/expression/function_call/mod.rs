@@ -1,8 +1,6 @@
 #[cfg(test)]
 mod tests;
 
-use std::ops::Deref;
-
 use crate::*;
 
 impl Interpret for FunctionCall {

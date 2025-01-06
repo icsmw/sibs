@@ -10,7 +10,8 @@ members = [
     "common",
     "runtime",
     "functions",
-    "support/boxed"
+    "support/boxed",
+    "support/importer"
 ]
 
 [workspace.dependencies]

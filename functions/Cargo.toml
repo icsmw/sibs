@@ -11,6 +11,7 @@ thiserror.workspace = true
 uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }
 runtime = { path = "../runtime" }
 boxed = { path = "../support/boxed" }
+importer = { path = "../support/importer" }
 diagnostics = { path = "../diagnostics" }
 paste.workspace = true
 

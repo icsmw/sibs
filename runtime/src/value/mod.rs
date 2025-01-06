@@ -1,4 +1,9 @@
+mod converting;
+
+pub use converting::*;
+
 use crate::*;
+use std::fmt;
 
 /// Runtime Value
 #[enum_ids::enum_ids(display_variant)]
@@ -107,4 +112,28 @@ pub enum RtValueEqOrd {
     Bool(bool),
     PathBuf(PathBuf),
     Str(String),
+}
+
+impl fmt::Display for RtValue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Void => String::from("Void"),
+                Self::ExecuteResult => String::from("ExecuteResult"),
+                Self::Range(v) => format!("Range({v:?})"),
+                Self::Num(v) => format!("Num({v})"),
+                Self::Bool(v) => format!("Bool({v})"),
+                Self::PathBuf(v) => format!("PathBuf({})", v.to_string_lossy()),
+                Self::Str(v) => format!("Str({v})"),
+                Self::Vec(v) => format!("Vec({v:?})"),
+                Self::Error => String::from("Error"),
+                Self::Closure(v) => format!("Closure({v})"),
+                Self::BinaryOperator(..) => String::from("BinaryOperator"),
+                Self::ComparisonOperator(..) => String::from("ComparisonOperator"),
+                Self::LogicalOperator(..) => String::from("LogicalOperator"),
+            }
+        )
+    }
 }
