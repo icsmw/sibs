@@ -30,6 +30,14 @@ impl SemanticCx {
         }
         Ok(None)
     }
+    pub fn lookup_fn_by_inps<S: AsRef<str>>(
+        &mut self,
+        name: S,
+        incomes: &[&Ty],
+        caller: &Uuid,
+    ) -> Option<FnEntity> {
+        self.fns.lookup_by_inps(name, incomes, caller)
+    }
     pub fn by_node<N: InferType + Identification>(&mut self, node: &N) -> Result<(), LinkedErr<E>> {
         if self.table.has(node.uuid()) {
             // It's PPM and it's already registred

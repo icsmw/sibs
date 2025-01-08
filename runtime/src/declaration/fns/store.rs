@@ -32,6 +32,23 @@ impl Fns {
     pub fn lookup_closure(&self, uuid: &Uuid) -> Option<FnEntity<'_>> {
         self.cfns.funcs.get(uuid).map(FnEntity::CFn)
     }
+    pub fn lookup_by_inps<S: AsRef<str>>(
+        &mut self,
+        name: S,
+        incomes: &[&Ty],
+        caller: &Uuid,
+    ) -> Option<FnEntity> {
+        let uen = self.ufns.lookup_by_inps(name.as_ref(), incomes, caller);
+        let een = self.efns.lookup_by_inps(name, incomes, caller);
+        if uen.is_some() && een.is_some() {
+            return None;
+        }
+        if let Some(en) = uen {
+            Some(FnEntity::UFn(en))
+        } else {
+            een.map(FnEntity::EFn)
+        }
+    }
     /// Asynchronously executes a function in the runtime with the given parameters.
     ///
     /// # Arguments

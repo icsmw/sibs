@@ -53,4 +53,7 @@ impl EmbeddedFnEntity {
     ) -> Result<RtValue, LinkedErr<E>> {
         (self.exec)(args, rt, caller.clone()).await
     }
+    pub fn compatible(&self, incomes: &[&Ty]) -> bool {
+        FnEntity::args_compatible(&self.args.iter().collect::<Vec<&Ty>>(), incomes)
+    }
 }

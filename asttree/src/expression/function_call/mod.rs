@@ -22,6 +22,12 @@ impl FunctionCall {
             .collect::<Vec<String>>()
             .join("::")
     }
+    pub fn get_last_name(&self) -> String {
+        self.reference
+            .last()
+            .map(|(n, _)| n.clone())
+            .unwrap_or_default()
+    }
     pub fn get_src(&self) -> Option<SrcLink> {
         if let Some((_, ft)) = self.reference.first() {
             let pos = Position {

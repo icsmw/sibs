@@ -63,14 +63,9 @@ impl InferType for LinkedNode {
                     .get_mut()
                     .map_err(|err| LinkedErr::by_node(err.into(), ppm))?
                     .parent
-                    .set(ty);
+                    .set(ppm.uuid(), ty);
                 ty = ppm.infer_type(scx)?;
             }
-            scx.tys
-                .get_mut()
-                .map_err(|err| LinkedErr::by_pos(err.into(), &(&md.link).into()))?
-                .parent
-                .drop();
             Ok(ty)
         }
         match infer_type(&self.node, &self.md, scx) {
@@ -107,18 +102,13 @@ impl Finalization for LinkedNode {
                     .get_mut()
                     .map_err(|err| LinkedErr::by_node(err.into(), ppm))?
                     .parent
-                    .set(ty);
+                    .set(ppm.uuid(), ty);
                 ppm.initialize(scx)?;
                 ppm.finalize(scx)?;
                 scx.register(ppm.uuid(), &Ty::Indeterminate);
                 ty = ppm.infer_type(scx)?;
                 scx.register(ppm.uuid(), &ty);
             }
-            scx.tys
-                .get_mut()
-                .map_err(|err| LinkedErr::by_pos(err.into(), &(&md.link).into()))?
-                .parent
-                .drop();
             Ok(())
         }
         match initialize_and_finalize(&self.node, &self.md, scx) {

@@ -29,10 +29,6 @@ impl CFns {
         let uuid = self.link(uuid, caller)?;
         self.funcs.get(&uuid)
     }
-    pub(crate) fn lookup_by_caller(&self, caller: &Uuid) -> Option<&ClosureFnEntity> {
-        let uuid = self.links.get(caller)?;
-        self.funcs.get(uuid)
-    }
     pub fn get_ty(&self, uuid: &Uuid) -> Option<(Vec<Ty>, Ty)> {
         self.funcs.get(uuid).map(|en| {
             (

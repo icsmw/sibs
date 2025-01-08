@@ -1,7 +1,7 @@
 use crate::*;
 
 test_value_expectation!(
-    repeat,
+    repeat_000,
     Block,
     RtValue::Str(String::from("RRRRR")),
     r#"{
@@ -9,6 +9,15 @@ test_value_expectation!(
     }"#
 );
 
+test_value_expectation!(
+    repeat_001,
+    Block,
+    RtValue::Str(String::from("RRRRR")),
+    r#"{
+        let r = "R";
+        r.repeat(5);
+    }"#
+);
 // test_block!(
 //     repeat_short,
 //     r#"

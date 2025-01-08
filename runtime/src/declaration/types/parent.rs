@@ -2,20 +2,22 @@ use crate::*;
 
 #[derive(Debug, Default)]
 pub struct TyParent {
-    pub ty: Option<Ty>,
+    pub tys: HashMap<Uuid, Ty>,
 }
 
 impl TyParent {
-    pub fn set(&mut self, ty: Ty) {
-        self.ty = Some(ty);
+    pub fn set(&mut self, uuid: &Uuid, ty: Ty) -> bool {
+        if self.tys.contains_key(uuid) {
+            false
+        } else {
+            self.tys.insert(*uuid, ty);
+            true
+        }
     }
-    pub fn withdraw(&mut self) -> Option<Ty> {
-        self.ty.take()
+    pub fn get(&self, uuid: &Uuid) -> Option<&Ty> {
+        self.tys.get(uuid)
     }
-    pub fn is_empty(&self) -> bool {
-        self.ty.is_none()
-    }
-    pub fn drop(&mut self) {
-        self.ty = None;
+    pub fn exist(&self, uuid: &Uuid) -> bool {
+        self.tys.contains_key(uuid)
     }
 }

@@ -30,8 +30,29 @@ impl EFns {
         let name = self.links.get(caller)?;
         self.funcs.get(name)
     }
-
+    pub(crate) fn lookup_by_inps<S: AsRef<str>>(
+        &mut self,
+        name: S,
+        incomes: &[&Ty],
+        caller: &Uuid,
+    ) -> Option<&EmbeddedFnEntity> {
+        let filtered = self
+            .funcs
+            .values()
+            .filter(|en| en.name == name.as_ref() && en.compatible(incomes))
+            .map(|en| en.fullname.to_owned())
+            .collect::<Vec<String>>();
+        if filtered.len() != 1 {
+            None
+        } else {
+            filtered.first().and_then(|name| {
+                let _ = self.link(name, caller);
+                self.funcs.get(name)
+            })
+        }
+    }
     fn link<S: AsRef<str>>(&mut self, fn_name: S, caller: &Uuid) -> Option<String> {
+        // HERE IS LONG NAME
         if let Some(name) = if self.funcs.contains_key(fn_name.as_ref()) {
             Some(fn_name.as_ref().to_owned())
         } else {

@@ -31,6 +31,7 @@ impl Debug for FnBody {
 pub struct UserFnEntity {
     pub uuid: Uuid,
     pub name: String,
+    pub fullname: String,
     pub args: Vec<UserFnArgDeclaration>,
     pub result: Ty,
     pub body: FnBody,
@@ -133,5 +134,11 @@ impl UserFnEntity {
             return Err(LinkedErr::by_link(err, (&md.link).into()));
         }
         result
+    }
+    pub fn compatible(&self, incomes: &[&Ty]) -> bool {
+        FnEntity::args_compatible(
+            &self.args.iter().map(|arg| &arg.ty).collect::<Vec<&Ty>>(),
+            incomes,
+        )
     }
 }

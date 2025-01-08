@@ -49,4 +49,48 @@ impl<'a> FnEntity<'a> {
             Self::CFn(en) => en.execute(rt, args, fns).await,
         }
     }
+
+    pub fn args_compatible(args: &[&Ty], incomes: &[&Ty]) -> bool {
+        let mut incomes = incomes.iter();
+        let mut repeated = false;
+        for arg_ty in args.iter() {
+            if repeated {
+                return false;
+            }
+            match arg_ty {
+                Ty::Determined(..) | Ty::OneOf(..) | Ty::Variants(..) | Ty::Optional(..) => {
+                    let Some(in_ty) = incomes.next() else {
+                        return false;
+                    };
+                    let Some(in_ty) = in_ty.determined() else {
+                        return false;
+                    };
+                    if !match arg_ty {
+                        Ty::Determined(arg_ty) | Ty::Variants(arg_ty) | Ty::Optional(arg_ty) => {
+                            arg_ty.compatible(in_ty)
+                        }
+                        Ty::OneOf(arg_tys) => arg_tys.iter().any(|arg_ty| arg_ty.compatible(in_ty)),
+                        _ => true,
+                    } {
+                        return false;
+                    }
+                }
+                Ty::Repeated(arg_ty) => {
+                    repeated = true;
+                    for in_ty in incomes.by_ref() {
+                        let Some(in_ty) = in_ty.determined() else {
+                            return false;
+                        };
+                        if !arg_ty.compatible(in_ty) {
+                            return false;
+                        }
+                    }
+                }
+                Ty::Undefined | Ty::Indeterminate => {
+                    return false;
+                }
+            }
+        }
+        true
+    }
 }

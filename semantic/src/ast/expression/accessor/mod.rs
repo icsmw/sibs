@@ -10,7 +10,8 @@ impl InferType for Accessor {
             .get_mut()
             .map_err(|err| LinkedErr::between(err.into(), &self.open, &self.close))?
             .parent
-            .withdraw()
+            .get(&self.uuid)
+            .cloned()
         else {
             return Err(LinkedErr::between(
                 E::AccessorWithoutParent,

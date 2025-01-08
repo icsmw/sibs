@@ -78,6 +78,13 @@ test_success!(
     r#"{ let a = "Hello"; a.console::print(); }"#
 );
 
+test_success!(embedded_fn_call_001, Block, "{ let a = 5; a.sum(5); }");
+test_success!(
+    embedded_fn_call_002,
+    Block,
+    r#"{ let a = "R"; a.repeat(5); }"#
+);
+
 test_fail!(
     call_000,
     Anchor,

@@ -43,6 +43,7 @@ impl Initialize for FunctionDeclaration {
         let entity = UserFnEntity {
             uuid: self.uuid,
             name: name.to_owned(),
+            fullname: name.to_owned(),
             args,
             result: match self.infer_type(scx) {
                 Ok(ty) => ty,

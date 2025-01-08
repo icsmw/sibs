@@ -17,8 +17,9 @@ impl UFns {
     pub fn leave(&mut self) {
         let _ = self.path.pop();
     }
-    pub fn add<S: AsRef<str>>(&mut self, fn_name: S, entity: UserFnEntity) -> Result<(), E> {
-        let name = self.fullname(fn_name);
+    pub fn add<S: AsRef<str>>(&mut self, fn_name: S, mut entity: UserFnEntity) -> Result<(), E> {
+        let name = self.fullname(fn_name.as_ref());
+        entity.fullname = self.fullname(fn_name);
         entity.verify(&name)?;
         if self.funcs.contains_key(&name) {
             return Err(E::FuncAlreadyRegistered(name));
@@ -53,7 +54,27 @@ impl UFns {
         let name = self.links.get(caller)?;
         self.funcs.get(name)
     }
-
+    pub(crate) fn lookup_by_inps<S: AsRef<str>>(
+        &mut self,
+        name: S,
+        incomes: &[&Ty],
+        caller: &Uuid,
+    ) -> Option<&UserFnEntity> {
+        let filtered = self
+            .funcs
+            .values()
+            .filter(|en| en.name == name.as_ref() && en.compatible(incomes))
+            .map(|en| en.fullname.to_owned())
+            .collect::<Vec<String>>();
+        if filtered.len() != 1 {
+            None
+        } else {
+            filtered.first().and_then(|name| {
+                let _ = self.link(name, caller);
+                self.funcs.get(name)
+            })
+        }
+    }
     fn link<S: AsRef<str>>(&mut self, fn_name: S, caller: &Uuid) -> Option<String> {
         if let Some(name) = if self.funcs.contains_key(fn_name.as_ref()) {
             Some(fn_name.as_ref().to_owned())

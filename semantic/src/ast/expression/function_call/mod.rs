@@ -5,7 +5,7 @@ use crate::*;
 
 impl InferType for FunctionCall {
     fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
-        let name = self.get_name();
+        let name: String = self.get_name();
         if let Some(entity) = scx.lookup_fn(&name, &self.uuid).map_err(|err| {
             LinkedErr::between(
                 err,
@@ -15,11 +15,39 @@ impl InferType for FunctionCall {
         })? {
             Ok(entity.result_ty())
         } else {
-            Err(LinkedErr::between(
-                E::FnNotFound(name),
-                self.reference.first().map(|(_, t)| t).unwrap_or(&self.open),
-                &self.close,
-            ))
+            let last_name: String = self.get_last_name();
+            let mut tys = self
+                .args
+                .iter()
+                .map(|n| n.infer_type(scx))
+                .collect::<Result<Vec<_>, _>>()?;
+            if let Some(ty) = scx
+                .tys
+                .get_mut()
+                .map_err(|err| {
+                    LinkedErr::between(
+                        err.into(),
+                        self.reference.first().map(|(_, t)| t).unwrap_or(&self.open),
+                        &self.close,
+                    )
+                })?
+                .parent
+                .get(&self.uuid)
+                .cloned()
+            {
+                tys.insert(0, ty);
+            }
+            if let Some(entity) =
+                scx.lookup_fn_by_inps(&last_name, &tys.iter().collect::<Vec<&Ty>>(), &self.uuid)
+            {
+                Ok(entity.result_ty())
+            } else {
+                Err(LinkedErr::between(
+                    E::FnNotFound(name),
+                    self.reference.first().map(|(_, t)| t).unwrap_or(&self.open),
+                    &self.close,
+                ))
+            }
         }
     }
 }
@@ -39,7 +67,8 @@ impl Finalization for FunctionCall {
             .get_mut()
             .map_err(|err| LinkedErr::between(err.into(), tk_from, &self.close))?
             .parent
-            .withdraw();
+            .get(&self.uuid)
+            .cloned();
         self.args.iter().try_for_each(|n| n.finalize(scx))?;
         let mut tys = self
             .args
@@ -50,13 +79,22 @@ impl Finalization for FunctionCall {
             tys.insert(0, ty);
         }
         let name = self.get_name();
-        let Some(entity) = scx
-            .lookup_fn(&name, &self.uuid)
-            .map_err(|err| LinkedErr::between(err, tk_from, &self.close))?
-        else {
+        let Some(entity) = (if let Some(entity) =
+            scx.lookup_fn(&name, &self.uuid).map_err(|err| {
+                LinkedErr::between(
+                    err,
+                    self.reference.first().map(|(_, t)| t).unwrap_or(&self.open),
+                    &self.close,
+                )
+            })? {
+            Some(entity)
+        } else {
+            let last_name: String = self.get_last_name();
+            scx.lookup_fn_by_inps(&last_name, &tys.iter().collect::<Vec<&Ty>>(), &self.uuid)
+        }) else {
             return Err(LinkedErr::between(
                 E::FnNotFound(name),
-                tk_from,
+                self.reference.first().map(|(_, t)| t).unwrap_or(&self.open),
                 &self.close,
             ));
         };
