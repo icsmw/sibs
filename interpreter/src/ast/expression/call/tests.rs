@@ -38,5 +38,12 @@ test_value_expectation!(
     embedded_fn_call_002,
     Block,
     RtValue::Num(10.0),
+    "{ 5.math::sum(5); }"
+);
+
+test_value_expectation!(
+    embedded_fn_call_003,
+    Block,
+    RtValue::Num(10.0),
     "{ 5.sum(5); }"
 );

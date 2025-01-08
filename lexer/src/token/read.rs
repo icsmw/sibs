@@ -161,6 +161,9 @@ impl Read for Token {
                         break;
                     }
                 }
+                if lx.pos > 0 && lx.input[from..lx.pos].ends_with('.') {
+                    lx.decrease(1);
+                };
                 let to = lx.pos;
                 let snum = &lx.input[from..to];
                 match snum.parse::<f64>() {

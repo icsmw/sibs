@@ -137,6 +137,22 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    /// Decrease current position to given number
+    ///
+    /// # Arguments
+    ///
+    /// * `n` - The number to decrease position.
+    ///
+    /// # Warning
+    ///
+    /// Position could be increased to value > 1, because of `ch.len_utf8()`.
+    /// This method should be used only `n` is know for previous char.
+    pub(crate) fn decrease(&mut self, n: usize) {
+        if self.pos > n {
+            self.pos -= n;
+        }
+    }
+
     /// Reads characters until a specified stop character is encountered.
     ///
     /// The stop character is not included in the returned string.
