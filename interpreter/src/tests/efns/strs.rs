@@ -1,7 +1,7 @@
 use crate::*;
 
 test_value_expectation!(
-    repeat_000,
+    strs_repeat_000,
     Block,
     RtValue::Str(String::from("RRRRR")),
     r#"{
@@ -10,7 +10,7 @@ test_value_expectation!(
 );
 
 test_value_expectation!(
-    repeat_001,
+    strs_repeat_001,
     Block,
     RtValue::Str(String::from("RRRRR")),
     r#"{
@@ -20,7 +20,7 @@ test_value_expectation!(
 );
 
 test_value_expectation!(
-    repeat_002,
+    strs_repeat_002,
     Block,
     RtValue::Bool(true),
     r#"{
@@ -28,137 +28,112 @@ test_value_expectation!(
     }"#
 );
 
-// test_block!(
-//     to_ascii_lowercase,
-//     r#"
-//             if "R".to_ascii_lowercase() == "r" {
-//                 true;
-//             } else {
-//                 false;
-//             };
-//         "#,
-//     true
-// );
+test_value_expectation!(
+    strs_to_ascii_lowercase,
+    Block,
+    RtValue::Str(String::from("r")),
+    r#"{
+        "R".to_ascii_lowercase();
+    }"#
+);
 
-// test_block!(
-//     to_ascii_uppercase,
-//     r#"
-//             if "r".to_ascii_uppercase() == "R" {
-//                 true;
-//             } else {
-//                 false;
-//             };
-//         "#,
-//     true
-// );
+test_value_expectation!(
+    strs_to_ascii_uppercase,
+    Block,
+    RtValue::Str(String::from("R")),
+    r#"{
+        "r".to_ascii_uppercase();
+    }"#
+);
 
-// test_block!(
-//     to_lowercase,
-//     r#"
-//             if "R".to_lowercase() == "r" {
-//                 true;
-//             } else {
-//                 false;
-//             };
-//         "#,
-//     true
-// );
+test_value_expectation!(
+    strs_to_lowercase,
+    Block,
+    RtValue::Str(String::from("r")),
+    r#"{
+        "R".to_lowercase();
+    }"#
+);
 
-// test_block!(
-//     to_uppercase,
-//     r#"
-//             if "r".to_uppercase() == "R" {
-//                 true;
-//             } else {
-//                 false;
-//             };
-//         "#,
-//     true
-// );
+test_value_expectation!(
+    strs_to_uppercase,
+    Block,
+    RtValue::Str(String::from("R")),
+    r#"{
+        "r".to_uppercase();
+    }"#
+);
 
-// test_block!(
-//     sub,
-//     r#"
-//             $a = "Hello World!";
-//             $b = $a.sub(0, 5);
-//             $c = $a.str::sub(0, 5).str::sub(0, 2);
-//             if $b == "Hello" && $c == "He" {
-//                 true;
-//             } else {
-//                 false;
-//             };
-//         "#,
-//     true
-// );
+test_value_expectation!(
+    strs_sub,
+    Block,
+    RtValue::Str(String::from("He")),
+    r#"{
+        let a = "Hello World!";
+        let b = a.sub(0, 5);
+        a.sub(0, 5).sub(0, 2);
+    }"#
+);
 
-// test_block!(
-//     split_off,
-//     r#"
-//             if "Hello, World!".split_off(7) == "World!" {
-//                 true;
-//             } else {
-//                 false;
-//             };
-//         "#,
-//     true
-// );
+test_value_expectation!(
+    strs_split_off,
+    Block,
+    RtValue::Str(String::from("World!")),
+    r#"{
+        "Hello, World!".split_off(7);
+    }"#
+);
 
-// test_block!(
-//     trim,
-//     r#"
-//             if "   word   ".trim() == "word" {
-//                 true;
-//             } else {
-//                 false;
-//             };
-//         "#,
-//     true
-// );
+test_value_expectation!(
+    strs_trim,
+    Block,
+    RtValue::Str(String::from("word")),
+    r#"{
+        "   word   ".trim();
+    }"#
+);
 
-// test_block!(
-//     trim_end,
-//     r#"
-//             if "   word   ".trim_end() == "   word" {
-//                 true;
-//             } else {
-//                 false;
-//             };
-//         "#,
-//     true
-// );
+test_value_expectation!(
+    strs_trim_end,
+    Block,
+    RtValue::Str(String::from("   word")),
+    r#"{
+        "   word   ".trim_end();
+    }"#
+);
 
-// test_block!(
-//     trim_start,
-//     r#"
-//             if "   word   ".trim_start() == "word   " {
-//                 true;
-//             } else {
-//                 false;
-//             };
-//         "#,
-//     true
-// );
+test_value_expectation!(
+    strs_trim_start,
+    Block,
+    RtValue::Str(String::from("word   ")),
+    r#"{
+        "   word   ".trim_start();
+    }"#
+);
 
-// test_block!(
-//     len,
-//     r#"
-//             "12345".len() == 5;
-//         "#,
-//     true
-// );
+test_value_expectation!(
+    strs_len,
+    Block,
+    RtValue::Num(5.0),
+    r#"{
+        "12345".len();
+    }"#
+);
 
-// test_block!(
-//     is_empty,
-//     r#"
-//             "".is_empty();
-//         "#,
-//     true
-// );
+test_value_expectation!(
+    strs_is_empty,
+    Block,
+    RtValue::Bool(true),
+    r#"{
+        "".is_empty();
+    }"#
+);
 
-// test_block!(
-//     is_trimmed_empty,
-//     r#"
-//             "   ".is_trimmed_empty();
-//         "#,
-//     true
-// );
+test_value_expectation!(
+    strs_is_trimmed_empty,
+    Block,
+    RtValue::Bool(true),
+    r#"{
+        "   ".is_trimmed_empty();
+    }"#
+);
