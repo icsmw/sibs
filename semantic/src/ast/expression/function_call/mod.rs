@@ -3,6 +3,31 @@ mod tests;
 
 use crate::*;
 
+fn get_args_tys(node: &FunctionCall, scx: &mut SemanticCx) -> Result<Vec<Ty>, LinkedErr<E>> {
+    let mut tys = node
+        .args
+        .iter()
+        .map(|n| n.infer_type(scx))
+        .collect::<Result<Vec<_>, _>>()?;
+    if let Some(ty) = scx
+        .tys
+        .get()
+        .map_err(|err| {
+            LinkedErr::between(
+                err.into(),
+                node.reference.first().map(|(_, t)| t).unwrap_or(&node.open),
+                &node.close,
+            )
+        })?
+        .parent
+        .get(&node.uuid)
+        .cloned()
+    {
+        tys.insert(0, ty);
+    }
+    Ok(tys)
+}
+
 impl InferType for FunctionCall {
     fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         let name: String = self.get_name();
@@ -16,27 +41,7 @@ impl InferType for FunctionCall {
             Ok(entity.result_ty())
         } else {
             let last_name: String = self.get_last_name();
-            let mut tys = self
-                .args
-                .iter()
-                .map(|n| n.infer_type(scx))
-                .collect::<Result<Vec<_>, _>>()?;
-            if let Some(ty) = scx
-                .tys
-                .get_mut()
-                .map_err(|err| {
-                    LinkedErr::between(
-                        err.into(),
-                        self.reference.first().map(|(_, t)| t).unwrap_or(&self.open),
-                        &self.close,
-                    )
-                })?
-                .parent
-                .get(&self.uuid)
-                .cloned()
-            {
-                tys.insert(0, ty);
-            }
+            let tys = get_args_tys(self, scx)?;
             if let Some(entity) =
                 scx.lookup_fn_by_inps(&last_name, &tys.iter().collect::<Vec<&Ty>>(), &self.uuid)
             {
@@ -62,22 +67,8 @@ impl Initialize for FunctionCall {
 impl Finalization for FunctionCall {
     fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         let tk_from = self.reference.first().map(|(_, t)| t).unwrap_or(&self.open);
-        let p_ty = scx
-            .tys
-            .get_mut()
-            .map_err(|err| LinkedErr::between(err.into(), tk_from, &self.close))?
-            .parent
-            .get(&self.uuid)
-            .cloned();
         self.args.iter().try_for_each(|n| n.finalize(scx))?;
-        let mut tys = self
-            .args
-            .iter()
-            .map(|n| n.infer_type(scx))
-            .collect::<Result<Vec<_>, _>>()?;
-        if let Some(ty) = p_ty {
-            tys.insert(0, ty);
-        }
+        let tys = get_args_tys(self, scx)?;
         let name = self.get_name();
         let Some(entity) = (if let Some(entity) =
             scx.lookup_fn(&name, &self.uuid).map_err(|err| {

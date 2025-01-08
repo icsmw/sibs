@@ -18,13 +18,15 @@ test_value_expectation!(
         r.repeat(5);
     }"#
 );
-// test_block!(
-//     repeat_short,
-//     r#"
-//             "R".repeat(5) == "RRRRR";
-//         "#,
-//     true
-// );
+
+test_value_expectation!(
+    repeat_002,
+    Block,
+    RtValue::Bool(true),
+    r#"{
+        "R".repeat(5) == "RRRRR";
+    }"#
+);
 
 // test_block!(
 //     to_ascii_lowercase,
