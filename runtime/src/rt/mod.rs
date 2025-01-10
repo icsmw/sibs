@@ -18,19 +18,21 @@ pub struct Runtime {
     pub scopes: RtScope,
     pub tys: Arc<TypesTable>,
     pub fns: Arc<Fns>,
+    pub tasks: Arc<Tasks>,
     pub cx: RtContext,
     tx: UnboundedSender<Demand>,
 }
 
 impl Runtime {
     #[tracing::instrument]
-    pub fn new(params: RtParameters, tys: TypesTable, fns: Fns) -> Self {
+    pub fn new(params: RtParameters, tys: TypesTable, fns: Fns, tasks: Tasks) -> Self {
         let (tx, mut rx) = unbounded_channel();
         let inst = Self {
             tx,
             scopes: RtScope::new(),
             tys: Arc::new(tys),
             fns: Arc::new(fns),
+            tasks: Arc::new(tasks),
             cx: RtContext::new(params),
         };
         let scopes = inst.scopes.clone();

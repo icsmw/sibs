@@ -36,6 +36,7 @@ macro_rules! test_value_expectation {
                     RtParameters::default(),
                     scx.table,
                     into_rt_ufns(scx.fns),
+                    into_rt_tasks(scx.tasks),
                 );
                 let vl = node.interpret(rt.clone()).await;
                 if let Err(err) = &vl {
@@ -95,6 +96,7 @@ macro_rules! test_task_results {
                     RtParameters::new($component_name, $task_name, Vec::new(), PathBuf::new()),
                     scx.table,
                     into_rt_ufns(scx.fns),
+                    into_rt_tasks(scx.tasks),
                 );
                 let vl = node.interpret(rt.clone()).await;
                 if let Err(err) = &vl {

@@ -78,6 +78,14 @@ pub enum E {
     CompNotFound(String),
     #[error("Task \"{0}\" on component \"{1}\" doesn't exist")]
     TaskNotFound(String, String),
+    #[error("Task \"{0}\" isn't inited")]
+    NotInitedTask(String),
+    #[error("Invalid task argument")]
+    InvalidTaskArgument,
+    #[error("Invalid task argument type")]
+    InvalidTaskArgumentType,
+    #[error("Task argument type dismatch; expected: {0}")]
+    TaskArgumentTypeDismatch(String),
 
     #[error("Function has been declared multiple arguments with type Repeated. Only one repeated argument can be defined (at the end)")]
     MultipleRepeatedFnArgsDeclared,

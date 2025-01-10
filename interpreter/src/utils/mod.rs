@@ -55,3 +55,31 @@ fn node_into_exec(body: FnBody) -> FnBody {
         FnBody::Declaration => FnBody::Declaration,
     }
 }
+
+pub(crate) fn into_rt_tasks(mut tasks: Tasks) -> Tasks {
+    tasks.table = tasks
+        .table
+        .into_iter()
+        .map(|(k, mut v)| {
+            v.body = task_node_into_exec(v.body);
+            (k, v)
+        })
+        .collect();
+    tasks
+}
+
+fn task_node_into_exec(body: TaskBody) -> TaskBody {
+    match body {
+        TaskBody::Executor(md, ex) => TaskBody::Executor(md, ex),
+        TaskBody::Node(node) => {
+            let meta = node.md.clone();
+            let func = move |rt: Runtime| -> RtPinnedResult<LinkedErr<E>> {
+                Box::pin({
+                    let node = node.clone();
+                    async move { node.interpret(rt).await }
+                })
+            };
+            TaskBody::Executor(meta, Box::new(func))
+        }
+    }
+}

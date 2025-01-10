@@ -1,3 +1,5 @@
+use std::collections::hash_map;
+
 use crate::*;
 
 #[derive(Debug, Default)]
@@ -12,15 +14,11 @@ pub struct Tasks {
 
 impl Tasks {
     pub fn add(&mut self, task: TaskEntity) -> Result<(), E> {
-        let Some(component) = &self.component else {
-            return Err(E::NoMasterComponent(task.name.clone()));
-        };
-        let name = format!("{}:{}", component.name, task.name);
-        if self.table.contains_key(&task.name) {
-            Err(E::TaskDuplicate)
-        } else {
-            self.table.insert(name, task);
+        if let hash_map::Entry::Vacant(en) = self.table.entry(task.fullname()) {
+            en.insert(task);
             Ok(())
+        } else {
+            Err(E::TaskDuplicate)
         }
     }
     pub fn master<S: AsRef<str>>(&mut self, name: S, uuid: &Uuid) {
@@ -35,6 +33,21 @@ impl Tasks {
     pub fn lookup<S: AsRef<str>>(&mut self, name: S, caller: &Uuid) -> Option<&TaskEntity> {
         let name = self.link(name, caller)?;
         self.table.get(&name)
+    }
+    pub(crate) fn lookup_by_caller(&self, caller: &Uuid) -> Option<&TaskEntity> {
+        let name = self.links.get(caller)?;
+        self.table.get(name)
+    }
+    pub async fn execute(
+        &self,
+        uuid: &Uuid,
+        rt: Runtime,
+        args: Vec<FnArgValue>,
+    ) -> Result<RtValue, LinkedErr<E>> {
+        let Some(entity) = self.lookup_by_caller(uuid) else {
+            return Err(LinkedErr::unlinked(E::NoLinkedFunctions(*uuid)));
+        };
+        entity.execute(rt, args).await
     }
     fn link<S: AsRef<str>>(&mut self, name: S, caller: &Uuid) -> Option<String> {
         if let Some(name) = if self.table.contains_key(name.as_ref()) {

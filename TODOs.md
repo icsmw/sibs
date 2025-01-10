@@ -1,0 +1,4 @@
+- Add trait on asttree `IntoPosition` for each node;
+- Update all `LinkedErr` to use trait `IntoPosition`;
+- Check `ufns`, `efns` to reuse same code parts
+- Add to Ty - enum AllowedFor { Task, Func }
