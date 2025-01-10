@@ -13,6 +13,16 @@ pub struct TaskCall {
     pub uuid: Uuid,
 }
 
+impl TaskCall {
+    pub fn get_name(&self) -> String {
+        self.reference
+            .iter()
+            .map(|(part, _)| part.clone())
+            .collect::<Vec<String>>()
+            .join(":")
+    }
+}
+
 impl fmt::Display for TaskCall {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

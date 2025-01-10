@@ -72,6 +72,14 @@ pub enum E {
     ClosureNotInited(Uuid),
     #[error("Function has multiple arguments with type Repeated. Only one repeated argument can be defined (at the end)")]
     MultipleRepeatedFnArgs,
+    #[error("Invalid task argument; cannot recognize")]
+    InvalidTaskArg,
+    #[error("Fail to get master of task")]
+    FailToGetMasterOfTask,
+    #[error("Task \"{0}\" not found")]
+    TaskNotFound(String),
+    #[error("Task \"{0}\" expect {1} arguments; got: {2}")]
+    TaskArgsNumberDismatch(String, usize, usize),
 
     #[error("Runtime error: {0}")]
     RtError(RtError),

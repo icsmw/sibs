@@ -91,6 +91,11 @@ pub enum E {
 
     #[error("Fn {0} is using keyword: {1}")]
     FnUsesKeyword(String, String),
+
+    #[error("Task with same name in same component already exists")]
+    TaskDuplicate,
+    #[error("Master component isn't defined for: {0}")]
+    NoMasterComponent(String),
 }
 
 impl From<io::Error> for E {

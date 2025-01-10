@@ -4,6 +4,7 @@ use crate::*;
 pub struct SemanticCx {
     pub tys: TyStore,
     pub fns: Fns,
+    pub tasks: Tasks,
     pub table: TypesTable,
 }
 
@@ -37,6 +38,9 @@ impl SemanticCx {
         caller: &Uuid,
     ) -> Option<FnEntity> {
         self.fns.lookup_by_inps(name, incomes, caller)
+    }
+    pub fn lookup_task<S: AsRef<str>>(&mut self, name: S, caller: &Uuid) -> Option<&TaskEntity> {
+        self.tasks.lookup(name.as_ref(), caller)
     }
     pub fn by_node<N: InferType + Identification>(&mut self, node: &N) -> Result<(), LinkedErr<E>> {
         if self.table.has(node.uuid()) {

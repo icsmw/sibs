@@ -8,6 +8,7 @@ impl InferType for Component {
 
 impl Initialize for Component {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        scx.tasks.master(self.get_name(), &self.uuid);
         self.nodes.iter().try_for_each(|n| n.initialize(scx))?;
         Ok(())
     }
@@ -15,6 +16,7 @@ impl Initialize for Component {
 
 impl Finalization for Component {
     fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        scx.tasks.master(self.get_name(), &self.uuid);
         self.nodes.iter().try_for_each(|n| n.finalize(scx))?;
         Ok(())
     }

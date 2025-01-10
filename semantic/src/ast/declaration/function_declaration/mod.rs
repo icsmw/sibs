@@ -67,9 +67,9 @@ impl Initialize for FunctionDeclaration {
 
 impl Finalization for FunctionDeclaration {
     fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
-        let Some(name) = self.get_name() else {
-            return Err(LinkedErr::token(E::InvalidFnName, &self.sig));
-        };
+        // let Some(name) = self.get_name() else {
+        //     return Err(LinkedErr::token(E::InvalidFnName, &self.sig));
+        // };
         scx.tys
             .enter(&self.uuid)
             .map_err(|err| LinkedErr::token(err.into(), &self.sig))?;
@@ -78,14 +78,15 @@ impl Finalization for FunctionDeclaration {
         // it might fall into recursion
         self.block.initialize(scx)?;
         self.block.finalize(scx)?;
-        let ty = self.infer_type(scx)?;
-        scx.fns.ufns.set_result_ty(name, ty).map_err(|err| {
-            LinkedErr::between(
-                E::FnDeclarationError(err.to_string()),
-                &self.sig,
-                &self.name,
-            )
-        })?;
+        // This block is useless. Has to be removed after confirming
+        // let ty = self.infer_type(scx)?;
+        // scx.fns.ufns.set_result_ty(name, ty).map_err(|err| {
+        //     LinkedErr::between(
+        //         E::FnDeclarationError(err.to_string()),
+        //         &self.sig,
+        //         &self.name,
+        //     )
+        // })?;
         scx.tys
             .leave()
             .map_err(|err| LinkedErr::between(err.into(), &self.sig, &self.name))?;

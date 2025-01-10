@@ -52,7 +52,6 @@ impl EFns {
         }
     }
     fn link<S: AsRef<str>>(&mut self, fn_name: S, caller: &Uuid) -> Option<String> {
-        // HERE IS LONG NAME
         if let Some(name) = if self.funcs.contains_key(fn_name.as_ref()) {
             Some(fn_name.as_ref().to_owned())
         } else {
