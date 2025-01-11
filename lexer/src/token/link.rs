@@ -33,6 +33,28 @@ impl SrcLink {
         }
     }
 
+    pub fn from_tk(token: &Token) -> Self {
+        Self {
+            pos: token.pos.clone(),
+            expos: token.pos.clone(),
+            src: token.src,
+        }
+    }
+
+    pub fn from_tks(from: &Token, to: &Token) -> Self {
+        Self {
+            pos: Position {
+                from: from.pos.from,
+                to: to.pos.to,
+            },
+            expos: Position {
+                from: from.pos.from,
+                to: to.pos.to,
+            },
+            src: from.src,
+        }
+    }
+
     pub fn from(&self) -> usize {
         self.pos.from
     }

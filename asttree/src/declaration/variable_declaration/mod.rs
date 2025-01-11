@@ -13,6 +13,21 @@ pub struct VariableDeclaration {
     pub uuid: Uuid,
 }
 
+impl SrcLinking for VariableDeclaration {
+    fn link(&self) -> SrcLink {
+        if let Some(node) = self.assignation.as_ref() {
+            src_from::tk_and_node(&self.token, node)
+        } else if let Some(node) = self.r#type.as_ref() {
+            src_from::tk_and_node(&self.token, node)
+        } else {
+            src_from::tk_and_node(&self.token, &self.variable)
+        }
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl fmt::Display for VariableDeclaration {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

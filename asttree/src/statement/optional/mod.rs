@@ -12,6 +12,15 @@ pub struct Optional {
     pub uuid: Uuid,
 }
 
+impl SrcLinking for Optional {
+    fn link(&self) -> SrcLink {
+        src_from::nodes(&self.comparison, &self.action)
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl fmt::Display for Optional {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} {} {}", self.comparison, self.token, self.action)

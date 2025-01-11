@@ -22,6 +22,19 @@ impl Anchor {
     }
 }
 
+impl SrcLinking for Anchor {
+    fn link(&self) -> SrcLink {
+        if let (Some(open), Some(close)) = (self.nodes.first(), self.nodes.last()) {
+            src_from::nodes(open, close)
+        } else {
+            SrcLink::new(&Uuid::default())
+        }
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl fmt::Display for Anchor {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

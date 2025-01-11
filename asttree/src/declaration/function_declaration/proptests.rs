@@ -28,6 +28,8 @@ impl Arbitrary for FunctionDeclaration {
             .prop_map(|(name, args, block)| FunctionDeclaration {
                 sig: Token::for_test(Kind::Keyword(Keyword::Fn)),
                 name: Token::for_test(name),
+                open: Token::for_test(Kind::LeftParen),
+                close: Token::for_test(Kind::RightParen),
                 block: Box::new(block),
                 args,
                 uuid: Uuid::new_v4(),

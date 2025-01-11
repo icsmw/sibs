@@ -12,6 +12,15 @@ pub struct ModuleDeclaration {
     pub uuid: Uuid,
 }
 
+impl SrcLinking for ModuleDeclaration {
+    fn link(&self) -> SrcLink {
+        src_from::tk_and_node(&self.sig, &self.node)
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl fmt::Display for ModuleDeclaration {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} {} {}", self.sig, self.from, self.node)

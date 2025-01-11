@@ -11,6 +11,15 @@ pub struct AssignedValue {
     pub uuid: Uuid,
 }
 
+impl SrcLinking for AssignedValue {
+    fn link(&self) -> SrcLink {
+        src_from::tk_and_node(&self.token, &self.node)
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl fmt::Display for AssignedValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} {}", self.token, self.node)

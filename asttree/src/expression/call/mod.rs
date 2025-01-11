@@ -27,6 +27,15 @@ impl Call {
     }
 }
 
+impl SrcLinking for Call {
+    fn link(&self) -> SrcLink {
+        src_from::tk_and_node(&self.token, &self.node)
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl fmt::Display for Call {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}{}", self.token, self.node)

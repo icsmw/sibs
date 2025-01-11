@@ -12,6 +12,15 @@ pub struct While {
     pub uuid: Uuid,
 }
 
+impl SrcLinking for While {
+    fn link(&self) -> SrcLink {
+        src_from::tk_and_node(&self.token, &self.block)
+    }
+    fn slink(&self) -> SrcLink {
+        src_from::tk_and_node(&self.token, &self.comparison)
+    }
+}
+
 impl fmt::Display for While {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} {} {}", self.token, self.comparison, self.block)

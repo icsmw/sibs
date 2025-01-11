@@ -13,6 +13,15 @@ pub struct Error {
     pub close: Token,
 }
 
+impl SrcLinking for Error {
+    fn link(&self) -> SrcLink {
+        src_from::tks(&self.open, &self.close)
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

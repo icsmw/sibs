@@ -12,6 +12,15 @@ pub struct Array {
     pub uuid: Uuid,
 }
 
+impl SrcLinking for Array {
+    fn link(&self) -> SrcLink {
+        src_from::tks(&self.open, &self.close)
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl fmt::Display for Array {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

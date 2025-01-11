@@ -34,6 +34,15 @@ pub struct CompoundAssignmentsOp {
     pub uuid: Uuid,
 }
 
+impl SrcLinking for CompoundAssignmentsOp {
+    fn link(&self) -> SrcLink {
+        src_from::tk(&self.token)
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl fmt::Display for CompoundAssignmentsOp {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.operator)

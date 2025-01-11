@@ -11,6 +11,15 @@ pub struct Loop {
     pub uuid: Uuid,
 }
 
+impl SrcLinking for Loop {
+    fn link(&self) -> SrcLink {
+        src_from::tk_and_node(&self.token, &self.block)
+    }
+    fn slink(&self) -> SrcLink {
+        src_from::tk(&self.token)
+    }
+}
+
 impl fmt::Display for Loop {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} {}", self.token, self.block)

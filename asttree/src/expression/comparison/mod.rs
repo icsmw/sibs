@@ -12,6 +12,15 @@ pub struct Comparison {
     pub uuid: Uuid,
 }
 
+impl SrcLinking for Comparison {
+    fn link(&self) -> SrcLink {
+        src_from::nodes(&self.left, &self.right)
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl fmt::Display for Comparison {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} {} {}", self.left, self.operator, self.right)

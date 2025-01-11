@@ -12,6 +12,15 @@ pub enum IfCase {
     Else(LinkedNode, Token),
 }
 
+impl IfCase {
+    fn block(&self) -> &LinkedNode {
+        match self {
+            Self::If(n, ..) => n,
+            Self::Else(n, ..) => n,
+        }
+    }
+}
+
 impl fmt::Display for IfCase {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
@@ -33,6 +42,19 @@ impl fmt::Display for IfCase {
 pub struct If {
     pub cases: Vec<IfCase>,
     pub uuid: Uuid,
+}
+
+impl SrcLinking for If {
+    fn link(&self) -> SrcLink {
+        if let (Some(open), Some(close)) = (self.cases.first(), self.cases.last()) {
+            src_from::nodes(open.block(), close.block())
+        } else {
+            SrcLink::new(&Uuid::default())
+        }
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
 }
 
 impl fmt::Display for If {

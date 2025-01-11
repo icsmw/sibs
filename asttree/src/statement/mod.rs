@@ -96,6 +96,29 @@ impl Statement {
     }
 }
 
+impl SrcLinking for Statement {
+    fn link(&self) -> SrcLink {
+        match self {
+            Self::Assignation(n) => n.link(),
+            Self::AssignedValue(n) => n.link(),
+            Self::Block(n) => n.link(),
+            Self::Break(n) => n.link(),
+            Self::Each(n) => n.link(),
+            Self::For(n) => n.link(),
+            Self::If(n) => n.link(),
+            Self::Join(n) => n.link(),
+            Self::Loop(n) => n.link(),
+            Self::OneOf(n) => n.link(),
+            Self::Optional(n) => n.link(),
+            Self::Return(n) => n.link(),
+            Self::While(n) => n.link(),
+        }
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl From<Statement> for Node {
     fn from(val: Statement) -> Self {
         Node::Statement(val)

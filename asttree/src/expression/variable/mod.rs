@@ -12,6 +12,19 @@ pub struct Variable {
     pub uuid: Uuid,
 }
 
+impl SrcLinking for Variable {
+    fn link(&self) -> SrcLink {
+        if let Some(open) = self.negation.as_ref() {
+            src_from::tks(open, &self.token)
+        } else {
+            src_from::tk(&self.token)
+        }
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl fmt::Display for Variable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

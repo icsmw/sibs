@@ -36,7 +36,7 @@ impl ReadNode<Task> for Task {
         if !matches!(name.kind, Kind::Identifier(..)) {
             return Err(E::MissedTaskName.link_with_token(&sig));
         }
-        let (mut inner, ..) = parser
+        let (mut inner, open, close) = parser
             .between(KindId::LeftParen, KindId::RightParen)?
             .ok_or_else(|| E::MissedTaskArguments.link_with_token(&sig))?;
         let mut args = Vec::new();
@@ -63,6 +63,8 @@ impl ReadNode<Task> for Task {
             vis,
             sig,
             name,
+            open,
+            close,
             args,
             block: Box::new(block),
             uuid: Uuid::new_v4(),

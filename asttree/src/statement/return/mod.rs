@@ -11,6 +11,19 @@ pub struct Return {
     pub uuid: Uuid,
 }
 
+impl SrcLinking for Return {
+    fn link(&self) -> SrcLink {
+        if let Some(n) = self.node.as_ref() {
+            src_from::tk_and_node(&self.token, n)
+        } else {
+            src_from::tk(&self.token)
+        }
+    }
+    fn slink(&self) -> SrcLink {
+        src_from::tk(&self.token)
+    }
+}
+
 impl fmt::Display for Return {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

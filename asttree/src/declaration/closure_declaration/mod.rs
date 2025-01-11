@@ -14,6 +14,15 @@ pub struct ClosureDeclaration {
     pub uuid: Uuid,
 }
 
+impl SrcLinking for ClosureDeclaration {
+    fn link(&self) -> SrcLink {
+        src_from::tk_and_node(&self.open, &self.ty)
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl fmt::Display for ClosureDeclaration {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

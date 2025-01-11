@@ -19,6 +19,15 @@ pub struct BinaryOp {
     pub uuid: Uuid,
 }
 
+impl SrcLinking for BinaryOp {
+    fn link(&self) -> SrcLink {
+        src_from::tk(&self.token)
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl fmt::Display for BinaryOp {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.token)

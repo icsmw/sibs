@@ -11,6 +11,15 @@ pub struct VariableName {
     pub uuid: Uuid,
 }
 
+impl SrcLinking for VariableName {
+    fn link(&self) -> SrcLink {
+        src_from::tk(&self.token)
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl fmt::Display for VariableName {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.token)

@@ -10,6 +10,17 @@ pub enum VariableCompoundType {
     Vec(Token, Box<LinkedNode>),
 }
 
+impl SrcLinking for VariableCompoundType {
+    fn link(&self) -> SrcLink {
+        match self {
+            Self::Vec(tk, node) => src_from::tk_and_node(tk, node),
+        }
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl fmt::Display for VariableCompoundType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
@@ -34,6 +45,18 @@ impl VariableCompoundType {
 pub enum VariableTypeDef {
     Primitive(Token),
     Compound(VariableCompoundType),
+}
+
+impl SrcLinking for VariableTypeDef {
+    fn link(&self) -> SrcLink {
+        match self {
+            Self::Primitive(tk) => src_from::tk(tk),
+            Self::Compound(ty) => ty.link(),
+        }
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
 }
 
 impl fmt::Display for VariableTypeDef {
@@ -62,6 +85,15 @@ impl VariableTypeDef {
 pub struct VariableType {
     pub r#type: VariableTypeDef,
     pub uuid: Uuid,
+}
+
+impl SrcLinking for VariableType {
+    fn link(&self) -> SrcLink {
+        self.r#type.link()
+    }
+    fn slink(&self) -> SrcLink {
+        self.r#type.slink()
+    }
 }
 
 impl fmt::Display for VariableType {

@@ -30,6 +30,15 @@ impl Component {
     }
 }
 
+impl SrcLinking for Component {
+    fn link(&self) -> SrcLink {
+        src_from::tks(&self.sig, &self.close_bl)
+    }
+    fn slink(&self) -> SrcLink {
+        src_from::tks(&self.sig, &self.name)
+    }
+}
+
 impl fmt::Display for Component {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

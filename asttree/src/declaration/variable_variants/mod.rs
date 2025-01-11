@@ -11,6 +11,19 @@ pub struct VariableVariants {
     pub uuid: Uuid,
 }
 
+impl SrcLinking for VariableVariants {
+    fn link(&self) -> SrcLink {
+        if let Some(n) = self.variants.last() {
+            src_from::tk_and_node(&self.token, n)
+        } else {
+            src_from::tk(&self.token)
+        }
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl fmt::Display for VariableVariants {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

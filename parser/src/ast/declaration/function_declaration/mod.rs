@@ -32,7 +32,7 @@ impl ReadNode<FunctionDeclaration> for FunctionDeclaration {
         if !matches!(name.kind, Kind::Identifier(..)) {
             return Err(E::MissedFnName.link_with_token(&sig));
         }
-        let (mut inner, _, close_tk) = parser
+        let (mut inner, open_tk, close_tk) = parser
             .between(KindId::LeftParen, KindId::RightParen)?
             .ok_or_else(|| E::MissedFnArguments.link_between(&sig, &name))?;
         let mut args = Vec::new();
@@ -58,6 +58,8 @@ impl ReadNode<FunctionDeclaration> for FunctionDeclaration {
         Ok(Some(FunctionDeclaration {
             sig,
             name,
+            open: open_tk,
+            close: close_tk,
             args,
             block: Box::new(block),
             uuid: Uuid::new_v4(),

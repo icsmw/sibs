@@ -13,6 +13,15 @@ pub struct ComparisonGroup {
     pub uuid: Uuid,
 }
 
+impl SrcLinking for ComparisonGroup {
+    fn link(&self) -> SrcLink {
+        src_from::tks(&self.open, &self.close)
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl fmt::Display for ComparisonGroup {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

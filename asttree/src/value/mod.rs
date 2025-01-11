@@ -42,6 +42,23 @@ impl Value {
     }
 }
 
+impl SrcLinking for Value {
+    fn link(&self) -> SrcLink {
+        match self {
+            Self::Error(n) => n.link(),
+            Self::Boolean(n) => n.link(),
+            Self::Number(n) => n.link(),
+            Self::Array(n) => n.link(),
+            Self::InterpolatedString(n) => n.link(),
+            Self::PrimitiveString(n) => n.link(),
+            Self::Closure(n) => n.link(),
+        }
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl From<Value> for Node {
     fn from(val: Value) -> Self {
         Node::Value(val)

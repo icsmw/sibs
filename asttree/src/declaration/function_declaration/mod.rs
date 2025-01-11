@@ -8,6 +8,8 @@ use std::fmt;
 pub struct FunctionDeclaration {
     pub sig: Token,
     pub name: Token,
+    pub open: Token,
+    pub close: Token,
     pub args: Vec<LinkedNode>,
     pub block: Box<LinkedNode>,
     pub uuid: Uuid,
@@ -23,6 +25,15 @@ impl FunctionDeclaration {
     }
 }
 
+impl SrcLinking for FunctionDeclaration {
+    fn link(&self) -> SrcLink {
+        src_from::tk_and_node(&self.sig, &self.block)
+    }
+    fn slink(&self) -> SrcLink {
+        src_from::tks(&self.sig, &self.close)
+    }
+}
+
 impl fmt::Display for FunctionDeclaration {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
@@ -30,13 +41,13 @@ impl fmt::Display for FunctionDeclaration {
             "{} {} {} {} {} {}",
             self.sig,
             self.name,
-            Kind::LeftParen,
+            self.open,
             self.args
                 .iter()
                 .map(|n| n.to_string())
                 .collect::<Vec<String>>()
                 .join(&format!(" {} ", Kind::Comma)),
-            Kind::RightParen,
+            self.close,
             self.block
         )
     }

@@ -24,6 +24,15 @@ impl Module {
     }
 }
 
+impl SrcLinking for Module {
+    fn link(&self) -> SrcLink {
+        src_from::tks(&self.sig, &self.close)
+    }
+    fn slink(&self) -> SrcLink {
+        src_from::tks(&self.sig, &self.name)
+    }
+}
+
 impl fmt::Display for Module {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

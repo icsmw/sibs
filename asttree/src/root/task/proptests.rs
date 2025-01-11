@@ -30,6 +30,8 @@ impl Arbitrary for Task {
                 vis,
                 sig: Token::for_test(Kind::Keyword(Keyword::Task)),
                 name: Token::for_test(name),
+                open: Token::for_test(Kind::LeftParen),
+                close: Token::for_test(Kind::RightParen),
                 block: Box::new(block),
                 uuid: Uuid::new_v4(),
                 args,

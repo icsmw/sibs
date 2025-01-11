@@ -10,6 +10,19 @@ pub struct ComparisonSeq {
     pub uuid: Uuid,
 }
 
+impl SrcLinking for ComparisonSeq {
+    fn link(&self) -> SrcLink {
+        if let (Some(open), Some(close)) = (self.nodes.first(), self.nodes.last()) {
+            src_from::nodes(open, close)
+        } else {
+            SrcLink::new(&Uuid::default())
+        }
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl fmt::Display for ComparisonSeq {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

@@ -33,3 +33,18 @@ impl From<ControlFlowModifier> for Node {
         Node::ControlFlowModifier(val)
     }
 }
+
+impl SrcLinking for ControlFlowModifier {
+    fn link(&self) -> SrcLink {
+        match self {
+            Self::Gatekeeper(n) => n.link(),
+            Self::Skip(n) => n.link(),
+        }
+    }
+    fn slink(&self) -> SrcLink {
+        match self {
+            Self::Gatekeeper(n) => n.slink(),
+            Self::Skip(n) => n.slink(),
+        }
+    }
+}

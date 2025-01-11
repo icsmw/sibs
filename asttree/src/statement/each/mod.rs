@@ -14,6 +14,15 @@ pub struct Each {
     pub uuid: Uuid,
 }
 
+impl SrcLinking for Each {
+    fn link(&self) -> SrcLink {
+        src_from::tk_and_node(&self.token, &self.block)
+    }
+    fn slink(&self) -> SrcLink {
+        src_from::tk_and_node(&self.token, &self.elements)
+    }
+}
+
 impl fmt::Display for Each {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

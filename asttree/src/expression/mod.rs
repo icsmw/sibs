@@ -104,6 +104,34 @@ impl Expression {
     }
 }
 
+impl SrcLinking for Expression {
+    fn link(&self) -> SrcLink {
+        match self {
+            Self::Accessor(n) => n.link(),
+            Self::BinaryExp(n) => n.link(),
+            Self::BinaryExpGroup(n) => n.link(),
+            Self::BinaryExpSeq(n) => n.link(),
+            Self::BinaryOp(n) => n.link(),
+            Self::Call(n) => n.link(),
+            Self::Command(n) => n.link(),
+            Self::Comparison(n) => n.link(),
+            Self::ComparisonGroup(n) => n.link(),
+            Self::ComparisonOp(n) => n.link(),
+            Self::ComparisonSeq(n) => n.link(),
+            Self::CompoundAssignments(n) => n.link(),
+            Self::CompoundAssignmentsOp(n) => n.link(),
+            Self::FunctionCall(n) => n.link(),
+            Self::LogicalOp(n) => n.link(),
+            Self::Range(n) => n.link(),
+            Self::TaskCall(n) => n.link(),
+            Self::Variable(n) => n.link(),
+        }
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl From<Expression> for Node {
     fn from(val: Expression) -> Self {
         Node::Expression(val)

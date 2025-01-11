@@ -33,6 +33,15 @@ pub struct Skip {
     pub uuid: Uuid,
 }
 
+impl SrcLinking for Skip {
+    fn link(&self) -> SrcLink {
+        src_from::tks(&self.token, &self.close)
+    }
+    fn slink(&self) -> SrcLink {
+        src_from::tk(&self.token)
+    }
+}
+
 impl fmt::Display for Skip {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

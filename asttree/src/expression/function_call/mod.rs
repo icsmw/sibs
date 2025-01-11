@@ -45,6 +45,21 @@ impl FunctionCall {
     }
 }
 
+impl SrcLinking for FunctionCall {
+    fn link(&self) -> SrcLink {
+        if let Some(open) = self.negation.as_ref() {
+            src_from::tks(open, &self.close)
+        } else if let Some((_, open)) = self.reference.first() {
+            src_from::tks(open, &self.close)
+        } else {
+            src_from::tks(&self.open, &self.close)
+        }
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl fmt::Display for FunctionCall {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

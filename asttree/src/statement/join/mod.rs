@@ -13,6 +13,15 @@ pub struct Join {
     pub uuid: Uuid,
 }
 
+impl SrcLinking for Join {
+    fn link(&self) -> SrcLink {
+        src_from::tks(&self.token, &self.close)
+    }
+    fn slink(&self) -> SrcLink {
+        src_from::tk(&self.token)
+    }
+}
+
 impl fmt::Display for Join {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

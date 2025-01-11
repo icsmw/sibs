@@ -20,6 +20,16 @@ impl ArgumentDeclaration {
         }
     }
 }
+
+impl SrcLinking for ArgumentDeclaration {
+    fn link(&self) -> SrcLink {
+        src_from::nodes(&self.variable, &self.r#type)
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl fmt::Display for ArgumentDeclaration {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} {}", self.variable, self.r#type)

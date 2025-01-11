@@ -69,3 +69,23 @@ impl From<Declaration> for Node {
         Node::Declaration(val)
     }
 }
+
+impl SrcLinking for Declaration {
+    fn link(&self) -> SrcLink {
+        match self {
+            Self::IncludeDeclaration(n) => n.link(),
+            Self::ModuleDeclaration(n) => n.link(),
+            Self::ArgumentDeclaration(n) => n.link(),
+            Self::FunctionDeclaration(n) => n.link(),
+            Self::VariableDeclaration(n) => n.link(),
+            Self::VariableType(n) => n.link(),
+            Self::VariableTypeDeclaration(n) => n.link(),
+            Self::VariableVariants(n) => n.link(),
+            Self::VariableName(n) => n.link(),
+            Self::ClosureDeclaration(n) => n.link(),
+        }
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}

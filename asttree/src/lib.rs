@@ -1,6 +1,7 @@
 mod cfm;
 mod declaration;
 mod expression;
+mod linking;
 mod metadata;
 mod miscellaneous;
 mod root;
@@ -10,6 +11,7 @@ mod value;
 pub use cfm::*;
 pub use declaration::*;
 pub use expression::*;
+pub use linking::*;
 pub use metadata::*;
 pub use miscellaneous::*;
 pub use root::*;
@@ -87,5 +89,39 @@ impl Identification for LinkedNode {
 impl fmt::Display for LinkedNode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}{}", self.md.meta_to_string(), self.node)
+    }
+}
+
+impl SrcLinking for Node {
+    fn link(&self) -> SrcLink {
+        match self {
+            Self::Statement(n) => n.link(),
+            Self::Expression(n) => n.link(),
+            Self::Declaration(n) => n.link(),
+            Self::Value(n) => n.link(),
+            Self::ControlFlowModifier(n) => n.link(),
+            Self::Root(n) => n.link(),
+            Self::Miscellaneous(n) => n.link(),
+        }
+    }
+    fn slink(&self) -> SrcLink {
+        match self {
+            Self::Statement(n) => n.slink(),
+            Self::Expression(n) => n.slink(),
+            Self::Declaration(n) => n.slink(),
+            Self::Value(n) => n.slink(),
+            Self::ControlFlowModifier(n) => n.slink(),
+            Self::Root(n) => n.slink(),
+            Self::Miscellaneous(n) => n.slink(),
+        }
+    }
+}
+
+impl SrcLinking for LinkedNode {
+    fn link(&self) -> SrcLink {
+        self.node.link()
+    }
+    fn slink(&self) -> SrcLink {
+        self.node.slink()
     }
 }

@@ -15,6 +15,15 @@ pub struct For {
     pub uuid: Uuid,
 }
 
+impl SrcLinking for For {
+    fn link(&self) -> SrcLink {
+        src_from::tk_and_node(&self.token_for, &self.block)
+    }
+    fn slink(&self) -> SrcLink {
+        src_from::tk_and_node(&self.token_for, &self.elements)
+    }
+}
+
 impl fmt::Display for For {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

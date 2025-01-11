@@ -29,3 +29,15 @@ impl From<Miscellaneous> for Node {
         Node::Miscellaneous(val)
     }
 }
+
+impl SrcLinking for Miscellaneous {
+    fn link(&self) -> SrcLink {
+        match self {
+            Self::Comment(n) => n.link(),
+            Self::Meta(n) => n.link(),
+        }
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}

@@ -35,6 +35,20 @@ impl Root {
     }
 }
 
+impl SrcLinking for Root {
+    fn link(&self) -> SrcLink {
+        match self {
+            Self::Anchor(n) => n.link(),
+            Self::Module(n) => n.link(),
+            Self::Component(n) => n.link(),
+            Self::Task(n) => n.link(),
+        }
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
 impl From<Root> for Node {
     fn from(val: Root) -> Self {
         Node::Root(val)
