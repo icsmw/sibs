@@ -5,7 +5,7 @@ impl InferType for Assignation {
         let variable = if let Node::Expression(Expression::Variable(variable)) = &self.left.node {
             variable.ident.to_owned()
         } else {
-            return Err(LinkedErr::by_node(
+            return Err(LinkedErr::from(
                 E::UnexpectedNode(self.left.node.id()),
                 &self.left,
             ));
@@ -13,18 +13,18 @@ impl InferType for Assignation {
         let left = scx
             .tys
             .lookup(&variable)
-            .map_err(|err| LinkedErr::by_node(err.into(), &self.left))?
+            .map_err(|err| LinkedErr::from(err.into(), &self.left))?
             .cloned()
-            .ok_or(LinkedErr::by_node(
+            .ok_or(LinkedErr::from(
                 E::VariableIsNotDefined(variable.clone()),
                 &self.left,
             ))?;
         let right = self.right.infer_type(scx)?;
         if matches!(right, Ty::Indeterminate) {
-            return Err(LinkedErr::by_node(E::IndeterminateType, &self.right));
+            return Err(LinkedErr::from(E::IndeterminateType, &self.right));
         }
         let Some(annot) = left.annotated.as_ref() else {
-            return Err(LinkedErr::by_node(E::IndeterminateType, &self.left));
+            return Err(LinkedErr::from(E::IndeterminateType, &self.left));
         };
         if annot.reassignable(&right) {
             scx.tys
@@ -32,13 +32,12 @@ impl InferType for Assignation {
                     variable,
                     TypeEntity::new(Some(right), Some(annot.to_owned())),
                 )
-                .map_err(|err| LinkedErr::between_nodes(err.into(), &self.left, &self.right))?;
+                .map_err(|err| LinkedErr::from(err.into(), self))?;
             Ok(DeterminedTy::Void.into())
         } else {
-            Err(LinkedErr::between_nodes(
+            Err(LinkedErr::from(
                 E::DismatchTypes(format!("{annot}, {right}")),
-                &self.left,
-                &self.right,
+                self,
             ))
         }
     }

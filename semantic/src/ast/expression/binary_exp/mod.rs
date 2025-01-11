@@ -8,17 +8,9 @@ impl InferType for BinaryExp {
         let left = self.left.infer_type(scx)?;
         let right = self.right.infer_type(scx)?;
         if !left.numeric() {
-            Err(LinkedErr::between_nodes(
-                E::ExpectedNumericType(left),
-                &self.left,
-                &self.right,
-            ))
+            Err(LinkedErr::from(E::ExpectedNumericType(left), self))
         } else if !right.numeric() {
-            Err(LinkedErr::between_nodes(
-                E::ExpectedNumericType(right),
-                &self.left,
-                &self.right,
-            ))
+            Err(LinkedErr::from(E::ExpectedNumericType(right), self))
         } else {
             Ok(DeterminedTy::Num.into())
         }

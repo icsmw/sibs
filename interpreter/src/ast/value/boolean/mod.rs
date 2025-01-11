@@ -10,6 +10,6 @@ impl Interpret for Boolean {
                 return Ok(RtValue::Bool(false));
             }
         }
-        Err(LinkedErr::token(E::FailExtractValue, &self.token))
+        Err(LinkedErr::from(E::FailExtractValue, self))
     }
 }

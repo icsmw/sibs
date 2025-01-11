@@ -6,7 +6,7 @@ impl Interpret for Number {
         if let Kind::Number(n) = &self.token.kind {
             Ok(RtValue::Num(*n))
         } else {
-            Err(LinkedErr::token(E::FailExtractValue, &self.token))
+            Err(LinkedErr::from(E::FailExtractValue, self))
         }
     }
 }

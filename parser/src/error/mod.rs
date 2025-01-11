@@ -194,9 +194,6 @@ impl E {
         parser.err_until_end(self)
     }
     pub fn link(self, node: &LinkedNode) -> LinkedErr<E> {
-        LinkedErr::by_node(self, node)
-    }
-    pub fn unlinked(self) -> LinkedErr<E> {
-        LinkedErr::unlinked(self)
+        LinkedErr::from(self, node)
     }
 }

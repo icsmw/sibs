@@ -7,7 +7,7 @@ impl Interpret for VariableDeclaration {
             if let Node::Declaration(Declaration::VariableName(variable)) = &self.variable.node {
                 variable.ident.to_owned()
             } else {
-                return Err(LinkedErr::by_node(
+                return Err(LinkedErr::from(
                     E::UnexpectedNode(self.variable.node.id()),
                     &self.variable,
                 ));
@@ -20,7 +20,7 @@ impl Interpret for VariableDeclaration {
             rt.scopes
                 .insert(&variable, vl)
                 .await
-                .map_err(|err| LinkedErr::by_node(err, node))?;
+                .map_err(|err| LinkedErr::from(err, node))?;
         }
         Ok(RtValue::Void)
     }

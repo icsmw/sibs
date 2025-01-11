@@ -4,7 +4,7 @@ impl Interpret for Comparison {
     #[boxed]
     fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
         let RtValue::ComparisonOperator(op) = self.operator.interpret(rt.clone()).await? else {
-            return Err(LinkedErr::by_node(
+            return Err(LinkedErr::from(
                 E::InvalidValueType(RtValueId::ComparisonOperator.to_string()),
                 &self.operator,
             ));
@@ -14,19 +14,15 @@ impl Interpret for Comparison {
             .interpret(rt.clone())
             .await?
             .into_eq_ord()
-            .ok_or(LinkedErr::by_node(E::NotComparableValue, &self.left))?;
+            .ok_or(LinkedErr::from(E::NotComparableValue, &self.left))?;
         let right = self
             .right
             .interpret(rt.clone())
             .await?
             .into_eq_ord()
-            .ok_or(LinkedErr::by_node(E::NotComparableValue, &self.right))?;
+            .ok_or(LinkedErr::from(E::NotComparableValue, &self.right))?;
         if left.id() != right.id() {
-            return Err(LinkedErr::between_nodes(
-                E::DifferentTypeOfValues,
-                &self.left,
-                &self.right,
-            ));
+            return Err(LinkedErr::from(E::DifferentTypeOfValues, self));
         }
         Ok(RtValue::Bool(match op {
             ComparisonOperator::BangEqual => left != right,

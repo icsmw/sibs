@@ -11,7 +11,7 @@ impl Interpret for BinaryExpSeq {
         for (n, next) in self.nodes.iter().enumerate() {
             if n == 0 {
                 let RtValue::Num(vl) = next.interpret(rt.clone()).await? else {
-                    return Err(LinkedErr::by_node(
+                    return Err(LinkedErr::from(
                         E::InvalidValueType(RtValueId::Num.to_string()),
                         next,
                     ));
@@ -19,10 +19,10 @@ impl Interpret for BinaryExpSeq {
                 assemble = vl;
             } else if n % 2 != 0 {
                 if operator.is_some() {
-                    return Err(LinkedErr::by_node(E::MissedBinaryOperator, next));
+                    return Err(LinkedErr::from(E::MissedBinaryOperator, next));
                 }
                 let RtValue::BinaryOperator(op) = next.interpret(rt.clone()).await? else {
-                    return Err(LinkedErr::by_node(
+                    return Err(LinkedErr::from(
                         E::InvalidValueType(RtValueId::BinaryOperator.to_string()),
                         next,
                     ));
@@ -30,10 +30,10 @@ impl Interpret for BinaryExpSeq {
                 operator = Some(op);
             } else if n % 2 == 0 {
                 let Some(operator) = operator.take() else {
-                    return Err(LinkedErr::by_node(E::MissedBinaryOperator, next));
+                    return Err(LinkedErr::from(E::MissedBinaryOperator, next));
                 };
                 let RtValue::Num(vl) = next.interpret(rt.clone()).await? else {
-                    return Err(LinkedErr::by_node(
+                    return Err(LinkedErr::from(
                         E::InvalidValueType(RtValueId::Num.to_string()),
                         next,
                     ));

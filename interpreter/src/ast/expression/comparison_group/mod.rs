@@ -5,7 +5,7 @@ impl Interpret for ComparisonGroup {
     fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
         let vl = self.node.interpret(rt).await?;
         if !matches!(vl, RtValue::Bool(..)) {
-            return Err(LinkedErr::by_node(
+            return Err(LinkedErr::from(
                 E::InvalidValueType(RtValueId::Bool.to_string()),
                 &self.node,
             ));

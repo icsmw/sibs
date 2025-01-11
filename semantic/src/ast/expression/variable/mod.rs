@@ -5,10 +5,10 @@ impl InferType for Variable {
         let ety = scx
             .tys
             .lookup(&self.ident)
-            .map_err(|err| LinkedErr::token(err.into(), &self.token))?
-            .ok_or(LinkedErr::token(
+            .map_err(|err| LinkedErr::from(err.into(), self))?
+            .ok_or(LinkedErr::from(
                 E::VariableIsNotDefined(self.ident.clone()),
-                &self.token,
+                self,
             ))?;
         if let Some(ty) = ety.assigned.as_ref() {
             if let (Some(negation), false) = (self.negation.as_ref(), ty.bool()) {
@@ -21,9 +21,9 @@ impl InferType for Variable {
                 Ok(ty.to_owned())
             }
         } else {
-            Err(LinkedErr::token(
+            Err(LinkedErr::from(
                 E::VariableIsNotDefined(self.ident.clone()),
-                &self.token,
+                self,
             ))
         }
     }
@@ -33,10 +33,10 @@ impl Initialize for Variable {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         scx.tys
             .lookup(&self.ident)
-            .map_err(|err| LinkedErr::token(err.into(), &self.token))?
-            .ok_or(LinkedErr::token(
+            .map_err(|err| LinkedErr::from(err.into(), self))?
+            .ok_or(LinkedErr::from(
                 E::VariableIsNotDefined(self.ident.clone()),
-                &self.token,
+                self,
             ))?;
         Ok(())
     }

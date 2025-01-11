@@ -28,10 +28,10 @@ impl Initialize for ClosureDeclaration {
         let mut args = Vec::new();
         for n_arg in self.args.iter() {
             let Node::Declaration(Declaration::ArgumentDeclaration(arg_dec)) = &n_arg.node else {
-                return Err(LinkedErr::by_node(E::InvalidFnArg, n_arg));
+                return Err(LinkedErr::from(E::InvalidFnArg, n_arg));
             };
             let Some(ident) = arg_dec.get_var_name() else {
-                return Err(LinkedErr::by_node(E::InvalidFnArg, n_arg));
+                return Err(LinkedErr::from(E::InvalidFnArg, n_arg));
             };
             let ty = n_arg.infer_type(scx)?;
             args.push(UserFnArgDeclaration {

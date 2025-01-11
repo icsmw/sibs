@@ -8,16 +8,16 @@ impl InferType for VariableTypeDeclaration {
             .map(|n| n.infer_type(scx))
             .collect::<Result<Vec<_>, _>>()?;
         if tys.is_empty() {
-            Err(LinkedErr::token(E::EmptyTypeDeclaration, &self.token))
+            Err(LinkedErr::from(E::EmptyTypeDeclaration, self))
         } else if tys.len() == 1 {
             Ok(tys[0].clone())
         } else {
             let tys = tys
                 .into_iter()
                 .map(|ty| {
-                    ty.determined().cloned().ok_or(LinkedErr::token(
+                    ty.determined().cloned().ok_or(LinkedErr::from(
                         E::FailInferDeterminedType(ty.clone()),
-                        &self.token,
+                        self,
                     ))
                 })
                 .collect::<Result<Vec<_>, _>>()?;

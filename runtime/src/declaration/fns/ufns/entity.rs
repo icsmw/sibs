@@ -77,11 +77,13 @@ impl UserFnEntity {
         rt: Runtime,
         args: Vec<FnArgValue>,
         fns: &Fns,
+        caller: &SrcLink,
     ) -> Result<RtValue, LinkedErr<E>> {
         let FnBody::Executor(md, exec) = &self.body else {
-            return Err(LinkedErr::unlinked(E::NotInitedFunction(
-                self.name.to_owned(),
-            )));
+            return Err(LinkedErr::by_link(
+                E::NotInitedFunction(self.name.to_owned()),
+                caller.into(),
+            ));
         };
         if let Err(err) = rt.scopes.enter(&self.uuid).await {
             return Err(LinkedErr::by_link(err, (&md.link).into()));

@@ -34,7 +34,7 @@ impl InferType for Accessor {
         if let DeterminedTy::Vec(Some(inner_ty)) = dpty {
             let ty = self.node.infer_type(scx)?;
             if !ty.numeric() {
-                return Err(LinkedErr::by_node(E::ExpectedNumericType(ty), &self.node));
+                return Err(LinkedErr::from(E::ExpectedNumericType(ty), &self.node));
             }
             Ok((*inner_ty.to_owned()).into())
         } else {

@@ -79,7 +79,10 @@ impl Fns {
             .lookup_by_caller(uuid)
             .or_else(|| self.lookup_closure(uuid))
         else {
-            return Err(LinkedErr::unlinked(E::NoLinkedFunctions(*uuid)));
+            return Err(LinkedErr::by_link(
+                E::NoLinkedFunctions(*uuid),
+                caller.into(),
+            ));
         };
         fn_entity.execute(rt, args, self, caller).await
     }

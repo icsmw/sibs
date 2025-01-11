@@ -9,7 +9,7 @@ impl Interpret for Assignation {
         let variable = if let Node::Expression(Expression::Variable(variable)) = &self.left.node {
             variable.ident.to_owned()
         } else {
-            return Err(LinkedErr::by_node(
+            return Err(LinkedErr::from(
                 E::UnexpectedNode(self.left.node.id()),
                 &self.left,
             ));
@@ -19,7 +19,7 @@ impl Interpret for Assignation {
         rt.scopes
             .insert(&variable, vl)
             .await
-            .map_err(|err| LinkedErr::by_node(err, &self.right))?;
+            .map_err(|err| LinkedErr::from(err, &self.right))?;
         Ok(RtValue::Void)
     }
 }

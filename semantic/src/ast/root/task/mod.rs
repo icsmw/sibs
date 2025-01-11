@@ -6,7 +6,7 @@ impl InferType for Task {
         let ty = self.block.infer_type(scx)?;
         scx.tys
             .close()
-            .map_err(|err| LinkedErr::token(err.into(), &self.name))?;
+            .map_err(|err| LinkedErr::sfrom(err.into(), self))?;
         Ok(ty)
     }
 }
@@ -14,7 +14,7 @@ impl InferType for Task {
 impl Initialize for Task {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         let Some(master) = scx.tasks.get_master() else {
-            return Err(LinkedErr::token(E::FailToGetMasterOfTask, &self.name));
+            return Err(LinkedErr::sfrom(E::FailToGetMasterOfTask, self));
         };
         scx.tys.open(&self.uuid);
         self.args.iter().try_for_each(|n| n.initialize(scx))?;
@@ -22,10 +22,10 @@ impl Initialize for Task {
         let mut args = Vec::new();
         for n_arg in self.args.iter() {
             let Node::Declaration(Declaration::ArgumentDeclaration(arg_dec)) = &n_arg.node else {
-                return Err(LinkedErr::by_node(E::InvalidTaskArg, n_arg));
+                return Err(LinkedErr::from(E::InvalidTaskArg, n_arg));
             };
             let Some(ident) = arg_dec.get_var_name() else {
-                return Err(LinkedErr::by_node(E::InvalidTaskArg, n_arg));
+                return Err(LinkedErr::from(E::InvalidTaskArg, n_arg));
             };
             let ty = n_arg.infer_type(scx)?;
             args.push(TaskArgDeclaration {
@@ -47,10 +47,10 @@ impl Initialize for Task {
         };
         scx.tasks
             .add(entity)
-            .map_err(|err| LinkedErr::token(err.into(), &self.name))?;
+            .map_err(|err| LinkedErr::sfrom(err.into(), self))?;
         scx.tys
             .close()
-            .map_err(|err| LinkedErr::token(err.into(), &self.name))?;
+            .map_err(|err| LinkedErr::sfrom(err.into(), self))?;
         Ok(())
     }
 }
@@ -62,7 +62,7 @@ impl Finalization for Task {
         self.block.finalize(scx)?;
         scx.tys
             .close()
-            .map_err(|err| LinkedErr::token(err.into(), &self.name))?;
+            .map_err(|err| LinkedErr::sfrom(err.into(), self))?;
         Ok(())
     }
 }

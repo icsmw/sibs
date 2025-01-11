@@ -7,7 +7,7 @@ impl InferType for ComparisonGroup {
     fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         let ty = self.node.infer_type(scx)?;
         if !ty.bool() {
-            Err(LinkedErr::by_node(E::ExpectedBoolType(ty), &self.node))
+            Err(LinkedErr::from(E::ExpectedBoolType(ty), &self.node))
         } else {
             Ok(ty)
         }

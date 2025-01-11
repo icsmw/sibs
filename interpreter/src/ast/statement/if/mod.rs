@@ -10,7 +10,7 @@ impl Interpret for If {
             match case {
                 IfCase::If(cnd, blk, _) => {
                     let RtValue::Bool(vl) = cnd.interpret(rt.clone()).await? else {
-                        return Err(LinkedErr::by_node(
+                        return Err(LinkedErr::from(
                             E::InvalidValueType(RtValueId::Bool.to_string()),
                             cnd,
                         ));

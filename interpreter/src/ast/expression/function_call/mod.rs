@@ -6,17 +6,12 @@ use crate::*;
 impl Interpret for FunctionCall {
     #[boxed]
     fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
-        let link = self.get_src().ok_or(LinkedErr::between(
-            E::FailGetSrcLink,
-            &self.open,
-            &self.close,
-        ))?;
         let mut args = Vec::new();
         if let Some(parent) = rt
             .scopes
             .withdraw_parent_vl()
             .await
-            .map_err(|err| LinkedErr::by_link(err, (&link).into()))?
+            .map_err(|err| LinkedErr::from(err, self))?
         {
             args.push(parent.into());
         }
@@ -27,13 +22,13 @@ impl Interpret for FunctionCall {
             .scopes
             .lookup(self.get_name())
             .await
-            .map_err(|err| LinkedErr::by_link(err, (&link).into()))?
+            .map_err(|err| LinkedErr::from(err, self))?
             .as_deref()
         {
             *uuid
         } else {
             self.uuid
         };
-        rt.clone().fns.execute(&uuid, rt, args, &link).await
+        rt.clone().fns.execute(&uuid, rt, args, &self.link()).await
     }
 }

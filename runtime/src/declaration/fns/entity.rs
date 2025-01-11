@@ -44,9 +44,9 @@ impl<'a> FnEntity<'a> {
         caller: &SrcLink,
     ) -> Result<RtValue, LinkedErr<E>> {
         match self {
-            Self::UFn(en) => en.execute(rt, args, fns).await,
+            Self::UFn(en) => en.execute(rt, args, fns, caller).await,
             Self::EFn(en) => en.execute(rt, args, fns, caller).await,
-            Self::CFn(en) => en.execute(rt, args, fns).await,
+            Self::CFn(en) => en.execute(rt, args, fns, caller).await,
         }
     }
 

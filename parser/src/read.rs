@@ -36,7 +36,7 @@ pub(crate) fn resolve_conflicts<K: Display + Clone + PartialEq + ConflictResolve
             return Err(if let Some((_, node, _)) = results.first() {
                 err.link(node)
             } else {
-                err.unlinked()
+                err.link(node)
             });
         } else if &resolved_id.resolve_conflict(id) == id {
             ignored.push(resolved_id);

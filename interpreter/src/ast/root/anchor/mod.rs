@@ -7,9 +7,9 @@ impl Interpret for Anchor {
             .cx
             .get_target_component()
             .await
-            .map_err(LinkedErr::unlinked)?;
+            .map_err(|err| LinkedErr::from(err, self))?;
         let Some(comp) = self.get_component(&comp) else {
-            return Err(LinkedErr::unlinked(E::CompNotFound(comp)));
+            return Err(LinkedErr::from(E::CompNotFound(comp), self));
         };
         comp.interpret(rt).await
     }

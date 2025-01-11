@@ -8,18 +8,21 @@ impl InferType for VariableVariants {
             .map(|n| n.infer_type(scx))
             .collect::<Result<Vec<_>, _>>()?;
         if tys.is_empty() {
-            return Err(LinkedErr::unlinked(E::NoVariantsAreDefined));
+            return Err(LinkedErr::from(E::NoVariantsAreDefined, self));
         }
         let first = &tys[0];
         if tys.iter().all(|ty| ty == first) {
             Ok(first.clone())
         } else {
-            Err(LinkedErr::unlinked(E::DismatchTypes(
-                tys.iter()
-                    .map(|ty| ty.to_string())
-                    .collect::<Vec<String>>()
-                    .join(", "),
-            )))
+            Err(LinkedErr::from(
+                E::DismatchTypes(
+                    tys.iter()
+                        .map(|ty| ty.to_string())
+                        .collect::<Vec<String>>()
+                        .join(", "),
+                ),
+                self,
+            ))
         }
     }
 }

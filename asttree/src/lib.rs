@@ -125,3 +125,21 @@ impl SrcLinking for LinkedNode {
         self.node.slink()
     }
 }
+
+impl SrcLinking for &LinkedNode {
+    fn link(&self) -> SrcLink {
+        self.node.link()
+    }
+    fn slink(&self) -> SrcLink {
+        self.node.slink()
+    }
+}
+
+impl SrcLinking for Box<LinkedNode> {
+    fn link(&self) -> SrcLink {
+        self.node.link()
+    }
+    fn slink(&self) -> SrcLink {
+        self.node.slink()
+    }
+}

@@ -68,9 +68,13 @@ impl TaskEntity {
         &self,
         rt: Runtime,
         args: Vec<FnArgValue>,
+        caller: &SrcLink,
     ) -> Result<RtValue, LinkedErr<E>> {
         let TaskBody::Executor(md, exec) = &self.body else {
-            return Err(LinkedErr::unlinked(E::NotInitedTask(self.fullname())));
+            return Err(LinkedErr::by_link(
+                E::NotInitedTask(self.fullname()),
+                caller.into(),
+            ));
         };
         if let Err(err) = rt.scopes.enter(&self.uuid).await {
             return Err(LinkedErr::by_link(err, (&md.link).into()));

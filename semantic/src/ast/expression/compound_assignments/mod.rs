@@ -8,17 +8,13 @@ impl InferType for CompoundAssignments {
         let left = self.left.infer_type(scx)?;
         let right = self.right.infer_type(scx)?;
         if !left.numeric() {
-            Err(LinkedErr::by_node(E::ExpectedNumericType(left), &self.left))
+            Err(LinkedErr::from(E::ExpectedNumericType(left), &self.left))
         } else if !right.numeric() {
-            Err(LinkedErr::by_node(
-                E::ExpectedNumericType(right),
-                &self.right,
-            ))
+            Err(LinkedErr::from(E::ExpectedNumericType(right), &self.right))
         } else if !left.compatible(&right) {
-            Err(LinkedErr::between_nodes(
+            Err(LinkedErr::from(
                 E::DismatchTypes(format!("{left}, {right}")),
-                &self.left,
-                &self.right,
+                self,
             ))
         } else {
             Ok(DeterminedTy::Void.into())

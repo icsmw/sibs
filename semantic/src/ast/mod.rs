@@ -61,22 +61,14 @@ impl InferType for LinkedNode {
             for ppm in md.ppm.iter() {
                 scx.tys
                     .get_mut()
-                    .map_err(|err| LinkedErr::by_node(err.into(), ppm))?
+                    .map_err(|err| LinkedErr::from(err.into(), ppm))?
                     .parent
                     .set(ppm.uuid(), ty);
                 ty = ppm.infer_type(scx)?;
             }
             Ok(ty)
         }
-        match infer_type(&self.node, &self.md, scx) {
-            Err(mut err) => {
-                if err.is_unlinked() {
-                    err.relink(self);
-                }
-                Err(err)
-            }
-            Ok(ty) => Ok(ty),
-        }
+        infer_type(&self.node, &self.md, scx)
     }
 }
 
@@ -100,7 +92,7 @@ impl Finalization for LinkedNode {
             for ppm in md.ppm.iter() {
                 scx.tys
                     .get_mut()
-                    .map_err(|err| LinkedErr::by_node(err.into(), ppm))?
+                    .map_err(|err| LinkedErr::from(err.into(), ppm))?
                     .parent
                     .set(ppm.uuid(), ty);
                 ppm.initialize(scx)?;
@@ -111,25 +103,14 @@ impl Finalization for LinkedNode {
             }
             Ok(())
         }
-        match initialize_and_finalize(&self.node, &self.md, scx) {
-            Err(mut err) => {
-                if err.is_unlinked() {
-                    err.relink(self);
-                }
-                Err(err)
-            }
-            Ok(_) => {
-                self.node.finalize(scx)?;
-                if !matches!(
-                    self.node,
-                    Node::Expression(Expression::Accessor(..))
-                        | Node::Expression(Expression::Call(..))
-                ) {
-                    scx.by_node(&self.node)?;
-                }
-                Ok(())
-            }
+        initialize_and_finalize(&self.node, &self.md, scx)?;
+        self.node.finalize(scx)?;
+        if !matches!(
+            self.node,
+            Node::Expression(Expression::Accessor(..)) | Node::Expression(Expression::Call(..))
+        ) {
+            scx.by_node(&self.node)?;
         }
-        // Ok(())
+        Ok(())
     }
 }

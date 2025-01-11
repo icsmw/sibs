@@ -4,10 +4,10 @@ impl Interpret for ComparisonSeq {
     #[boxed]
     fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
         let Some(node) = self.nodes.first() else {
-            return Err(LinkedErr::unlinked(E::InvalidComparisonSeq));
+            return Err(LinkedErr::from(E::InvalidComparisonSeq, self));
         };
         let RtValue::Bool(mut result) = node.interpret(rt.clone()).await? else {
-            return Err(LinkedErr::by_node(
+            return Err(LinkedErr::from(
                 E::InvalidValueType(RtValueId::Bool.to_string()),
                 node,
             ));
@@ -18,7 +18,7 @@ impl Interpret for ComparisonSeq {
             match vl {
                 RtValue::Bool(vl) => {
                     let Some(op) = prev_op.take() else {
-                        return Err(LinkedErr::by_node(
+                        return Err(LinkedErr::from(
                             E::InvalidValueType(RtValueId::Bool.to_string()),
                             n,
                         ));
@@ -30,7 +30,7 @@ impl Interpret for ComparisonSeq {
                 }
                 RtValue::LogicalOperator(op) => prev_op = Some(op),
                 _ => {
-                    return Err(LinkedErr::by_node(
+                    return Err(LinkedErr::from(
                         E::InvalidValueType(RtValueId::Bool.to_string()),
                         n,
                     ));

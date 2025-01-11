@@ -12,7 +12,7 @@ impl InferType for BinaryExpSeq {
         {
             let ty = node.infer_type(scx)?;
             if !ty.numeric() {
-                return Err(LinkedErr::by_node(E::ExpectedNumericType(ty), node));
+                return Err(LinkedErr::from(E::ExpectedNumericType(ty), node));
             }
         }
         Ok(DeterminedTy::Num.into())

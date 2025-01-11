@@ -20,7 +20,7 @@ impl Interpret for InterpolatedString {
                 p.interpret(rt.clone())
                     .await?
                     .as_string()
-                    .ok_or(LinkedErr::token(E::CannotBeConvertedToString, &self.token))?,
+                    .ok_or(LinkedErr::from(E::CannotBeConvertedToString, self))?,
             );
         }
         Ok(RtValue::Str(vls.join("")))

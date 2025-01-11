@@ -7,16 +7,16 @@ fn redirect_parent_ty(node: &Call, scx: &mut SemanticCx) -> Result<(), LinkedErr
     let Some(ty) = scx
         .tys
         .get()
-        .map_err(|err| LinkedErr::by_node(err.into(), &node.node))?
+        .map_err(|err| LinkedErr::from(err.into(), &node.node))?
         .parent
         .get(&node.uuid)
         .cloned()
     else {
-        return Err(LinkedErr::by_node(E::CallWithoutParent, &node.node));
+        return Err(LinkedErr::from(E::CallWithoutParent, &node.node));
     };
     scx.tys
         .get_mut()
-        .map_err(|err| LinkedErr::by_node(err.into(), &node.node))?
+        .map_err(|err| LinkedErr::from(err.into(), &node.node))?
         .parent
         .set(node.node.uuid(), ty);
     Ok(())

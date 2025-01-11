@@ -43,11 +43,15 @@ impl Tasks {
         uuid: &Uuid,
         rt: Runtime,
         args: Vec<FnArgValue>,
+        caller: &SrcLink,
     ) -> Result<RtValue, LinkedErr<E>> {
         let Some(entity) = self.lookup_by_caller(uuid) else {
-            return Err(LinkedErr::unlinked(E::NoLinkedFunctions(*uuid)));
+            return Err(LinkedErr::by_link(
+                E::NoLinkedFunctions(*uuid),
+                caller.into(),
+            ));
         };
-        entity.execute(rt, args).await
+        entity.execute(rt, args, caller).await
     }
     fn link<S: AsRef<str>>(&mut self, name: S, caller: &Uuid) -> Option<String> {
         if let Some(name) = if self.table.contains_key(name.as_ref()) {

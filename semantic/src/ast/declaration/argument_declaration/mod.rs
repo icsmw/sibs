@@ -13,16 +13,13 @@ impl Initialize for ArgumentDeclaration {
             let ty = self.infer_type(scx)?;
             scx.tys
                 .insert(&variable.ident, TypeEntity::new(Some(ty.clone()), Some(ty)))
-                .map_err(|err| {
-                    LinkedErr::between_nodes(err.into(), &self.variable, &self.r#type)
-                })?;
+                .map_err(|err| LinkedErr::from(err.into(), self))?;
             self.variable.initialize(scx)?;
             Ok(())
         } else {
-            Err(LinkedErr::between_nodes(
+            Err(LinkedErr::from(
                 E::UnexpectedNode(self.variable.node.id()),
-                &self.variable,
-                &self.r#type,
+                self,
             ))
         }
     }

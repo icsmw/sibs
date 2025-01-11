@@ -6,7 +6,7 @@ impl Interpret for PrimitiveString {
         if let Kind::String(s) = &self.token.kind {
             Ok(RtValue::Str(s.to_owned()))
         } else {
-            Err(LinkedErr::token(E::FailExtractValue, &self.token))
+            Err(LinkedErr::from(E::FailExtractValue, self))
         }
     }
 }

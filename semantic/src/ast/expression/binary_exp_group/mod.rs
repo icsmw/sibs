@@ -7,7 +7,7 @@ impl InferType for BinaryExpGroup {
     fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         let ty = self.node.infer_type(scx)?;
         if !ty.numeric() {
-            Err(LinkedErr::by_node(E::ExpectedNumericType(ty), &self.node))
+            Err(LinkedErr::from(E::ExpectedNumericType(ty), &self.node))
         } else {
             Ok(ty)
         }

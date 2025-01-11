@@ -39,9 +39,13 @@ impl ClosureFnEntity {
         rt: Runtime,
         args: Vec<FnArgValue>,
         _fns: &Fns,
+        caller: &SrcLink,
     ) -> Result<RtValue, LinkedErr<E>> {
         let FnBody::Executor(md, exec) = &self.body else {
-            return Err(LinkedErr::unlinked(E::NotInitedClosure(self.uuid)));
+            return Err(LinkedErr::by_link(
+                E::NotInitedClosure(self.uuid),
+                caller.into(),
+            ));
         };
         if let Err(err) = rt.scopes.enter(&self.uuid).await {
             return Err(LinkedErr::by_link(err, (&md.link).into()));
