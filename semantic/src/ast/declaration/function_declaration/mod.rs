@@ -70,7 +70,15 @@ impl Finalization for FunctionDeclaration {
         scx.tys
             .enter(&self.uuid)
             .map_err(|err| LinkedErr::from(err.into(), self))?;
-        self.args.iter().try_for_each(|n| n.finalize(scx))?;
+        for arg in self.args.iter() {
+            arg.finalize(scx)?;
+            if !arg
+                .infer_type(scx)?
+                .is_ty_compatible(&UsageCx::DeclaredArgFn)
+            {
+                return Err(LinkedErr::sfrom(E::TypeCannotUsedInContext, arg));
+            }
+        }
         // Initialization of fn's block cannot be done in the scope of `Initialize` because
         // it might fall into recursion
         self.block.initialize(scx)?;

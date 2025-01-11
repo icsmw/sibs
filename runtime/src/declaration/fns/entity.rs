@@ -7,7 +7,7 @@ pub enum FnEntity<'a> {
     CFn(&'a ClosureFnEntity),
 }
 
-impl<'a> FnEntity<'a> {
+impl FnEntity<'_> {
     pub fn name(&self) -> &str {
         match self {
             Self::UFn(en) => &en.name,

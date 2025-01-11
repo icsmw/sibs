@@ -80,6 +80,8 @@ pub enum E {
     TaskNotFound(String),
     #[error("Task \"{0}\" expect {1} arguments; got: {2}")]
     TaskArgsNumberDismatch(String, usize, usize),
+    #[error("This type cannot be used in this context")]
+    TypeCannotUsedInContext,
 
     #[error("Runtime error: {0}")]
     RtError(RtError),

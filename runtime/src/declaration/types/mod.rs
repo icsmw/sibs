@@ -1,9 +1,11 @@
+mod compatibility;
 mod entry;
 mod parent;
 mod scope;
 mod store;
 mod table;
 
+pub use compatibility::*;
 pub use entry::*;
 pub use parent::*;
 pub use scope::*;

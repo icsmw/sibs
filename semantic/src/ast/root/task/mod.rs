@@ -59,6 +59,12 @@ impl Finalization for Task {
     fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         scx.tys.open(&self.uuid);
         self.args.iter().try_for_each(|n| n.finalize(scx))?;
+        for arg in self.args.iter() {
+            arg.finalize(scx)?;
+            if !arg.infer_type(scx)?.is_ty_compatible(&UsageCx::TaskArg) {
+                return Err(LinkedErr::sfrom(E::TypeCannotUsedInContext, arg));
+            }
+        }
         self.block.finalize(scx)?;
         scx.tys
             .close()

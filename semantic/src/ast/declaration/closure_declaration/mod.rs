@@ -68,7 +68,12 @@ impl Finalization for ClosureDeclaration {
         scx.tys
             .enter(&self.uuid)
             .map_err(|err| LinkedErr::between(err.into(), &self.open, &self.close))?;
-        self.args.iter().try_for_each(|n| n.finalize(scx))?;
+        for arg in self.args.iter() {
+            arg.finalize(scx)?;
+            if !arg.infer_type(scx)?.is_ty_compatible(&UsageCx::ClosureArg) {
+                return Err(LinkedErr::sfrom(E::TypeCannotUsedInContext, arg));
+            }
+        }
         self.ty.initialize(scx)?;
         self.ty.finalize(scx)?;
         let ty = self.ty.infer_type(scx)?;

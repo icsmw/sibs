@@ -43,17 +43,6 @@ impl UFns {
         let name = self.link(fn_name, caller)?;
         self.funcs.get(&name)
     }
-    pub fn get_mut<S: AsRef<str>>(&mut self, fn_name: S) -> Option<&mut UserFnEntity> {
-        if self.funcs.contains_key(fn_name.as_ref()) {
-            self.funcs.get_mut(fn_name.as_ref())
-        } else {
-            self.funcs.get_mut(self.fullname(&fn_name).as_str())
-        }
-    }
-    pub(crate) fn lookup_by_caller(&self, caller: &Uuid) -> Option<&UserFnEntity> {
-        let name = self.links.get(caller)?;
-        self.funcs.get(name)
-    }
     pub(crate) fn lookup_by_inps<S: AsRef<str>>(
         &mut self,
         name: S,
