@@ -17,3 +17,18 @@ test_success!(
     };
     "#
 );
+
+test_fail!(
+    task_000,
+    Anchor,
+    r#"
+    component comp() { 
+        task task_a() {
+            true;
+        }
+        task task_b(a: num, b: str, cb: |n: num|: num) {
+            true;
+        }
+    };
+    "#
+);

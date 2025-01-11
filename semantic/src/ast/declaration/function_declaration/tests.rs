@@ -42,6 +42,16 @@ test_success!(
     }"#
 );
 
+test_success!(
+    function_declaration_003,
+    Block,
+    r#"{
+        fn test(a: str, b: num, c: bool, cb: |n: num|: num) {
+            a;
+        }
+    }"#
+);
+
 test_fail!(
     function_declaration_000,
     Block,
