@@ -1,3 +1,3 @@
-- Update all `LinkedErr` to use trait `SrcLinking`;
-- Check `ufns`, `efns` to reuse same code parts
-- Add to Ty - enum AllowedFor { Task, Func }
+- [done] Update all `LinkedErr` to use trait `SrcLinking`;
+- [done] Check `ufns`, `efns` to reuse same code parts
+- [done] Add to Ty - enum AllowedFor { Task, Func }

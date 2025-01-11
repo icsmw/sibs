@@ -11,12 +11,8 @@ impl InferType for Variable {
                 self,
             ))?;
         if let Some(ty) = ety.assigned.as_ref() {
-            if let (Some(negation), false) = (self.negation.as_ref(), ty.bool()) {
-                Err(LinkedErr::between(
-                    E::NegationToNotBool,
-                    negation,
-                    &self.token,
-                ))
+            if let (Some(..), false) = (self.negation.as_ref(), ty.bool()) {
+                Err(LinkedErr::sfrom(E::NegationToNotBool, self))
             } else {
                 Ok(ty.to_owned())
             }

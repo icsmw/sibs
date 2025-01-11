@@ -1,8 +1,13 @@
+#[cfg(test)]
+mod tests;
+
 use crate::*;
 
 impl InferType for Task {
     fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
-        scx.tys.open(&self.uuid);
+        scx.tys
+            .open(&self.uuid)
+            .map_err(|err| LinkedErr::sfrom(err.into(), self))?;
         let ty = self.block.infer_type(scx)?;
         scx.tys
             .close()
@@ -16,7 +21,9 @@ impl Initialize for Task {
         let Some(master) = scx.tasks.get_master() else {
             return Err(LinkedErr::sfrom(E::FailToGetMasterOfTask, self));
         };
-        scx.tys.open(&self.uuid);
+        scx.tys
+            .open(&self.uuid)
+            .map_err(|err| LinkedErr::sfrom(err.into(), self))?;
         self.args.iter().try_for_each(|n| n.initialize(scx))?;
         self.block.initialize(scx)?;
         let mut args = Vec::new();
@@ -57,7 +64,9 @@ impl Initialize for Task {
 
 impl Finalization for Task {
     fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
-        scx.tys.open(&self.uuid);
+        scx.tys
+            .open(&self.uuid)
+            .map_err(|err| LinkedErr::sfrom(err.into(), self))?;
         self.args.iter().try_for_each(|n| n.finalize(scx))?;
         for arg in self.args.iter() {
             arg.finalize(scx)?;

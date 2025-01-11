@@ -8,27 +8,21 @@ impl InferType for Accessor {
         let Some(pty) = scx
             .tys
             .get_mut()
-            .map_err(|err| LinkedErr::between(err.into(), &self.open, &self.close))?
+            .map_err(|err| LinkedErr::from(err.into(), self))?
             .parent
             .get(&self.uuid)
             .cloned()
         else {
-            return Err(LinkedErr::between(
-                E::AccessorWithoutParent,
-                &self.open,
-                &self.close,
-            ));
+            return Err(LinkedErr::from(E::AccessorWithoutParent, self));
         };
-        let dpty = pty.determined().ok_or(LinkedErr::between(
+        let dpty = pty.determined().ok_or(LinkedErr::from(
             E::FailInferDeterminedType(pty.clone()),
-            &self.open,
-            &self.close,
+            self,
         ))?;
         if !matches!(dpty, DeterminedTy::Vec(..)) {
-            return Err(LinkedErr::between(
+            return Err(LinkedErr::from(
                 E::AccessorOnWrongType(pty.to_owned()),
-                &self.open,
-                &self.close,
+                self,
             ));
         }
         if let DeterminedTy::Vec(Some(inner_ty)) = dpty {
@@ -38,10 +32,9 @@ impl InferType for Accessor {
             }
             Ok((*inner_ty.to_owned()).into())
         } else {
-            Err(LinkedErr::between(
+            Err(LinkedErr::from(
                 E::AccessorOnWrongType(pty.to_owned()),
-                &self.open,
-                &self.close,
+                self,
             ))
         }
     }

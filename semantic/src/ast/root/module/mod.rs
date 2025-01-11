@@ -11,7 +11,9 @@ impl Initialize for Module {
         let Some(name) = self.get_name() else {
             return Err(LinkedErr::sfrom(E::InvalidModuleName, self));
         };
-        scx.tys.open(&self.uuid);
+        scx.tys
+            .open(&self.uuid)
+            .map_err(|err| LinkedErr::sfrom(err.into(), self))?;
         scx.fns.ufns.enter(name);
         for node in self.nodes.iter() {
             node.initialize(scx)?;
@@ -29,7 +31,9 @@ impl Finalization for Module {
         let Some(name) = self.get_name() else {
             return Err(LinkedErr::sfrom(E::InvalidModuleName, self));
         };
-        scx.tys.open(&self.uuid);
+        scx.tys
+            .open(&self.uuid)
+            .map_err(|err| LinkedErr::sfrom(err.into(), self))?;
         scx.fns.ufns.enter(name);
         for node in self.nodes.iter() {
             node.finalize(scx)?;

@@ -6,11 +6,7 @@ use crate::*;
 impl InferType for ClosureDeclaration {
     fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         let Some((args, out)) = scx.fns.cfns.get_ty(&self.uuid) else {
-            return Err(LinkedErr::between(
-                E::ClosureNotInited(self.uuid),
-                &self.open,
-                &self.close,
-            ));
+            return Err(LinkedErr::from(E::ClosureNotInited(self.uuid), self));
         };
         Ok(Ty::Determined(DeterminedTy::Closure(
             self.uuid,
@@ -23,7 +19,7 @@ impl Initialize for ClosureDeclaration {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         scx.tys
             .enter(&self.uuid)
-            .map_err(|err| LinkedErr::between(err.into(), &self.open, &self.close))?;
+            .map_err(|err| LinkedErr::from(err.into(), self))?;
         self.args.iter().try_for_each(|n| n.initialize(scx))?;
         let mut args = Vec::new();
         for n_arg in self.args.iter() {
@@ -51,14 +47,11 @@ impl Initialize for ClosureDeclaration {
         };
         scx.tys
             .leave()
-            .map_err(|err| LinkedErr::between(err.into(), &self.open, &self.close))?;
-        scx.fns.cfns.add(entity).map_err(|err| {
-            LinkedErr::between(
-                E::FnDeclarationError(err.to_string()),
-                &self.open,
-                &self.close,
-            )
-        })?;
+            .map_err(|err| LinkedErr::from(err.into(), self))?;
+        scx.fns
+            .cfns
+            .add(entity)
+            .map_err(|err| LinkedErr::from(E::FnDeclarationError(err.to_string()), self))?;
         Ok(())
     }
 }
@@ -67,7 +60,7 @@ impl Finalization for ClosureDeclaration {
     fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         scx.tys
             .enter(&self.uuid)
-            .map_err(|err| LinkedErr::between(err.into(), &self.open, &self.close))?;
+            .map_err(|err| LinkedErr::from(err.into(), self))?;
         for arg in self.args.iter() {
             arg.finalize(scx)?;
             if !arg.infer_type(scx)?.is_ty_compatible(&UsageCx::ClosureArg) {
@@ -77,16 +70,13 @@ impl Finalization for ClosureDeclaration {
         self.ty.initialize(scx)?;
         self.ty.finalize(scx)?;
         let ty = self.ty.infer_type(scx)?;
-        scx.fns.cfns.set_result_ty(&self.uuid, ty).map_err(|err| {
-            LinkedErr::between(
-                E::FnDeclarationError(err.to_string()),
-                &self.open,
-                &self.close,
-            )
-        })?;
+        scx.fns
+            .cfns
+            .set_result_ty(&self.uuid, ty)
+            .map_err(|err| LinkedErr::from(E::FnDeclarationError(err.to_string()), self))?;
         scx.tys
             .leave()
-            .map_err(|err| LinkedErr::between(err.into(), &self.open, &self.close))?;
+            .map_err(|err| LinkedErr::from(err.into(), self))?;
         Ok(())
     }
 }

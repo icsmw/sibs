@@ -11,7 +11,7 @@ impl InferType for FunctionDeclaration {
         let ty = self.block.infer_type(scx)?;
         scx.tys
             .leave()
-            .map_err(|err| LinkedErr::between(err.into(), &self.sig, &self.name))?;
+            .map_err(|err| LinkedErr::sfrom(err.into(), self))?;
         Ok(ty)
     }
 }
@@ -53,14 +53,11 @@ impl Initialize for FunctionDeclaration {
         };
         scx.tys
             .leave()
-            .map_err(|err| LinkedErr::between(err.into(), &self.sig, &self.name))?;
-        scx.fns.ufns.add(name, entity).map_err(|err| {
-            LinkedErr::between(
-                E::FnDeclarationError(err.to_string()),
-                &self.sig,
-                &self.name,
-            )
-        })?;
+            .map_err(|err| LinkedErr::sfrom(err.into(), self))?;
+        scx.fns
+            .ufns
+            .add(name, entity)
+            .map_err(|err| LinkedErr::sfrom(E::FnDeclarationError(err.to_string()), self))?;
         Ok(())
     }
 }
@@ -85,7 +82,7 @@ impl Finalization for FunctionDeclaration {
         self.block.finalize(scx)?;
         scx.tys
             .leave()
-            .map_err(|err| LinkedErr::between(err.into(), &self.sig, &self.name))?;
+            .map_err(|err| LinkedErr::sfrom(err.into(), self))?;
         Ok(())
     }
 }

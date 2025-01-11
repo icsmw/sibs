@@ -7,12 +7,14 @@ pub struct TyStore {
 }
 
 impl TyStore {
-    pub fn open(&mut self, uuid: &Uuid) {
+    pub fn open(&mut self, uuid: &Uuid) -> Result<(), E> {
         self.scopes.entry(*uuid).or_default();
         self.location.push(*uuid);
+        self.enter(uuid)
     }
     pub fn close(&mut self) -> Result<(), E> {
         if !self.location.is_empty() {
+            self.leave()?;
             self.location.pop();
             Ok(())
         } else {

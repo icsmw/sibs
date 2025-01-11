@@ -6,7 +6,7 @@ impl Interpret for Block {
         rt.scopes
             .enter(&self.uuid)
             .await
-            .map_err(|err| LinkedErr::between(err, &self.open, &self.close))?;
+            .map_err(|err| LinkedErr::from(err, self))?;
         let mut last = None;
         for n in self.nodes.iter() {
             last = Some(n.interpret(rt.clone()).await?);
@@ -14,7 +14,7 @@ impl Interpret for Block {
         rt.scopes
             .leave()
             .await
-            .map_err(|err| LinkedErr::between(err, &self.open, &self.close))?;
+            .map_err(|err| LinkedErr::from(err, self))?;
         Ok(last.unwrap_or(RtValue::Void))
     }
 }
