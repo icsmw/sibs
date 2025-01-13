@@ -17,32 +17,44 @@ impl ReadNode<For> for For {
         if !matches!(token_for.kind, Kind::Keyword(Keyword::For)) {
             return Ok(None);
         }
-        let Some((mut inner, ..)) = parser.between(KindId::LeftParen, KindId::RightParen)? else {
-            return Ok(None);
-        };
-        let el_ref = LinkedNode::try_oneof(
-            &mut inner,
-            &[NodeReadTarget::Expression(&[ExpressionId::Variable])],
-        )?
-        .ok_or_else(|| E::MissedElementDeclarationInFor.link_with_token(&token_for))?;
-        if !inner.is_next(KindId::Comma) {
-            return Err(E::MissedComma.link_by_current(&inner));
-        } else {
-            let _ = inner.token();
-        }
-        let index_ref = LinkedNode::try_oneof(
-            &mut inner,
-            &[NodeReadTarget::Expression(&[ExpressionId::Variable])],
-        )?
-        .ok_or_else(|| E::MissedIndexDeclarationInFor.link_by_current(&inner))?;
-        if !inner.is_done() {
-            return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
-        };
+        let restore = parser.pin();
+        let (el, index) =
+            if let Some((mut inner, ..)) = parser.between(KindId::LeftParen, KindId::RightParen)? {
+                let el = LinkedNode::try_oneof(
+                    &mut inner,
+                    &[NodeReadTarget::Expression(&[ExpressionId::Variable])],
+                )?
+                .ok_or_else(|| E::MissedElementDeclarationInFor.link_with_token(&token_for))?;
+                if !inner.is_next(KindId::Comma) {
+                    return Err(E::MissedComma.link_by_current(&inner));
+                } else {
+                    let _ = inner.token();
+                }
+                let index_ref = LinkedNode::try_oneof(
+                    &mut inner,
+                    &[NodeReadTarget::Expression(&[ExpressionId::Variable])],
+                )?
+                .ok_or_else(|| E::MissedIndexDeclarationInFor.link_by_current(&inner))?;
+                if !inner.is_done() {
+                    return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
+                };
+                (el, Some(index_ref))
+            } else {
+                restore(parser);
+                if let Some(el) = LinkedNode::try_oneof(
+                    parser,
+                    &[NodeReadTarget::Expression(&[ExpressionId::Variable])],
+                )? {
+                    (el, None)
+                } else {
+                    return Err(E::MissedElementDeclarationInFor.link_with_token(&token_for));
+                }
+            };
         let Some(token_in) = parser.token().cloned() else {
-            return Ok(None);
+            return Err(E::InvalidForSyntax.link_with_token(&token_for));
         };
         if !matches!(token_in.kind, Kind::Keyword(Keyword::In)) {
-            return Ok(None);
+            return Err(E::MissedInKeywordInFor.link_with_token(&token_for));
         }
         let elements = LinkedNode::try_oneof(
             parser,
@@ -64,8 +76,8 @@ impl ReadNode<For> for For {
         Ok(Some(For {
             token_for,
             token_in,
-            element: Box::new(el_ref),
-            index: Box::new(index_ref),
+            element: Box::new(el),
+            index: index.map(Box::new),
             elements: Box::new(elements),
             block: Box::new(block),
             uuid: Uuid::new_v4(),

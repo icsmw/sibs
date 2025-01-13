@@ -13,11 +13,13 @@ impl Arbitrary for For {
                 .prop_map(move |n| (n, deep + 1))
                 .prop_flat_map(LinkedNode::arbitrary_with)
                 .boxed(),
-            Variable::arbitrary()
-                .prop_map(|n| Node::Expression(Expression::Variable(n)))
-                .prop_map(move |n| (n, deep + 1))
-                .prop_flat_map(LinkedNode::arbitrary_with)
-                .boxed(),
+            prop::option::of(
+                Variable::arbitrary()
+                    .prop_map(|n| Node::Expression(Expression::Variable(n)))
+                    .prop_map(move |n| (n, deep + 1))
+                    .prop_flat_map(LinkedNode::arbitrary_with)
+                    .boxed(),
+            ),
             if deep > PROPTEST_DEEP_FACTOR {
                 prop::strategy::Union::new(vec![
                     Variable::arbitrary()
@@ -53,7 +55,7 @@ impl Arbitrary for For {
         )
             .prop_map(move |(element, index, elements, block)| For {
                 element: Box::new(element),
-                index: Box::new(index),
+                index: index.map(Box::new),
                 elements: Box::new(elements),
                 block: Box::new(block),
                 token_for: Token::for_test(Kind::Keyword(Keyword::For)),

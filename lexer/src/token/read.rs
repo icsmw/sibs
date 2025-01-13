@@ -156,6 +156,9 @@ impl Read for Token {
             KindId::Number => {
                 while let Some(c) = lx.char() {
                     if c.is_ascii_digit() || c == '.' {
+                        if c == '.' && lx.is_next('.') {
+                            break;
+                        }
                         lx.advance();
                     } else {
                         break;

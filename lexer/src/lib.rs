@@ -137,6 +137,24 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    /// Checks next char
+    ///
+    /// # Arguments
+    ///
+    /// * `ch` - char expectation.
+    ///
+    /// # Returns
+    ///
+    /// * `true` next char fits to expectation
+    /// * `false` next char doesn't fit to expectation
+    pub(crate) fn is_next(&mut self, ch: char) -> bool {
+        let pin = self.pin();
+        self.advance();
+        let result = self.char().map(|nch| nch == ch).unwrap_or(false);
+        pin(self);
+        result
+    }
+
     /// Decrease current position to given number
     ///
     /// # Arguments

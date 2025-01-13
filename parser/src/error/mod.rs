@@ -83,6 +83,10 @@ pub enum E {
     MissedIndexDeclarationInFor,
     #[error("Fail to recognize elements for for statement: {0}")]
     FailRecognizeElementsInFor(String),
+    #[error("Invalid \"for\" syntax. Ex: for el in els {{...}}; for (el, n) in els {{...}};")]
+    InvalidForSyntax,
+    #[error("In for statement keyword \"in\" is missed")]
+    MissedInKeywordInFor,
 
     /// While
     #[error("In while statement comparison is missed")]

@@ -82,6 +82,8 @@ pub enum E {
     TaskArgsNumberDismatch(String, usize, usize),
     #[error("This type cannot be used in this context")]
     TypeCannotUsedInContext,
+    #[error("Invalid iteration source; available: Range, Vec, Str")]
+    InvalidIterationSource,
 
     #[error("Runtime error: {0}")]
     RtError(RtError),

@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 use crate::*;
 
 impl InferType for For {
@@ -8,18 +11,67 @@ impl InferType for For {
 
 impl Initialize for For {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        scx.tys
+            .enter(&self.uuid)
+            .map_err(|err| LinkedErr::from(err.into(), self))?;
         self.elements.initialize(scx)?;
-        self.element.initialize(scx)?;
-        self.index.initialize(scx)?;
-        self.block.initialize(scx)
+        let ty = match self.elements.infer_type(scx)? {
+            Ty::Determined(DeterminedTy::Vec(None)) => {
+                return Err(LinkedErr::from(E::IndeterminateType, &self.elements))
+            }
+            Ty::Determined(DeterminedTy::Vec(Some(ty))) => Ty::Determined(*ty),
+            Ty::Determined(DeterminedTy::Range) => Ty::Determined(DeterminedTy::Num),
+            Ty::Determined(DeterminedTy::Str) => Ty::Determined(DeterminedTy::Str),
+            _ => return Err(LinkedErr::from(E::InvalidIterationSource, &self.elements)),
+        };
+        let el = if let Node::Expression(Expression::Variable(el)) = &self.element.node {
+            el.ident.to_owned()
+        } else {
+            return Err(LinkedErr::from(
+                E::UnexpectedNode(self.element.node.id()),
+                &self.element,
+            ));
+        };
+        scx.tys
+            .insert(el, TypeEntity::new(Some(ty.clone()), Some(ty)))
+            .map_err(|err| LinkedErr::from(err.into(), self))?;
+        if let Some(index) = self.index.as_ref() {
+            let el = if let Node::Expression(Expression::Variable(el)) = &index.node {
+                el.ident.to_owned()
+            } else {
+                return Err(LinkedErr::from(
+                    E::UnexpectedNode(index.node.id()),
+                    &index.node,
+                ));
+            };
+            scx.tys
+                .insert(
+                    el,
+                    TypeEntity::new(
+                        Some(Ty::Determined(DeterminedTy::Num)),
+                        Some(Ty::Determined(DeterminedTy::Num)),
+                    ),
+                )
+                .map_err(|err| LinkedErr::from(err.into(), self))?;
+        };
+        self.block.initialize(scx)?;
+        scx.tys
+            .leave()
+            .map_err(|err| LinkedErr::from(err.into(), self))?;
+        Ok(())
     }
 }
 
 impl Finalization for For {
     fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
+        scx.tys
+            .enter(&self.uuid)
+            .map_err(|err| LinkedErr::from(err.into(), self))?;
         self.elements.finalize(scx)?;
-        self.element.finalize(scx)?;
-        self.index.finalize(scx)?;
-        self.block.finalize(scx)
+        self.block.finalize(scx)?;
+        scx.tys
+            .leave()
+            .map_err(|err| LinkedErr::from(err.into(), self))?;
+        Ok(())
     }
 }
