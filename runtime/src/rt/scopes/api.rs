@@ -10,7 +10,8 @@ pub enum Demand {
     CloseScope(oneshot::Sender<Result<(), E>>),
     EnterScope(Uuid, oneshot::Sender<Result<(), E>>),
     LeaveScope(oneshot::Sender<Result<(), E>>),
-    SetVariableValue(String, RtValue, oneshot::Sender<Result<(), E>>),
+    InsertVariable(String, RtValue, oneshot::Sender<Result<(), E>>),
+    UpdateVariableValue(String, RtValue, oneshot::Sender<Result<(), E>>),
     GetVariableValue(String, oneshot::Sender<Result<Option<Arc<RtValue>>, E>>),
     Destroy(oneshot::Sender<()>),
 }

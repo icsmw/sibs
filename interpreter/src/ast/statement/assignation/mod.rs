@@ -17,7 +17,7 @@ impl Interpret for Assignation {
         let vl = self.right.interpret(rt.clone()).await?;
         chk_ty(&self.left, &vl, &rt).await?;
         rt.scopes
-            .insert(&variable, vl)
+            .update(&variable, vl)
             .await
             .map_err(|err| LinkedErr::from(err, &self.right))?;
         Ok(RtValue::Void)

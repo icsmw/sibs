@@ -31,6 +31,16 @@ impl VlScope {
         }
         Err(E::NoCurrentScopeLevel)
     }
+    pub fn update<S: AsRef<str>>(&mut self, name: S, vl: RtValue) -> Result<(), E> {
+        for uuid in self.location.iter().rev() {
+            let scope = self.levels.get_mut(uuid).ok_or(E::NoCurrentScopeLevel)?;
+            if scope.contains_key(name.as_ref()) {
+                scope.insert(name.as_ref().to_owned(), Arc::new(vl));
+                return Ok(());
+            }
+        }
+        Err(E::VariableNotFound(name.as_ref().to_owned()))
+    }
     pub fn lookup<S: AsRef<str>>(&self, name: S) -> Option<Arc<RtValue>> {
         for uuid in self.location.iter().rev() {
             if let Some(vl) = self.levels.get(uuid)?.get(name.as_ref()) {

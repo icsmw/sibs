@@ -42,6 +42,9 @@ impl VlScopes {
     pub fn insert<S: AsRef<str>>(&mut self, name: S, vl: RtValue) -> Result<(), E> {
         self.get_mut()?.insert(name, vl)
     }
+    pub fn update<S: AsRef<str>>(&mut self, name: S, vl: RtValue) -> Result<(), E> {
+        self.get_mut()?.update(name, vl)
+    }
     pub fn lookup<S: AsRef<str>>(&self, name: S) -> Result<Option<Arc<RtValue>>, E> {
         Ok(self.get()?.lookup(name))
     }

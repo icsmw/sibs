@@ -21,6 +21,11 @@ impl Interpret for VariableDeclaration {
                 .insert(&variable, vl)
                 .await
                 .map_err(|err| LinkedErr::from(err, node))?;
+        } else {
+            rt.scopes
+                .insert(&variable, RtValue::Void)
+                .await
+                .map_err(|err| LinkedErr::from(err, &self.variable))?;
         }
         Ok(RtValue::Void)
     }

@@ -56,8 +56,11 @@ impl RtScope {
                     Demand::LeaveScope(tx) => {
                         chk_send_err!(tx.send(scopes.leave()), DemandId::EnterScope);
                     }
-                    Demand::SetVariableValue(name, vl, tx) => {
-                        chk_send_err!(tx.send(scopes.insert(name, vl)), DemandId::SetVariableValue);
+                    Demand::InsertVariable(name, vl, tx) => {
+                        chk_send_err!(tx.send(scopes.insert(name, vl)), DemandId::InsertVariable);
+                    }
+                    Demand::UpdateVariableValue(name, vl, tx) => {
+                        chk_send_err!(tx.send(scopes.update(name, vl)), DemandId::InsertVariable);
                     }
                     Demand::GetVariableValue(name, tx) => {
                         chk_send_err!(tx.send(scopes.lookup(name)), DemandId::GetVariableValue);
@@ -119,7 +122,17 @@ impl RtScope {
     pub async fn insert<S: AsRef<str>>(&self, name: S, vl: RtValue) -> Result<(), E> {
         let (tx, rx) = oneshot::channel();
         self.tx
-            .send(Demand::SetVariableValue(name.as_ref().to_owned(), vl, tx))?;
+            .send(Demand::InsertVariable(name.as_ref().to_owned(), vl, tx))?;
+        rx.await?
+    }
+
+    pub async fn update<S: AsRef<str>>(&self, name: S, vl: RtValue) -> Result<(), E> {
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(Demand::UpdateVariableValue(
+            name.as_ref().to_owned(),
+            vl,
+            tx,
+        ))?;
         rx.await?
     }
 

@@ -34,6 +34,12 @@ pub struct CompoundAssignmentsOp {
     pub uuid: Uuid,
 }
 
+impl CompoundAssignmentsOp {
+    pub fn is_str_compatible(&self) -> bool {
+        matches!(self.operator, CompoundAssignmentsOperator::PlusEqual)
+    }
+}
+
 impl SrcLinking for CompoundAssignmentsOp {
     fn link(&self) -> SrcLink {
         src_from::tk(&self.token)

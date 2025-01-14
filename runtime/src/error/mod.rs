@@ -50,6 +50,10 @@ pub enum E {
     FailToFindScope(Uuid),
     #[error("Cannot convert \"{0}\" into \"{0}\"")]
     FailCovertToRsType(String, String),
+    #[error("Variable \"{0}\" not found")]
+    VariableNotFound(String),
+    #[error("This operation isn't applicable to this type")]
+    NotApplicableToTypeOperation,
 
     #[error("Function \"{0}\" has been registred already")]
     FuncAlreadyRegistered(String),
@@ -104,6 +108,9 @@ pub enum E {
     TaskDuplicate,
     #[error("Master component isn't defined for: {0}")]
     NoMasterComponent(String),
+
+    #[error("Invalid iteration source; available: Range, Vec, Str")]
+    InvalidIterationSource,
 }
 
 impl From<io::Error> for E {
