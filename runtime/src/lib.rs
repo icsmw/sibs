@@ -13,7 +13,12 @@ pub(crate) use lexer::*;
 pub use rt::*;
 pub use value::*;
 
-pub(crate) use std::{collections::HashMap, ops::RangeInclusive, path::PathBuf, sync::Arc};
+pub(crate) use std::{
+    collections::{HashMap, HashSet},
+    ops::RangeInclusive,
+    path::PathBuf,
+    sync::Arc,
+};
 pub(crate) use tokio::{
     spawn,
     sync::{

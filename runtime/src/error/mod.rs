@@ -111,6 +111,17 @@ pub enum E {
 
     #[error("Invalid iteration source; available: Range, Vec, Str")]
     InvalidIterationSource,
+
+    #[error("No break signal for {0}")]
+    NoBreakSignalFor(Uuid),
+    #[error("Break signal for {0} already exist")]
+    BreakSignalAlreadyExist(Uuid),
+    #[error("Loop {0} already exist")]
+    LoopAlreadyExist(Uuid),
+    #[error("No open loops to break")]
+    NoOpenLoopsToBreak,
+    #[error("No open loops to close")]
+    NoOpenLoopsToClose,
 }
 
 impl From<io::Error> for E {

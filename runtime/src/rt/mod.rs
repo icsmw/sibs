@@ -1,8 +1,10 @@
 mod api;
 mod context;
+mod events;
 mod scopes;
 
 pub use context::*;
+pub use events::*;
 pub use scopes::*;
 
 use crate::*;
@@ -20,6 +22,7 @@ pub struct Runtime {
     pub fns: Arc<Fns>,
     pub tasks: Arc<Tasks>,
     pub cx: RtContext,
+    pub evns: RtEvents,
     tx: UnboundedSender<Demand>,
 }
 
@@ -34,9 +37,11 @@ impl Runtime {
             fns: Arc::new(fns),
             tasks: Arc::new(tasks),
             cx: RtContext::new(params),
+            evns: RtEvents::new(),
         };
         let scopes = inst.scopes.clone();
         let cx = inst.cx.clone();
+        let evns = inst.evns.clone();
         spawn(async move {
             tracing::info!("init demand's listener");
             if let Some(demand) = rx.recv().await {
@@ -45,6 +50,7 @@ impl Runtime {
                         tracing::info!("got shutdown signal");
                         chk_err!(scopes.destroy().await);
                         chk_err!(cx.destroy().await);
+                        chk_err!(evns.destroy().await);
                         chk_send_err!(tx.send(()), DemandId::Destroy);
                     }
                 }

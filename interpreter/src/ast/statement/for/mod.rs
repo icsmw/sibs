@@ -41,7 +41,19 @@ impl Interpret for For {
                 return Err(LinkedErr::from(E::InvalidIterationSource, &self.elements));
             }
         };
+        rt.evns
+            .open_loop(&self.uuid)
+            .await
+            .map_err(|err| LinkedErr::by_link(err, (&self.slink()).into()))?;
         for (n, vl) in vls.into_iter().enumerate() {
+            if rt
+                .evns
+                .chk_break(&self.uuid)
+                .await
+                .map_err(|err| LinkedErr::by_link(err, (&self.slink()).into()))?
+            {
+                break;
+            }
             rt.scopes
                 .insert(&el, vl)
                 .await
@@ -54,6 +66,10 @@ impl Interpret for For {
             }
             self.block.interpret(rt.clone()).await?;
         }
+        rt.evns
+            .close_loop()
+            .await
+            .map_err(|err| LinkedErr::by_link(err, (&self.slink()).into()))?;
         Ok(RtValue::Void)
     }
 }

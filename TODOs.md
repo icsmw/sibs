@@ -1,3 +1,4 @@
 - [done] Update all `LinkedErr` to use trait `SrcLinking`;
 - [done] Check `ufns`, `efns` to reuse same code parts
 - [done] Add to Ty - enum AllowedFor { Task, Func }
+- all loops and iterators (while, loop, for) and recursion should have global limit for iterations number

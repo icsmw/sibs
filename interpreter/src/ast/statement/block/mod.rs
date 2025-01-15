@@ -9,6 +9,14 @@ impl Interpret for Block {
             .map_err(|err| LinkedErr::from(err, self))?;
         let mut last = None;
         for n in self.nodes.iter() {
+            if rt
+                .evns
+                .is_break_in_current_scope()
+                .await
+                .map_err(|err| LinkedErr::from(err, self))?
+            {
+                break;
+            }
             last = Some(n.interpret(rt.clone()).await?);
         }
         rt.scopes
