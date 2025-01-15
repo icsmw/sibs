@@ -19,7 +19,10 @@ impl ReadNode<While> for While {
         }
         let comparison = LinkedNode::try_oneof(
             parser,
-            &[NodeReadTarget::Expression(&[ExpressionId::ComparisonSeq])],
+            &[
+                NodeReadTarget::Expression(&[ExpressionId::ComparisonSeq, ExpressionId::Variable]),
+                NodeReadTarget::Value(&[ValueId::Boolean]),
+            ],
         )?
         .ok_or_else(|| E::MissedComparisonInWhile.link_with_token(&token))?;
         let block =

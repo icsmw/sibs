@@ -8,11 +8,23 @@ impl Arbitrary for While {
 
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         (
-            ComparisonSeq::arbitrary_with(deep + 1)
-                .prop_map(|v| Node::Expression(Expression::ComparisonSeq(v)))
-                .prop_map(move |n| (n, deep + 1))
-                .prop_flat_map(LinkedNode::arbitrary_with)
-                .boxed(),
+            prop::strategy::Union::new(vec![
+                ComparisonSeq::arbitrary_with(deep + 1)
+                    .prop_map(|v| Node::Expression(Expression::ComparisonSeq(v)))
+                    .prop_map(move |n| (n, deep + 1))
+                    .prop_flat_map(LinkedNode::arbitrary_with)
+                    .boxed(),
+                Variable::arbitrary()
+                    .prop_map(|v| Node::Expression(Expression::Variable(v)))
+                    .prop_map(move |n| (n, deep + 1))
+                    .prop_flat_map(LinkedNode::arbitrary_with)
+                    .boxed(),
+                Boolean::arbitrary()
+                    .prop_map(|v| Node::Value(Value::Boolean(v)))
+                    .prop_map(move |n| (n, deep + 1))
+                    .prop_flat_map(LinkedNode::arbitrary_with)
+                    .boxed(),
+            ]),
             Block::arbitrary_with(deep + 1)
                 .prop_map(|v| Node::Statement(Statement::Block(v)))
                 .prop_map(move |n| (n, deep + 1))
