@@ -24,7 +24,7 @@ impl ReadNode<Gatekeeper> for Gatekeeper {
         let mut nodes = Vec::new();
         while let Some(node) = LinkedNode::try_oneof(
             &mut inner,
-            &[NodeReadTarget::ControlFlowModifier(&[
+            &[NodeTarget::ControlFlowModifier(&[
                 ControlFlowModifierId::Skip,
             ])],
         )? {

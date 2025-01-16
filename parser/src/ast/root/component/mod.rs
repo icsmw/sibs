@@ -43,8 +43,8 @@ impl ReadNode<Component> for Component {
             let Some(node) = LinkedNode::try_oneof(
                 &mut inner,
                 &[
-                    NodeReadTarget::ControlFlowModifier(&[ControlFlowModifierId::Gatekeeper]),
-                    NodeReadTarget::Root(&[RootId::Task]),
+                    NodeTarget::ControlFlowModifier(&[ControlFlowModifierId::Gatekeeper]),
+                    NodeTarget::Root(&[RootId::Task]),
                 ],
             )?
             else {

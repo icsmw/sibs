@@ -23,13 +23,13 @@ impl ReadNode<Comparison> for Comparison {
         let Some(left) = LinkedNode::try_oneof(
             parser,
             &[
-                NodeReadTarget::Value(&[
+                NodeTarget::Value(&[
                     ValueId::Number,
                     ValueId::Boolean,
                     ValueId::PrimitiveString,
                     ValueId::InterpolatedString,
                 ]),
-                NodeReadTarget::Expression(&[ExpressionId::Variable, ExpressionId::FunctionCall]),
+                NodeTarget::Expression(&[ExpressionId::Variable, ExpressionId::FunctionCall]),
             ],
         )?
         else {
@@ -37,7 +37,7 @@ impl ReadNode<Comparison> for Comparison {
         };
         let Some(operator) = LinkedNode::try_oneof(
             parser,
-            &[NodeReadTarget::Expression(&[ExpressionId::ComparisonOp])],
+            &[NodeTarget::Expression(&[ExpressionId::ComparisonOp])],
         )?
         else {
             return Ok(None);
@@ -45,13 +45,13 @@ impl ReadNode<Comparison> for Comparison {
         let Some(right) = LinkedNode::try_oneof(
             parser,
             &[
-                NodeReadTarget::Value(&[
+                NodeTarget::Value(&[
                     ValueId::Number,
                     ValueId::Boolean,
                     ValueId::PrimitiveString,
                     ValueId::InterpolatedString,
                 ]),
-                NodeReadTarget::Expression(&[ExpressionId::Variable, ExpressionId::FunctionCall]),
+                NodeTarget::Expression(&[ExpressionId::Variable, ExpressionId::FunctionCall]),
             ],
         )?
         else {

@@ -40,12 +40,12 @@ impl ReadNode<TaskCall> for TaskCall {
         while let Some(node) = LinkedNode::try_oneof(
             &mut inner,
             &[
-                NodeReadTarget::Value(&[
+                NodeTarget::Value(&[
                     ValueId::Number,
                     ValueId::Boolean,
                     ValueId::PrimitiveString,
                 ]),
-                NodeReadTarget::Expression(&[
+                NodeTarget::Expression(&[
                     ExpressionId::Variable,
                     ExpressionId::BinaryExpSeq,
                     ExpressionId::ComparisonSeq,

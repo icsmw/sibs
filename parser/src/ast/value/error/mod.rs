@@ -25,12 +25,12 @@ impl ReadNode<Error> for Error {
         let node = LinkedNode::try_oneof(
             &mut inner,
             &[
-                NodeReadTarget::Value(&[
+                NodeTarget::Value(&[
                     ValueId::Number,
                     ValueId::PrimitiveString,
                     ValueId::InterpolatedString,
                 ]),
-                NodeReadTarget::Expression(&[ExpressionId::Variable]),
+                NodeTarget::Expression(&[ExpressionId::Variable]),
             ],
         )?
         .ok_or_else(|| E::MissedErrorMessage.link_with_token(&token))?;

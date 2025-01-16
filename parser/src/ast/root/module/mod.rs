@@ -44,11 +44,11 @@ impl ReadNode<Module> for Module {
             let Some(node) = LinkedNode::try_oneof(
                 &mut inner,
                 &[
-                    NodeReadTarget::Declaration(&[
+                    NodeTarget::Declaration(&[
                         DeclarationId::FunctionDeclaration,
                         DeclarationId::ModuleDeclaration,
                     ]),
-                    NodeReadTarget::Root(&[RootId::Module]),
+                    NodeTarget::Root(&[RootId::Module]),
                 ],
             )?
             else {

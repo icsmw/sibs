@@ -20,7 +20,7 @@ impl ReadNode<AssignedValue> for AssignedValue {
         let node = LinkedNode::try_oneof(
             parser,
             &[
-                NodeReadTarget::Value(&[
+                NodeTarget::Value(&[
                     ValueId::Number,
                     ValueId::Boolean,
                     ValueId::PrimitiveString,
@@ -28,8 +28,8 @@ impl ReadNode<AssignedValue> for AssignedValue {
                     ValueId::Array,
                     ValueId::Closure,
                 ]),
-                NodeReadTarget::Statement(&[StatementId::If]),
-                NodeReadTarget::Expression(&[
+                NodeTarget::Statement(&[StatementId::If]),
+                NodeTarget::Expression(&[
                     ExpressionId::Variable,
                     ExpressionId::BinaryExpSeq,
                     ExpressionId::ComparisonSeq,

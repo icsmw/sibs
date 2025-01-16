@@ -22,7 +22,7 @@ impl ReadNode<For> for For {
             if let Some((mut inner, ..)) = parser.between(KindId::LeftParen, KindId::RightParen)? {
                 let el = LinkedNode::try_oneof(
                     &mut inner,
-                    &[NodeReadTarget::Expression(&[ExpressionId::Variable])],
+                    &[NodeTarget::Expression(&[ExpressionId::Variable])],
                 )?
                 .ok_or_else(|| E::MissedElementDeclarationInFor.link_with_token(&token_for))?;
                 if !inner.is_next(KindId::Comma) {
@@ -32,7 +32,7 @@ impl ReadNode<For> for For {
                 }
                 let index_ref = LinkedNode::try_oneof(
                     &mut inner,
-                    &[NodeReadTarget::Expression(&[ExpressionId::Variable])],
+                    &[NodeTarget::Expression(&[ExpressionId::Variable])],
                 )?
                 .ok_or_else(|| E::MissedIndexDeclarationInFor.link_by_current(&inner))?;
                 if !inner.is_done() {
@@ -43,7 +43,7 @@ impl ReadNode<For> for For {
                 restore(parser);
                 if let Some(el) = LinkedNode::try_oneof(
                     parser,
-                    &[NodeReadTarget::Expression(&[ExpressionId::Variable])],
+                    &[NodeTarget::Expression(&[ExpressionId::Variable])],
                 )? {
                     (el, None)
                 } else {
@@ -59,8 +59,8 @@ impl ReadNode<For> for For {
         let elements = LinkedNode::try_oneof(
             parser,
             &[
-                NodeReadTarget::Value(&[ValueId::Array]),
-                NodeReadTarget::Expression(&[
+                NodeTarget::Value(&[ValueId::Array]),
+                NodeTarget::Expression(&[
                     ExpressionId::Variable,
                     ExpressionId::FunctionCall,
                     ExpressionId::Range,
@@ -71,7 +71,7 @@ impl ReadNode<For> for For {
             E::FailRecognizeElementsInFor(parser.to_string()).link_with_token(&token_in)
         })?;
         let block =
-            LinkedNode::try_oneof(parser, &[NodeReadTarget::Statement(&[StatementId::Block])])?
+            LinkedNode::try_oneof(parser, &[NodeTarget::Statement(&[StatementId::Block])])?
                 .ok_or_else(|| E::MissedBlock.link_with_token(&token_for))?;
         Ok(Some(For {
             token_for,

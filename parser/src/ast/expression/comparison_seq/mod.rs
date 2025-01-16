@@ -24,7 +24,7 @@ impl ReadNode<ComparisonSeq> for ComparisonSeq {
         let mut collected: Vec<LinkedNode> = Vec::new();
         while let Some(node) = LinkedNode::try_oneof(
             parser,
-            &[NodeReadTarget::Expression(&[
+            &[NodeTarget::Expression(&[
                 ExpressionId::Variable,
                 ExpressionId::FunctionCall,
                 ExpressionId::Comparison,

@@ -8,7 +8,8 @@ impl InferType for Loop {
 
 impl Initialize for Loop {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
-        self.block.initialize(scx)
+        self.block.initialize(scx)?;
+        Ok(())
     }
 }
 

@@ -12,6 +12,12 @@ pub struct IncludeDeclaration {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for IncludeDeclaration {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.node.lookup_inner(self.uuid, trgs)
+    }
+}
+
 impl SrcLinking for IncludeDeclaration {
     fn link(&self) -> SrcLink {
         src_from::tk_and_node(&self.sig, &self.node)

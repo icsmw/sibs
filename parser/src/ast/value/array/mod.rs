@@ -20,13 +20,13 @@ impl ReadNode<Array> for Array {
         while let Some(node) = LinkedNode::try_oneof(
             &mut inner,
             &[
-                NodeReadTarget::Value(&[
+                NodeTarget::Value(&[
                     ValueId::Number,
                     ValueId::Boolean,
                     ValueId::PrimitiveString,
                     ValueId::InterpolatedString,
                 ]),
-                NodeReadTarget::Expression(&[
+                NodeTarget::Expression(&[
                     ExpressionId::Variable,
                     ExpressionId::BinaryExpSeq,
                     ExpressionId::ComparisonSeq,

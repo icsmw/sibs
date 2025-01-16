@@ -10,6 +10,15 @@ pub enum SkipTaskArgument {
     Any,
 }
 
+impl<'a> LookupInner<'a> for &'a SkipTaskArgument {
+    fn lookup_inner(self, owner: Uuid, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        match self {
+            SkipTaskArgument::Any => Vec::new(),
+            SkipTaskArgument::Value(node) => node.lookup_inner(owner, trgs),
+        }
+    }
+}
+
 impl fmt::Display for SkipTaskArgument {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
@@ -31,6 +40,18 @@ pub struct Skip {
     pub open: Token,
     pub close: Token,
     pub uuid: Uuid,
+}
+
+impl<'a> Lookup<'a> for Skip {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.args
+            .iter()
+            .flat_map(|arg| arg.lookup_inner(self.uuid, trgs))
+            .collect::<Vec<FoundNode>>()
+            .into_iter()
+            .chain(self.func.lookup_inner(self.uuid, trgs))
+            .collect()
+    }
 }
 
 impl SrcLinking for Skip {

@@ -13,6 +13,15 @@ pub struct Gatekeeper {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for Gatekeeper {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.nodes
+            .iter()
+            .collect::<Vec<&LinkedNode>>()
+            .lookup_inner(self.uuid, trgs)
+    }
+}
+
 impl SrcLinking for Gatekeeper {
     fn link(&self) -> SrcLink {
         src_from::tks(&self.token, &self.close)

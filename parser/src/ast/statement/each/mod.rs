@@ -22,7 +22,7 @@ impl ReadNode<Each> for Each {
         };
         let el_ref = LinkedNode::try_oneof(
             &mut inner,
-            &[NodeReadTarget::Expression(&[ExpressionId::Variable])],
+            &[NodeTarget::Expression(&[ExpressionId::Variable])],
         )?
         .ok_or_else(|| E::MissedElementDeclarationInEach.link_with_token(&token))?;
         if !inner.is_next(KindId::Comma) {
@@ -32,7 +32,7 @@ impl ReadNode<Each> for Each {
         }
         let index_ref = LinkedNode::try_oneof(
             &mut inner,
-            &[NodeReadTarget::Expression(&[ExpressionId::Variable])],
+            &[NodeTarget::Expression(&[ExpressionId::Variable])],
         )?
         .ok_or_else(|| E::MissedIndexDeclarationInEach.link_with_token(&token))?;
         if !inner.is_next(KindId::Comma) {
@@ -43,8 +43,8 @@ impl ReadNode<Each> for Each {
         let elements = LinkedNode::try_oneof(
             &mut inner,
             &[
-                NodeReadTarget::Value(&[ValueId::Array]),
-                NodeReadTarget::Expression(&[ExpressionId::Variable, ExpressionId::FunctionCall]),
+                NodeTarget::Value(&[ValueId::Array]),
+                NodeTarget::Expression(&[ExpressionId::Variable, ExpressionId::FunctionCall]),
             ],
         )?
         .ok_or_else(|| E::FailRecognizeElementsInEach(inner.to_string()).link_until_end(&inner))?;
@@ -52,7 +52,7 @@ impl ReadNode<Each> for Each {
             return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
         };
         let block =
-            LinkedNode::try_oneof(parser, &[NodeReadTarget::Statement(&[StatementId::Block])])?
+            LinkedNode::try_oneof(parser, &[NodeTarget::Statement(&[StatementId::Block])])?
                 .ok_or_else(|| E::MissedBlock.link_with_token(&token))?;
         Ok(Some(Each {
             token,

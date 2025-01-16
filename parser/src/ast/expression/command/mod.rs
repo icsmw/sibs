@@ -57,14 +57,14 @@ impl ReadNode<Command> for Command {
                     let node = LinkedNode::try_oneof(
                         &mut inner,
                         &[
-                            NodeReadTarget::Value(&[
+                            NodeTarget::Value(&[
                                 ValueId::Number,
                                 ValueId::Boolean,
                                 ValueId::PrimitiveString,
                                 ValueId::InterpolatedString,
                             ]),
-                            NodeReadTarget::Statement(&[StatementId::If]),
-                            NodeReadTarget::Expression(&[
+                            NodeTarget::Statement(&[StatementId::If]),
+                            NodeTarget::Expression(&[
                                 ExpressionId::Variable,
                                 ExpressionId::BinaryExpSeq,
                                 ExpressionId::ComparisonSeq,

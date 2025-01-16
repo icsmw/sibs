@@ -13,14 +13,14 @@ impl ReadNode<CompoundAssignments> for CompoundAssignments {
     fn read(parser: &mut Parser) -> Result<Option<CompoundAssignments>, LinkedErr<E>> {
         let Some(left) = LinkedNode::try_oneof(
             parser,
-            &[NodeReadTarget::Expression(&[ExpressionId::Variable])],
+            &[NodeTarget::Expression(&[ExpressionId::Variable])],
         )?
         else {
             return Ok(None);
         };
         let Some(operator) = LinkedNode::try_oneof(
             parser,
-            &[NodeReadTarget::Expression(&[
+            &[NodeTarget::Expression(&[
                 ExpressionId::CompoundAssignmentsOp,
             ])],
         )?
@@ -30,8 +30,8 @@ impl ReadNode<CompoundAssignments> for CompoundAssignments {
         let Some(right) = LinkedNode::try_oneof(
             parser,
             &[
-                NodeReadTarget::Value(&[ValueId::Number]),
-                NodeReadTarget::Expression(&[ExpressionId::Variable, ExpressionId::BinaryExpSeq]),
+                NodeTarget::Value(&[ValueId::Number]),
+                NodeTarget::Expression(&[ExpressionId::Variable, ExpressionId::BinaryExpSeq]),
             ],
         )?
         else {

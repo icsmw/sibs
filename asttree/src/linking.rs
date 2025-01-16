@@ -1,5 +1,10 @@
 use crate::*;
 
+pub trait SrcLinking {
+    fn link(&self) -> SrcLink;
+    fn slink(&self) -> SrcLink;
+}
+
 pub(crate) mod src_from {
     use crate::*;
 
@@ -35,9 +40,4 @@ pub(crate) mod src_from {
     pub fn tks(from: &Token, to: &Token) -> SrcLink {
         SrcLink::from_tks(from, to)
     }
-}
-
-pub trait SrcLinking {
-    fn link(&self) -> SrcLink;
-    fn slink(&self) -> SrcLink;
 }

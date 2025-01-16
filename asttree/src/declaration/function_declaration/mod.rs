@@ -25,6 +25,18 @@ impl FunctionDeclaration {
     }
 }
 
+impl<'a> Lookup<'a> for FunctionDeclaration {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.args
+            .iter()
+            .flat_map(|arg| arg.lookup_inner(self.uuid, trgs))
+            .collect::<Vec<FoundNode>>()
+            .into_iter()
+            .chain(self.block.lookup_inner(self.uuid, trgs))
+            .collect()
+    }
+}
+
 impl SrcLinking for FunctionDeclaration {
     fn link(&self) -> SrcLink {
         src_from::tk_and_node(&self.sig, &self.block)

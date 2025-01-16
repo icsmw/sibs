@@ -34,6 +34,15 @@ impl From<ControlFlowModifier> for Node {
     }
 }
 
+impl<'a> Lookup<'a> for ControlFlowModifier {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        match self {
+            Self::Gatekeeper(n) => n.lookup(trgs),
+            Self::Skip(n) => n.lookup(trgs),
+        }
+    }
+}
+
 impl SrcLinking for ControlFlowModifier {
     fn link(&self) -> SrcLink {
         match self {

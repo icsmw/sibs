@@ -15,42 +15,29 @@ use crate::*;
 use asttree::*;
 use diagnostics::*;
 
-#[derive(Debug, Clone)]
-pub enum NodeReadTarget<'a> {
-    Statement(&'a [StatementId]),
-    Expression(&'a [ExpressionId]),
-    Declaration(&'a [DeclarationId]),
-    Value(&'a [ValueId]),
-    ControlFlowModifier(&'a [ControlFlowModifierId]),
-    Root(&'a [RootId]),
-    Miscellaneous(&'a [MiscellaneousId]),
-}
-
 pub(crate) fn read_and_resolve_nodes(
     parser: &mut Parser,
-    targets: &[NodeReadTarget],
+    targets: &[NodeTarget],
 ) -> Result<Option<LinkedNode>, LinkedErr<E>> {
     let mut results = Vec::new();
     let reset = parser.pin();
     for target in targets {
         let drop = parser.pin();
         if let (Some(node), id) = match target {
-            NodeReadTarget::Statement(ids) => {
-                (Statement::try_oneof(parser, ids)?, NodeId::Statement)
-            }
-            NodeReadTarget::Expression(ids) => {
+            NodeTarget::Statement(ids) => (Statement::try_oneof(parser, ids)?, NodeId::Statement),
+            NodeTarget::Expression(ids) => {
                 (Expression::try_oneof(parser, ids)?, NodeId::Expression)
             }
-            NodeReadTarget::Declaration(ids) => {
+            NodeTarget::Declaration(ids) => {
                 (Declaration::try_oneof(parser, ids)?, NodeId::Declaration)
             }
-            NodeReadTarget::Value(ids) => (Value::try_oneof(parser, ids)?, NodeId::Value),
-            NodeReadTarget::ControlFlowModifier(ids) => (
+            NodeTarget::Value(ids) => (Value::try_oneof(parser, ids)?, NodeId::Value),
+            NodeTarget::ControlFlowModifier(ids) => (
                 ControlFlowModifier::try_oneof(parser, ids)?,
                 NodeId::ControlFlowModifier,
             ),
-            NodeReadTarget::Root(ids) => (Root::try_oneof(parser, ids)?, NodeId::Root),
-            NodeReadTarget::Miscellaneous(ids) => (
+            NodeTarget::Root(ids) => (Root::try_oneof(parser, ids)?, NodeId::Root),
+            NodeTarget::Miscellaneous(ids) => (
                 Miscellaneous::try_oneof(parser, ids)?,
                 NodeId::Miscellaneous,
             ),
@@ -63,10 +50,10 @@ pub(crate) fn read_and_resolve_nodes(
     resolve_conflicts(results, parser)
 }
 
-impl TryReadOneOf<LinkedNode, NodeReadTarget<'_>> for LinkedNode {
+impl TryReadOneOf<LinkedNode, NodeTarget<'_>> for LinkedNode {
     fn try_oneof(
         parser: &mut Parser,
-        targets: &[NodeReadTarget],
+        targets: &[NodeTarget],
     ) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         let reset = parser.pin();
         Ok(read_and_resolve_nodes(parser, targets)?.or_else(|| {

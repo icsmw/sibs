@@ -13,6 +13,17 @@ pub struct VariableDeclaration {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for VariableDeclaration {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.variable
+            .lookup_inner(self.uuid, trgs)
+            .into_iter()
+            .chain(self.r#type.as_ref().lookup_inner(self.uuid, trgs))
+            .chain(self.assignation.as_ref().lookup_inner(self.uuid, trgs))
+            .collect()
+    }
+}
+
 impl SrcLinking for VariableDeclaration {
     fn link(&self) -> SrcLink {
         if let Some(node) = self.assignation.as_ref() {

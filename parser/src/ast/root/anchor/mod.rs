@@ -35,7 +35,7 @@ fn get_inner<N: GetFilename>(
     target: RootId,
 ) -> Result<LinkedNode, LinkedErr<E>> {
     let mut inner = read_file(parser, node).map_err(|e| e.link(linked))?;
-    let Some(node) = LinkedNode::try_oneof(&mut inner, &[NodeReadTarget::Root(&[target.clone()])])?
+    let Some(node) = LinkedNode::try_oneof(&mut inner, &[NodeTarget::Root(&[target.clone()])])?
     else {
         return Err(E::FailToFindNode(target.to_string()).link(linked));
     };
@@ -56,11 +56,11 @@ impl ReadNode<Anchor> for Anchor {
             let Some(node) = LinkedNode::try_oneof(
                 parser,
                 &[
-                    NodeReadTarget::Declaration(&[
+                    NodeTarget::Declaration(&[
                         DeclarationId::ModuleDeclaration,
                         DeclarationId::IncludeDeclaration,
                     ]),
-                    NodeReadTarget::Root(&[RootId::Task, RootId::Component, RootId::Module]),
+                    NodeTarget::Root(&[RootId::Task, RootId::Component, RootId::Module]),
                 ],
             )?
             else {

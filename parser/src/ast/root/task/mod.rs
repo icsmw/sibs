@@ -42,7 +42,7 @@ impl ReadNode<Task> for Task {
         let mut args = Vec::new();
         while let Some(arg) = LinkedNode::try_oneof(
             &mut inner,
-            &[NodeReadTarget::Declaration(&[
+            &[NodeTarget::Declaration(&[
                 DeclarationId::ArgumentDeclaration,
             ])],
         )? {
@@ -57,7 +57,7 @@ impl ReadNode<Task> for Task {
             return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
         }
         let block =
-            LinkedNode::try_oneof(parser, &[NodeReadTarget::Statement(&[StatementId::Block])])?
+            LinkedNode::try_oneof(parser, &[NodeTarget::Statement(&[StatementId::Block])])?
                 .ok_or_else(|| E::MissedTaskBlock.link_with_token(&sig))?;
         Ok(Some(Task {
             vis,

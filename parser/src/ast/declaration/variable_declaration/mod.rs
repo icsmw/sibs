@@ -27,19 +27,19 @@ impl ReadNode<VariableDeclaration> for VariableDeclaration {
         restore(parser);
         let variable = LinkedNode::try_oneof(
             parser,
-            &[NodeReadTarget::Declaration(&[DeclarationId::VariableName])],
+            &[NodeTarget::Declaration(&[DeclarationId::VariableName])],
         )?
         .ok_or_else(|| E::MissedVariableDefinition.link_with_token(&token))?;
         let ty = LinkedNode::try_oneof(
             parser,
-            &[NodeReadTarget::Declaration(&[
+            &[NodeTarget::Declaration(&[
                 DeclarationId::VariableTypeDeclaration,
             ])],
         )?
         .map(Box::new);
         let assignation = LinkedNode::try_oneof(
             parser,
-            &[NodeReadTarget::Statement(&[StatementId::AssignedValue])],
+            &[NodeTarget::Statement(&[StatementId::AssignedValue])],
         )?
         .map(Box::new);
         Ok(Some(VariableDeclaration {

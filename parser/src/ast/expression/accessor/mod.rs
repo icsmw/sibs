@@ -19,13 +19,13 @@ impl ReadNode<Accessor> for Accessor {
         let Some(node) = LinkedNode::try_oneof(
             &mut inner,
             &[
-                NodeReadTarget::Value(&[ValueId::Number]),
-                NodeReadTarget::Expression(&[
+                NodeTarget::Value(&[ValueId::Number]),
+                NodeTarget::Expression(&[
                     ExpressionId::Variable,
                     ExpressionId::BinaryExpSeq,
                     ExpressionId::FunctionCall,
                 ]),
-                NodeReadTarget::Statement(&[StatementId::If]),
+                NodeTarget::Statement(&[StatementId::If]),
             ],
         )?
         else {

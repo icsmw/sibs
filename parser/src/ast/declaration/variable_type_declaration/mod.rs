@@ -22,7 +22,7 @@ impl ReadNode<VariableTypeDeclaration> for VariableTypeDeclaration {
         loop {
             let Some(node) = LinkedNode::try_oneof(
                 parser,
-                &[NodeReadTarget::Declaration(&[DeclarationId::VariableType])],
+                &[NodeTarget::Declaration(&[DeclarationId::VariableType])],
             )?
             else {
                 break;

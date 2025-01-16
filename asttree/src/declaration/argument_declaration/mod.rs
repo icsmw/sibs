@@ -21,6 +21,16 @@ impl ArgumentDeclaration {
     }
 }
 
+impl<'a> Lookup<'a> for ArgumentDeclaration {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.variable
+            .lookup_inner(self.uuid, trgs)
+            .into_iter()
+            .chain(self.r#type.lookup_inner(self.uuid, trgs))
+            .collect()
+    }
+}
+
 impl SrcLinking for ArgumentDeclaration {
     fn link(&self) -> SrcLink {
         src_from::nodes(&self.variable, &self.r#type)

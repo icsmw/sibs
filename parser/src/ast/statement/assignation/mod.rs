@@ -13,14 +13,14 @@ impl ReadNode<Assignation> for Assignation {
     fn read(parser: &mut Parser) -> Result<Option<Assignation>, LinkedErr<E>> {
         let Some(left) = LinkedNode::try_oneof(
             parser,
-            &[NodeReadTarget::Expression(&[ExpressionId::Variable])],
+            &[NodeTarget::Expression(&[ExpressionId::Variable])],
         )?
         else {
             return Ok(None);
         };
         let Some(right) = LinkedNode::try_oneof(
             parser,
-            &[NodeReadTarget::Statement(&[StatementId::AssignedValue])],
+            &[NodeTarget::Statement(&[StatementId::AssignedValue])],
         )?
         else {
             return Ok(None);

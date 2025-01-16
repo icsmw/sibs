@@ -2,20 +2,24 @@ mod cfm;
 mod declaration;
 mod expression;
 mod linking;
+mod lookup;
 mod metadata;
 mod miscellaneous;
 mod root;
 mod statement;
+mod targets;
 mod value;
 
 pub use cfm::*;
 pub use declaration::*;
 pub use expression::*;
 pub use linking::*;
+pub use lookup::*;
 pub use metadata::*;
 pub use miscellaneous::*;
 pub use root::*;
 pub use statement::*;
+pub use targets::*;
 pub use value::*;
 
 pub(crate) use lexer::*;
@@ -116,6 +120,24 @@ impl SrcLinking for Node {
         }
     }
 }
+
+// impl Lookup for LinkedNode {
+//     fn lookup(&self, trgs: &[NodeTarget]) -> Vec<FoundNode> {
+//         self.node.lookup(trgs)
+//     }
+// }
+
+// impl Lookup for &LinkedNode {
+//     fn lookup(&self, trgs: &[NodeTarget]) -> Vec<FoundNode> {
+//         self.node.lookup(trgs)
+//     }
+// }
+
+// impl Lookup for Box<LinkedNode> {
+//     fn lookup(&self, trgs: &[NodeTarget]) -> Vec<FoundNode> {
+//         self.node.lookup(trgs)
+//     }
+// }
 
 impl SrcLinking for LinkedNode {
     fn link(&self) -> SrcLink {

@@ -19,7 +19,7 @@ impl ReadNode<If> for If {
                     Kind::Keyword(Keyword::If) => {
                         let cond = LinkedNode::try_oneof(
                             parser,
-                            &[NodeReadTarget::Expression(&[ExpressionId::ComparisonSeq])],
+                            &[NodeTarget::Expression(&[ExpressionId::ComparisonSeq])],
                         )?
                         .ok_or_else(|| {
                             E::MissedExpectation(
@@ -30,7 +30,7 @@ impl ReadNode<If> for If {
                         })?;
                         let blk = LinkedNode::try_oneof(
                             parser,
-                            &[NodeReadTarget::Statement(&[StatementId::Block])],
+                            &[NodeTarget::Statement(&[StatementId::Block])],
                         )?
                         .ok_or_else(|| {
                             E::MissedExpectation(
@@ -44,7 +44,7 @@ impl ReadNode<If> for If {
                     Kind::Keyword(Keyword::Else) => {
                         let blk = LinkedNode::try_oneof(
                             parser,
-                            &[NodeReadTarget::Statement(&[StatementId::Block])],
+                            &[NodeTarget::Statement(&[StatementId::Block])],
                         )?
                         .ok_or_else(|| {
                             E::MissedExpectation(

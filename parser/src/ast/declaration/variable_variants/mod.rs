@@ -22,7 +22,7 @@ impl ReadNode<VariableVariants> for VariableVariants {
         loop {
             let Some(node) = LinkedNode::try_oneof(
                 parser,
-                &[NodeReadTarget::Value(&[
+                &[NodeTarget::Value(&[
                     ValueId::PrimitiveString,
                     ValueId::Number,
                 ])],

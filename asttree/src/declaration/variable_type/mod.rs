@@ -10,6 +10,14 @@ pub enum VariableCompoundType {
     Vec(Token, Box<LinkedNode>),
 }
 
+impl<'a> LookupInner<'a> for &'a VariableCompoundType {
+    fn lookup_inner(self, owner: Uuid, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        match self {
+            VariableCompoundType::Vec(_, n) => n.lookup_inner(owner, trgs),
+        }
+    }
+}
+
 impl SrcLinking for VariableCompoundType {
     fn link(&self) -> SrcLink {
         match self {
@@ -45,6 +53,15 @@ impl VariableCompoundType {
 pub enum VariableTypeDef {
     Primitive(Token),
     Compound(VariableCompoundType),
+}
+
+impl<'a> LookupInner<'a> for &'a VariableTypeDef {
+    fn lookup_inner(self, owner: Uuid, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        match self {
+            VariableTypeDef::Primitive(..) => Vec::new(),
+            VariableTypeDef::Compound(ty) => ty.lookup_inner(owner, trgs),
+        }
+    }
 }
 
 impl SrcLinking for VariableTypeDef {
@@ -85,6 +102,12 @@ impl VariableTypeDef {
 pub struct VariableType {
     pub r#type: VariableTypeDef,
     pub uuid: Uuid,
+}
+
+impl<'a> Lookup<'a> for VariableType {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.r#type.lookup_inner(self.uuid, trgs)
+    }
 }
 
 impl SrcLinking for VariableType {

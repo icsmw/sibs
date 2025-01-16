@@ -17,8 +17,8 @@ impl ReadNode<BinaryExp> for BinaryExp {
         let Some(left) = LinkedNode::try_oneof(
             parser,
             &[
-                NodeReadTarget::Value(&[ValueId::Number]),
-                NodeReadTarget::Expression(&[ExpressionId::Variable, ExpressionId::FunctionCall]),
+                NodeTarget::Value(&[ValueId::Number]),
+                NodeTarget::Expression(&[ExpressionId::Variable, ExpressionId::FunctionCall]),
             ],
         )?
         else {
@@ -26,7 +26,7 @@ impl ReadNode<BinaryExp> for BinaryExp {
         };
         let Some(operator) = LinkedNode::try_oneof(
             parser,
-            &[NodeReadTarget::Expression(&[ExpressionId::BinaryOp])],
+            &[NodeTarget::Expression(&[ExpressionId::BinaryOp])],
         )?
         else {
             return Ok(None);
@@ -34,8 +34,8 @@ impl ReadNode<BinaryExp> for BinaryExp {
         let Some(right) = LinkedNode::try_oneof(
             parser,
             &[
-                NodeReadTarget::Value(&[ValueId::Number]),
-                NodeReadTarget::Expression(&[ExpressionId::Variable, ExpressionId::FunctionCall]),
+                NodeTarget::Value(&[ValueId::Number]),
+                NodeTarget::Expression(&[ExpressionId::Variable, ExpressionId::FunctionCall]),
             ],
         )?
         else {

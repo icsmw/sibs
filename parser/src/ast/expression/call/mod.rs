@@ -27,7 +27,7 @@ impl ReadNode<Call> for Call {
         restore(parser);
         let Some(node) = LinkedNode::try_oneof(
             parser,
-            &[NodeReadTarget::Expression(&[ExpressionId::FunctionCall])],
+            &[NodeTarget::Expression(&[ExpressionId::FunctionCall])],
         )?
         else {
             return Ok(None);

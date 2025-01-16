@@ -11,6 +11,15 @@ pub struct VariableTypeDeclaration {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for VariableTypeDeclaration {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.types
+            .iter()
+            .collect::<Vec<&LinkedNode>>()
+            .lookup_inner(self.uuid, trgs)
+    }
+}
+
 impl SrcLinking for VariableTypeDeclaration {
     fn link(&self) -> SrcLink {
         if let Some(n) = self.types.last() {

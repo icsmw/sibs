@@ -17,8 +17,8 @@ impl ReadNode<Range> for Range {
         let Some(left) = LinkedNode::try_oneof(
             parser,
             &[
-                NodeReadTarget::Value(&[ValueId::Number]),
-                NodeReadTarget::Expression(&[ExpressionId::Variable]),
+                NodeTarget::Value(&[ValueId::Number]),
+                NodeTarget::Expression(&[ExpressionId::Variable]),
             ],
         )?
         else {
@@ -32,8 +32,8 @@ impl ReadNode<Range> for Range {
         let Some(right) = LinkedNode::try_oneof(
             parser,
             &[
-                NodeReadTarget::Value(&[ValueId::Number]),
-                NodeReadTarget::Expression(&[ExpressionId::Variable]),
+                NodeTarget::Value(&[ValueId::Number]),
+                NodeTarget::Expression(&[ExpressionId::Variable]),
             ],
         )?
         else {

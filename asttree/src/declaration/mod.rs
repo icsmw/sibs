@@ -70,6 +70,23 @@ impl From<Declaration> for Node {
     }
 }
 
+impl<'a> Lookup<'a> for Declaration {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        match self {
+            Self::IncludeDeclaration(n) => n.lookup(trgs),
+            Self::ModuleDeclaration(n) => n.lookup(trgs),
+            Self::ArgumentDeclaration(n) => n.lookup(trgs),
+            Self::FunctionDeclaration(n) => n.lookup(trgs),
+            Self::VariableDeclaration(n) => n.lookup(trgs),
+            Self::VariableType(n) => n.lookup(trgs),
+            Self::VariableTypeDeclaration(n) => n.lookup(trgs),
+            Self::VariableVariants(n) => n.lookup(trgs),
+            Self::VariableName(n) => n.lookup(trgs),
+            Self::ClosureDeclaration(n) => n.lookup(trgs),
+        }
+    }
+}
+
 impl SrcLinking for Declaration {
     fn link(&self) -> SrcLink {
         match self {

@@ -25,7 +25,7 @@ impl ReadNode<OneOf> for OneOf {
         let mut commands = Vec::new();
         while let Some(node) = LinkedNode::try_oneof(
             &mut inner,
-            &[NodeReadTarget::Expression(&[ExpressionId::Command])],
+            &[NodeTarget::Expression(&[ExpressionId::Command])],
         )? {
             commands.push(node);
             let Some(tk) = inner.token() else {

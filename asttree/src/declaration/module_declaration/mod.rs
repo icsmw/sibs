@@ -12,6 +12,12 @@ pub struct ModuleDeclaration {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for ModuleDeclaration {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.node.lookup_inner(self.uuid, trgs)
+    }
+}
+
 impl SrcLinking for ModuleDeclaration {
     fn link(&self) -> SrcLink {
         src_from::tk_and_node(&self.sig, &self.node)

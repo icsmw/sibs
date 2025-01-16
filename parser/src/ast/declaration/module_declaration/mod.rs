@@ -40,7 +40,7 @@ impl ReadNode<ModuleDeclaration> for ModuleDeclaration {
         }
         let node = LinkedNode::try_oneof(
             parser,
-            &[NodeReadTarget::Value(&[ValueId::PrimitiveString])],
+            &[NodeTarget::Value(&[ValueId::PrimitiveString])],
         )?
         .ok_or_else(|| E::MissedModulePath.link_with_token(&sig))?;
         Ok(Some(ModuleDeclaration {

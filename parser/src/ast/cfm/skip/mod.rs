@@ -39,7 +39,7 @@ impl ReadNode<Skip> for Skip {
             }
             let Some(node) = LinkedNode::try_oneof(
                 &mut args_inner,
-                &[NodeReadTarget::Value(&[
+                &[NodeTarget::Value(&[
                     ValueId::Array,
                     ValueId::Boolean,
                     ValueId::Number,
@@ -60,7 +60,7 @@ impl ReadNode<Skip> for Skip {
         let _ = inner.token();
         let func = LinkedNode::try_oneof(
             &mut inner,
-            &[NodeReadTarget::Expression(&[ExpressionId::FunctionCall])],
+            &[NodeTarget::Expression(&[ExpressionId::FunctionCall])],
         )?
         .ok_or_else(|| E::NoSkipDirectiveFuncCall.link_until_end(&inner))?;
         if !inner.is_done() {

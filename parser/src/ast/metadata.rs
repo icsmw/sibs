@@ -25,7 +25,7 @@ impl ReadMetadata for Metadata {
         self.ppm = Vec::new();
         while let Some(node) = LinkedNode::try_oneof(
             parser,
-            &[NodeReadTarget::Expression(&[
+            &[NodeTarget::Expression(&[
                 ExpressionId::Accessor,
                 ExpressionId::Call,
             ])],

@@ -23,7 +23,7 @@ impl ReadNode<Optional> for Optional {
     fn read(parser: &mut Parser) -> Result<Option<Optional>, LinkedErr<E>> {
         let Some(comparison) = LinkedNode::try_oneof(
             parser,
-            &[NodeReadTarget::Expression(&[ExpressionId::ComparisonSeq])],
+            &[NodeTarget::Expression(&[ExpressionId::ComparisonSeq])],
         )?
         else {
             return Ok(None);
@@ -37,7 +37,7 @@ impl ReadNode<Optional> for Optional {
         let action = LinkedNode::try_oneof(
             parser,
             &[
-                NodeReadTarget::Statement(&[
+                NodeTarget::Statement(&[
                     StatementId::Break,
                     StatementId::Return,
                     StatementId::Block,
@@ -49,7 +49,7 @@ impl ReadNode<Optional> for Optional {
                     StatementId::Join,
                     StatementId::OneOf,
                 ]),
-                NodeReadTarget::Expression(&[ExpressionId::Command, ExpressionId::FunctionCall]),
+                NodeTarget::Expression(&[ExpressionId::Command, ExpressionId::FunctionCall]),
             ],
         )?
         .ok_or_else(|| E::MissedActionInOptional.link_with_token(&token))?;

@@ -27,7 +27,7 @@ impl ReadNode<ClosureDeclaration> for ClosureDeclaration {
         let mut close = None;
         while let Some(arg) = LinkedNode::try_oneof(
             parser,
-            &[NodeReadTarget::Declaration(&[
+            &[NodeTarget::Declaration(&[
                 DeclarationId::ArgumentDeclaration,
             ])],
         )? {
@@ -47,7 +47,7 @@ impl ReadNode<ClosureDeclaration> for ClosureDeclaration {
         };
         let ty = LinkedNode::try_oneof(
             parser,
-            &[NodeReadTarget::Declaration(&[
+            &[NodeTarget::Declaration(&[
                 DeclarationId::VariableTypeDeclaration,
             ])],
         )?

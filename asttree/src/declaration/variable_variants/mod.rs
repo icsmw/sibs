@@ -11,6 +11,15 @@ pub struct VariableVariants {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for VariableVariants {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.variants
+            .iter()
+            .collect::<Vec<&LinkedNode>>()
+            .lookup_inner(self.uuid, trgs)
+    }
+}
+
 impl SrcLinking for VariableVariants {
     fn link(&self) -> SrcLink {
         if let Some(n) = self.variants.last() {

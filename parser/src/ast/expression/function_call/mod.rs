@@ -50,14 +50,14 @@ impl ReadNode<FunctionCall> for FunctionCall {
         while let Some(node) = LinkedNode::try_oneof(
             &mut inner,
             &[
-                NodeReadTarget::Value(&[
+                NodeTarget::Value(&[
                     ValueId::Number,
                     ValueId::Boolean,
                     ValueId::PrimitiveString,
                     ValueId::InterpolatedString,
                     ValueId::Closure,
                 ]),
-                NodeReadTarget::Expression(&[
+                NodeTarget::Expression(&[
                     ExpressionId::Variable,
                     ExpressionId::BinaryExpSeq,
                     ExpressionId::ComparisonSeq,

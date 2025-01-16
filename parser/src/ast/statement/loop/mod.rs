@@ -18,7 +18,7 @@ impl ReadNode<Loop> for Loop {
             return Ok(None);
         }
         let block =
-            LinkedNode::try_oneof(parser, &[NodeReadTarget::Statement(&[StatementId::Block])])?
+            LinkedNode::try_oneof(parser, &[NodeTarget::Statement(&[StatementId::Block])])?
                 .ok_or_else(|| E::MissedBlock.link_with_token(&token))?;
         Ok(Some(Loop {
             token,

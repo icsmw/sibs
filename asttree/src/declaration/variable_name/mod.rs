@@ -11,6 +11,12 @@ pub struct VariableName {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for VariableName {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        vec![]
+    }
+}
+
 impl SrcLinking for VariableName {
     fn link(&self) -> SrcLink {
         src_from::tk(&self.token)

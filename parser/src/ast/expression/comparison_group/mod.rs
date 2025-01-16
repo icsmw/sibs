@@ -28,7 +28,7 @@ impl ReadNode<ComparisonGroup> for ComparisonGroup {
         };
         let Some(node) = LinkedNode::try_oneof(
             &mut inner,
-            &[NodeReadTarget::Expression(&[ExpressionId::ComparisonSeq])],
+            &[NodeTarget::Expression(&[ExpressionId::ComparisonSeq])],
         )?
         else {
             return Ok(None);

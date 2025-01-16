@@ -24,14 +24,14 @@ impl ReadNode<Return> for Return {
                 LinkedNode::try_oneof(
                     parser,
                     &[
-                        NodeReadTarget::Value(&[
+                        NodeTarget::Value(&[
                             ValueId::Number,
                             ValueId::Boolean,
                             ValueId::PrimitiveString,
                             ValueId::InterpolatedString,
                             ValueId::Error,
                         ]),
-                        NodeReadTarget::Expression(&[
+                        NodeTarget::Expression(&[
                             ExpressionId::Variable,
                             ExpressionId::BinaryExpSeq,
                             ExpressionId::ComparisonSeq,

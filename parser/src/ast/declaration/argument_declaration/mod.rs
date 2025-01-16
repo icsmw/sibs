@@ -21,14 +21,14 @@ impl ReadNode<ArgumentDeclaration> for ArgumentDeclaration {
         restore(parser);
         let Some(variable) = LinkedNode::try_oneof(
             parser,
-            &[NodeReadTarget::Declaration(&[DeclarationId::VariableName])],
+            &[NodeTarget::Declaration(&[DeclarationId::VariableName])],
         )?
         else {
             return Ok(None);
         };
         let Some(ty) = LinkedNode::try_oneof(
             parser,
-            &[NodeReadTarget::Declaration(&[
+            &[NodeTarget::Declaration(&[
                 DeclarationId::VariableTypeDeclaration,
                 DeclarationId::VariableVariants,
                 DeclarationId::ClosureDeclaration,

@@ -18,7 +18,7 @@ impl ReadNode<BinaryExpGroup> for BinaryExpGroup {
         };
         let Some(node) = LinkedNode::try_oneof(
             &mut inner,
-            &[NodeReadTarget::Expression(&[ExpressionId::BinaryExpSeq])],
+            &[NodeTarget::Expression(&[ExpressionId::BinaryExpSeq])],
         )?
         else {
             return Ok(None);

@@ -28,11 +28,11 @@ impl ReadNode<Block> for Block {
             let Some(node) = LinkedNode::try_oneof(
                 &mut inner,
                 &[
-                    NodeReadTarget::Declaration(&[
+                    NodeTarget::Declaration(&[
                         DeclarationId::VariableDeclaration,
                         DeclarationId::FunctionDeclaration,
                     ]),
-                    NodeReadTarget::Statement(&[
+                    NodeTarget::Statement(&[
                         StatementId::Assignation,
                         StatementId::Break,
                         StatementId::Return,
@@ -45,7 +45,7 @@ impl ReadNode<Block> for Block {
                         StatementId::Optional,
                         StatementId::While,
                     ]),
-                    NodeReadTarget::Expression(&[
+                    NodeTarget::Expression(&[
                         ExpressionId::Command,
                         ExpressionId::FunctionCall,
                         ExpressionId::TaskCall,
@@ -55,7 +55,7 @@ impl ReadNode<Block> for Block {
                         ExpressionId::ComparisonSeq,
                         ExpressionId::Comparison,
                     ]),
-                    NodeReadTarget::Value(&[
+                    NodeTarget::Value(&[
                         ValueId::Boolean,
                         ValueId::Number,
                         ValueId::InterpolatedString,

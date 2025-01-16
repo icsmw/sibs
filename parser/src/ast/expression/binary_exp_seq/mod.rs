@@ -18,8 +18,8 @@ impl ReadNode<BinaryExpSeq> for BinaryExpSeq {
         while let Some(node) = LinkedNode::try_oneof(
             parser,
             &[
-                NodeReadTarget::Value(&[ValueId::Number]),
-                NodeReadTarget::Expression(&[
+                NodeTarget::Value(&[ValueId::Number]),
+                NodeTarget::Expression(&[
                     ExpressionId::Variable,
                     ExpressionId::FunctionCall,
                     ExpressionId::BinaryOp,

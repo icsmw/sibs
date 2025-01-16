@@ -21,7 +21,7 @@ impl ReadNode<Closure> for Closure {
         let mut close = None;
         while let Some(arg) = LinkedNode::try_oneof(
             parser,
-            &[NodeReadTarget::Declaration(&[
+            &[NodeTarget::Declaration(&[
                 DeclarationId::ArgumentDeclaration,
             ])],
         )? {
@@ -40,7 +40,7 @@ impl ReadNode<Closure> for Closure {
             return Err(E::MissedClosingBar.link_with_token(&open));
         };
         let block =
-            LinkedNode::try_oneof(parser, &[NodeReadTarget::Statement(&[StatementId::Block])])?
+            LinkedNode::try_oneof(parser, &[NodeTarget::Statement(&[StatementId::Block])])?
                 .ok_or_else(|| E::MissedClosureBlock.link_between(&open, &close))?;
         Ok(Some(Closure {
             args,
