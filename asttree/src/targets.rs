@@ -11,7 +11,7 @@ pub enum NodeTarget<'a> {
     Miscellaneous(&'a [MiscellaneousId]),
 }
 
-impl<'a> NodeTarget<'a> {
+impl NodeTarget<'_> {
     pub fn is(&self, node: &Node) -> bool {
         let id = node.id();
         match self {
@@ -77,7 +77,6 @@ impl<'a> FilterTargetsFromNodes<'a> for Vec<&'a LinkedNode> {
     fn into_filtered_nodes(self, trgs: &[NodeTarget]) -> Vec<&'a LinkedNode> {
         self.into_iter()
             .filter(|n| trgs.iter().any(|trg| trg.is(&n.node)))
-            .map(|n| n)
             .collect::<Vec<&LinkedNode>>()
     }
 }
@@ -92,7 +91,7 @@ impl<'a> FilterTargetsFromNodes<'a> for &'a LinkedNode {
     }
 }
 
-impl<'a> From<NodeTarget<'a>> for NodeId {
+impl From<NodeTarget<'_>> for NodeId {
     fn from(trg: NodeTarget) -> Self {
         match trg {
             NodeTarget::ControlFlowModifier(..) => NodeId::ControlFlowModifier,
@@ -106,7 +105,7 @@ impl<'a> From<NodeTarget<'a>> for NodeId {
     }
 }
 
-impl<'a> From<&NodeTarget<'a>> for NodeId {
+impl From<&NodeTarget<'_>> for NodeId {
     fn from(trg: &NodeTarget) -> Self {
         match trg {
             NodeTarget::ControlFlowModifier(..) => NodeId::ControlFlowModifier,

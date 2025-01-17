@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 use crate::*;
 
 impl InferType for Block {
@@ -5,11 +8,20 @@ impl InferType for Block {
         scx.tys
             .enter(&self.uuid)
             .map_err(|err| LinkedErr::from(err.into(), self))?;
-        let ty = self
+        let mut ty = self
             .nodes
             .last()
             .map(|n| n.infer_type(scx))
             .unwrap_or_else(|| Ok(DeterminedTy::Void.into()))?;
+        for ret in self
+            .lookup(&[NodeTarget::Statement(&[StatementId::Return])])
+            .into_iter()
+        {
+            if ty != ret.node.infer_type(scx)? {
+                ty = Ty::Indeterminate;
+                break;
+            }
+        }
         scx.tys
             .leave()
             .map_err(|err| LinkedErr::from(err.into(), self))?;

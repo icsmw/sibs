@@ -24,10 +24,13 @@ impl IfCase {
 impl<'a> LookupInner<'a> for &'a IfCase {
     fn lookup_inner(self, owner: Uuid, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         match self {
-            IfCase::If(n, ..) => n,
-            IfCase::Else(n, ..) => n,
+            IfCase::If(con, blk, ..) => con
+                .lookup_inner(owner, trgs)
+                .into_iter()
+                .chain(blk.lookup_inner(owner, trgs))
+                .collect(),
+            IfCase::Else(n, ..) => n.lookup_inner(owner, trgs),
         }
-        .lookup_inner(owner, trgs)
     }
 }
 
