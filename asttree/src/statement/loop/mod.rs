@@ -11,6 +11,12 @@ pub struct Loop {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for Loop {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.block.lookup_inner(self.uuid, trgs)
+    }
+}
+
 impl SrcLinking for Loop {
     fn link(&self) -> SrcLink {
         src_from::tk_and_node(&self.token, &self.block)

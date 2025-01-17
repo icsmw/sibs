@@ -30,6 +30,15 @@ impl FunctionCall {
     }
 }
 
+impl<'a> Lookup<'a> for FunctionCall {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.args
+            .iter()
+            .collect::<Vec<&LinkedNode>>()
+            .lookup_inner(self.uuid, trgs)
+    }
+}
+
 impl SrcLinking for FunctionCall {
     fn link(&self) -> SrcLink {
         if let Some(open) = self.negation.as_ref() {

@@ -12,6 +12,12 @@ pub struct BinaryExpGroup {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for BinaryExpGroup {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.node.lookup_inner(self.uuid, trgs)
+    }
+}
+
 impl SrcLinking for BinaryExpGroup {
     fn link(&self) -> SrcLink {
         src_from::tks(&self.open, &self.close)

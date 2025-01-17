@@ -10,6 +10,12 @@ pub struct Break {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for Break {
+    fn lookup(&'a self, _trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        vec![]
+    }
+}
+
 impl SrcLinking for Break {
     fn link(&self) -> SrcLink {
         src_from::tk(&self.token)

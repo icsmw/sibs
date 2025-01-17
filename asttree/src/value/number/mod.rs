@@ -11,6 +11,12 @@ pub struct Number {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for Number {
+    fn lookup(&'a self, _trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        vec![]
+    }
+}
+
 impl SrcLinking for Number {
     fn link(&self) -> SrcLink {
         src_from::tk(&self.token)

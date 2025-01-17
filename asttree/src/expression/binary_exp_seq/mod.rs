@@ -10,6 +10,15 @@ pub struct BinaryExpSeq {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for BinaryExpSeq {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.nodes
+            .iter()
+            .collect::<Vec<&LinkedNode>>()
+            .lookup_inner(self.uuid, trgs)
+    }
+}
+
 impl SrcLinking for BinaryExpSeq {
     fn link(&self) -> SrcLink {
         if let (Some(open), Some(close)) = (self.nodes.first(), self.nodes.last()) {

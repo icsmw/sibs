@@ -12,7 +12,7 @@ pub struct VariableName {
 }
 
 impl<'a> Lookup<'a> for VariableName {
-    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+    fn lookup(&'a self, _trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         vec![]
     }
 }

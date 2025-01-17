@@ -23,6 +23,15 @@ impl TaskCall {
     }
 }
 
+impl<'a> Lookup<'a> for TaskCall {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.args
+            .iter()
+            .collect::<Vec<&LinkedNode>>()
+            .lookup_inner(self.uuid, trgs)
+    }
+}
+
 impl SrcLinking for TaskCall {
     fn link(&self) -> SrcLink {
         if let Some((_, open)) = self.reference.first() {

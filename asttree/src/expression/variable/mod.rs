@@ -12,6 +12,12 @@ pub struct Variable {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for Variable {
+    fn lookup(&'a self, _trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        vec![]
+    }
+}
+
 impl SrcLinking for Variable {
     fn link(&self) -> SrcLink {
         if let Some(open) = self.negation.as_ref() {

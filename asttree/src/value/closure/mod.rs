@@ -13,6 +13,18 @@ pub struct Closure {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for Closure {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.args
+            .iter()
+            .flat_map(|arg| arg.lookup_inner(self.uuid, trgs))
+            .collect::<Vec<FoundNode>>()
+            .into_iter()
+            .chain(self.block.lookup_inner(self.uuid, trgs))
+            .collect()
+    }
+}
+
 impl SrcLinking for Closure {
     fn link(&self) -> SrcLink {
         src_from::tk_and_node(&self.open, &self.block)

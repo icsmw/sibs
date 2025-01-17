@@ -11,6 +11,12 @@ pub struct Return {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for Return {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.node.as_ref().lookup_inner(self.uuid, trgs)
+    }
+}
+
 impl SrcLinking for Return {
     fn link(&self) -> SrcLink {
         if let Some(n) = self.node.as_ref() {

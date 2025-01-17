@@ -30,6 +30,15 @@ impl From<Miscellaneous> for Node {
     }
 }
 
+impl<'a> Lookup<'a> for Miscellaneous {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        match self {
+            Self::Comment(n) => n.lookup(trgs),
+            Self::Meta(n) => n.lookup(trgs),
+        }
+    }
+}
+
 impl SrcLinking for Miscellaneous {
     fn link(&self) -> SrcLink {
         match self {

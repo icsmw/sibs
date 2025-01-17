@@ -22,6 +22,15 @@ impl Anchor {
     }
 }
 
+impl<'a> Lookup<'a> for Anchor {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.nodes
+            .iter()
+            .collect::<Vec<&LinkedNode>>()
+            .lookup_inner(self.uuid, trgs)
+    }
+}
+
 impl SrcLinking for Anchor {
     fn link(&self) -> SrcLink {
         if let (Some(open), Some(close)) = (self.nodes.first(), self.nodes.last()) {

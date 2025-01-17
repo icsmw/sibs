@@ -12,6 +12,16 @@ pub struct BinaryExp {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for BinaryExp {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.left
+            .lookup_inner(self.uuid, trgs)
+            .into_iter()
+            .chain(self.right.lookup_inner(self.uuid, trgs))
+            .collect()
+    }
+}
+
 impl SrcLinking for BinaryExp {
     fn link(&self) -> SrcLink {
         src_from::nodes(&self.left, &self.right)

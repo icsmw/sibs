@@ -13,6 +13,15 @@ pub struct Join {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for Join {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.commands
+            .iter()
+            .collect::<Vec<&LinkedNode>>()
+            .lookup_inner(self.uuid, trgs)
+    }
+}
+
 impl SrcLinking for Join {
     fn link(&self) -> SrcLink {
         src_from::tks(&self.token, &self.close)

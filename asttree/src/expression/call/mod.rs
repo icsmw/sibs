@@ -27,6 +27,12 @@ impl Call {
     }
 }
 
+impl<'a> Lookup<'a> for Call {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.node.lookup_inner(self.uuid, trgs)
+    }
+}
+
 impl SrcLinking for Call {
     fn link(&self) -> SrcLink {
         src_from::tk_and_node(&self.token, &self.node)

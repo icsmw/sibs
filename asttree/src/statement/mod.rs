@@ -96,6 +96,26 @@ impl Statement {
     }
 }
 
+impl<'a> Lookup<'a> for Statement {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        match self {
+            Self::Assignation(n) => n.lookup(trgs),
+            Self::AssignedValue(n) => n.lookup(trgs),
+            Self::Block(n) => n.lookup(trgs),
+            Self::Break(n) => n.lookup(trgs),
+            Self::Each(n) => n.lookup(trgs),
+            Self::For(n) => n.lookup(trgs),
+            Self::If(n) => n.lookup(trgs),
+            Self::Join(n) => n.lookup(trgs),
+            Self::Loop(n) => n.lookup(trgs),
+            Self::OneOf(n) => n.lookup(trgs),
+            Self::Optional(n) => n.lookup(trgs),
+            Self::Return(n) => n.lookup(trgs),
+            Self::While(n) => n.lookup(trgs),
+        }
+    }
+}
+
 impl SrcLinking for Statement {
     fn link(&self) -> SrcLink {
         match self {

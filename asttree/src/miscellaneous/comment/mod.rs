@@ -10,6 +10,12 @@ pub struct Comment {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for Comment {
+    fn lookup(&'a self, _trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        vec![]
+    }
+}
+
 impl SrcLinking for Comment {
     fn link(&self) -> SrcLink {
         src_from::tk(&self.token)

@@ -21,6 +21,12 @@ pub struct ComparisonOp {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for ComparisonOp {
+    fn lookup(&'a self, _trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        vec![]
+    }
+}
+
 impl SrcLinking for ComparisonOp {
     fn link(&self) -> SrcLink {
         src_from::tk(&self.token)

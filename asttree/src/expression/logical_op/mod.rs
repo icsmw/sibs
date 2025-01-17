@@ -17,6 +17,12 @@ pub struct LogicalOp {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for LogicalOp {
+    fn lookup(&'a self, _trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        vec![]
+    }
+}
+
 impl SrcLinking for LogicalOp {
     fn link(&self) -> SrcLink {
         src_from::tk(&self.token)

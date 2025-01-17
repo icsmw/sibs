@@ -13,6 +13,12 @@ pub struct Error {
     pub close: Token,
 }
 
+impl<'a> Lookup<'a> for Error {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.node.lookup_inner(self.uuid, trgs)
+    }
+}
+
 impl SrcLinking for Error {
     fn link(&self) -> SrcLink {
         src_from::tks(&self.open, &self.close)

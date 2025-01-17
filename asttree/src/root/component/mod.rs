@@ -30,6 +30,15 @@ impl Component {
     }
 }
 
+impl<'a> Lookup<'a> for Component {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.nodes
+            .iter()
+            .collect::<Vec<&LinkedNode>>()
+            .lookup_inner(self.uuid, trgs)
+    }
+}
+
 impl SrcLinking for Component {
     fn link(&self) -> SrcLink {
         src_from::tks(&self.sig, &self.close_bl)

@@ -12,6 +12,16 @@ pub struct While {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for While {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.comparison
+            .lookup_inner(self.uuid, trgs)
+            .into_iter()
+            .chain(self.block.lookup_inner(self.uuid, trgs))
+            .collect()
+    }
+}
+
 impl SrcLinking for While {
     fn link(&self) -> SrcLink {
         src_from::tk_and_node(&self.token, &self.block)

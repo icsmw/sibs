@@ -11,6 +11,12 @@ pub struct Boolean {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for Boolean {
+    fn lookup(&'a self, _trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        vec![]
+    }
+}
+
 impl SrcLinking for Boolean {
     fn link(&self) -> SrcLink {
         src_from::tk(&self.token)

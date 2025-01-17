@@ -104,6 +104,31 @@ impl Expression {
     }
 }
 
+impl<'a> Lookup<'a> for Expression {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        match self {
+            Self::Accessor(n) => n.lookup(trgs),
+            Self::BinaryExp(n) => n.lookup(trgs),
+            Self::BinaryExpGroup(n) => n.lookup(trgs),
+            Self::BinaryExpSeq(n) => n.lookup(trgs),
+            Self::BinaryOp(n) => n.lookup(trgs),
+            Self::Call(n) => n.lookup(trgs),
+            Self::Command(n) => n.lookup(trgs),
+            Self::Comparison(n) => n.lookup(trgs),
+            Self::ComparisonGroup(n) => n.lookup(trgs),
+            Self::ComparisonOp(n) => n.lookup(trgs),
+            Self::ComparisonSeq(n) => n.lookup(trgs),
+            Self::CompoundAssignments(n) => n.lookup(trgs),
+            Self::CompoundAssignmentsOp(n) => n.lookup(trgs),
+            Self::FunctionCall(n) => n.lookup(trgs),
+            Self::LogicalOp(n) => n.lookup(trgs),
+            Self::Range(n) => n.lookup(trgs),
+            Self::TaskCall(n) => n.lookup(trgs),
+            Self::Variable(n) => n.lookup(trgs),
+        }
+    }
+}
+
 impl SrcLinking for Expression {
     fn link(&self) -> SrcLink {
         match self {

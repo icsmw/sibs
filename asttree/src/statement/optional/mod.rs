@@ -12,6 +12,16 @@ pub struct Optional {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for Optional {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.comparison
+            .lookup_inner(self.uuid, trgs)
+            .into_iter()
+            .chain(self.action.lookup_inner(self.uuid, trgs))
+            .collect()
+    }
+}
+
 impl SrcLinking for Optional {
     fn link(&self) -> SrcLink {
         src_from::nodes(&self.comparison, &self.action)

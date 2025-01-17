@@ -11,6 +11,12 @@ pub struct PrimitiveString {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for PrimitiveString {
+    fn lookup(&'a self, _trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        vec![]
+    }
+}
+
 impl SrcLinking for PrimitiveString {
     fn link(&self) -> SrcLink {
         src_from::tk(&self.token)

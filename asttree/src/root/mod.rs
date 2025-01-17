@@ -35,6 +35,17 @@ impl Root {
     }
 }
 
+impl<'a> Lookup<'a> for Root {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        match self {
+            Self::Anchor(n) => n.lookup(trgs),
+            Self::Module(n) => n.lookup(trgs),
+            Self::Component(n) => n.lookup(trgs),
+            Self::Task(n) => n.lookup(trgs),
+        }
+    }
+}
+
 impl SrcLinking for Root {
     fn link(&self) -> SrcLink {
         match self {

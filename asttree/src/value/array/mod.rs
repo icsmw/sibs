@@ -12,6 +12,15 @@ pub struct Array {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for Array {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.els
+            .iter()
+            .collect::<Vec<&LinkedNode>>()
+            .lookup_inner(self.uuid, trgs)
+    }
+}
+
 impl SrcLinking for Array {
     fn link(&self) -> SrcLink {
         src_from::tks(&self.open, &self.close)

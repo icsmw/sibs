@@ -42,6 +42,20 @@ impl Value {
     }
 }
 
+impl<'a> Lookup<'a> for Value {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        match self {
+            Self::Error(n) => n.lookup(trgs),
+            Self::Boolean(n) => n.lookup(trgs),
+            Self::Number(n) => n.lookup(trgs),
+            Self::Array(n) => n.lookup(trgs),
+            Self::InterpolatedString(n) => n.lookup(trgs),
+            Self::PrimitiveString(n) => n.lookup(trgs),
+            Self::Closure(n) => n.lookup(trgs),
+        }
+    }
+}
+
 impl SrcLinking for Value {
     fn link(&self) -> SrcLink {
         match self {

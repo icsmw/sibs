@@ -12,6 +12,17 @@ pub enum InterpolatedStringPart {
     Close(Token),
 }
 
+impl<'a> LookupInner<'a> for &'a InterpolatedStringPart {
+    fn lookup_inner(self, owner: Uuid, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        match self {
+            InterpolatedStringPart::Open(..)
+            | InterpolatedStringPart::Close(..)
+            | InterpolatedStringPart::Literal(..) => Vec::new(),
+            InterpolatedStringPart::Expression(n) => n.lookup_inner(owner, trgs),
+        }
+    }
+}
+
 impl fmt::Display for InterpolatedStringPart {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
@@ -32,6 +43,15 @@ pub struct InterpolatedString {
     pub nodes: Vec<InterpolatedStringPart>,
     pub token: Token,
     pub uuid: Uuid,
+}
+
+impl<'a> Lookup<'a> for InterpolatedString {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.nodes
+            .iter()
+            .flat_map(|n| n.lookup_inner(self.uuid, trgs))
+            .collect()
+    }
 }
 
 impl SrcLinking for InterpolatedString {

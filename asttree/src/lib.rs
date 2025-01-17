@@ -96,6 +96,20 @@ impl fmt::Display for LinkedNode {
     }
 }
 
+impl Lookup<'_> for Node {
+    fn lookup(&self, trgs: &[NodeTarget]) -> Vec<FoundNode> {
+        match self {
+            Self::Statement(n) => n.lookup(trgs),
+            Self::Expression(n) => n.lookup(trgs),
+            Self::Declaration(n) => n.lookup(trgs),
+            Self::Value(n) => n.lookup(trgs),
+            Self::ControlFlowModifier(n) => n.lookup(trgs),
+            Self::Root(n) => n.lookup(trgs),
+            Self::Miscellaneous(n) => n.lookup(trgs),
+        }
+    }
+}
+
 impl SrcLinking for Node {
     fn link(&self) -> SrcLink {
         match self {
@@ -121,23 +135,17 @@ impl SrcLinking for Node {
     }
 }
 
-// impl Lookup for LinkedNode {
-//     fn lookup(&self, trgs: &[NodeTarget]) -> Vec<FoundNode> {
-//         self.node.lookup(trgs)
-//     }
-// }
+impl Lookup<'_> for LinkedNode {
+    fn lookup(&self, trgs: &[NodeTarget]) -> Vec<FoundNode> {
+        self.node.lookup(trgs)
+    }
+}
 
-// impl Lookup for &LinkedNode {
-//     fn lookup(&self, trgs: &[NodeTarget]) -> Vec<FoundNode> {
-//         self.node.lookup(trgs)
-//     }
-// }
-
-// impl Lookup for Box<LinkedNode> {
-//     fn lookup(&self, trgs: &[NodeTarget]) -> Vec<FoundNode> {
-//         self.node.lookup(trgs)
-//     }
-// }
+impl Lookup<'_> for Box<LinkedNode> {
+    fn lookup(&self, trgs: &[NodeTarget]) -> Vec<FoundNode> {
+        self.node.lookup(trgs)
+    }
+}
 
 impl SrcLinking for LinkedNode {
     fn link(&self) -> SrcLink {

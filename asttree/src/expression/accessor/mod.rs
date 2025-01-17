@@ -12,6 +12,12 @@ pub struct Accessor {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for Accessor {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.node.lookup_inner(self.uuid, trgs)
+    }
+}
+
 impl SrcLinking for Accessor {
     fn link(&self) -> SrcLink {
         src_from::tks(&self.open, &self.close)

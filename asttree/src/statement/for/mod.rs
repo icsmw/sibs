@@ -15,6 +15,18 @@ pub struct For {
     pub uuid: Uuid,
 }
 
+impl<'a> Lookup<'a> for For {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.element
+            .lookup_inner(self.uuid, trgs)
+            .into_iter()
+            .chain(self.index.as_ref().lookup_inner(self.uuid, trgs))
+            .chain(self.elements.lookup_inner(self.uuid, trgs))
+            .chain(self.block.lookup_inner(self.uuid, trgs))
+            .collect()
+    }
+}
+
 impl SrcLinking for For {
     fn link(&self) -> SrcLink {
         src_from::tk_and_node(&self.token_for, &self.block)

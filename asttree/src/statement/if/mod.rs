@@ -21,6 +21,16 @@ impl IfCase {
     }
 }
 
+impl<'a> LookupInner<'a> for &'a IfCase {
+    fn lookup_inner(self, owner: Uuid, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        match self {
+            IfCase::If(n, ..) => n,
+            IfCase::Else(n, ..) => n,
+        }
+        .lookup_inner(owner, trgs)
+    }
+}
+
 impl fmt::Display for IfCase {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
@@ -42,6 +52,15 @@ impl fmt::Display for IfCase {
 pub struct If {
     pub cases: Vec<IfCase>,
     pub uuid: Uuid,
+}
+
+impl<'a> Lookup<'a> for If {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.cases
+            .iter()
+            .flat_map(|case| case.lookup_inner(self.uuid, trgs))
+            .collect()
+    }
 }
 
 impl SrcLinking for If {

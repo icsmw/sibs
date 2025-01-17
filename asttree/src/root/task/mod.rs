@@ -22,6 +22,18 @@ impl Task {
     }
 }
 
+impl<'a> Lookup<'a> for Task {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.args
+            .iter()
+            .flat_map(|arg| arg.lookup_inner(self.uuid, trgs))
+            .collect::<Vec<FoundNode>>()
+            .into_iter()
+            .chain(self.block.lookup_inner(self.uuid, trgs))
+            .collect()
+    }
+}
+
 impl SrcLinking for Task {
     fn link(&self) -> SrcLink {
         src_from::tk_and_node(&self.sig, &self.block)

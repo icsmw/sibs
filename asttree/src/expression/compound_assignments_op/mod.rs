@@ -40,6 +40,12 @@ impl CompoundAssignmentsOp {
     }
 }
 
+impl<'a> Lookup<'a> for CompoundAssignmentsOp {
+    fn lookup(&'a self, _trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        vec![]
+    }
+}
+
 impl SrcLinking for CompoundAssignmentsOp {
     fn link(&self) -> SrcLink {
         src_from::tk(&self.token)
