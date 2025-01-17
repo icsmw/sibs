@@ -17,6 +17,8 @@ impl RtEvents {
             tracing::info!("init demand's listener");
             let mut breaks: HashSet<Uuid> = HashSet::new();
             let mut loops: Vec<Uuid> = Vec::new();
+            let mut rcx: Vec<Uuid> = Vec::new();
+            let mut returns: HashMap<Uuid, RtValue> = HashMap::new();
             while let Some(demand) = rx.recv().await {
                 match demand {
                     Demand::OpenLoop(uuid, tx) => {
@@ -76,6 +78,64 @@ impl RtEvents {
                                 )
                             },
                             DemandId::IsBreakInCurrentScope
+                        );
+                    }
+                    Demand::OpenReturnContext(uuid, tx) => {
+                        if rcx.contains(&uuid) {
+                            chk_send_err!(
+                                { tx.send(Err(E::ReturnCXAlreadyExist(uuid))) },
+                                DemandId::OpenReturnContext
+                            );
+                        } else {
+                            rcx.push(uuid);
+                            chk_send_err!({ tx.send(Ok(())) }, DemandId::OpenReturnContext);
+                        }
+                    }
+                    Demand::CloseReturnContext(tx) => {
+                        if let Some(uuid) = loops.pop() {
+                            returns.remove(&uuid);
+                            chk_send_err!({ tx.send(Ok(())) }, DemandId::CloseReturnContext);
+                        } else {
+                            chk_send_err!(
+                                { tx.send(Err(E::NoOpenReturnCXsToClose)) },
+                                DemandId::CloseReturnContext
+                            );
+                        }
+                    }
+                    Demand::SetReturnValue(vl, tx) => {
+                        let Some(target) = rcx.last() else {
+                            chk_send_err!(
+                                { tx.send(Err(E::NoOpenReturnCXToBreak)) },
+                                DemandId::SetReturnValue
+                            );
+                            continue;
+                        };
+                        if returns.contains_key(target) {
+                            chk_send_err!(
+                                { tx.send(Err(E::ReturnValueAlreadyExist(*target))) },
+                                DemandId::SetReturnValue
+                            );
+                        } else {
+                            returns.insert(*target, vl);
+                            chk_send_err!({ tx.send(Ok(())) }, DemandId::SetReturnValue);
+                        }
+                    }
+                    Demand::WithdrawReturnValue(uuid, tx) => {
+                        chk_send_err!(
+                            { tx.send(Ok(returns.remove(&uuid))) },
+                            DemandId::WithdrawReturnValue
+                        );
+                    }
+                    Demand::IsReturnValueSetInCurrentCx(tx) => {
+                        chk_send_err!(
+                            {
+                                tx.send(
+                                    rcx.last()
+                                        .map(|uuid| returns.contains_key(uuid))
+                                        .unwrap_or(false),
+                                )
+                            },
+                            DemandId::IsReturnValueSetInCurrentCx
                         );
                     }
                     Demand::Destroy(tx) => {

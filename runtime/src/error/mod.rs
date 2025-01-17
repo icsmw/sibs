@@ -122,6 +122,15 @@ pub enum E {
     NoOpenLoopsToBreak,
     #[error("No open loops to close")]
     NoOpenLoopsToClose,
+
+    #[error("Return context {0} already exist")]
+    ReturnCXAlreadyExist(Uuid),
+    #[error("No open return contexts to break")]
+    NoOpenReturnCXToBreak,
+    #[error("No open return contexts to close")]
+    NoOpenReturnCXsToClose,
+    #[error("Return value for {0} already exist")]
+    ReturnValueAlreadyExist(Uuid),
 }
 
 impl From<io::Error> for E {
