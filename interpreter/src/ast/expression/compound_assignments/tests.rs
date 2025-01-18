@@ -54,6 +54,16 @@ test_value_expectation!(
     }"#
 );
 
+test_value_expectation!(
+    compound_assignments_005,
+    Block,
+    RtValue::Num(20.0),
+    r#"{
+        let sum = 10;
+        sum += 10;
+    }"#
+);
+
 // test_value_expectation!(
 //     compound_assignments_005,
 //     Block,

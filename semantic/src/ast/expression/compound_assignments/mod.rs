@@ -40,7 +40,7 @@ impl InferType for CompoundAssignments {
                 self,
             ));
         }
-        Ok(DeterminedTy::Void.into())
+        Ok(left)
     }
 }
 

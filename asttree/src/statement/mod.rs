@@ -58,6 +58,11 @@ pub enum Statement {
     /// for (el, n) in elements { ... };
     /// for (el, n) in [1, 2, 3] { ... };
     /// for (el, n) in ["one", "two", "three"] { ... };
+    /// for el in 0..1 { ... };
+    /// for el in from..to { ... };
+    /// for el in elements { ... };
+    /// for el in [1, 2, 3] { ... };
+    /// for el in ["one", "two", "three"] { ... };
     For(For),
     /// while s < 100 { ... };
     /// while a < 100 || b > 100 { ... };

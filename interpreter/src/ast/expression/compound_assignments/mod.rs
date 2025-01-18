@@ -49,6 +49,7 @@ impl Interpret for CompoundAssignments {
                     .update(&variable, RtValue::Num(updated))
                     .await
                     .map_err(|err| LinkedErr::from(err, &self.right))?;
+                Ok(RtValue::Num(updated))
             }
             RtValue::Str(vl) => {
                 let RtValue::Str(left) = left.as_ref() else {
@@ -64,9 +65,10 @@ impl Interpret for CompoundAssignments {
                     }
                 };
                 rt.scopes
-                    .update(&variable, RtValue::Str(updated))
+                    .update(&variable, RtValue::Str(updated.clone()))
                     .await
                     .map_err(|err| LinkedErr::from(err, &self.right))?;
+                Ok(RtValue::Str(updated))
             }
             RtValue::PathBuf(vl) => {
                 let RtValue::PathBuf(left) = left.as_ref() else {
@@ -82,17 +84,15 @@ impl Interpret for CompoundAssignments {
                     }
                 };
                 rt.scopes
-                    .update(&variable, RtValue::PathBuf(updated))
+                    .update(&variable, RtValue::PathBuf(updated.clone()))
                     .await
                     .map_err(|err| LinkedErr::from(err, &self.right))?;
+                Ok(RtValue::PathBuf(updated))
             }
-            _ => {
-                return Err(LinkedErr::from(
-                    E::InvalidValueType(right.id().to_string()),
-                    &self.right,
-                ));
-            }
+            _ => Err(LinkedErr::from(
+                E::InvalidValueType(right.id().to_string()),
+                &self.right,
+            )),
         }
-        Ok(RtValue::Void)
     }
 }
