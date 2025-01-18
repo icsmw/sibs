@@ -8,27 +8,13 @@ impl Interpret for FunctionDeclaration {
 }
 
 impl Execute for FunctionDeclaration {
-    #[boxed]
-    fn exec(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
-        rt.evns
-            .open_return_cx(&self.uuid)
-            .await
-            .map_err(|err| LinkedErr::from(err, self))?;
-        let mut result = self.block.interpret(rt.clone()).await?;
-        result = if let Some(result) = rt
-            .evns
-            .withdraw_return_vl(&self.uuid)
-            .await
-            .map_err(|err| LinkedErr::from(err, self))?
-        {
-            result
-        } else {
-            result
-        };
-        rt.evns
-            .close_return_cx()
-            .await
-            .map_err(|err| LinkedErr::from(err, self))?;
-        Ok(result)
+    fn block(&self) -> &LinkedNode {
+        &self.block
+    }
+    fn link(&self) -> SrcLink {
+        self.slink()
+    }
+    fn uuid(&self) -> &Uuid {
+        &self.uuid
     }
 }
