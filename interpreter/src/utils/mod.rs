@@ -20,7 +20,7 @@ pub(crate) fn into_rt_ufns(mut fns: Fns) -> Fns {
         .funcs
         .into_iter()
         .map(|(k, mut v)| {
-            v.body = node_into_exec(v.body);
+            v.body = ufn_into_exec(v.body);
             (k, v)
         })
         .collect();
@@ -29,27 +29,44 @@ pub(crate) fn into_rt_ufns(mut fns: Fns) -> Fns {
         .funcs
         .into_iter()
         .map(|(k, mut v)| {
-            v.body = node_into_exec(v.body);
+            v.body = cfn_into_exec(v.body);
             (k, v)
         })
         .collect();
     fns
 }
 
-fn node_into_exec(body: FnBody) -> FnBody {
+fn ufn_into_exec(body: UserFnBody) -> UserFnBody {
     match body {
-        FnBody::Executor(md, ex) => FnBody::Executor(md, ex),
-        FnBody::Node(node) => {
-            let meta = node.md.clone();
+        UserFnBody::Executor(link, ex) => UserFnBody::Executor(link, ex),
+        UserFnBody::Node(node) => {
+            let link = node.slink();
             let func = move |rt: Runtime| -> RtPinnedResult<LinkedErr<E>> {
                 Box::pin({
                     let node = node.clone();
-                    async move { runner(node, rt).await }
+                    async move { node.exec(rt).await }
                 })
             };
-            FnBody::Executor(meta, Box::new(func))
+            UserFnBody::Executor(link, Box::new(func))
         }
-        FnBody::Declaration => FnBody::Declaration,
+        UserFnBody::Declaration => UserFnBody::Declaration,
+    }
+}
+
+fn cfn_into_exec(body: ClosureFnBody) -> ClosureFnBody {
+    match body {
+        ClosureFnBody::Executor(link, ex) => ClosureFnBody::Executor(link, ex),
+        ClosureFnBody::Node(node) => {
+            let link = node.slink();
+            let func = move |rt: Runtime| -> RtPinnedResult<LinkedErr<E>> {
+                Box::pin({
+                    let node = node.clone();
+                    async move { node.exec(rt).await }
+                })
+            };
+            ClosureFnBody::Executor(link, Box::new(func))
+        }
+        ClosureFnBody::Declaration => ClosureFnBody::Declaration,
     }
 }
 
@@ -69,14 +86,14 @@ fn task_node_into_exec(body: TaskBody) -> TaskBody {
     match body {
         TaskBody::Executor(md, ex) => TaskBody::Executor(md, ex),
         TaskBody::Node(node) => {
-            let meta = node.md.clone();
+            let link = node.slink();
             let func = move |rt: Runtime| -> RtPinnedResult<LinkedErr<E>> {
                 Box::pin({
                     let node = node.clone();
-                    async move { runner(node, rt).await }
+                    async move { node.exec(rt).await }
                 })
             };
-            TaskBody::Executor(meta, Box::new(func))
+            TaskBody::Executor(link, Box::new(func))
         }
     }
 }

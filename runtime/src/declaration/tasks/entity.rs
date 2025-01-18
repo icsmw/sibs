@@ -5,8 +5,8 @@ use crate::*;
 pub type TaskExecutor = Box<dyn Fn(Runtime) -> RtPinnedResult<'static, LinkedErr<E>> + Send + Sync>;
 
 pub enum TaskBody {
-    Node(LinkedNode),
-    Executor(Metadata, TaskExecutor),
+    Node(Task),
+    Executor(SrcLink, TaskExecutor),
 }
 
 impl Debug for TaskBody {
@@ -70,22 +70,19 @@ impl TaskEntity {
         args: Vec<FnArgValue>,
         caller: &SrcLink,
     ) -> Result<RtValue, LinkedErr<E>> {
-        let TaskBody::Executor(md, exec) = &self.body else {
+        let TaskBody::Executor(link, exec) = &self.body else {
             return Err(LinkedErr::by_link(
                 E::NotInitedTask(self.fullname()),
                 caller.into(),
             ));
         };
         if let Err(err) = rt.scopes.enter(&self.uuid).await {
-            return Err(LinkedErr::by_link(err, (&md.link).into()));
+            return Err(LinkedErr::by_link(err, link.into()));
         }
         let mut err = None;
         for (n, arg_vl) in args.into_iter().enumerate() {
             let Some(decl) = self.args.get(n) else {
-                err = Some(LinkedErr::by_link(
-                    E::InvalidTaskArgument,
-                    (&md.link).into(),
-                ));
+                err = Some(LinkedErr::by_link(E::InvalidTaskArgument, link.into()));
                 break;
             };
             let Some(vl_ty) = arg_vl.value.as_ty() else {
@@ -109,13 +106,13 @@ impl TaskEntity {
         }
         if let Some(err) = err.take() {
             if let Err(err) = rt.scopes.leave().await {
-                return Err(LinkedErr::by_link(err, (&md.link).into()));
+                return Err(LinkedErr::by_link(err, link.into()));
             }
             return Err(err);
         }
         let result = exec(rt.clone()).await;
         if let Err(err) = rt.scopes.leave().await {
-            return Err(LinkedErr::by_link(err, (&md.link).into()));
+            return Err(LinkedErr::by_link(err, link.into()));
         }
         result
     }

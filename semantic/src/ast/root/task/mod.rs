@@ -50,7 +50,7 @@ impl Initialize for Task {
                 Ok(ty) => ty,
                 Err(_err) => DeterminedTy::Recursion(self.uuid).into(),
             },
-            body: TaskBody::Node(*self.block.clone()),
+            body: TaskBody::Node(self.clone()),
         };
         scx.tasks
             .add(entity)

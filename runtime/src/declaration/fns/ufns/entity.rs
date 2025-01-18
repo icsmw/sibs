@@ -1,27 +1,25 @@
 use std::fmt::Debug;
 
-use asttree::LinkedNode;
-
 use crate::*;
 
 pub type UserFnExecutor =
     Box<dyn Fn(Runtime) -> RtPinnedResult<'static, LinkedErr<E>> + Send + Sync>;
 
-pub enum FnBody {
-    Node(LinkedNode),
-    Executor(Metadata, UserFnExecutor),
+pub enum UserFnBody {
+    Node(FunctionDeclaration),
+    Executor(SrcLink, UserFnExecutor),
     Declaration,
 }
 
-impl Debug for FnBody {
+impl Debug for UserFnBody {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
             "{}",
             match self {
-                Self::Node(n) => format!("FnBody::Node({n:?})"),
-                Self::Executor(..) => "FnBody::Executor(..)".to_owned(),
-                Self::Declaration => "FnBody::Declaration".to_owned(),
+                Self::Node(n) => format!("UserFnBody::Node({n:?})"),
+                Self::Executor(..) => "UserFnBody::Executor(..)".to_owned(),
+                Self::Declaration => "UserFnBody::Declaration".to_owned(),
             }
         )
     }
@@ -34,7 +32,7 @@ pub struct UserFnEntity {
     pub fullname: String,
     pub args: Vec<UserFnArgDeclaration>,
     pub result: Ty,
-    pub body: FnBody,
+    pub body: UserFnBody,
 }
 
 impl UserFnEntity {
@@ -79,19 +77,19 @@ impl UserFnEntity {
         fns: &Fns,
         caller: &SrcLink,
     ) -> Result<RtValue, LinkedErr<E>> {
-        let FnBody::Executor(md, exec) = &self.body else {
+        let UserFnBody::Executor(link, exec) = &self.body else {
             return Err(LinkedErr::by_link(
                 E::NotInitedFunction(self.name.to_owned()),
                 caller.into(),
             ));
         };
         if let Err(err) = rt.scopes.enter(&self.uuid).await {
-            return Err(LinkedErr::by_link(err, (&md.link).into()));
+            return Err(LinkedErr::by_link(err, link.into()));
         }
         let mut err = None;
         for (n, arg_vl) in args.into_iter().enumerate() {
             let Some(decl) = self.args.get(n) else {
-                err = Some(LinkedErr::by_link(E::InvalidFnArgument, (&md.link).into()));
+                err = Some(LinkedErr::by_link(E::InvalidFnArgument, link.into()));
                 break;
             };
             let Some(vl_ty) = arg_vl.value.as_ty() else {
@@ -127,13 +125,13 @@ impl UserFnEntity {
         }
         if let Some(err) = err.take() {
             if let Err(err) = rt.scopes.leave().await {
-                return Err(LinkedErr::by_link(err, (&md.link).into()));
+                return Err(LinkedErr::by_link(err, link.into()));
             }
             return Err(err);
         }
         let result = exec(rt.clone()).await;
         if let Err(err) = rt.scopes.leave().await {
-            return Err(LinkedErr::by_link(err, (&md.link).into()));
+            return Err(LinkedErr::by_link(err, link.into()));
         }
         result
     }

@@ -43,7 +43,7 @@ impl Initialize for ClosureDeclaration {
                 Ok(ty) => ty,
                 Err(_err) => DeterminedTy::Recursion(self.uuid).into(),
             },
-            body: FnBody::Declaration,
+            body: ClosureFnBody::Declaration,
         };
         scx.tys
             .leave()

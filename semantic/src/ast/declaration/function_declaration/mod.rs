@@ -49,7 +49,7 @@ impl Initialize for FunctionDeclaration {
                 Ok(ty) => ty,
                 Err(_err) => DeterminedTy::Recursion(self.uuid).into(),
             },
-            body: FnBody::Node(*self.block.clone()),
+            body: UserFnBody::Node(self.clone()),
         };
         scx.tys
             .leave()

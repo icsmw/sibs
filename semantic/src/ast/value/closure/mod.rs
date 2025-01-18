@@ -43,7 +43,7 @@ impl Initialize for Closure {
                 Ok(ty) => ty,
                 Err(_err) => DeterminedTy::Recursion(self.uuid).into(),
             },
-            body: FnBody::Node(*self.block.clone()),
+            body: ClosureFnBody::Node(self.clone()),
         };
         scx.tys
             .leave()

@@ -20,3 +20,7 @@ pub(crate) use semantic::*;
 pub trait Interpret {
     fn interpret(&self, _rt: Runtime) -> RtPinnedResult<LinkedErr<E>>;
 }
+
+pub trait Execute {
+    fn exec(&self, _rt: Runtime) -> RtPinnedResult<LinkedErr<E>>;
+}
