@@ -54,6 +54,8 @@ pub enum E {
     VariableNotFound(String),
     #[error("This operation isn't applicable to this type")]
     NotApplicableToTypeOperation,
+    #[error("Invalid value type; expected {0}; actual: {1}")]
+    InvalidType(Ty, RtValue),
 
     #[error("Function \"{0}\" has been registred already")]
     FuncAlreadyRegistered(String),
