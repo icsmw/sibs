@@ -47,7 +47,27 @@ impl Tasks {
     ) -> Result<RtValue, LinkedErr<E>> {
         let Some(entity) = self.lookup_by_caller(uuid) else {
             return Err(LinkedErr::by_link(
-                E::NoLinkedFunctions(*uuid),
+                E::NoLinkedTaskCallers(*uuid),
+                caller.into(),
+            ));
+        };
+        entity.execute(rt, args, caller).await
+    }
+    pub async fn execute_by_name<S: AsRef<str>>(
+        &self,
+        master: &Uuid,
+        name: S,
+        rt: Runtime,
+        args: Vec<FnArgValue>,
+        caller: &SrcLink,
+    ) -> Result<RtValue, LinkedErr<E>> {
+        let Some(entity) = self
+            .table
+            .values()
+            .find(|en| &en.master.uuid == master && en.name == name.as_ref())
+        else {
+            return Err(LinkedErr::by_link(
+                E::TaskNotFound(name.as_ref().to_string(), master.to_string()),
                 caller.into(),
             ));
         };

@@ -61,25 +61,6 @@ impl RtEvents {
                             chk_send_err!({ tx.send(Ok(())) }, DemandId::SetBreakSignal);
                         }
                     }
-                    Demand::ChkBreakSignal(uuid, tx) => {
-                        chk_send_err!(
-                            { tx.send(breaks.contains(&uuid)) },
-                            DemandId::ChkBreakSignal
-                        );
-                    }
-                    Demand::IsBreakInCurrentScope(tx) => {
-                        chk_send_err!(
-                            {
-                                tx.send(
-                                    loops
-                                        .last()
-                                        .map(|uuid| breaks.contains(uuid))
-                                        .unwrap_or(false),
-                                )
-                            },
-                            DemandId::IsBreakInCurrentScope
-                        );
-                    }
                     Demand::OpenReturnContext(uuid, tx) => {
                         if rcx.contains(&uuid) {
                             chk_send_err!(
@@ -92,7 +73,7 @@ impl RtEvents {
                         }
                     }
                     Demand::CloseReturnContext(tx) => {
-                        if let Some(uuid) = loops.pop() {
+                        if let Some(uuid) = rcx.pop() {
                             returns.remove(&uuid);
                             chk_send_err!({ tx.send(Ok(())) }, DemandId::CloseReturnContext);
                         } else {
@@ -126,16 +107,21 @@ impl RtEvents {
                             DemandId::WithdrawReturnValue
                         );
                     }
-                    Demand::IsReturnValueSetInCurrentCx(tx) => {
+                    Demand::IsStopped(tx) => {
                         chk_send_err!(
                             {
                                 tx.send(
-                                    rcx.last()
-                                        .map(|uuid| returns.contains_key(uuid))
-                                        .unwrap_or(false),
+                                    loops
+                                        .last()
+                                        .map(|uuid| breaks.contains(uuid))
+                                        .unwrap_or(false)
+                                        || rcx
+                                            .last()
+                                            .map(|uuid| returns.contains_key(uuid))
+                                            .unwrap_or(false),
                                 )
                             },
-                            DemandId::IsReturnValueSetInCurrentCx
+                            DemandId::IsStopped
                         );
                     }
                     Demand::Destroy(tx) => {
@@ -168,16 +154,34 @@ impl RtEvents {
         rx.await?
     }
 
-    pub async fn chk_break(&self, target: &Uuid) -> Result<bool, E> {
+    pub async fn open_return_cx(&self, uuid: &Uuid) -> Result<(), E> {
         let (tx, rx) = oneshot::channel();
-        self.tx.send(Demand::ChkBreakSignal(*target, tx))?;
+        self.tx.send(Demand::OpenReturnContext(*uuid, tx))?;
+        rx.await?
+    }
+
+    pub async fn close_return_cx(&self) -> Result<(), E> {
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(Demand::CloseReturnContext(tx))?;
+        rx.await?
+    }
+
+    pub async fn set_return_vl(&self, vl: RtValue) -> Result<(), E> {
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(Demand::SetReturnValue(vl, tx))?;
+        rx.await?
+    }
+
+    pub async fn is_stopped(&self) -> Result<bool, E> {
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(Demand::IsStopped(tx))?;
         Ok(rx.await?)
     }
 
-    pub async fn is_break_in_current_scope(&self) -> Result<bool, E> {
+    pub async fn withdraw_return_vl(&self, uuid: &Uuid) -> Result<Option<RtValue>, E> {
         let (tx, rx) = oneshot::channel();
-        self.tx.send(Demand::IsBreakInCurrentScope(tx))?;
-        Ok(rx.await?)
+        self.tx.send(Demand::WithdrawReturnValue(*uuid, tx))?;
+        rx.await?
     }
 
     pub async fn destroy(&self) -> Result<(), E> {

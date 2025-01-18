@@ -90,6 +90,8 @@ pub enum E {
     InvalidTaskArgumentType,
     #[error("Task argument type dismatch; expected: {0}")]
     TaskArgumentTypeDismatch(String),
+    #[error("Node \"{0}\" doesn't have linked tasks caller")]
+    NoLinkedTaskCallers(Uuid),
 
     #[error("Function has been declared multiple arguments with type Repeated. Only one repeated argument can be defined (at the end)")]
     MultipleRepeatedFnArgsDeclared,

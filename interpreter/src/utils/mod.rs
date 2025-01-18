@@ -44,7 +44,7 @@ fn node_into_exec(body: FnBody) -> FnBody {
             let func = move |rt: Runtime| -> RtPinnedResult<LinkedErr<E>> {
                 Box::pin({
                     let node = node.clone();
-                    async move { node.interpret(rt).await }
+                    async move { runner(node, rt).await }
                 })
             };
             FnBody::Executor(meta, Box::new(func))
@@ -73,10 +73,33 @@ fn task_node_into_exec(body: TaskBody) -> TaskBody {
             let func = move |rt: Runtime| -> RtPinnedResult<LinkedErr<E>> {
                 Box::pin({
                     let node = node.clone();
-                    async move { node.interpret(rt).await }
+                    async move { runner(node, rt).await }
                 })
             };
             TaskBody::Executor(meta, Box::new(func))
         }
     }
+}
+
+async fn runner(node: LinkedNode, rt: Runtime) -> Result<RtValue, LinkedErr<E>> {
+    rt.evns
+        .open_return_cx(node.uuid())
+        .await
+        .map_err(|err| LinkedErr::from(err, &node))?;
+    let mut result = node.interpret(rt.clone()).await?;
+    result = if let Some(result) = rt
+        .evns
+        .withdraw_return_vl(node.uuid())
+        .await
+        .map_err(|err| LinkedErr::from(err, &node))?
+    {
+        result
+    } else {
+        result
+    };
+    rt.evns
+        .close_return_cx()
+        .await
+        .map_err(|err| LinkedErr::from(err, &node))?;
+    Ok(result)
 }

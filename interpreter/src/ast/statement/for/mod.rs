@@ -48,7 +48,7 @@ impl Interpret for For {
         for (n, vl) in vls.into_iter().enumerate() {
             if rt
                 .evns
-                .chk_break(&self.uuid)
+                .is_stopped()
                 .await
                 .map_err(|err| LinkedErr::by_link(err, (&self.slink()).into()))?
             {

@@ -11,7 +11,7 @@ impl Interpret for Block {
         for n in self.nodes.iter() {
             if rt
                 .evns
-                .is_break_in_current_scope()
+                .is_stopped()
                 .await
                 .map_err(|err| LinkedErr::from(err, self))?
             {

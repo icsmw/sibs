@@ -8,12 +8,9 @@ impl Interpret for Component {
             .get_task_params()
             .await
             .map_err(|err| LinkedErr::from(err, self))?;
-        let Some(task) = self.get_task(&task) else {
-            return Err(LinkedErr::from(
-                E::TaskNotFound(task, self.get_name()),
-                self,
-            ));
-        };
-        task.interpret(rt).await
+        rt.clone()
+            .tasks
+            .execute_by_name(&self.uuid, task, rt, vec![], &self.link())
+            .await
     }
 }
