@@ -2,7 +2,6 @@ mod assignation;
 mod assigned_value;
 mod block;
 mod r#break;
-mod each;
 mod r#for;
 mod r#if;
 mod join;
@@ -21,7 +20,6 @@ impl InferType for Statement {
             Statement::AssignedValue(n) => n.infer_type(scx),
             Statement::Block(n) => n.infer_type(scx),
             Statement::Break(n) => n.infer_type(scx),
-            Statement::Each(n) => n.infer_type(scx),
             Statement::For(n) => n.infer_type(scx),
             Statement::If(n) => n.infer_type(scx),
             Statement::Join(n) => n.infer_type(scx),
@@ -41,7 +39,6 @@ impl Initialize for Statement {
             Statement::AssignedValue(n) => n.initialize(scx),
             Statement::Block(n) => n.initialize(scx),
             Statement::Break(n) => n.initialize(scx),
-            Statement::Each(n) => n.initialize(scx),
             Statement::For(n) => n.initialize(scx),
             Statement::If(n) => n.initialize(scx),
             Statement::Join(n) => n.initialize(scx),
@@ -61,7 +58,6 @@ impl Finalization for Statement {
             Statement::AssignedValue(n) => n.finalize(scx),
             Statement::Block(n) => n.finalize(scx),
             Statement::Break(n) => n.finalize(scx),
-            Statement::Each(n) => n.finalize(scx),
             Statement::For(n) => n.finalize(scx),
             Statement::If(n) => n.finalize(scx),
             Statement::Join(n) => n.finalize(scx),

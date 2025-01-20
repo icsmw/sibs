@@ -36,7 +36,6 @@ impl ReadNode<Block> for Block {
                         StatementId::Assignation,
                         StatementId::Break,
                         StatementId::Return,
-                        StatementId::Each,
                         StatementId::For,
                         StatementId::If,
                         StatementId::Join,

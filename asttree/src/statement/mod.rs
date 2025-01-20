@@ -2,7 +2,6 @@ mod assignation;
 mod assigned_value;
 mod block;
 mod r#break;
-mod each;
 mod r#for;
 mod r#if;
 mod join;
@@ -15,7 +14,6 @@ mod r#while;
 pub use assignation::*;
 pub use assigned_value::*;
 pub use block::*;
-pub use each::*;
 pub use join::*;
 pub use oneof::*;
 pub use optional::*;
@@ -70,9 +68,6 @@ pub enum Statement {
     While(While),
     /// loop { ... }
     Loop(Loop),
-    /// each(el, n, elements) { el; };
-    /// each(el, n, [1, 2, 3]) { el; };
-    Each(Each),
     /// a = 1, a = func(), etc.
     Assignation(Assignation),
     /// any value to assignate to variable
@@ -88,7 +83,6 @@ impl Statement {
             Self::AssignedValue(n) => &n.uuid,
             Self::Block(n) => &n.uuid,
             Self::Break(n) => &n.uuid,
-            Self::Each(n) => &n.uuid,
             Self::For(n) => &n.uuid,
             Self::If(n) => &n.uuid,
             Self::Join(n) => &n.uuid,
@@ -108,7 +102,6 @@ impl<'a> Lookup<'a> for Statement {
             Self::AssignedValue(n) => n.lookup(trgs),
             Self::Block(n) => n.lookup(trgs),
             Self::Break(n) => n.lookup(trgs),
-            Self::Each(n) => n.lookup(trgs),
             Self::For(n) => n.lookup(trgs),
             Self::If(n) => n.lookup(trgs),
             Self::Join(n) => n.lookup(trgs),
@@ -128,7 +121,6 @@ impl SrcLinking for Statement {
             Self::AssignedValue(n) => n.link(),
             Self::Block(n) => n.link(),
             Self::Break(n) => n.link(),
-            Self::Each(n) => n.link(),
             Self::For(n) => n.link(),
             Self::If(n) => n.link(),
             Self::Join(n) => n.link(),

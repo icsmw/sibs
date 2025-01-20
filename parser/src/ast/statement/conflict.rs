@@ -5,7 +5,6 @@ impl ConflictResolver<StatementId> for StatementId {
         match self {
             Self::Break
             | Self::Return
-            | Self::Each
             | Self::For
             | Self::Loop
             | Self::While

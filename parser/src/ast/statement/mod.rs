@@ -4,7 +4,6 @@ mod assignation;
 mod assigned_value;
 mod block;
 mod r#break;
-mod each;
 mod r#for;
 mod r#if;
 mod join;
@@ -28,7 +27,6 @@ impl TryRead<Statement, StatementId> for Statement {
             StatementId::Block => Block::read_as_linked(parser)?,
             StatementId::Break => Break::read_as_linked(parser)?,
             StatementId::Return => Return::read_as_linked(parser)?,
-            StatementId::Each => Each::read_as_linked(parser)?,
             StatementId::While => While::read_as_linked(parser)?,
             StatementId::For => For::read_as_linked(parser)?,
             StatementId::Loop => Loop::read_as_linked(parser)?,

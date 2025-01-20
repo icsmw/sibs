@@ -2,7 +2,6 @@ mod assignation;
 mod assigned_value;
 mod block;
 mod r#break;
-mod each;
 mod r#for;
 mod r#if;
 mod join;
@@ -21,7 +20,6 @@ impl Interpret for Statement {
             Statement::AssignedValue(n) => n.interpret(rt),
             Statement::Block(n) => n.interpret(rt),
             Statement::Break(n) => n.interpret(rt),
-            Statement::Each(n) => n.interpret(rt),
             Statement::For(n) => n.interpret(rt),
             Statement::If(n) => n.interpret(rt),
             Statement::Join(n) => n.interpret(rt),

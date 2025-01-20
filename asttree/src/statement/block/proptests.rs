@@ -106,9 +106,6 @@ impl Arbitrary for Block {
                     Return::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Statement(Statement::Return(v)))
                         .boxed(),
-                    Each::arbitrary_with(deep + 1)
-                        .prop_map(|v| Node::Statement(Statement::Each(v)))
-                        .boxed(),
                     For::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Statement(Statement::For(v)))
                         .boxed(),

@@ -45,7 +45,6 @@ impl ReadNode<Optional> for Optional {
                     StatementId::For,
                     StatementId::While,
                     StatementId::Assignation,
-                    StatementId::Each,
                     StatementId::Join,
                     StatementId::OneOf,
                 ]),

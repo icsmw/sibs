@@ -51,9 +51,6 @@ impl Arbitrary for Optional {
                     Assignation::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Statement(Statement::Assignation(v)))
                         .boxed(),
-                    Each::arbitrary_with(deep + 1)
-                        .prop_map(|v| Node::Statement(Statement::Each(v)))
-                        .boxed(),
                     Join::arbitrary_with(deep + 1)
                         .prop_map(|v| Node::Statement(Statement::Join(v)))
                         .boxed(),
