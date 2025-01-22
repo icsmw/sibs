@@ -7,13 +7,16 @@ edition = "2021"
 
 [dependencies]
 tokio-util.workspace = true
-tokio.workspace = true
+tokio = { workspace = true, features = ["time"] }
 enum_ids.workspace = true
 thiserror.workspace = true
-uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }
+uuid = { workspace = true, features = ["fast-rng", "macro-diagnostics", "v4"] }
 tracing.workspace = true
 tracing-subscriber.workspace = true
 paste.workspace = true
+indicatif.workspace = true
+console.workspace = true
+indexmap.workspace = true
 
 asttree = { path = "../asttree" }
 diagnostics = { path = "../diagnostics" }

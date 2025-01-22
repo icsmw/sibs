@@ -7,10 +7,7 @@ use crate::*;
 use api::*;
 pub use parent::*;
 pub(crate) use scope::*;
-use std::sync::Arc;
 pub(crate) use store::*;
-use tokio::spawn;
-use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct RtScope {
@@ -54,13 +51,16 @@ impl RtScope {
                         chk_send_err!(tx.send(scopes.enter(&uuid)), DemandId::EnterScope);
                     }
                     Demand::LeaveScope(tx) => {
-                        chk_send_err!(tx.send(scopes.leave()), DemandId::EnterScope);
+                        chk_send_err!(tx.send(scopes.leave()), DemandId::LeaveScope);
                     }
                     Demand::InsertVariable(name, vl, tx) => {
                         chk_send_err!(tx.send(scopes.insert(name, vl)), DemandId::InsertVariable);
                     }
                     Demand::UpdateVariableValue(name, vl, tx) => {
-                        chk_send_err!(tx.send(scopes.update(name, vl)), DemandId::InsertVariable);
+                        chk_send_err!(
+                            tx.send(scopes.update(name, vl)),
+                            DemandId::UpdateVariableValue
+                        );
                     }
                     Demand::GetVariableValue(name, tx) => {
                         chk_send_err!(tx.send(scopes.lookup(name)), DemandId::GetVariableValue);

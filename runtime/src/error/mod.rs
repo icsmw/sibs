@@ -135,6 +135,17 @@ pub enum E {
     NoOpenReturnCXsToClose,
     #[error("Return value for {0} already exist")]
     ReturnValueAlreadyExist(Uuid),
+
+    #[error("Render progress error: {0}")]
+    RenderTemplateErr(indicatif::style::TemplateError),
+    #[error("No progress has been found for parent task: {0}")]
+    NoProgressForTask(Uuid),
+}
+
+impl From<indicatif::style::TemplateError> for E {
+    fn from(err: indicatif::style::TemplateError) -> Self {
+        E::RenderTemplateErr(err)
+    }
 }
 
 impl From<io::Error> for E {
