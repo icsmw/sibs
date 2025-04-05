@@ -36,6 +36,7 @@ impl ReadNode<AssignedValue> for AssignedValue {
                     ExpressionId::FunctionCall,
                     ExpressionId::Command,
                     ExpressionId::TaskCall,
+                    ExpressionId::Range,
                 ]),
             ],
         )?

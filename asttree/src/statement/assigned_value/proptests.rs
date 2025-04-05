@@ -21,6 +21,9 @@ impl Arbitrary for AssignedValue {
                 Variable::arbitrary()
                     .prop_map(|v| Node::Expression(Expression::Variable(v)))
                     .boxed(),
+                Range::arbitrary()
+                    .prop_map(|v| Node::Expression(Expression::Range(v)))
+                    .boxed(),
             ])
         } else {
             prop::strategy::Union::new(vec![
@@ -62,6 +65,9 @@ impl Arbitrary for AssignedValue {
                     .boxed(),
                 If::arbitrary_with(deep + 1)
                     .prop_map(|v| Node::Statement(Statement::If(v)))
+                    .boxed(),
+                Range::arbitrary()
+                    .prop_map(|v| Node::Expression(Expression::Range(v)))
                     .boxed(),
             ])
         }

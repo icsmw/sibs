@@ -11,10 +11,8 @@ impl Interest for Assignation {
 
 impl ReadNode<Assignation> for Assignation {
     fn read(parser: &mut Parser) -> Result<Option<Assignation>, LinkedErr<E>> {
-        let Some(left) = LinkedNode::try_oneof(
-            parser,
-            &[NodeTarget::Expression(&[ExpressionId::Variable])],
-        )?
+        let Some(left) =
+            LinkedNode::try_oneof(parser, &[NodeTarget::Expression(&[ExpressionId::Variable])])?
         else {
             return Ok(None);
         };
