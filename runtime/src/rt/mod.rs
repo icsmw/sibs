@@ -1,13 +1,13 @@
 mod api;
 mod context;
 mod events;
-// mod jobs;
+mod journal;
 mod progressor;
 mod scopes;
 
 pub use context::*;
 pub use events::*;
-// pub use jobs::*;
+pub use journal::*;
 pub use progressor::*;
 pub use scopes::*;
 
