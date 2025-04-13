@@ -87,6 +87,23 @@ impl<'a> Lookup<'a> for Declaration {
     }
 }
 
+impl FindMutByUuid for Declaration {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        match self {
+            Self::IncludeDeclaration(n) => n.find_mut_by_uuid(uuid),
+            Self::ModuleDeclaration(n) => n.find_mut_by_uuid(uuid),
+            Self::ArgumentDeclaration(n) => n.find_mut_by_uuid(uuid),
+            Self::FunctionDeclaration(n) => n.find_mut_by_uuid(uuid),
+            Self::VariableDeclaration(n) => n.find_mut_by_uuid(uuid),
+            Self::VariableType(n) => n.find_mut_by_uuid(uuid),
+            Self::VariableTypeDeclaration(n) => n.find_mut_by_uuid(uuid),
+            Self::VariableVariants(n) => n.find_mut_by_uuid(uuid),
+            Self::VariableName(n) => n.find_mut_by_uuid(uuid),
+            Self::ClosureDeclaration(n) => n.find_mut_by_uuid(uuid),
+        }
+    }
+}
+
 impl SrcLinking for Declaration {
     fn link(&self) -> SrcLink {
         match self {

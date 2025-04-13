@@ -26,6 +26,35 @@ impl Initialize for While {
         scx.tys
             .leave()
             .map_err(|err| LinkedErr::from(err.into(), self))?;
+        if let Some(node) = self
+            .block
+            .lookup(&[NodeTarget::Declaration(&[
+                DeclarationId::FunctionDeclaration,
+                DeclarationId::ClosureDeclaration,
+            ])])
+            .first()
+        {
+            return Err(LinkedErr::from(E::NotAllowedFnDeclaration, node.node));
+        }
+        let nodes = self.block.lookup(&[NodeTarget::Statement(&[
+            StatementId::Break,
+            StatementId::Return,
+        ])]);
+        for found in nodes.into_iter() {
+            match &found.node.node {
+                Node::Statement(Statement::Break(node)) => {
+                    if node.target.is_none() {
+                        return Err(LinkedErr::from(E::NotAssignedBreak, node));
+                    }
+                }
+                Node::Statement(Statement::Return(node)) => {
+                    if !node.is_assigned() {
+                        return Err(LinkedErr::from(E::NotAssignedReturn, node));
+                    }
+                }
+                _ => {}
+            }
+        }
         Ok(())
     }
 }

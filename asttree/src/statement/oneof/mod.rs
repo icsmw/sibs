@@ -22,6 +22,12 @@ impl<'a> Lookup<'a> for OneOf {
     }
 }
 
+impl FindMutByUuid for OneOf {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.commands.find_mut_by_uuid(uuid)
+    }
+}
+
 impl SrcLinking for OneOf {
     fn link(&self) -> SrcLink {
         src_from::tks(&self.token, &self.close)

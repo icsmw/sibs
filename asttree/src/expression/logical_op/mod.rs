@@ -23,6 +23,12 @@ impl<'a> Lookup<'a> for LogicalOp {
     }
 }
 
+impl FindMutByUuid for LogicalOp {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        None
+    }
+}
+
 impl SrcLinking for LogicalOp {
     fn link(&self) -> SrcLink {
         src_from::tk(&self.token)

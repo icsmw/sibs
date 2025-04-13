@@ -17,6 +17,12 @@ impl<'a> Lookup<'a> for VariableName {
     }
 }
 
+impl FindMutByUuid for VariableName {
+    fn find_mut_by_uuid(&mut self, _uuid: &Uuid) -> Option<&mut LinkedNode> {
+        None
+    }
+}
+
 impl SrcLinking for VariableName {
     fn link(&self) -> SrcLink {
         src_from::tk(&self.token)

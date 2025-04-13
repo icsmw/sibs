@@ -129,6 +129,31 @@ impl<'a> Lookup<'a> for Expression {
     }
 }
 
+impl FindMutByUuid for Expression {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        match self {
+            Self::Accessor(n) => n.find_mut_by_uuid(uuid),
+            Self::BinaryExp(n) => n.find_mut_by_uuid(uuid),
+            Self::BinaryExpGroup(n) => n.find_mut_by_uuid(uuid),
+            Self::BinaryExpSeq(n) => n.find_mut_by_uuid(uuid),
+            Self::BinaryOp(n) => n.find_mut_by_uuid(uuid),
+            Self::Call(n) => n.find_mut_by_uuid(uuid),
+            Self::Command(n) => n.find_mut_by_uuid(uuid),
+            Self::Comparison(n) => n.find_mut_by_uuid(uuid),
+            Self::ComparisonGroup(n) => n.find_mut_by_uuid(uuid),
+            Self::ComparisonOp(n) => n.find_mut_by_uuid(uuid),
+            Self::ComparisonSeq(n) => n.find_mut_by_uuid(uuid),
+            Self::CompoundAssignments(n) => n.find_mut_by_uuid(uuid),
+            Self::CompoundAssignmentsOp(n) => n.find_mut_by_uuid(uuid),
+            Self::FunctionCall(n) => n.find_mut_by_uuid(uuid),
+            Self::LogicalOp(n) => n.find_mut_by_uuid(uuid),
+            Self::Range(n) => n.find_mut_by_uuid(uuid),
+            Self::TaskCall(n) => n.find_mut_by_uuid(uuid),
+            Self::Variable(n) => n.find_mut_by_uuid(uuid),
+        }
+    }
+}
+
 impl SrcLinking for Expression {
     fn link(&self) -> SrcLink {
         match self {

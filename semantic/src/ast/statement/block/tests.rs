@@ -1,7 +1,7 @@
 use crate::*;
 
 test_success!(
-    block_000,
+    success_block_000,
     Anchor,
     r#"
     component comp() { 
@@ -21,7 +21,7 @@ test_success!(
 );
 
 test_fail!(
-    block_000,
+    fail_block_000,
     Anchor,
     r#"
     component comp() { 

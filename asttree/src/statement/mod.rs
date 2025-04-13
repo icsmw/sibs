@@ -114,6 +114,25 @@ impl<'a> Lookup<'a> for Statement {
     }
 }
 
+impl FindMutByUuid for Statement {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        match self {
+            Self::Assignation(n) => n.find_mut_by_uuid(uuid),
+            Self::AssignedValue(n) => n.find_mut_by_uuid(uuid),
+            Self::Block(n) => n.find_mut_by_uuid(uuid),
+            Self::Break(n) => n.find_mut_by_uuid(uuid),
+            Self::For(n) => n.find_mut_by_uuid(uuid),
+            Self::If(n) => n.find_mut_by_uuid(uuid),
+            Self::Join(n) => n.find_mut_by_uuid(uuid),
+            Self::Loop(n) => n.find_mut_by_uuid(uuid),
+            Self::OneOf(n) => n.find_mut_by_uuid(uuid),
+            Self::Optional(n) => n.find_mut_by_uuid(uuid),
+            Self::Return(n) => n.find_mut_by_uuid(uuid),
+            Self::While(n) => n.find_mut_by_uuid(uuid),
+        }
+    }
+}
+
 impl SrcLinking for Statement {
     fn link(&self) -> SrcLink {
         match self {

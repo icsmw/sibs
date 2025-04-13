@@ -110,6 +110,20 @@ impl Lookup<'_> for Node {
     }
 }
 
+impl FindMutByUuid for Node {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        match self {
+            Self::Statement(n) => n.find_mut_by_uuid(uuid),
+            Self::Expression(n) => n.find_mut_by_uuid(uuid),
+            Self::Declaration(n) => n.find_mut_by_uuid(uuid),
+            Self::Value(n) => n.find_mut_by_uuid(uuid),
+            Self::ControlFlowModifier(n) => n.find_mut_by_uuid(uuid),
+            Self::Root(n) => n.find_mut_by_uuid(uuid),
+            Self::Miscellaneous(n) => n.find_mut_by_uuid(uuid),
+        }
+    }
+}
+
 impl SrcLinking for Node {
     fn link(&self) -> SrcLink {
         match self {

@@ -14,6 +14,14 @@ pub enum E {
     DismatchTypes(String),
     #[error("Assignation can't be done with IndeterminateType")]
     IndeterminateType,
+    #[error("Loop doesn't have a condition to be breaked")]
+    NotBreakableLoop,
+    #[error("Declaration functions and closures isn't allowed in this context")]
+    NotAllowedFnDeclaration,
+    #[error("Loop includes break unassigned command")]
+    NotAssignedBreak,
+    #[error("Loop includes return unassigned command")]
+    NotAssignedReturn,
     #[error("Cannot find not assigned type, not annotated type")]
     MissedAssignedAndAnnotatedType,
     #[error("Attempt to leave global scope")]

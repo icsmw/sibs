@@ -46,6 +46,7 @@ impl ReadNode<Return> for Return {
         Ok(Some(Return {
             token: tk.to_owned(),
             node,
+            targets: Vec::new(),
             uuid: Uuid::new_v4(),
         }))
     }

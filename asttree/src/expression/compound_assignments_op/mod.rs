@@ -46,6 +46,12 @@ impl<'a> Lookup<'a> for CompoundAssignmentsOp {
     }
 }
 
+impl FindMutByUuid for CompoundAssignmentsOp {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        None
+    }
+}
+
 impl SrcLinking for CompoundAssignmentsOp {
     fn link(&self) -> SrcLink {
         src_from::tk(&self.token)

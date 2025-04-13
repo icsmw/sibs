@@ -56,6 +56,20 @@ impl<'a> Lookup<'a> for Value {
     }
 }
 
+impl FindMutByUuid for Value {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        match self {
+            Self::Error(n) => n.find_mut_by_uuid(uuid),
+            Self::Boolean(n) => n.find_mut_by_uuid(uuid),
+            Self::Number(n) => n.find_mut_by_uuid(uuid),
+            Self::Array(n) => n.find_mut_by_uuid(uuid),
+            Self::InterpolatedString(n) => n.find_mut_by_uuid(uuid),
+            Self::PrimitiveString(n) => n.find_mut_by_uuid(uuid),
+            Self::Closure(n) => n.find_mut_by_uuid(uuid),
+        }
+    }
+}
+
 impl SrcLinking for Value {
     fn link(&self) -> SrcLink {
         match self {

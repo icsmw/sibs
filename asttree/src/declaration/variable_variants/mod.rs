@@ -20,6 +20,12 @@ impl<'a> Lookup<'a> for VariableVariants {
     }
 }
 
+impl FindMutByUuid for VariableVariants {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.variants.find_mut_by_uuid(uuid)
+    }
+}
+
 impl SrcLinking for VariableVariants {
     fn link(&self) -> SrcLink {
         if let Some(n) = self.variants.last() {

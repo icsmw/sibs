@@ -30,6 +30,12 @@ impl<'a> Lookup<'a> for Component {
     }
 }
 
+impl FindMutByUuid for Component {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.nodes.find_mut_by_uuid(uuid)
+    }
+}
+
 impl SrcLinking for Component {
     fn link(&self) -> SrcLink {
         src_from::tks(&self.sig, &self.close_bl)

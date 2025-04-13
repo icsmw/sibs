@@ -17,6 +17,12 @@ impl<'a> Lookup<'a> for Boolean {
     }
 }
 
+impl FindMutByUuid for Boolean {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        None
+    }
+}
+
 impl SrcLinking for Boolean {
     fn link(&self) -> SrcLink {
         src_from::tk(&self.token)

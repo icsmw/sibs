@@ -20,6 +20,12 @@ impl<'a> Lookup<'a> for VariableTypeDeclaration {
     }
 }
 
+impl FindMutByUuid for VariableTypeDeclaration {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.types.find_mut_by_uuid(uuid)
+    }
+}
+
 impl SrcLinking for VariableTypeDeclaration {
     fn link(&self) -> SrcLink {
         if let Some(n) = self.types.last() {

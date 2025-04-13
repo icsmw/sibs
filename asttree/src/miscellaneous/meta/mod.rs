@@ -15,6 +15,12 @@ impl<'a> Lookup<'a> for Meta {
     }
 }
 
+impl FindMutByUuid for Meta {
+    fn find_mut_by_uuid(&mut self, _uuid: &Uuid) -> Option<&mut LinkedNode> {
+        None
+    }
+}
+
 impl SrcLinking for Meta {
     fn link(&self) -> SrcLink {
         src_from::tk(&self.token)

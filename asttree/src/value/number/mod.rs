@@ -17,6 +17,12 @@ impl<'a> Lookup<'a> for Number {
     }
 }
 
+impl FindMutByUuid for Number {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        None
+    }
+}
+
 impl SrcLinking for Number {
     fn link(&self) -> SrcLink {
         src_from::tk(&self.token)

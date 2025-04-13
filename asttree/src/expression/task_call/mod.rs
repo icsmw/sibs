@@ -32,6 +32,12 @@ impl<'a> Lookup<'a> for TaskCall {
     }
 }
 
+impl FindMutByUuid for TaskCall {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.args.find_mut_by_uuid(uuid)
+    }
+}
+
 impl SrcLinking for TaskCall {
     fn link(&self) -> SrcLink {
         if let Some((_, open)) = self.reference.first() {

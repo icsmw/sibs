@@ -11,6 +11,7 @@ impl Arbitrary for Break {
             .boxed()
             .prop_map(move |knd| Break {
                 token: Token::for_test(Kind::Keyword(knd)),
+                target: None,
                 uuid: Uuid::new_v4(),
             })
             .boxed()

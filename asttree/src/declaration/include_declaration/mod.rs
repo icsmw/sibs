@@ -18,6 +18,12 @@ impl<'a> Lookup<'a> for IncludeDeclaration {
     }
 }
 
+impl FindMutByUuid for IncludeDeclaration {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.node.find_mut_by_uuid(uuid)
+    }
+}
+
 impl SrcLinking for IncludeDeclaration {
     fn link(&self) -> SrcLink {
         src_from::tk_and_node(&self.sig, &self.node)

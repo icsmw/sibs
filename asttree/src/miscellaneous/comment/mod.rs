@@ -16,6 +16,12 @@ impl<'a> Lookup<'a> for Comment {
     }
 }
 
+impl FindMutByUuid for Comment {
+    fn find_mut_by_uuid(&mut self, _uuid: &Uuid) -> Option<&mut LinkedNode> {
+        None
+    }
+}
+
 impl SrcLinking for Comment {
     fn link(&self) -> SrcLink {
         src_from::tk(&self.token)

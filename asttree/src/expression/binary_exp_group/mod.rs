@@ -18,6 +18,12 @@ impl<'a> Lookup<'a> for BinaryExpGroup {
     }
 }
 
+impl FindMutByUuid for BinaryExpGroup {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.node.find_mut_by_uuid(uuid)
+    }
+}
+
 impl SrcLinking for BinaryExpGroup {
     fn link(&self) -> SrcLink {
         src_from::tks(&self.open, &self.close)

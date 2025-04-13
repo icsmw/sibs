@@ -31,6 +31,8 @@ pub enum E {
     MissedSemicolon,
     #[error("Infinite number cannot be used")]
     InfiniteNumber,
+    #[error("Loop doesn't have a condition to be breaked")]
+    NotBreakableLoop,
     #[error("Invalid right side of assignation: {0}")]
     InvalidAssignation(String),
     #[error("Error message is missed")]
@@ -49,6 +51,8 @@ pub enum E {
     MissedExpectation(String, String),
     #[error("Expected block, but it's missed")]
     MissedBlock,
+    #[error("Fail find node {0}")]
+    FailFindNode(Uuid),
     #[error("Probably parse has been modified in middle of parsing")]
     UnexpectedEmptyParser,
     #[error("File \"{0}\" not found")]

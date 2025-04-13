@@ -22,6 +22,14 @@ impl<'a> Lookup<'a> for While {
     }
 }
 
+impl FindMutByUuid for While {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.block
+            .find_mut_by_uuid(uuid)
+            .or_else(|| self.comparison.find_mut_by_uuid(uuid))
+    }
+}
+
 impl SrcLinking for While {
     fn link(&self) -> SrcLink {
         src_from::tk_and_node(&self.token, &self.block)

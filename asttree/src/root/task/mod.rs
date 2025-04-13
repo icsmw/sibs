@@ -34,6 +34,14 @@ impl<'a> Lookup<'a> for Task {
     }
 }
 
+impl FindMutByUuid for Task {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.block
+            .find_mut_by_uuid(uuid)
+            .or_else(|| self.args.find_mut_by_uuid(uuid))
+    }
+}
+
 impl SrcLinking for Task {
     fn link(&self) -> SrcLink {
         src_from::tk_and_node(&self.sig, &self.block)

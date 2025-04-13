@@ -27,6 +27,16 @@ impl<'a> Lookup<'a> for For {
     }
 }
 
+impl FindMutByUuid for For {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.element
+            .find_mut_by_uuid(uuid)
+            .or_else(|| self.index.find_mut_by_uuid(uuid))
+            .or_else(|| self.block.find_mut_by_uuid(uuid))
+            .or_else(|| self.elements.find_mut_by_uuid(uuid))
+    }
+}
+
 impl SrcLinking for For {
     fn link(&self) -> SrcLink {
         src_from::tk_and_node(&self.token_for, &self.block)

@@ -21,6 +21,15 @@ impl<'a> LookupInner<'a> for &'a CommandPart {
     }
 }
 
+impl FindMutByUuid for CommandPart {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        match self {
+            CommandPart::Open(..) | CommandPart::Close(..) | CommandPart::Literal(..) => None,
+            CommandPart::Expression(n) => n.find_mut_by_uuid(uuid),
+        }
+    }
+}
+
 impl fmt::Display for CommandPart {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
@@ -33,6 +42,12 @@ impl fmt::Display for CommandPart {
                 Self::Expression(n) => format!("{} {n} {}", Kind::LeftBrace, Kind::RightBrace),
             }
         )
+    }
+}
+
+impl FindMutByUuid for Vec<CommandPart> {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.iter_mut().find_map(|n| n.find_mut_by_uuid(uuid))
     }
 }
 
@@ -49,6 +64,12 @@ impl<'a> Lookup<'a> for Command {
             .iter()
             .flat_map(|n| n.lookup_inner(self.uuid, trgs))
             .collect()
+    }
+}
+
+impl FindMutByUuid for Command {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.nodes.find_mut_by_uuid(uuid)
     }
 }
 

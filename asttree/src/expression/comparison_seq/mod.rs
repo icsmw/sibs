@@ -19,6 +19,12 @@ impl<'a> Lookup<'a> for ComparisonSeq {
     }
 }
 
+impl FindMutByUuid for ComparisonSeq {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.nodes.find_mut_by_uuid(uuid)
+    }
+}
+
 impl SrcLinking for ComparisonSeq {
     fn link(&self) -> SrcLink {
         if let (Some(open), Some(close)) = (self.nodes.first(), self.nodes.last()) {

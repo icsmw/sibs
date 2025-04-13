@@ -21,6 +21,12 @@ impl<'a> Lookup<'a> for Array {
     }
 }
 
+impl FindMutByUuid for Array {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.els.find_mut_by_uuid(uuid)
+    }
+}
+
 impl SrcLinking for Array {
     fn link(&self) -> SrcLink {
         src_from::tks(&self.open, &self.close)

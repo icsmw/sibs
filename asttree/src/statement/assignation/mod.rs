@@ -21,6 +21,14 @@ impl<'a> Lookup<'a> for Assignation {
     }
 }
 
+impl FindMutByUuid for Assignation {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.left
+            .find_mut_by_uuid(uuid)
+            .or_else(|| self.right.find_mut_by_uuid(uuid))
+    }
+}
+
 impl SrcLinking for Assignation {
     fn link(&self) -> SrcLink {
         src_from::nodes(&self.left, &self.right)

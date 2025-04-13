@@ -25,6 +25,14 @@ impl<'a> Lookup<'a> for Closure {
     }
 }
 
+impl FindMutByUuid for Closure {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.block
+            .find_mut_by_uuid(uuid)
+            .or_else(|| self.args.find_mut_by_uuid(uuid))
+    }
+}
+
 impl SrcLinking for Closure {
     fn link(&self) -> SrcLink {
         src_from::tk_and_node(&self.open, &self.block)

@@ -43,6 +43,15 @@ impl<'a> Lookup<'a> for ControlFlowModifier {
     }
 }
 
+impl FindMutByUuid for ControlFlowModifier {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        match self {
+            Self::Gatekeeper(n) => n.find_mut_by_uuid(uuid),
+            Self::Skip(n) => n.find_mut_by_uuid(uuid),
+        }
+    }
+}
+
 impl SrcLinking for ControlFlowModifier {
     fn link(&self) -> SrcLink {
         match self {

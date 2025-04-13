@@ -31,6 +31,12 @@ impl<'a> Lookup<'a> for Anchor {
     }
 }
 
+impl FindMutByUuid for Anchor {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.nodes.find_mut_by_uuid(uuid)
+    }
+}
+
 impl SrcLinking for Anchor {
     fn link(&self) -> SrcLink {
         if let (Some(open), Some(close)) = (self.nodes.first(), self.nodes.last()) {

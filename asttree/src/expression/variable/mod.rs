@@ -18,6 +18,12 @@ impl<'a> Lookup<'a> for Variable {
     }
 }
 
+impl FindMutByUuid for Variable {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        None
+    }
+}
+
 impl SrcLinking for Variable {
     fn link(&self) -> SrcLink {
         if let Some(open) = self.negation.as_ref() {

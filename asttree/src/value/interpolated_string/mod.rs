@@ -23,6 +23,17 @@ impl<'a> LookupInner<'a> for &'a InterpolatedStringPart {
     }
 }
 
+impl FindMutByUuid for InterpolatedStringPart {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        match self {
+            InterpolatedStringPart::Open(..)
+            | InterpolatedStringPart::Close(..)
+            | InterpolatedStringPart::Literal(..) => None,
+            InterpolatedStringPart::Expression(n) => n.find_mut_by_uuid(uuid),
+        }
+    }
+}
+
 impl fmt::Display for InterpolatedStringPart {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
@@ -35,6 +46,12 @@ impl fmt::Display for InterpolatedStringPart {
                 Self::Expression(n) => format!("{} {n} {}", Kind::LeftBrace, Kind::RightBrace),
             }
         )
+    }
+}
+
+impl FindMutByUuid for Vec<InterpolatedStringPart> {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.iter_mut().find_map(|n| n.find_mut_by_uuid(uuid))
     }
 }
 
@@ -51,6 +68,12 @@ impl<'a> Lookup<'a> for InterpolatedString {
             .iter()
             .flat_map(|n| n.lookup_inner(self.uuid, trgs))
             .collect()
+    }
+}
+
+impl FindMutByUuid for InterpolatedString {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.nodes.find_mut_by_uuid(uuid)
     }
 }
 

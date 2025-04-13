@@ -51,6 +51,7 @@ impl Arbitrary for Return {
         .prop_map(|node| Return {
             token: Token::for_test(Kind::Keyword(Keyword::Return)),
             node: node.map(Box::new),
+            targets: Vec::new(),
             uuid: Uuid::new_v4(),
         })
         .boxed()

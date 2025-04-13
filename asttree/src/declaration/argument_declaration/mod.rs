@@ -31,6 +31,14 @@ impl<'a> Lookup<'a> for ArgumentDeclaration {
     }
 }
 
+impl FindMutByUuid for ArgumentDeclaration {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.variable
+            .find_mut_by_uuid(uuid)
+            .or_else(|| self.r#type.find_mut_by_uuid(uuid))
+    }
+}
+
 impl SrcLinking for ArgumentDeclaration {
     fn link(&self) -> SrcLink {
         src_from::nodes(&self.variable, &self.r#type)

@@ -19,6 +19,19 @@ impl<'a> LookupInner<'a> for &'a SkipTaskArgument {
     }
 }
 
+impl FindMutByUuid for SkipTaskArgument {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        if let Self::Value(node) = self {
+            return if node.uuid() == uuid {
+                Some(node)
+            } else {
+                node.node.find_mut_by_uuid(uuid)
+            };
+        }
+        None
+    }
+}
+
 impl fmt::Display for SkipTaskArgument {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
@@ -51,6 +64,20 @@ impl<'a> Lookup<'a> for Skip {
             .into_iter()
             .chain(self.func.lookup_inner(self.uuid, trgs))
             .collect()
+    }
+}
+
+impl FindMutByUuid for Vec<SkipTaskArgument> {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.iter_mut().find_map(|node| node.find_mut_by_uuid(uuid))
+    }
+}
+
+impl FindMutByUuid for Skip {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.func
+            .find_mut_by_uuid(uuid)
+            .or_else(|| self.args.find_mut_by_uuid(uuid))
     }
 }
 

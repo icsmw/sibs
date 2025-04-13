@@ -33,6 +33,12 @@ impl<'a> Lookup<'a> for Call {
     }
 }
 
+impl FindMutByUuid for Call {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.node.find_mut_by_uuid(uuid)
+    }
+}
+
 impl SrcLinking for Call {
     fn link(&self) -> SrcLink {
         src_from::tk_and_node(&self.token, &self.node)

@@ -22,6 +22,15 @@ impl<'a> Lookup<'a> for Comparison {
     }
 }
 
+impl FindMutByUuid for Comparison {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.left
+            .find_mut_by_uuid(uuid)
+            .or_else(|| self.operator.find_mut_by_uuid(uuid))
+            .or_else(|| self.right.find_mut_by_uuid(uuid))
+    }
+}
+
 impl SrcLinking for Comparison {
     fn link(&self) -> SrcLink {
         src_from::nodes(&self.left, &self.right)

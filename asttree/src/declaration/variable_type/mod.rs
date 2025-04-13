@@ -18,6 +18,14 @@ impl<'a> LookupInner<'a> for &'a VariableCompoundType {
     }
 }
 
+impl FindMutByUuid for VariableCompoundType {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        match self {
+            VariableCompoundType::Vec(_, n) => n.find_mut_by_uuid(uuid),
+        }
+    }
+}
+
 impl SrcLinking for VariableCompoundType {
     fn link(&self) -> SrcLink {
         match self {
@@ -60,6 +68,15 @@ impl<'a> LookupInner<'a> for &'a VariableTypeDef {
         match self {
             VariableTypeDef::Primitive(..) => Vec::new(),
             VariableTypeDef::Compound(ty) => ty.lookup_inner(owner, trgs),
+        }
+    }
+}
+
+impl FindMutByUuid for VariableTypeDef {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        match self {
+            VariableTypeDef::Primitive(..) => None,
+            VariableTypeDef::Compound(ty) => ty.find_mut_by_uuid(uuid),
         }
     }
 }
@@ -107,6 +124,12 @@ pub struct VariableType {
 impl<'a> Lookup<'a> for VariableType {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.r#type.lookup_inner(self.uuid, trgs)
+    }
+}
+
+impl FindMutByUuid for VariableType {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.r#type.find_mut_by_uuid(uuid)
     }
 }
 

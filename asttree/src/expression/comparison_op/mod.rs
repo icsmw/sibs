@@ -27,6 +27,12 @@ impl<'a> Lookup<'a> for ComparisonOp {
     }
 }
 
+impl FindMutByUuid for ComparisonOp {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        None
+    }
+}
+
 impl SrcLinking for ComparisonOp {
     fn link(&self) -> SrcLink {
         src_from::tk(&self.token)

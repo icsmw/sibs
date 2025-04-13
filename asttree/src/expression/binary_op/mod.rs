@@ -25,6 +25,12 @@ impl<'a> Lookup<'a> for BinaryOp {
     }
 }
 
+impl FindMutByUuid for BinaryOp {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        None
+    }
+}
+
 impl SrcLinking for BinaryOp {
     fn link(&self) -> SrcLink {
         src_from::tk(&self.token)

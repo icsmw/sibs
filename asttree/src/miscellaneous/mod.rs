@@ -39,6 +39,15 @@ impl<'a> Lookup<'a> for Miscellaneous {
     }
 }
 
+impl FindMutByUuid for Miscellaneous {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        match self {
+            Self::Comment(n) => n.find_mut_by_uuid(uuid),
+            Self::Meta(n) => n.find_mut_by_uuid(uuid),
+        }
+    }
+}
+
 impl SrcLinking for Miscellaneous {
     fn link(&self) -> SrcLink {
         match self {

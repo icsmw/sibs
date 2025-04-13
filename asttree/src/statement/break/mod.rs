@@ -7,12 +7,19 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub struct Break {
     pub token: Token,
+    pub target: Option<Uuid>,
     pub uuid: Uuid,
 }
 
 impl<'a> Lookup<'a> for Break {
     fn lookup(&'a self, _trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         vec![]
+    }
+}
+
+impl FindMutByUuid for Break {
+    fn find_mut_by_uuid(&mut self, _uuid: &Uuid) -> Option<&mut LinkedNode> {
+        None
     }
 }
 

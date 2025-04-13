@@ -46,6 +46,17 @@ impl<'a> Lookup<'a> for Root {
     }
 }
 
+impl FindMutByUuid for Root {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        match self {
+            Self::Anchor(n) => n.find_mut_by_uuid(uuid),
+            Self::Module(n) => n.find_mut_by_uuid(uuid),
+            Self::Component(n) => n.find_mut_by_uuid(uuid),
+            Self::Task(n) => n.find_mut_by_uuid(uuid),
+        }
+    }
+}
+
 impl SrcLinking for Root {
     fn link(&self) -> SrcLink {
         match self {

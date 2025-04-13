@@ -17,6 +17,12 @@ impl<'a> Lookup<'a> for Loop {
     }
 }
 
+impl FindMutByUuid for Loop {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.block.find_mut_by_uuid(uuid)
+    }
+}
+
 impl SrcLinking for Loop {
     fn link(&self) -> SrcLink {
         src_from::tk_and_node(&self.token, &self.block)

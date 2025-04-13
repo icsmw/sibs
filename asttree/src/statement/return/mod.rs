@@ -9,11 +9,32 @@ pub struct Return {
     pub token: Token,
     pub node: Option<Box<LinkedNode>>,
     pub uuid: Uuid,
+    pub targets: Vec<Uuid>,
+}
+
+impl Return {
+    pub fn add_target(&mut self, uuid: &Uuid) {
+        if !self.targets.contains(uuid) {
+            self.targets.push(*uuid);
+        }
+    }
+    pub fn is_target_included(&self, uuid: &Uuid) -> bool {
+        self.targets.contains(uuid)
+    }
+    pub fn is_assigned(&self) -> bool {
+        !self.targets.is_empty()
+    }
 }
 
 impl<'a> Lookup<'a> for Return {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.node.as_ref().lookup_inner(self.uuid, trgs)
+    }
+}
+
+impl FindMutByUuid for Return {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.node.find_mut_by_uuid(uuid)
     }
 }
 

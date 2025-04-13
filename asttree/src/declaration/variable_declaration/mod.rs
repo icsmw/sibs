@@ -24,6 +24,15 @@ impl<'a> Lookup<'a> for VariableDeclaration {
     }
 }
 
+impl FindMutByUuid for VariableDeclaration {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.variable
+            .find_mut_by_uuid(uuid)
+            .or_else(|| self.r#type.find_mut_by_uuid(uuid))
+            .or_else(|| self.assignation.find_mut_by_uuid(uuid))
+    }
+}
+
 impl SrcLinking for VariableDeclaration {
     fn link(&self) -> SrcLink {
         if let Some(node) = self.assignation.as_ref() {

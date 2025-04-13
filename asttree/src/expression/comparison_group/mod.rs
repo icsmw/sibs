@@ -19,6 +19,12 @@ impl<'a> Lookup<'a> for ComparisonGroup {
     }
 }
 
+impl FindMutByUuid for ComparisonGroup {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.node.find_mut_by_uuid(uuid)
+    }
+}
+
 impl SrcLinking for ComparisonGroup {
     fn link(&self) -> SrcLink {
         src_from::tks(&self.open, &self.close)

@@ -34,6 +34,17 @@ impl<'a> LookupInner<'a> for &'a IfCase {
     }
 }
 
+impl FindMutByUuid for IfCase {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        match self {
+            IfCase::If(con, blk, ..) => con
+                .find_mut_by_uuid(uuid)
+                .or_else(|| blk.find_mut_by_uuid(uuid)),
+            IfCase::Else(n, ..) => n.find_mut_by_uuid(uuid),
+        }
+    }
+}
+
 impl fmt::Display for IfCase {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
@@ -51,6 +62,12 @@ impl fmt::Display for IfCase {
     }
 }
 
+impl FindMutByUuid for Vec<IfCase> {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.iter_mut().find_map(|n| n.find_mut_by_uuid(uuid))
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct If {
     pub cases: Vec<IfCase>,
@@ -63,6 +80,12 @@ impl<'a> Lookup<'a> for If {
             .iter()
             .flat_map(|case| case.lookup_inner(self.uuid, trgs))
             .collect()
+    }
+}
+
+impl FindMutByUuid for If {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.cases.find_mut_by_uuid(uuid)
     }
 }
 
