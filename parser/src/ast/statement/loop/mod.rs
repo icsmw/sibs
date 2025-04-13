@@ -37,9 +37,7 @@ impl ReadNode<Loop> for Loop {
             };
             match &mut node.node {
                 Node::Statement(Statement::Break(node)) => {
-                    if node.target.is_none() {
-                        node.target = Some(self_uuid)
-                    }
+                    node.set_target(&self_uuid);
                 }
                 Node::Statement(Statement::Return(node)) => node.add_target(&self_uuid),
                 _ => {

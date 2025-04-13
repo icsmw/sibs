@@ -31,7 +31,7 @@ impl Initialize for Loop {
         for found in nodes.iter() {
             match &found.node.node {
                 Node::Statement(Statement::Break(node)) => {
-                    if node.target.is_none() {
+                    if !node.is_assigned() {
                         return Err(LinkedErr::from(E::NotAssignedBreak, node));
                     }
                 }
@@ -47,11 +47,7 @@ impl Initialize for Loop {
         }
         if !nodes.iter().any(|found| {
             if let Node::Statement(Statement::Break(node)) = &found.node.node {
-                if let Some(uuid) = node.target {
-                    uuid == self.uuid
-                } else {
-                    false
-                }
+                node.is_target(&self.uuid)
             } else if let Node::Statement(Statement::Return(node)) = &found.node.node {
                 node.is_target_included(&self.uuid)
             } else {

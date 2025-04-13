@@ -11,6 +11,23 @@ pub struct Break {
     pub uuid: Uuid,
 }
 
+impl Break {
+    pub fn set_target(&mut self, uuid: &Uuid) {
+        if self.target.is_none() {
+            self.target = Some(*uuid)
+        }
+    }
+    pub fn is_target(&self, uuid: &Uuid) -> bool {
+        self.target
+            .as_ref()
+            .map(|target| target == uuid)
+            .unwrap_or(false)
+    }
+    pub fn is_assigned(&self) -> bool {
+        self.target.is_some()
+    }
+}
+
 impl<'a> Lookup<'a> for Break {
     fn lookup(&'a self, _trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         vec![]

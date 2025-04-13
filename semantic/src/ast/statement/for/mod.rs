@@ -75,7 +75,7 @@ impl Initialize for For {
         for found in nodes.into_iter() {
             match &found.node.node {
                 Node::Statement(Statement::Break(node)) => {
-                    if node.target.is_none() {
+                    if !node.is_assigned() {
                         return Err(LinkedErr::from(E::NotAssignedBreak, node));
                     }
                 }
