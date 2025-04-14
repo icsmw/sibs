@@ -9,33 +9,33 @@ mod value;
 use crate::*;
 
 impl Interpret for Node {
-    fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
         match self {
-            Node::ControlFlowModifier(n) => n.interpret(rt),
-            Node::Declaration(n) => n.interpret(rt),
-            Node::Expression(n) => n.interpret(rt),
-            Node::Miscellaneous(n) => n.interpret(rt),
-            Node::Root(n) => n.interpret(rt),
-            Node::Statement(n) => n.interpret(rt),
-            Node::Value(n) => n.interpret(rt),
+            Node::ControlFlowModifier(n) => n.interpret(rt, cx),
+            Node::Declaration(n) => n.interpret(rt, cx),
+            Node::Expression(n) => n.interpret(rt, cx),
+            Node::Miscellaneous(n) => n.interpret(rt, cx),
+            Node::Root(n) => n.interpret(rt, cx),
+            Node::Statement(n) => n.interpret(rt, cx),
+            Node::Value(n) => n.interpret(rt, cx),
         }
     }
 }
 
 impl Interpret for LinkedNode {
     #[boxed]
-    fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
-        let mut vl = self.node.interpret(rt.clone()).await?;
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+        let mut vl = self.node.interpret(rt.clone(), cx.clone()).await?;
         let mut linked_node = self;
         for ppm in self.md.ppm.iter() {
-            rt.scopes
+            cx.values()
                 .set_parent_vl(ParentValue::by_node(vl, linked_node))
                 .await
                 .map_err(|err| LinkedErr::by_link(err, (&self.md.link).into()))?;
-            vl = ppm.interpret(rt.clone()).await?;
+            vl = ppm.interpret(rt.clone(), cx.clone()).await?;
             linked_node = ppm;
         }
-        rt.scopes
+        cx.values()
             .drop_parent_vl()
             .await
             .map_err(|err| LinkedErr::by_link(err, (&self.md.link).into()))?;

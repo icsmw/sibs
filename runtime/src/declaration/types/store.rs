@@ -18,7 +18,7 @@ impl TyStore {
             self.location.pop();
             Ok(())
         } else {
-            Err(E::AttemptToLeaveGlobalScope)
+            Err(E::AttemptToLeaveGlobalContext)
         }
     }
     pub fn enter(&mut self, uuid: &Uuid) -> Result<(), E> {
@@ -36,16 +36,16 @@ impl TyStore {
     }
     pub fn get(&self) -> Result<&TyScope, E> {
         if let Some(sc) = self.location.last() {
-            self.scopes.get(sc).ok_or(E::FailToFindScope(*sc))
+            self.scopes.get(sc).ok_or(E::FailToFindContext(*sc))
         } else {
-            Err(E::NoRootScope)
+            Err(E::NoRootContext)
         }
     }
     pub fn get_mut(&mut self) -> Result<&mut TyScope, E> {
         if let Some(sc) = self.location.last() {
-            self.scopes.get_mut(sc).ok_or(E::FailToFindScope(*sc))
+            self.scopes.get_mut(sc).ok_or(E::FailToFindContext(*sc))
         } else {
-            Err(E::NoRootScope)
+            Err(E::NoRootContext)
         }
     }
 }

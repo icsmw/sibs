@@ -3,13 +3,13 @@ use std::sync::Arc;
 use crate::*;
 
 #[derive(Debug, Default)]
-pub struct VlScope {
+pub struct VlContext {
     pub levels: HashMap<Uuid, HashMap<String, Arc<RtValue>>>,
     pub location: Vec<Uuid>,
     pub parent: RtParent,
 }
 
-impl VlScope {
+impl VlContext {
     pub fn enter(&mut self, uuid: &Uuid) {
         self.levels.entry(*uuid).or_default();
         self.location.push(*uuid);
@@ -19,7 +19,7 @@ impl VlScope {
             self.location.pop();
             Ok(())
         } else {
-            Err(E::AttemptToLeaveRootScopeLevel)
+            Err(E::AttemptToLeaveRootContextLevel)
         }
     }
     pub fn insert<S: AsRef<str>>(&mut self, name: S, vl: RtValue) -> Result<(), E> {
@@ -29,11 +29,11 @@ impl VlScope {
                 return Ok(());
             }
         }
-        Err(E::NoCurrentScopeLevel)
+        Err(E::NoCurrentContextLevel)
     }
     pub fn update<S: AsRef<str>>(&mut self, name: S, vl: RtValue) -> Result<(), E> {
         for uuid in self.location.iter().rev() {
-            let scope = self.levels.get_mut(uuid).ok_or(E::NoCurrentScopeLevel)?;
+            let scope = self.levels.get_mut(uuid).ok_or(E::NoCurrentContextLevel)?;
             if scope.contains_key(name.as_ref()) {
                 scope.insert(name.as_ref().to_owned(), Arc::new(vl));
                 return Ok(());

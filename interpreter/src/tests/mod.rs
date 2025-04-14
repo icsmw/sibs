@@ -37,8 +37,9 @@ macro_rules! test_value_expectation {
                     scx.table,
                     into_rt_ufns(scx.fns),
                     into_rt_tasks(scx.tasks),
-                );
-                let vl = node.interpret(rt.clone()).await;
+                ).expect("Runtime created");
+                let cx = rt.create_cx(Uuid::new_v4()).await.expect("Context created");
+                let vl = node.interpret(rt.clone(), cx.clone()).await;
                 if let Err(err) = &vl {
                     eprintln!("{err:?}");
                     eprintln!("{}", parser.report_err(err).expect("Reporting error"));
@@ -94,8 +95,9 @@ macro_rules! test_fail {
                     scx.table,
                     into_rt_ufns(scx.fns),
                     into_rt_tasks(scx.tasks),
-                );
-                let vl = node.interpret(rt.clone()).await;
+                ).expect("Runtime created");
+                let cx = rt.create_cx(Uuid::new_v4()).await.expect("Context created");
+                let vl = node.interpret(rt.clone(), cx.clone()).await;
                 assert!(vl.is_err());
                 let _ = rt.destroy().await;
             }
@@ -143,8 +145,9 @@ macro_rules! test_task_results {
                     scx.table,
                     into_rt_ufns(scx.fns),
                     into_rt_tasks(scx.tasks),
-                );
-                let vl = node.interpret(rt.clone()).await;
+                ).expect("Runtime created");
+                let cx = rt.create_cx(Uuid::new_v4()).await.expect("Context created");
+                let vl = node.interpret(rt.clone(), cx.clone()).await;
                 if let Err(err) = &vl {
                     eprintln!("{err:?}");
                     eprintln!("{}", parser.report_err(err).expect("Reporting error"));

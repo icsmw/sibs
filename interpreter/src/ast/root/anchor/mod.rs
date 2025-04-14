@@ -2,15 +2,14 @@ use crate::*;
 
 impl Interpret for Anchor {
     #[boxed]
-    fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
-        let comp = rt
-            .cx
-            .get_target_component()
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+        let rt_params = rt
+            .get_rt_parameters()
             .await
             .map_err(|err| LinkedErr::from(err, self))?;
-        let Some(comp) = self.get_component(&comp) else {
-            return Err(LinkedErr::from(E::CompNotFound(comp), self));
+        let Some(component) = self.get_component(&rt_params.component) else {
+            return Err(LinkedErr::from(E::CompNotFound(rt_params.component), self));
         };
-        comp.interpret(rt).await
+        component.interpret(rt, cx).await
     }
 }

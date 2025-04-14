@@ -4,8 +4,8 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum E {
-    #[error("Attempt to leave global scope")]
-    AttemptToLeaveGlobalScope,
+    #[error("Attempt to leave global context")]
+    AttemptToLeaveGlobalContext,
     #[error("Attempt to set type without scope")]
     NoCurrentScope,
     #[error("Variable \"{0}\" isn't found")]
@@ -40,14 +40,14 @@ pub enum E {
     UnexpectedNode(NodeId),
     #[error("Undefined variable: {0}")]
     UndefinedVariable(String),
-    #[error("Attempt to leave root scope's level")]
-    AttemptToLeaveRootScopeLevel,
-    #[error("Attempt to set type without root scope's level")]
-    NoCurrentScopeLevel,
-    #[error("No root scope found")]
-    NoRootScope,
-    #[error("Fail to find scope {0}")]
-    FailToFindScope(Uuid),
+    #[error("Attempt to leave root context's level")]
+    AttemptToLeaveRootContextLevel,
+    #[error("Attempt to set type without root context's level")]
+    NoCurrentContextLevel,
+    #[error("No root context found")]
+    NoRootContext,
+    #[error("Fail to find context {0}")]
+    FailToFindContext(Uuid),
     #[error("Cannot convert \"{0}\" into \"{0}\"")]
     FailCovertToRsType(String, String),
     #[error("Variable \"{0}\" not found")]
@@ -140,6 +140,14 @@ pub enum E {
     RenderTemplateErr(indicatif::style::TemplateError),
     #[error("No progress has been found for parent task: {0}")]
     NoProgressForTask(Uuid),
+
+    #[error("Fail to spawn command: {0}")]
+    SpawnSetup(String),
+    #[error("Executing command error: {0}")]
+    SpawnError(String),
+
+    #[error("Fail to get time with UNIX_EPOCH")]
+    Timestamp,
 }
 
 impl From<indicatif::style::TemplateError> for E {

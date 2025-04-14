@@ -18,11 +18,11 @@ enum NextTick {
 }
 
 #[derive(Clone, Debug)]
-pub struct Progressor {
+pub struct RtProgress {
     tx: UnboundedSender<Demand>,
 }
 
-impl Progressor {
+impl RtProgress {
     #[tracing::instrument]
     pub fn new() -> Result<Self, E> {
         let (tx, mut rx) = unbounded_channel();
@@ -81,17 +81,14 @@ impl Progressor {
         Ok(instance)
     }
 
-    pub async fn create_job<S: AsRef<str>>(
+    pub async fn create_job<S: ToString>(
         &self,
         job: S,
         parent: Option<&Uuid>,
     ) -> Result<Progress, E> {
         let (tx, rx) = oneshot::channel();
-        self.tx.send(Demand::CreateJob(
-            job.as_ref().to_string(),
-            parent.copied(),
-            tx,
-        ))?;
+        self.tx
+            .send(Demand::CreateJob(job.to_string(), parent.copied(), tx))?;
         rx.await?
     }
 
@@ -102,10 +99,9 @@ impl Progressor {
         );
     }
 
-    pub fn set_msg<S: AsRef<str>>(&self, uuid: &Uuid, msg: S) {
+    pub fn set_msg<S: ToString>(&self, uuid: &Uuid, msg: S) {
         chk_send_err!(
-            self.tx
-                .send(Demand::SetMsg(*uuid, msg.as_ref().to_string())),
+            self.tx.send(Demand::SetMsg(*uuid, msg.to_string())),
             DemandId::SetMsg
         );
     }
@@ -121,7 +117,7 @@ impl Progressor {
 #[tokio::test]
 async fn visual_test() {
     use tokio::time::{self, Duration};
-    let progressor = Progressor::new().expect("Progressor has been created");
+    let progressor = RtProgress::new().expect("RtProgress has been created");
     let mut jobs = Vec::new();
     for job in ["a", "b", "c", "d"] {
         let master = progressor

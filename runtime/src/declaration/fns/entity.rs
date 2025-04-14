@@ -39,14 +39,15 @@ impl FnEntity<'_> {
     pub async fn execute(
         &self,
         rt: Runtime,
+        cx: Context,
         args: Vec<FnArgValue>,
         fns: &Fns,
         caller: &SrcLink,
     ) -> Result<RtValue, LinkedErr<E>> {
         match self {
-            Self::UFn(en) => en.execute(rt, args, fns, caller).await,
-            Self::EFn(en) => en.execute(rt, args, fns, caller).await,
-            Self::CFn(en) => en.execute(rt, args, fns, caller).await,
+            Self::UFn(en) => en.execute(rt, cx, args, fns, caller).await,
+            Self::EFn(en) => en.execute(rt, cx, args, fns, caller).await,
+            Self::CFn(en) => en.execute(rt, cx, args, fns, caller).await,
         }
     }
 

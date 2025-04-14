@@ -5,10 +5,10 @@ use crate::*;
 
 impl Interpret for FunctionCall {
     #[boxed]
-    fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
         let mut args = Vec::new();
-        if let Some(parent) = rt
-            .scopes
+        if let Some(parent) = cx
+            .values()
             .withdraw_parent_vl()
             .await
             .map_err(|err| LinkedErr::from(err, self))?
@@ -16,10 +16,13 @@ impl Interpret for FunctionCall {
             args.push(parent.into());
         }
         for n in self.args.iter() {
-            args.push(FnArgValue::by_node(n.interpret(rt.clone()).await?, n));
+            args.push(FnArgValue::by_node(
+                n.interpret(rt.clone(), cx.clone()).await?,
+                n,
+            ));
         }
-        let uuid = if let Some(RtValue::Closure(uuid)) = rt
-            .scopes
+        let uuid = if let Some(RtValue::Closure(uuid)) = cx
+            .values()
             .lookup(self.get_name())
             .await
             .map_err(|err| LinkedErr::from(err, self))?
@@ -29,6 +32,9 @@ impl Interpret for FunctionCall {
         } else {
             self.uuid
         };
-        rt.clone().fns.execute(&uuid, rt, args, &self.link()).await
+        rt.clone()
+            .fns
+            .execute(&uuid, rt, cx, args, &self.link())
+            .await
     }
 }

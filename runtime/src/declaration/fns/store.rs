@@ -72,6 +72,7 @@ impl Fns {
         &self,
         uuid: &Uuid,
         rt: Runtime,
+        cx: Context,
         args: Vec<FnArgValue>,
         caller: &SrcLink,
     ) -> Result<RtValue, LinkedErr<E>> {
@@ -84,6 +85,6 @@ impl Fns {
                 caller.into(),
             ));
         };
-        fn_entity.execute(rt, args, self, caller).await
+        fn_entity.execute(rt, cx, args, self, caller).await
     }
 }

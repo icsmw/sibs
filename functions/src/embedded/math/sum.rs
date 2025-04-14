@@ -6,6 +6,7 @@ declare_embedded_fn!(vec![Ty::Repeated(DeterminedTy::Num)], DeterminedTy::Num);
 pub fn executor(
     args: Vec<FnArgValue>,
     _rt: Runtime,
+    _cx: Context,
     _caller: SrcLink,
 ) -> RtPinnedResult<'static, LinkedErr<E>> {
     let mut sum: f64 = 0.0;

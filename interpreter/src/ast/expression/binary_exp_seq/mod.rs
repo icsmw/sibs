@@ -5,12 +5,12 @@ use crate::*;
 
 impl Interpret for BinaryExpSeq {
     #[boxed]
-    fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
         let mut assemble: f64 = 0.0;
         let mut operator = None;
         for (n, next) in self.nodes.iter().enumerate() {
             if n == 0 {
-                let RtValue::Num(vl) = next.interpret(rt.clone()).await? else {
+                let RtValue::Num(vl) = next.interpret(rt.clone(), cx.clone()).await? else {
                     return Err(LinkedErr::from(
                         E::InvalidValueType(RtValueId::Num.to_string()),
                         next,
@@ -21,7 +21,8 @@ impl Interpret for BinaryExpSeq {
                 if operator.is_some() {
                     return Err(LinkedErr::from(E::MissedBinaryOperator, next));
                 }
-                let RtValue::BinaryOperator(op) = next.interpret(rt.clone()).await? else {
+                let RtValue::BinaryOperator(op) = next.interpret(rt.clone(), cx.clone()).await?
+                else {
                     return Err(LinkedErr::from(
                         E::InvalidValueType(RtValueId::BinaryOperator.to_string()),
                         next,
@@ -32,7 +33,7 @@ impl Interpret for BinaryExpSeq {
                 let Some(operator) = operator.take() else {
                     return Err(LinkedErr::from(E::MissedBinaryOperator, next));
                 };
-                let RtValue::Num(vl) = next.interpret(rt.clone()).await? else {
+                let RtValue::Num(vl) = next.interpret(rt.clone(), cx.clone()).await? else {
                     return Err(LinkedErr::from(
                         E::InvalidValueType(RtValueId::Num.to_string()),
                         next,

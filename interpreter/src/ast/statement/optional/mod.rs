@@ -5,8 +5,8 @@ use crate::*;
 
 impl Interpret for Optional {
     #[boxed]
-    fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
-        let comparison = self.comparison.interpret(rt.clone()).await?;
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+        let comparison = self.comparison.interpret(rt.clone(), cx.clone()).await?;
         let RtValue::Bool(comparison) = comparison else {
             return Err(LinkedErr::from(
                 E::InvalidType(Ty::Determined(DeterminedTy::Bool), comparison),
@@ -16,7 +16,7 @@ impl Interpret for Optional {
         if !comparison {
             return Ok(RtValue::Void);
         }
-        self.action.interpret(rt).await?;
+        self.action.interpret(rt, cx).await?;
         Ok(RtValue::Void)
     }
 }

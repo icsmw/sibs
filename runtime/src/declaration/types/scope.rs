@@ -17,7 +17,7 @@ impl TyScope {
             self.location.pop();
             Ok(())
         } else {
-            Err(E::AttemptToLeaveRootScopeLevel)
+            Err(E::AttemptToLeaveRootContextLevel)
         }
     }
     pub fn insert<S: AsRef<str>>(&mut self, name: S, edt: TypeEntity) -> Result<(), E> {
@@ -27,7 +27,7 @@ impl TyScope {
                 return Ok(());
             }
         }
-        Err(E::NoCurrentScopeLevel)
+        Err(E::NoCurrentContextLevel)
     }
     pub fn lookup<S: AsRef<str>>(&self, name: S) -> Option<&TypeEntity> {
         for uuid in self.location.iter().rev() {

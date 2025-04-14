@@ -2,24 +2,24 @@ use crate::*;
 
 impl Interpret for Block {
     #[boxed]
-    fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
-        rt.scopes
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+        cx.location()
             .enter(&self.uuid)
             .await
             .map_err(|err| LinkedErr::from(err, self))?;
         let mut last = None;
         for n in self.nodes.iter() {
-            if rt
-                .evns
+            if cx
+                .loops()
                 .is_stopped()
                 .await
                 .map_err(|err| LinkedErr::from(err, self))?
             {
                 break;
             }
-            last = Some(n.interpret(rt.clone()).await?);
+            last = Some(n.interpret(rt.clone(), cx.clone()).await?);
         }
-        rt.scopes
+        cx.location()
             .leave()
             .await
             .map_err(|err| LinkedErr::from(err, self))?;

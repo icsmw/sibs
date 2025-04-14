@@ -41,10 +41,10 @@ fn ufn_into_exec(body: UserFnBody) -> UserFnBody {
         UserFnBody::Executor(link, ex) => UserFnBody::Executor(link, ex),
         UserFnBody::Node(node) => {
             let link = node.slink();
-            let func = move |rt: Runtime| -> RtPinnedResult<LinkedErr<E>> {
+            let func = move |rt: Runtime, cx: Context| -> RtPinnedResult<LinkedErr<E>> {
                 Box::pin({
                     let node = node.clone();
-                    async move { node.exec(rt).await }
+                    async move { node.exec(rt, cx).await }
                 })
             };
             UserFnBody::Executor(link, Box::new(func))
@@ -58,10 +58,10 @@ fn cfn_into_exec(body: ClosureFnBody) -> ClosureFnBody {
         ClosureFnBody::Executor(link, ex) => ClosureFnBody::Executor(link, ex),
         ClosureFnBody::Node(node) => {
             let link = node.slink();
-            let func = move |rt: Runtime| -> RtPinnedResult<LinkedErr<E>> {
+            let func = move |rt: Runtime, cx: Context| -> RtPinnedResult<LinkedErr<E>> {
                 Box::pin({
                     let node = node.clone();
-                    async move { node.exec(rt).await }
+                    async move { node.exec(rt, cx).await }
                 })
             };
             ClosureFnBody::Executor(link, Box::new(func))
@@ -87,10 +87,10 @@ fn task_node_into_exec(body: TaskBody) -> TaskBody {
         TaskBody::Executor(md, ex) => TaskBody::Executor(md, ex),
         TaskBody::Node(node) => {
             let link = node.slink();
-            let func = move |rt: Runtime| -> RtPinnedResult<LinkedErr<E>> {
+            let func = move |rt: Runtime, cx: Context| -> RtPinnedResult<LinkedErr<E>> {
                 Box::pin({
                     let node = node.clone();
-                    async move { node.exec(rt).await }
+                    async move { node.exec(rt, cx).await }
                 })
             };
             TaskBody::Executor(link, Box::new(func))
@@ -98,15 +98,15 @@ fn task_node_into_exec(body: TaskBody) -> TaskBody {
     }
 }
 
-async fn runner(node: LinkedNode, rt: Runtime) -> Result<RtValue, LinkedErr<E>> {
-    rt.evns
-        .open_return_cx(node.uuid())
+async fn runner(node: LinkedNode, rt: Runtime, cx: Context) -> Result<RtValue, LinkedErr<E>> {
+    cx.returns()
+        .open_cx(node.uuid())
         .await
         .map_err(|err| LinkedErr::from(err, &node))?;
-    let mut result = node.interpret(rt.clone()).await?;
-    result = if let Some(result) = rt
-        .evns
-        .withdraw_return_vl(node.uuid())
+    let mut result = node.interpret(rt.clone(), cx.clone()).await?;
+    result = if let Some(result) = cx
+        .returns()
+        .withdraw_vl(node.uuid())
         .await
         .map_err(|err| LinkedErr::from(err, &node))?
     {
@@ -114,8 +114,8 @@ async fn runner(node: LinkedNode, rt: Runtime) -> Result<RtValue, LinkedErr<E>> 
     } else {
         result
     };
-    rt.evns
-        .close_return_cx()
+    cx.returns()
+        .close_cx()
         .await
         .map_err(|err| LinkedErr::from(err, &node))?;
     Ok(result)

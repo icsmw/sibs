@@ -5,7 +5,7 @@ use crate::*;
 
 impl Interpret for For {
     #[boxed]
-    fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
         let el = if let Node::Expression(Expression::Variable(el)) = &self.element.node {
             el.ident.to_owned()
         } else {
@@ -26,7 +26,7 @@ impl Interpret for For {
         } else {
             None
         };
-        let vls = match self.elements.interpret(rt.clone()).await? {
+        let vls = match self.elements.interpret(rt.clone(), cx.clone()).await? {
             RtValue::Vec(els) => els,
             RtValue::Range(range) => range
                 .collect::<Vec<isize>>()
@@ -41,33 +41,33 @@ impl Interpret for For {
                 return Err(LinkedErr::from(E::InvalidIterationSource, &self.elements));
             }
         };
-        rt.evns
-            .open_loop(&self.uuid)
+        cx.loops()
+            .open(&self.uuid)
             .await
             .map_err(|err| LinkedErr::by_link(err, (&self.slink()).into()))?;
         for (n, vl) in vls.into_iter().enumerate() {
-            if rt
-                .evns
+            if cx
+                .loops()
                 .is_stopped()
                 .await
                 .map_err(|err| LinkedErr::by_link(err, (&self.slink()).into()))?
             {
                 break;
             }
-            rt.scopes
+            cx.values()
                 .insert(&el, vl)
                 .await
                 .map_err(|err| LinkedErr::from(err, &self.element))?;
             if let Some((variable, node)) = indx.as_ref() {
-                rt.scopes
+                cx.values()
                     .insert(variable, RtValue::Num(n as f64))
                     .await
                     .map_err(|err| LinkedErr::from(err, *node))?;
             }
-            self.block.interpret(rt.clone()).await?;
+            self.block.interpret(rt.clone(), cx.clone()).await?;
         }
-        rt.evns
-            .close_loop()
+        cx.loops()
+            .close()
             .await
             .map_err(|err| LinkedErr::by_link(err, (&self.slink()).into()))?;
         Ok(RtValue::Void)

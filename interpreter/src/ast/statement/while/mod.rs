@@ -5,21 +5,21 @@ use crate::*;
 
 impl Interpret for While {
     #[boxed]
-    fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
-        rt.evns
-            .open_loop(&self.uuid)
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+        cx.loops()
+            .open(&self.uuid)
             .await
             .map_err(|err| LinkedErr::by_link(err, (&self.slink()).into()))?;
         loop {
-            if rt
-                .evns
+            if cx
+                .loops()
                 .is_stopped()
                 .await
                 .map_err(|err| LinkedErr::by_link(err, (&self.slink()).into()))?
             {
                 break;
             }
-            let vl = self.comparison.interpret(rt.clone()).await?;
+            let vl = self.comparison.interpret(rt.clone(), cx.clone()).await?;
             let RtValue::Bool(vl) = vl else {
                 return Err(LinkedErr::from(
                     E::InvalidValueType(format!("returns {vl} instead bool")),
@@ -29,10 +29,10 @@ impl Interpret for While {
             if !vl {
                 break;
             }
-            self.block.interpret(rt.clone()).await?;
+            self.block.interpret(rt.clone(), cx.clone()).await?;
         }
-        rt.evns
-            .close_loop()
+        cx.loops()
+            .close()
             .await
             .map_err(|err| LinkedErr::by_link(err, (&self.slink()).into()))?;
         Ok(RtValue::Void)

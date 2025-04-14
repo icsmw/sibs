@@ -2,8 +2,10 @@ use crate::*;
 
 impl Interpret for Comparison {
     #[boxed]
-    fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
-        let RtValue::ComparisonOperator(op) = self.operator.interpret(rt.clone()).await? else {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+        let RtValue::ComparisonOperator(op) =
+            self.operator.interpret(rt.clone(), cx.clone()).await?
+        else {
             return Err(LinkedErr::from(
                 E::InvalidValueType(RtValueId::ComparisonOperator.to_string()),
                 &self.operator,
@@ -11,13 +13,13 @@ impl Interpret for Comparison {
         };
         let left = self
             .left
-            .interpret(rt.clone())
+            .interpret(rt.clone(), cx.clone())
             .await?
             .into_eq_ord()
             .ok_or(LinkedErr::from(E::NotComparableValue, &self.left))?;
         let right = self
             .right
-            .interpret(rt.clone())
+            .interpret(rt.clone(), cx.clone())
             .await?
             .into_eq_ord()
             .ok_or(LinkedErr::from(E::NotComparableValue, &self.right))?;

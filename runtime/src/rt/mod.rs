@@ -1,15 +1,13 @@
 mod api;
 mod context;
-mod events;
+mod jobs;
 mod journal;
 mod progressor;
-mod scopes;
 
 pub use context::*;
-pub use events::*;
+pub use jobs::*;
 pub use journal::*;
 pub use progressor::*;
-pub use scopes::*;
 
 use crate::*;
 use api::*;
@@ -21,47 +19,70 @@ pub type RtResult<E> = Result<RtValue, E>;
 
 #[derive(Debug, Clone)]
 pub struct Runtime {
-    pub scopes: RtScope,
     pub tys: Arc<TypesTable>,
     pub fns: Arc<Fns>,
     pub tasks: Arc<Tasks>,
-    pub cx: RtContext,
-    pub evns: RtEvents,
     tx: UnboundedSender<Demand>,
 }
 
 impl Runtime {
     #[tracing::instrument]
-    pub fn new(params: RtParameters, tys: TypesTable, fns: Fns, tasks: Tasks) -> Self {
+    pub fn new(params: RtParameters, tys: TypesTable, fns: Fns, tasks: Tasks) -> Result<Self, E> {
         let (tx, mut rx) = unbounded_channel();
         let inst = Self {
             tx,
-            scopes: RtScope::new(),
             tys: Arc::new(tys),
             fns: Arc::new(fns),
             tasks: Arc::new(tasks),
-            cx: RtContext::new(params),
-            evns: RtEvents::new(),
         };
-        let scopes = inst.scopes.clone();
-        let cx = inst.cx.clone();
-        let evns = inst.evns.clone();
+        let cx = RtContext::new(params.cwd.clone());
+        let progress = RtProgress::new()?;
+        let journal = RtJournal::new()?;
         spawn(async move {
             tracing::info!("init demand's listener");
-            if let Some(demand) = rx.recv().await {
+            while let Some(demand) = rx.recv().await {
                 match demand {
+                    Demand::GetRtParameters(tx) => {
+                        chk_send_err!(tx.send(params.clone()), DemandId::GetRtParameters);
+                    }
+                    Demand::CreateOwnedContext(owner, tx) => {
+                        let progress = match progress.create_job("job", None).await {
+                            Ok(progress) => progress,
+                            Err(err) => {
+                                chk_send_err!(tx.send(Err(err)), DemandId::CreateOwnedContext);
+                                continue;
+                            }
+                        };
+                        chk_send_err!(
+                            tx.send(Ok(cx.create_owned(owner, journal.owned(owner), progress))),
+                            DemandId::CreateOwnedContext
+                        );
+                    }
                     Demand::Destroy(tx) => {
                         tracing::info!("got shutdown signal");
-                        chk_err!(scopes.destroy().await);
                         chk_err!(cx.destroy().await);
-                        chk_err!(evns.destroy().await);
+                        chk_err!(progress.destroy().await);
+                        chk_err!(journal.destroy().await);
                         chk_send_err!(tx.send(()), DemandId::Destroy);
+                        break;
                     }
                 }
             }
             tracing::info!("shutdown demand's listener");
         });
-        inst
+        Ok(inst)
+    }
+
+    pub async fn get_rt_parameters(&self) -> Result<RtParameters, E> {
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(Demand::GetRtParameters(tx))?;
+        Ok(rx.await?)
+    }
+
+    pub async fn create_cx(&self, owner: Uuid) -> Result<Context, E> {
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(Demand::CreateOwnedContext(owner, tx))?;
+        rx.await?
     }
 
     pub async fn destroy(&self) -> Result<(), E> {

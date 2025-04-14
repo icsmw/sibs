@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct RtParameters {
     pub args: Vec<String>,
     pub cwd: PathBuf,

@@ -2,11 +2,11 @@ use crate::*;
 
 impl Interpret for ComparisonSeq {
     #[boxed]
-    fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
         let Some(node) = self.nodes.first() else {
             return Err(LinkedErr::from(E::InvalidComparisonSeq, self));
         };
-        let RtValue::Bool(mut result) = node.interpret(rt.clone()).await? else {
+        let RtValue::Bool(mut result) = node.interpret(rt.clone(), cx.clone()).await? else {
             return Err(LinkedErr::from(
                 E::InvalidValueType(RtValueId::Bool.to_string()),
                 node,
@@ -14,7 +14,7 @@ impl Interpret for ComparisonSeq {
         };
         let mut prev_op = None;
         for n in self.nodes.iter().skip(1) {
-            let vl = n.interpret(rt.clone()).await?;
+            let vl = n.interpret(rt.clone(), cx.clone()).await?;
             match vl {
                 RtValue::Bool(vl) => {
                     let Some(op) = prev_op.take() else {

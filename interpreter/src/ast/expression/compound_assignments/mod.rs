@@ -5,7 +5,7 @@ use crate::*;
 
 impl Interpret for CompoundAssignments {
     #[boxed]
-    fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
         let variable = if let Node::Expression(Expression::Variable(variable)) = &self.left.node {
             variable.ident.to_owned()
         } else {
@@ -20,8 +20,8 @@ impl Interpret for CompoundAssignments {
                 &self.operator,
             ));
         };
-        let left = rt
-            .scopes
+        let left = cx
+            .values()
             .lookup(&variable)
             .await
             .map_err(|err| LinkedErr::from(err, &self.left))?
@@ -29,7 +29,7 @@ impl Interpret for CompoundAssignments {
                 E::VariableNotFound(variable.clone()),
                 &self.left,
             ))?;
-        let right = self.right.interpret(rt.clone()).await?;
+        let right = self.right.interpret(rt.clone(), cx.clone()).await?;
         chk_ty(&self.left, &right, &rt).await?;
         match &right {
             RtValue::Num(vl) => {
@@ -45,7 +45,7 @@ impl Interpret for CompoundAssignments {
                     CompoundAssignmentsOperator::SlashEqual => left / vl,
                     CompoundAssignmentsOperator::StarEqual => left * vl,
                 };
-                rt.scopes
+                cx.values()
                     .update(&variable, RtValue::Num(updated))
                     .await
                     .map_err(|err| LinkedErr::from(err, &self.right))?;
@@ -64,7 +64,7 @@ impl Interpret for CompoundAssignments {
                         return Err(LinkedErr::from(E::NotApplicableToTypeOperation, op));
                     }
                 };
-                rt.scopes
+                cx.values()
                     .update(&variable, RtValue::Str(updated.clone()))
                     .await
                     .map_err(|err| LinkedErr::from(err, &self.right))?;
@@ -83,7 +83,7 @@ impl Interpret for CompoundAssignments {
                         return Err(LinkedErr::from(E::NotApplicableToTypeOperation, op));
                     }
                 };
-                rt.scopes
+                cx.values()
                     .update(&variable, RtValue::PathBuf(updated.clone()))
                     .await
                     .map_err(|err| LinkedErr::from(err, &self.right))?;

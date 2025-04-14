@@ -2,8 +2,8 @@ use crate::*;
 
 impl Interpret for BinaryExpGroup {
     #[boxed]
-    fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
-        let vl = self.node.interpret(rt).await?;
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+        let vl = self.node.interpret(rt, cx.clone()).await?;
         if !matches!(vl, RtValue::Num(..)) {
             return Err(LinkedErr::from(
                 E::InvalidValueType(RtValueId::Num.to_string()),

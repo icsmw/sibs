@@ -2,7 +2,8 @@ use std::fmt::Debug;
 
 use crate::*;
 
-pub type TaskExecutor = Box<dyn Fn(Runtime) -> RtPinnedResult<'static, LinkedErr<E>> + Send + Sync>;
+pub type TaskExecutor =
+    Box<dyn Fn(Runtime, Context) -> RtPinnedResult<'static, LinkedErr<E>> + Send + Sync>;
 
 pub enum TaskBody {
     Node(Task),
@@ -67,6 +68,7 @@ impl TaskEntity {
     pub async fn execute(
         &self,
         rt: Runtime,
+        cx: Context,
         args: Vec<FnArgValue>,
         caller: &SrcLink,
     ) -> Result<RtValue, LinkedErr<E>> {
@@ -76,7 +78,7 @@ impl TaskEntity {
                 caller.into(),
             ));
         };
-        if let Err(err) = rt.scopes.enter(&self.uuid).await {
+        if let Err(err) = cx.location().enter(&self.uuid).await {
             return Err(LinkedErr::by_link(err, link.into()));
         }
         let mut err = None;
@@ -99,19 +101,19 @@ impl TaskEntity {
                 ));
                 break;
             }
-            if let Err(e) = rt.scopes.insert(&decl.ident, arg_vl.value).await {
+            if let Err(e) = cx.values().insert(&decl.ident, arg_vl.value).await {
                 err = Some(LinkedErr::by_link(e, (&arg_vl.link).into()));
                 break;
             }
         }
         if let Some(err) = err.take() {
-            if let Err(err) = rt.scopes.leave().await {
+            if let Err(err) = cx.location().leave().await {
                 return Err(LinkedErr::by_link(err, link.into()));
             }
             return Err(err);
         }
-        let result = exec(rt.clone()).await;
-        if let Err(err) = rt.scopes.leave().await {
+        let result = exec(rt.clone(), cx.clone()).await;
+        if let Err(err) = cx.location().leave().await {
             return Err(LinkedErr::by_link(err, link.into()));
         }
         result

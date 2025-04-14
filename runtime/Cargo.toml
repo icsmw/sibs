@@ -6,8 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tokio-util.workspace = true
+tokio-util = { workspace = true, features = ["codec"] }
 tokio = { workspace = true, features = ["time"] }
+tokio-stream.workspace = true
 enum_ids.workspace = true
 thiserror.workspace = true
 uuid = { workspace = true, features = ["fast-rng", "macro-diagnostics", "v4"] }

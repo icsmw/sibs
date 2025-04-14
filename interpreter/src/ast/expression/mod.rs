@@ -20,26 +20,26 @@ mod variable;
 use crate::*;
 
 impl Interpret for Expression {
-    fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
         match self {
-            Expression::Accessor(n) => n.interpret(rt),
-            Expression::BinaryExp(n) => n.interpret(rt),
-            Expression::BinaryExpGroup(n) => n.interpret(rt),
-            Expression::BinaryExpSeq(n) => n.interpret(rt),
-            Expression::BinaryOp(n) => n.interpret(rt),
-            Expression::Call(n) => n.interpret(rt),
-            Expression::Command(n) => n.interpret(rt),
-            Expression::Comparison(n) => n.interpret(rt),
-            Expression::ComparisonGroup(n) => n.interpret(rt),
-            Expression::ComparisonOp(n) => n.interpret(rt),
-            Expression::ComparisonSeq(n) => n.interpret(rt),
-            Expression::CompoundAssignments(n) => n.interpret(rt),
-            Expression::CompoundAssignmentsOp(n) => n.interpret(rt),
-            Expression::FunctionCall(n) => n.interpret(rt),
-            Expression::LogicalOp(n) => n.interpret(rt),
-            Expression::Range(n) => n.interpret(rt),
-            Expression::TaskCall(n) => n.interpret(rt),
-            Expression::Variable(n) => n.interpret(rt),
+            Expression::Accessor(n) => n.interpret(rt, cx),
+            Expression::BinaryExp(n) => n.interpret(rt, cx),
+            Expression::BinaryExpGroup(n) => n.interpret(rt, cx),
+            Expression::BinaryExpSeq(n) => n.interpret(rt, cx),
+            Expression::BinaryOp(n) => n.interpret(rt, cx),
+            Expression::Call(n) => n.interpret(rt, cx),
+            Expression::Command(n) => n.interpret(rt, cx),
+            Expression::Comparison(n) => n.interpret(rt, cx),
+            Expression::ComparisonGroup(n) => n.interpret(rt, cx),
+            Expression::ComparisonOp(n) => n.interpret(rt, cx),
+            Expression::ComparisonSeq(n) => n.interpret(rt, cx),
+            Expression::CompoundAssignments(n) => n.interpret(rt, cx),
+            Expression::CompoundAssignmentsOp(n) => n.interpret(rt, cx),
+            Expression::FunctionCall(n) => n.interpret(rt, cx),
+            Expression::LogicalOp(n) => n.interpret(rt, cx),
+            Expression::Range(n) => n.interpret(rt, cx),
+            Expression::TaskCall(n) => n.interpret(rt, cx),
+            Expression::Variable(n) => n.interpret(rt, cx),
         }
     }
 }

@@ -6,7 +6,7 @@ pub enum FnArgDeclaration {
     UFn(UserFnArgDeclaration),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FnArgValue {
     pub value: RtValue,
     pub link: SrcLink,

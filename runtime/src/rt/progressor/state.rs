@@ -18,14 +18,14 @@ impl Default for ProgressState {
 }
 
 impl ProgressState {
-    pub fn set_msg<S: AsRef<str>>(&mut self, msg: S) {
+    pub fn set_msg<S: ToString>(&mut self, msg: S) {
         match self {
             Self::Success(inner, ..)
             | Self::Failed(inner, ..)
             | Self::Progress(inner, ..)
             | Self::Pending(inner, ..)
             | Self::Working(inner, ..)
-            | Self::Cancelled(inner, ..) => inner.replace(msg.as_ref().to_string()),
+            | Self::Cancelled(inner, ..) => inner.replace(msg.to_string()),
         };
     }
     pub fn get_msg(&self) -> Option<String> {

@@ -14,20 +14,20 @@ mod r#while;
 use crate::*;
 
 impl Interpret for Statement {
-    fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
         match self {
-            Statement::Assignation(n) => n.interpret(rt),
-            Statement::AssignedValue(n) => n.interpret(rt),
-            Statement::Block(n) => n.interpret(rt),
-            Statement::Break(n) => n.interpret(rt),
-            Statement::For(n) => n.interpret(rt),
-            Statement::If(n) => n.interpret(rt),
-            Statement::Join(n) => n.interpret(rt),
-            Statement::Loop(n) => n.interpret(rt),
-            Statement::OneOf(n) => n.interpret(rt),
-            Statement::Optional(n) => n.interpret(rt),
-            Statement::Return(n) => n.interpret(rt),
-            Statement::While(n) => n.interpret(rt),
+            Statement::Assignation(n) => n.interpret(rt, cx),
+            Statement::AssignedValue(n) => n.interpret(rt, cx),
+            Statement::Block(n) => n.interpret(rt, cx),
+            Statement::Break(n) => n.interpret(rt, cx),
+            Statement::For(n) => n.interpret(rt, cx),
+            Statement::If(n) => n.interpret(rt, cx),
+            Statement::Join(n) => n.interpret(rt, cx),
+            Statement::Loop(n) => n.interpret(rt, cx),
+            Statement::OneOf(n) => n.interpret(rt, cx),
+            Statement::Optional(n) => n.interpret(rt, cx),
+            Statement::Return(n) => n.interpret(rt, cx),
+            Statement::While(n) => n.interpret(rt, cx),
         }
     }
 }

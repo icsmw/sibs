@@ -5,7 +5,7 @@ use crate::*;
 
 impl Interpret for Assignation {
     #[boxed]
-    fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
         let variable = if let Node::Expression(Expression::Variable(variable)) = &self.left.node {
             variable.ident.to_owned()
         } else {
@@ -14,9 +14,9 @@ impl Interpret for Assignation {
                 &self.left,
             ));
         };
-        let vl = self.right.interpret(rt.clone()).await?;
+        let vl = self.right.interpret(rt.clone(), cx.clone()).await?;
         chk_ty(&self.left, &vl, &rt).await?;
-        rt.scopes
+        cx.values()
             .update(&variable, vl)
             .await
             .map_err(|err| LinkedErr::from(err, &self.right))?;

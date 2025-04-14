@@ -1,9 +1,9 @@
 use crate::*;
 use std::time::Instant;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Progress {
-    progressor: Progressor,
+    progressor: RtProgress,
     pub alias: String,
     pub uuid: Uuid,
     pub parent: Option<Uuid>,
@@ -11,17 +11,17 @@ pub struct Progress {
 }
 
 impl Progress {
-    pub fn new<S: AsRef<str>>(alias: S, parent: Option<Uuid>, progressor: Progressor) -> Self {
+    pub fn new<S: ToString>(alias: S, parent: Option<Uuid>, progressor: RtProgress) -> Self {
         Self {
             progressor,
-            alias: alias.as_ref().to_string(),
+            alias: alias.to_string(),
             uuid: Uuid::new_v4(),
             parent,
             ts: Instant::now(),
         }
     }
 
-    pub fn msg<S: AsRef<str>>(&mut self, msg: S) {
+    pub fn msg<S: ToString>(&self, msg: S) {
         self.progressor.set_msg(&self.uuid, msg);
     }
 
@@ -30,42 +30,42 @@ impl Progress {
             .set_state(&self.uuid, ProgressState::Progress(None, done, total));
     }
 
-    pub fn success<S: AsRef<str>>(&self, msg: Option<S>) {
+    pub fn success<S: ToString>(&self, msg: Option<S>) {
         self.progressor.set_state(
             &self.uuid,
-            ProgressState::Success(msg.map(|s| s.as_ref().to_string())),
+            ProgressState::Success(msg.map(|s| s.to_string())),
         );
     }
 
-    pub fn failed<S: AsRef<str>>(&self, msg: Option<S>) {
+    pub fn failed<S: ToString>(&self, msg: Option<S>) {
         self.progressor.set_state(
             &self.uuid,
-            ProgressState::Failed(msg.map(|s| s.as_ref().to_string())),
+            ProgressState::Failed(msg.map(|s| s.to_string())),
         );
     }
 
-    pub fn pending<S: AsRef<str>>(&self, msg: Option<S>) {
+    pub fn pending<S: ToString>(&self, msg: Option<S>) {
         self.progressor.set_state(
             &self.uuid,
-            ProgressState::Pending(msg.map(|s| s.as_ref().to_string())),
+            ProgressState::Pending(msg.map(|s| s.to_string())),
         );
     }
 
-    pub fn working<S: AsRef<str>>(&self, msg: Option<S>) {
+    pub fn working<S: ToString>(&self, msg: Option<S>) {
         self.progressor.set_state(
             &self.uuid,
-            ProgressState::Working(msg.map(|s| s.as_ref().to_string())),
+            ProgressState::Working(msg.map(|s| s.to_string())),
         );
     }
 
-    pub fn cancelled<S: AsRef<str>>(&self, msg: Option<S>) {
+    pub fn cancelled<S: ToString>(&self, msg: Option<S>) {
         self.progressor.set_state(
             &self.uuid,
-            ProgressState::Cancelled(msg.map(|s| s.as_ref().to_string())),
+            ProgressState::Cancelled(msg.map(|s| s.to_string())),
         );
     }
 
-    pub async fn child<S: AsRef<str>>(&self, job: S) -> Result<Progress, E> {
+    pub async fn child<S: ToString>(&self, job: S) -> Result<Progress, E> {
         self.progressor.create_job(job, Some(&self.uuid)).await
     }
 }

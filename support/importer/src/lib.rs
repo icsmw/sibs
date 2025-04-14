@@ -94,7 +94,7 @@ pub fn import(args: pm::TokenStream, input: pm::TokenStream) -> pm::TokenStream 
     };
 
     pm::TokenStream::from(quote! {
-        fn #func_name(args: Vec<FnArgValue>, _rt: Runtime, caller: SrcLink) -> RtPinnedResult<'static, LinkedErr<E>> {
+        fn #func_name(args: Vec<FnArgValue>, _rt: Runtime, _cx: Context, caller: SrcLink) -> RtPinnedResult<'static, LinkedErr<E>> {
             Box::pin(async move {
                 if args.len() != #args_required {
                     return Err(LinkedErr::by_link(E::InvalidFnArgument, (&caller).into()));

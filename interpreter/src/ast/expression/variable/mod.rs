@@ -4,9 +4,9 @@ use crate::*;
 
 impl Interpret for Variable {
     #[boxed]
-    fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
-        let vl = rt
-            .scopes
+    fn interpret(&self, _rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+        let vl = cx
+            .values()
             .lookup(&self.ident)
             .await
             .map_err(|err| LinkedErr::from(err, self))?

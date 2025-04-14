@@ -20,7 +20,7 @@ pub(crate) use semantic::*;
 use uuid::Uuid;
 
 pub trait Interpret {
-    fn interpret(&self, _rt: Runtime) -> RtPinnedResult<LinkedErr<E>>;
+    fn interpret(&self, _rt: Runtime, _cx: Context) -> RtPinnedResult<LinkedErr<E>>;
 }
 
 pub trait Execute
@@ -31,15 +31,15 @@ where
     fn block(&self) -> &LinkedNode;
     fn link(&self) -> SrcLink;
     #[boxed]
-    fn exec(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
-        rt.evns
-            .open_return_cx(self.uuid())
+    fn exec(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+        cx.returns()
+            .open_cx(self.uuid())
             .await
             .map_err(|err| LinkedErr::by_link(err, (&self.link()).into()))?;
-        let mut result = self.block().interpret(rt.clone()).await?;
-        result = if let Some(result) = rt
-            .evns
-            .withdraw_return_vl(self.uuid())
+        let mut result = self.block().interpret(rt.clone(), cx.clone()).await?;
+        result = if let Some(result) = cx
+            .returns()
+            .withdraw_vl(self.uuid())
             .await
             .map_err(|err| LinkedErr::by_link(err, (&self.link()).into()))?
         {
@@ -47,8 +47,8 @@ where
         } else {
             result
         };
-        rt.evns
-            .close_return_cx()
+        cx.returns()
+            .close_cx()
             .await
             .map_err(|err| LinkedErr::by_link(err, (&self.link()).into()))?;
         Ok(result)

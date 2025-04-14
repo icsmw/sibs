@@ -2,7 +2,7 @@ use crate::*;
 
 impl Interpret for VariableDeclaration {
     #[boxed]
-    fn interpret(&self, rt: Runtime) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
         let variable =
             if let Node::Declaration(Declaration::VariableName(variable)) = &self.variable.node {
                 variable.ident.to_owned()
@@ -13,16 +13,16 @@ impl Interpret for VariableDeclaration {
                 ));
             };
         if let Some(node) = &self.assignation {
-            let vl = node.interpret(rt.clone()).await?;
+            let vl = node.interpret(rt.clone(), cx.clone()).await?;
             if let Some(ty) = &self.r#type {
                 chk_ty(ty, &vl, &rt).await?;
             }
-            rt.scopes
+            cx.values()
                 .insert(&variable, vl)
                 .await
                 .map_err(|err| LinkedErr::from(err, node))?;
         } else {
-            rt.scopes
+            cx.values()
                 .insert(&variable, RtValue::Void)
                 .await
                 .map_err(|err| LinkedErr::from(err, &self.variable))?;

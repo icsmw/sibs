@@ -3,12 +3,31 @@ use std::sync::Arc;
 use crate::*;
 
 #[derive(Debug)]
-pub struct VlScopes {
-    pub scopes: HashMap<Uuid, VlScope>,
-    pub location: Vec<Uuid>,
+pub struct Store {
+    pub(crate) scopes: HashMap<Uuid, VlContext>,
+    pub(crate) location: Vec<Uuid>,
+    pub(crate) breaks: HashSet<Uuid>,
+    pub(crate) loops: Vec<Uuid>,
+    pub(crate) rcx: Vec<Uuid>,
+    pub(crate) returns: HashMap<Uuid, RtValue>,
+    pub(crate) cwd: PathBuf,
 }
 
-impl VlScopes {
+impl Store {
+    pub fn new(cwd: PathBuf) -> Self {
+        let root = Uuid::new_v4();
+        let mut scopes = HashMap::new();
+        scopes.insert(root, VlContext::default());
+        Self {
+            scopes,
+            location: vec![root],
+            loops: Vec::new(),
+            breaks: HashSet::new(),
+            rcx: Vec::new(),
+            returns: HashMap::new(),
+            cwd,
+        }
+    }
     pub fn open(&mut self, uuid: &Uuid) {
         self.scopes.entry(*uuid).or_default();
         self.location.push(*uuid);
@@ -18,7 +37,7 @@ impl VlScopes {
             self.location.pop();
             Ok(())
         } else {
-            Err(E::AttemptToLeaveGlobalScope)
+            Err(E::AttemptToLeaveGlobalContext)
         }
     }
     pub fn set_parent_vl(&mut self, vl: ParentValue) -> Result<(), E> {
@@ -48,30 +67,18 @@ impl VlScopes {
     pub fn lookup<S: AsRef<str>>(&self, name: S) -> Result<Option<Arc<RtValue>>, E> {
         Ok(self.get()?.lookup(name))
     }
-    fn get(&self) -> Result<&VlScope, E> {
+    fn get(&self) -> Result<&VlContext, E> {
         if let Some(sc) = self.location.last() {
-            self.scopes.get(sc).ok_or(E::FailToFindScope(*sc))
+            self.scopes.get(sc).ok_or(E::FailToFindContext(*sc))
         } else {
-            Err(E::NoRootScope)
+            Err(E::NoRootContext)
         }
     }
-    fn get_mut(&mut self) -> Result<&mut VlScope, E> {
+    fn get_mut(&mut self) -> Result<&mut VlContext, E> {
         if let Some(sc) = self.location.last() {
-            self.scopes.get_mut(sc).ok_or(E::FailToFindScope(*sc))
+            self.scopes.get_mut(sc).ok_or(E::FailToFindContext(*sc))
         } else {
-            Err(E::NoRootScope)
-        }
-    }
-}
-
-impl Default for VlScopes {
-    fn default() -> Self {
-        let root = Uuid::new_v4();
-        let mut scopes = HashMap::new();
-        scopes.insert(root, VlScope::default());
-        Self {
-            scopes,
-            location: vec![root],
+            Err(E::NoRootContext)
         }
     }
 }
