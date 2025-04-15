@@ -53,10 +53,15 @@ fn parse_command(cmd: &str) -> (&str, Vec<&str>) {
 pub async fn spawn<S: AsRef<str>, P: AsRef<Path>>(
     cmd: S,
     cwd: P,
-    owner: Uuid,
+    _owner: Uuid,
     cx: Context,
 ) -> Result<SpawnStatus, E> {
-    fn post_logs(line: Result<String, LinesCodecError>, stdout: bool, job: &Job) {
+    fn post_logs(
+        line: Result<String, LinesCodecError>,
+        output: &mut Vec<String>,
+        stdout: bool,
+        job: &Job,
+    ) {
         match line {
             Ok(line) => {
                 let trimmed = line.trim_end();
@@ -66,6 +71,7 @@ pub async fn spawn<S: AsRef<str>, P: AsRef<Path>>(
                 } else {
                     job.journal.stderr(trimmed);
                 }
+                output.push(trimmed.to_owned());
             }
             Err(err) => {
                 job.journal
@@ -73,23 +79,23 @@ pub async fn spawn<S: AsRef<str>, P: AsRef<Path>>(
             }
         }
     }
-    fn get_status(status: ExitStatus, job: &Job) -> SpawnStatus {
+    fn get_status(status: ExitStatus, output: Vec<String>, job: &Job) -> SpawnStatus {
         if status.success() {
-            job.progress.success::<&str>(None);
-            job.journal.debug("Finished successfully");
-            SpawnStatus::Success
+            job.done().success::<&str>(None);
+            SpawnStatus::Success(output)
         } else {
-            job.progress.failed::<&str>(None);
-            job.journal.debug(format!(
+            job.done().failed(Some(format!(
                 "Finished with error; code: {}",
                 status
                     .code()
                     .map(|c| c.to_string())
                     .unwrap_or("unknown code".to_owned())
-            ));
-            SpawnStatus::Failed(status.code())
+            )));
+            SpawnStatus::Failed(status.code(), output)
         }
     }
+    let mut cstdout = Vec::new();
+    let mut cstderr = Vec::new();
     let job = cx.job.child(Uuid::new_v4(), cmd.as_ref()).await?;
     let mut child = setup(cmd, cwd)?;
     let mut stdout = codec::FramedRead::new(
@@ -112,18 +118,18 @@ pub async fn spawn<S: AsRef<str>, P: AsRef<Path>>(
             join!(
                 async {
                     while let Some(line) = stdout.next().await {
-                        post_logs(line, true, &job)
+                        post_logs(line, &mut cstdout, true, &job)
                     }
                 },
                 async {
                     while let Some(line) = stderr.next().await {
-                         post_logs(line, false, &job)
+                         post_logs(line, &mut cstderr, false, &job)
                     }
                 }
             );
             child.wait().await
         } => {
-            res.map(|status| get_status(status, &job))
+            res.map(|status| get_status(status, [cstdout, cstderr].concat(), &job))
                 .map_err(|err| E::SpawnError(err.to_string()))?
         }
         _ = async {
@@ -132,21 +138,18 @@ pub async fn spawn<S: AsRef<str>, P: AsRef<Path>>(
             job.journal.debug("Cancel signal has been gotten");
             match child.try_wait() {
                 Ok(Some(status)) => {
-                    get_status(status, &job)
+                    get_status(status, [cstdout, cstderr].concat(), &job)
                 }
                 Ok(None) => {
                     if let Err(err) = child.kill().await {
-                        job.progress.cancelled(Some(err.to_string()));
-                        job.journal.err(format!("Fail to kill process: {err}"));
+                        job.cancel().failed(Some(err.to_string()));
                     } else {
-                        job.progress.cancelled(Some(String::from("Process has been killed")));
-                        job.journal.err("Process has been killed");
+                        job.cancel().success(Some("Process has been killed"));
                     }
                     SpawnStatus::Cancelled
                 }
                 Err(err) => {
-                    job.progress.cancelled(Some(err.to_string()));
-                    job.journal.err(format!("Fail to kill process: {err}"));
+                    job.cancel().failed(Some(format!("Fail to kill process: {err}")));
                     SpawnStatus::Cancelled
                 }
             }

@@ -5,6 +5,48 @@ use tokio_util::sync::CancellationToken;
 use crate::*;
 
 #[derive(Debug, Clone)]
+pub struct Done<'a> {
+    job: &'a Job,
+}
+
+impl Done<'_> {
+    pub fn success<S: ToString>(&self, msg: Option<S>) {
+        if let Some(msg) = msg.as_ref() {
+            self.job.journal.debug(msg.to_string());
+        }
+        self.job.progress.success(msg);
+    }
+    pub fn failed<S: ToString>(&self, msg: Option<S>) {
+        if let Some(msg) = msg.as_ref() {
+            self.job.journal.err(msg.to_string());
+        }
+        self.job.progress.failed(msg);
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Cancel<'a> {
+    job: &'a Job,
+}
+
+impl Cancel<'_> {
+    pub fn success<S: ToString>(&self, msg: Option<S>) {
+        if let Some(msg) = msg.as_ref() {
+            self.job.journal.debug(msg.to_string());
+        }
+        self.job.progress.cancelled(msg);
+    }
+    pub fn failed<S: ToString>(&self, msg: Option<S>) {
+        if let Some(msg) = msg.as_ref() {
+            self.job
+                .journal
+                .err(format!("Cancelled with error: {}", msg.to_string()));
+        }
+        self.job.progress.cancelled(msg);
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Job {
     pub journal: Journal,
     pub progress: Progress,
@@ -33,6 +75,14 @@ impl Job {
             cancel: CancellationToken::new(),
             rt,
         }
+    }
+
+    pub fn done(&self) -> Done<'_> {
+        Done { job: self }
+    }
+
+    pub fn cancel(&self) -> Done<'_> {
+        Done { job: self }
     }
 
     pub async fn child<S: ToString>(&self, owner: Uuid, alias: S) -> Result<Job, E> {

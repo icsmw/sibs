@@ -2,15 +2,56 @@ mod converting;
 
 pub use converting::*;
 
-use crate::*;
+use crate::{spawner::SpawnStatus, *};
 use std::fmt;
+
+#[enum_ids::enum_ids(display_variant)]
+#[derive(Debug, Clone, PartialEq)]
+pub enum ExecuteResult {
+    Success(Vec<RtValue>),
+    Failed(Option<i32>, Vec<RtValue>),
+    Cancelled,
+}
+
+impl fmt::Display for ExecuteResult {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Success(..) => "Success".to_owned(),
+                Self::Failed(code, ..) =>
+                    if let Some(code) = code {
+                        format!("Failed (code {code})")
+                    } else {
+                        "Failed".to_owned()
+                    },
+                Self::Cancelled => "Cancelled".to_owned(),
+            }
+        )
+    }
+}
+
+impl From<SpawnStatus> for ExecuteResult {
+    fn from(status: SpawnStatus) -> Self {
+        match status {
+            SpawnStatus::Success(output) => {
+                ExecuteResult::Success(output.into_iter().map(RtValue::Str).collect())
+            }
+            SpawnStatus::Failed(code, output) => {
+                ExecuteResult::Failed(code, output.into_iter().map(RtValue::Str).collect())
+            }
+            SpawnStatus::Cancelled => ExecuteResult::Cancelled,
+        }
+    }
+}
 
 /// Runtime Value
 #[enum_ids::enum_ids(display_variant)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum RtValue {
     Void,
-    ExecuteResult,
+    ExecuteResult(ExecuteResult),
     Range(RangeInclusive<isize>),
     Num(f64),
     Bool(bool),
@@ -24,10 +65,16 @@ pub enum RtValue {
     LogicalOperator(LogicalOperator),
 }
 
+impl From<SpawnStatus> for RtValue {
+    fn from(status: SpawnStatus) -> Self {
+        RtValue::ExecuteResult(status.into())
+    }
+}
+
 impl RtValue {
     pub fn as_string(self) -> Option<String> {
         match self {
-            Self::ExecuteResult
+            Self::ExecuteResult(..)
             | Self::Error
             | Self::Closure(..)
             | Self::BinaryOperator(..)
@@ -66,7 +113,7 @@ impl RtValue {
             Self::Str(..) => Some(DeterminedTy::Str.into()),
             Self::Range(..) => Some(DeterminedTy::Range.into()),
             Self::Error => Some(DeterminedTy::Error.into()),
-            Self::ExecuteResult => Some(DeterminedTy::ExecuteResult.into()),
+            Self::ExecuteResult(..) => Some(DeterminedTy::ExecuteResult.into()),
             Self::Closure(uuid) => Some(DeterminedTy::Closure(*uuid, None).into()),
             Self::Void => Some(DeterminedTy::Void.into()),
             Self::Vec(els) => {
@@ -97,7 +144,7 @@ impl RtValue {
             | Self::Closure(..)
             | Self::ComparisonOperator(..)
             | Self::Error
-            | Self::ExecuteResult
+            | Self::ExecuteResult(..)
             | Self::Range(..)
             | Self::Vec(..)
             | Self::Void => None,
@@ -121,7 +168,7 @@ impl fmt::Display for RtValue {
             "{}",
             match self {
                 Self::Void => String::from("Void"),
-                Self::ExecuteResult => String::from("ExecuteResult"),
+                Self::ExecuteResult(v) => format!("ExecuteResult({v})"),
                 Self::Range(v) => format!("Range({v:?})"),
                 Self::Num(v) => format!("Num({v})"),
                 Self::Bool(v) => format!("Bool({v})"),

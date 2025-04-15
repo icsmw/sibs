@@ -24,15 +24,17 @@ impl Interpret for Command {
                     .ok_or(LinkedErr::from(E::CannotBeConvertedToString, self))?,
             );
         }
-        // spawner::spawn(
-        //     vls.join(""),
-        //     cx.cwd()
-        //         .get_cwd()
-        //         .await
-        //         .map_err(|err| LinkedErr::token(err, &self.token))?,
-        //     owner,
-        //     cx,
-        // );
-        Ok(RtValue::Void)
+        spawner::spawn(
+            vls.join(""),
+            cx.cwd()
+                .get_cwd()
+                .await
+                .map_err(|err| LinkedErr::token(err, &self.token))?,
+            self.uuid,
+            cx,
+        )
+        .await
+        .map(|ss| ss.into())
+        .map_err(|err| LinkedErr::token(err, &self.token))
     }
 }

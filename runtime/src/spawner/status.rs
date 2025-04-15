@@ -1,8 +1,6 @@
-use std::{path::PathBuf, process::ExitStatus};
-
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum SpawnStatus {
-    Success,
-    Failed(Option<i32>),
+    Success(Vec<String>),
+    Failed(Option<i32>, Vec<String>),
     Cancelled,
 }
