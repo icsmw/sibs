@@ -2,6 +2,11 @@
 name = "asttree"
 version = "0.1.0"
 edition = "2021"
+authors = ["d.astafyev@outlook.com"]
+description = ""
+license = "Apache-2.0"
+repository = "https://github.com/icsmw/sibs.git"
+homepage = "https://github.com/icsmw/sibs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
