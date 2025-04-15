@@ -119,18 +119,12 @@ impl ContextCwd<'_> {
 pub struct Context {
     owner: Uuid,
     rt: RtContext,
-    pub journal: Journal,
-    pub progress: Progress,
+    pub job: Job,
 }
 
 impl Context {
-    pub fn new(owner: Uuid, rt: RtContext, journal: Journal, progress: Progress) -> Self {
-        Self {
-            owner,
-            rt,
-            journal,
-            progress,
-        }
+    pub fn new(owner: Uuid, rt: RtContext, job: Job) -> Self {
+        Self { owner, rt, job }
     }
     pub fn loops(&self) -> ContextLoop<'_> {
         ContextLoop {

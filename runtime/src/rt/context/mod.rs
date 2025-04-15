@@ -228,8 +228,8 @@ impl RtContext {
         Self { tx }
     }
 
-    pub fn create_owned(&self, owner: Uuid, journal: Journal, progress: Progress) -> Context {
-        Context::new(owner, self.clone(), journal, progress)
+    pub fn create(&self, owner: Uuid, job: Job) -> Context {
+        Context::new(owner, self.clone(), job)
     }
 
     pub(crate) async fn set_parent_vl(&self, owner: Uuid, vl: ParentValue) -> Result<(), E> {

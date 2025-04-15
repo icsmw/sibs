@@ -3,12 +3,17 @@ use crate::*;
 #[derive(Debug, Clone)]
 pub struct Journal {
     owner: Uuid,
+    parent: Option<Uuid>,
     journal: RtJournal,
 }
 
 impl Journal {
-    pub fn new(owner: Uuid, journal: RtJournal) -> Self {
-        Self { owner, journal }
+    pub fn new(owner: Uuid, parent: Option<Uuid>, journal: RtJournal) -> Self {
+        Self {
+            owner,
+            parent,
+            journal,
+        }
     }
     pub fn stdout<S: Into<String>>(&self, msg: S) {
         self.journal.stdout(self.owner, msg);
@@ -32,5 +37,13 @@ impl Journal {
 
     pub fn warn<S: Into<String>>(&self, msg: S) {
         self.journal.warn(self.owner, msg);
+    }
+
+    pub fn child(&self, owner: Uuid) -> Journal {
+        Self {
+            owner,
+            parent: Some(self.owner),
+            journal: self.journal.clone(),
+        }
     }
 }

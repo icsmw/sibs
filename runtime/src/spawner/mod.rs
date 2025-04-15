@@ -10,10 +10,7 @@ use tokio::{
     select,
 };
 use tokio_stream::StreamExt;
-use tokio_util::{
-    codec::{self, LinesCodec, LinesCodecError},
-    sync::CancellationToken,
-};
+use tokio_util::codec::{self, LinesCodec, LinesCodecError};
 
 use crate::*;
 pub use status::*;
@@ -57,39 +54,33 @@ pub async fn spawn<S: AsRef<str>, P: AsRef<Path>>(
     cmd: S,
     cwd: P,
     owner: Uuid,
-    parent: Option<Uuid>,
-    token: CancellationToken,
-    rt: Runtime,
+    cx: Context,
 ) -> Result<SpawnStatus, E> {
-    fn post_logs(
-        line: Result<String, LinesCodecError>,
-        stdout: bool,
-        progress: &Progress,
-        journal: &Journal,
-    ) {
+    fn post_logs(line: Result<String, LinesCodecError>, stdout: bool, job: &Job) {
         match line {
             Ok(line) => {
                 let trimmed = line.trim_end();
-                progress.msg(trimmed);
+                job.progress.msg(trimmed);
                 if stdout {
-                    journal.stdout(trimmed);
+                    job.journal.stdout(trimmed);
                 } else {
-                    journal.stderr(trimmed);
+                    job.journal.stderr(trimmed);
                 }
             }
             Err(err) => {
-                journal.err(format!("Error during decoding cmd output: {err}",));
+                job.journal
+                    .err(format!("Error during decoding cmd output: {err}",));
             }
         }
     }
-    fn get_status(status: ExitStatus, progress: &Progress, journal: &Journal) -> SpawnStatus {
+    fn get_status(status: ExitStatus, job: &Job) -> SpawnStatus {
         if status.success() {
-            progress.success::<&str>(None);
-            journal.debug("Finished successfully");
+            job.progress.success::<&str>(None);
+            job.journal.debug("Finished successfully");
             SpawnStatus::Success
         } else {
-            progress.failed::<&str>(None);
-            journal.debug(format!(
+            job.progress.failed::<&str>(None);
+            job.journal.debug(format!(
                 "Finished with error; code: {}",
                 status
                     .code()
@@ -99,11 +90,7 @@ pub async fn spawn<S: AsRef<str>, P: AsRef<Path>>(
             SpawnStatus::Failed(status.code())
         }
     }
-    let journal = rt.journal.owned(owner);
-    let progress = rt
-        .progress
-        .create_job(cmd.as_ref(), parent.as_ref())
-        .await?;
+    let job = cx.job.child(Uuid::new_v4(), cmd.as_ref()).await?;
     let mut child = setup(cmd, cwd)?;
     let mut stdout = codec::FramedRead::new(
         child
@@ -119,46 +106,47 @@ pub async fn spawn<S: AsRef<str>, P: AsRef<Path>>(
             .ok_or_else(|| E::SpawnSetup(String::from("Fail to get stderr handle")))?,
         LinesCodec::default(),
     );
+    let token = job.cancel.clone();
     let status = select! {
         res = async {
             join!(
                 async {
                     while let Some(line) = stdout.next().await {
-                        post_logs(line, true, &progress, &journal)
+                        post_logs(line, true, &job)
                     }
                 },
                 async {
                     while let Some(line) = stderr.next().await {
-                         post_logs(line, false, &progress, &journal)
+                         post_logs(line, false, &job)
                     }
                 }
             );
             child.wait().await
         } => {
-            res.map(|status| get_status(status, &progress, &journal))
+            res.map(|status| get_status(status, &job))
                 .map_err(|err| E::SpawnError(err.to_string()))?
         }
         _ = async {
             token.cancelled().await;
         } => {
-            journal.debug("Cancel signal has been gotten");
+            job.journal.debug("Cancel signal has been gotten");
             match child.try_wait() {
                 Ok(Some(status)) => {
-                    get_status(status, &progress, &journal)
+                    get_status(status, &job)
                 }
                 Ok(None) => {
                     if let Err(err) = child.kill().await {
-                        progress.cancelled(Some(err.to_string()));
-                        journal.err(format!("Fail to kill process: {err}"));
+                        job.progress.cancelled(Some(err.to_string()));
+                        job.journal.err(format!("Fail to kill process: {err}"));
                     } else {
-                        progress.cancelled(Some(String::from("Process has been killed")));
-                        journal.err("Process has been killed");
+                        job.progress.cancelled(Some(String::from("Process has been killed")));
+                        job.journal.err("Process has been killed");
                     }
                     SpawnStatus::Cancelled
                 }
                 Err(err) => {
-                    progress.cancelled(Some(err.to_string()));
-                    journal.err(format!("Fail to kill process: {err}"));
+                    job.progress.cancelled(Some(err.to_string()));
+                    job.journal.err(format!("Fail to kill process: {err}"));
                     SpawnStatus::Cancelled
                 }
             }

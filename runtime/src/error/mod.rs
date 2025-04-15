@@ -148,6 +148,11 @@ pub enum E {
 
     #[error("Fail to get time with UNIX_EPOCH")]
     Timestamp,
+
+    #[error("Job {1} ({0}) already exists")]
+    JobAlreadyExists(Uuid, String),
+    #[error("Job {0} doesn't exist")]
+    JobDoesNotExist(Uuid),
 }
 
 impl From<indicatif::style::TemplateError> for E {

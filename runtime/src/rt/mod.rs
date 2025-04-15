@@ -36,8 +36,7 @@ impl Runtime {
             tasks: Arc::new(tasks),
         };
         let cx = RtContext::new(params.cwd.clone());
-        let progress = RtProgress::new()?;
-        let journal = RtJournal::new()?;
+        let jobs = RtJobs::new()?;
         spawn(async move {
             tracing::info!("init demand's listener");
             while let Some(demand) = rx.recv().await {
@@ -45,24 +44,20 @@ impl Runtime {
                     Demand::GetRtParameters(tx) => {
                         chk_send_err!(tx.send(params.clone()), DemandId::GetRtParameters);
                     }
-                    Demand::CreateOwnedContext(owner, tx) => {
-                        let progress = match progress.create_job("job", None).await {
-                            Ok(progress) => progress,
+                    Demand::CreateContext(owner, alias, parent, tx) => {
+                        let job = match jobs.create(owner, alias, parent).await {
+                            Ok(job) => job,
                             Err(err) => {
-                                chk_send_err!(tx.send(Err(err)), DemandId::CreateOwnedContext);
+                                chk_send_err!(tx.send(Err(err)), DemandId::CreateContext);
                                 continue;
                             }
                         };
-                        chk_send_err!(
-                            tx.send(Ok(cx.create_owned(owner, journal.owned(owner), progress))),
-                            DemandId::CreateOwnedContext
-                        );
+                        chk_send_err!(tx.send(Ok(cx.create(owner, job))), DemandId::CreateContext);
                     }
                     Demand::Destroy(tx) => {
                         tracing::info!("got shutdown signal");
                         chk_err!(cx.destroy().await);
-                        chk_err!(progress.destroy().await);
-                        chk_err!(journal.destroy().await);
+                        chk_err!(jobs.destroy().await);
                         chk_send_err!(tx.send(()), DemandId::Destroy);
                         break;
                     }
@@ -79,9 +74,15 @@ impl Runtime {
         Ok(rx.await?)
     }
 
-    pub async fn create_cx(&self, owner: Uuid) -> Result<Context, E> {
+    pub async fn create_cx<S: ToString>(
+        &self,
+        owner: Uuid,
+        alias: S,
+        parent: Option<Uuid>,
+    ) -> Result<Context, E> {
         let (tx, rx) = oneshot::channel();
-        self.tx.send(Demand::CreateOwnedContext(owner, tx))?;
+        self.tx
+            .send(Demand::CreateContext(owner, alias.to_string(), parent, tx))?;
         rx.await?
     }
 

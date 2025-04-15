@@ -107,7 +107,7 @@ impl ProgressRender {
         let state = ProgressState::default();
         let pref = ProgressRef {
             alias: progress.alias.clone(),
-            uuid: progress.uuid,
+            uuid: progress.owner,
             childs: IndexMap::new(),
             bar: self.styles.get(&state),
             state,

@@ -1,5 +1,5 @@
 use crate::*;
-// use runtime::spawner;
+use runtime::spawner;
 
 impl Interpret for CommandPart {
     #[boxed]
@@ -24,8 +24,15 @@ impl Interpret for Command {
                     .ok_or(LinkedErr::from(E::CannotBeConvertedToString, self))?,
             );
         }
-        let cmd = vls.join("");
-        // spawner::spawn(cmd, cwd, owner, parent, token, rt);
-        Ok(RtValue::Str(vls.join("")))
+        // spawner::spawn(
+        //     vls.join(""),
+        //     cx.cwd()
+        //         .get_cwd()
+        //         .await
+        //         .map_err(|err| LinkedErr::token(err, &self.token))?,
+        //     owner,
+        //     cx,
+        // );
+        Ok(RtValue::Void)
     }
 }

@@ -47,13 +47,13 @@ impl RtProgress {
                 };
                 match tick {
                     NextTick::Demand(demand) => match demand {
-                        Demand::CreateJob(alias, parent, tx) => {
-                            let job = Progress::new(alias, parent, this.clone());
+                        Demand::Create(owner, alias, parent, tx) => {
+                            let job = Progress::new(owner, alias, parent, this.clone());
                             if let Err(err) = render.add(&job) {
-                                chk_send_err!(tx.send(Err(err)), DemandId::CreateJob);
+                                chk_send_err!(tx.send(Err(err)), DemandId::Create);
                                 continue;
                             };
-                            chk_send_err!(tx.send(Ok(job)), DemandId::CreateJob);
+                            chk_send_err!(tx.send(Ok(job)), DemandId::Create);
                         }
                         Demand::SetState(uuid, state) => {
                             render.set_state(uuid, state);
@@ -81,14 +81,15 @@ impl RtProgress {
         Ok(instance)
     }
 
-    pub async fn create_job<S: ToString>(
+    pub(crate) async fn create<S: ToString>(
         &self,
-        job: S,
-        parent: Option<&Uuid>,
+        owner: Uuid,
+        alias: S,
+        parent: Option<Uuid>,
     ) -> Result<Progress, E> {
         let (tx, rx) = oneshot::channel();
         self.tx
-            .send(Demand::CreateJob(job.to_string(), parent.copied(), tx))?;
+            .send(Demand::Create(owner, alias.to_string(), parent, tx))?;
         rx.await?
     }
 
@@ -121,7 +122,7 @@ async fn visual_test() {
     let mut jobs = Vec::new();
     for job in ["a", "b", "c", "d"] {
         let master = progressor
-            .create_job(format!("Job {job}"), None)
+            .create(Uuid::new_v4(), format!("Job {job}"), None)
             .await
             .expect("Job's progress created");
         for sub in 0..5 {

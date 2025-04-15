@@ -3,6 +3,6 @@ use crate::*;
 #[derive(Debug)]
 #[enum_ids::enum_ids(display)]
 pub enum Demand {
-    Write(Record),
+    Create(Uuid, String, Option<Uuid>, oneshot::Sender<Result<Job, E>>),
     Destroy(oneshot::Sender<()>),
 }

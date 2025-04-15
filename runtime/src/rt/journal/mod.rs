@@ -42,8 +42,8 @@ impl RtJournal {
         Ok(rx.await?)
     }
 
-    pub fn owned(&self, owner: Uuid) -> Journal {
-        Journal::new(owner, self.clone())
+    pub(crate) fn create(&self, owner: Uuid, parent: Option<Uuid>) -> Journal {
+        Journal::new(owner, parent, self.clone())
     }
 
     pub fn stdout<S: Into<String>>(&self, owner: Uuid, msg: S) {

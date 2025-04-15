@@ -1,7 +1,7 @@
 mod declaration;
 pub mod error;
 mod rt;
-// pub mod spawner;
+pub mod spawner;
 mod utils;
 mod value;
 
