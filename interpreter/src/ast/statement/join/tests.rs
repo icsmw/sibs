@@ -27,21 +27,20 @@ test_task_results!(
         task task_a() {
             join(
                 `../target/debug/exit 0 500 60 60`.success(),
-                :my_component:task_b(),
-                :my_component:task_c(),
-                :my_component:task_d(),
+                :my_component:task_b().success(),
+                :my_component:task_c().success(),
+                :my_component:task_d().success(),
             );
-            print("Hello");
             true;
         }
         task task_b() {
-            `../target/debug/exit 0 400 60 60`.success();
+            `../target/debug/exit 0 400 60 60`;
         }
         task task_c() {
-            `../target/debug/exit 0 200 60 60`.success();
+            `../target/debug/exit 0 200 60 60`;
         }
         task task_d() {
-            `../target/debug/exit 0 300 60 60`.success();
+            `../target/debug/exit 0 300 60 60`;
         }
     };
     "#
