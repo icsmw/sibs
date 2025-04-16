@@ -10,7 +10,20 @@ use std::fmt;
 pub enum ExecuteResult {
     Success(Vec<RtValue>),
     Failed(Option<i32>, Vec<RtValue>),
+    RunError(String),
     Cancelled,
+}
+
+impl ExecuteResult {
+    pub fn is_success(&self) -> bool {
+        matches!(self, Self::Success(..))
+    }
+    pub fn is_failed(&self) -> bool {
+        matches!(self, Self::Failed(..) | Self::RunError(..))
+    }
+    pub fn is_cancelled(&self) -> bool {
+        matches!(self, Self::Cancelled)
+    }
 }
 
 impl fmt::Display for ExecuteResult {
@@ -26,6 +39,7 @@ impl fmt::Display for ExecuteResult {
                     } else {
                         "Failed".to_owned()
                     },
+                Self::RunError(err) => format!("Fail to run: {err}"),
                 Self::Cancelled => "Cancelled".to_owned(),
             }
         )
@@ -41,6 +55,7 @@ impl From<SpawnStatus> for ExecuteResult {
             SpawnStatus::Failed(code, output) => {
                 ExecuteResult::Failed(code, output.into_iter().map(RtValue::Str).collect())
             }
+            SpawnStatus::RunError(err) => ExecuteResult::RunError(err),
             SpawnStatus::Cancelled => ExecuteResult::Cancelled,
         }
     }

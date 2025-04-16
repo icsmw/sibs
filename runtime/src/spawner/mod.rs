@@ -18,6 +18,7 @@ pub use status::*;
 #[cfg(windows)]
 fn setup<S: AsRef<str>, P: AsRef<Path>>(cmd: S, cwd: P) -> Result<Child, E> {
     let (cmd, args) = parse_command(cmd.as_ref());
+    let cwd_str = cwd.as_ref().to_string_lossy().to_string();
     const CREATE_NO_WINDOW: u32 = 0x08000000;
     Command::new(cmd)
         .args(args)
@@ -28,12 +29,13 @@ fn setup<S: AsRef<str>, P: AsRef<Path>>(cmd: S, cwd: P) -> Result<Child, E> {
         .stdin(Stdio::piped())
         .kill_on_drop(true)
         .spawn()
-        .map_err(|e| E::SpawnSetup(e.to_string()))
+        .map_err(|e| E::SpawnSetup(e.to_string(), cwd_str))
 }
 
 #[cfg(not(windows))]
 fn setup<S: AsRef<str>, P: AsRef<Path>>(cmd: S, cwd: P) -> Result<Child, E> {
     let (cmd, args) = parse_command(cmd.as_ref());
+    let cwd_str = cwd.as_ref().to_string_lossy().to_string();
     Command::new(cmd)
         .args(args)
         .current_dir(cwd)
@@ -42,7 +44,7 @@ fn setup<S: AsRef<str>, P: AsRef<Path>>(cmd: S, cwd: P) -> Result<Child, E> {
         .stdin(Stdio::piped())
         .kill_on_drop(true)
         .spawn()
-        .map_err(|e| E::SpawnSetup(e.to_string()))
+        .map_err(|e| E::SpawnSetup(e.to_string(), cwd_str))
 }
 
 fn parse_command(cmd: &str) -> (&str, Vec<&str>) {
@@ -94,22 +96,26 @@ pub async fn spawn<S: AsRef<str>, P: AsRef<Path>>(
             SpawnStatus::Failed(status.code(), output)
         }
     }
+    let cwd_str = cwd.as_ref().to_string_lossy().to_string();
     let mut cstdout = Vec::new();
     let mut cstderr = Vec::new();
     let job = cx.job.child(Uuid::new_v4(), cmd.as_ref()).await?;
-    let mut child = setup(cmd, cwd)?;
+    let mut child = match setup(cmd, cwd) {
+        Ok(child) => child,
+        Err(err) => {
+            return Ok(SpawnStatus::RunError(err.to_string()));
+        }
+    };
     let mut stdout = codec::FramedRead::new(
-        child
-            .stdout
-            .take()
-            .ok_or_else(|| E::SpawnSetup(String::from("Fail to get stdout handle")))?,
+        child.stdout.take().ok_or_else(|| {
+            E::SpawnSetup(String::from("Fail to get stdout handle"), cwd_str.clone())
+        })?,
         LinesCodec::default(),
     );
     let mut stderr = codec::FramedRead::new(
-        child
-            .stderr
-            .take()
-            .ok_or_else(|| E::SpawnSetup(String::from("Fail to get stderr handle")))?,
+        child.stderr.take().ok_or_else(|| {
+            E::SpawnSetup(String::from("Fail to get stderr handle"), cwd_str.clone())
+        })?,
         LinesCodec::default(),
     );
     let token = job.cancel.clone();
@@ -130,7 +136,7 @@ pub async fn spawn<S: AsRef<str>, P: AsRef<Path>>(
             child.wait().await
         } => {
             res.map(|status| get_status(status, [cstdout, cstderr].concat(), &job))
-                .map_err(|err| E::SpawnError(err.to_string()))?
+                .map_err(|err| E::SpawnError(err.to_string(), cwd_str))?
         }
         _ = async {
             token.cancelled().await;

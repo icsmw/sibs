@@ -1,4 +1,9 @@
-use std::path::{Path, PathBuf};
+use std::{
+    env::current_dir,
+    path::{Path, PathBuf},
+};
+
+use crate::E;
 
 #[derive(Debug, Default, Clone)]
 pub struct RtParameters {
@@ -21,5 +26,12 @@ impl RtParameters {
             component: component.as_ref().to_owned(),
             task: task.as_ref().to_owned(),
         }
+    }
+
+    pub fn default_from_cwd() -> Result<Self, E> {
+        Ok(Self {
+            cwd: std::env::current_dir()?,
+            ..Default::default()
+        })
     }
 }

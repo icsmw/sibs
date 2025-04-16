@@ -33,7 +33,7 @@ macro_rules! test_value_expectation {
                 }
                 assert!(result.is_ok());
                 let rt = Runtime::new(
-                    RtParameters::default(),
+                    RtParameters::default_from_cwd().expect("RtParameter created"),
                     scx.table,
                     into_rt_ufns(scx.fns),
                     into_rt_tasks(scx.tasks),
@@ -91,7 +91,7 @@ macro_rules! test_fail {
                 }
                 assert!(result.is_ok());
                 let rt = Runtime::new(
-                    RtParameters::default(),
+                    RtParameters::default_from_cwd().expect("RtParameter created"),
                     scx.table,
                     into_rt_ufns(scx.fns),
                     into_rt_tasks(scx.tasks),
