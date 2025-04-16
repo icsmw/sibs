@@ -18,6 +18,7 @@ thiserror.workspace = true
 uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }
 tracing.workspace = true
 tracing-subscriber.workspace = true
+futures.workspace = true
 
 asttree = { path = "../asttree" }
 diagnostics = { path = "../diagnostics" }

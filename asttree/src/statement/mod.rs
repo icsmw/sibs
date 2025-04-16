@@ -73,6 +73,7 @@ pub enum Statement {
     /// any value to assignate to variable
     AssignedValue(AssignedValue),
     OneOf(OneOf),
+    /// join(`command`, `command`);
     Join(Join),
 }
 

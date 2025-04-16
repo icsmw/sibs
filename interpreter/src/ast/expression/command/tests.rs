@@ -51,12 +51,14 @@ test_value_expectation!(
     }"#
 );
 
-test_fail!(
+test_value_expectation!(
     command_005,
     Block,
-    r#"{
-        // Failed because command is invalid
-        `same very fake command`.success();
+    RtValue::Bool(true),
+    r#"
+    {
+        
+        `../target/debug/exit 0`.is_success();
     }"#
 );
 
@@ -65,17 +67,24 @@ test_fail!(
     Block,
     r#"{
         // Failed because command is invalid
+        `same very fake command`.success();
+    }"#
+);
+
+test_fail!(
+    command_007,
+    Block,
+    r#"{
+        // Failed because command is invalid
         `same very fake command`.executed();
     }"#
 );
 
-
 test_fail!(
-    command_007,
+    command_008,
     Block,
     r#"{
         // Failed because arguments are invalid
         `ls -fake`.success();
     }"#
 );
-

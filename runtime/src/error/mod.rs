@@ -1,6 +1,7 @@
 use crate::*;
 use std::{io, time::SystemTimeError};
 use thiserror::Error;
+use tokio::task::JoinError;
 
 #[derive(Error, Debug)]
 pub enum E {
@@ -157,6 +158,13 @@ pub enum E {
     JobAlreadyExists(Uuid, String),
     #[error("Job {0} doesn't exist")]
     JobDoesNotExist(Uuid),
+
+    #[error("Join error: {0}")]
+    JoinError(JoinError),
+    #[error("Fail to find join result {0}")]
+    FailToFindJoinResult(Uuid),
+    #[error("Some nodes had same UUIDs, cannot order results")]
+    SomeNodesHadSameUuid,
 }
 
 impl From<indicatif::style::TemplateError> for E {
@@ -168,6 +176,12 @@ impl From<indicatif::style::TemplateError> for E {
 impl From<io::Error> for E {
     fn from(err: io::Error) -> Self {
         E::IO(err)
+    }
+}
+
+impl From<JoinError> for E {
+    fn from(err: JoinError) -> Self {
+        E::JoinError(err)
     }
 }
 
