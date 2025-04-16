@@ -3,11 +3,14 @@ mod context;
 mod jobs;
 mod journal;
 mod progressor;
+mod signals;
 
 pub use context::*;
 pub use jobs::*;
 pub use journal::*;
 pub use progressor::*;
+pub use signals::*;
+use tokio_util::sync::CancellationToken;
 
 use crate::*;
 use api::*;
@@ -16,6 +19,24 @@ use std::{future::Future, pin::Pin};
 
 pub type RtPinnedResult<'a, E> = Pin<Box<dyn Future<Output = RtResult<E>> + 'a + Send>>;
 pub type RtResult<E> = Result<RtValue, E>;
+
+pub struct SignalsGroup<'a> {
+    rt: &'a Runtime,
+}
+
+impl SignalsGroup<'_> {
+    pub async fn emit_signal<S: ToString>(&self, key: S) -> Result<(), E> {
+        self.rt.emit_signal(key).await
+    }
+
+    pub async fn wait_signal<S: ToString>(&self, key: S) -> Result<Option<CancellationToken>, E> {
+        self.rt.wait_signal(key).await
+    }
+
+    pub async fn waiters_signal<S: ToString>(&self, key: S) -> Result<usize, E> {
+        self.rt.waiters_signal(key).await
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct Runtime {
@@ -37,6 +58,7 @@ impl Runtime {
         };
         let cx = RtContext::new(params.cwd.clone());
         let jobs = RtJobs::new()?;
+        let mut signals = Signals::default();
         spawn(async move {
             tracing::info!("init demand's listener");
             while let Some(demand) = rx.recv().await {
@@ -53,6 +75,15 @@ impl Runtime {
                             }
                         };
                         chk_send_err!(tx.send(Ok(cx.create(owner, job))), DemandId::CreateContext);
+                    }
+                    Demand::EmitSignal(key, tx) => {
+                        chk_send_err!(tx.send(signals.emit(key)), DemandId::EmitSignal);
+                    }
+                    Demand::WaitSignal(key, tx) => {
+                        chk_send_err!(tx.send(signals.wait(key)), DemandId::WaitSignal);
+                    }
+                    Demand::WaitersSignal(key, tx) => {
+                        chk_send_err!(tx.send(signals.waiters(key)), DemandId::WaitersSignal);
                     }
                     Demand::Destroy(tx) => {
                         tracing::info!("got shutdown signal");
@@ -84,6 +115,31 @@ impl Runtime {
         self.tx
             .send(Demand::CreateContext(owner, alias.to_string(), parent, tx))?;
         rx.await?
+    }
+
+    pub fn signals(&self) -> SignalsGroup<'_> {
+        SignalsGroup { rt: self }
+    }
+
+    pub(crate) async fn emit_signal<S: ToString>(&self, key: S) -> Result<(), E> {
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(Demand::EmitSignal(key.to_string(), tx))?;
+        rx.await?
+    }
+
+    pub(crate) async fn wait_signal<S: ToString>(
+        &self,
+        key: S,
+    ) -> Result<Option<CancellationToken>, E> {
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(Demand::WaitSignal(key.to_string(), tx))?;
+        Ok(rx.await?)
+    }
+
+    pub(crate) async fn waiters_signal<S: ToString>(&self, key: S) -> Result<usize, E> {
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(Demand::WaitersSignal(key.to_string(), tx))?;
+        Ok(rx.await?)
     }
 
     pub async fn destroy(&self) -> Result<(), E> {

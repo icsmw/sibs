@@ -165,6 +165,9 @@ pub enum E {
     FailToFindJoinResult(Uuid),
     #[error("Some nodes had same UUIDs, cannot order results")]
     SomeNodesHadSameUuid,
+
+    #[error("Signal \"{0}\" emitted multiple times")]
+    MultipleSignalEmit(String),
 }
 
 impl From<indicatif::style::TemplateError> for E {

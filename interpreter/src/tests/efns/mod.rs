@@ -1,1 +1,2 @@
+mod signals;
 mod strs;
