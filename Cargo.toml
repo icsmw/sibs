@@ -11,7 +11,10 @@ members = [
     "runtime",
     "functions",
     "support/boxed",
-    "support/importer"
+    "support/importer",
+    "tests/cmds/test_utils",
+    "tests/cmds/exit",
+    "tests/cmds/noise"
 ]
 
 [workspace.dependencies]
@@ -31,3 +34,4 @@ tracing-subscriber = "0.3"
 console = "0.15"
 indicatif = "0.17"
 indexmap = "2.7"
+rand = "0.9"
