@@ -8,11 +8,17 @@ impl Arbitrary for Join {
 
     fn arbitrary_with(deep: Self::Parameters) -> Self::Strategy {
         prop::collection::vec(
-            Command::arbitrary_with(deep + 1)
-                .prop_map(|n| Node::Expression(Expression::Command(n)))
-                .prop_map(move |n| (n, deep + 1))
-                .prop_flat_map(LinkedNode::arbitrary_with)
-                .boxed(),
+            prop::strategy::Union::new(vec![
+                Command::arbitrary_with(deep + 1)
+                    .prop_map(|v| Node::Expression(Expression::Command(v)))
+                    .prop_map(move |n| (n, deep + 1))
+                    .boxed(),
+                TaskCall::arbitrary_with(deep + 1)
+                    .prop_map(|v| Node::Expression(Expression::TaskCall(v)))
+                    .prop_map(move |n| (n, deep + 1))
+                    .boxed(),
+            ])
+            .prop_flat_map(LinkedNode::arbitrary_with),
             1..5,
         )
         .prop_map(move |commands| Join {

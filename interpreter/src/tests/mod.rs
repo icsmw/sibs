@@ -141,7 +141,7 @@ macro_rules! test_task_results {
                 }
                 assert!(result.is_ok());
                 let rt = Runtime::new(
-                    RtParameters::new($component_name, $task_name, Vec::new(), PathBuf::new()),
+                    RtParameters::new($component_name, $task_name, Vec::new(), std::env::current_dir().expect("Current folder detected")),
                     scx.table,
                     into_rt_ufns(scx.fns),
                     into_rt_tasks(scx.tasks),

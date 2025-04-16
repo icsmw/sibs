@@ -25,7 +25,10 @@ impl ReadNode<Join> for Join {
         let mut commands = Vec::new();
         while let Some(node) = LinkedNode::try_oneof(
             &mut inner,
-            &[NodeTarget::Expression(&[ExpressionId::Command])],
+            &[NodeTarget::Expression(&[
+                ExpressionId::Command,
+                ExpressionId::TaskCall,
+            ])],
         )? {
             commands.push(node);
             let Some(tk) = inner.token() else {

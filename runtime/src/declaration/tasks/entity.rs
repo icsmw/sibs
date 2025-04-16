@@ -78,7 +78,11 @@ impl TaskEntity {
                 caller.into(),
             ));
         };
-        if let Err(err) = cx.location().enter(&self.uuid).await {
+        let task_cx = cx
+            .child(self.uuid, self.name.clone())
+            .await
+            .map_err(|err| LinkedErr::by_link(err, caller.into()))?;
+        if let Err(err) = task_cx.location().enter(&self.uuid).await {
             return Err(LinkedErr::by_link(err, link.into()));
         }
         let mut err = None;
@@ -101,21 +105,25 @@ impl TaskEntity {
                 ));
                 break;
             }
-            if let Err(e) = cx.values().insert(&decl.ident, arg_vl.value).await {
+            if let Err(e) = task_cx.values().insert(&decl.ident, arg_vl.value).await {
                 err = Some(LinkedErr::by_link(e, (&arg_vl.link).into()));
                 break;
             }
         }
         if let Some(err) = err.take() {
-            if let Err(err) = cx.location().leave().await {
+            if let Err(err) = task_cx.location().leave().await {
                 return Err(LinkedErr::by_link(err, link.into()));
             }
             return Err(err);
         }
-        let result = exec(rt.clone(), cx.clone()).await;
-        if let Err(err) = cx.location().leave().await {
+        let result = exec(rt.clone(), task_cx.clone()).await;
+        if let Err(err) = task_cx.location().leave().await {
             return Err(LinkedErr::by_link(err, link.into()));
         }
+        task_cx
+            .close()
+            .await
+            .map_err(|err| LinkedErr::by_link(err, caller.into()))?;
         result
     }
 

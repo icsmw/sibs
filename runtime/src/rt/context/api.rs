@@ -23,6 +23,7 @@ pub enum DemandCommand {
     WithdrawReturnValue(Uuid, oneshot::Sender<Result<Option<RtValue>, E>>),
     GetCwd(oneshot::Sender<PathBuf>),
     SetCwd(PathBuf, oneshot::Sender<()>),
+    CloseContext(Uuid, oneshot::Sender<()>),
 }
 
 #[derive(Debug)]

@@ -214,6 +214,10 @@ impl RtContext {
                                 store.cwd = path;
                                 chk_send_err!(tx.send(()), DemandCommandId::SetCwd);
                             }
+                            DemandCommand::CloseContext(uuid, tx) => {
+                                stores.remove(&uuid);
+                                chk_send_err!(tx.send(()), DemandCommandId::CloseContext);
+                            }
                         }
                     }
                     Demand::Destroy(tx) => {
@@ -405,6 +409,15 @@ impl RtContext {
         let (tx, rx) = oneshot::channel();
         self.tx
             .send(Demand::Command(owner, DemandCommand::SetCwd(path, tx)))?;
+        rx.await.map_err(|e| e.into())
+    }
+
+    pub(crate) async fn close_cx(&self, owner: Uuid) -> Result<(), E> {
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(Demand::Command(
+            owner,
+            DemandCommand::CloseContext(owner, tx),
+        ))?;
         rx.await.map_err(|e| e.into())
     }
 

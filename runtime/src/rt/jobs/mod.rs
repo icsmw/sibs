@@ -6,6 +6,7 @@ use crate::*;
 use api::*;
 use entry::*;
 pub use job::*;
+use tokio_util::sync::CancellationToken;
 
 #[derive(Clone, Debug)]
 pub struct RtJobs {
@@ -21,7 +22,8 @@ impl RtJobs {
         let inner = instance.clone();
         spawn(async move {
             tracing::info!("init demand's listener");
-            let mut root: JobEntry = JobEntry::new("root", Uuid::new_v4(), None);
+            let mut root: JobEntry =
+                JobEntry::new("root", Uuid::new_v4(), None, CancellationToken::new());
             while let Some(demand) = rx.recv().await {
                 match demand {
                     Demand::Destroy(tx) => {
@@ -30,7 +32,7 @@ impl RtJobs {
                         break;
                     }
                     Demand::Create(owner, alias, parent, tx) => {
-                        let job = JobEntry::new(&alias, owner, parent);
+                        let job = JobEntry::new(&alias, owner, parent, root.cancel.clone());
                         if let Some(parent_uuid) = parent {
                             let Some(parent_entry) = root.find(&parent_uuid) else {
                                 chk_send_err!(

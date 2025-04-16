@@ -14,13 +14,18 @@ pub struct JobEntry {
 }
 
 impl JobEntry {
-    pub fn new<S: ToString>(alias: S, owner: Uuid, parent: Option<Uuid>) -> Self {
+    pub fn new<S: ToString>(
+        alias: S,
+        owner: Uuid,
+        parent: Option<Uuid>,
+        cancel: CancellationToken,
+    ) -> Self {
         Self {
             owner,
             parent,
             alias: alias.to_string(),
             childs: HashMap::new(),
-            cancel: CancellationToken::new(),
+            cancel,
         }
     }
     pub(crate) fn find(&mut self, uuid: &Uuid) -> Option<&mut JobEntry> {

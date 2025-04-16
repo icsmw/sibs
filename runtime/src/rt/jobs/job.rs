@@ -90,4 +90,9 @@ impl Job {
             .create(owner, alias.to_string(), Some(self.owner))
             .await
     }
+
+    pub fn close(&self) {
+        self.journal.debug("job is closed");
+        // TODO: Change state of progress?
+    }
 }
