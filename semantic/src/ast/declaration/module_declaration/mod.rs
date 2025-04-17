@@ -8,12 +8,34 @@ impl InferType for ModuleDeclaration {
 
 impl Initialize for ModuleDeclaration {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
-        self.node.initialize(scx)
+        scx.tys
+            .open(&self.uuid)
+            .map_err(|err| LinkedErr::sfrom(err.into(), self))?;
+        scx.fns.ufns.enter(&self.name);
+        for node in self.nodes.iter() {
+            node.initialize(scx)?;
+        }
+        scx.fns.ufns.leave();
+        scx.tys
+            .close()
+            .map_err(|err| LinkedErr::sfrom(err.into(), self))?;
+        self.infer_type(scx).map(|_| ())
     }
 }
 
 impl Finalization for ModuleDeclaration {
     fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
-        self.node.finalize(scx)
+        scx.tys
+            .open(&self.uuid)
+            .map_err(|err| LinkedErr::sfrom(err.into(), self))?;
+        scx.fns.ufns.enter(&self.name);
+        for node in self.nodes.iter() {
+            node.finalize(scx)?;
+        }
+        scx.fns.ufns.leave();
+        scx.tys
+            .close()
+            .map_err(|err| LinkedErr::sfrom(err.into(), self))?;
+        Ok(())
     }
 }

@@ -10,9 +10,6 @@ homepage = "https://github.com/icsmw/sibs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[features]
-io_tests = []
-
 [dependencies]
 
 enum_ids.workspace = true

@@ -1,0 +1,29 @@
+
+mod from "./mods/math.sibs";
+include from "./components/b.sibs";
+
+mod inner_mod_a {
+    fn sum(a: num, b: num) {
+        a + b;
+    };
+};
+
+component component_a() {
+    task task_a() {
+        let a = 5;
+        if a.inner_mod_a::sum(5) != 10 {
+            return false;
+        }
+        if a.math::sum(5) != 10 {
+            return false;
+        }
+        if a.math::inner::sum(5) != 10 {
+            return false;
+        }
+        let b = :component_b:task_b(5);
+        if b != 10 {
+            return false;
+        }
+        true;
+    }
+};

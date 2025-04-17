@@ -2,7 +2,7 @@ use crate::*;
 use proptest::prelude::*;
 
 impl Arbitrary for IncludeDeclaration {
-    type Parameters = ();
+    type Parameters = u8;
 
     type Strategy = BoxedStrategy<Self>;
 
@@ -15,6 +15,10 @@ impl Arbitrary for IncludeDeclaration {
                 sig: Token::for_test(Kind::Keyword(Keyword::Include)),
                 from: Token::for_test(Kind::Identifier(String::from("from"))),
                 node: Box::new(node),
+                root: Box::new(LinkedNode::from_node(Node::Root(Root::Anchor(Anchor {
+                    nodes: Vec::new(),
+                    uuid: Uuid::new_v4(),
+                })))),
                 uuid: Uuid::new_v4(),
             })
             .boxed()

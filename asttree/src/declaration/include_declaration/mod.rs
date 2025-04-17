@@ -9,6 +9,7 @@ pub struct IncludeDeclaration {
     pub sig: Token,
     pub from: Token,
     pub node: Box<LinkedNode>,
+    pub root: Box<LinkedNode>,
     pub uuid: Uuid,
 }
 

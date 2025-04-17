@@ -1,0 +1,12 @@
+
+mod inner_mod_b {
+    fn sum(a: num, b: num) {
+        a + b;
+    };
+};
+
+component component_b() {
+    task task_b(a: num) {
+        a.inner_mod_a::sum(5);
+    }
+};

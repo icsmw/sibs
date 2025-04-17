@@ -9,6 +9,8 @@ pub struct ModuleDeclaration {
     pub sig: Token,
     pub from: Token,
     pub node: Box<LinkedNode>,
+    pub name: String,
+    pub nodes: Vec<LinkedNode>,
     pub uuid: Uuid,
 }
 

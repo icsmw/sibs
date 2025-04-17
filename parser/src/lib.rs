@@ -1,7 +1,6 @@
 mod ast;
 mod error;
 
-pub use ast::*;
 pub use error::E as ParserError;
 pub(crate) use error::*;
 mod conflict;
@@ -55,13 +54,13 @@ impl Parser {
             pos: 0,
             src,
             filename: Some(filename.clone()),
-            srcs: Rc::new(RefCell::new(CodeSources::bound(filename, &src))),
+            srcs: Rc::new(RefCell::new(CodeSources::bound(filename, &src)?)),
             cwd: Some(cwd),
         })
     }
     pub fn new_child<P: AsRef<Path>>(&mut self, filename: P) -> Result<Self, E> {
         let (filename, cwd, tokens, src) = BoundLexer::new(filename.as_ref())?.inner();
-        self.srcs.borrow_mut().add_file_src(&filename, &src);
+        self.srcs.borrow_mut().add_file_src(&filename, &src)?;
         Ok(Self {
             tokens,
             pos: 0,
@@ -70,6 +69,28 @@ impl Parser {
             srcs: self.srcs.clone(),
             cwd: Some(cwd),
         })
+    }
+
+    pub fn from_node<N: GetFilename>(&mut self, node: &N) -> Result<Parser, E> {
+        let mut filename = node.get_filename()?;
+        if filename.is_relative() {
+            filename = self.cwd.as_ref().ok_or(E::NoParentPath)?.join(filename);
+        }
+        if !filename.exists() {
+            return Err(E::FileNotFound(filename.to_string_lossy().to_string()));
+        }
+        self.new_child(filename)
+    }
+
+    pub fn from_file<P: AsRef<Path>>(&mut self, filename: P) -> Result<Parser, E> {
+        let mut filename = filename.as_ref().to_path_buf();
+        if filename.is_relative() {
+            filename = self.cwd.as_ref().ok_or(E::NoParentPath)?.join(filename);
+        }
+        if !filename.exists() {
+            return Err(E::FileNotFound(filename.to_string_lossy().to_string()));
+        }
+        self.new_child(filename)
     }
 
     pub fn report_err<T: Display>(&self, err: &LinkedErr<T>) -> Result<String, E> {

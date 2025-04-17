@@ -271,7 +271,7 @@ impl BoundLexer {
             filename,
             cwd,
             tokens,
-            uuid: Uuid::new_v4(),
+            uuid: lexer.uuid,
         })
     }
     pub fn inner(self) -> (PathBuf, PathBuf, Vec<Token>, Uuid) {

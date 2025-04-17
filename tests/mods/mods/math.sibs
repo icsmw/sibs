@@ -1,0 +1,14 @@
+mod from "./nested.sibs";
+
+mod inner {
+    fn sum(a: num, b: num) {
+        nested::sum(a,b);
+    };
+}
+
+fn sum(a: num, b: num) {
+    a + b;
+};
+fn diff(a: num, b: num) {
+    a - b;
+};

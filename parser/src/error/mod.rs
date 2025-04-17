@@ -67,6 +67,8 @@ pub enum E {
     FailToFindNode(String),
     #[error("IO Error: {0}")]
     IOError(io::Error),
+    #[error("Fail to get module name from {0};")]
+    FailGetModuleName(String),
 
     /// Call
     #[error("Missed expression after dot")]

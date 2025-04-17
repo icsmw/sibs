@@ -38,19 +38,40 @@ pub struct CodeSources {
 }
 
 impl CodeSources {
-    pub fn bound<P: AsRef<Path>>(filename: P, uuid: &Uuid) -> Self {
+    pub fn bound<P: AsRef<Path>>(filename: P, uuid: &Uuid) -> Result<Self, io::Error> {
         let mut sources = HashMap::new();
-        sources.insert(*uuid, CodeSource::File(filename.as_ref().to_path_buf()));
-        Self { sources }
+        let filename = std::fs::canonicalize(filename)?;
+        sources.insert(*uuid, CodeSource::File(filename));
+        Ok(Self { sources })
     }
     pub fn unbound<S: AsRef<str>>(content: S, uuid: &Uuid) -> Self {
         let mut sources = HashMap::new();
         sources.insert(*uuid, CodeSource::Inline(content.as_ref().to_owned()));
         Self { sources }
     }
-    pub fn add_file_src<P: AsRef<Path>>(&mut self, filename: P, uuid: &Uuid) {
-        self.sources
-            .insert(*uuid, CodeSource::File(filename.as_ref().to_path_buf()));
+    pub fn add_file_src<P: AsRef<Path>>(
+        &mut self,
+        filename: P,
+        uuid: &Uuid,
+    ) -> Result<(), io::Error> {
+        let filename = std::fs::canonicalize(filename)?;
+        if self.sources.iter().any(|(_, cs)| {
+            if let CodeSource::File(path) = cs {
+                path == &filename
+            } else {
+                false
+            }
+        }) {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                format!(
+                    "File \"{}\" already has been attached",
+                    filename.to_string_lossy()
+                ),
+            ));
+        }
+        self.sources.insert(*uuid, CodeSource::File(filename));
+        Ok(())
     }
     pub fn add_inline_src<S: AsRef<str>>(&mut self, content: S, uuid: &Uuid) {
         self.sources
