@@ -8,7 +8,7 @@ use refs::*;
 use std::borrow::Borrow;
 use syn::{
     parse_macro_input, GenericArgument, ItemFn, PathArguments, ReturnType, Signature, Type,
-    TypePath, TypeTuple,
+    TypePath,
 };
 
 fn get_result_type(sig: &Signature) -> Option<(&Type, &Type)> {
@@ -46,7 +46,7 @@ pub fn import(args: pm::TokenStream, input: pm::TokenStream) -> pm::TokenStream 
     for (i, arg) in args.iter().enumerate() {
         if let syn::FnArg::Typed(pat_type) = arg {
             match pat_type.ty.borrow() {
-                Type::Path(ty) => {
+                Type::Path(_ty) => {
                     arguments.push(quote! {
                         args[#i].take().unwrap().value.try_to_rs().map_err(|err| LinkedErr::by_link(err, (&caller).into()))?,
                     });
@@ -73,7 +73,7 @@ pub fn import(args: pm::TokenStream, input: pm::TokenStream) -> pm::TokenStream 
                 .into();
         }
     }
-    let Some((type_ok, type_err)) = get_result_type(&item_fn.sig) else {
+    let Some((type_ok, _type_err)) = get_result_type(&item_fn.sig) else {
         return syn::Error::new_spanned(item_fn.sig, "Return type can be only Result<T,E>")
             .to_compile_error()
             .into();

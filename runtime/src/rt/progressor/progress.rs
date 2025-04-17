@@ -70,6 +70,7 @@ impl Progress {
         );
     }
 
+    #[cfg(test)]
     pub(crate) async fn child<S: ToString>(&self, job: S) -> Result<Progress, E> {
         self.progressor
             .create(Uuid::new_v4(), job, Some(self.owner))

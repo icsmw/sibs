@@ -18,7 +18,6 @@ impl RtJournal {
     pub fn new() -> Result<Self, E> {
         let (tx, mut rx) = unbounded_channel();
         let instance = Self { tx };
-        let this = instance.clone();
         spawn(async move {
             tracing::info!("init demand's listener");
             while let Some(demand) = rx.recv().await {

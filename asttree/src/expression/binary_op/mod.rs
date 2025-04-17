@@ -26,7 +26,7 @@ impl<'a> Lookup<'a> for BinaryOp {
 }
 
 impl FindMutByUuid for BinaryOp {
-    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+    fn find_mut_by_uuid(&mut self, _uuid: &Uuid) -> Option<&mut LinkedNode> {
         None
     }
 }

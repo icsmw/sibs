@@ -18,7 +18,7 @@ impl<'a> Lookup<'a> for Boolean {
 }
 
 impl FindMutByUuid for Boolean {
-    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+    fn find_mut_by_uuid(&mut self, _uuid: &Uuid) -> Option<&mut LinkedNode> {
         None
     }
 }

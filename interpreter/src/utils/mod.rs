@@ -14,6 +14,7 @@ pub async fn chk_ty(node: &LinkedNode, vl: &RtValue, rt: &Runtime) -> Result<(),
     }
 }
 
+#[cfg(test)]
 pub(crate) fn into_rt_ufns(mut fns: Fns) -> Fns {
     fns.ufns.funcs = fns
         .ufns
@@ -36,6 +37,7 @@ pub(crate) fn into_rt_ufns(mut fns: Fns) -> Fns {
     fns
 }
 
+#[cfg(test)]
 fn ufn_into_exec(body: UserFnBody) -> UserFnBody {
     match body {
         UserFnBody::Executor(link, ex) => UserFnBody::Executor(link, ex),
@@ -53,6 +55,7 @@ fn ufn_into_exec(body: UserFnBody) -> UserFnBody {
     }
 }
 
+#[cfg(test)]
 fn cfn_into_exec(body: ClosureFnBody) -> ClosureFnBody {
     match body {
         ClosureFnBody::Executor(link, ex) => ClosureFnBody::Executor(link, ex),
@@ -70,6 +73,7 @@ fn cfn_into_exec(body: ClosureFnBody) -> ClosureFnBody {
     }
 }
 
+#[cfg(test)]
 pub(crate) fn into_rt_tasks(mut tasks: Tasks) -> Tasks {
     tasks.table = tasks
         .table
@@ -82,6 +86,7 @@ pub(crate) fn into_rt_tasks(mut tasks: Tasks) -> Tasks {
     tasks
 }
 
+#[cfg(test)]
 fn task_node_into_exec(body: TaskBody) -> TaskBody {
     match body {
         TaskBody::Executor(md, ex) => TaskBody::Executor(md, ex),
@@ -98,6 +103,7 @@ fn task_node_into_exec(body: TaskBody) -> TaskBody {
     }
 }
 
+#[cfg(test)]
 async fn runner(node: LinkedNode, rt: Runtime, cx: Context) -> Result<RtValue, LinkedErr<E>> {
     cx.returns()
         .open_cx(node.uuid())

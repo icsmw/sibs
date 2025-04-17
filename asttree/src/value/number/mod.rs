@@ -18,7 +18,7 @@ impl<'a> Lookup<'a> for Number {
 }
 
 impl FindMutByUuid for Number {
-    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+    fn find_mut_by_uuid(&mut self, _uuid: &Uuid) -> Option<&mut LinkedNode> {
         None
     }
 }
