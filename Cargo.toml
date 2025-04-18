@@ -36,3 +36,7 @@ indicatif = "0.17"
 indexmap = "2.7"
 rand = "0.9"
 futures = "0.3"
+bstorage = "0.2"
+fshasher = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+blake3 = "1.4"

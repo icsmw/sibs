@@ -30,7 +30,7 @@ impl Interpret for Command {
         spawner::spawn(
             vls.join(""),
             cx.cwd()
-                .get_cwd()
+                .get()
                 .await
                 .map_err(|err| LinkedErr::token(err, &self.token))?,
             self.uuid,

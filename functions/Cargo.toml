@@ -15,6 +15,10 @@ homepage = "https://github.com/icsmw/sibs"
 thiserror.workspace = true
 uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }
 paste.workspace = true
+fshasher.workspace = true
+serde = { workspace = true , features = ["derive"] }
+blake3.workspace = true
+bstorage.workspace = true
 
 runtime = { path = "../runtime" }
 boxed = { path = "../support/boxed" }

@@ -70,6 +70,8 @@ pub enum E {
     ClosureNotFound(Uuid),
     #[error("Invalid function argument")]
     InvalidFnArgument,
+    #[error("Invalid function arguments number; expected: {0}; gotten: {1}")]
+    InvalidFnArgumentsNumber(usize, usize),
     #[error("Missed function argument; expected: {0}")]
     MissedFnArgument(String),
     #[error("Invalid function argument type")]
@@ -109,6 +111,8 @@ pub enum E {
     IO(io::Error),
     #[error("System time error: {0}")]
     SysTime(SystemTimeError),
+    #[error("Storage error: {0}")]
+    Storage(bstorage::E),
 
     #[error("Fn {0} is using keyword: {1}")]
     FnUsesKeyword(String, String),
@@ -170,6 +174,9 @@ pub enum E {
 
     #[error("Signal \"{0}\" emitted multiple times")]
     MultipleSignalEmit(String),
+
+    #[error("Error: ")]
+    Other(String),
 }
 
 impl From<indicatif::style::TemplateError> for E {
@@ -181,6 +188,12 @@ impl From<indicatif::style::TemplateError> for E {
 impl From<io::Error> for E {
     fn from(err: io::Error) -> Self {
         E::IO(err)
+    }
+}
+
+impl From<bstorage::E> for E {
+    fn from(err: bstorage::E) -> Self {
+        E::Storage(err)
     }
 }
 

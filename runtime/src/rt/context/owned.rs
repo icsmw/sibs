@@ -1,3 +1,5 @@
+use bstorage::Storage;
+
 use crate::*;
 
 pub struct ContextValues<'a> {
@@ -106,12 +108,16 @@ pub struct ContextCwd<'a> {
 }
 
 impl ContextCwd<'_> {
-    pub async fn set_cwd(&self, path: PathBuf) -> Result<(), E> {
+    pub async fn set(&self, path: PathBuf) -> Result<(), E> {
         self.rt.set_cwd(*self.owner, path).await
     }
 
-    pub async fn get_cwd(&self) -> Result<PathBuf, E> {
+    pub async fn get(&self) -> Result<PathBuf, E> {
         self.rt.get_cwd(*self.owner).await
+    }
+
+    pub async fn root(&self) -> Result<PathBuf, E> {
+        self.rt.get_root_cwd(*self.owner).await
     }
 }
 
@@ -155,6 +161,15 @@ impl Context {
             owner: &self.owner,
             rt: &self.rt,
         }
+    }
+    pub async fn storage(&self) -> Result<Storage, E> {
+        Ok(Storage::create(
+            self.cwd()
+                .root()
+                .await?
+                .join(SIBS_FOLDER)
+                .join(STORAGE_FOLDER),
+        )?)
     }
     pub(crate) async fn child<S: ToString>(&self, owner: Uuid, alias: S) -> Result<Context, E> {
         Ok(self.rt.create(owner, self.job.child(owner, alias).await?))

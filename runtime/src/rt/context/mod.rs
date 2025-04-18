@@ -214,6 +214,12 @@ impl RtContext {
                                 store.cwd = path;
                                 chk_send_err!(tx.send(()), DemandCommandId::SetCwd);
                             }
+                            DemandCommand::GetRootCwd(tx) => {
+                                chk_send_err!(
+                                    { tx.send(cwd.clone()) },
+                                    DemandCommandId::GetRootCwd
+                                );
+                            }
                             DemandCommand::CloseContext(uuid, tx) => {
                                 stores.remove(&uuid);
                                 chk_send_err!(tx.send(()), DemandCommandId::CloseContext);
@@ -402,6 +408,13 @@ impl RtContext {
         let (tx, rx) = oneshot::channel();
         self.tx
             .send(Demand::Command(owner, DemandCommand::GetCwd(tx)))?;
+        rx.await.map_err(|e| e.into())
+    }
+
+    pub(crate) async fn get_root_cwd(&self, owner: Uuid) -> Result<PathBuf, E> {
+        let (tx, rx) = oneshot::channel();
+        self.tx
+            .send(Demand::Command(owner, DemandCommand::GetRootCwd(tx)))?;
         rx.await.map_err(|e| e.into())
     }
 
