@@ -143,7 +143,8 @@ impl DeterminedTy {
             if let (Some(left), Some(right)) = (left, right) {
                 left.compatible(right)
             } else {
-                left.is_none() && right.is_some()
+                // If the type of array on one of the sides isn't defined, we cannot actually check the type. Just believe
+                true
             }
         } else if let (DeterminedTy::Closure(l_uuid, left), DeterminedTy::Closure(r_uuid, right)) =
             (self, right)
