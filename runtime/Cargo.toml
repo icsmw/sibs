@@ -24,6 +24,8 @@ indicatif.workspace = true
 console.workspace = true
 indexmap.workspace = true
 bstorage.workspace = true
+terminal_size.workspace = true
+regex.workspace = true
 
 asttree = { path = "../asttree" }
 diagnostics = { path = "../diagnostics" }

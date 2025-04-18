@@ -12,6 +12,7 @@ members = [
     "functions",
     "support/boxed",
     "support/importer",
+    "support/term",
     "tests/cmds/test_utils",
     "tests/cmds/exit",
     "tests/cmds/noise"
@@ -40,3 +41,5 @@ bstorage = "0.2"
 fshasher = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 blake3 = "1.4"
+terminal_size = "0.4"
+regex = "1.10"

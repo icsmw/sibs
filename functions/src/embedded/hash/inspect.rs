@@ -7,10 +7,12 @@ declare_embedded_fn!(
             DeterminedTy::Str,
             DeterminedTy::Vec(Some(Box::new(DeterminedTy::Str))),
             DeterminedTy::Vec(Some(Box::new(DeterminedTy::PathBuf))),
+            DeterminedTy::Vec(Some(Box::new(DeterminedTy::Void))),
         ]),
         Ty::OneOf(vec![
             DeterminedTy::Str,
             DeterminedTy::Vec(Some(Box::new(DeterminedTy::Str))),
+            DeterminedTy::Vec(Some(Box::new(DeterminedTy::Void))),
         ]),
         Ty::Determined(DeterminedTy::Bool),
     ],
@@ -176,10 +178,6 @@ pub fn executor(
             "{}: will be inspected by hasher",
             p.to_string_lossy()
         ));
-        println!(
-            "\n\n\n{}: will be inspected by hasher\n\n\n",
-            p.to_string_lossy()
-        );
     });
     expections.push("**/.sibs".to_string());
     for path in paths.iter() {

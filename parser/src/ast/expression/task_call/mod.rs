@@ -44,6 +44,7 @@ impl ReadNode<TaskCall> for TaskCall {
                     ValueId::Number,
                     ValueId::Boolean,
                     ValueId::PrimitiveString,
+                    ValueId::Array,
                 ]),
                 NodeTarget::Expression(&[
                     ExpressionId::Variable,

@@ -95,7 +95,7 @@ test_task_results!(
         task task_a() {
             :comp:task_b(5);
         }
-        #[skip(hash::inspect("../target", "", false))];
+        #[skip(hash::inspect(["../target"], [""], false))];
         task task_b(v: num) {
             v;
         }

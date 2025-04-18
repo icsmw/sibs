@@ -45,6 +45,9 @@ impl Arbitrary for TaskCall {
                         FunctionCall::arbitrary_with(deep + 1)
                             .prop_map(|v| Node::Expression(Expression::FunctionCall(v)))
                             .boxed(),
+                        Array::arbitrary_with(deep + 1)
+                            .prop_map(|v| Node::Value(Value::Array(v)))
+                            .boxed(),
                     ])
                     .prop_map(move |n| (n, deep + 1))
                     .prop_flat_map(LinkedNode::arbitrary_with),
