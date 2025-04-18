@@ -166,11 +166,20 @@ pub fn executor(
         .await
         .map_err(|err| LinkedErr::by_link(err, (&caller).into()))?;
     let mut summary = Vec::new();
+    let paths = paths
+        .into_iter()
+        .map(|p| p.canonicalize())
+        .collect::<Result<Vec<PathBuf>, _>>()
+        .map_err(|err| LinkedErr::by_link(err.into(), (&caller).into()))?;
     paths.iter().for_each(|p| {
         cx.job.journal.info(format!(
             "{}: will be inspected by hasher",
             p.to_string_lossy()
         ));
+        println!(
+            "\n\n\n{}: will be inspected by hasher\n\n\n",
+            p.to_string_lossy()
+        );
     });
     expections.push("**/.sibs".to_string());
     for path in paths.iter() {
