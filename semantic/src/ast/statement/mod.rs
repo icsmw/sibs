@@ -1,3 +1,5 @@
+mod arg_assignation;
+mod arg_assigned_value;
 mod assignation;
 mod assigned_value;
 mod block;
@@ -18,6 +20,8 @@ impl InferType for Statement {
         match self {
             Statement::Assignation(n) => n.infer_type(scx),
             Statement::AssignedValue(n) => n.infer_type(scx),
+            Statement::ArgumentAssignation(n) => n.infer_type(scx),
+            Statement::ArgumentAssignedValue(n) => n.infer_type(scx),
             Statement::Block(n) => n.infer_type(scx),
             Statement::Break(n) => n.infer_type(scx),
             Statement::For(n) => n.infer_type(scx),
@@ -37,6 +41,8 @@ impl Initialize for Statement {
         match self {
             Statement::Assignation(n) => n.initialize(scx),
             Statement::AssignedValue(n) => n.initialize(scx),
+            Statement::ArgumentAssignation(n) => n.initialize(scx),
+            Statement::ArgumentAssignedValue(n) => n.initialize(scx),
             Statement::Block(n) => n.initialize(scx),
             Statement::Break(n) => n.initialize(scx),
             Statement::For(n) => n.initialize(scx),
@@ -56,6 +62,8 @@ impl Finalization for Statement {
         match self {
             Statement::Assignation(n) => n.finalize(scx),
             Statement::AssignedValue(n) => n.finalize(scx),
+            Statement::ArgumentAssignation(n) => n.finalize(scx),
+            Statement::ArgumentAssignedValue(n) => n.finalize(scx),
             Statement::Block(n) => n.finalize(scx),
             Statement::Break(n) => n.finalize(scx),
             Statement::For(n) => n.finalize(scx),

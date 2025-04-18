@@ -19,6 +19,15 @@ impl Arbitrary for Task {
                     .boxed(),
                 1..5,
             ),
+            prop::collection::vec(
+                Gatekeeper::arbitrary_with(deep + 1)
+                    .prop_map(ControlFlowModifier::Gatekeeper)
+                    .prop_map(Node::ControlFlowModifier)
+                    .prop_map(move |n| (n, deep + 1))
+                    .prop_flat_map(LinkedNode::arbitrary_with)
+                    .boxed(),
+                0..2,
+            ),
             Block::arbitrary_with(deep + 1)
                 .prop_map(Statement::Block)
                 .prop_map(Node::Statement)
@@ -26,7 +35,7 @@ impl Arbitrary for Task {
                 .prop_flat_map(LinkedNode::arbitrary_with)
                 .boxed(),
         )
-            .prop_map(|(vis, name, args, block)| Task {
+            .prop_map(|(vis, name, args, gts, block)| Task {
                 vis,
                 sig: Token::for_test(Kind::Keyword(Keyword::Task)),
                 name: Token::for_test(name),
@@ -35,6 +44,7 @@ impl Arbitrary for Task {
                 block: Box::new(block),
                 uuid: Uuid::new_v4(),
                 args,
+                gts,
             })
             .boxed()
     }

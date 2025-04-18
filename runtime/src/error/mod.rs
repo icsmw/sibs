@@ -57,6 +57,8 @@ pub enum E {
     NotApplicableToTypeOperation,
     #[error("Invalid value type; expected {0}; actual: {1}")]
     InvalidType(Ty, RtValue),
+    #[error("Invalid type; expected {0}; actual: {1}")]
+    DismatchValueType(String, String),
 
     #[error("Function \"{0}\" has been registred already")]
     FuncAlreadyRegistered(String),

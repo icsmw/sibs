@@ -11,20 +11,12 @@ impl Arbitrary for Component {
             gens::rnd_kind_with(vec![KindId::Identifier]),
             prop::collection::vec(gens::kind(KindId::Identifier), 1..5),
             prop::collection::vec(
-                prop::strategy::Union::new(vec![
-                    Task::arbitrary_with(deep + 1)
-                        .prop_map(Root::Task)
-                        .prop_map(Node::Root)
-                        .prop_map(move |n| (n, deep + 1))
-                        .prop_flat_map(LinkedNode::arbitrary_with)
-                        .boxed(),
-                    Gatekeeper::arbitrary_with(deep + 1)
-                        .prop_map(ControlFlowModifier::Gatekeeper)
-                        .prop_map(Node::ControlFlowModifier)
-                        .prop_map(move |n| (n, deep + 1))
-                        .prop_flat_map(LinkedNode::arbitrary_with)
-                        .boxed(),
-                ]),
+                Task::arbitrary_with(deep + 1)
+                    .prop_map(Root::Task)
+                    .prop_map(Node::Root)
+                    .prop_map(move |n| (n, deep + 1))
+                    .prop_flat_map(LinkedNode::arbitrary_with)
+                    .boxed(),
                 1..5,
             ),
         )

@@ -12,6 +12,8 @@ pub struct Task {
     pub open: Token,
     pub close: Token,
     pub args: Vec<LinkedNode>,
+    // GateKeepers
+    pub gts: Vec<LinkedNode>,
     pub block: Box<LinkedNode>,
     pub uuid: Uuid,
 }

@@ -20,4 +20,24 @@ impl Execute for Task {
     fn uuid(&self) -> &Uuid {
         &self.uuid
     }
+    #[boxed]
+    fn before(&self, rt: Runtime, cx: Context) -> GtPinnedResult<LinkedErr<E>> {
+        if self.gts.is_empty() {
+            return Ok(true);
+        }
+        for gt in self.gts.iter() {
+            let value = gt.interpret(rt.clone(), cx.clone()).await?;
+            if let RtValue::Bool(value) = value {
+                if !value {
+                    return Ok(false);
+                }
+            } else {
+                return Err(LinkedErr::from(
+                    E::DismatchValueType(RtValueId::Bool.to_string(), value.id().to_string()),
+                    gt,
+                ));
+            }
+        }
+        Ok(true)
+    }
 }

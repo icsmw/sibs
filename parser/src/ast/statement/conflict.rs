@@ -10,6 +10,8 @@ impl ConflictResolver<StatementId> for StatementId {
             | Self::While
             | Self::Assignation
             | Self::AssignedValue
+            | Self::ArgumentAssignation
+            | Self::ArgumentAssignedValue
             | Self::Optional
             | Self::OneOf
             | Self::Join

@@ -78,6 +78,8 @@ pub enum RtValue {
     BinaryOperator(BinaryOperator),
     ComparisonOperator(ComparisonOperator),
     LogicalOperator(LogicalOperator),
+    NamedArgumentValue(String, Box<RtValue>),
+    Skipped,
 }
 
 impl From<SpawnStatus> for RtValue {
@@ -90,11 +92,13 @@ impl RtValue {
     pub fn as_string(self) -> Option<String> {
         match self {
             Self::ExecuteResult(..)
+            | Self::NamedArgumentValue(..)
             | Self::Error
             | Self::Closure(..)
             | Self::BinaryOperator(..)
             | Self::ComparisonOperator(..)
-            | Self::LogicalOperator(..) => None,
+            | Self::LogicalOperator(..)
+            | Self::Skipped => None,
             Self::Bool(v) => Some(v.to_string()),
             Self::Num(v) => Some(v.to_string()),
             Self::Str(v) => Some(v),
@@ -142,9 +146,11 @@ impl RtValue {
                     Some(DeterminedTy::Vec(None).into())
                 }
             }
-            Self::BinaryOperator(..) | Self::LogicalOperator(..) | Self::ComparisonOperator(..) => {
-                None
-            }
+            Self::BinaryOperator(..)
+            | Self::LogicalOperator(..)
+            | Self::ComparisonOperator(..)
+            | Self::NamedArgumentValue(..)
+            | Self::Skipped => None,
         }
     }
 
@@ -162,7 +168,9 @@ impl RtValue {
             | Self::ExecuteResult(..)
             | Self::Range(..)
             | Self::Vec(..)
-            | Self::Void => None,
+            | Self::NamedArgumentValue(..)
+            | Self::Void
+            | Self::Skipped => None,
         }
     }
 }
@@ -195,6 +203,8 @@ impl fmt::Display for RtValue {
                 Self::BinaryOperator(..) => String::from("BinaryOperator"),
                 Self::ComparisonOperator(..) => String::from("ComparisonOperator"),
                 Self::LogicalOperator(..) => String::from("LogicalOperator"),
+                Self::NamedArgumentValue(n, v) => format!("NamedArgumentValue({n}: {v})"),
+                Self::Skipped => String::from("Skipped"),
             }
         )
     }

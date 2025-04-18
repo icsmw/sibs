@@ -103,26 +103,26 @@ fn task_node_into_exec(body: TaskBody) -> TaskBody {
     }
 }
 
-#[cfg(test)]
-async fn runner(node: LinkedNode, rt: Runtime, cx: Context) -> Result<RtValue, LinkedErr<E>> {
-    cx.returns()
-        .open_cx(node.uuid())
-        .await
-        .map_err(|err| LinkedErr::from(err, &node))?;
-    let mut result = node.interpret(rt.clone(), cx.clone()).await?;
-    result = if let Some(result) = cx
-        .returns()
-        .withdraw_vl(node.uuid())
-        .await
-        .map_err(|err| LinkedErr::from(err, &node))?
-    {
-        result
-    } else {
-        result
-    };
-    cx.returns()
-        .close_cx()
-        .await
-        .map_err(|err| LinkedErr::from(err, &node))?;
-    Ok(result)
-}
+// #[cfg(test)]
+// async fn runner(node: LinkedNode, rt: Runtime, cx: Context) -> Result<RtValue, LinkedErr<E>> {
+//     cx.returns()
+//         .open_cx(node.uuid())
+//         .await
+//         .map_err(|err| LinkedErr::from(err, &node))?;
+//     let mut result = node.interpret(rt.clone(), cx.clone()).await?;
+//     result = if let Some(result) = cx
+//         .returns()
+//         .withdraw_vl(node.uuid())
+//         .await
+//         .map_err(|err| LinkedErr::from(err, &node))?
+//     {
+//         result
+//     } else {
+//         result
+//     };
+//     cx.returns()
+//         .close_cx()
+//         .await
+//         .map_err(|err| LinkedErr::from(err, &node))?;
+//     Ok(result)
+// }

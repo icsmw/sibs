@@ -102,7 +102,7 @@ fn get_mod_inner(inner: &mut Parser) -> Result<Vec<LinkedNode>, LinkedErr<E>> {
         nodes.push(node);
     }
     if !inner.is_done() {
-        Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner))
+        Err(E::UnrecognizedCode(inner.to_string()).link_until_end(inner))
     } else {
         Ok(nodes)
     }

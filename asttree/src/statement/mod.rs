@@ -1,3 +1,5 @@
+mod arg_assignation;
+mod arg_assigned_value;
 mod assignation;
 mod assigned_value;
 mod block;
@@ -11,6 +13,8 @@ mod optional;
 mod r#return;
 mod r#while;
 
+pub use arg_assignation::*;
+pub use arg_assigned_value::*;
 pub use assignation::*;
 pub use assigned_value::*;
 pub use block::*;
@@ -72,6 +76,10 @@ pub enum Statement {
     Assignation(Assignation),
     /// any value to assignate to variable
     AssignedValue(AssignedValue),
+    /// a = 1, a = "text", etc.
+    ArgumentAssignation(ArgumentAssignation),
+    /// any value to assignate to argument
+    ArgumentAssignedValue(ArgumentAssignedValue),
     OneOf(OneOf),
     /// join(`command`, `command`);
     Join(Join),
@@ -82,6 +90,8 @@ impl Statement {
         match self {
             Self::Assignation(n) => &n.uuid,
             Self::AssignedValue(n) => &n.uuid,
+            Self::ArgumentAssignation(n) => &n.uuid,
+            Self::ArgumentAssignedValue(n) => &n.uuid,
             Self::Block(n) => &n.uuid,
             Self::Break(n) => &n.uuid,
             Self::For(n) => &n.uuid,
@@ -101,6 +111,8 @@ impl<'a> Lookup<'a> for Statement {
         match self {
             Self::Assignation(n) => n.lookup(trgs),
             Self::AssignedValue(n) => n.lookup(trgs),
+            Self::ArgumentAssignation(n) => n.lookup(trgs),
+            Self::ArgumentAssignedValue(n) => n.lookup(trgs),
             Self::Block(n) => n.lookup(trgs),
             Self::Break(n) => n.lookup(trgs),
             Self::For(n) => n.lookup(trgs),
@@ -120,6 +132,8 @@ impl FindMutByUuid for Statement {
         match self {
             Self::Assignation(n) => n.find_mut_by_uuid(uuid),
             Self::AssignedValue(n) => n.find_mut_by_uuid(uuid),
+            Self::ArgumentAssignation(n) => n.find_mut_by_uuid(uuid),
+            Self::ArgumentAssignedValue(n) => n.find_mut_by_uuid(uuid),
             Self::Block(n) => n.find_mut_by_uuid(uuid),
             Self::Break(n) => n.find_mut_by_uuid(uuid),
             Self::For(n) => n.find_mut_by_uuid(uuid),
@@ -139,6 +153,8 @@ impl SrcLinking for Statement {
         match self {
             Self::Assignation(n) => n.link(),
             Self::AssignedValue(n) => n.link(),
+            Self::ArgumentAssignation(n) => n.link(),
+            Self::ArgumentAssignedValue(n) => n.link(),
             Self::Block(n) => n.link(),
             Self::Break(n) => n.link(),
             Self::For(n) => n.link(),

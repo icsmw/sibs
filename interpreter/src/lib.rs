@@ -31,7 +31,15 @@ where
     fn block(&self) -> &LinkedNode;
     fn link(&self) -> SrcLink;
     #[boxed]
+    fn before(&self, _rt: Runtime, _cx: Context) -> GtPinnedResult<LinkedErr<E>> {
+        Ok(true)
+    }
+    #[boxed]
     fn exec(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+        let before = self.before(rt.clone(), cx.clone()).await?;
+        if !before {
+            return Ok(RtValue::Skipped);
+        }
         cx.returns()
             .open_cx(self.uuid())
             .await

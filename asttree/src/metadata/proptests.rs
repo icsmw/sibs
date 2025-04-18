@@ -125,6 +125,8 @@ impl Arbitrary for LinkedNode {
         if !matches!(
             node,
             Node::Expression(Expression::Variable(..))
+                | Node::Statement(Statement::ArgumentAssignation(..))
+                | Node::Statement(Statement::ArgumentAssignedValue(..))
                 | Node::Expression(Expression::FunctionCall(..))
                 | Node::Expression(Expression::Command(..))
                 | Node::Value(Value::Array(..))

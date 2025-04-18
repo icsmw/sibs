@@ -9,6 +9,9 @@ impl InferType for Task {
             .open(&self.uuid)
             .map_err(|err| LinkedErr::sfrom(err.into(), self))?;
         let ty = self.block.infer_type(scx)?;
+        for gt in self.gts.iter() {
+            gt.infer_type(scx)?;
+        }
         scx.tys
             .close()
             .map_err(|err| LinkedErr::sfrom(err.into(), self))?;
@@ -26,6 +29,9 @@ impl Initialize for Task {
             .map_err(|err| LinkedErr::sfrom(err.into(), self))?;
         self.args.iter().try_for_each(|n| n.initialize(scx))?;
         self.block.initialize(scx)?;
+        for gt in self.gts.iter() {
+            gt.initialize(scx)?;
+        }
         let mut args = Vec::new();
         for n_arg in self.args.iter() {
             let Node::Declaration(Declaration::ArgumentDeclaration(arg_dec)) = &n_arg.node else {
@@ -67,6 +73,9 @@ impl Finalization for Task {
         scx.tys
             .open(&self.uuid)
             .map_err(|err| LinkedErr::sfrom(err.into(), self))?;
+        for gt in self.gts.iter() {
+            gt.finalize(scx)?;
+        }
         self.args.iter().try_for_each(|n| n.finalize(scx))?;
         for arg in self.args.iter() {
             arg.finalize(scx)?;

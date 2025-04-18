@@ -1,5 +1,7 @@
 mod conflict;
 
+mod arg_assignation;
+mod arg_assigned_value;
 mod assignation;
 mod assigned_value;
 mod block;
@@ -32,6 +34,8 @@ impl TryRead<Statement, StatementId> for Statement {
             StatementId::Loop => Loop::read_as_linked(parser)?,
             StatementId::Assignation => Assignation::read_as_linked(parser)?,
             StatementId::AssignedValue => AssignedValue::read_as_linked(parser)?,
+            StatementId::ArgumentAssignation => ArgumentAssignation::read_as_linked(parser)?,
+            StatementId::ArgumentAssignedValue => ArgumentAssignedValue::read_as_linked(parser)?,
             StatementId::Optional => Optional::read_as_linked(parser)?,
             StatementId::OneOf => OneOf::read_as_linked(parser)?,
             StatementId::Join => Join::read_as_linked(parser)?,

@@ -10,12 +10,11 @@ use crate::*;
 #[derive(Debug, Clone)]
 #[allow(clippy::large_enum_variant)]
 pub enum ControlFlowModifier {
-    /// #[skip([task_args], func())]
-    /// #[skip([1, 2], func())]
-    /// #[skip(["test", *], func())]
-    /// #[skip([*,*], func())]
+    /// #[skip(param_a = "12", param_b = 12, func())]
     Gatekeeper(Gatekeeper),
-    /// skip([task_args], func())
+    /// skip(func())
+    /// skip(param_b = 12, func())
+    /// skip(param_a = "12", param_b = 12, func())
     Skip(Skip),
 }
 

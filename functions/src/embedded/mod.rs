@@ -1,4 +1,5 @@
 mod console;
+mod debugging;
 mod math;
 mod signals;
 mod status;
@@ -10,5 +11,6 @@ pub fn register(efns: &mut EFns) -> Result<(), E> {
     math::register(efns)?;
     status::register(efns)?;
     signals::register(efns)?;
+    debugging::register(efns)?;
     Ok(())
 }

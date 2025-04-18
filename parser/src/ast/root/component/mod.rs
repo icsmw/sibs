@@ -40,13 +40,8 @@ impl ReadNode<Component> for Component {
                     break 'semicolons;
                 }
             }
-            let Some(node) = LinkedNode::try_oneof(
-                &mut inner,
-                &[
-                    NodeTarget::ControlFlowModifier(&[ControlFlowModifierId::Gatekeeper]),
-                    NodeTarget::Root(&[RootId::Task]),
-                ],
-            )?
+            let Some(node) =
+                LinkedNode::try_oneof(&mut inner, &[NodeTarget::Root(&[RootId::Task])])?
             else {
                 break;
             };

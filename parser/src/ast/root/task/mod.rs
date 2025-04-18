@@ -7,13 +7,33 @@ impl Interest for Task {
     fn intrested(token: &Token) -> bool {
         matches!(
             token.kind,
-            Kind::Keyword(Keyword::Task) | Kind::Keyword(Keyword::Private)
+            Kind::Keyword(Keyword::Task) | Kind::Keyword(Keyword::Private) | Kind::Pound
         )
     }
 }
 
 impl ReadNode<Task> for Task {
     fn read(parser: &mut Parser) -> Result<Option<Task>, LinkedErr<E>> {
+        let mut gts = Vec::new();
+        loop {
+            'semicolons: loop {
+                if parser.is_next(KindId::Semicolon) {
+                    let _ = parser.token();
+                } else {
+                    break 'semicolons;
+                }
+            }
+            let Some(node) = LinkedNode::try_oneof(
+                parser,
+                &[NodeTarget::ControlFlowModifier(&[
+                    ControlFlowModifierId::Gatekeeper,
+                ])],
+            )?
+            else {
+                break;
+            };
+            gts.push(node);
+        }
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };
@@ -56,9 +76,8 @@ impl ReadNode<Task> for Task {
         if !inner.is_done() {
             return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
         }
-        let block =
-            LinkedNode::try_oneof(parser, &[NodeTarget::Statement(&[StatementId::Block])])?
-                .ok_or_else(|| E::MissedTaskBlock.link_with_token(&sig))?;
+        let block = LinkedNode::try_oneof(parser, &[NodeTarget::Statement(&[StatementId::Block])])?
+            .ok_or_else(|| E::MissedTaskBlock.link_with_token(&sig))?;
         Ok(Some(Task {
             vis,
             sig,
@@ -66,6 +85,7 @@ impl ReadNode<Task> for Task {
             open,
             close,
             args,
+            gts,
             block: Box::new(block),
             uuid: Uuid::new_v4(),
         }))

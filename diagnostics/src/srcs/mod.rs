@@ -90,7 +90,7 @@ impl CodeSources {
         let num_rate = src.split('\n').count().to_string().len() + 1;
         let from_ln = &src[0..from]
             .split('\n')
-            .last()
+            .next_back()
             .map(|s| s.len())
             .unwrap_or(0);
         let error_range = from..to;

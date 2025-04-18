@@ -1,3 +1,5 @@
+mod arg_assignation;
+mod arg_assigned_value;
 mod assignation;
 mod assigned_value;
 mod block;
@@ -18,6 +20,8 @@ impl Interpret for Statement {
         match self {
             Statement::Assignation(n) => n.interpret(rt, cx),
             Statement::AssignedValue(n) => n.interpret(rt, cx),
+            Statement::ArgumentAssignation(n) => n.interpret(rt, cx),
+            Statement::ArgumentAssignedValue(n) => n.interpret(rt, cx),
             Statement::Block(n) => n.interpret(rt, cx),
             Statement::Break(n) => n.interpret(rt, cx),
             Statement::For(n) => n.interpret(rt, cx),
