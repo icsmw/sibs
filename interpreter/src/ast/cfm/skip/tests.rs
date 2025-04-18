@@ -29,3 +29,58 @@ test_task_results!(
     };
     "#
 );
+
+
+test_task_results!(
+    skip_002,
+    "comp",
+    "task_a",
+    RtValue::Skipped,
+    r#"
+    component comp() {
+        task task_a() {
+            :comp:task_b();
+        }
+        #[skip(debugging::out(false))];
+        task task_b() {
+            true;
+        }
+    };
+    "#
+);
+
+test_task_results!(
+    skip_003,
+    "comp",
+    "task_a",
+    RtValue::Num(5.0),
+    r#"
+    component comp() {
+        task task_a() {
+            :comp:task_b(5);
+        }
+        #[skip(v = 6, debugging::out(false))];
+        task task_b(v: num) {
+            v;
+        }
+    };
+    "#
+);
+
+test_task_results!(
+    skip_004,
+    "comp",
+    "task_a",
+    RtValue::Skipped,
+    r#"
+    component comp() {
+        task task_a() {
+            :comp:task_b(5);
+        }
+        #[skip(v = 5, debugging::out(false))];
+        task task_b(v: num) {
+            v;
+        }
+    };
+    "#
+);
