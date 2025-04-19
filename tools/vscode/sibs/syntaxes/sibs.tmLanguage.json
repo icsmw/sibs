@@ -1,0 +1,86 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "Simple Build System",
+    "patterns": [
+        { "include": "#keywords" },
+        { "include": "#primitiveString" },
+        { "include": "#complexString" },
+        { "include": "#commands" },
+        { "include": "#functionCalls" },
+        { "include": "#taskCalls" }
+    ],
+    "repository": {
+        "keywords": {
+            "patterns": [
+                {
+                    "name": "keyword.control.sibs",
+                    "match": "\\b(component|task|mod|fn|include|let|loop|while|true|false|private|break|Error|join)\\b"
+                },
+                {
+                    "match": "\\b(bool|str|num|Vec)\\b",
+                    "name": "storage.type.sibs"
+                }
+            ]
+        },
+        "functionCalls": {
+            "patterns": [
+                {
+                    "name": "support.function.sibs",
+                    "match": "\\b(?:[a-zA-Z_][\\w]*::)*[a-zA-Z_][\\w]*\\s*(?=\\()"
+                }
+            ]
+        },
+        "taskCalls": {
+            "patterns": [
+                {
+                    "name": "entity.name.function.taskcall.sibs",
+                    "match": ":[a-zA-Z_][\\w]*:[a-zA-Z_][\\w]*\\s*(?=\\()"
+                }
+            ]
+        },
+        "primitiveString": {
+            "name": "string.quoted.double.sibs",
+            "begin": "\"",
+            "end": "\"",
+            "patterns": [
+                {
+                    "name": "constant.character.escape.sibs",
+                    "match": "\\\\."
+                }
+            ]
+        },
+
+        "complexString": {
+            "name": "string.interpolated.single.sibs",
+            "begin": "'",
+            "end": "'",
+            "patterns": [
+                {
+                    "name": "meta.embedded.block.sibs",
+                    "match": "\\{[^}]*\\}"
+                },
+                {
+                    "name": "constant.character.escape.sibs",
+                    "match": "\\\\."
+                }
+            ]
+        },
+
+        "commands": {
+            "name": "string.template.sibs",
+            "begin": "`",
+            "end": "`",
+            "patterns": [
+                {
+                    "name": "meta.embedded.block.sibs",
+                    "match": "\\{[^}]*\\}"
+                },
+                {
+                    "name": "constant.character.escape.sibs",
+                    "match": "\\\\."
+                }
+            ]
+        }
+    },
+    "scopeName": "source.sibs"
+}

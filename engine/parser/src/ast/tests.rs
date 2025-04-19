@@ -52,6 +52,9 @@ macro_rules! test_node_reading {
                 fn [< test_ $element_ref >](cases in proptest::collection::vec($element_ref::arbitrary(), $exp_count)) {
                     for case in cases.into_iter() {
                         let content = case.to_string();
+                        println!("{}\n\n\n\n\n\n", content);
+                        println!(">>>>>>>>>>>>>>>>>>>>>\n\n\n\n\n\n");
+
                         let mut lx = lexer::Lexer::new(&content, 0);
                         let mut parser = $crate::Parser::unbound(lx.read().unwrap().tokens, &lx.uuid, &content);
                         let node = $element_ref::read_as_linked(&mut parser);

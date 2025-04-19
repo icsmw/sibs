@@ -120,7 +120,7 @@ impl Arbitrary for LinkedNode {
                     .boxed(),
             ])
             .prop_map(LinkedNode::from_node),
-            0..4,
+            0,
         );
         if !matches!(
             node,

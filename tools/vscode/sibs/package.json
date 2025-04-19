@@ -1,0 +1,25 @@
+{
+  "name": "sibs",
+  "displayName": "sibs",
+  "description": "Simple Build System",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.99.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "sibs",
+      "aliases": ["Simple Build System", "sibs"],
+      "extensions": ["sibs"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "sibs",
+      "scopeName": "main.sibs",
+      "path": "./syntaxes/sibs.tmLanguage.json"
+    }]
+  }
+}
