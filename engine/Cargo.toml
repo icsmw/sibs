@@ -10,6 +10,7 @@ members = [
     "common",
     "runtime",
     "functions",
+    "cli",
     "support/boxed",
     "support/importer",
     "support/term",
@@ -19,7 +20,7 @@ members = [
 ]
 
 [workspace.dependencies]
-enum_ids = "0.6"
+enum_ids = "0.7"
 thiserror = "2.0"
 uuid = "1.8"
 proptest = "1.4"

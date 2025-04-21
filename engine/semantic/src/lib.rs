@@ -8,9 +8,9 @@ mod error;
 pub(crate) use asttree::*;
 pub use context::*;
 pub(crate) use diagnostics::*;
+pub use error::E as SemanticError;
 pub(crate) use error::*;
 pub(crate) use runtime::*;
-
 pub(crate) use uuid::Uuid;
 
 pub trait InferType {

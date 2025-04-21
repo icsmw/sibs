@@ -3,6 +3,8 @@ mod utils;
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+pub(crate) use parser::*;
 
 pub(crate) use asttree::*;
 pub(crate) use boxed::boxed;
@@ -11,12 +13,8 @@ use lexer::SrcLink;
 pub(crate) use lexer::{Keyword, Kind};
 pub(crate) use runtime::error::E;
 pub(crate) use runtime::*;
-pub(crate) use utils::*;
-
-#[cfg(test)]
-pub(crate) use parser::*;
-#[cfg(test)]
 pub(crate) use semantic::*;
+pub use utils::*;
 use uuid::Uuid;
 
 pub trait Interpret {

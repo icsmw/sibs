@@ -221,6 +221,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "cli"
+version = "0.1.0"
+dependencies = [
+ "asttree",
+ "boxed",
+ "common",
+ "diagnostics",
+ "enum_ids",
+ "functions",
+ "interpreter",
+ "lexer",
+ "parser",
+ "runtime",
+ "semantic",
+ "thiserror 2.0.3",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
 name = "colorchoice"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -273,9 +293,9 @@ checksum = "34aa73646ffb006b8f5147f3dc182bd4bcb190227ce861fc4a4844bf8e3cb2c0"
 
 [[package]]
 name = "enum_ids"
-version = "0.6.1"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "abf8aba3a682695515d24b4668955e8af13c238356a1244433b1d10b8b5743c7"
+checksum = "b4187077ab498475c7316f3dbfce3bcb9b34deb6d7cb60c8a864f33170104e0f"
 dependencies = [
  "proc-macro2",
  "quote",

@@ -32,12 +32,8 @@ macro_rules! test_value_expectation {
                     eprintln!("{}", parser.report_err(err).expect("Reporting error"));
                 }
                 assert!(result.is_ok());
-                let rt = Runtime::new(
-                    RtParameters::default_from_cwd().expect("RtParameter created"),
-                    scx.table,
-                    into_rt_ufns(scx.fns),
-                    into_rt_tasks(scx.tasks),
-                ).expect("Runtime created");
+                let params = RtParameters::default_from_cwd().expect("RtParameter created");
+                let rt = runtime(params, scx).expect("Runtime created");
                 let cx = rt.create_cx(Uuid::new_v4(), "Test", None).await.expect("Context created");
                 let vl = node.interpret(rt.clone(), cx.clone()).await;
                 if let Err(err) = &vl {
@@ -90,12 +86,8 @@ macro_rules! test_fail {
                     eprintln!("{}", parser.report_err(err).expect("Reporting error"));
                 }
                 assert!(result.is_ok());
-                let rt = Runtime::new(
-                    RtParameters::default_from_cwd().expect("RtParameter created"),
-                    scx.table,
-                    into_rt_ufns(scx.fns),
-                    into_rt_tasks(scx.tasks),
-                ).expect("Runtime created");
+                let params = RtParameters::default_from_cwd().expect("RtParameter created");
+                let rt = runtime(params, scx).expect("Runtime created");
                 let cx = rt.create_cx(Uuid::new_v4(), "Test", None).await.expect("Context created");
                 let vl = node.interpret(rt.clone(), cx.clone()).await;
                 assert!(vl.is_err());
@@ -139,12 +131,8 @@ macro_rules! test_task_results {
                     eprintln!("{}", parser.report_err(err).expect("Reporting error"));
                 }
                 assert!(result.is_ok());
-                let rt = Runtime::new(
-                    RtParameters::new($component_name, $task_name, Vec::new(), std::env::current_dir().expect("Current folder detected")),
-                    scx.table,
-                    into_rt_ufns(scx.fns),
-                    into_rt_tasks(scx.tasks),
-                ).expect("Runtime created");
+                let params = RtParameters::new($component_name, $task_name, Vec::new(), std::env::current_dir().expect("Current folder detected"));
+                let rt = runtime(params, scx).expect("Runtime created");
                 let cx = rt.create_cx(Uuid::new_v4(), "Test", None).await.expect("Context created");
                 let vl = node.interpret(rt.clone(), cx.clone()).await;
                 if let Err(err) = &vl {
@@ -200,12 +188,8 @@ macro_rules! test_task_results_from_file {
                     eprintln!("{}", parser.report_err(err).expect("Reporting error"));
                 }
                 assert!(result.is_ok());
-                let rt = Runtime::new(
-                    RtParameters::new($component_name, $task_name, Vec::new(), std::env::current_dir().expect("Current folder detected")),
-                    scx.table,
-                    into_rt_ufns(scx.fns),
-                    into_rt_tasks(scx.tasks),
-                ).expect("Runtime created");
+                let params = RtParameters::new($component_name, $task_name, Vec::new(), std::env::current_dir().expect("Current folder detected"));
+                let rt = runtime(params, scx).expect("Runtime created");
                 let cx = rt.create_cx(Uuid::new_v4(), "Test", None).await.expect("Context created");
                 let vl = node.interpret(rt.clone(), cx.clone()).await;
                 if let Err(err) = &vl {

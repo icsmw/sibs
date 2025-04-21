@@ -1,6 +1,10 @@
 use crate::*;
 
-pub async fn chk_ty(node: &LinkedNode, vl: &RtValue, rt: &Runtime) -> Result<(), LinkedErr<E>> {
+pub(crate) async fn chk_ty(
+    node: &LinkedNode,
+    vl: &RtValue,
+    rt: &Runtime,
+) -> Result<(), LinkedErr<E>> {
     let Some(ty) = rt.tys.get(node.uuid()) else {
         return Err(LinkedErr::from(E::FailInferType, node));
     };
@@ -14,8 +18,7 @@ pub async fn chk_ty(node: &LinkedNode, vl: &RtValue, rt: &Runtime) -> Result<(),
     }
 }
 
-#[cfg(test)]
-pub(crate) fn into_rt_ufns(mut fns: Fns) -> Fns {
+fn into_rt_ufns(mut fns: Fns) -> Fns {
     fns.ufns.funcs = fns
         .ufns
         .funcs
@@ -37,7 +40,6 @@ pub(crate) fn into_rt_ufns(mut fns: Fns) -> Fns {
     fns
 }
 
-#[cfg(test)]
 fn ufn_into_exec(body: UserFnBody) -> UserFnBody {
     match body {
         UserFnBody::Executor(link, ex) => UserFnBody::Executor(link, ex),
@@ -55,7 +57,6 @@ fn ufn_into_exec(body: UserFnBody) -> UserFnBody {
     }
 }
 
-#[cfg(test)]
 fn cfn_into_exec(body: ClosureFnBody) -> ClosureFnBody {
     match body {
         ClosureFnBody::Executor(link, ex) => ClosureFnBody::Executor(link, ex),
@@ -73,8 +74,7 @@ fn cfn_into_exec(body: ClosureFnBody) -> ClosureFnBody {
     }
 }
 
-#[cfg(test)]
-pub(crate) fn into_rt_tasks(mut tasks: Tasks) -> Tasks {
+fn into_rt_tasks(mut tasks: Tasks) -> Tasks {
     tasks.table = tasks
         .table
         .into_iter()
@@ -86,7 +86,6 @@ pub(crate) fn into_rt_tasks(mut tasks: Tasks) -> Tasks {
     tasks
 }
 
-#[cfg(test)]
 fn task_node_into_exec(body: TaskBody) -> TaskBody {
     match body {
         TaskBody::Executor(md, ex) => TaskBody::Executor(md, ex),
@@ -103,26 +102,11 @@ fn task_node_into_exec(body: TaskBody) -> TaskBody {
     }
 }
 
-// #[cfg(test)]
-// async fn runner(node: LinkedNode, rt: Runtime, cx: Context) -> Result<RtValue, LinkedErr<E>> {
-//     cx.returns()
-//         .open_cx(node.uuid())
-//         .await
-//         .map_err(|err| LinkedErr::from(err, &node))?;
-//     let mut result = node.interpret(rt.clone(), cx.clone()).await?;
-//     result = if let Some(result) = cx
-//         .returns()
-//         .withdraw_vl(node.uuid())
-//         .await
-//         .map_err(|err| LinkedErr::from(err, &node))?
-//     {
-//         result
-//     } else {
-//         result
-//     };
-//     cx.returns()
-//         .close_cx()
-//         .await
-//         .map_err(|err| LinkedErr::from(err, &node))?;
-//     Ok(result)
-// }
+pub fn runtime(params: RtParameters, scx: SemanticCx) -> Result<Runtime, E> {
+    Runtime::new(
+        params,
+        scx.table,
+        into_rt_ufns(scx.fns),
+        into_rt_tasks(scx.tasks),
+    )
+}
