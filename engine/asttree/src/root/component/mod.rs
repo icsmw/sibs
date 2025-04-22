@@ -19,6 +19,15 @@ impl Component {
     pub fn get_name(&self) -> String {
         self.name.to_string()
     }
+    pub fn get_tasks_md(&self) -> Vec<(String, &Metadata)> {
+        let mut tasks = Vec::new();
+        for node in self.nodes.iter() {
+            if let Node::Root(Root::Task(task)) = &node.node {
+                tasks.push((task.get_name(), &node.md));
+            }
+        }
+        tasks
+    }
 }
 
 impl<'a> Lookup<'a> for Component {

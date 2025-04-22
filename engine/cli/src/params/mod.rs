@@ -4,9 +4,9 @@ mod version;
 
 use crate::*;
 
-use help::*;
-use scenario::*;
-use version::*;
+pub(crate) use help::*;
+pub(crate) use scenario::*;
+pub(crate) use version::*;
 
 pub trait Parameter {
     fn keys() -> Vec<String>;

@@ -21,9 +21,17 @@ pub enum E {
         "Parameter \"{0}\" can be used as standalone only. Please use --help to get more details"
     )]
     StandaloneParameter(String),
+    #[error("To run task component name should be provided")]
+    NoComponentParameter,
+    #[error("Fail to get cwd from \"{0}\"")]
+    FailToGetCwd(String),
+    #[error("Component \"{0}\" doesn't exists")]
+    ComponentNotFound(String),
 
     #[error("Fail to read valid scenario from \"{0}\"")]
     FailExtractAnchorNodeFrom(String),
+    #[error("Script has been executed already")]
+    ScriptAlreadyExecuted,
     #[error("Parser error: {0}")]
     Parser(parser::ParserError),
     #[error("Semantic error: {0}")]

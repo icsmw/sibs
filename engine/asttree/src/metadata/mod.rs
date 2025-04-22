@@ -1,7 +1,13 @@
 #[cfg(feature = "proptests")]
 mod proptests;
 
+use std::collections::HashMap;
+
 use crate::*;
+
+pub type TasksMetadata<'a> = Vec<(String, &'a Metadata)>;
+pub type ComponentMetadata<'a> = (&'a Metadata, TasksMetadata<'a>);
+pub type AnchorMetadata<'a> = HashMap<String, ComponentMetadata<'a>>;
 
 #[derive(Debug, Clone, Default)]
 pub struct Metadata {
@@ -30,6 +36,19 @@ impl Metadata {
                 Kind::LF
             )
         }
+    }
+
+    pub fn lines(&self) -> Vec<String> {
+        self.meta
+            .iter()
+            .filter_map(|n| {
+                if let Node::Miscellaneous(Miscellaneous::Meta(mn)) = &n.node {
+                    Some(mn.as_trimmed_string())
+                } else {
+                    None
+                }
+            })
+            .collect()
     }
 
     #[cfg(feature = "proptests")]

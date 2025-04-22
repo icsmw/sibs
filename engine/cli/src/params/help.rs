@@ -14,6 +14,13 @@ impl Parameter for HelpParameter {
     fn action(args: &mut Vec<String>) -> Option<Result<Action, E>> {
         let pos = args.iter().position(|arg| ARGS.contains(&arg.as_str()))?;
         args.remove(pos);
-        Some(Ok(Action::Help(HelpAction {})))
+
+        Some(Ok(Action::Help(HelpAction {
+            inner: if let Some(arg) = args.get(pos) {
+                arg == "--"
+            } else {
+                false
+            },
+        })))
     }
 }

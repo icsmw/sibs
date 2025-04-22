@@ -2,7 +2,7 @@
 mod proptests;
 
 use crate::*;
-use std::fmt;
+use std::{collections::HashMap, fmt};
 
 #[derive(Debug, Clone)]
 pub struct Anchor {
@@ -12,13 +12,32 @@ pub struct Anchor {
 
 impl Anchor {
     pub fn get_component<S: AsRef<str>>(&self, name: S) -> Option<&LinkedNode> {
-        self.nodes.iter().find(|n| {
-            if let Node::Root(Root::Component(comp)) = &n.node {
-                name.as_ref() == comp.get_name()
-            } else {
-                false
+        self.nodes.iter().find_map(|n| match &n.node {
+            Node::Root(Root::Component(comp)) => {
+                if name.as_ref() == comp.get_name() {
+                    Some(n)
+                } else {
+                    None
+                }
             }
+            Node::Declaration(Declaration::IncludeDeclaration(incl)) => {
+                incl.get_component(name.as_ref())
+            }
+            _ => None,
         })
+    }
+    pub fn get_components_md(&self) -> AnchorMetadata {
+        let mut components = HashMap::new();
+        self.nodes.iter().for_each(|n| match &n.node {
+            Node::Root(Root::Component(comp)) => {
+                components.insert(comp.get_name(), (&n.md, comp.get_tasks_md()));
+            }
+            Node::Declaration(Declaration::IncludeDeclaration(incl)) => {
+                components.extend(incl.get_components_md());
+            }
+            _ => {}
+        });
+        components
     }
 }
 

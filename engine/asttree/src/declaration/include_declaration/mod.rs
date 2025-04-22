@@ -2,7 +2,7 @@
 mod proptests;
 
 use crate::*;
-use std::fmt;
+use std::{collections::HashMap, fmt};
 
 #[derive(Debug, Clone)]
 pub struct IncludeDeclaration {
@@ -11,6 +11,23 @@ pub struct IncludeDeclaration {
     pub node: Box<LinkedNode>,
     pub root: Box<LinkedNode>,
     pub uuid: Uuid,
+}
+
+impl IncludeDeclaration {
+    pub fn get_component<S: AsRef<str>>(&self, name: S) -> Option<&LinkedNode> {
+        if let Node::Root(Root::Anchor(anchor)) = &self.root.node {
+            anchor.get_component(name)
+        } else {
+            None
+        }
+    }
+    pub fn get_components_md(&self) -> AnchorMetadata {
+        if let Node::Root(Root::Anchor(anchor)) = &self.root.node {
+            anchor.get_components_md()
+        } else {
+            HashMap::new()
+        }
+    }
 }
 
 impl<'a> Lookup<'a> for IncludeDeclaration {

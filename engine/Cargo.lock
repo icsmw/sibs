@@ -229,6 +229,7 @@ dependencies = [
  "parser",
  "runtime",
  "semantic",
+ "term",
  "thiserror 2.0.12",
  "tokio",
  "uuid",

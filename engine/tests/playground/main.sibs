@@ -1,0 +1,28 @@
+include from "./nested.sibs";
+
+mod fns {
+    fn sum(a: num, b: num) {
+        a + b;
+    };
+    fn diff(a: num, b: num) {
+        a - b;
+    };
+}
+
+/// This is description component_a
+component component_a() {
+    /// This description is task_a
+    task task_a() {
+        let a = 5;
+        a.fns::sum(a);
+    }
+};
+
+/// This is description component_b
+component component_b() {
+    /// This description is task_a
+    task task_a() {
+        let a = 5;
+        a.fns::sum(a);
+    }
+};

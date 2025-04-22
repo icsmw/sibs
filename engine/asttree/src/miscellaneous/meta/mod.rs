@@ -9,6 +9,12 @@ pub struct Meta {
     pub uuid: Uuid,
 }
 
+impl Meta {
+    pub fn as_trimmed_string(&self) -> String {
+        self.token.to_string().replace("///", "").trim().to_owned()
+    }
+}
+
 impl<'a> Lookup<'a> for Meta {
     fn lookup(&'a self, _trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         vec![]

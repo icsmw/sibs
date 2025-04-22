@@ -1,15 +1,15 @@
 mod actions;
 mod error;
 mod params;
-mod processing;
 mod scenario;
+mod script;
 
 pub(crate) use actions::*;
 pub(crate) use boxed::boxed;
 pub(crate) use error::*;
 pub(crate) use params::*;
-pub(crate) use processing::*;
 pub(crate) use scenario::*;
+pub(crate) use script::*;
 
 #[tokio::main]
 async fn main() -> Result<(), E> {
@@ -28,14 +28,19 @@ async fn main() -> Result<(), E> {
         .into_iter()
         .flatten()
         .collect();
-    // Run actions without context
-    actions
-        .iter()
-        .map(|act| act.no_context_run(&artifacts))
-        .collect::<Result<Vec<()>, _>>()?;
-    // Run actions with context
+    // Run actions
+    let mut post_actions = Vec::new();
     for act in actions.into_iter() {
-        act.context_run(artifacts.clone()).await?;
+        post_actions.push(act.run(artifacts.clone())?);
+    }
+    // Run post actions, if exists
+    for artifact in post_actions.into_iter() {
+        match artifact {
+            RunArtifact::Script(mut script) => {
+                script.run().await?;
+            }
+            RunArtifact::Void => {}
+        }
     }
     Ok(())
 }

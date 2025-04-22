@@ -27,5 +27,6 @@ interpreter = { path = "../interpreter" }
 runtime = { path = "../runtime" }
 functions = { path = "../functions" }
 boxed = { path = "../support/boxed" }
+term = { path = "../support/term" }
 
 [dev-dependencies]

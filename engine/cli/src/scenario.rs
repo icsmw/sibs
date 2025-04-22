@@ -35,6 +35,13 @@ impl Scenario {
         Ok(Self { filepath })
     }
 
+    pub fn cwd(&self) -> Result<PathBuf, E> {
+        self.filepath
+            .parent()
+            .map(|p| p.to_path_buf())
+            .ok_or(E::FailToGetCwd(self.filepath.to_string_lossy().to_string()))
+    }
+
     fn search(location: &PathBuf) -> Result<Option<PathBuf>, E> {
         if location.join(DEFAULT_SIBS_SCENARIO).exists() {
             return Ok(Some(location.join(DEFAULT_SIBS_SCENARIO)));
