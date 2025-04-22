@@ -37,7 +37,7 @@ async fn main() -> Result<(), E> {
     for artifact in post_actions.into_iter() {
         match artifact {
             RunArtifact::Script(mut script) => {
-                script.run().await?;
+                let _ = script.run().await?;
             }
             RunArtifact::Void => {}
         }

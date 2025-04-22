@@ -27,8 +27,8 @@ impl ReadNode<BinaryExpSeq> for BinaryExpSeq {
                 ]),
             ],
         )? {
-            if let Node::Expression(Expression::BinaryOp(op)) = &node.node {
-                match collected.last().map(|n| &n.node) {
+            if let Node::Expression(Expression::BinaryOp(op)) = &node.get_node() {
+                match collected.last().map(|n| n.get_node()) {
                     Some(Node::Expression(Expression::BinaryOp(prev))) => {
                         return Err(E::UnexpectedBinaryOperator(prev.token.id())
                             .link_with_token(&prev.token));
@@ -41,7 +41,7 @@ impl ReadNode<BinaryExpSeq> for BinaryExpSeq {
                     Some(_) => {}
                 }
             } else {
-                match collected.last().map(|n| &n.node) {
+                match collected.last().map(|n| n.get_node()) {
                     Some(Node::Expression(Expression::BinaryOp(..))) | None => {}
                     Some(Node::Expression(Expression::Variable(..))) => {
                         if collected.len() == 1 {
@@ -58,7 +58,7 @@ impl ReadNode<BinaryExpSeq> for BinaryExpSeq {
             collected.push(node);
         }
         if let Some(node) = collected.last() {
-            if matches!(node.node, Node::Expression(Expression::BinaryOp(..))) {
+            if matches!(node.get_node(), Node::Expression(Expression::BinaryOp(..))) {
                 return Err(E::MissedBinaryArgument.link(node));
             }
         }
@@ -66,7 +66,7 @@ impl ReadNode<BinaryExpSeq> for BinaryExpSeq {
         let mut finish = false;
         while !finish {
             for (n, node) in collected.iter().enumerate() {
-                if let Node::Expression(Expression::BinaryOp(op)) = &node.node {
+                if let Node::Expression(Expression::BinaryOp(op)) = &node.get_node() {
                     if matches!(op.operator, BinaryOperator::Slash | BinaryOperator::Star) {
                         index = Some(n);
                         break;
@@ -77,9 +77,9 @@ impl ReadNode<BinaryExpSeq> for BinaryExpSeq {
                 let right = collected.remove(n + 1);
                 let operator = collected.remove(n);
                 let left = collected.remove(n - 1);
-                let from = left.md.link.pos.from;
-                let to = right.md.link.pos.to;
-                let src = left.md.link.src;
+                let from = left.get_md().link.pos.from;
+                let to = right.get_md().link.pos.to;
+                let src = left.get_md().link.src;
                 let node = BinaryExp {
                     left: Box::new(left),
                     right: Box::new(right),
@@ -87,9 +87,9 @@ impl ReadNode<BinaryExpSeq> for BinaryExpSeq {
                     uuid: Uuid::new_v4(),
                 };
                 let mut expr = LinkedNode::from_node(Node::Expression(Expression::BinaryExp(node)));
-                expr.md.link.pos.from = from;
-                expr.md.link.pos.to = to;
-                expr.md.link.src = src;
+                expr.get_mut_md().link.pos.from = from;
+                expr.get_mut_md().link.pos.to = to;
+                expr.get_mut_md().link.src = src;
                 collected.insert(n - 1, expr);
             } else {
                 finish = true;

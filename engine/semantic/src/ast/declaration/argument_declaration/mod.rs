@@ -9,7 +9,7 @@ impl InferType for ArgumentDeclaration {
 impl Initialize for ArgumentDeclaration {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         self.r#type.initialize(scx)?;
-        if let Node::Declaration(Declaration::VariableName(variable)) = &self.variable.node {
+        if let Node::Declaration(Declaration::VariableName(variable)) = self.variable.get_node() {
             let ty = self.infer_type(scx)?;
             scx.tys
                 .insert(&variable.ident, TypeEntity::new(Some(ty.clone()), Some(ty)))
@@ -18,7 +18,7 @@ impl Initialize for ArgumentDeclaration {
             Ok(())
         } else {
             Err(LinkedErr::from(
-                E::UnexpectedNode(self.variable.node.id()),
+                E::UnexpectedNode(self.variable.get_node().id()),
                 self,
             ))
         }

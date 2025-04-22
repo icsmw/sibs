@@ -24,11 +24,11 @@ impl Initialize for For {
             Ty::Determined(DeterminedTy::Str) => Ty::Determined(DeterminedTy::Str),
             _ => return Err(LinkedErr::from(E::InvalidIterationSource, &self.elements)),
         };
-        let el = if let Node::Expression(Expression::Variable(el)) = &self.element.node {
+        let el = if let Node::Expression(Expression::Variable(el)) = self.element.get_node() {
             el.ident.to_owned()
         } else {
             return Err(LinkedErr::from(
-                E::UnexpectedNode(self.element.node.id()),
+                E::UnexpectedNode(self.element.get_node().id()),
                 &self.element,
             ));
         };
@@ -36,12 +36,12 @@ impl Initialize for For {
             .insert(el, TypeEntity::new(Some(ty.clone()), Some(ty)))
             .map_err(|err| LinkedErr::from(err.into(), self))?;
         if let Some(index) = self.index.as_ref() {
-            let el = if let Node::Expression(Expression::Variable(el)) = &index.node {
+            let el = if let Node::Expression(Expression::Variable(el)) = index.get_node() {
                 el.ident.to_owned()
             } else {
                 return Err(LinkedErr::from(
-                    E::UnexpectedNode(index.node.id()),
-                    &index.node,
+                    E::UnexpectedNode(index.get_node().id()),
+                    index.get_node(),
                 ));
             };
             scx.tys
@@ -73,7 +73,7 @@ impl Initialize for For {
             StatementId::Return,
         ])]);
         for found in nodes.into_iter() {
-            match &found.node.node {
+            match found.node.get_node() {
                 Node::Statement(Statement::Break(node)) => {
                     if !node.is_assigned() {
                         return Err(LinkedErr::from(E::NotAssignedBreak, node));

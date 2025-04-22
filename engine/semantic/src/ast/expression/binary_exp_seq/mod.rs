@@ -8,7 +8,7 @@ impl InferType for BinaryExpSeq {
         for node in self
             .nodes
             .iter()
-            .filter(|n| !matches!(n.node, Node::Expression(Expression::BinaryOp(..))))
+            .filter(|n| !matches!(n.get_node(), Node::Expression(Expression::BinaryOp(..))))
         {
             let ty = node.infer_type(scx)?;
             if !ty.numeric() {

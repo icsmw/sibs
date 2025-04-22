@@ -29,7 +29,7 @@ impl Initialize for Loop {
             return Err(LinkedErr::from(E::NotBreakableLoop, self));
         }
         for found in nodes.iter() {
-            match &found.node.node {
+            match found.node.get_node() {
                 Node::Statement(Statement::Break(node)) => {
                     if !node.is_assigned() {
                         return Err(LinkedErr::from(E::NotAssignedBreak, node));
@@ -46,9 +46,9 @@ impl Initialize for Loop {
             }
         }
         if !nodes.iter().any(|found| {
-            if let Node::Statement(Statement::Break(node)) = &found.node.node {
+            if let Node::Statement(Statement::Break(node)) = found.node.get_node() {
                 node.is_target(&self.uuid)
-            } else if let Node::Statement(Statement::Return(node)) = &found.node.node {
+            } else if let Node::Statement(Statement::Return(node)) = found.node.get_node() {
                 node.is_target_included(&self.uuid)
             } else {
                 false

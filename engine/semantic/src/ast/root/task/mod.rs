@@ -34,7 +34,8 @@ impl Initialize for Task {
         }
         let mut args = Vec::new();
         for n_arg in self.args.iter() {
-            let Node::Declaration(Declaration::ArgumentDeclaration(arg_dec)) = &n_arg.node else {
+            let Node::Declaration(Declaration::ArgumentDeclaration(arg_dec)) = n_arg.get_node()
+            else {
                 return Err(LinkedErr::from(E::InvalidTaskArg, n_arg));
             };
             let Some(ident) = arg_dec.get_var_name() else {
@@ -44,7 +45,7 @@ impl Initialize for Task {
             args.push(TaskArgDeclaration {
                 ty,
                 ident,
-                link: n_arg.md.link.clone(),
+                link: n_arg.get_md().link.clone(),
             });
         }
         let entity = TaskEntity {

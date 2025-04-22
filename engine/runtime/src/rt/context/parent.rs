@@ -10,7 +10,7 @@ impl ParentValue {
     pub fn by_node(value: RtValue, node: &LinkedNode) -> Self {
         Self {
             value,
-            link: node.md.link.clone(),
+            link: node.get_md().link.clone(),
         }
     }
 }
@@ -36,7 +36,7 @@ impl RtParent {
     pub fn withdraw(&mut self) -> Option<ParentValue> {
         self.vl.take()
     }
-    pub fn drop(&mut self) {
+    pub fn clear(&mut self) {
         self.vl = None;
     }
 }

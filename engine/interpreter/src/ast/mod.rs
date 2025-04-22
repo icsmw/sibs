@@ -25,20 +25,20 @@ impl Interpret for Node {
 impl Interpret for LinkedNode {
     #[boxed]
     fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
-        let mut vl = self.node.interpret(rt.clone(), cx.clone()).await?;
+        let mut vl = self.get_node().interpret(rt.clone(), cx.clone()).await?;
         let mut linked_node = self;
-        for ppm in self.md.ppm.iter() {
+        for ppm in self.get_md().ppm.iter() {
             cx.values()
                 .set_parent_vl(ParentValue::by_node(vl, linked_node))
                 .await
-                .map_err(|err| LinkedErr::by_link(err, (&self.md.link).into()))?;
+                .map_err(|err| LinkedErr::by_link(err, (&self.get_md().link).into()))?;
             vl = ppm.interpret(rt.clone(), cx.clone()).await?;
             linked_node = ppm;
         }
         cx.values()
             .drop_parent_vl()
             .await
-            .map_err(|err| LinkedErr::by_link(err, (&self.md.link).into()))?;
+            .map_err(|err| LinkedErr::by_link(err, (&self.get_md().link).into()))?;
         Ok(vl)
     }
 }

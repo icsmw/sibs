@@ -11,10 +11,10 @@ impl Interest for IncludeDeclaration {
 
 impl GetFilename for IncludeDeclaration {
     fn get_filename(&self) -> Result<PathBuf, E> {
-        let Node::Value(Value::PrimitiveString(val)) = &self.node.node else {
+        let Node::Value(Value::PrimitiveString(val)) = self.node.get_node() else {
             return Err(E::UnexpectedType(
                 ValueId::PrimitiveString.to_string(),
-                self.node.node.id().to_string(),
+                self.node.get_node().id().to_string(),
             ));
         };
         Ok(PathBuf::from(&val.inner))
@@ -43,10 +43,10 @@ impl ReadNode<IncludeDeclaration> for IncludeDeclaration {
                 .ok_or_else(|| E::MissedModulePath.link_with_token(&sig))?;
         #[cfg(not(test))]
         let root = {
-            let Node::Value(Value::PrimitiveString(filename)) = &filename_node.node else {
+            let Node::Value(Value::PrimitiveString(filename)) = &filename_node.get_node() else {
                 return Err(E::UnexpectedType(
                     ValueId::PrimitiveString.to_string(),
-                    filename_node.node.id().to_string(),
+                    filename_node.get_node().id().to_string(),
                 )
                 .link(&filename_node));
             };

@@ -5,6 +5,7 @@ use crate::*;
 pub type TaskExecutor =
     Box<dyn Fn(Runtime, Context) -> RtPinnedResult<'static, LinkedErr<E>> + Send + Sync>;
 
+#[allow(clippy::large_enum_variant)]
 pub enum TaskBody {
     Node(Task),
     Executor(SrcLink, TaskExecutor),

@@ -40,7 +40,7 @@ impl ReadNode<Skip> for Skip {
             else {
                 break;
             };
-            if matches!(node.node, Node::Statement(..)) {
+            if matches!(node.get_node(), Node::Statement(..)) {
                 args.push(node);
             } else {
                 func = Some(node);

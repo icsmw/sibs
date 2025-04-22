@@ -152,11 +152,8 @@ impl CodeSources {
                 .sig()
                 .map(|filename| format!("file: {filename}\n"))
                 .unwrap_or_default(),
-            report[(error_first_ln.min(if error_first_ln >= REPORT_LN_AROUND {
-                error_first_ln - REPORT_LN_AROUND
-            } else {
-                0
-            }))..report.len().min(error_last_ln + REPORT_LN_AROUND)]
+            report[(error_first_ln.saturating_sub(REPORT_LN_AROUND))
+                ..report.len().min(error_last_ln + REPORT_LN_AROUND)]
                 .join("\n")
         ))
     }

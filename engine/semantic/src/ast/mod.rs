@@ -68,13 +68,13 @@ impl InferType for LinkedNode {
             }
             Ok(ty)
         }
-        infer_type(&self.node, &self.md, scx)
+        infer_type(self.get_node(), self.get_md(), scx)
     }
 }
 
 impl Initialize for LinkedNode {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
-        self.node.initialize(scx)
+        self.get_node().initialize(scx)
     }
 }
 
@@ -103,13 +103,13 @@ impl Finalization for LinkedNode {
             }
             Ok(())
         }
-        initialize_and_finalize(&self.node, &self.md, scx)?;
-        self.node.finalize(scx)?;
+        initialize_and_finalize(self.get_node(), self.get_md(), scx)?;
+        self.get_node().finalize(scx)?;
         if !matches!(
-            self.node,
+            self.get_node(),
             Node::Expression(Expression::Accessor(..)) | Node::Expression(Expression::Call(..))
         ) {
-            scx.by_node(&self.node)?;
+            scx.by_node(self.get_node())?;
         }
         Ok(())
     }

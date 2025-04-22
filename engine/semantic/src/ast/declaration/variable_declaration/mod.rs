@@ -7,9 +7,10 @@ use crate::*;
 
 impl InferType for VariableDeclaration {
     fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
-        let Node::Declaration(Declaration::VariableName(variable)) = &self.variable.node else {
+        let Node::Declaration(Declaration::VariableName(variable)) = self.variable.get_node()
+        else {
             return Err(LinkedErr::from(
-                E::UnexpectedNode(self.variable.node.id()),
+                E::UnexpectedNode(self.variable.get_node().id()),
                 &self.variable,
             ));
         };
@@ -33,9 +34,10 @@ impl Initialize for VariableDeclaration {
             n.initialize(scx)?;
         }
         self.variable.initialize(scx)?;
-        let Node::Declaration(Declaration::VariableName(variable)) = &self.variable.node else {
+        let Node::Declaration(Declaration::VariableName(variable)) = self.variable.get_node()
+        else {
             return Err(LinkedErr::from(
-                E::UnexpectedNode(self.variable.node.id()),
+                E::UnexpectedNode(self.variable.get_node().id()),
                 &self.variable,
             ));
         };

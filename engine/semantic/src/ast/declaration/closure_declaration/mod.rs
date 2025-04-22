@@ -23,7 +23,8 @@ impl Initialize for ClosureDeclaration {
         self.args.iter().try_for_each(|n| n.initialize(scx))?;
         let mut args = Vec::new();
         for n_arg in self.args.iter() {
-            let Node::Declaration(Declaration::ArgumentDeclaration(arg_dec)) = &n_arg.node else {
+            let Node::Declaration(Declaration::ArgumentDeclaration(arg_dec)) = n_arg.get_node()
+            else {
                 return Err(LinkedErr::from(E::InvalidFnArg, n_arg));
             };
             let Some(ident) = arg_dec.get_var_name() else {
@@ -33,7 +34,7 @@ impl Initialize for ClosureDeclaration {
             args.push(UserFnArgDeclaration {
                 ty,
                 ident,
-                link: n_arg.md.link.clone(),
+                link: n_arg.get_md().link.clone(),
             });
         }
         let entity = ClosureFnEntity {

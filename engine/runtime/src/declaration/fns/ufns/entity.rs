@@ -5,6 +5,7 @@ use crate::*;
 pub type UserFnExecutor =
     Box<dyn Fn(Runtime, Context) -> RtPinnedResult<'static, LinkedErr<E>> + Send + Sync>;
 
+#[allow(clippy::large_enum_variant)]
 pub enum UserFnBody {
     Node(FunctionDeclaration),
     Executor(SrcLink, UserFnExecutor),

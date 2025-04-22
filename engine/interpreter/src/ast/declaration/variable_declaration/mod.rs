@@ -3,15 +3,16 @@ use crate::*;
 impl Interpret for VariableDeclaration {
     #[boxed]
     fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
-        let variable =
-            if let Node::Declaration(Declaration::VariableName(variable)) = &self.variable.node {
-                variable.ident.to_owned()
-            } else {
-                return Err(LinkedErr::from(
-                    E::UnexpectedNode(self.variable.node.id()),
-                    &self.variable,
-                ));
-            };
+        let variable = if let Node::Declaration(Declaration::VariableName(variable)) =
+            self.variable.get_node()
+        {
+            variable.ident.to_owned()
+        } else {
+            return Err(LinkedErr::from(
+                E::UnexpectedNode(self.variable.get_node().id()),
+                &self.variable,
+            ));
+        };
         if let Some(node) = &self.assignation {
             let vl = node.interpret(rt.clone(), cx.clone()).await?;
             if let Some(ty) = &self.r#type {

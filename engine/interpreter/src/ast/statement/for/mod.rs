@@ -6,20 +6,20 @@ use crate::*;
 impl Interpret for For {
     #[boxed]
     fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
-        let el = if let Node::Expression(Expression::Variable(el)) = &self.element.node {
+        let el = if let Node::Expression(Expression::Variable(el)) = self.element.get_node() {
             el.ident.to_owned()
         } else {
             return Err(LinkedErr::from(
-                E::UnexpectedNode(self.element.node.id()),
+                E::UnexpectedNode(self.element.get_node().id()),
                 &self.element,
             ));
         };
         let indx = if let Some(indx) = self.index.as_ref() {
-            if let Node::Expression(Expression::Variable(indx)) = &indx.node {
+            if let Node::Expression(Expression::Variable(indx)) = indx.get_node() {
                 Some((indx.ident.to_owned(), indx))
             } else {
                 return Err(LinkedErr::from(
-                    E::UnexpectedNode(self.element.node.id()),
+                    E::UnexpectedNode(self.element.get_node().id()),
                     indx,
                 ));
             }

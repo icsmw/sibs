@@ -19,7 +19,7 @@ impl FnArgValue {
     pub fn by_node(value: RtValue, node: &LinkedNode) -> Self {
         Self {
             value,
-            link: node.md.link.clone(),
+            link: node.get_md().link.clone(),
         }
     }
 }

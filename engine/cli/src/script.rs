@@ -117,8 +117,8 @@ impl Script {
         let Some(component) = self.anchor.get_component(&component) else {
             return Err(E::ComponentNotFound(component));
         };
-        lines.extend(component.md.lines());
-        if let Node::Root(Root::Component(component)) = &component.node {
+        lines.extend(component.get_md().lines());
+        if let Node::Root(Root::Component(component)) = component.get_node() {
             component.get_tasks_md().iter().for_each(|(task, meta)| {
                 lines.push(format!(" - [b]{task}[/b][>>]"));
                 lines.extend(meta.lines().into_iter().map(|ln| format!("[>>]{ln}")));

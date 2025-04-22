@@ -5,9 +5,10 @@ use crate::*;
 
 impl InferType for CompoundAssignments {
     fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
-        let Node::Expression(Expression::CompoundAssignmentsOp(op)) = &self.operator.node else {
+        let Node::Expression(Expression::CompoundAssignmentsOp(op)) = self.operator.get_node()
+        else {
             return Err(LinkedErr::from(
-                E::UnexpectedNode(self.operator.node.id()),
+                E::UnexpectedNode(self.operator.get_node().id()),
                 &self.operator,
             ));
         };

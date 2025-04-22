@@ -41,7 +41,7 @@ impl Initialize for While {
             StatementId::Return,
         ])]);
         for found in nodes.into_iter() {
-            match &found.node.node {
+            match found.node.get_node() {
                 Node::Statement(Statement::Break(node)) => {
                     if !node.is_assigned() {
                         return Err(LinkedErr::from(E::NotAssignedBreak, node));

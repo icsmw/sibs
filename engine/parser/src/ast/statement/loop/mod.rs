@@ -35,7 +35,7 @@ impl ReadNode<Loop> for Loop {
             let Some(node) = block.find_mut_by_uuid(&uuid) else {
                 return Err(LinkedErr::from(E::FailFindNode(uuid), &block));
             };
-            match &mut node.node {
+            match &mut node.get_mut_node() {
                 Node::Statement(Statement::Break(node)) => {
                     node.set_target(&self_uuid);
                 }

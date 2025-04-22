@@ -71,16 +71,31 @@ impl Identification for Node {
 
 #[derive(Debug, Clone)]
 pub struct LinkedNode {
-    pub node: Node,
-    pub md: Metadata,
+    node: Node,
+    md: Metadata,
 }
 
 impl LinkedNode {
+    pub fn new(node: Node, md: Metadata) -> Self {
+        Self { node, md }
+    }
     pub fn from_node(node: Node) -> Self {
-        LinkedNode {
+        Self {
             node,
             md: Metadata::default(),
         }
+    }
+    pub fn get_node(&self) -> &Node {
+        &self.node
+    }
+    pub fn get_md(&self) -> &Metadata {
+        &self.md
+    }
+    pub fn get_mut_node(&mut self) -> &mut Node {
+        &mut self.node
+    }
+    pub fn get_mut_md(&mut self) -> &mut Metadata {
+        &mut self.md
     }
 }
 

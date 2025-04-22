@@ -48,7 +48,7 @@ impl Store {
         Ok(self.get_mut()?.parent.withdraw())
     }
     pub fn drop_parent_vl(&mut self) -> Result<(), E> {
-        self.get_mut()?.parent.drop();
+        self.get_mut()?.parent.clear();
         Ok(())
     }
     pub fn enter(&mut self, uuid: &Uuid) -> Result<(), E> {

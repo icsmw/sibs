@@ -8,13 +8,13 @@ pub(crate) fn resolve_conflicts<K: Display + Clone + PartialEq + ConflictResolve
     let Some((n, (ppos, node, id))) = results
         .iter()
         .enumerate()
-        .max_by_key(|(_, (_, n, ..))| n.md.link.exto())
+        .max_by_key(|(_, (_, n, ..))| n.get_md().link.exto())
     else {
         return Ok(None);
     };
     let conflicted = results
         .iter()
-        .filter(|(_, n, oid)| n.md.link.exto() == node.md.link.exto() && oid != id)
+        .filter(|(_, n, oid)| n.get_md().link.exto() == node.get_md().link.exto() && oid != id)
         .cloned()
         .collect::<Vec<(usize, LinkedNode, K)>>();
     if conflicted.is_empty() {
@@ -28,7 +28,7 @@ pub(crate) fn resolve_conflicts<K: Display + Clone + PartialEq + ConflictResolve
             let err = E::NodesAreInConflict(
                 results
                     .iter()
-                    .filter(|(_, n, ..)| n.md.link.exto() == node.md.link.exto())
+                    .filter(|(_, n, ..)| n.get_md().link.exto() == node.get_md().link.exto())
                     .map(|(.., id)| id.to_string())
                     .collect::<Vec<String>>()
                     .join(", "),
@@ -71,9 +71,9 @@ pub trait ReadNode<T: Clone + Debug + Into<Node>>: Interest {
         let Some(tk_after_md) = parser.current() else {
             return Err(LinkedErr::token(E::UnexpectedEmptyParser, &tk_from));
         };
-        linked.md.link.set_pos(&tk_from, &tk_before_md);
-        linked.md.link.set_expos(&tk_from, tk_after_md);
-        linked.md.merge(md);
+        linked.get_mut_md().link.set_pos(&tk_from, &tk_before_md);
+        linked.get_mut_md().link.set_expos(&tk_from, tk_after_md);
+        linked.get_mut_md().merge(md);
         Ok(Some(linked))
     }
 }

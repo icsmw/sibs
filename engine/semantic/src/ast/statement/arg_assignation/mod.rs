@@ -2,14 +2,15 @@ use crate::*;
 
 impl InferType for ArgumentAssignation {
     fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
-        let variable = if let Node::Expression(Expression::Variable(variable)) = &self.left.node {
-            variable.ident.to_owned()
-        } else {
-            return Err(LinkedErr::from(
-                E::UnexpectedNode(self.left.node.id()),
-                &self.left,
-            ));
-        };
+        let variable =
+            if let Node::Expression(Expression::Variable(variable)) = self.left.get_node() {
+                variable.ident.to_owned()
+            } else {
+                return Err(LinkedErr::from(
+                    E::UnexpectedNode(self.left.get_node().id()),
+                    &self.left,
+                ));
+            };
         let left = scx
             .tys
             .lookup(&variable)

@@ -32,8 +32,8 @@ impl ReadNode<ComparisonSeq> for ComparisonSeq {
                 ExpressionId::ComparisonGroup,
             ])],
         )? {
-            if let Node::Expression(Expression::LogicalOp(op)) = &(node.node) {
-                match collected.last().map(|n| &n.node) {
+            if let Node::Expression(Expression::LogicalOp(op)) = &(node.get_node()) {
+                match collected.last().map(|n| n.get_node()) {
                     Some(Node::Expression(Expression::LogicalOp(prev))) => {
                         return Err(E::UnexpectedLogicalOperator(prev.token.id())
                             .link_with_token(&prev.token));
@@ -46,7 +46,7 @@ impl ReadNode<ComparisonSeq> for ComparisonSeq {
                     Some(_) => {}
                 }
             } else {
-                match collected.last().map(|n| &n.node) {
+                match collected.last().map(|n| n.get_node()) {
                     Some(Node::Expression(Expression::LogicalOp(..))) | None => {}
                     Some(Node::Expression(Expression::Variable(..))) => {
                         if collected.len() == 1 {
@@ -63,7 +63,7 @@ impl ReadNode<ComparisonSeq> for ComparisonSeq {
             collected.push(node);
         }
         if let Some(node) = collected.last() {
-            if matches!(node.node, Node::Expression(Expression::LogicalOp(..))) {
+            if matches!(node.get_node(), Node::Expression(Expression::LogicalOp(..))) {
                 return Err(E::MissedConditionArgument.link(node));
             }
         }
