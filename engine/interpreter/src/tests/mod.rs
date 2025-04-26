@@ -8,14 +8,14 @@ macro_rules! test_value_expectation {
             async fn [< test_value_expectation_ $fn_name >]() {
                 use $crate::*;
                 let mut lx = lexer::Lexer::new(&$content, 0);
-                let mut parser = Parser::unbound(lx.read().unwrap().tokens, &lx.uuid, &$content);
+                let mut parser = Parser::unbound(lx.read().unwrap().tokens, &lx.uuid, &$content, false);
                 let node = $element_ref::read(&mut parser);
                 if let Err(err) = &node {
                     eprintln!("{}", parser.report_err(err).expect("Reporting error"));
                 }
                 let node = node.expect("Node is parsed without errors")
                     .expect("Node is parsed");
-                let mut scx = SemanticCx::default();
+                let mut scx = SemanticCx::new(false);
                 functions::register(&mut scx.fns.efns).expect("functions are registred");
                 let result = node.initialize(&mut scx);
                 if let Err(err) = &result {
@@ -62,14 +62,14 @@ macro_rules! test_fail {
             async fn [< test_fail $fn_name >]() {
                 use $crate::*;
                 let mut lx = lexer::Lexer::new(&$content, 0);
-                let mut parser = Parser::unbound(lx.read().unwrap().tokens, &lx.uuid, &$content);
+                let mut parser = Parser::unbound(lx.read().unwrap().tokens, &lx.uuid, &$content, false);
                 let node = $element_ref::read(&mut parser);
                 if let Err(err) = &node {
                     eprintln!("{}", parser.report_err(err).expect("Reporting error"));
                 }
                 let node = node.expect("Node is parsed without errors")
                     .expect("Node is parsed");
-                let mut scx = SemanticCx::default();
+                let mut scx = SemanticCx::new(false);
                 functions::register(&mut scx.fns.efns).expect("functions are registred");
                 let result = node.initialize(&mut scx);
                 if let Err(err) = &result {
@@ -106,7 +106,7 @@ macro_rules! test_task_results {
                 use $crate::*;
 
                 let mut lx = lexer::Lexer::new(&$content, 0);
-                let mut parser = Parser::unbound(lx.read().unwrap().tokens, &lx.uuid, $content);
+                let mut parser = Parser::unbound(lx.read().unwrap().tokens, &lx.uuid, $content, false);
                 let node = Anchor::read(&mut parser);
                 if let Err(err) = &node {
                     eprintln!("{}", parser.report_err(err).expect("Reporting error"));
@@ -114,7 +114,7 @@ macro_rules! test_task_results {
                 let node = node
                     .expect("Node is parsed without errors")
                     .expect("Node is parsed");
-                let mut scx = SemanticCx::default();
+                let mut scx = SemanticCx::new(false);
                 functions::register(&mut scx.fns.efns).expect("functions are registred");
                 let result = node.initialize(&mut scx);
                 if let Err(err) = &result {
@@ -163,7 +163,7 @@ macro_rules! test_task_results_from_file {
                 let filepath = std::env::current_dir()
                     .expect("Current folder")
                     .join($filename);
-                let mut parser = Parser::new(filepath).expect("Parser created");
+                let mut parser = Parser::new(filepath, false).expect("Parser created");
                 let node = Anchor::read(&mut parser);
                 if let Err(err) = &node {
                     eprintln!("{}", parser.report_err(err).expect("Reporting error"));
@@ -171,7 +171,7 @@ macro_rules! test_task_results_from_file {
                 let node = node
                     .expect("Node is parsed without errors")
                     .expect("Node is parsed");
-                let mut scx = SemanticCx::default();
+                let mut scx = SemanticCx::new(false);
                 functions::register(&mut scx.fns.efns).expect("functions are registred");
                 let result = node.initialize(&mut scx);
                 if let Err(err) = &result {

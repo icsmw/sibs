@@ -34,10 +34,17 @@ pub struct Parser {
     pub(crate) filename: Option<PathBuf>,
     pub(crate) cwd: Option<PathBuf>,
     pub(crate) srcs: Rc<RefCell<CodeSources>>,
+    pub(crate) errs: Rc<RefCell<Errors<E>>>,
+    resilience: bool,
 }
 
 impl Parser {
-    pub fn unbound<S: AsRef<str>>(tokens: Vec<Token>, src: &Uuid, content: S) -> Self {
+    pub fn unbound<S: AsRef<str>>(
+        tokens: Vec<Token>,
+        src: &Uuid,
+        content: S,
+        resilience: bool,
+    ) -> Self {
         Self {
             tokens,
             pos: 0,
@@ -45,9 +52,11 @@ impl Parser {
             filename: None,
             cwd: None,
             srcs: Rc::new(RefCell::new(CodeSources::unbound(content, src))),
+            errs: Rc::new(RefCell::new(Errors::default())),
+            resilience,
         }
     }
-    pub fn new<P: AsRef<Path>>(filename: P) -> Result<Self, E> {
+    pub fn new<P: AsRef<Path>>(filename: P, resilience: bool) -> Result<Self, E> {
         let (filename, cwd, tokens, src) = BoundLexer::new(filename.as_ref())?.inner();
         Ok(Self {
             tokens,
@@ -55,7 +64,9 @@ impl Parser {
             src,
             filename: Some(filename.clone()),
             srcs: Rc::new(RefCell::new(CodeSources::bound(filename, &src)?)),
+            errs: Rc::new(RefCell::new(Errors::default())),
             cwd: Some(cwd),
+            resilience,
         })
     }
     pub fn new_child<P: AsRef<Path>>(&mut self, filename: P) -> Result<Self, E> {
@@ -67,8 +78,14 @@ impl Parser {
             src,
             filename: Some(filename.clone()),
             srcs: self.srcs.clone(),
+            errs: self.errs.clone(),
             cwd: Some(cwd),
+            resilience: self.resilience,
         })
+    }
+
+    pub fn is_resilience(&self) -> bool {
+        self.resilience
     }
 
     pub fn from_node<N: GetFilename>(&mut self, node: &N) -> Result<Parser, E> {
@@ -97,6 +114,13 @@ impl Parser {
         self.srcs.borrow().err(err).map_err(E::IOError)
     }
 
+    pub fn get_err_report(&self) -> Result<Option<LinkedErr<E>>, E> {
+        let Some(err) = self.errs.borrow_mut().first() else {
+            return Ok(None);
+        };
+        Ok(Some(err))
+    }
+
     pub(crate) fn inherit(&self, tokens: Vec<Token>) -> Self {
         Self {
             tokens,
@@ -104,7 +128,9 @@ impl Parser {
             src: self.src,
             filename: self.filename.clone(),
             srcs: self.srcs.clone(),
+            errs: self.errs.clone(),
             cwd: self.cwd.clone(),
+            resilience: self.resilience,
         }
     }
 

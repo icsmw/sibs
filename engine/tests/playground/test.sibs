@@ -1,0 +1,9 @@
+/// This is description component_a
+component component_a() {
+    /// This description is task_a
+    task task_a() {
+        let a = 5;
+        dsfsdfsdf---fsd;
+        a.fns::sum(a);
+    }
+};

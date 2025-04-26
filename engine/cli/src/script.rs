@@ -25,7 +25,7 @@ impl Script {
         task: Option<String>,
         args: Option<Vec<String>>,
     ) -> Result<Self, E> {
-        let mut parser = Parser::new(&scenario.filepath)?;
+        let mut parser = Parser::new(&scenario.filepath, false)?;
         let anchor = Anchor::read(&mut parser);
         if let Err(err) = &anchor {
             eprintln!("{}", parser.report_err(err)?);
@@ -33,7 +33,7 @@ impl Script {
         let anchor = anchor?.ok_or(E::FailExtractAnchorNodeFrom(
             scenario.filepath.to_string_lossy().to_string(),
         ))?;
-        let mut scx = SemanticCx::default();
+        let mut scx = SemanticCx::new(false);
         functions::register(&mut scx.fns.efns)?;
         if let Err(err) = anchor.initialize(&mut scx) {
             eprintln!("{}", parser.report_err(&err)?);
@@ -63,12 +63,11 @@ impl Script {
         let task = self.task.take().ok_or(E::ScriptAlreadyExecuted)?;
         let scx = self.scx.take().ok_or(E::ScriptAlreadyExecuted)?;
         let args = self.args.take().ok_or(E::ScriptAlreadyExecuted)?;
-        let params = RtParameters::new(component, task, args, self.scenario.cwd()?);
+        let params = RtParameters::new(component.clone(), task.clone(), args, self.scenario.cwd()?);
         let rt = interpreter::runtime(params, scx)?;
         let cx = rt
-            .create_cx(Uuid::new_v4(), "Test", None)
-            .await
-            .expect("Context created");
+            .create_cx(Uuid::new_v4(), format!("{component}:{task}"), None)
+            .await?;
         let vl = self.anchor.interpret(rt.clone(), cx).await;
         let _ = rt.destroy().await;
         match vl {

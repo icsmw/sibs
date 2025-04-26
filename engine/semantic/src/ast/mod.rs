@@ -74,7 +74,14 @@ impl InferType for LinkedNode {
 
 impl Initialize for LinkedNode {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
-        self.get_node().initialize(scx)
+        if let Err(err) = self.get_node().initialize(scx) {
+            if scx.is_resilience() {
+                scx.errs.add(err);
+            } else {
+                return Err(err);
+            }
+        }
+        Ok(())
     }
 }
 
@@ -103,8 +110,20 @@ impl Finalization for LinkedNode {
             }
             Ok(())
         }
-        initialize_and_finalize(self.get_node(), self.get_md(), scx)?;
-        self.get_node().finalize(scx)?;
+        if let Err(err) = initialize_and_finalize(self.get_node(), self.get_md(), scx) {
+            if scx.is_resilience() {
+                scx.errs.add(err);
+            } else {
+                return Err(err);
+            }
+        }
+        if let Err(err) = self.get_node().finalize(scx) {
+            if scx.is_resilience() {
+                scx.errs.add(err);
+            } else {
+                return Err(err);
+            }
+        }
         if !matches!(
             self.get_node(),
             Node::Expression(Expression::Accessor(..)) | Node::Expression(Expression::Call(..))

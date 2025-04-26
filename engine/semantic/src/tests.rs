@@ -7,9 +7,9 @@ macro_rules! test_success {
                 use parser::*;
                 use $crate::*;
                 let mut lx = lexer::Lexer::new(&$content, 0);
-                let mut parser = Parser::unbound(lx.read().unwrap().tokens, &lx.uuid, $content);
+                let mut parser = Parser::unbound(lx.read().unwrap().tokens, &lx.uuid, $content, false);
                 let node = $element_ref::read(&mut parser).expect("Node is parsed without errors").expect("Node is parsed");
-                let mut scx = $crate::SemanticCx::default();
+                let mut scx = $crate::SemanticCx::new(false);
                 functions::register(&mut scx.fns.efns).expect("functions are registred");
                 let result = node.initialize(&mut scx);
                 if let Err(err) = &result {
@@ -40,9 +40,9 @@ macro_rules! test_fail {
                     use parser::*;
                     use $crate::*;
                     let mut lx = lexer::Lexer::new(&$content, 0);
-                    let mut parser = Parser::unbound(lx.read().unwrap().tokens, &lx.uuid, $content);
+                    let mut parser = Parser::unbound(lx.read().unwrap().tokens, &lx.uuid, $content, false);
                     let node = $element_ref::read(&mut parser).expect("Node is parsed without errors").expect("Node is parsed");
-                    let mut scx = $crate::SemanticCx::default();
+                    let mut scx = $crate::SemanticCx::new(false);
                     functions::register(&mut scx.fns.efns).expect("functions are registred");
                     if node.initialize(&mut scx).is_err() {
                         return;

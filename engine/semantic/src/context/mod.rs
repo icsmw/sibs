@@ -1,14 +1,29 @@
 use crate::*;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct SemanticCx {
     pub tys: TyStore,
     pub fns: Fns,
     pub tasks: Tasks,
     pub table: TypesTable,
+    pub errs: Errors<E>,
+    resilience: bool,
 }
 
 impl SemanticCx {
+    pub fn new(resilience: bool) -> Self {
+        Self {
+            tys: TyStore::default(),
+            fns: Fns::default(),
+            tasks: Tasks::default(),
+            table: TypesTable::default(),
+            errs: Errors::default(),
+            resilience,
+        }
+    }
+    pub fn is_resilience(&self) -> bool {
+        self.resilience
+    }
     pub fn lookup_fn<S: AsRef<str>>(
         &mut self,
         name: S,

@@ -55,10 +55,33 @@ impl TryReadOneOf<LinkedNode, NodeTarget<'_>> for LinkedNode {
         parser: &mut Parser,
         targets: &[NodeTarget],
     ) -> Result<Option<LinkedNode>, LinkedErr<E>> {
-        let reset = parser.pin();
-        Ok(read_and_resolve_nodes(parser, targets)?.or_else(|| {
-            reset(parser);
-            None
-        }))
+        let origin = parser.pin();
+        let mut shifted = parser.pin();
+        let mut resilience = false;
+        loop {
+            match read_and_resolve_nodes(parser, targets) {
+                Ok(node) => {
+                    if !parser.is_resilience() || !resilience || node.is_some() {
+                        return Ok(node.or_else(|| {
+                            origin(parser);
+                            None
+                        }));
+                    }
+                }
+                Err(err) => {
+                    if !parser.is_resilience() {
+                        return Err(err);
+                    }
+                    resilience = true;
+                    parser.errs.borrow_mut().add(err);
+                }
+            };
+            shifted(parser);
+            if parser.token().is_none() {
+                origin(parser);
+                return Err(parser.errs.borrow_mut().first().unwrap());
+            }
+            shifted = parser.pin();
+        }
     }
 }
