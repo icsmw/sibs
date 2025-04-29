@@ -64,6 +64,51 @@ impl Declaration {
     }
 }
 
+impl Diagnostic for Declaration {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        match self {
+            Self::IncludeDeclaration(n) => n.located(src, pos),
+            Self::ModuleDeclaration(n) => n.located(src, pos),
+            Self::ArgumentDeclaration(n) => n.located(src, pos),
+            Self::FunctionDeclaration(n) => n.located(src, pos),
+            Self::VariableDeclaration(n) => n.located(src, pos),
+            Self::VariableType(n) => n.located(src, pos),
+            Self::VariableTypeDeclaration(n) => n.located(src, pos),
+            Self::VariableVariants(n) => n.located(src, pos),
+            Self::VariableName(n) => n.located(src, pos),
+            Self::ClosureDeclaration(n) => n.located(src, pos),
+        }
+    }
+    fn get_position(&self) -> Position {
+        match self {
+            Self::IncludeDeclaration(n) => n.get_position(),
+            Self::ModuleDeclaration(n) => n.get_position(),
+            Self::ArgumentDeclaration(n) => n.get_position(),
+            Self::FunctionDeclaration(n) => n.get_position(),
+            Self::VariableDeclaration(n) => n.get_position(),
+            Self::VariableType(n) => n.get_position(),
+            Self::VariableTypeDeclaration(n) => n.get_position(),
+            Self::VariableVariants(n) => n.get_position(),
+            Self::VariableName(n) => n.get_position(),
+            Self::ClosureDeclaration(n) => n.get_position(),
+        }
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        match self {
+            Self::IncludeDeclaration(n) => n.childs(),
+            Self::ModuleDeclaration(n) => n.childs(),
+            Self::ArgumentDeclaration(n) => n.childs(),
+            Self::FunctionDeclaration(n) => n.childs(),
+            Self::VariableDeclaration(n) => n.childs(),
+            Self::VariableType(n) => n.childs(),
+            Self::VariableTypeDeclaration(n) => n.childs(),
+            Self::VariableVariants(n) => n.childs(),
+            Self::VariableName(n) => n.childs(),
+            Self::ClosureDeclaration(n) => n.childs(),
+        }
+    }
+}
+
 impl From<Declaration> for Node {
     fn from(val: Declaration) -> Self {
         Node::Declaration(val)

@@ -20,6 +20,7 @@ impl ConflictResolver for KindId {
         match self {
             Self::Keyword
             | Self::String
+            | Self::Literal
             | Self::InterpolatedString
             | Self::Command
             | Self::EOF
@@ -174,6 +175,7 @@ impl ConflictResolver for KindId {
                 | KindId::BOF
                 | KindId::Identifier
                 | KindId::String
+                | KindId::Literal
                 | KindId::Whitespace
                 | KindId::InterpolatedString
                 | KindId::Command

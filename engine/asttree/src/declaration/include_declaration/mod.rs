@@ -13,6 +13,22 @@ pub struct IncludeDeclaration {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for IncludeDeclaration {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.sig.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::new(self.sig.pos.from, self.node.md.link.to())
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        vec![&*self.node, &*self.root]
+    }
+}
+
 impl IncludeDeclaration {
     pub fn get_component<S: AsRef<str>>(&self, name: S) -> Option<&LinkedNode> {
         if let Node::Root(Root::Anchor(anchor)) = &self.root.node {

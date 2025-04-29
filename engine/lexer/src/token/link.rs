@@ -55,6 +55,10 @@ impl SrcLink {
         }
     }
 
+    pub fn belongs(&self, src: &Uuid) -> bool {
+        &self.src == src
+    }
+
     pub fn from(&self) -> usize {
         self.pos.from
     }

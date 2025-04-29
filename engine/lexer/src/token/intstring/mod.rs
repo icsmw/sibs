@@ -13,7 +13,7 @@ pub enum StringPart {
     /// The opening token of the string or command (e.g., `"`, `'`, or `` ` ``).
     Open(Token),
     /// A literal string segment.
-    Literal(String),
+    Literal(Token),
     /// An expression enclosed within `{}`.
     Expression(Vec<Token>),
     /// The closing token of the string or command.
@@ -52,6 +52,7 @@ impl StringPart {
             lx.pos + knd.length()?,
         ))];
         let mut skip = false;
+        let mut from = lx.pos + 1;
         let closed = loop {
             if !skip {
                 lx.advance();
@@ -63,7 +64,12 @@ impl StringPart {
             };
             if nch == '{' && !serialized {
                 if !collected.is_empty() {
-                    parts.push(StringPart::Literal(collected.clone()));
+                    parts.push(StringPart::Literal(Token::by_pos(
+                        Kind::Literal(collected.clone()),
+                        &lx.uuid,
+                        from,
+                        from + collected.len(),
+                    )));
                     collected.clear();
                 }
                 let mut tokens = Tokens::with(vec![Token::by_pos(
@@ -88,6 +94,7 @@ impl StringPart {
                     {
                         closed = true;
                         skip = true;
+                        from = lx.pos;
                         break;
                     }
                 }
@@ -98,7 +105,12 @@ impl StringPart {
                 }
             } else if nch == stop_ch && !serialized {
                 if !collected.is_empty() {
-                    parts.push(StringPart::Literal(collected.clone()));
+                    parts.push(StringPart::Literal(Token::by_pos(
+                        Kind::Literal(collected.clone()),
+                        &lx.uuid,
+                        from,
+                        from + collected.len(),
+                    )));
                 }
                 break true;
             } else {
@@ -135,7 +147,7 @@ impl fmt::Display for StringPart {
             "{}",
             match self {
                 Self::Open(tk) => tk.to_string(),
-                Self::Literal(s) => s.to_owned(),
+                Self::Literal(tk) => tk.to_string(),
                 Self::Expression(tokens) => tokens
                     .iter()
                     .map(|t| t.to_string())

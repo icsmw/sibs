@@ -79,6 +79,75 @@ pub enum Expression {
     TaskCall(TaskCall),
 }
 
+impl Diagnostic for Expression {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        match self {
+            Self::Accessor(n) => n.located(src, pos),
+            Self::BinaryExp(n) => n.located(src, pos),
+            Self::BinaryExpGroup(n) => n.located(src, pos),
+            Self::BinaryExpSeq(n) => n.located(src, pos),
+            Self::BinaryOp(n) => n.located(src, pos),
+            Self::Call(n) => n.located(src, pos),
+            Self::Command(n) => n.located(src, pos),
+            Self::Comparison(n) => n.located(src, pos),
+            Self::ComparisonGroup(n) => n.located(src, pos),
+            Self::ComparisonOp(n) => n.located(src, pos),
+            Self::ComparisonSeq(n) => n.located(src, pos),
+            Self::CompoundAssignments(n) => n.located(src, pos),
+            Self::CompoundAssignmentsOp(n) => n.located(src, pos),
+            Self::FunctionCall(n) => n.located(src, pos),
+            Self::LogicalOp(n) => n.located(src, pos),
+            Self::Range(n) => n.located(src, pos),
+            Self::TaskCall(n) => n.located(src, pos),
+            Self::Variable(n) => n.located(src, pos),
+        }
+    }
+    fn get_position(&self) -> Position {
+        match self {
+            Self::Accessor(n) => n.get_position(),
+            Self::BinaryExp(n) => n.get_position(),
+            Self::BinaryExpGroup(n) => n.get_position(),
+            Self::BinaryExpSeq(n) => n.get_position(),
+            Self::BinaryOp(n) => n.get_position(),
+            Self::Call(n) => n.get_position(),
+            Self::Command(n) => n.get_position(),
+            Self::Comparison(n) => n.get_position(),
+            Self::ComparisonGroup(n) => n.get_position(),
+            Self::ComparisonOp(n) => n.get_position(),
+            Self::ComparisonSeq(n) => n.get_position(),
+            Self::CompoundAssignments(n) => n.get_position(),
+            Self::CompoundAssignmentsOp(n) => n.get_position(),
+            Self::FunctionCall(n) => n.get_position(),
+            Self::LogicalOp(n) => n.get_position(),
+            Self::Range(n) => n.get_position(),
+            Self::TaskCall(n) => n.get_position(),
+            Self::Variable(n) => n.get_position(),
+        }
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        match self {
+            Self::Accessor(n) => n.childs(),
+            Self::BinaryExp(n) => n.childs(),
+            Self::BinaryExpGroup(n) => n.childs(),
+            Self::BinaryExpSeq(n) => n.childs(),
+            Self::BinaryOp(n) => n.childs(),
+            Self::Call(n) => n.childs(),
+            Self::Command(n) => n.childs(),
+            Self::Comparison(n) => n.childs(),
+            Self::ComparisonGroup(n) => n.childs(),
+            Self::ComparisonOp(n) => n.childs(),
+            Self::ComparisonSeq(n) => n.childs(),
+            Self::CompoundAssignments(n) => n.childs(),
+            Self::CompoundAssignmentsOp(n) => n.childs(),
+            Self::FunctionCall(n) => n.childs(),
+            Self::LogicalOp(n) => n.childs(),
+            Self::Range(n) => n.childs(),
+            Self::TaskCall(n) => n.childs(),
+            Self::Variable(n) => n.childs(),
+        }
+    }
+}
+
 impl Expression {
     pub fn uuid(&self) -> &Uuid {
         match self {

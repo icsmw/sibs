@@ -13,6 +13,32 @@ pub enum IfCase {
     Else(LinkedNode, Token),
 }
 
+impl Diagnostic for IfCase {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        let token = match self {
+            Self::If(_, _, tk) => tk,
+            Self::Else(_, tk) => tk,
+        };
+        if !token.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        match self {
+            Self::If(_, blk, tk) => Position::new(tk.pos.from, blk.md.link.to()),
+            Self::Else(blk, tk) => Position::new(tk.pos.from, blk.md.link.to()),
+        }
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        match self {
+            Self::If(cond, blk, _) => vec![cond, blk],
+            Self::Else(blk, _) => vec![blk],
+        }
+    }
+}
+
 impl IfCase {
     fn block(&self) -> &LinkedNode {
         match self {
@@ -73,6 +99,22 @@ impl FindMutByUuid for Vec<IfCase> {
 pub struct If {
     pub cases: Vec<IfCase>,
     pub uuid: Uuid,
+}
+
+impl Diagnostic for If {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        self.cases.iter().any(|cs| cs.located(src, pos))
+    }
+    fn get_position(&self) -> Position {
+        if let (Some(first), Some(last)) = (self.cases.first(), self.cases.last()) {
+            Position::new(first.get_position().from, last.get_position().to)
+        } else {
+            Position::default()
+        }
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        self.cases.iter().flat_map(|cs| cs.childs()).collect()
+    }
 }
 
 impl<'a> Lookup<'a> for If {

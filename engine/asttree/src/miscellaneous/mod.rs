@@ -24,6 +24,27 @@ impl Miscellaneous {
     }
 }
 
+impl Diagnostic for Miscellaneous {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        match self {
+            Self::Comment(n) => n.located(src, pos),
+            Self::Meta(n) => n.located(src, pos),
+        }
+    }
+    fn get_position(&self) -> Position {
+        match self {
+            Self::Comment(n) => n.get_position(),
+            Self::Meta(n) => n.get_position(),
+        }
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        match self {
+            Self::Comment(n) => n.childs(),
+            Self::Meta(n) => n.childs(),
+        }
+    }
+}
+
 impl From<Miscellaneous> for Node {
     fn from(val: Miscellaneous) -> Self {
         Node::Miscellaneous(val)

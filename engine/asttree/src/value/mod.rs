@@ -42,6 +42,43 @@ impl Value {
     }
 }
 
+impl Diagnostic for Value {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        match self {
+            Self::Error(n) => n.located(src, pos),
+            Self::Boolean(n) => n.located(src, pos),
+            Self::Number(n) => n.located(src, pos),
+            Self::Array(n) => n.located(src, pos),
+            Self::InterpolatedString(n) => n.located(src, pos),
+            Self::PrimitiveString(n) => n.located(src, pos),
+            Self::Closure(n) => n.located(src, pos),
+        }
+    }
+    fn get_position(&self) -> Position {
+        match self {
+            Self::Error(n) => n.get_position(),
+            Self::Boolean(n) => n.get_position(),
+            Self::Number(n) => n.get_position(),
+            Self::Array(n) => n.get_position(),
+            Self::InterpolatedString(n) => n.get_position(),
+            Self::PrimitiveString(n) => n.get_position(),
+            Self::Closure(n) => n.get_position(),
+        }
+    }
+
+    fn childs(&self) -> Vec<&LinkedNode> {
+        match self {
+            Self::Error(n) => n.childs(),
+            Self::Boolean(n) => n.childs(),
+            Self::Number(n) => n.childs(),
+            Self::Array(n) => n.childs(),
+            Self::InterpolatedString(n) => n.childs(),
+            Self::PrimitiveString(n) => n.childs(),
+            Self::Closure(n) => n.childs(),
+        }
+    }
+}
+
 impl<'a> Lookup<'a> for Value {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         match self {

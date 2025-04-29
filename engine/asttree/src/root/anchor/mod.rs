@@ -41,6 +41,29 @@ impl Anchor {
     }
 }
 
+impl Diagnostic for Anchor {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        let Some(first) = self.nodes.first() else {
+            return false;
+        };
+        if !first.md.link.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        if let (Some(first), Some(last)) = (self.nodes.first(), self.nodes.last()) {
+            Position::new(first.md.link.from(), last.md.link.to())
+        } else {
+            Position::new(0, 0)
+        }
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        self.nodes.iter().collect()
+    }
+}
+
 impl<'a> Lookup<'a> for Anchor {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.nodes

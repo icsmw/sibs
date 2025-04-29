@@ -30,7 +30,7 @@ pub(crate) trait Interest {
 impl Interest for KindId {
     fn interest_in_char(&self, ch: &char) -> bool {
         match self {
-            Self::EOF | Self::BOF => false,
+            Self::Literal | Self::EOF | Self::BOF => false,
             Self::Whitespace => ch.is_whitespace(),
             Self::Identifier | Self::Keyword => ch.is_alphabetic(),
             Self::Number => ch.is_alphanumeric(),
@@ -96,6 +96,7 @@ impl Interest for KindId {
             Self::Whitespace
             | Self::Number
             | Self::String
+            | Self::Literal
             | Self::InterpolatedString
             | Self::Command
             | Self::SingleQuote

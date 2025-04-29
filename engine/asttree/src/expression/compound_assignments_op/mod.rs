@@ -34,6 +34,22 @@ pub struct CompoundAssignmentsOp {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for CompoundAssignmentsOp {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.token.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        self.token.pos.clone()
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        Vec::new()
+    }
+}
+
 impl CompoundAssignmentsOp {
     pub fn is_str_compatible(&self) -> bool {
         matches!(self.operator, CompoundAssignmentsOperator::PlusEqual)

@@ -191,6 +191,21 @@ pub fn kind(id: KindId) -> BoxedStrategy<Kind> {
                 )
             })
             .boxed(),
+        KindId::Literal => gen_string(RangeInclusive::new(0, 200))
+            .prop_map(|str| {
+                Kind::Literal(
+                    str.chars()
+                        .map(|ch| {
+                            if ch == '"' || ch == '\'' || ch == '`' || ch == '\\' {
+                                "_".to_string()
+                            } else {
+                                ch.to_string()
+                            }
+                        })
+                        .collect::<String>(),
+                )
+            })
+            .boxed(),
         KindId::InterpolatedString => (1..10, prop_oneof![Just(0u8), Just(1u8)])
             .prop_flat_map(|(count, first)| {
                 let mut parts: Vec<BoxedStrategy<StringPart>> = vec![Just(StringPart::Open(

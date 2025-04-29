@@ -11,6 +11,22 @@ pub struct Loop {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for Loop {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.token.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::new(self.token.pos.from, self.block.md.link.to())
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        vec![&*self.block]
+    }
+}
+
 impl<'a> Lookup<'a> for Loop {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.block.lookup_inner(self.uuid, trgs)

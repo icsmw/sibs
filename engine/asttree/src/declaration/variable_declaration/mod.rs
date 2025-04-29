@@ -13,6 +13,36 @@ pub struct VariableDeclaration {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for VariableDeclaration {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.token.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::new(
+            self.token.pos.from,
+            self.assignation
+                .as_ref()
+                .map(|n| n.md.link.to())
+                .or_else(|| self.r#type.as_ref().map(|n| n.md.link.to()))
+                .unwrap_or(self.variable.md.link.to()),
+        )
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        let mut nodes: Vec<&LinkedNode> = vec![&*self.variable];
+        if let Some(node) = self.r#type.as_ref() {
+            nodes.push(node);
+        }
+        if let Some(node) = self.assignation.as_ref() {
+            nodes.push(node);
+        }
+        nodes
+    }
+}
+
 impl<'a> Lookup<'a> for VariableDeclaration {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.variable

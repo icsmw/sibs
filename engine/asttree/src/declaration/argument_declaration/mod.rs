@@ -11,6 +11,21 @@ pub struct ArgumentDeclaration {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for ArgumentDeclaration {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        self.variable.located(src, pos) || self.r#type.located(src, pos)
+    }
+    fn get_position(&self) -> Position {
+        Position::new(
+            self.variable.get_position().from,
+            self.r#type.get_position().to,
+        )
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        vec![&*self.variable, &*self.r#type]
+    }
+}
+
 impl ArgumentDeclaration {
     pub fn get_var_name(&self) -> Option<String> {
         if let Node::Declaration(Declaration::VariableName(n)) = &self.variable.node {

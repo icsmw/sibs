@@ -22,19 +22,24 @@ impl Arbitrary for StringPart {
         if variant == 0 {
             (gen_string(RangeInclusive::new(1, 100)), Just(sch))
                 .prop_map(|(str, sch)| {
-                    StringPart::Literal(
-                        str.chars()
-                            .map(|ch| {
-                                if ch == '{' || ch == '}' || ch == '\\' {
-                                    "_".to_string()
-                                } else if ch == sch {
-                                    format!("\\{sch}")
-                                } else {
-                                    ch.to_string()
-                                }
-                            })
-                            .collect::<String>(),
-                    )
+                    StringPart::Literal(Token::by_pos(
+                        Kind::Literal(
+                            str.chars()
+                                .map(|ch| {
+                                    if ch == '{' || ch == '}' || ch == '\\' {
+                                        "_".to_string()
+                                    } else if ch == sch {
+                                        format!("\\{sch}")
+                                    } else {
+                                        ch.to_string()
+                                    }
+                                })
+                                .collect::<String>(),
+                        ),
+                        &Uuid::new_v4(),
+                        0,
+                        0,
+                    ))
                 })
                 .boxed()
         } else {
@@ -50,6 +55,7 @@ impl Arbitrary for StringPart {
                     KindId::DoubleQuote,
                     KindId::Number,
                     KindId::Whitespace,
+                    KindId::Literal,
                     KindId::EOF,
                     KindId::BOF,
                 ]),

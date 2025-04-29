@@ -54,6 +54,7 @@ proptest! {
         KindId::SingleQuote,
         KindId::DoubleQuote,
         KindId::Backtick,
+        KindId::Literal,
         KindId::EOF,
         KindId::BOF]), 1..1000)) {
         let mut cases = cases.into_iter().flat_map(|knd| {

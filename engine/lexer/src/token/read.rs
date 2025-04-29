@@ -291,6 +291,7 @@ impl Read for Token {
             } else {
                 None
             }),
+            KindId::Literal => Err(E::AttemptToReadLiteral),
             KindId::EOF | KindId::BOF => Err(E::AttemptToReadEOForBOF),
         }
     }

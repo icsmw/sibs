@@ -11,8 +11,6 @@ pub enum E {
     IO(String),
     #[error("--scenario requires a path to .sibs file")]
     MissedPathWithScenario,
-    #[error("Invalid arguments: {0}")]
-    InvalidArguments(String),
     #[error("No arguments to get task's name")]
     FailToGetTaskName,
     #[error("No arguments to get component's name")]

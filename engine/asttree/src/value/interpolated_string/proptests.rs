@@ -13,7 +13,7 @@ impl Arbitrary for InterpolatedStringPart {
         if lit {
             return gen_string(RangeInclusive::new(1, 100))
                 .prop_map(|str| {
-                    InterpolatedStringPart::Literal(
+                    InterpolatedStringPart::Literal(Token::for_test(Kind::Literal(
                         str.chars()
                             .map(|ch| {
                                 if ch == '{' || ch == '}' || ch == '\\' || ch == '\'' {
@@ -23,7 +23,7 @@ impl Arbitrary for InterpolatedStringPart {
                                 }
                             })
                             .collect::<String>(),
-                    )
+                    )))
                 })
                 .boxed();
         }

@@ -13,6 +13,24 @@ pub struct Closure {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for Closure {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.open.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::new(self.open.pos.from, self.block.md.link.to())
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        let mut nodes: Vec<&LinkedNode> = self.args.iter().collect();
+        nodes.push(&*self.block);
+        nodes
+    }
+}
+
 impl<'a> Lookup<'a> for Closure {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.args

@@ -14,6 +14,24 @@ pub struct ModuleDeclaration {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for ModuleDeclaration {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.sig.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::new(self.sig.pos.from, self.node.md.link.to())
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        let mut nodes: Vec<&LinkedNode> = self.nodes.iter().collect();
+        nodes.push(&*self.node);
+        nodes
+    }
+}
+
 impl<'a> Lookup<'a> for ModuleDeclaration {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.node.lookup_inner(self.uuid, trgs)

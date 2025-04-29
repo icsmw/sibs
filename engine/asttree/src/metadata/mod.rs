@@ -56,3 +56,23 @@ impl Metadata {
         self.meta.append(&mut src.md.meta);
     }
 }
+
+impl Diagnostic for Metadata {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.link.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::new(self.link.exfrom(), self.link.exto())
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        [
+            self.ppm.iter().collect::<Vec<&LinkedNode>>(),
+            self.meta.iter().collect::<Vec<&LinkedNode>>(),
+        ]
+        .concat()
+    }
+}

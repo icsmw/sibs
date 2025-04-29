@@ -12,6 +12,22 @@ pub struct Block {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for Block {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.open.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::new(self.open.pos.from, self.close.pos.from)
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        self.nodes.iter().collect()
+    }
+}
+
 impl<'a> Lookup<'a> for Block {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.nodes

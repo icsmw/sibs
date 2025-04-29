@@ -13,6 +13,22 @@ pub struct Join {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for Join {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.token.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::tokens(&self.token, &self.close)
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        self.commands.iter().collect()
+    }
+}
+
 impl<'a> Lookup<'a> for Join {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.commands

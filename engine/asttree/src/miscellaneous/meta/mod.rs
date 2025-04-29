@@ -9,6 +9,22 @@ pub struct Meta {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for Meta {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.token.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        self.token.pos.clone()
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        Vec::new()
+    }
+}
+
 impl Meta {
     pub fn as_trimmed_string(&self) -> String {
         self.token.to_string().replace("///", "").trim().to_owned()

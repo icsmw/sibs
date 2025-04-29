@@ -12,6 +12,22 @@ pub struct Array {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for Array {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.open.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::tokens(&self.open, &self.close)
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        self.els.iter().collect()
+    }
+}
+
 impl<'a> Lookup<'a> for Array {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.els

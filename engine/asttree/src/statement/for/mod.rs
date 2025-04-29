@@ -15,6 +15,24 @@ pub struct For {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for For {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.token_for.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::new(self.token_for.pos.from, self.block.md.link.to())
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        let mut nodes = vec![&*self.element, &*self.elements, &*self.block];
+        self.index.as_ref().map(|n| nodes.push(&*n));
+        nodes
+    }
+}
+
 impl<'a> Lookup<'a> for For {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.element

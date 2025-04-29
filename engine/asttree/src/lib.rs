@@ -1,5 +1,6 @@
 mod cfm;
 mod declaration;
+mod diagnostic;
 mod expression;
 mod linking;
 mod lookup;
@@ -12,6 +13,7 @@ mod value;
 
 pub use cfm::*;
 pub use declaration::*;
+pub use diagnostic::*;
 pub use expression::*;
 pub use linking::*;
 pub use lookup::*;
@@ -48,6 +50,42 @@ impl Default for Node {
             token: Token::for_test(Kind::Comment(String::from("DEFAULT NODE VALUE"))),
             uuid: Uuid::new_v4(),
         }))
+    }
+}
+
+impl Diagnostic for Node {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        match self {
+            Self::Statement(n) => n.located(src, pos),
+            Self::Expression(n) => n.located(src, pos),
+            Self::Declaration(n) => n.located(src, pos),
+            Self::Value(n) => n.located(src, pos),
+            Self::ControlFlowModifier(n) => n.located(src, pos),
+            Self::Root(n) => n.located(src, pos),
+            Self::Miscellaneous(n) => n.located(src, pos),
+        }
+    }
+    fn get_position(&self) -> Position {
+        match self {
+            Self::Statement(n) => n.get_position(),
+            Self::Expression(n) => n.get_position(),
+            Self::Declaration(n) => n.get_position(),
+            Self::Value(n) => n.get_position(),
+            Self::ControlFlowModifier(n) => n.get_position(),
+            Self::Root(n) => n.get_position(),
+            Self::Miscellaneous(n) => n.get_position(),
+        }
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        match self {
+            Self::Statement(n) => n.childs(),
+            Self::Expression(n) => n.childs(),
+            Self::Declaration(n) => n.childs(),
+            Self::Value(n) => n.childs(),
+            Self::ControlFlowModifier(n) => n.childs(),
+            Self::Root(n) => n.childs(),
+            Self::Miscellaneous(n) => n.childs(),
+        }
     }
 }
 
@@ -96,6 +134,18 @@ impl LinkedNode {
     }
     pub fn get_mut_md(&mut self) -> &mut Metadata {
         &mut self.md
+    }
+}
+
+impl Diagnostic for LinkedNode {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        self.md.located(src, pos)
+    }
+    fn get_position(&self) -> Position {
+        self.md.get_position()
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        [self.md.childs(), self.node.childs()].concat()
     }
 }
 

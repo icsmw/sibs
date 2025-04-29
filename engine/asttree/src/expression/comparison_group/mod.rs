@@ -13,6 +13,22 @@ pub struct ComparisonGroup {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for ComparisonGroup {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.open.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::tokens(self.negation.as_ref().unwrap_or(&self.open), &self.close)
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        vec![&*self.node]
+    }
+}
+
 impl<'a> Lookup<'a> for ComparisonGroup {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.node.lookup_inner(self.uuid, trgs)

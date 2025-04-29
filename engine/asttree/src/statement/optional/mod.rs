@@ -12,6 +12,22 @@ pub struct Optional {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for Optional {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.token.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::new(self.comparison.md.link.from(), self.action.md.link.to())
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        vec![&*self.comparison, &*self.action]
+    }
+}
+
 impl<'a> Lookup<'a> for Optional {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.comparison

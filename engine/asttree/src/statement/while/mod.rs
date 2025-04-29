@@ -12,6 +12,22 @@ pub struct While {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for While {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.token.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::new(self.token.pos.from, self.block.md.link.to())
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        vec![&*self.block, &*self.comparison]
+    }
+}
+
 impl<'a> Lookup<'a> for While {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.comparison

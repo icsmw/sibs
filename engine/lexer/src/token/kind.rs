@@ -15,6 +15,8 @@ pub enum Kind {
     Identifier(String),
     /// A numeric literal represented as a floating-point number.
     Number(f64),
+    /// A string literal. Used in strings and commands
+    Literal(String),
     /// A string literal.
     String(String),
     /// An interpolated string, represented as a vector of `StringPart`.
@@ -134,6 +136,7 @@ impl fmt::Display for Kind {
                 Self::Keyword(s) => s.to_string(),
                 Self::Identifier(s) => s.clone(),
                 Self::Number(n) => n.to_string(),
+                Self::Literal(n) => n.to_string(),
                 Self::String(s) => format!("\"{s}\""),
                 Self::Whitespace(s) => s.clone(),
                 Self::InterpolatedString(s) => s
@@ -261,6 +264,7 @@ impl fmt::Display for KindId {
                 | Self::Keyword
                 | Self::Number
                 | Self::String
+                | Self::Literal
                 | Self::InterpolatedString
                 | Self::Command
                 | Self::EOF
@@ -331,6 +335,7 @@ impl TryFrom<KindId> for Kind {
             | KindId::Keyword
             | KindId::Number
             | KindId::String
+            | KindId::Literal
             | KindId::Whitespace
             | KindId::InterpolatedString
             | KindId::Command

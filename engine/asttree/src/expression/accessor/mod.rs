@@ -12,6 +12,22 @@ pub struct Accessor {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for Accessor {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.open.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::tokens(&self.open, &self.close)
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        vec![&*self.node]
+    }
+}
+
 impl<'a> Lookup<'a> for Accessor {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.node.lookup_inner(self.uuid, trgs)

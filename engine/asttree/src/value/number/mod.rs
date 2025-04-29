@@ -11,6 +11,22 @@ pub struct Number {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for Number {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.token.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        self.token.pos.clone()
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        Vec::new()
+    }
+}
+
 impl<'a> Lookup<'a> for Number {
     fn lookup(&'a self, _trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         vec![]

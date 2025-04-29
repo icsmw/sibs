@@ -8,9 +8,48 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub enum InterpolatedStringPart {
     Open(Token),
-    Literal(String),
+    Literal(Token),
     Expression(LinkedNode),
     Close(Token),
+}
+
+impl Diagnostic for InterpolatedStringPart {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        match self {
+            InterpolatedStringPart::Open(tk)
+            | InterpolatedStringPart::Close(tk)
+            | InterpolatedStringPart::Literal(tk, ..) => {
+                if !tk.belongs(src) {
+                    false
+                } else {
+                    self.get_position().is_in(pos)
+                }
+            }
+            InterpolatedStringPart::Expression(n) => {
+                if !n.md.link.belongs(src) {
+                    false
+                } else {
+                    self.get_position().is_in(pos)
+                }
+            }
+        }
+    }
+    fn get_position(&self) -> Position {
+        match self {
+            InterpolatedStringPart::Open(tk)
+            | InterpolatedStringPart::Close(tk)
+            | InterpolatedStringPart::Literal(tk, ..) => tk.pos.clone(),
+            InterpolatedStringPart::Expression(n) => n.md.link.pos.clone(),
+        }
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        match self {
+            InterpolatedStringPart::Open(..)
+            | InterpolatedStringPart::Close(..)
+            | InterpolatedStringPart::Literal(..) => Vec::new(),
+            InterpolatedStringPart::Expression(n) => vec![n],
+        }
+    }
 }
 
 impl<'a> LookupInner<'a> for &'a InterpolatedStringPart {
@@ -43,7 +82,7 @@ impl fmt::Display for InterpolatedStringPart {
             match self {
                 Self::Open(tk) => tk.to_string(),
                 Self::Close(tk) => tk.to_string(),
-                Self::Literal(s) => s.to_owned(),
+                Self::Literal(tk) => tk.to_string(),
                 Self::Expression(n) => format!("{} {n} {}", Kind::LeftBrace, Kind::RightBrace),
             }
         )
@@ -63,6 +102,25 @@ pub struct InterpolatedString {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for InterpolatedString {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.token.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        if let (Some(first), Some(last)) = (self.nodes.first(), self.nodes.last()) {
+            Position::new(first.get_position().from, last.get_position().to)
+        } else {
+            self.token.pos.clone()
+        }
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        self.nodes.iter().flat_map(|n| n.childs()).collect()
+    }
+}
 impl<'a> Lookup<'a> for InterpolatedString {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.nodes

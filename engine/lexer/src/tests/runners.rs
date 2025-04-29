@@ -71,6 +71,7 @@ impl Token {
             }
             Kind::Identifier(..)
             | Kind::String(..)
+            | Kind::Literal(..)
             | Kind::Comment(..)
             | Kind::Meta(..)
             | Kind::Number(..)
@@ -90,8 +91,9 @@ impl Token {
                                 .length()
                                 .expect("Wrapping token doesn't have a length");
                         }
-                        StringPart::Literal(s) => {
-                            pos += s.len();
+                        StringPart::Literal(tk) => {
+                            tk.set_pos(pos);
+                            pos += tk.to_string().len();
                         }
                         StringPart::Expression(tks) => {
                             tks.iter_mut().for_each(|tk| {

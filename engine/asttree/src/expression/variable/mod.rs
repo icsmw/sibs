@@ -12,6 +12,28 @@ pub struct Variable {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for Variable {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.token.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::new(
+            self.negation
+                .as_ref()
+                .map(|tk| tk.pos.from)
+                .unwrap_or(self.token.pos.from),
+            self.token.pos.to,
+        )
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        Vec::new()
+    }
+}
+
 impl<'a> Lookup<'a> for Variable {
     fn lookup(&'a self, _trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         vec![]

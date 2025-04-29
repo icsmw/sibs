@@ -13,6 +13,22 @@ pub struct Error {
     pub close: Token,
 }
 
+impl Diagnostic for Error {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.token.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::tokens(&self.token, &self.close)
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        vec![&*self.node]
+    }
+}
+
 impl<'a> Lookup<'a> for Error {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.node.lookup_inner(self.uuid, trgs)

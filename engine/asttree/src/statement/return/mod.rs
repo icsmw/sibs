@@ -26,6 +26,25 @@ impl Return {
     }
 }
 
+impl Diagnostic for Return {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.token.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        self.token.pos.clone()
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        self.node
+            .as_ref()
+            .map(|n| vec![&**n])
+            .unwrap_or_else(|| Vec::new())
+    }
+}
+
 impl<'a> Lookup<'a> for Return {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.node.as_ref().lookup_inner(self.uuid, trgs)

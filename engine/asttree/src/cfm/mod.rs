@@ -18,6 +18,27 @@ pub enum ControlFlowModifier {
     Skip(Skip),
 }
 
+impl Diagnostic for ControlFlowModifier {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        match self {
+            Self::Gatekeeper(n) => n.located(src, pos),
+            Self::Skip(n) => n.located(src, pos),
+        }
+    }
+    fn get_position(&self) -> Position {
+        match self {
+            Self::Gatekeeper(n) => n.get_position(),
+            Self::Skip(n) => n.get_position(),
+        }
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        match self {
+            Self::Gatekeeper(n) => n.childs(),
+            Self::Skip(n) => n.childs(),
+        }
+    }
+}
+
 impl ControlFlowModifier {
     pub fn uuid(&self) -> &Uuid {
         match self {

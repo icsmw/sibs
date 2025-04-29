@@ -24,6 +24,22 @@ impl Module {
     }
 }
 
+impl Diagnostic for Module {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.sig.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::tokens(&self.sig, &self.close)
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        self.nodes.iter().collect()
+    }
+}
+
 impl<'a> Lookup<'a> for Module {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.nodes

@@ -13,6 +13,22 @@ pub struct CompoundAssignments {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for CompoundAssignments {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.left.md.link.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::new(self.left.md.link.from(), self.right.md.link.to())
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        vec![&*self.left, &*self.operator, &*self.right]
+    }
+}
+
 impl<'a> Lookup<'a> for CompoundAssignments {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.left

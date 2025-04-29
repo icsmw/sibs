@@ -13,6 +13,28 @@ pub struct TaskCall {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for TaskCall {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.open.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::new(
+            self.reference
+                .first()
+                .map(|(_, tk)| tk.pos.from)
+                .unwrap_or(self.open.pos.from),
+            self.close.pos.to,
+        )
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        self.args.iter().collect()
+    }
+}
+
 impl TaskCall {
     pub fn get_name(&self) -> String {
         self.reference

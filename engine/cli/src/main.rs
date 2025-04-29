@@ -5,7 +5,6 @@ mod scenario;
 mod script;
 
 pub(crate) use actions::*;
-pub(crate) use boxed::boxed;
 pub(crate) use error::*;
 pub(crate) use params::*;
 pub(crate) use scenario::*;

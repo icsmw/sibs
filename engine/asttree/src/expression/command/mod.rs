@@ -8,9 +8,44 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub enum CommandPart {
     Open(Token),
-    Literal(String),
+    Literal(Token),
     Expression(LinkedNode),
     Close(Token),
+}
+
+impl Diagnostic for CommandPart {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        match self {
+            CommandPart::Open(tk) | CommandPart::Close(tk) | CommandPart::Literal(tk, ..) => {
+                if !tk.belongs(src) {
+                    false
+                } else {
+                    self.get_position().is_in(pos)
+                }
+            }
+            CommandPart::Expression(n) => {
+                if !n.md.link.belongs(src) {
+                    false
+                } else {
+                    self.get_position().is_in(pos)
+                }
+            }
+        }
+    }
+    fn get_position(&self) -> Position {
+        match self {
+            CommandPart::Open(tk) | CommandPart::Close(tk) | CommandPart::Literal(tk, ..) => {
+                tk.pos.clone()
+            }
+            CommandPart::Expression(n) => n.md.link.pos.clone(),
+        }
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        match self {
+            CommandPart::Open(..) | CommandPart::Close(..) | CommandPart::Literal(..) => Vec::new(),
+            CommandPart::Expression(n) => vec![n],
+        }
+    }
 }
 
 impl<'a> LookupInner<'a> for &'a CommandPart {
@@ -39,7 +74,7 @@ impl fmt::Display for CommandPart {
             match self {
                 Self::Open(tk) => tk.to_string(),
                 Self::Close(tk) => tk.to_string(),
-                Self::Literal(s) => s.to_owned(),
+                Self::Literal(tk) => tk.to_string(),
                 Self::Expression(n) => format!("{} {n} {}", Kind::LeftBrace, Kind::RightBrace),
             }
         )
@@ -57,6 +92,26 @@ pub struct Command {
     pub nodes: Vec<CommandPart>,
     pub token: Token,
     pub uuid: Uuid,
+}
+
+impl Diagnostic for Command {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.token.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        if let (Some(first), Some(last)) = (self.nodes.first(), self.nodes.last()) {
+            Position::new(first.get_position().from, last.get_position().to)
+        } else {
+            self.token.pos.clone()
+        }
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        self.nodes.iter().flat_map(|n| n.childs()).collect()
+    }
 }
 
 impl<'a> Lookup<'a> for Command {

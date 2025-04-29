@@ -22,6 +22,15 @@ impl Position {
     pub fn new(from: usize, to: usize) -> Self {
         Self { from, to }
     }
+    pub fn tokens(from: &Token, to: &Token) -> Self {
+        Self {
+            from: from.pos.from,
+            to: to.pos.to,
+        }
+    }
+    pub fn is_in(&self, pos: usize) -> bool {
+        pos >= self.from && pos <= self.to
+    }
 }
 
 /// Represents the position of a token or element in the source code.

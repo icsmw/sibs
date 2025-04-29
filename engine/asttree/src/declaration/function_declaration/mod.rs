@@ -15,6 +15,24 @@ pub struct FunctionDeclaration {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for FunctionDeclaration {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.sig.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::new(self.sig.pos.from, self.block.md.link.to())
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        let mut nodes: Vec<&LinkedNode> = self.args.iter().collect();
+        nodes.push(&*self.block);
+        nodes
+    }
+}
+
 impl FunctionDeclaration {
     pub fn get_name(&self) -> Option<&str> {
         if let Kind::Identifier(name) = &self.name.kind {

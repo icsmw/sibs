@@ -10,6 +10,30 @@ pub enum VariableCompoundType {
     Vec(Token, Box<LinkedNode>),
 }
 
+impl Diagnostic for VariableCompoundType {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        match self {
+            VariableCompoundType::Vec(tk, ..) => {
+                if !tk.belongs(src) {
+                    false
+                } else {
+                    self.get_position().is_in(pos)
+                }
+            }
+        }
+    }
+    fn get_position(&self) -> Position {
+        match self {
+            VariableCompoundType::Vec(tk, n) => Position::new(tk.pos.from, n.md.link.to()),
+        }
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        match self {
+            VariableCompoundType::Vec(_, n) => vec![&*n],
+        }
+    }
+}
+
 impl<'a> LookupInner<'a> for &'a VariableCompoundType {
     fn lookup_inner(self, owner: Uuid, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         match self {
@@ -61,6 +85,33 @@ impl VariableCompoundType {
 pub enum VariableTypeDef {
     Primitive(Token),
     Compound(VariableCompoundType),
+}
+
+impl Diagnostic for VariableTypeDef {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        match self {
+            VariableTypeDef::Primitive(token) => {
+                if !token.belongs(src) {
+                    false
+                } else {
+                    token.pos.is_in(pos)
+                }
+            }
+            VariableTypeDef::Compound(ty) => ty.located(src, pos),
+        }
+    }
+    fn get_position(&self) -> Position {
+        match self {
+            VariableTypeDef::Primitive(token) => token.pos.clone(),
+            VariableTypeDef::Compound(ty) => ty.get_position(),
+        }
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        match self {
+            VariableTypeDef::Primitive(..) => Vec::new(),
+            VariableTypeDef::Compound(ty) => ty.childs(),
+        }
+    }
 }
 
 impl<'a> LookupInner<'a> for &'a VariableTypeDef {
@@ -119,6 +170,18 @@ impl VariableTypeDef {
 pub struct VariableType {
     pub r#type: VariableTypeDef,
     pub uuid: Uuid,
+}
+
+impl Diagnostic for VariableType {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        self.r#type.located(src, pos)
+    }
+    fn get_position(&self) -> Position {
+        self.r#type.get_position()
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        self.r#type.childs()
+    }
 }
 
 impl<'a> Lookup<'a> for VariableType {

@@ -27,6 +27,22 @@ impl Call {
     }
 }
 
+impl Diagnostic for Call {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.token.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::new(self.token.pos.from, self.node.md.link.to())
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        vec![&*self.node]
+    }
+}
+
 impl<'a> Lookup<'a> for Call {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.node.lookup_inner(self.uuid, trgs)

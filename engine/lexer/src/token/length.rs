@@ -67,6 +67,7 @@ impl ConstantLength for KindId {
             Self::Identifier
             | Self::Number
             | Self::String
+            | Self::Literal
             | Self::InterpolatedString
             | Self::Command
             | Self::Whitespace

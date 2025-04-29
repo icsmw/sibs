@@ -14,6 +14,24 @@ pub struct ClosureDeclaration {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for ClosureDeclaration {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.token.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::tokens(&self.token, &self.close)
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        let mut nodes: Vec<&LinkedNode> = self.args.iter().collect();
+        nodes.push(&*self.ty);
+        nodes
+    }
+}
+
 impl<'a> Lookup<'a> for ClosureDeclaration {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.args

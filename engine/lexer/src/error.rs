@@ -37,6 +37,10 @@ pub enum E {
     #[error("Attempt to read EOF or BOF")]
     AttemptToReadEOForBOF,
 
+    /// Error indicating an attempt to read Literal, which can be read only in the scope of InterpolatedString.
+    #[error("Attempt to directly read Literal")]
+    AttemptToReadLiteral,
+
     /// Error indicating a `KindId` cannot be converted to a character.
     #[error("{0:?} cannot be converted to char")]
     CannotConverToChar(KindId),

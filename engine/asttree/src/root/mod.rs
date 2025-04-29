@@ -35,6 +35,33 @@ impl Root {
     }
 }
 
+impl Diagnostic for Root {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        match self {
+            Self::Anchor(n) => n.located(src, pos),
+            Self::Module(n) => n.located(src, pos),
+            Self::Component(n) => n.located(src, pos),
+            Self::Task(n) => n.located(src, pos),
+        }
+    }
+    fn get_position(&self) -> Position {
+        match self {
+            Self::Anchor(n) => n.get_position(),
+            Self::Module(n) => n.get_position(),
+            Self::Component(n) => n.get_position(),
+            Self::Task(n) => n.get_position(),
+        }
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        match self {
+            Self::Anchor(n) => n.childs(),
+            Self::Module(n) => n.childs(),
+            Self::Component(n) => n.childs(),
+            Self::Task(n) => n.childs(),
+        }
+    }
+}
+
 impl<'a> Lookup<'a> for Root {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         match self {

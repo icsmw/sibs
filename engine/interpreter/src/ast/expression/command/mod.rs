@@ -8,7 +8,7 @@ impl Interpret for CommandPart {
     #[boxed]
     fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
         match self {
-            Self::Literal(s) => Ok(RtValue::Str(s.to_owned())),
+            Self::Literal(tk) => Ok(RtValue::Str(tk.to_string())),
             Self::Expression(n) => n.interpret(rt, cx).await,
             Self::Open(..) | Self::Close(..) => Ok(RtValue::Str(String::new())),
         }

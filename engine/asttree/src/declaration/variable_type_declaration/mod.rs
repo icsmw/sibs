@@ -11,6 +11,25 @@ pub struct VariableTypeDeclaration {
     pub uuid: Uuid,
 }
 
+impl Diagnostic for VariableTypeDeclaration {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.token.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        self.types
+            .last()
+            .map(|node| Position::new(self.token.pos.from, node.md.link.to()))
+            .unwrap_or(self.token.pos.clone())
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        self.types.iter().collect()
+    }
+}
+
 impl<'a> Lookup<'a> for VariableTypeDeclaration {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.types

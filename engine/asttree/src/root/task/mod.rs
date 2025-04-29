@@ -24,6 +24,34 @@ impl Task {
     }
 }
 
+impl Diagnostic for Task {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.sig.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::new(
+            self.vis
+                .as_ref()
+                .map(|tk| tk.pos.from)
+                .unwrap_or(self.sig.pos.from),
+            self.block.md.link.to(),
+        )
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        let mut nodes: Vec<&LinkedNode> = [
+            self.args.iter().collect::<Vec<&LinkedNode>>(),
+            self.gts.iter().collect::<Vec<&LinkedNode>>(),
+        ]
+        .concat();
+        nodes.push(&*self.block);
+        nodes
+    }
+}
+
 impl<'a> Lookup<'a> for Task {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.args

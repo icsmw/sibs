@@ -106,6 +106,64 @@ impl Statement {
     }
 }
 
+impl Diagnostic for Statement {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        match self {
+            Self::Assignation(n) => n.located(src, pos),
+            Self::AssignedValue(n) => n.located(src, pos),
+            Self::ArgumentAssignation(n) => n.located(src, pos),
+            Self::ArgumentAssignedValue(n) => n.located(src, pos),
+            Self::Block(n) => n.located(src, pos),
+            Self::Break(n) => n.located(src, pos),
+            Self::For(n) => n.located(src, pos),
+            Self::If(n) => n.located(src, pos),
+            Self::Join(n) => n.located(src, pos),
+            Self::Loop(n) => n.located(src, pos),
+            Self::OneOf(n) => n.located(src, pos),
+            Self::Optional(n) => n.located(src, pos),
+            Self::Return(n) => n.located(src, pos),
+            Self::While(n) => n.located(src, pos),
+        }
+    }
+    fn get_position(&self) -> Position {
+        match self {
+            Self::Assignation(n) => n.get_position(),
+            Self::AssignedValue(n) => n.get_position(),
+            Self::ArgumentAssignation(n) => n.get_position(),
+            Self::ArgumentAssignedValue(n) => n.get_position(),
+            Self::Block(n) => n.get_position(),
+            Self::Break(n) => n.get_position(),
+            Self::For(n) => n.get_position(),
+            Self::If(n) => n.get_position(),
+            Self::Join(n) => n.get_position(),
+            Self::Loop(n) => n.get_position(),
+            Self::OneOf(n) => n.get_position(),
+            Self::Optional(n) => n.get_position(),
+            Self::Return(n) => n.get_position(),
+            Self::While(n) => n.get_position(),
+        }
+    }
+
+    fn childs(&self) -> Vec<&LinkedNode> {
+        match self {
+            Self::Assignation(n) => n.childs(),
+            Self::AssignedValue(n) => n.childs(),
+            Self::ArgumentAssignation(n) => n.childs(),
+            Self::ArgumentAssignedValue(n) => n.childs(),
+            Self::Block(n) => n.childs(),
+            Self::Break(n) => n.childs(),
+            Self::For(n) => n.childs(),
+            Self::If(n) => n.childs(),
+            Self::Join(n) => n.childs(),
+            Self::Loop(n) => n.childs(),
+            Self::OneOf(n) => n.childs(),
+            Self::Optional(n) => n.childs(),
+            Self::Return(n) => n.childs(),
+            Self::While(n) => n.childs(),
+        }
+    }
+}
+
 impl<'a> Lookup<'a> for Statement {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         match self {

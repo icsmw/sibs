@@ -40,6 +40,18 @@ pub struct Token {
     pub pos: Position,
 }
 
+impl Token {
+    pub fn is_in_position(&self, src: &Uuid, pos: usize) -> bool {
+        if &self.src != src {
+            return false;
+        }
+        self.pos.is_in(pos)
+    }
+    pub fn belongs(&self, src: &Uuid) -> bool {
+        &self.src == src
+    }
+}
+
 impl PartialEq for Token {
     /// Compares two `Token` instances for equality, ignoring the `src` field.
     ///
