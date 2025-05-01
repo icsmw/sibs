@@ -3,28 +3,8 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum E {
-    #[error("Path doesn't exist: {0}")]
-    PathDoesNotExist(String),
-    #[error("Cannot find scenario file in current location: {0}")]
-    ScenarioNotFound(String),
     #[error("IO error: {0}")]
     IO(String),
-    #[error("--scenario requires a path to .sibs file")]
-    MissedPathWithScenario,
-    #[error("No arguments to get task's name")]
-    FailToGetTaskName,
-    #[error("No arguments to get component's name")]
-    FailToGetComponentName,
-    #[error(
-        "Parameter \"{0}\" can be used as standalone only. Please use --help to get more details"
-    )]
-    StandaloneParameter(String),
-    #[error("To run task component name should be provided")]
-    NoComponentParameter,
-    #[error("Fail to get cwd from \"{0}\"")]
-    FailToGetCwd(String),
-    #[error("Component \"{0}\" doesn't exists")]
-    ComponentNotFound(String),
 
     #[error("Fail to read valid scenario from \"{0}\"")]
     FailExtractAnchorNodeFrom(String),

@@ -21,6 +21,7 @@ pub(crate) fn read_and_resolve_nodes(
 ) -> Result<Option<LinkedNode>, LinkedErr<E>> {
     let mut results = Vec::new();
     let reset = parser.pin();
+    let from = parser.pos;
     for target in targets {
         let drop = parser.pin();
         if let (Some(node), id) = match target {
@@ -47,7 +48,7 @@ pub(crate) fn read_and_resolve_nodes(
         drop(parser);
     }
     reset(parser);
-    resolve_conflicts(results, parser)
+    resolve_conflicts(results, parser, from)
 }
 
 impl TryReadOneOf<LinkedNode, NodeTarget<'_>> for LinkedNode {

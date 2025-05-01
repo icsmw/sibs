@@ -38,6 +38,8 @@ pub struct Token {
     pub kind: Kind,
     /// The position of the token in the source code.
     pub pos: Position,
+    /// Owner (Node) of token. Can be empty if parsing of Node was failed
+    pub owner: Option<Uuid>,
 }
 
 impl Token {
@@ -52,6 +54,14 @@ impl Token {
     }
     pub fn fingerprint(&self) -> String {
         format!("{}:{}:{}", self.src, self.pos.from, self.pos.to)
+    }
+    pub fn set_owner(&mut self, uuid: &Uuid) -> bool {
+        if self.owner.is_some() {
+            false
+        } else {
+            self.owner = Some(*uuid);
+            true
+        }
     }
 }
 
@@ -79,6 +89,7 @@ impl Token {
             src: src.to_owned(),
             kind,
             pos: Position::new(from, to),
+            owner: None,
         }
     }
 
@@ -93,6 +104,7 @@ impl Token {
             src: Uuid::new_v4(),
             kind,
             pos: Position::new(0, 0),
+            owner: None,
         }
     }
 }

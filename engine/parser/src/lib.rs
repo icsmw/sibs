@@ -125,6 +125,12 @@ impl Parser {
         self.tokens.iter().find(|tk| tk.pos.is_in(pos))
     }
 
+    pub fn bind_tokens(&mut self, from: usize, to: usize, uuid: &Uuid) {
+        self.tokens[from..to].iter_mut().for_each(|tk| {
+            let _ = tk.set_owner(uuid);
+        });
+    }
+
     pub fn len(&self) -> usize {
         self.tokens.last().map(|tk| tk.pos.to).unwrap_or_default()
     }

@@ -4,6 +4,7 @@ use std::fmt::{Debug, Display};
 pub(crate) fn resolve_conflicts<K: Display + Clone + PartialEq + ConflictResolver<K>>(
     mut results: Vec<(usize, LinkedNode, K)>,
     parser: &mut Parser,
+    from: usize,
 ) -> Result<Option<LinkedNode>, LinkedErr<E>> {
     let Some((n, (ppos, node, id))) = results
         .iter()
@@ -19,7 +20,9 @@ pub(crate) fn resolve_conflicts<K: Display + Clone + PartialEq + ConflictResolve
         .collect::<Vec<(usize, LinkedNode, K)>>();
     if conflicted.is_empty() {
         parser.pos = *ppos;
-        return Ok(Some(results.remove(n).1));
+        let node = results.remove(n).1;
+        parser.bind_tokens(from, parser.pos, node.uuid());
+        return Ok(Some(node));
     };
     let (mut ppos, mut resolved_node, mut resolved_id) = (ppos, node.clone(), id.clone());
     let mut ignored = Vec::new();
@@ -46,6 +49,7 @@ pub(crate) fn resolve_conflicts<K: Display + Clone + PartialEq + ConflictResolve
         }
     }
     parser.pos = *ppos;
+    parser.bind_tokens(from, parser.pos, resolved_node.uuid());
     Ok(Some(resolved_node))
 }
 
@@ -90,6 +94,7 @@ pub(crate) trait TryRead<
             return Ok(None);
         };
         let reset = parser.pin();
+        let from = parser.pos;
         for id in ids {
             let drop = parser.pin();
             if let Some(el) = Self::try_read(parser, id.clone())? {
@@ -98,7 +103,7 @@ pub(crate) trait TryRead<
             drop(parser);
         }
         reset(parser);
-        resolve_conflicts(results, parser)
+        resolve_conflicts(results, parser, from)
     }
 }
 

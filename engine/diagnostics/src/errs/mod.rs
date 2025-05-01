@@ -22,6 +22,9 @@ impl<E: Display> Errors<E> {
     pub fn is_empty(&self) -> bool {
         self.errors.is_empty()
     }
+    pub fn extract(&mut self) -> Vec<LinkedErr<E>> {
+        self.errors.drain(..).collect()
+    }
 }
 
 impl<E: Display> Default for Errors<E> {
