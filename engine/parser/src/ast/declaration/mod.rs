@@ -21,7 +21,7 @@ impl AsVec<DeclarationId> for DeclarationId {
 
 impl TryRead<Declaration, DeclarationId> for Declaration {
     fn try_read(
-        parser: &mut Parser,
+        parser: &Parser,
         id: DeclarationId,
     ) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         Ok(match id {

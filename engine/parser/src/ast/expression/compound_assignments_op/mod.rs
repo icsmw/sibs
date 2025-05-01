@@ -13,7 +13,7 @@ impl Interest for CompoundAssignmentsOp {
 }
 
 impl ReadNode<CompoundAssignmentsOp> for CompoundAssignmentsOp {
-    fn read(parser: &mut Parser) -> Result<Option<CompoundAssignmentsOp>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<CompoundAssignmentsOp>, LinkedErr<E>> {
         let Some(tk) = parser.token() else {
             return Ok(None);
         };

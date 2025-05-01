@@ -13,7 +13,7 @@ impl Interest for Boolean {
 }
 
 impl ReadNode<Boolean> for Boolean {
-    fn read(parser: &mut Parser) -> Result<Option<Boolean>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<Boolean>, LinkedErr<E>> {
         if let Some(tk) = parser.token() {
             let node = Boolean {
                 inner: if matches!(tk.kind, Kind::Keyword(Keyword::True)) {

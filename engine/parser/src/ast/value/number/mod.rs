@@ -10,7 +10,7 @@ impl Interest for Number {
 }
 
 impl ReadNode<Number> for Number {
-    fn read(parser: &mut Parser) -> Result<Option<Number>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<Number>, LinkedErr<E>> {
         if let Some(tk) = parser.token() {
             let Kind::Number(inner) = &tk.kind else {
                 return Ok(None);

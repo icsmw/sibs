@@ -20,7 +20,7 @@ impl Interest for Optional {
 }
 
 impl ReadNode<Optional> for Optional {
-    fn read(parser: &mut Parser) -> Result<Option<Optional>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<Optional>, LinkedErr<E>> {
         let Some(comparison) = LinkedNode::try_oneof(
             parser,
             &[NodeTarget::Expression(&[ExpressionId::ComparisonSeq])],

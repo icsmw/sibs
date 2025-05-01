@@ -10,7 +10,7 @@ impl Interest for CompoundAssignments {
 }
 
 impl ReadNode<CompoundAssignments> for CompoundAssignments {
-    fn read(parser: &mut Parser) -> Result<Option<CompoundAssignments>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<CompoundAssignments>, LinkedErr<E>> {
         let Some(left) = LinkedNode::try_oneof(
             parser,
             &[NodeTarget::Expression(&[ExpressionId::Variable])],

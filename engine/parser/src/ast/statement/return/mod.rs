@@ -10,7 +10,7 @@ impl Interest for Return {
 }
 
 impl ReadNode<Return> for Return {
-    fn read(parser: &mut Parser) -> Result<Option<Return>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<Return>, LinkedErr<E>> {
         let Some(tk) = parser.token().cloned() else {
             return Ok(None);
         };

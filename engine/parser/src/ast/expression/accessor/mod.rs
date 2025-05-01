@@ -10,7 +10,7 @@ impl Interest for Accessor {
 }
 
 impl ReadNode<Accessor> for Accessor {
-    fn read(parser: &mut Parser) -> Result<Option<Accessor>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<Accessor>, LinkedErr<E>> {
         let Some((mut inner, open, close)) =
             parser.between(KindId::LeftBracket, KindId::RightBracket)?
         else {

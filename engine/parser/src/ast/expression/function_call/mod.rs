@@ -10,7 +10,7 @@ impl Interest for FunctionCall {
 }
 
 impl ReadNode<FunctionCall> for FunctionCall {
-    fn read(parser: &mut Parser) -> Result<Option<FunctionCall>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<FunctionCall>, LinkedErr<E>> {
         let mut reference = Vec::new();
         let restore = parser.pin();
         let Some(token) = parser.token().cloned() else {

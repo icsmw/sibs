@@ -17,7 +17,7 @@ impl AsVec<ValueId> for ValueId {
 }
 
 impl TryRead<Value, ValueId> for Value {
-    fn try_read(parser: &mut Parser, id: ValueId) -> Result<Option<LinkedNode>, LinkedErr<E>> {
+    fn try_read(parser: &Parser, id: ValueId) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         Ok(match id {
             ValueId::PrimitiveString => PrimitiveString::read_as_linked(parser)?,
             ValueId::InterpolatedString => InterpolatedString::read_as_linked(parser)?,

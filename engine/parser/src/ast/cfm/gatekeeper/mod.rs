@@ -10,7 +10,7 @@ impl Interest for Gatekeeper {
 }
 
 impl ReadNode<Gatekeeper> for Gatekeeper {
-    fn read(parser: &mut Parser) -> Result<Option<Gatekeeper>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<Gatekeeper>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };

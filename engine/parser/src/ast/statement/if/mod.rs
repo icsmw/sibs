@@ -10,7 +10,7 @@ impl Interest for If {
 }
 
 impl ReadNode<If> for If {
-    fn read(parser: &mut Parser) -> Result<Option<If>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<If>, LinkedErr<E>> {
         let mut cases = Vec::new();
         loop {
             let restore = parser.pin();

@@ -13,7 +13,7 @@ impl AsVec<ControlFlowModifierId> for ControlFlowModifierId {
 
 impl TryRead<ControlFlowModifier, ControlFlowModifierId> for ControlFlowModifier {
     fn try_read(
-        parser: &mut Parser,
+        parser: &Parser,
         id: ControlFlowModifierId,
     ) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         Ok(match id {

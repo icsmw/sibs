@@ -10,7 +10,7 @@ impl Interest for Break {
 }
 
 impl ReadNode<Break> for Break {
-    fn read(parser: &mut Parser) -> Result<Option<Break>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<Break>, LinkedErr<E>> {
         let Some(tk) = parser.token() else {
             return Ok(None);
         };

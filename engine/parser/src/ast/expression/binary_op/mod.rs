@@ -13,7 +13,7 @@ impl Interest for BinaryOp {
 }
 
 impl ReadNode<BinaryOp> for BinaryOp {
-    fn read(parser: &mut Parser) -> Result<Option<BinaryOp>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<BinaryOp>, LinkedErr<E>> {
         let Some(tk) = parser.token() else {
             return Ok(None);
         };

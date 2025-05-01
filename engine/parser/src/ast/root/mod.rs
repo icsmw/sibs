@@ -14,7 +14,7 @@ impl AsVec<RootId> for RootId {
 }
 
 impl TryRead<Root, RootId> for Root {
-    fn try_read(parser: &mut Parser, id: RootId) -> Result<Option<LinkedNode>, LinkedErr<E>> {
+    fn try_read(parser: &Parser, id: RootId) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         Ok(match id {
             RootId::Anchor => Anchor::read_as_linked(parser)?,
             RootId::Module => Module::read_as_linked(parser)?,

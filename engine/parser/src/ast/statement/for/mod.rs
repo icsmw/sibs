@@ -10,7 +10,7 @@ impl Interest for For {
 }
 
 impl ReadNode<For> for For {
-    fn read(parser: &mut Parser) -> Result<Option<For>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<For>, LinkedErr<E>> {
         let Some(token_for) = parser.token().cloned() else {
             return Ok(None);
         };

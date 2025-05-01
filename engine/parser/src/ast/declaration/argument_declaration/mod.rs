@@ -10,7 +10,7 @@ impl Interest for ArgumentDeclaration {
 }
 
 impl ReadNode<ArgumentDeclaration> for ArgumentDeclaration {
-    fn read(parser: &mut Parser) -> Result<Option<ArgumentDeclaration>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<ArgumentDeclaration>, LinkedErr<E>> {
         let restore = parser.pin();
         let Some(next) = parser.token() else {
             return Ok(None);

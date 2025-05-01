@@ -13,7 +13,7 @@ impl Interest for BinaryExp {
 }
 
 impl ReadNode<BinaryExp> for BinaryExp {
-    fn read(parser: &mut Parser) -> Result<Option<BinaryExp>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<BinaryExp>, LinkedErr<E>> {
         let Some(left) = LinkedNode::try_oneof(
             parser,
             &[

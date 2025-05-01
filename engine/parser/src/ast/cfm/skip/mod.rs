@@ -10,7 +10,7 @@ impl Interest for Skip {
 }
 
 impl ReadNode<Skip> for Skip {
-    fn read(parser: &mut Parser) -> Result<Option<Skip>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<Skip>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };

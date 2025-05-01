@@ -10,7 +10,7 @@ impl Interest for BinaryExpGroup {
 }
 
 impl ReadNode<BinaryExpGroup> for BinaryExpGroup {
-    fn read(parser: &mut Parser) -> Result<Option<BinaryExpGroup>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<BinaryExpGroup>, LinkedErr<E>> {
         let Some((mut inner, open, close)) =
             parser.between(KindId::LeftParen, KindId::RightParen)?
         else {

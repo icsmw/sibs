@@ -28,7 +28,7 @@ impl AsVec<ExpressionId> for ExpressionId {
 }
 
 impl TryRead<Expression, ExpressionId> for Expression {
-    fn try_read(parser: &mut Parser, id: ExpressionId) -> Result<Option<LinkedNode>, LinkedErr<E>> {
+    fn try_read(parser: &Parser, id: ExpressionId) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         Ok(match id {
             ExpressionId::Variable => Variable::read_as_linked(parser)?,
             ExpressionId::Comparison => Comparison::read_as_linked(parser)?,

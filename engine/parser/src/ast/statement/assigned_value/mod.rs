@@ -10,7 +10,7 @@ impl Interest for AssignedValue {
 }
 
 impl ReadNode<AssignedValue> for AssignedValue {
-    fn read(parser: &mut Parser) -> Result<Option<AssignedValue>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<AssignedValue>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };

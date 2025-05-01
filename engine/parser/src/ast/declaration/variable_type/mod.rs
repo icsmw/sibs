@@ -16,7 +16,7 @@ impl Interest for VariableType {
 }
 
 impl ReadNode<VariableType> for VariableType {
-    fn read(parser: &mut Parser) -> Result<Option<VariableType>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<VariableType>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };

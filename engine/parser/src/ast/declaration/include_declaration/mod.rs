@@ -22,7 +22,7 @@ impl GetFilename for IncludeDeclaration {
 }
 
 impl ReadNode<IncludeDeclaration> for IncludeDeclaration {
-    fn read(parser: &mut Parser) -> Result<Option<IncludeDeclaration>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<IncludeDeclaration>, LinkedErr<E>> {
         let Some(sig) = parser.token().cloned() else {
             return Ok(None);
         };

@@ -10,7 +10,7 @@ impl Interest for FunctionDeclaration {
 }
 
 impl ReadNode<FunctionDeclaration> for FunctionDeclaration {
-    fn read(parser: &mut Parser) -> Result<Option<FunctionDeclaration>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<FunctionDeclaration>, LinkedErr<E>> {
         let Some(sig) = parser.token().cloned() else {
             return Ok(None);
         };

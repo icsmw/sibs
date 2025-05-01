@@ -13,7 +13,7 @@ impl Interest for BinaryExpSeq {
 }
 
 impl ReadNode<BinaryExpSeq> for BinaryExpSeq {
-    fn read(parser: &mut Parser) -> Result<Option<BinaryExpSeq>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<BinaryExpSeq>, LinkedErr<E>> {
         let mut collected: Vec<LinkedNode> = Vec::new();
         while let Some(node) = LinkedNode::try_oneof(
             parser,

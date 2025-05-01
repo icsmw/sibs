@@ -10,7 +10,7 @@ impl Interest for LogicalOp {
 }
 
 impl ReadNode<LogicalOp> for LogicalOp {
-    fn read(parser: &mut Parser) -> Result<Option<LogicalOp>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<LogicalOp>, LinkedErr<E>> {
         let Some(tk) = parser.token() else {
             return Ok(None);
         };

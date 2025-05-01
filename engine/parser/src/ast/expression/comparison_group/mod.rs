@@ -10,7 +10,7 @@ impl Interest for ComparisonGroup {
 }
 
 impl ReadNode<ComparisonGroup> for ComparisonGroup {
-    fn read(parser: &mut Parser) -> Result<Option<ComparisonGroup>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<ComparisonGroup>, LinkedErr<E>> {
         let restore = parser.pin();
         let Some(token) = parser.token().cloned() else {
             return Ok(None);

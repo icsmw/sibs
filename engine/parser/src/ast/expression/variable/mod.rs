@@ -10,7 +10,7 @@ impl Interest for Variable {
 }
 
 impl ReadNode<Variable> for Variable {
-    fn read(parser: &mut Parser) -> Result<Option<Variable>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<Variable>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };

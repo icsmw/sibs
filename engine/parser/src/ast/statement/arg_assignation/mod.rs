@@ -10,7 +10,7 @@ impl Interest for ArgumentAssignation {
 }
 
 impl ReadNode<ArgumentAssignation> for ArgumentAssignation {
-    fn read(parser: &mut Parser) -> Result<Option<ArgumentAssignation>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<ArgumentAssignation>, LinkedErr<E>> {
         let Some(left) =
             LinkedNode::try_oneof(parser, &[NodeTarget::Expression(&[ExpressionId::Variable])])?
         else {

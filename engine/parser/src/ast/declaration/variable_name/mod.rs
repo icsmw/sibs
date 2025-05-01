@@ -10,7 +10,7 @@ impl Interest for VariableName {
 }
 
 impl ReadNode<VariableName> for VariableName {
-    fn read(parser: &mut Parser) -> Result<Option<VariableName>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<VariableName>, LinkedErr<E>> {
         if let Some(tk) = parser.token() {
             let Kind::Identifier(ident) = &tk.kind else {
                 return Ok(None);

@@ -3,7 +3,7 @@ use asttree::{ExpressionId, LinkedNode, Metadata};
 use crate::*;
 
 impl ReadMetadata for Metadata {
-    fn read_md_before(&mut self, parser: &mut Parser) -> Result<(), LinkedErr<E>> {
+    fn read_md_before(&mut self, parser: &Parser) -> Result<(), LinkedErr<E>> {
         self.meta = Vec::new();
         loop {
             let drop = parser.pin();
@@ -21,7 +21,7 @@ impl ReadMetadata for Metadata {
         }
         Ok(())
     }
-    fn read_md_after(&mut self, parser: &mut Parser) -> Result<(), LinkedErr<E>> {
+    fn read_md_after(&mut self, parser: &Parser) -> Result<(), LinkedErr<E>> {
         self.ppm = Vec::new();
         while let Some(node) = LinkedNode::try_oneof(
             parser,

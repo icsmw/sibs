@@ -10,7 +10,7 @@ impl Interest for Command {
 }
 
 impl ReadNode<Command> for Command {
-    fn read(parser: &mut Parser) -> Result<Option<Command>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<Command>, LinkedErr<E>> {
         let Some(tk) = parser.token().cloned() else {
             return Ok(None);
         };

@@ -10,7 +10,7 @@ impl Interest for VariableTypeDeclaration {
 }
 
 impl ReadNode<VariableTypeDeclaration> for VariableTypeDeclaration {
-    fn read(parser: &mut Parser) -> Result<Option<VariableTypeDeclaration>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<VariableTypeDeclaration>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };

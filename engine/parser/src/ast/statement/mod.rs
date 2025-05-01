@@ -24,7 +24,7 @@ impl AsVec<StatementId> for StatementId {
 }
 
 impl TryRead<Statement, StatementId> for Statement {
-    fn try_read(parser: &mut Parser, id: StatementId) -> Result<Option<LinkedNode>, LinkedErr<E>> {
+    fn try_read(parser: &Parser, id: StatementId) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         Ok(match id {
             StatementId::Block => Block::read_as_linked(parser)?,
             StatementId::Break => Break::read_as_linked(parser)?,

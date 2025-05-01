@@ -10,7 +10,7 @@ impl Interest for Comment {
 }
 
 impl ReadNode<Comment> for Comment {
-    fn read(parser: &mut Parser) -> Result<Option<Comment>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<Comment>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };

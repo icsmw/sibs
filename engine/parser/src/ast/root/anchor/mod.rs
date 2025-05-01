@@ -16,7 +16,7 @@ impl Interest for Anchor {
 }
 
 impl ReadNode<Anchor> for Anchor {
-    fn read(parser: &mut Parser) -> Result<Option<Anchor>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<Anchor>, LinkedErr<E>> {
         let mut nodes = Vec::new();
         loop {
             'semicolons: loop {

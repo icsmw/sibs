@@ -20,7 +20,7 @@ impl Interest for ComparisonSeq {
 }
 
 impl ReadNode<ComparisonSeq> for ComparisonSeq {
-    fn read(parser: &mut Parser) -> Result<Option<ComparisonSeq>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<ComparisonSeq>, LinkedErr<E>> {
         let mut collected: Vec<LinkedNode> = Vec::new();
         while let Some(node) = LinkedNode::try_oneof(
             parser,

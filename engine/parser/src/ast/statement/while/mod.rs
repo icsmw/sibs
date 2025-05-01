@@ -10,7 +10,7 @@ impl Interest for While {
 }
 
 impl ReadNode<While> for While {
-    fn read(parser: &mut Parser) -> Result<Option<While>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<While>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };

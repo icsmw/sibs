@@ -16,12 +16,12 @@ use asttree::*;
 use diagnostics::*;
 
 pub(crate) fn read_and_resolve_nodes(
-    parser: &mut Parser,
+    parser: &Parser,
     targets: &[NodeTarget],
 ) -> Result<Option<LinkedNode>, LinkedErr<E>> {
     let mut results = Vec::new();
     let reset = parser.pin();
-    let from = parser.pos;
+    let from = parser.pos();
     for target in targets {
         let drop = parser.pin();
         if let (Some(node), id) = match target {
@@ -43,7 +43,7 @@ pub(crate) fn read_and_resolve_nodes(
                 NodeId::Miscellaneous,
             ),
         } {
-            results.push((parser.pos, node, id));
+            results.push((parser.pos(), node, id));
         }
         drop(parser);
     }
@@ -53,7 +53,7 @@ pub(crate) fn read_and_resolve_nodes(
 
 impl TryReadOneOf<LinkedNode, NodeTarget<'_>> for LinkedNode {
     fn try_oneof(
-        parser: &mut Parser,
+        parser: &Parser,
         targets: &[NodeTarget],
     ) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         let origin = parser.pin();

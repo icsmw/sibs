@@ -10,7 +10,7 @@ impl Interest for Loop {
 }
 
 impl ReadNode<Loop> for Loop {
-    fn read(parser: &mut Parser) -> Result<Option<Loop>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<Loop>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };

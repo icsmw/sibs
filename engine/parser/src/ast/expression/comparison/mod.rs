@@ -19,7 +19,7 @@ impl Interest for Comparison {
 }
 
 impl ReadNode<Comparison> for Comparison {
-    fn read(parser: &mut Parser) -> Result<Option<Comparison>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<Comparison>, LinkedErr<E>> {
         let Some(left) = LinkedNode::try_oneof(
             parser,
             &[

@@ -13,7 +13,7 @@ impl Interest for Task {
 }
 
 impl ReadNode<Task> for Task {
-    fn read(parser: &mut Parser) -> Result<Option<Task>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<Task>, LinkedErr<E>> {
         let mut gts = Vec::new();
         loop {
             'semicolons: loop {

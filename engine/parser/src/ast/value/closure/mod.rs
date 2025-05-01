@@ -10,7 +10,7 @@ impl Interest for Closure {
 }
 
 impl ReadNode<Closure> for Closure {
-    fn read(parser: &mut Parser) -> Result<Option<Closure>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<Closure>, LinkedErr<E>> {
         let Some(open) = parser.token().cloned() else {
             return Ok(None);
         };

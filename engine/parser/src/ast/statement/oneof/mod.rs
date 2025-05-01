@@ -10,7 +10,7 @@ impl Interest for OneOf {
 }
 
 impl ReadNode<OneOf> for OneOf {
-    fn read(parser: &mut Parser) -> Result<Option<OneOf>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<OneOf>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };

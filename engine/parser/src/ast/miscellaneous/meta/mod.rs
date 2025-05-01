@@ -10,7 +10,7 @@ impl Interest for Meta {
 }
 
 impl ReadNode<Meta> for Meta {
-    fn read(parser: &mut Parser) -> Result<Option<Meta>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<Meta>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };

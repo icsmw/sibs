@@ -13,7 +13,7 @@ impl Interest for Range {
 }
 
 impl ReadNode<Range> for Range {
-    fn read(parser: &mut Parser) -> Result<Option<Range>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<Range>, LinkedErr<E>> {
         let Some(left) = LinkedNode::try_oneof(
             parser,
             &[

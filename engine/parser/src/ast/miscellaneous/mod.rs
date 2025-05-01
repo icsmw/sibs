@@ -12,10 +12,7 @@ impl AsVec<MiscellaneousId> for MiscellaneousId {
 }
 
 impl TryRead<Miscellaneous, MiscellaneousId> for Miscellaneous {
-    fn try_read(
-        parser: &mut Parser,
-        id: MiscellaneousId,
-    ) -> Result<Option<LinkedNode>, LinkedErr<E>> {
+    fn try_read(parser: &Parser, id: MiscellaneousId) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         Ok(match id {
             MiscellaneousId::Comment => Comment::read_as_linked(parser)?,
             MiscellaneousId::Meta => Meta::read_as_linked(parser)?,

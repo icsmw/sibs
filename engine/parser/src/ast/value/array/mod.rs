@@ -10,7 +10,7 @@ impl Interest for Array {
 }
 
 impl ReadNode<Array> for Array {
-    fn read(parser: &mut Parser) -> Result<Option<Array>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<Array>, LinkedErr<E>> {
         let Some((mut inner, open, close)) =
             parser.between(KindId::LeftBracket, KindId::RightBracket)?
         else {

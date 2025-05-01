@@ -22,7 +22,7 @@ impl GetFilename for ModuleDeclaration {
 }
 
 impl ReadNode<ModuleDeclaration> for ModuleDeclaration {
-    fn read(parser: &mut Parser) -> Result<Option<ModuleDeclaration>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<ModuleDeclaration>, LinkedErr<E>> {
         let Some(sig) = parser.token().cloned() else {
             return Ok(None);
         };

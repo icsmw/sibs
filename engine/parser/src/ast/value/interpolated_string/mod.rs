@@ -10,7 +10,7 @@ impl Interest for InterpolatedString {
 }
 
 impl ReadNode<InterpolatedString> for InterpolatedString {
-    fn read(parser: &mut Parser) -> Result<Option<InterpolatedString>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<InterpolatedString>, LinkedErr<E>> {
         let Some(tk) = parser.token().cloned() else {
             return Ok(None);
         };

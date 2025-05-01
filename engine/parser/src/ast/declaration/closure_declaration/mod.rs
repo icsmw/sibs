@@ -10,7 +10,7 @@ impl Interest for ClosureDeclaration {
 }
 
 impl ReadNode<ClosureDeclaration> for ClosureDeclaration {
-    fn read(parser: &mut Parser) -> Result<Option<ClosureDeclaration>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<ClosureDeclaration>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };

@@ -10,7 +10,7 @@ impl Interest for Module {
 }
 
 impl ReadNode<Module> for Module {
-    fn read(parser: &mut Parser) -> Result<Option<Module>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<Module>, LinkedErr<E>> {
         let Some(sig) = parser.token().cloned() else {
             return Ok(None);
         };

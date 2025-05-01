@@ -10,7 +10,7 @@ impl Interest for Error {
 }
 
 impl ReadNode<Error> for Error {
-    fn read(parser: &mut Parser) -> Result<Option<Error>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<Error>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };

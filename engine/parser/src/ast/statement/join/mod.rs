@@ -10,7 +10,7 @@ impl Interest for Join {
 }
 
 impl ReadNode<Join> for Join {
-    fn read(parser: &mut Parser) -> Result<Option<Join>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<Join>, LinkedErr<E>> {
         let Some(token) = parser.token().cloned() else {
             return Ok(None);
         };

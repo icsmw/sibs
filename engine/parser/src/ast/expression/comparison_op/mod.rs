@@ -18,7 +18,7 @@ impl Interest for ComparisonOp {
 }
 
 impl ReadNode<ComparisonOp> for ComparisonOp {
-    fn read(parser: &mut Parser) -> Result<Option<ComparisonOp>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<ComparisonOp>, LinkedErr<E>> {
         let Some(tk) = parser.token() else {
             return Ok(None);
         };

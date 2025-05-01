@@ -10,7 +10,7 @@ impl Interest for TaskCall {
 }
 
 impl ReadNode<TaskCall> for TaskCall {
-    fn read(parser: &mut Parser) -> Result<Option<TaskCall>, LinkedErr<E>> {
+    fn read(parser: &Parser) -> Result<Option<TaskCall>, LinkedErr<E>> {
         let mut reference = Vec::new();
         let Some(tk) = parser.token() else {
             return Ok(None);
