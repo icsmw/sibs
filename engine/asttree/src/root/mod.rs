@@ -24,13 +24,21 @@ pub enum Root {
     Task(Task),
 }
 
-impl Root {
-    pub fn uuid(&self) -> &Uuid {
+impl Identification for Root {
+    fn uuid(&self) -> &Uuid {
         match self {
             Self::Anchor(n) => &n.uuid,
             Self::Module(n) => &n.uuid,
             Self::Component(n) => &n.uuid,
             Self::Task(n) => &n.uuid,
+        }
+    }
+    fn ident(&self) -> String {
+        match self {
+            Self::Anchor(..) => RootId::Anchor.to_string(),
+            Self::Module(..) => RootId::Module.to_string(),
+            Self::Component(..) => RootId::Component.to_string(),
+            Self::Task(..) => RootId::Task.to_string(),
         }
     }
 }

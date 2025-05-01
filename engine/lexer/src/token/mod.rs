@@ -50,6 +50,9 @@ impl Token {
     pub fn belongs(&self, src: &Uuid) -> bool {
         &self.src == src
     }
+    pub fn fingerprint(&self) -> String {
+        format!("{}:{}:{}", self.src, self.pos.from, self.pos.to)
+    }
 }
 
 impl PartialEq for Token {

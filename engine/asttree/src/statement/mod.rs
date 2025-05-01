@@ -85,8 +85,8 @@ pub enum Statement {
     Join(Join),
 }
 
-impl Statement {
-    pub fn uuid(&self) -> &Uuid {
+impl Identification for Statement {
+    fn uuid(&self) -> &Uuid {
         match self {
             Self::Assignation(n) => &n.uuid,
             Self::AssignedValue(n) => &n.uuid,
@@ -102,6 +102,24 @@ impl Statement {
             Self::Optional(n) => &n.uuid,
             Self::Return(n) => &n.uuid,
             Self::While(n) => &n.uuid,
+        }
+    }
+    fn ident(&self) -> String {
+        match self {
+            Self::Assignation(..) => StatementId::Assignation.to_string(),
+            Self::AssignedValue(..) => StatementId::AssignedValue.to_string(),
+            Self::ArgumentAssignation(..) => StatementId::ArgumentAssignation.to_string(),
+            Self::ArgumentAssignedValue(..) => StatementId::ArgumentAssignedValue.to_string(),
+            Self::Block(..) => StatementId::Block.to_string(),
+            Self::Break(..) => StatementId::Break.to_string(),
+            Self::For(..) => StatementId::For.to_string(),
+            Self::If(..) => StatementId::If.to_string(),
+            Self::Join(..) => StatementId::Join.to_string(),
+            Self::Loop(..) => StatementId::Loop.to_string(),
+            Self::OneOf(..) => StatementId::OneOf.to_string(),
+            Self::Optional(..) => StatementId::Optional.to_string(),
+            Self::Return(..) => StatementId::Return.to_string(),
+            Self::While(..) => StatementId::While.to_string(),
         }
     }
 }

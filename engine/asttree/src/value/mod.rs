@@ -28,8 +28,8 @@ pub enum Value {
     Closure(Closure),
 }
 
-impl Value {
-    pub fn uuid(&self) -> &Uuid {
+impl Identification for Value {
+    fn uuid(&self) -> &Uuid {
         match self {
             Self::Error(n) => &n.uuid,
             Self::Boolean(n) => &n.uuid,
@@ -38,6 +38,17 @@ impl Value {
             Self::InterpolatedString(n) => &n.uuid,
             Self::PrimitiveString(n) => &n.uuid,
             Self::Closure(n) => &n.uuid,
+        }
+    }
+    fn ident(&self) -> String {
+        match self {
+            Self::Error(..) => ValueId::Error.to_string(),
+            Self::Boolean(..) => ValueId::Error.to_string(),
+            Self::Number(..) => ValueId::Error.to_string(),
+            Self::Array(..) => ValueId::Error.to_string(),
+            Self::InterpolatedString(..) => ValueId::Error.to_string(),
+            Self::PrimitiveString(..) => ValueId::Error.to_string(),
+            Self::Closure(..) => ValueId::Error.to_string(),
         }
     }
 }

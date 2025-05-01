@@ -34,7 +34,7 @@ pub struct Parser {
     pub(crate) filename: Option<PathBuf>,
     pub(crate) cwd: Option<PathBuf>,
     pub(crate) srcs: Rc<RefCell<CodeSources>>,
-    pub(crate) errs: Rc<RefCell<Errors<E>>>,
+    pub errs: Rc<RefCell<Errors<E>>>,
     resilience: bool,
 }
 
@@ -114,11 +114,19 @@ impl Parser {
         self.srcs.borrow().err(err).map_err(E::IOError)
     }
 
-    pub fn get_err_report(&self) -> Result<Option<LinkedErr<E>>, E> {
+    pub fn get_err_report(&self) -> Option<LinkedErr<E>> {
         let Some(err) = self.errs.borrow_mut().first() else {
-            return Ok(None);
+            return None;
         };
-        Ok(Some(err))
+        Some(err)
+    }
+
+    pub fn get_token_by_pos(&self, pos: usize) -> Option<&Token> {
+        self.tokens.iter().find(|tk| tk.pos.is_in(pos))
+    }
+
+    pub fn len(&self) -> usize {
+        self.tokens.last().map(|tk| tk.pos.to).unwrap_or_default()
     }
 
     pub(crate) fn inherit(&self, tokens: Vec<Token>) -> Self {

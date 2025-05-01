@@ -91,6 +91,9 @@ impl Diagnostic for Node {
 
 pub trait Identification {
     fn uuid(&self) -> &Uuid;
+    fn ident(&self) -> String {
+        String::new()
+    }
 }
 
 impl Identification for Node {
@@ -103,6 +106,17 @@ impl Identification for Node {
             Self::ControlFlowModifier(n) => n.uuid(),
             Self::Root(n) => n.uuid(),
             Self::Miscellaneous(n) => n.uuid(),
+        }
+    }
+    fn ident(&self) -> String {
+        match self {
+            Self::Statement(n) => n.ident(),
+            Self::Expression(n) => n.ident(),
+            Self::Declaration(n) => n.ident(),
+            Self::Value(n) => n.ident(),
+            Self::ControlFlowModifier(n) => n.ident(),
+            Self::Root(n) => n.ident(),
+            Self::Miscellaneous(n) => n.ident(),
         }
     }
 }
@@ -152,6 +166,9 @@ impl Diagnostic for LinkedNode {
 impl Identification for LinkedNode {
     fn uuid(&self) -> &Uuid {
         self.node.uuid()
+    }
+    fn ident(&self) -> String {
+        self.node.ident()
     }
 }
 

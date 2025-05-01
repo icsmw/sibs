@@ -6,7 +6,8 @@ use std::fmt;
 /// This enumeration includes all possible token types that the lexer can produce,
 /// which are then used by the parser for further syntactic analysis.
 #[allow(clippy::upper_case_acronyms)]
-#[enum_ids::enum_ids]
+#[enum_ids::enum_ids(display_variant)]
+// #[enum_ids::enum_ids]
 #[derive(Debug, PartialEq, Clone)]
 pub enum Kind {
     /// The keyword.
@@ -201,79 +202,141 @@ impl fmt::Display for Kind {
     }
 }
 
-/// Represents the unique identifier for each `Kind` variant.
-///
-/// This is typically used internally for more efficient comparisons and mappings.
-impl fmt::Display for KindId {
-    /// Formats the `KindId` variant into its corresponding string representation.
-    ///
-    /// Similar to the `Display` implementation for `Kind`, this converts a `KindId`
-    /// into a human-readable string.
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Self::SingleQuote => "'".to_owned(),
-                Self::DoubleQuote => "\"".to_owned(),
-                Self::Tilde => "~".to_owned(),
-                Self::Backtick => "`".to_owned(),
-                Self::Question => "?".to_owned(),
-                Self::Dollar => "$".to_owned(),
-                Self::At => "@".to_owned(),
-                Self::Pound => "#".to_owned(),
-                Self::Plus => "+".to_owned(),
-                Self::Minus => "-".to_owned(),
-                Self::Star => "*".to_owned(),
-                Self::Slash => "/".to_owned(),
-                Self::Percent => "%".to_owned(),
-                Self::Equals => "=".to_owned(),
-                Self::EqualEqual => "==".to_owned(),
-                Self::BangEqual => "!=".to_owned(),
-                Self::Less => "<".to_owned(),
-                Self::LessEqual => "<=".to_owned(),
-                Self::Greater => ">".to_owned(),
-                Self::GreaterEqual => ">=".to_owned(),
-                Self::And => "&&".to_owned(),
-                Self::Or => "||".to_owned(),
-                Self::VerticalBar => "|".to_owned(),
-                Self::Bang => "!".to_owned(),
-                Self::PlusEqual => "+=".to_owned(),
-                Self::MinusEqual => "-=".to_owned(),
-                Self::StarEqual => "*=".to_owned(),
-                Self::SlashEqual => "/=".to_owned(),
-                Self::LeftParen => "(".to_owned(),
-                Self::RightParen => ")".to_owned(),
-                Self::LeftBrace => "{".to_owned(),
-                Self::RightBrace => "}".to_owned(),
-                Self::LeftBracket => "[".to_owned(),
-                Self::RightBracket => "]".to_owned(),
-                Self::Comma => ",".to_owned(),
-                Self::Colon => ":".to_owned(),
-                Self::Dot => ".".to_owned(),
-                Self::DotDot => "..".to_owned(),
-                Self::Semicolon => ";".to_owned(),
-                Self::Arrow => "->".to_owned(),
-                Self::DoubleArrow => "=>".to_owned(),
-                Self::Comment => "//".to_owned(),
-                Self::Meta => "///".to_owned(),
-                Self::LF => '\n'.to_string(),
-                Self::CR => '\r'.to_string(),
-                Self::CRLF => "\r\n".to_owned(),
-                Self::Identifier
-                | Self::Keyword
-                | Self::Number
-                | Self::String
-                | Self::Literal
-                | Self::InterpolatedString
-                | Self::Command
-                | Self::EOF
-                | Self::BOF
-                | Self::Whitespace => String::new(),
-            }
-        )
+impl KindId {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::SingleQuote => "'",
+            Self::DoubleQuote => "\"",
+            Self::Tilde => "~",
+            Self::Backtick => "`",
+            Self::Question => "?",
+            Self::Dollar => "$",
+            Self::At => "@",
+            Self::Pound => "#",
+            Self::Plus => "+",
+            Self::Minus => "-",
+            Self::Star => "*",
+            Self::Slash => "/",
+            Self::Percent => "%",
+            Self::Equals => "=",
+            Self::EqualEqual => "==",
+            Self::BangEqual => "!=",
+            Self::Less => "<",
+            Self::LessEqual => "<=",
+            Self::Greater => ">",
+            Self::GreaterEqual => ">=",
+            Self::And => "&&",
+            Self::Or => "||",
+            Self::VerticalBar => "|",
+            Self::Bang => "!",
+            Self::PlusEqual => "+=",
+            Self::MinusEqual => "-=",
+            Self::StarEqual => "*=",
+            Self::SlashEqual => "/=",
+            Self::LeftParen => "(",
+            Self::RightParen => ")",
+            Self::LeftBrace => "{",
+            Self::RightBrace => "}",
+            Self::LeftBracket => "[",
+            Self::RightBracket => "]",
+            Self::Comma => ",",
+            Self::Colon => ":",
+            Self::Dot => ".",
+            Self::DotDot => "..",
+            Self::Semicolon => ";",
+            Self::Arrow => "->",
+            Self::DoubleArrow => "=>",
+            Self::Comment => "//",
+            Self::Meta => "///",
+            Self::LF => "\n",
+            Self::CR => "\r",
+            Self::CRLF => "\r\n",
+            Self::Identifier
+            | Self::Keyword
+            | Self::Number
+            | Self::String
+            | Self::Literal
+            | Self::InterpolatedString
+            | Self::Command
+            | Self::EOF
+            | Self::BOF
+            | Self::Whitespace => "",
+        }
     }
 }
+// /// Represents the unique identifier for each `Kind` variant.
+// ///
+// /// This is typically used internally for more efficient comparisons and mappings.
+// impl fmt::Display for KindId {
+//     /// Formats the `KindId` variant into its corresponding string representation.
+//     ///
+//     /// Similar to the `Display` implementation for `Kind`, this converts a `KindId`
+//     /// into a human-readable string.
+//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//         write!(
+//             f,
+//             "{}",
+//             match self {
+//                 Self::SingleQuote => "'".to_owned(),
+//                 Self::DoubleQuote => "\"".to_owned(),
+//                 Self::Tilde => "~".to_owned(),
+//                 Self::Backtick => "`".to_owned(),
+//                 Self::Question => "?".to_owned(),
+//                 Self::Dollar => "$".to_owned(),
+//                 Self::At => "@".to_owned(),
+//                 Self::Pound => "#".to_owned(),
+//                 Self::Plus => "+".to_owned(),
+//                 Self::Minus => "-".to_owned(),
+//                 Self::Star => "*".to_owned(),
+//                 Self::Slash => "/".to_owned(),
+//                 Self::Percent => "%".to_owned(),
+//                 Self::Equals => "=".to_owned(),
+//                 Self::EqualEqual => "==".to_owned(),
+//                 Self::BangEqual => "!=".to_owned(),
+//                 Self::Less => "<".to_owned(),
+//                 Self::LessEqual => "<=".to_owned(),
+//                 Self::Greater => ">".to_owned(),
+//                 Self::GreaterEqual => ">=".to_owned(),
+//                 Self::And => "&&".to_owned(),
+//                 Self::Or => "||".to_owned(),
+//                 Self::VerticalBar => "|".to_owned(),
+//                 Self::Bang => "!".to_owned(),
+//                 Self::PlusEqual => "+=".to_owned(),
+//                 Self::MinusEqual => "-=".to_owned(),
+//                 Self::StarEqual => "*=".to_owned(),
+//                 Self::SlashEqual => "/=".to_owned(),
+//                 Self::LeftParen => "(".to_owned(),
+//                 Self::RightParen => ")".to_owned(),
+//                 Self::LeftBrace => "{".to_owned(),
+//                 Self::RightBrace => "}".to_owned(),
+//                 Self::LeftBracket => "[".to_owned(),
+//                 Self::RightBracket => "]".to_owned(),
+//                 Self::Comma => ",".to_owned(),
+//                 Self::Colon => ":".to_owned(),
+//                 Self::Dot => ".".to_owned(),
+//                 Self::DotDot => "..".to_owned(),
+//                 Self::Semicolon => ";".to_owned(),
+//                 Self::Arrow => "->".to_owned(),
+//                 Self::DoubleArrow => "=>".to_owned(),
+//                 Self::Comment => "//".to_owned(),
+//                 Self::Meta => "///".to_owned(),
+//                 Self::LF => '\n'.to_string(),
+//                 Self::CR => '\r'.to_string(),
+//                 Self::CRLF => "\r\n".to_owned(),
+//                 Self::Identifier
+//                 | Self::Keyword
+//                 | Self::Number
+//                 | Self::String
+//                 | Self::Literal
+//                 | Self::InterpolatedString
+//                 | Self::Command
+//                 | Self::EOF
+//                 | Self::BOF
+//                 | Self::Whitespace => String::new(),
+//             }
+//         )
+//     }
+// }
 
 impl TryFrom<KindId> for Kind {
     type Error = E;

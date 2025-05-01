@@ -15,11 +15,17 @@ pub enum Miscellaneous {
     Comment(Comment),
 }
 
-impl Miscellaneous {
-    pub fn uuid(&self) -> &Uuid {
+impl Identification for Miscellaneous {
+    fn uuid(&self) -> &Uuid {
         match self {
             Self::Comment(n) => &n.uuid,
             Self::Meta(n) => &n.uuid,
+        }
+    }
+    fn ident(&self) -> String {
+        match self {
+            Self::Comment(..) => MiscellaneousId::Comment.to_string(),
+            Self::Meta(..) => MiscellaneousId::Meta.to_string(),
         }
     }
 }

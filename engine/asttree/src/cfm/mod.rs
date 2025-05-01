@@ -39,11 +39,17 @@ impl Diagnostic for ControlFlowModifier {
     }
 }
 
-impl ControlFlowModifier {
-    pub fn uuid(&self) -> &Uuid {
+impl Identification for ControlFlowModifier {
+    fn uuid(&self) -> &Uuid {
         match self {
             Self::Gatekeeper(n) => &n.uuid,
             Self::Skip(n) => &n.uuid,
+        }
+    }
+    fn ident(&self) -> String {
+        match self {
+            Self::Gatekeeper(..) => ControlFlowModifierId::Gatekeeper.to_string(),
+            Self::Skip(..) => ControlFlowModifierId::Skip.to_string(),
         }
     }
 }

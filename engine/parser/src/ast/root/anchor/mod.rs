@@ -46,7 +46,7 @@ impl ReadNode<Anchor> for Anchor {
         }
         Ok(Some(Anchor {
             nodes,
-            uuid: Uuid::new_v4(),
+            uuid: parser.src.clone(),
         }))
     }
 }

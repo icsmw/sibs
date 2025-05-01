@@ -11,6 +11,7 @@ members = [
     "runtime",
     "functions",
     "cli",
+    "driver",
     "support/boxed",
     "support/importer",
     "support/term",

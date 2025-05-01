@@ -148,8 +148,8 @@ impl Diagnostic for Expression {
     }
 }
 
-impl Expression {
-    pub fn uuid(&self) -> &Uuid {
+impl Identification for Expression {
+    fn uuid(&self) -> &Uuid {
         match self {
             Self::Accessor(n) => &n.uuid,
             Self::BinaryExp(n) => &n.uuid,
@@ -169,6 +169,28 @@ impl Expression {
             Self::Range(n) => &n.uuid,
             Self::TaskCall(n) => &n.uuid,
             Self::Variable(n) => &n.uuid,
+        }
+    }
+    fn ident(&self) -> String {
+        match self {
+            Self::Accessor(..) => ExpressionId::Accessor.to_string(),
+            Self::BinaryExp(..) => ExpressionId::BinaryExp.to_string(),
+            Self::BinaryExpGroup(..) => ExpressionId::BinaryExpGroup.to_string(),
+            Self::BinaryExpSeq(..) => ExpressionId::BinaryExpSeq.to_string(),
+            Self::BinaryOp(..) => ExpressionId::BinaryOp.to_string(),
+            Self::Call(..) => ExpressionId::Call.to_string(),
+            Self::Command(..) => ExpressionId::Command.to_string(),
+            Self::Comparison(..) => ExpressionId::Comparison.to_string(),
+            Self::ComparisonGroup(..) => ExpressionId::ComparisonGroup.to_string(),
+            Self::ComparisonOp(..) => ExpressionId::ComparisonOp.to_string(),
+            Self::ComparisonSeq(..) => ExpressionId::ComparisonSeq.to_string(),
+            Self::CompoundAssignments(..) => ExpressionId::CompoundAssignments.to_string(),
+            Self::CompoundAssignmentsOp(..) => ExpressionId::CompoundAssignmentsOp.to_string(),
+            Self::FunctionCall(..) => ExpressionId::FunctionCall.to_string(),
+            Self::LogicalOp(..) => ExpressionId::LogicalOp.to_string(),
+            Self::Range(..) => ExpressionId::Range.to_string(),
+            Self::TaskCall(..) => ExpressionId::TaskCall.to_string(),
+            Self::Variable(..) => ExpressionId::Variable.to_string(),
         }
     }
 }

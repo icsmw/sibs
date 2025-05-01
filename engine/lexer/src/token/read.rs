@@ -200,7 +200,7 @@ impl Read for Token {
                 if !tks.is_nl() {
                     return Ok(None);
                 }
-                if id.to_string() == lx.read_nth(2) {
+                if id.as_str() == lx.read_nth(2) {
                     let drop = lx.pin();
                     Ok(if let Some(content) = lx.read_until('\n') {
                         Some(Token::by_pos(
@@ -226,7 +226,7 @@ impl Read for Token {
                 if !tks.is_nl() {
                     return Ok(None);
                 }
-                if id.to_string() == lx.read_nth(3) {
+                if id.as_str() == lx.read_nth(3) {
                     let drop = lx.pin();
                     Ok(if let Some(content) = lx.read_until('\n') {
                         Some(Token::by_pos(Kind::Meta(content), &lx.uuid, from, lx.pos))
@@ -286,7 +286,7 @@ impl Read for Token {
             | KindId::DoubleArrow
             | KindId::LF
             | KindId::CR
-            | KindId::CRLF => Ok(if id.to_string() == lx.read_nth(id.length()?) {
+            | KindId::CRLF => Ok(if id.as_str() == lx.read_nth(id.length()?) {
                 Some(Token::by_pos(id.try_into()?, &lx.uuid, from, lx.pos))
             } else {
                 None

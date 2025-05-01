@@ -4,7 +4,7 @@ use crate::LinkedErr;
 
 #[derive(Debug)]
 pub struct Errors<E: Display> {
-    pub errors: Vec<LinkedErr<E>>,
+    errors: Vec<LinkedErr<E>>,
 }
 
 impl<E: Display> Errors<E> {
@@ -17,6 +17,10 @@ impl<E: Display> Errors<E> {
         } else {
             Some(self.errors.remove(0))
         }
+    }
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.errors.is_empty()
     }
 }
 

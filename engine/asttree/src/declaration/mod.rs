@@ -47,8 +47,8 @@ pub enum Declaration {
     ClosureDeclaration(ClosureDeclaration),
 }
 
-impl Declaration {
-    pub fn uuid(&self) -> &Uuid {
+impl Identification for Declaration {
+    fn uuid(&self) -> &Uuid {
         match self {
             Self::IncludeDeclaration(n) => &n.uuid,
             Self::ModuleDeclaration(n) => &n.uuid,
@@ -60,6 +60,20 @@ impl Declaration {
             Self::VariableVariants(n) => &n.uuid,
             Self::VariableName(n) => &n.uuid,
             Self::ClosureDeclaration(n) => &n.uuid,
+        }
+    }
+    fn ident(&self) -> String {
+        match self {
+            Self::IncludeDeclaration(..) => DeclarationId::IncludeDeclaration.to_string(),
+            Self::ModuleDeclaration(..) => DeclarationId::ModuleDeclaration.to_string(),
+            Self::ArgumentDeclaration(..) => DeclarationId::ArgumentDeclaration.to_string(),
+            Self::FunctionDeclaration(..) => DeclarationId::FunctionDeclaration.to_string(),
+            Self::VariableDeclaration(..) => DeclarationId::VariableDeclaration.to_string(),
+            Self::VariableType(..) => DeclarationId::VariableType.to_string(),
+            Self::VariableTypeDeclaration(..) => DeclarationId::VariableTypeDeclaration.to_string(),
+            Self::VariableVariants(..) => DeclarationId::VariableVariants.to_string(),
+            Self::VariableName(..) => DeclarationId::VariableName.to_string(),
+            Self::ClosureDeclaration(..) => DeclarationId::ClosureDeclaration.to_string(),
         }
     }
 }
