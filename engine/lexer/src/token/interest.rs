@@ -35,10 +35,9 @@ impl Interest for KindId {
             Self::Identifier | Self::Keyword => ch.is_alphabetic(),
             Self::Number => ch.is_alphanumeric(),
             Self::String => &'"' == ch,
-            Self::InterpolatedString => &'\'' == ch,
-            Self::Command => &'`' == ch,
             Self::SingleQuote => &'\'' == ch,
             Self::DoubleQuote => &'"' == ch,
+            Self::Backslash => &'\\' == ch,
             Self::Tilde => &'~' == ch,
             Self::Backtick => &'`' == ch,
             Self::Question => &'?' == ch,
@@ -97,10 +96,9 @@ impl Interest for KindId {
             | Self::Number
             | Self::String
             | Self::Literal
-            | Self::InterpolatedString
-            | Self::Command
             | Self::SingleQuote
             | Self::DoubleQuote
+            | Self::Backslash
             | Self::Tilde
             | Self::Backtick
             | Self::Question

@@ -25,6 +25,10 @@ pub enum E {
     #[error("Token {0} doesn't have constant length")]
     NoConstantLength(KindId),
 
+    /// Error happens when two or more cases gives conflicted results of parsing
+    #[error("Attampt to parse after token {0} gives conflict")]
+    CasesConflictOn(KindId),
+
     /// Error indicating a `KindId` cannot be converted to its corresponding `Kind`.
     #[error("Token {0} cannot be converted to origin token")]
     CannotConvertToKind(KindId),

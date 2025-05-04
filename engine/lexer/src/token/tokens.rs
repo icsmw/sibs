@@ -29,6 +29,10 @@ impl Tokens {
         self.tokens.push(token);
     }
 
+    pub fn extend(&mut self, token: Vec<Token>) {
+        self.tokens.extend(token);
+    }
+
     /// Checks if the last significant token indicates a new line.
     ///
     /// This method iterates over the tokens in reverse, skipping any whitespace,

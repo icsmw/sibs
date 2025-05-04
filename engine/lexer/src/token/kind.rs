@@ -20,14 +20,12 @@ pub enum Kind {
     Literal(String),
     /// A string literal.
     String(String),
-    /// An interpolated string, represented as a vector of `StringPart`.
-    InterpolatedString(Vec<StringPart>),
-    /// A command string, represented as a vector of `StringPart`.
-    Command(Vec<StringPart>),
     /// A single quote character (`'`).
     SingleQuote,
     /// A double quote character (`"`).
     DoubleQuote,
+    /// A back slash character (`\`)
+    Backslash,
     /// A tilde character (`~`).
     Tilde,
     /// A backtick character (`` ` ``).
@@ -140,18 +138,9 @@ impl fmt::Display for Kind {
                 Self::Literal(n) => n.to_string(),
                 Self::String(s) => format!("\"{s}\""),
                 Self::Whitespace(s) => s.clone(),
-                Self::InterpolatedString(s) => s
-                    .iter()
-                    .map(|p| p.to_string())
-                    .collect::<Vec<String>>()
-                    .join(""),
-                Self::Command(s) => s
-                    .iter()
-                    .map(|p| p.to_string())
-                    .collect::<Vec<String>>()
-                    .join(""),
                 Self::SingleQuote => "'".to_owned(),
                 Self::DoubleQuote => "\"".to_owned(),
+                Self::Backslash => "\\".to_owned(),
                 Self::Tilde => "~".to_owned(),
                 Self::Backtick => "`".to_owned(),
                 Self::Question => "?".to_owned(),
@@ -207,6 +196,7 @@ impl KindId {
         match self {
             Self::SingleQuote => "'",
             Self::DoubleQuote => "\"",
+            Self::Backslash => "\\",
             Self::Tilde => "~",
             Self::Backtick => "`",
             Self::Question => "?",
@@ -256,88 +246,12 @@ impl KindId {
             | Self::Number
             | Self::String
             | Self::Literal
-            | Self::InterpolatedString
-            | Self::Command
             | Self::EOF
             | Self::BOF
             | Self::Whitespace => "",
         }
     }
 }
-// /// Represents the unique identifier for each `Kind` variant.
-// ///
-// /// This is typically used internally for more efficient comparisons and mappings.
-// impl fmt::Display for KindId {
-//     /// Formats the `KindId` variant into its corresponding string representation.
-//     ///
-//     /// Similar to the `Display` implementation for `Kind`, this converts a `KindId`
-//     /// into a human-readable string.
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         write!(
-//             f,
-//             "{}",
-//             match self {
-//                 Self::SingleQuote => "'".to_owned(),
-//                 Self::DoubleQuote => "\"".to_owned(),
-//                 Self::Tilde => "~".to_owned(),
-//                 Self::Backtick => "`".to_owned(),
-//                 Self::Question => "?".to_owned(),
-//                 Self::Dollar => "$".to_owned(),
-//                 Self::At => "@".to_owned(),
-//                 Self::Pound => "#".to_owned(),
-//                 Self::Plus => "+".to_owned(),
-//                 Self::Minus => "-".to_owned(),
-//                 Self::Star => "*".to_owned(),
-//                 Self::Slash => "/".to_owned(),
-//                 Self::Percent => "%".to_owned(),
-//                 Self::Equals => "=".to_owned(),
-//                 Self::EqualEqual => "==".to_owned(),
-//                 Self::BangEqual => "!=".to_owned(),
-//                 Self::Less => "<".to_owned(),
-//                 Self::LessEqual => "<=".to_owned(),
-//                 Self::Greater => ">".to_owned(),
-//                 Self::GreaterEqual => ">=".to_owned(),
-//                 Self::And => "&&".to_owned(),
-//                 Self::Or => "||".to_owned(),
-//                 Self::VerticalBar => "|".to_owned(),
-//                 Self::Bang => "!".to_owned(),
-//                 Self::PlusEqual => "+=".to_owned(),
-//                 Self::MinusEqual => "-=".to_owned(),
-//                 Self::StarEqual => "*=".to_owned(),
-//                 Self::SlashEqual => "/=".to_owned(),
-//                 Self::LeftParen => "(".to_owned(),
-//                 Self::RightParen => ")".to_owned(),
-//                 Self::LeftBrace => "{".to_owned(),
-//                 Self::RightBrace => "}".to_owned(),
-//                 Self::LeftBracket => "[".to_owned(),
-//                 Self::RightBracket => "]".to_owned(),
-//                 Self::Comma => ",".to_owned(),
-//                 Self::Colon => ":".to_owned(),
-//                 Self::Dot => ".".to_owned(),
-//                 Self::DotDot => "..".to_owned(),
-//                 Self::Semicolon => ";".to_owned(),
-//                 Self::Arrow => "->".to_owned(),
-//                 Self::DoubleArrow => "=>".to_owned(),
-//                 Self::Comment => "//".to_owned(),
-//                 Self::Meta => "///".to_owned(),
-//                 Self::LF => '\n'.to_string(),
-//                 Self::CR => '\r'.to_string(),
-//                 Self::CRLF => "\r\n".to_owned(),
-//                 Self::Identifier
-//                 | Self::Keyword
-//                 | Self::Number
-//                 | Self::String
-//                 | Self::Literal
-//                 | Self::InterpolatedString
-//                 | Self::Command
-//                 | Self::EOF
-//                 | Self::BOF
-//                 | Self::Whitespace => String::new(),
-//             }
-//         )
-//     }
-// }
-
 impl TryFrom<KindId> for Kind {
     type Error = E;
     /// Attempts to convert a `KindId` into its corresponding `Kind` variant.
@@ -350,6 +264,7 @@ impl TryFrom<KindId> for Kind {
         match id {
             KindId::SingleQuote => Ok(Kind::SingleQuote),
             KindId::DoubleQuote => Ok(Kind::DoubleQuote),
+            KindId::Backslash => Ok(Kind::Backslash),
             KindId::Tilde => Ok(Kind::Tilde),
             KindId::Backtick => Ok(Kind::Backtick),
             KindId::Question => Ok(Kind::Question),
@@ -400,8 +315,6 @@ impl TryFrom<KindId> for Kind {
             | KindId::String
             | KindId::Literal
             | KindId::Whitespace
-            | KindId::InterpolatedString
-            | KindId::Command
             | KindId::Comment
             | KindId::Meta => Err(E::CannotConvertToKind(id)),
         }

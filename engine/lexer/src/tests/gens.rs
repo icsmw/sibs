@@ -111,6 +111,7 @@ pub fn kind(id: KindId) -> BoxedStrategy<Kind> {
         | KindId::DoubleQuote
         | KindId::Tilde
         | KindId::Backtick
+        | KindId::Backslash
         | KindId::Dollar
         | KindId::At
         | KindId::Pound
@@ -204,58 +205,6 @@ pub fn kind(id: KindId) -> BoxedStrategy<Kind> {
                         })
                         .collect::<String>(),
                 )
-            })
-            .boxed(),
-        KindId::InterpolatedString => (1..10, prop_oneof![Just(0u8), Just(1u8)])
-            .prop_flat_map(|(count, first)| {
-                let mut parts: Vec<BoxedStrategy<StringPart>> = vec![Just(StringPart::Open(
-                    Token::by_pos(Kind::SingleQuote, &Uuid::new_v4(), 0, 0),
-                ))
-                .boxed()];
-                let mut variant = first;
-                for _ in 0..count {
-                    parts.push(StringPart::arbitrary_with((
-                        variant,
-                        KindId::SingleQuote.try_into().expect("SingleQuote as char"),
-                    )));
-                    variant = if variant == 0 { 1 } else { 0 };
-                }
-                parts.push(
-                    Just(StringPart::Close(Token::by_pos(
-                        Kind::SingleQuote,
-                        &Uuid::new_v4(),
-                        0,
-                        0,
-                    )))
-                    .boxed(),
-                );
-                parts.prop_map(Kind::InterpolatedString).boxed()
-            })
-            .boxed(),
-        KindId::Command => (1..10, prop_oneof![Just(0u8), Just(1u8)])
-            .prop_flat_map(|(count, first)| {
-                let mut parts: Vec<BoxedStrategy<StringPart>> = vec![Just(StringPart::Open(
-                    Token::by_pos(Kind::Backtick, &Uuid::new_v4(), 0, 0),
-                ))
-                .boxed()];
-                let mut variant = first;
-                for _ in 0..count {
-                    parts.push(StringPart::arbitrary_with((
-                        variant,
-                        KindId::Backtick.try_into().expect("Backtick as char"),
-                    )));
-                    variant = if variant == 0 { 1 } else { 0 };
-                }
-                parts.push(
-                    Just(StringPart::Close(Token::by_pos(
-                        Kind::Backtick,
-                        &Uuid::new_v4(),
-                        0,
-                        0,
-                    )))
-                    .boxed(),
-                );
-                parts.prop_map(Kind::Command).boxed()
             })
             .boxed(),
         KindId::Comment => gen_string(RangeInclusive::new(0, 200))

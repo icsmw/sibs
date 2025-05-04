@@ -20,6 +20,7 @@ impl ConstantLength for KindId {
             Self::EOF | Self::BOF => Ok(0),
             Self::SingleQuote
             | Self::DoubleQuote
+            | Self::Backslash
             | Self::Tilde
             | Self::Backtick
             | Self::Question
@@ -68,8 +69,6 @@ impl ConstantLength for KindId {
             | Self::Number
             | Self::String
             | Self::Literal
-            | Self::InterpolatedString
-            | Self::Command
             | Self::Whitespace
             | Self::Keyword => Err(E::NoConstantLength(self.clone())),
         }

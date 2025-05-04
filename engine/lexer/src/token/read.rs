@@ -177,7 +177,7 @@ impl Read for Token {
             KindId::String => {
                 if let Some('"') = lx.char() {
                     lx.advance();
-                    if let Some(str) = lx.read_until('"') {
+                    if let Some((str, ..)) = lx.read_until(&['"']) {
                         lx.advance();
                         Ok(Some(Token::by_pos(
                             Kind::String(str),
@@ -192,17 +192,13 @@ impl Read for Token {
                     Ok(None)
                 }
             }
-            KindId::Command => Ok(StringPart::try_read(lx, KindId::Backtick)?
-                .map(|kind| Token::by_pos(kind, &lx.uuid, from, lx.pos))),
-            KindId::InterpolatedString => Ok(StringPart::try_read(lx, KindId::SingleQuote)?
-                .map(|kind| Token::by_pos(kind, &lx.uuid, from, lx.pos))),
             KindId::Comment => {
                 if !tks.is_nl() {
                     return Ok(None);
                 }
                 if id.as_str() == lx.read_nth(2) {
                     let drop = lx.pin();
-                    Ok(if let Some(content) = lx.read_until('\n') {
+                    Ok(if let Some((content, ..)) = lx.read_until(&['\n']) {
                         Some(Token::by_pos(
                             Kind::Comment(content),
                             &lx.uuid,
@@ -228,7 +224,7 @@ impl Read for Token {
                 }
                 if id.as_str() == lx.read_nth(3) {
                     let drop = lx.pin();
-                    Ok(if let Some(content) = lx.read_until('\n') {
+                    Ok(if let Some((content, ..)) = lx.read_until(&['\n']) {
                         Some(Token::by_pos(Kind::Meta(content), &lx.uuid, from, lx.pos))
                     } else {
                         drop(lx);
@@ -246,6 +242,7 @@ impl Read for Token {
             KindId::Question
             | KindId::SingleQuote
             | KindId::DoubleQuote
+            | KindId::Backslash
             | KindId::Tilde
             | KindId::Backtick
             | KindId::Dollar

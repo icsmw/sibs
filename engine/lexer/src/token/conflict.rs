@@ -21,8 +21,6 @@ impl ConflictResolver for KindId {
             Self::Keyword
             | Self::String
             | Self::Literal
-            | Self::InterpolatedString
-            | Self::Command
             | Self::EOF
             | Self::BOF
             | Self::Question
@@ -59,6 +57,7 @@ impl ConflictResolver for KindId {
             | Self::CRLF
             | Self::SingleQuote
             | Self::DoubleQuote
+            | Self::Backslash
             | Self::Tilde
             | Self::Backtick
             | Self::Whitespace => self.clone(),
@@ -129,6 +128,7 @@ impl ConflictResolver for KindId {
                 KindId::Keyword | KindId::Number => id.clone(),
                 KindId::SingleQuote
                 | KindId::DoubleQuote
+                | KindId::Backslash
                 | KindId::Tilde
                 | KindId::Backtick
                 | KindId::Question
@@ -177,8 +177,6 @@ impl ConflictResolver for KindId {
                 | KindId::String
                 | KindId::Literal
                 | KindId::Whitespace
-                | KindId::InterpolatedString
-                | KindId::Command
                 | KindId::Comment
                 | KindId::Meta => self.clone(),
             },

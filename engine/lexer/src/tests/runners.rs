@@ -66,7 +66,8 @@ impl Token {
             | Kind::SingleQuote
             | Kind::DoubleQuote
             | Kind::Tilde
-            | Kind::Backtick => {
+            | Kind::Backtick
+            | Kind::Backslash => {
                 self.pos.to = from + self.kind.id().length().expect("Fail to get element length");
             }
             Kind::Identifier(..)
@@ -77,38 +78,6 @@ impl Token {
             | Kind::Number(..)
             | Kind::Whitespace(..) => {
                 self.pos.to = from + self.to_string().len();
-            }
-            Kind::InterpolatedString(parts) | Kind::Command(parts) => {
-                let mut pos = from;
-                self.pos.to = from;
-                parts.iter_mut().for_each(|part| {
-                    self.pos.to += part.to_string().len();
-                    match part {
-                        StringPart::Open(tk) => {
-                            tk.set_pos(pos);
-                            pos += tk
-                                .id()
-                                .length()
-                                .expect("Wrapping token doesn't have a length");
-                        }
-                        StringPart::Literal(tk) => {
-                            tk.set_pos(pos);
-                            pos += tk.to_string().len();
-                        }
-                        StringPart::Expression(tks) => {
-                            tks.iter_mut().for_each(|tk| {
-                                pos = tk.set_pos(pos);
-                            });
-                        }
-                        StringPart::Close(tk) => {
-                            tk.set_pos(pos);
-                            pos += tk
-                                .id()
-                                .length()
-                                .expect("Wrapping token doesn't have a length");
-                        }
-                    }
-                });
             }
         };
         self.pos.to

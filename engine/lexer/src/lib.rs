@@ -183,12 +183,12 @@ impl<'a> Lexer<'a> {
     ///
     /// * `Some(String)` containing the read characters if the stop character is found.
     /// * `None` if the stop character is not found before the end of input.
-    pub(crate) fn read_until(&mut self, stop: char) -> Option<String> {
+    pub(crate) fn read_until(&mut self, stop: &[char]) -> Option<(String, char)> {
         let mut str = String::new();
         let mut escaped = false;
         while let Some(ch) = self.char() {
-            if ch == stop && !escaped {
-                return Some(str);
+            if stop.contains(&ch) && !escaped {
+                return Some((str, ch));
             }
             escaped = ch == '\\';
             str.push(ch);
@@ -236,7 +236,11 @@ impl<'a> Lexer<'a> {
     pub fn read(&mut self) -> Result<Tokens, E> {
         let mut tokens = Tokens::with(vec![Token::by_pos(Kind::BOF, &self.uuid, 0, 0)]);
         while let Some(tk) = Token::read(self, &tokens)? {
-            tokens.add(tk);
+            if let Some(tks) = cases::check(self, &tk)? {
+                tokens.extend(tks);
+            } else {
+                tokens.add(tk);
+            }
         }
         if !self.completed() {
             Err(E::FailRecognizeContent(self.pos))

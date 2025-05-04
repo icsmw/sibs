@@ -1,6 +1,6 @@
+pub mod cases;
 mod conflict;
 mod interest;
-mod intstring;
 mod keyword;
 mod kind;
 mod length;
@@ -11,7 +11,6 @@ mod tokens;
 
 pub(crate) use conflict::*;
 pub(crate) use interest::*;
-pub use intstring::*;
 pub use keyword::*;
 pub use kind::*;
 pub(crate) use length::*;
@@ -62,6 +61,10 @@ impl Token {
             self.owner = Some(*uuid);
             true
         }
+    }
+    pub fn offset(&mut self, offset: usize) {
+        self.pos.from += offset;
+        self.pos.to += offset;
     }
 }
 

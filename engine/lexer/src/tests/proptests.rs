@@ -29,22 +29,24 @@ proptest! {
         runners::test_tokens_by_kinds(cases.into_iter().flat_map(gens::add_bound_kinds).collect());
     }
 
+    #[test]
+    fn commands(cases in proptest::collection::vec(cases::proptests::content(Kind::Backtick, 1), 100)) {
+        for case in cases.into_iter() {
+            runners::test_tokens_by_kinds(case);
+        }
+    }
+
+    #[test]
+    fn strings(cases in proptest::collection::vec(cases::proptests::content(Kind::SingleQuote, 1), 100)) {
+        for case in cases.into_iter() {
+            runners::test_tokens_by_kinds(case);
+        }
+    }
+
     /// Tests the lexer with random meta tokens.
     #[test]
     fn meta(cases in proptest::collection::vec(gens::kind(KindId::Meta), 100)) {
         runners::test_tokens_by_kinds(cases.into_iter().flat_map(gens::add_bound_kinds).collect());
-    }
-
-    /// Tests the lexer with random command tokens.
-    #[test]
-    fn command(cases in proptest::collection::vec(gens::kind(KindId::Command), 100)) {
-        runners::test_tokens_by_kinds(cases.into_iter().collect());
-    }
-
-    /// Tests the lexer with random interpolated string tokens.
-    #[test]
-    fn interpolated_string(cases in proptest::collection::vec(gens::kind(KindId::InterpolatedString), 100)) {
-        runners::test_tokens_by_kinds(cases.into_iter().collect());
     }
 
     /// Tests the lexer with combinations of random tokens.
