@@ -57,7 +57,7 @@ fn process(lx: &mut Lexer, token: Token, kind: KindId) -> Result<Option<Vec<Toke
         }
         let offset = lx.pos;
         let content = until_groupend(lx, left_brace, right_brace);
-        let mut inner = Lexer::new(&content, 0);
+        let mut inner = lx.inherit(&content);
         tokens.push(Token::by_pos(Kind::LeftBrace, &lx.uuid, offset - 1, offset));
         tokens.extend(
             inner

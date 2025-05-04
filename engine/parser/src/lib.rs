@@ -181,10 +181,6 @@ impl Parser {
         self.tokens.get(pos)
     }
 
-    pub(crate) fn token_immutable(&self) -> Option<&Token> {
-        self.tokens.get(self.next_token_pos()?)
-    }
-
     pub(crate) fn current(&self) -> Option<&Token> {
         self.tokens.get(self.pos()).or_else(|| self.tokens.last())
     }

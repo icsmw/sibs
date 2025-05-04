@@ -180,9 +180,13 @@ pub fn kind(id: KindId) -> BoxedStrategy<Kind> {
                 Kind::String(
                     str.chars()
                         .map(|ch| {
-                            if ch == '"' {
-                                "\\\"".to_string()
-                            } else if ch == '\\' {
+                            if ch == '"'
+                                || ch == '\''
+                                || ch == '`'
+                                || ch == '\\'
+                                || ch == '{'
+                                || ch == '}'
+                            {
                                 "_".to_string()
                             } else {
                                 ch.to_string()
@@ -197,7 +201,13 @@ pub fn kind(id: KindId) -> BoxedStrategy<Kind> {
                 Kind::Literal(
                     str.chars()
                         .map(|ch| {
-                            if ch == '"' || ch == '\'' || ch == '`' || ch == '\\' {
+                            if ch == '"'
+                                || ch == '\''
+                                || ch == '`'
+                                || ch == '\\'
+                                || ch == '{'
+                                || ch == '}'
+                            {
                                 "_".to_string()
                             } else {
                                 ch.to_string()

@@ -44,7 +44,10 @@ pub fn content(id: Kind, deep: u8) -> BoxedStrategy<Vec<Kind>> {
                     break;
                 }
                 if !literals.is_empty() {
-                    output.push(literals.remove(0));
+                    let literal = literals.remove(0);
+                    if !literal.to_string().is_empty() {
+                        output.push(literal);
+                    }
                 }
                 if !nested.is_empty() {
                     output.push(Kind::LeftBrace);

@@ -5,57 +5,27 @@ use crate::*;
 
 impl Interest for InterpolatedString {
     fn intrested(token: &Token) -> bool {
-        matches!(token.kind, Kind::InterpolatedString(..))
+        matches!(token.kind, Kind::SingleQuote)
     }
 }
 
 impl ReadNode<InterpolatedString> for InterpolatedString {
     fn read(parser: &Parser) -> Result<Option<InterpolatedString>, LinkedErr<E>> {
-        let Some(tk) = parser.token().cloned() else {
+        let Some(open) = parser.token().cloned() else {
             return Ok(None);
         };
-        let Kind::InterpolatedString(parts) = &tk.kind else {
+        if !matches!(open.kind, Kind::SingleQuote) {
             return Ok(None);
-        };
-        let mut nodes = Vec::new();
-        for part in parts.clone().into_iter() {
-            match part {
-                StringPart::Open(tk) => {
-                    nodes.push(InterpolatedStringPart::Open(tk));
+        }
+        let mut nodes = vec![InterpolatedStringPart::Open(open.clone())];
+        while let Some(token) = parser.token() {
+            match token.id() {
+                KindId::Literal => {
+                    nodes.push(InterpolatedStringPart::Literal(token.clone()));
                 }
-                StringPart::Close(tk) => {
-                    nodes.push(InterpolatedStringPart::Close(tk));
-                }
-                StringPart::Literal(s) => {
-                    nodes.push(InterpolatedStringPart::Literal(s));
-                }
-                StringPart::Expression(mut tks) => {
-                    let (Some(f), Some(l)) = (tks.first(), tks.last()) else {
-                        return Err(E::NotSupportedStringInjection(
-                            tks.iter()
-                                .map(|t| t.to_string())
-                                .collect::<Vec<String>>()
-                                .join(" "),
-                        )
-                        .link_with_token(&tk));
-                    };
-                    if !matches!(f.kind, Kind::LeftBrace) || !matches!(l.kind, Kind::RightBrace) {
-                        return Err(E::NotSupportedStringInjection(
-                            tks.iter()
-                                .map(|t| t.to_string())
-                                .collect::<Vec<String>>()
-                                .join(" "),
-                        )
-                        .link_between(f, l));
-                    }
-                    let l_br = tks.remove(0);
-                    let r_br = tks.remove(tks.len() - 1);
-                    let mut inner = parser.inherit(tks);
-                    if inner.is_done() {
-                        return Err(E::EmptyStringExpression.link_between(&l_br, &r_br));
-                    }
+                KindId::LeftBrace => {
                     let node = LinkedNode::try_oneof(
-                        &mut inner,
+                        parser,
                         &[
                             NodeTarget::Value(&[
                                 ValueId::Number,
@@ -74,25 +44,36 @@ impl ReadNode<InterpolatedString> for InterpolatedString {
                         ],
                     )?
                     .ok_or_else(|| {
-                        E::NotSupportedStringInjection(inner.to_string()).link_until_end(&inner)
+                        E::NotSupportedStringInjection(parser.to_string()).link_until_end(&parser)
                     })?;
-                    if !inner.is_done() {
-                        return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
+                    let Some(next) = parser.token() else {
+                        return Err(E::NoClosing(KindId::RightBrace).link(&node));
+                    };
+                    if !matches!(next.id(), KindId::RightBrace) {
+                        return Err(E::NoClosing(KindId::RightBrace).link(&node));
                     }
                     nodes.push(InterpolatedStringPart::Expression(node));
                 }
-            };
+                KindId::SingleQuote => {
+                    nodes.push(InterpolatedStringPart::Close(token.clone()));
+                    break;
+                }
+                _ => {
+                    return Err(
+                        E::NotSupportedStringInjection(token.to_string()).link_with_token(token)
+                    );
+                }
+            }
         }
         if let (Some(InterpolatedStringPart::Open(..)), Some(InterpolatedStringPart::Close(..))) =
             (nodes.first(), nodes.last())
         {
             Ok(Some(InterpolatedString {
                 nodes,
-                token: tk,
                 uuid: Uuid::new_v4(),
             }))
         } else {
-            Err(E::InvalidString(tk.to_string()).link_with_token(&tk))
+            Err(E::InvalidString(open.to_string()).link_with_token(&open))
         }
     }
 }

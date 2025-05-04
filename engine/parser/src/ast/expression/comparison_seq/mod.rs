@@ -11,7 +11,7 @@ impl Interest for ComparisonSeq {
                 | Kind::Identifier(..)
                 | Kind::Number(..)
                 | Kind::String(..)
-                | Kind::InterpolatedString(..)
+                | Kind::SingleQuote
                 | Kind::Keyword(Keyword::True)
                 | Kind::Keyword(Keyword::False)
                 | Kind::Bang

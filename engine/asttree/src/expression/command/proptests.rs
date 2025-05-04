@@ -109,7 +109,6 @@ impl Arbitrary for Command {
                 nodes.push(CommandPart::Close(Token::for_test(Kind::Backtick)));
                 Command {
                     nodes,
-                    token: Token::for_test(Kind::Command(vec![])),
                     uuid: Uuid::new_v4(),
                 }
             })

@@ -19,9 +19,6 @@ impl Arbitrary for Block {
                     PrimitiveString::arbitrary()
                         .prop_map(|v| Node::Value(Value::PrimitiveString(v)))
                         .boxed(),
-                    Command::arbitrary_with(deep + 1)
-                        .prop_map(|v| Node::Expression(Expression::Command(v)))
-                        .boxed(),
                     Variable::arbitrary()
                         .prop_map(|v| Node::Expression(Expression::Variable(v)))
                         .boxed(),

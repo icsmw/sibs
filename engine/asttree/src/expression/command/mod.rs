@@ -90,23 +90,26 @@ impl FindMutByUuid for Vec<CommandPart> {
 #[derive(Debug, Clone)]
 pub struct Command {
     pub nodes: Vec<CommandPart>,
-    pub token: Token,
     pub uuid: Uuid,
 }
 
 impl Diagnostic for Command {
     fn located(&self, src: &Uuid, pos: usize) -> bool {
-        if !self.token.belongs(src) {
-            false
+        if let Some(CommandPart::Open(token)) = self.nodes.first() {
+            if !token.belongs(src) {
+                false
+            } else {
+                self.get_position().is_in(pos)
+            }
         } else {
-            self.get_position().is_in(pos)
+            false
         }
     }
     fn get_position(&self) -> Position {
         if let (Some(first), Some(last)) = (self.nodes.first(), self.nodes.last()) {
             Position::new(first.get_position().from, last.get_position().to)
         } else {
-            self.token.pos.clone()
+            Position::default()
         }
     }
     fn childs(&self) -> Vec<&LinkedNode> {
@@ -131,7 +134,13 @@ impl FindMutByUuid for Command {
 
 impl SrcLinking for Command {
     fn link(&self) -> SrcLink {
-        src_from::tk(&self.token)
+        if let (Some(CommandPart::Open(open)), Some(CommandPart::Close(close))) =
+            (self.nodes.first(), self.nodes.last())
+        {
+            SrcLink::from_tks(open, close)
+        } else {
+            SrcLink::default()
+        }
     }
     fn slink(&self) -> SrcLink {
         self.link()

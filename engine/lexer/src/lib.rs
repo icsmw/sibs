@@ -44,6 +44,14 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    pub fn inherit(&self, input: &'a str) -> Self {
+        Lexer {
+            input,
+            pos: 0,
+            uuid: self.uuid,
+        }
+    }
+
     /// Reads an identifier from the current position.
     ///
     /// An identifier consists of alphanumeric characters and underscores.

@@ -32,12 +32,12 @@ impl Interpret for Command {
             cx.cwd()
                 .get()
                 .await
-                .map_err(|err| LinkedErr::token(err, &self.token))?,
+                .map_err(|err| LinkedErr::from(err, self))?,
             self.uuid,
             cx,
         )
         .await
         .map(|ss| ss.into())
-        .map_err(|err| LinkedErr::token(err, &self.token))
+        .map_err(|err| LinkedErr::from(err, self))
     }
 }
