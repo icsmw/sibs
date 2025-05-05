@@ -1,4 +1,8 @@
-use std::{io, sync::PoisonError};
+use std::{
+    cell::{BorrowError, BorrowMutError},
+    io,
+    sync::PoisonError,
+};
 
 use crate::*;
 use diagnostics::*;
@@ -71,6 +75,10 @@ pub enum E {
     FailGetModuleName(String),
     #[error("Fail to get access to locked data")]
     PoisonError,
+    #[error("Fail to get write access to locked data")]
+    BorrowMutError,
+    #[error("Fail to get read access to locked data")]
+    BorrowError,
 
     /// Call
     #[error("Missed expression after dot")]
@@ -195,6 +203,18 @@ impl From<LexerErr> for E {
 impl<T> From<PoisonError<T>> for E {
     fn from(_: PoisonError<T>) -> Self {
         E::PoisonError
+    }
+}
+
+impl From<BorrowMutError> for E {
+    fn from(_: BorrowMutError) -> Self {
+        E::BorrowMutError
+    }
+}
+
+impl From<BorrowError> for E {
+    fn from(_: BorrowError) -> Self {
+        E::BorrowError
     }
 }
 

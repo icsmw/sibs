@@ -2,7 +2,7 @@ mod error;
 mod errors;
 mod locator;
 
-use std::{fmt, path::PathBuf};
+use std::{cell::Ref, fmt, path::PathBuf};
 use uuid::Uuid;
 
 pub(crate) use asttree::*;
@@ -77,6 +77,7 @@ impl Driver {
                 .into_iter()
                 .map(|err| DrivingError::Parsing(err)),
         );
+        parser.bind()?;
         self.parser = Some(parser);
         let mut scx = SemanticCx::new(self.resilience);
         functions::register(&mut scx.fns.efns)?;
@@ -143,7 +144,7 @@ impl Driver {
         find_node(anchor.childs(), &src.unwrap_or(anchor.uuid), pos)
     }
 
-    pub fn find_token(&self, pos: usize, _src: Option<Uuid>) -> Option<&Token> {
+    pub fn find_token(&self, pos: usize, _src: Option<Uuid>) -> Option<Ref<Token>> {
         // TODO: consider SRC
         self.parser
             .as_ref()

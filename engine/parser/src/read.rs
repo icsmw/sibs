@@ -21,7 +21,7 @@ pub(crate) fn resolve_conflicts<K: Display + Clone + PartialEq + ConflictResolve
     if conflicted.is_empty() {
         parser.set_pos(*ppos);
         let node = results.remove(n).1;
-        // parser.bind(from, parser.pos(), node.uuid());
+        parser.add_binding(from, parser.pos().saturating_sub(1), node.uuid());
         return Ok(Some(node));
     };
     let (mut ppos, mut resolved_node, mut resolved_id) = (ppos, node.clone(), id.clone());
@@ -49,7 +49,7 @@ pub(crate) fn resolve_conflicts<K: Display + Clone + PartialEq + ConflictResolve
         }
     }
     parser.set_pos(*ppos);
-    // parser.bind(from, parser.pos(), resolved_node.uuid());
+    parser.add_binding(from, parser.pos().saturating_sub(1), resolved_node.uuid());
     Ok(Some(resolved_node))
 }
 

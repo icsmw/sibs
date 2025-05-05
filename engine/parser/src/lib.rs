@@ -2,38 +2,40 @@ mod ast;
 mod error;
 
 pub use error::E as ParserError;
-pub(crate) use error::*;
+use error::*;
 mod conflict;
 mod interest;
 mod nodes;
 mod paths;
 mod read;
 
-pub(crate) use conflict::*;
-pub(crate) use interest::*;
+use conflict::*;
+use interest::*;
 pub use nodes::*;
-pub(crate) use paths::*;
+use paths::*;
 pub use read::*;
 
-pub(crate) use asttree::*;
-pub(crate) use diagnostics::*;
-pub(crate) use lexer::*;
+use asttree::*;
+use diagnostics::*;
+use lexer::*;
 use std::{
     cell::{Cell, Ref, RefCell},
+    collections::HashMap,
     fmt::{self, Display},
     path::{Path, PathBuf},
     rc::Rc,
 };
-pub(crate) use uuid::Uuid;
+use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct Parser {
     pub tokens: Rc<RefCell<Vec<Token>>>,
-    pub(crate) src: Uuid,
-    pub(crate) filename: Option<PathBuf>,
-    pub(crate) cwd: Option<PathBuf>,
-    pub(crate) srcs: Rc<RefCell<CodeSources>>,
+    src: Uuid,
+    filename: Option<PathBuf>,
+    cwd: Option<PathBuf>,
+    srcs: Rc<RefCell<CodeSources>>,
     pub errs: Rc<RefCell<Errors<E>>>,
+    bindings: Rc<RefCell<HashMap<Uuid, Vec<(usize, usize)>>>>,
     end: usize,
     pos: Cell<usize>,
     resilience: bool,
@@ -55,6 +57,7 @@ impl Parser {
             cwd: None,
             srcs: Rc::new(RefCell::new(CodeSources::unbound(content, src))),
             errs: Rc::new(RefCell::new(Errors::default())),
+            bindings: Rc::new(RefCell::new(HashMap::new())),
             end,
             resilience,
         }
@@ -69,6 +72,7 @@ impl Parser {
             filename: Some(filename.clone()),
             srcs: Rc::new(RefCell::new(CodeSources::bound(filename, &src)?)),
             errs: Rc::new(RefCell::new(Errors::default())),
+            bindings: Rc::new(RefCell::new(HashMap::new())),
             cwd: Some(cwd),
             end,
             resilience,
@@ -86,6 +90,7 @@ impl Parser {
             srcs: self.srcs.clone(),
             errs: self.errs.clone(),
             cwd: Some(cwd),
+            bindings: Rc::new(RefCell::new(HashMap::new())),
             end,
             resilience: self.resilience,
         })
@@ -134,12 +139,6 @@ impl Parser {
         Some(Ref::map(tokens_ref, |vec| &vec[index]))
     }
 
-    pub fn bind(&mut self, from: usize, to: usize, uuid: &Uuid) {
-        // self.tokens[from..to].iter_mut().for_each(|tk| {
-        //     let _ = tk.set_owner(uuid);
-        // });
-    }
-
     pub fn len(&self) -> usize {
         self.tokens
             .borrow()
@@ -156,7 +155,27 @@ impl Parser {
         self.pos.set(pos);
     }
 
-    pub(crate) fn inherit(&self, from: usize, to: usize) -> Self {
+    pub fn bind(&self) -> Result<(), E> {
+        let mut tokens = self.tokens.try_borrow_mut()?;
+        self.bindings
+            .try_borrow()?
+            .iter()
+            .for_each(|(owner, location)| {
+                location.into_iter().for_each(|(from, to)| {
+                    tokens[*from..*to].iter_mut().for_each(|tk| {
+                        let _ = tk.set_owner(owner);
+                    })
+                });
+            });
+        Ok(())
+    }
+
+    fn add_binding(&self, from: usize, to: usize, uuid: &Uuid) {
+        let mut bindings = self.bindings.borrow_mut();
+        bindings.entry(*uuid).or_default().push((from, to));
+    }
+
+    fn inherit(&self, from: usize, to: usize) -> Self {
         Self {
             tokens: self.tokens.clone(),
             pos: Cell::new(from),
@@ -164,13 +183,14 @@ impl Parser {
             filename: self.filename.clone(),
             srcs: self.srcs.clone(),
             errs: self.errs.clone(),
+            bindings: self.bindings.clone(),
             cwd: self.cwd.clone(),
             end: to.min(self.tokens.borrow().len() - 1),
             resilience: self.resilience,
         }
     }
 
-    pub(crate) fn next_token_pos(&self) -> Option<usize> {
+    fn next_token_pos(&self) -> Option<usize> {
         let mut pos = self.pos();
         while let Some(tk) = self.tokens.borrow().get(pos) {
             if pos > self.end {
@@ -192,14 +212,14 @@ impl Parser {
         None
     }
 
-    pub(crate) fn token(&self) -> Option<Ref<Token>> {
+    fn token(&self) -> Option<Ref<Token>> {
         let pos = self.next_token_pos()?;
         self.pos.set(pos + 1);
         let tokens_ref = self.tokens.borrow();
         Some(Ref::map(tokens_ref, |vec| &vec[pos]))
     }
 
-    pub(crate) fn current(&self) -> Option<Ref<Token>> {
+    fn current(&self) -> Option<Ref<Token>> {
         let tokens_ref = self.tokens.borrow();
         let index = self.pos();
         let token_ref = tokens_ref.get(index).or_else(|| tokens_ref.get(self.end))?;
@@ -209,7 +229,7 @@ impl Parser {
         Some(Ref::map(tokens_ref, move |vec| &vec[idx]))
     }
 
-    pub(crate) fn until_end(&self) -> Option<(Ref<Token>, Ref<Token>)> {
+    fn until_end(&self) -> Option<(Ref<Token>, Ref<Token>)> {
         let tokens_ref = self.tokens.borrow();
         let pos = self.pos().min(self.end);
         let from_index = tokens_ref
@@ -226,7 +246,7 @@ impl Parser {
         Some((from_ref, to_ref))
     }
 
-    pub(crate) fn tokens(&self, nm: usize) -> Option<Vec<Ref<Token>>> {
+    fn tokens(&self, nm: usize) -> Option<Vec<Ref<Token>>> {
         let mut tokens = Vec::new();
         while let Some(tk) = self.token() {
             tokens.push(tk);
@@ -237,7 +257,7 @@ impl Parser {
         None
     }
 
-    pub(crate) fn is_next(&self, kind: KindId) -> bool {
+    fn is_next(&self, kind: KindId) -> bool {
         let restore = self.pin();
         let tk = self.token();
         restore(self);
@@ -247,13 +267,13 @@ impl Parser {
         false
     }
 
-    pub(crate) fn next(&self) -> Option<Ref<Token>> {
+    fn next(&self) -> Option<Ref<Token>> {
         let tokens = self.tokens.borrow();
         let pos = self.next_token_pos()?;
         Some(Ref::map(tokens, |tokens| &tokens[pos]))
     }
 
-    pub(crate) fn pin(&self) -> impl Fn(&Parser) -> usize {
+    fn pin(&self) -> impl Fn(&Parser) -> usize {
         let pos = self.pos();
         move |parser: &Parser| {
             let to_restore = parser.pos();
@@ -262,7 +282,7 @@ impl Parser {
         }
     }
 
-    pub(crate) fn between(
+    fn between(
         &self,
         left: KindId,
         right: KindId,
@@ -302,14 +322,14 @@ impl Parser {
         Ok(Some((self.inherit(from_idx, to_idx), from_tk, to_tk)))
     }
 
-    pub(crate) fn is_done(&self) -> bool {
+    fn is_done(&self) -> bool {
         let restore = self.pin();
         let is_done = self.token().is_none();
         restore(self);
         is_done
     }
 
-    pub(crate) fn err_current(&self, err: E) -> LinkedErr<E> {
+    fn err_current(&self, err: E) -> LinkedErr<E> {
         LinkedErr {
             link: self
                 .current()
@@ -318,7 +338,7 @@ impl Parser {
             e: err,
         }
     }
-    pub(crate) fn err_until_end(&self, err: E) -> LinkedErr<E> {
+    fn err_until_end(&self, err: E) -> LinkedErr<E> {
         LinkedErr {
             link: self
                 .until_end()

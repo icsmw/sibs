@@ -1,12 +1,14 @@
+use std::cell::Ref;
+
 use crate::*;
 
 pub struct TokenStep<'a> {
     pub node: Option<&'a LinkedNode>,
-    pub token: &'a Token,
+    pub token: Ref<'a, Token>,
 }
 
 impl<'a> TokenStep<'a> {
-    pub fn new(token: &'a Token, node: Option<&'a LinkedNode>) -> Self {
+    pub fn new(token: Ref<'a, Token>, node: Option<&'a LinkedNode>) -> Self {
         Self { node, token }
     }
 }
@@ -15,11 +17,11 @@ impl fmt::Display for TokenStep<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{}-{} [{}/{:?}]:{}",
+            "{}-{} [owner:{:?}][{}/{}]",
             self.token.pos.from,
             self.token.pos.to,
-            self.token.kind.id().to_string(),
             self.token.owner,
+            self.token.kind.id().to_string(),
             self.node
                 .map(|n| format!("{}:{}", n.ident(), n.uuid()))
                 .unwrap_or(String::from("None"))
@@ -29,11 +31,11 @@ impl fmt::Display for TokenStep<'_> {
 
 pub struct NodeStep<'a> {
     pub node: &'a LinkedNode,
-    pub tokens: Vec<&'a Token>,
+    pub tokens: Vec<Ref<'a, Token>>,
 }
 
 impl<'a> NodeStep<'a> {
-    pub fn new(tokens: Vec<&'a Token>, node: &'a LinkedNode) -> Self {
+    pub fn new(tokens: Vec<Ref<'a, Token>>, node: &'a LinkedNode) -> Self {
         Self { node, tokens }
     }
 }
