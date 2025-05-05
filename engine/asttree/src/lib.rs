@@ -174,7 +174,13 @@ impl Identification for LinkedNode {
 
 impl fmt::Display for LinkedNode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}{}", self.md.meta_to_string(), self.node)
+        write!(
+            f,
+            "{}{}{}",
+            self.md.meta_to_string(),
+            self.node,
+            self.md.ppm_to_string()
+        )
     }
 }
 

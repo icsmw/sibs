@@ -38,6 +38,14 @@ impl Metadata {
         }
     }
 
+    pub fn ppm_to_string(&self) -> String {
+        self.ppm
+            .iter()
+            .map(|node| node.to_string())
+            .collect::<Vec<String>>()
+            .join("")
+    }
+
     pub fn lines(&self) -> Vec<String> {
         self.meta
             .iter()
