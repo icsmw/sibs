@@ -11,7 +11,7 @@ impl Interest for While {
 
 impl ReadNode<While> for While {
     fn read(parser: &Parser) -> Result<Option<While>, LinkedErr<E>> {
-        let Some(token) = parser.token().cloned() else {
+        let Some(token) = parser.token() else {
             return Ok(None);
         };
         if !matches!(token.kind, Kind::Keyword(Keyword::While)) {
@@ -50,7 +50,7 @@ impl ReadNode<While> for While {
             }
         }
         Ok(Some(While {
-            token,
+            token: token.clone(),
             comparison: Box::new(comparison),
             block: Box::new(block),
             uuid: self_uuid,

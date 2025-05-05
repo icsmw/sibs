@@ -11,7 +11,7 @@ impl Interest for Call {
 
 impl ReadNode<Call> for Call {
     fn read(parser: &Parser) -> Result<Option<Call>, LinkedErr<E>> {
-        let Some(token) = parser.token().cloned() else {
+        let Some(token) = parser.token() else {
             return Ok(None);
         };
         if !matches!(token.kind, Kind::Dot) {
@@ -22,7 +22,7 @@ impl ReadNode<Call> for Call {
             return Err(LinkedErr::token(E::MissedCallExpression, &token));
         };
         if matches!(next.kind, Kind::Keyword(..)) {
-            return Err(LinkedErr::token(E::KeywordUsing, next));
+            return Err(LinkedErr::token(E::KeywordUsing, &next));
         }
         restore(parser);
         let Some(node) = LinkedNode::try_oneof(
@@ -33,7 +33,7 @@ impl ReadNode<Call> for Call {
             return Ok(None);
         };
         Ok(Some(Call {
-            token,
+            token: token.clone(),
             node: Box::new(node),
             uuid: Uuid::new_v4(),
         }))

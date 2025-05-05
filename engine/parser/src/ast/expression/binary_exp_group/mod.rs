@@ -25,8 +25,8 @@ impl ReadNode<BinaryExpGroup> for BinaryExpGroup {
         };
         Ok(if inner.is_done() {
             Some(BinaryExpGroup {
-                open,
-                close,
+                open: open.clone(),
+                close: close.clone(),
                 node: Box::new(node),
                 uuid: Uuid::new_v4(),
             })

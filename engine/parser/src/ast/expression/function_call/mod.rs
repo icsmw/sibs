@@ -13,7 +13,7 @@ impl ReadNode<FunctionCall> for FunctionCall {
     fn read(parser: &Parser) -> Result<Option<FunctionCall>, LinkedErr<E>> {
         let mut reference = Vec::new();
         let restore = parser.pin();
-        let Some(token) = parser.token().cloned() else {
+        let Some(token) = parser.token() else {
             return Ok(None);
         };
         let negation = if matches!(token.kind, Kind::Bang) {
@@ -69,7 +69,7 @@ impl ReadNode<FunctionCall> for FunctionCall {
             args.push(node);
             if let Some(tk) = inner.token() {
                 if tk.id() != KindId::Comma {
-                    return Err(E::MissedComma.link_with_token(tk));
+                    return Err(E::MissedComma.link_with_token(&tk.to_owned()));
                 }
             } else {
                 break;
@@ -81,9 +81,9 @@ impl ReadNode<FunctionCall> for FunctionCall {
             Ok(Some(FunctionCall {
                 args,
                 reference,
-                open,
-                close,
-                negation,
+                open: open.to_owned(),
+                close: close.to_owned(),
+                negation: negation.map(|tk| tk.to_owned()),
                 uuid: Uuid::new_v4(),
             }))
         }

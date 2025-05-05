@@ -11,7 +11,7 @@ impl Interest for Return {
 
 impl ReadNode<Return> for Return {
     fn read(parser: &Parser) -> Result<Option<Return>, LinkedErr<E>> {
-        let Some(tk) = parser.token().cloned() else {
+        let Some(tk) = parser.token() else {
             return Ok(None);
         };
         if !matches!(tk.kind, Kind::Keyword(Keyword::Return)) {

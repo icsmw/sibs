@@ -11,13 +11,13 @@ impl Interest for ClosureDeclaration {
 
 impl ReadNode<ClosureDeclaration> for ClosureDeclaration {
     fn read(parser: &Parser) -> Result<Option<ClosureDeclaration>, LinkedErr<E>> {
-        let Some(token) = parser.token().cloned() else {
+        let Some(token) = parser.token() else {
             return Ok(None);
         };
         if !matches!(token.kind, Kind::Colon) {
             return Ok(None);
         }
-        let Some(open) = parser.token().cloned() else {
+        let Some(open) = parser.token() else {
             return Ok(None);
         };
         if !matches!(open.kind, Kind::VerticalBar) {
@@ -38,7 +38,7 @@ impl ReadNode<ClosureDeclaration> for ClosureDeclaration {
                     break;
                 }
                 if !matches!(tk.kind, Kind::Comma) {
-                    return Err(E::MissedComma.link_with_token(tk));
+                    return Err(E::MissedComma.link_with_token(&tk));
                 }
             }
         }
@@ -53,10 +53,10 @@ impl ReadNode<ClosureDeclaration> for ClosureDeclaration {
         )?
         .ok_or_else(|| E::MissedClosureReturnType.link_between(&open, &close))?;
         Ok(Some(ClosureDeclaration {
-            token,
+            token: token.clone(),
             args,
             ty: Box::new(ty),
-            open,
+            open: open.clone(),
             close,
             uuid: Uuid::new_v4(),
         }))

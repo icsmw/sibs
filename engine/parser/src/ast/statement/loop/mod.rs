@@ -11,7 +11,7 @@ impl Interest for Loop {
 
 impl ReadNode<Loop> for Loop {
     fn read(parser: &Parser) -> Result<Option<Loop>, LinkedErr<E>> {
-        let Some(token) = parser.token().cloned() else {
+        let Some(token) = parser.token() else {
             return Ok(None);
         };
         if !matches!(token.kind, Kind::Keyword(Keyword::Loop)) {
@@ -46,7 +46,7 @@ impl ReadNode<Loop> for Loop {
             }
         }
         Ok(Some(Loop {
-            token,
+            token: token.clone(),
             block: Box::new(block),
             uuid: self_uuid,
         }))

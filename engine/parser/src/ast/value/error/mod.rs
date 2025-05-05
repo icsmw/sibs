@@ -11,7 +11,7 @@ impl Interest for Error {
 
 impl ReadNode<Error> for Error {
     fn read(parser: &Parser) -> Result<Option<Error>, LinkedErr<E>> {
-        let Some(token) = parser.token().cloned() else {
+        let Some(token) = parser.token() else {
             return Ok(None);
         };
         if !matches!(token.kind, Kind::Keyword(Keyword::Error)) {
@@ -38,11 +38,11 @@ impl ReadNode<Error> for Error {
             Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner))
         } else {
             Ok(Some(Error {
-                token,
+                token: token.clone(),
                 node: Box::new(node),
                 uuid: Uuid::new_v4(),
-                open,
-                close,
+                open: open.clone(),
+                close: close.clone(),
             }))
         }
     }

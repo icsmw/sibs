@@ -1,4 +1,4 @@
-use std::io;
+use std::{io, sync::PoisonError};
 
 use crate::*;
 use diagnostics::*;
@@ -69,6 +69,8 @@ pub enum E {
     IOError(io::Error),
     #[error("Fail to get module name from {0};")]
     FailGetModuleName(String),
+    #[error("Fail to get access to locked data")]
+    PoisonError,
 
     /// Call
     #[error("Missed expression after dot")]
@@ -187,6 +189,12 @@ pub enum E {
 impl From<LexerErr> for E {
     fn from(err: LexerErr) -> Self {
         Self::LexerErr(err)
+    }
+}
+
+impl<T> From<PoisonError<T>> for E {
+    fn from(_: PoisonError<T>) -> Self {
+        E::PoisonError
     }
 }
 

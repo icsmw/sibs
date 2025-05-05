@@ -16,7 +16,7 @@ impl ReadNode<ArgumentDeclaration> for ArgumentDeclaration {
             return Ok(None);
         };
         if matches!(next.kind, Kind::Keyword(..)) {
-            return Err(LinkedErr::token(E::KeywordUsing, next));
+            return Err(LinkedErr::token(E::KeywordUsing, &next));
         }
         restore(parser);
         let Some(variable) = LinkedNode::try_oneof(

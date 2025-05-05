@@ -11,13 +11,13 @@ impl Interest for Module {
 
 impl ReadNode<Module> for Module {
     fn read(parser: &Parser) -> Result<Option<Module>, LinkedErr<E>> {
-        let Some(sig) = parser.token().cloned() else {
+        let Some(sig) = parser.token() else {
             return Ok(None);
         };
         if !matches!(sig.kind, Kind::Keyword(Keyword::Mod)) {
             return Ok(None);
         }
-        let Some(name) = parser.token().cloned() else {
+        let Some(name) = parser.token() else {
             return Ok(None);
         };
         let Kind::Identifier(vl) = &name.kind else {
@@ -60,10 +60,10 @@ impl ReadNode<Module> for Module {
             return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
         }
         Ok(Some(Module {
-            name,
-            sig,
-            open,
-            close,
+            name: name.clone(),
+            sig: sig.clone(),
+            open: open.clone(),
+            close: close.clone(),
             nodes,
             uuid: Uuid::new_v4(),
         }))

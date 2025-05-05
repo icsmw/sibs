@@ -11,7 +11,7 @@ impl Interest for Join {
 
 impl ReadNode<Join> for Join {
     fn read(parser: &Parser) -> Result<Option<Join>, LinkedErr<E>> {
-        let Some(token) = parser.token().cloned() else {
+        let Some(token) = parser.token() else {
             return Ok(None);
         };
         if !matches!(token.kind, Kind::Keyword(Keyword::Join)) {
@@ -35,7 +35,7 @@ impl ReadNode<Join> for Join {
                 continue;
             };
             if !matches!(tk.kind, Kind::Comma) {
-                return Err(E::MissedComma.link_with_token(tk));
+                return Err(E::MissedComma.link_with_token(&tk));
             }
         }
         if !inner.is_done() {
@@ -43,9 +43,9 @@ impl ReadNode<Join> for Join {
         };
         Ok(Some(Join {
             commands,
-            token,
-            open,
-            close,
+            token: token.clone(),
+            open: open.clone(),
+            close: close.clone(),
             uuid: Uuid::new_v4(),
         }))
     }

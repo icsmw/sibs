@@ -14,7 +14,7 @@ impl ReadNode<If> for If {
         let mut cases = Vec::new();
         loop {
             let restore = parser.pin();
-            if let Some(tk) = parser.token().cloned() {
+            if let Some(tk) = parser.token() {
                 match tk.kind {
                     Kind::Keyword(Keyword::If) => {
                         let cond = LinkedNode::try_oneof(
@@ -39,7 +39,7 @@ impl ReadNode<If> for If {
                             )
                             .link_with_token(&tk)
                         })?;
-                        cases.push(IfCase::If(cond, blk, tk));
+                        cases.push(IfCase::If(cond, blk, tk.clone()));
                     }
                     Kind::Keyword(Keyword::Else) => {
                         let blk = LinkedNode::try_oneof(
@@ -53,7 +53,7 @@ impl ReadNode<If> for If {
                             )
                             .link_with_token(&tk)
                         })?;
-                        cases.push(IfCase::Else(blk, tk));
+                        cases.push(IfCase::Else(blk, tk.clone()));
                     }
                     _ => {
                         restore(parser);

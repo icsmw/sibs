@@ -11,7 +11,7 @@ impl Interest for Command {
 
 impl ReadNode<Command> for Command {
     fn read(parser: &Parser) -> Result<Option<Command>, LinkedErr<E>> {
-        let Some(open) = parser.token().cloned() else {
+        let Some(open) = parser.token() else {
             return Ok(None);
         };
         if !matches!(open.kind, Kind::Backtick) {
@@ -60,7 +60,7 @@ impl ReadNode<Command> for Command {
                 }
                 _ => {
                     return Err(
-                        E::NotSupportedStringInjection(token.to_string()).link_with_token(token)
+                        E::NotSupportedStringInjection(token.to_string()).link_with_token(&token)
                     )
                 }
             }

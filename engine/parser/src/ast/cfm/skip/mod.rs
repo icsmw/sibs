@@ -11,7 +11,7 @@ impl Interest for Skip {
 
 impl ReadNode<Skip> for Skip {
     fn read(parser: &Parser) -> Result<Option<Skip>, LinkedErr<E>> {
-        let Some(token) = parser.token().cloned() else {
+        let Some(token) = parser.token() else {
             return Ok(None);
         };
         let Kind::Identifier(ident) = &token.kind else {
@@ -54,11 +54,11 @@ impl ReadNode<Skip> for Skip {
             return Err(E::NoSkipDirectiveFuncCall.link_until_end(&inner));
         };
         Ok(Some(Skip {
-            token,
+            token: token.clone(),
             args,
             func: Box::new(func),
-            open,
-            close,
+            open: open.clone(),
+            close: close.clone(),
             uuid: Uuid::new_v4(),
         }))
     }

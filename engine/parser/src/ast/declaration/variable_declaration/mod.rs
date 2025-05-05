@@ -11,7 +11,7 @@ impl Interest for VariableDeclaration {
 
 impl ReadNode<VariableDeclaration> for VariableDeclaration {
     fn read(parser: &Parser) -> Result<Option<VariableDeclaration>, LinkedErr<E>> {
-        let Some(token) = parser.token().cloned() else {
+        let Some(token) = parser.token() else {
             return Ok(None);
         };
         if !matches!(token.kind, Kind::Keyword(Keyword::Let)) {
@@ -22,7 +22,7 @@ impl ReadNode<VariableDeclaration> for VariableDeclaration {
             return Err(LinkedErr::token(E::MissedVariableName, &token));
         };
         if matches!(next.kind, Kind::Keyword(..)) {
-            return Err(LinkedErr::token(E::KeywordUsing, next));
+            return Err(LinkedErr::token(E::KeywordUsing, &next));
         }
         restore(parser);
         let variable = LinkedNode::try_oneof(
@@ -43,7 +43,7 @@ impl ReadNode<VariableDeclaration> for VariableDeclaration {
         )?
         .map(Box::new);
         Ok(Some(VariableDeclaration {
-            token,
+            token: token.clone(),
             variable: Box::new(variable),
             r#type: ty,
             assignation,

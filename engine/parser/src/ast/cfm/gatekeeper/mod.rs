@@ -11,7 +11,7 @@ impl Interest for Gatekeeper {
 
 impl ReadNode<Gatekeeper> for Gatekeeper {
     fn read(parser: &Parser) -> Result<Option<Gatekeeper>, LinkedErr<E>> {
-        let Some(token) = parser.token().cloned() else {
+        let Some(token) = parser.token() else {
             return Ok(None);
         };
         if !matches!(token.kind, Kind::Pound) {
@@ -40,10 +40,10 @@ impl ReadNode<Gatekeeper> for Gatekeeper {
             return Err(E::NoGatekeeperDirective.link_with_token(&token));
         }
         Ok(Some(Gatekeeper {
-            token,
+            token: token.clone(),
             nodes,
-            open,
-            close,
+            open: open.clone(),
+            close: close.clone(),
             uuid: Uuid::new_v4(),
         }))
     }

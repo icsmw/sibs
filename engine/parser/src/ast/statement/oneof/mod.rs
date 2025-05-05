@@ -11,7 +11,7 @@ impl Interest for OneOf {
 
 impl ReadNode<OneOf> for OneOf {
     fn read(parser: &Parser) -> Result<Option<OneOf>, LinkedErr<E>> {
-        let Some(token) = parser.token().cloned() else {
+        let Some(token) = parser.token() else {
             return Ok(None);
         };
         if !matches!(token.kind, Kind::Keyword(Keyword::OneOf)) {
@@ -32,7 +32,7 @@ impl ReadNode<OneOf> for OneOf {
                 continue;
             };
             if !matches!(tk.kind, Kind::Comma) {
-                return Err(E::MissedComma.link_with_token(tk));
+                return Err(E::MissedComma.link_with_token(&tk));
             }
         }
         if !inner.is_done() {
@@ -40,9 +40,9 @@ impl ReadNode<OneOf> for OneOf {
         };
         Ok(Some(OneOf {
             commands,
-            token,
-            open,
-            close,
+            token: token.clone(),
+            open: open.clone(),
+            close: close.clone(),
             uuid: Uuid::new_v4(),
         }))
     }

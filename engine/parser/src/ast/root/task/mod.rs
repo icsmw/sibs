@@ -34,13 +34,12 @@ impl ReadNode<Task> for Task {
             };
             gts.push(node);
         }
-        let Some(token) = parser.token().cloned() else {
+        let Some(token) = parser.token() else {
             return Ok(None);
         };
         let (sig, vis) = if matches!(token.kind, Kind::Keyword(Keyword::Private)) {
             let sig = parser
                 .token()
-                .cloned()
                 .ok_or_else(|| E::InvalidPrivateKeyUsage.link_with_token(&token))?;
             (sig, Some(token))
         } else {
@@ -51,7 +50,6 @@ impl ReadNode<Task> for Task {
         }
         let name = parser
             .token()
-            .cloned()
             .ok_or_else(|| E::MissedTaskName.link_with_token(&sig))?;
         if !matches!(name.kind, Kind::Identifier(..)) {
             return Err(E::MissedTaskName.link_with_token(&sig));
@@ -69,7 +67,7 @@ impl ReadNode<Task> for Task {
             args.push(arg);
             if let Some(tk) = inner.token() {
                 if !matches!(tk.kind, Kind::Comma) {
-                    return Err(E::MissedComma.link_with_token(tk));
+                    return Err(E::MissedComma.link_with_token(&tk));
                 }
             }
         }
@@ -79,11 +77,11 @@ impl ReadNode<Task> for Task {
         let block = LinkedNode::try_oneof(parser, &[NodeTarget::Statement(&[StatementId::Block])])?
             .ok_or_else(|| E::MissedTaskBlock.link_with_token(&sig))?;
         Ok(Some(Task {
-            vis,
-            sig,
-            name,
-            open,
-            close,
+            vis: vis.map(|tk| tk.clone()),
+            sig: sig.clone(),
+            name: name.clone(),
+            open: open.clone(),
+            close: close.clone(),
             args,
             gts,
             block: Box::new(block),

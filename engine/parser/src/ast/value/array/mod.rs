@@ -49,8 +49,8 @@ impl ReadNode<Array> for Array {
         } else {
             Ok(Some(Array {
                 els,
-                open,
-                close,
+                open: open.clone(),
+                close: close.clone(),
                 uuid: Uuid::new_v4(),
             }))
         }

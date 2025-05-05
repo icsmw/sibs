@@ -36,8 +36,8 @@ impl ReadNode<Accessor> for Accessor {
         }
         Ok(Some(Accessor {
             node: Box::new(node),
-            open,
-            close,
+            open: open.clone(),
+            close: close.clone(),
             uuid: Uuid::new_v4(),
         }))
     }

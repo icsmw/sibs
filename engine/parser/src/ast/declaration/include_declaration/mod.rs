@@ -23,13 +23,13 @@ impl GetFilename for IncludeDeclaration {
 
 impl ReadNode<IncludeDeclaration> for IncludeDeclaration {
     fn read(parser: &Parser) -> Result<Option<IncludeDeclaration>, LinkedErr<E>> {
-        let Some(sig) = parser.token().cloned() else {
+        let Some(sig) = parser.token() else {
             return Ok(None);
         };
         if !matches!(sig.kind, Kind::Keyword(Keyword::Include)) {
             return Ok(None);
         }
-        let Some(from) = parser.token().cloned() else {
+        let Some(from) = parser.token() else {
             return Ok(None);
         };
         let Kind::Identifier(vl) = &from.kind else {
@@ -71,8 +71,8 @@ impl ReadNode<IncludeDeclaration> for IncludeDeclaration {
             })))
         };
         Ok(Some(IncludeDeclaration {
-            sig,
-            from,
+            sig: sig.clone(),
+            from: from.clone(),
             node: Box::new(filename_node),
             root: Box::new(root),
             uuid: Uuid::new_v4(),

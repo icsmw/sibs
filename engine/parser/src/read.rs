@@ -61,22 +61,22 @@ pub trait ReadNode<T: Clone + Debug + Into<Node>>: Interest {
         let Some(tk_from) = parser.next() else {
             return Ok(None);
         };
-        if !Self::intrested(tk_from) {
+        if !Self::intrested(&tk_from) {
             return Ok(None);
         }
         let Some(node) = Self::read(parser)? else {
             return Ok(None);
         };
-        let Some(tk_before_md) = parser.current().cloned() else {
-            return Err(LinkedErr::token(E::UnexpectedEmptyParser, tk_from));
+        let Some(tk_before_md) = parser.current() else {
+            return Err(LinkedErr::token(E::UnexpectedEmptyParser, &tk_from));
         };
         md.read_md_after(parser)?;
         let mut linked = LinkedNode::from_node(node.into());
         let Some(tk_after_md) = parser.current() else {
-            return Err(LinkedErr::token(E::UnexpectedEmptyParser, tk_from));
+            return Err(LinkedErr::token(E::UnexpectedEmptyParser, &tk_from));
         };
-        linked.get_mut_md().link.set_pos(tk_from, &tk_before_md);
-        linked.get_mut_md().link.set_expos(tk_from, tk_after_md);
+        linked.get_mut_md().link.set_pos(&tk_from, &tk_before_md);
+        linked.get_mut_md().link.set_expos(&tk_from, &tk_after_md);
         linked.get_mut_md().merge(md);
         Ok(Some(linked))
     }

@@ -19,7 +19,7 @@ pub(crate) use asttree::*;
 pub(crate) use diagnostics::*;
 pub(crate) use lexer::*;
 use std::{
-    cell::{Cell, RefCell},
+    cell::{Cell, Ref, RefCell},
     fmt::{self, Display},
     path::{Path, PathBuf},
     rc::Rc,
@@ -28,12 +28,13 @@ pub(crate) use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct Parser {
-    pub tokens: Vec<Token>,
+    pub tokens: Rc<RefCell<Vec<Token>>>,
     pub(crate) src: Uuid,
     pub(crate) filename: Option<PathBuf>,
     pub(crate) cwd: Option<PathBuf>,
     pub(crate) srcs: Rc<RefCell<CodeSources>>,
     pub errs: Rc<RefCell<Errors<E>>>,
+    end: usize,
     pos: Cell<usize>,
     resilience: bool,
 }
@@ -45,41 +46,47 @@ impl Parser {
         content: S,
         resilience: bool,
     ) -> Self {
+        let end = tokens.len().saturating_sub(1);
         Self {
-            tokens,
+            tokens: Rc::new(RefCell::new(tokens)),
             pos: Cell::new(0),
             src: *src,
             filename: None,
             cwd: None,
             srcs: Rc::new(RefCell::new(CodeSources::unbound(content, src))),
             errs: Rc::new(RefCell::new(Errors::default())),
+            end,
             resilience,
         }
     }
     pub fn new<P: AsRef<Path>>(filename: P, resilience: bool) -> Result<Self, E> {
         let (filename, cwd, tokens, src) = BoundLexer::new(filename.as_ref())?.inner();
+        let end = tokens.len().saturating_sub(1);
         Ok(Self {
-            tokens,
+            tokens: Rc::new(RefCell::new(tokens)),
             pos: Cell::new(0),
             src,
             filename: Some(filename.clone()),
             srcs: Rc::new(RefCell::new(CodeSources::bound(filename, &src)?)),
             errs: Rc::new(RefCell::new(Errors::default())),
             cwd: Some(cwd),
+            end,
             resilience,
         })
     }
     pub fn new_child<P: AsRef<Path>>(&self, filename: P) -> Result<Self, E> {
         let (filename, cwd, tokens, src) = BoundLexer::new(filename.as_ref())?.inner();
         self.srcs.borrow_mut().add_file_src(&filename, &src)?;
+        let end = tokens.len().saturating_sub(1);
         Ok(Self {
-            tokens,
+            tokens: Rc::new(RefCell::new(tokens)),
             pos: Cell::new(0),
             src,
             filename: Some(filename.clone()),
             srcs: self.srcs.clone(),
             errs: self.errs.clone(),
             cwd: Some(cwd),
+            end,
             resilience: self.resilience,
         })
     }
@@ -121,18 +128,24 @@ impl Parser {
         Some(err)
     }
 
-    pub fn get_token_by_pos(&self, pos: usize) -> Option<&Token> {
-        self.tokens.iter().find(|tk| tk.pos.is_in(pos))
+    pub fn get_token_by_pos(&self, pos: usize) -> Option<Ref<Token>> {
+        let tokens_ref = self.tokens.borrow();
+        let index = tokens_ref.iter().position(|tk| tk.pos.is_in(pos))?;
+        Some(Ref::map(tokens_ref, |vec| &vec[index]))
     }
 
     pub fn bind(&mut self, from: usize, to: usize, uuid: &Uuid) {
-        self.tokens[from..to].iter_mut().for_each(|tk| {
-            let _ = tk.set_owner(uuid);
-        });
+        // self.tokens[from..to].iter_mut().for_each(|tk| {
+        //     let _ = tk.set_owner(uuid);
+        // });
     }
 
     pub fn len(&self) -> usize {
-        self.tokens.last().map(|tk| tk.pos.to).unwrap_or_default()
+        self.tokens
+            .borrow()
+            .last()
+            .map(|tk| tk.pos.to)
+            .unwrap_or_default()
     }
 
     pub fn pos(&self) -> usize {
@@ -143,22 +156,26 @@ impl Parser {
         self.pos.set(pos);
     }
 
-    pub(crate) fn inherit(&self, tokens: Vec<Token>) -> Self {
+    pub(crate) fn inherit(&self, from: usize, to: usize) -> Self {
         Self {
-            tokens,
-            pos: Cell::new(0),
+            tokens: self.tokens.clone(),
+            pos: Cell::new(from),
             src: self.src,
             filename: self.filename.clone(),
             srcs: self.srcs.clone(),
             errs: self.errs.clone(),
             cwd: self.cwd.clone(),
+            end: to.min(self.tokens.borrow().len() - 1),
             resilience: self.resilience,
         }
     }
 
     pub(crate) fn next_token_pos(&self) -> Option<usize> {
         let mut pos = self.pos();
-        while let Some(tk) = self.tokens.get(pos) {
+        while let Some(tk) = self.tokens.borrow().get(pos) {
+            if pos > self.end {
+                return None;
+            }
             if !matches!(
                 tk.id(),
                 KindId::Whitespace
@@ -175,30 +192,43 @@ impl Parser {
         None
     }
 
-    pub(crate) fn token(&self) -> Option<&Token> {
+    pub(crate) fn token(&self) -> Option<Ref<Token>> {
         let pos = self.next_token_pos()?;
         self.pos.set(pos + 1);
-        self.tokens.get(pos)
+        let tokens_ref = self.tokens.borrow();
+        Some(Ref::map(tokens_ref, |vec| &vec[pos]))
     }
 
-    pub(crate) fn current(&self) -> Option<&Token> {
-        self.tokens.get(self.pos()).or_else(|| self.tokens.last())
+    pub(crate) fn current(&self) -> Option<Ref<Token>> {
+        let tokens_ref = self.tokens.borrow();
+        let index = self.pos();
+        let token_ref = tokens_ref.get(index).or_else(|| tokens_ref.get(self.end))?;
+        let idx = tokens_ref
+            .iter()
+            .position(|tk| std::ptr::eq(tk, token_ref))?;
+        Some(Ref::map(tokens_ref, move |vec| &vec[idx]))
     }
 
-    pub(crate) fn until_end(&self) -> Option<(&Token, &Token)> {
-        if let (Some(from), Some(to)) = (
-            self.tokens.get(self.pos()).or_else(|| self.tokens.last()),
-            self.tokens.last(),
-        ) {
-            Some((from, to))
-        } else {
-            None
-        }
+    pub(crate) fn until_end(&self) -> Option<(Ref<Token>, Ref<Token>)> {
+        let tokens_ref = self.tokens.borrow();
+        let pos = self.pos().min(self.end);
+        let from_index = tokens_ref
+            .get(pos)
+            .or_else(|| tokens_ref.get(self.end))
+            .and_then(|tk| tokens_ref.iter().position(|x| std::ptr::eq(x, tk)))?;
+
+        let (from_ref, to_ref) = Ref::map_split(tokens_ref, move |vec| {
+            let from = &vec[from_index];
+            let to = &vec[self.end];
+            (from, to)
+        });
+
+        Some((from_ref, to_ref))
     }
 
-    pub(crate) fn tokens(&self, nm: usize) -> Option<Vec<Token>> {
+    pub(crate) fn tokens(&self, nm: usize) -> Option<Vec<Ref<Token>>> {
         let mut tokens = Vec::new();
-        while let Some(tk) = self.token().cloned() {
+        while let Some(tk) = self.token() {
             tokens.push(tk);
             if tokens.len() == nm {
                 return Some(tokens);
@@ -209,7 +239,7 @@ impl Parser {
 
     pub(crate) fn is_next(&self, kind: KindId) -> bool {
         let restore = self.pin();
-        let tk = self.token().cloned();
+        let tk = self.token();
         restore(self);
         if let Some(tk) = tk {
             return tk.id() == kind;
@@ -217,8 +247,10 @@ impl Parser {
         false
     }
 
-    pub(crate) fn next(&self) -> Option<&Token> {
-        self.tokens.get(self.next_token_pos()?)
+    pub(crate) fn next(&self) -> Option<Ref<Token>> {
+        let tokens = self.tokens.borrow();
+        let pos = self.next_token_pos()?;
+        Some(Ref::map(tokens, |tokens| &tokens[pos]))
     }
 
     pub(crate) fn pin(&self) -> impl Fn(&Parser) -> usize {
@@ -234,37 +266,40 @@ impl Parser {
         &self,
         left: KindId,
         right: KindId,
-    ) -> Result<Option<(Parser, Token, Token)>, LinkedErr<E>> {
-        let Some(open_tk) = self.token().cloned() else {
+    ) -> Result<Option<(Parser, Ref<Token>, Ref<Token>)>, LinkedErr<E>> {
+        let Some(from_tk) = self.token() else {
             return Ok(None);
         };
-        if open_tk.id() != left {
+        if from_tk.id() != left {
             return Ok(None);
         }
-        let mut tokens = Vec::new();
+        let from_idx = self.pos();
+        let mut to_idx = self.pos();
+        let mut to_tk = None;
         let mut inside = 0;
-        let close_tk = loop {
+        loop {
             let Some(tk) = self.token() else {
-                break None;
+                break;
             };
             if tk.id() == left {
                 inside += 1;
-                tokens.push(tk.clone());
                 continue;
             }
             if tk.id() == right {
                 if inside == 0 {
-                    break Some(tk.to_owned());
+                    to_idx = self.pos().saturating_sub(2);
+                    to_tk = Some(tk);
+                    break;
                 } else {
                     inside -= 1;
-                    tokens.push(tk.clone());
                     continue;
                 }
             }
-            tokens.push(tk.clone());
+        }
+        let Some(to_tk) = to_tk else {
+            return Err(LinkedErr::token(E::NoClosing(right), &from_tk));
         };
-        let close_tk = close_tk.ok_or_else(|| LinkedErr::token(E::NoClosing(right), &open_tk))?;
-        Ok(Some((self.inherit(tokens), open_tk, close_tk)))
+        Ok(Some((self.inherit(from_idx, to_idx), from_tk, to_tk)))
     }
 
     pub(crate) fn is_done(&self) -> bool {
@@ -278,7 +313,7 @@ impl Parser {
         LinkedErr {
             link: self
                 .current()
-                .map(|tk| tk.into())
+                .map(|tk| (&tk.to_owned()).into())
                 .unwrap_or(LinkedPosition::new(0, 0, &self.src)),
             e: err,
         }
@@ -287,7 +322,7 @@ impl Parser {
         LinkedErr {
             link: self
                 .until_end()
-                .map(|tks| tks.into())
+                .map(|(from, to)| (&from.to_owned(), &to.to_owned()).into())
                 .unwrap_or(LinkedPosition::new(0, 0, &self.src)),
             e: err,
         }
@@ -299,7 +334,7 @@ impl fmt::Display for Parser {
         write!(
             f,
             "{}",
-            self.tokens[self.pos()..]
+            self.tokens.borrow()[self.pos().min(self.end)..=self.end]
                 .iter()
                 .map(|n| n.to_string())
                 .collect::<Vec<String>>()

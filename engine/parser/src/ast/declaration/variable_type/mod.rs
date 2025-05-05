@@ -17,14 +17,14 @@ impl Interest for VariableType {
 
 impl ReadNode<VariableType> for VariableType {
     fn read(parser: &Parser) -> Result<Option<VariableType>, LinkedErr<E>> {
-        let Some(token) = parser.token().cloned() else {
+        let Some(token) = parser.token() else {
             return Ok(None);
         };
         match &token.kind {
             Kind::Keyword(Keyword::Bool)
             | Kind::Keyword(Keyword::Str)
             | Kind::Keyword(Keyword::Num) => Ok(Some(VariableType {
-                r#type: VariableTypeDef::Primitive(token),
+                r#type: VariableTypeDef::Primitive(token.clone()),
                 uuid: Uuid::new_v4(),
             })),
             Kind::Keyword(Keyword::Vec) => {
@@ -41,7 +41,7 @@ impl ReadNode<VariableType> for VariableType {
                 }
                 Ok(Some(VariableType {
                     r#type: VariableTypeDef::Compound(VariableCompoundType::Vec(
-                        token,
+                        token.clone(),
                         Box::new(ty),
                     )),
                     uuid: Uuid::new_v4(),

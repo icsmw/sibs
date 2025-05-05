@@ -11,7 +11,7 @@ impl Interest for For {
 
 impl ReadNode<For> for For {
     fn read(parser: &Parser) -> Result<Option<For>, LinkedErr<E>> {
-        let Some(token_for) = parser.token().cloned() else {
+        let Some(token_for) = parser.token() else {
             return Ok(None);
         };
         if !matches!(token_for.kind, Kind::Keyword(Keyword::For)) {
@@ -50,7 +50,7 @@ impl ReadNode<For> for For {
                 return Err(E::MissedElementDeclarationInFor.link_with_token(&token_for));
             }
         };
-        let Some(token_in) = parser.token().cloned() else {
+        let Some(token_in) = parser.token() else {
             return Err(E::InvalidForSyntax.link_with_token(&token_for));
         };
         if !matches!(token_in.kind, Kind::Keyword(Keyword::In)) {
@@ -95,8 +95,8 @@ impl ReadNode<For> for For {
             }
         }
         Ok(Some(For {
-            token_for,
-            token_in,
+            token_for: token_for.clone(),
+            token_in: token_in.clone(),
             element: Box::new(el),
             index: index.map(Box::new),
             elements: Box::new(elements),

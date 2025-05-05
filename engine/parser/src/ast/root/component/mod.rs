@@ -11,7 +11,7 @@ impl Interest for Component {
 
 impl ReadNode<Component> for Component {
     fn read(parser: &Parser) -> Result<Option<Component>, LinkedErr<E>> {
-        let Some(sig) = parser.token().cloned() else {
+        let Some(sig) = parser.token() else {
             return Ok(None);
         };
         if !matches!(sig.kind, Kind::Keyword(Keyword::Component)) {
@@ -19,7 +19,6 @@ impl ReadNode<Component> for Component {
         }
         let name = parser
             .token()
-            .cloned()
             .ok_or_else(|| E::MissedComponentName.link_with_token(&sig))?;
         if !matches!(name.kind, Kind::Identifier(..)) {
             return Err(E::MissedComponentName.link_with_token(&sig));
@@ -27,7 +26,7 @@ impl ReadNode<Component> for Component {
         let (inner, ..) = parser
             .between(KindId::LeftParen, KindId::RightParen)?
             .ok_or_else(|| E::MissedComponentCWD.link_with_token(&sig))?;
-        let path = inner.to_string();
+        let path = inner.to_string().trim().to_owned();
         let (mut inner, open_bl, close_bl) = parser
             .between(KindId::LeftBrace, KindId::RightBrace)?
             .ok_or_else(|| E::MissedComponentBlock.link_with_token(&sig))?;
@@ -54,12 +53,12 @@ impl ReadNode<Component> for Component {
             return Err(E::NoTasksInComponent.link_with_token(&sig));
         }
         Ok(Some(Component {
-            sig,
-            name,
+            sig: sig.clone(),
+            name: name.clone(),
             path,
             nodes,
-            open_bl,
-            close_bl,
+            open_bl: open_bl.clone(),
+            close_bl: close_bl.clone(),
             uuid: Uuid::new_v4(),
         }))
     }

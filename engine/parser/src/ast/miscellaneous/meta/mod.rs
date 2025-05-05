@@ -11,14 +11,14 @@ impl Interest for Meta {
 
 impl ReadNode<Meta> for Meta {
     fn read(parser: &Parser) -> Result<Option<Meta>, LinkedErr<E>> {
-        let Some(token) = parser.token().cloned() else {
+        let Some(token) = parser.token() else {
             return Ok(None);
         };
         if !matches!(token.kind, Kind::Meta(..)) {
             return Ok(None);
         }
         Ok(Some(Meta {
-            token,
+            token: token.clone(),
             uuid: Uuid::new_v4(),
         }))
     }

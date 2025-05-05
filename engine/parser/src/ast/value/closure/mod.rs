@@ -11,7 +11,7 @@ impl Interest for Closure {
 
 impl ReadNode<Closure> for Closure {
     fn read(parser: &Parser) -> Result<Option<Closure>, LinkedErr<E>> {
-        let Some(open) = parser.token().cloned() else {
+        let Some(open) = parser.token() else {
             return Ok(None);
         };
         if !matches!(open.kind, Kind::VerticalBar) {
@@ -32,21 +32,20 @@ impl ReadNode<Closure> for Closure {
                     break;
                 }
                 if !matches!(tk.kind, Kind::Comma) {
-                    return Err(E::MissedComma.link_with_token(tk));
+                    return Err(E::MissedComma.link_with_token(&tk));
                 }
             }
         }
         let Some(close) = close else {
             return Err(E::MissedClosingBar.link_with_token(&open));
         };
-        let block =
-            LinkedNode::try_oneof(parser, &[NodeTarget::Statement(&[StatementId::Block])])?
-                .ok_or_else(|| E::MissedClosureBlock.link_between(&open, &close))?;
+        let block = LinkedNode::try_oneof(parser, &[NodeTarget::Statement(&[StatementId::Block])])?
+            .ok_or_else(|| E::MissedClosureBlock.link_between(&open, &close))?;
         Ok(Some(Closure {
             args,
             block: Box::new(block),
-            open,
-            close,
+            open: open.clone(),
+            close: close.clone(),
             uuid: Uuid::new_v4(),
         }))
     }

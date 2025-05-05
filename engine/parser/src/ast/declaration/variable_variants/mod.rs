@@ -11,7 +11,7 @@ impl Interest for VariableVariants {
 
 impl ReadNode<VariableVariants> for VariableVariants {
     fn read(parser: &Parser) -> Result<Option<VariableVariants>, LinkedErr<E>> {
-        let Some(token) = parser.token().cloned() else {
+        let Some(token) = parser.token() else {
             return Ok(None);
         };
         if !matches!(token.kind, Kind::Colon) {
@@ -50,7 +50,7 @@ impl ReadNode<VariableVariants> for VariableVariants {
             Ok(None)
         } else {
             Ok(Some(VariableVariants {
-                token,
+                token: token.clone(),
                 variants,
                 uuid: Uuid::new_v4(),
             }))

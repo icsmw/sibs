@@ -11,7 +11,7 @@ impl Interest for InterpolatedString {
 
 impl ReadNode<InterpolatedString> for InterpolatedString {
     fn read(parser: &Parser) -> Result<Option<InterpolatedString>, LinkedErr<E>> {
-        let Some(open) = parser.token().cloned() else {
+        let Some(open) = parser.token() else {
             return Ok(None);
         };
         if !matches!(open.kind, Kind::SingleQuote) {
@@ -60,7 +60,7 @@ impl ReadNode<InterpolatedString> for InterpolatedString {
                 }
                 _ => {
                     return Err(
-                        E::NotSupportedStringInjection(token.to_string()).link_with_token(token)
+                        E::NotSupportedStringInjection(token.to_string()).link_with_token(&token)
                     );
                 }
             }

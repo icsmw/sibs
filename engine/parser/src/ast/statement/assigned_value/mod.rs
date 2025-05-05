@@ -11,7 +11,7 @@ impl Interest for AssignedValue {
 
 impl ReadNode<AssignedValue> for AssignedValue {
     fn read(parser: &Parser) -> Result<Option<AssignedValue>, LinkedErr<E>> {
-        let Some(token) = parser.token().cloned() else {
+        let Some(token) = parser.token() else {
             return Ok(None);
         };
         if !matches!(token.kind, Kind::Equals) {
@@ -42,7 +42,7 @@ impl ReadNode<AssignedValue> for AssignedValue {
         )?
         .ok_or_else(|| E::InvalidAssignation(parser.to_string()).link_with_token(&token))?;
         Ok(Some(AssignedValue {
-            token,
+            token: token.clone(),
             node: Box::new(node),
             uuid: Uuid::new_v4(),
         }))

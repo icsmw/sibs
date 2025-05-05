@@ -23,13 +23,13 @@ impl GetFilename for ModuleDeclaration {
 
 impl ReadNode<ModuleDeclaration> for ModuleDeclaration {
     fn read(parser: &Parser) -> Result<Option<ModuleDeclaration>, LinkedErr<E>> {
-        let Some(sig) = parser.token().cloned() else {
+        let Some(sig) = parser.token() else {
             return Ok(None);
         };
         if !matches!(sig.kind, Kind::Keyword(Keyword::Mod)) {
             return Ok(None);
         }
-        let Some(from) = parser.token().cloned() else {
+        let Some(from) = parser.token() else {
             return Ok(None);
         };
         let Kind::Identifier(vl) = &from.kind else {
@@ -65,8 +65,8 @@ impl ReadNode<ModuleDeclaration> for ModuleDeclaration {
         #[cfg(test)]
         let (nodes, name) = { (Vec::new(), String::from("test")) };
         Ok(Some(ModuleDeclaration {
-            sig,
-            from,
+            sig: sig.clone(),
+            from: from.clone(),
             node: Box::new(filename_node),
             uuid: Uuid::new_v4(),
             name,

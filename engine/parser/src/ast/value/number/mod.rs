@@ -16,7 +16,7 @@ impl ReadNode<Number> for Number {
                 return Ok(None);
             };
             if inner.is_infinite() {
-                return Err(E::InfiniteNumber.link_with_token(tk));
+                return Err(E::InfiniteNumber.link_with_token(&tk));
             }
             return Ok(Some(Number {
                 inner: inner.to_owned(),

@@ -11,7 +11,7 @@ impl Interest for VariableTypeDeclaration {
 
 impl ReadNode<VariableTypeDeclaration> for VariableTypeDeclaration {
     fn read(parser: &Parser) -> Result<Option<VariableTypeDeclaration>, LinkedErr<E>> {
-        let Some(token) = parser.token().cloned() else {
+        let Some(token) = parser.token() else {
             return Ok(None);
         };
         if !matches!(token.kind, Kind::Colon) {
@@ -47,7 +47,7 @@ impl ReadNode<VariableTypeDeclaration> for VariableTypeDeclaration {
             Ok(None)
         } else {
             Ok(Some(VariableTypeDeclaration {
-                token,
+                token: token.clone(),
                 types,
                 uuid: Uuid::new_v4(),
             }))

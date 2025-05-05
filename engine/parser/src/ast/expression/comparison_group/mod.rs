@@ -12,7 +12,7 @@ impl Interest for ComparisonGroup {
 impl ReadNode<ComparisonGroup> for ComparisonGroup {
     fn read(parser: &Parser) -> Result<Option<ComparisonGroup>, LinkedErr<E>> {
         let restore = parser.pin();
-        let Some(token) = parser.token().cloned() else {
+        let Some(token) = parser.token() else {
             return Ok(None);
         };
         let negation = if matches!(token.kind, Kind::Bang) {
@@ -35,10 +35,10 @@ impl ReadNode<ComparisonGroup> for ComparisonGroup {
         };
         Ok(if inner.is_done() {
             Some(ComparisonGroup {
-                open,
-                close,
+                open: open.clone(),
+                close: close.clone(),
                 node: Box::new(node),
-                negation,
+                negation: negation.map(|tk| tk.clone()),
                 uuid: Uuid::new_v4(),
             })
         } else {

@@ -11,7 +11,7 @@ impl Interest for FunctionDeclaration {
 
 impl ReadNode<FunctionDeclaration> for FunctionDeclaration {
     fn read(parser: &Parser) -> Result<Option<FunctionDeclaration>, LinkedErr<E>> {
-        let Some(sig) = parser.token().cloned() else {
+        let Some(sig) = parser.token() else {
             return Ok(None);
         };
         if !matches!(sig.kind, Kind::Keyword(Keyword::Fn)) {
@@ -22,12 +22,11 @@ impl ReadNode<FunctionDeclaration> for FunctionDeclaration {
             return Err(LinkedErr::token(E::MissedFnName, &sig));
         };
         if matches!(next.kind, Kind::Keyword(..)) {
-            return Err(LinkedErr::token(E::KeywordUsing, next));
+            return Err(LinkedErr::token(E::KeywordUsing, &next));
         }
         restore(parser);
         let name = parser
             .token()
-            .cloned()
             .ok_or_else(|| E::MissedFnName.link_with_token(&sig))?;
         if !matches!(name.kind, Kind::Identifier(..)) {
             return Err(E::MissedFnName.link_with_token(&sig));
@@ -45,21 +44,20 @@ impl ReadNode<FunctionDeclaration> for FunctionDeclaration {
             args.push(arg);
             if let Some(tk) = inner.token() {
                 if !matches!(tk.kind, Kind::Comma) {
-                    return Err(E::MissedComma.link_with_token(tk));
+                    return Err(E::MissedComma.link_with_token(&tk));
                 }
             }
         }
         if !inner.is_done() {
             return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
         }
-        let block =
-            LinkedNode::try_oneof(parser, &[NodeTarget::Statement(&[StatementId::Block])])?
-                .ok_or_else(|| E::MissedFnBlock.link_between(&sig, &close_tk))?;
+        let block = LinkedNode::try_oneof(parser, &[NodeTarget::Statement(&[StatementId::Block])])?
+            .ok_or_else(|| E::MissedFnBlock.link_between(&sig, &close_tk))?;
         Ok(Some(FunctionDeclaration {
-            sig,
-            name,
-            open: open_tk,
-            close: close_tk,
+            sig: sig.clone(),
+            name: name.clone(),
+            open: open_tk.clone(),
+            close: close_tk.clone(),
             args,
             block: Box::new(block),
             uuid: Uuid::new_v4(),

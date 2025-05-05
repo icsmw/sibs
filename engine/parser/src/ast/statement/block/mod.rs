@@ -74,8 +74,8 @@ impl ReadNode<Block> for Block {
         } else {
             Ok(Some(Block {
                 nodes,
-                open,
-                close,
+                open: open.clone(),
+                close: close.clone(),
                 uuid: Uuid::new_v4(),
             }))
         }

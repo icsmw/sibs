@@ -28,7 +28,7 @@ impl ReadNode<Optional> for Optional {
         else {
             return Ok(None);
         };
-        let Some(token) = parser.token().cloned() else {
+        let Some(token) = parser.token() else {
             return Ok(None);
         };
         if !matches!(token.kind, Kind::DoubleArrow) {
@@ -53,7 +53,7 @@ impl ReadNode<Optional> for Optional {
         )?
         .ok_or_else(|| E::MissedActionInOptional.link_with_token(&token))?;
         Ok(Some(Optional {
-            token,
+            token: token.clone(),
             action: Box::new(action),
             comparison: Box::new(comparison),
             uuid: Uuid::new_v4(),
