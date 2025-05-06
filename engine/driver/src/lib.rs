@@ -161,7 +161,7 @@ fn test() {
         true,
     );
     driver.read().unwrap();
-    if let Some(mut locator) = driver.locator(127, None) {
+    if let Some(mut locator) = driver.locator(1, None) {
         while let Some(fragment) = locator.next_token() {
             println!("{}", fragment.to_string());
         }

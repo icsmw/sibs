@@ -43,12 +43,12 @@ impl Identification for Value {
     fn ident(&self) -> String {
         match self {
             Self::Error(..) => ValueId::Error.to_string(),
-            Self::Boolean(..) => ValueId::Error.to_string(),
-            Self::Number(..) => ValueId::Error.to_string(),
-            Self::Array(..) => ValueId::Error.to_string(),
-            Self::InterpolatedString(..) => ValueId::Error.to_string(),
-            Self::PrimitiveString(..) => ValueId::Error.to_string(),
-            Self::Closure(..) => ValueId::Error.to_string(),
+            Self::Boolean(..) => ValueId::Boolean.to_string(),
+            Self::Number(..) => ValueId::Number.to_string(),
+            Self::Array(..) => ValueId::Array.to_string(),
+            Self::InterpolatedString(..) => ValueId::InterpolatedString.to_string(),
+            Self::PrimitiveString(..) => ValueId::PrimitiveString.to_string(),
+            Self::Closure(..) => ValueId::Closure.to_string(),
         }
     }
 }

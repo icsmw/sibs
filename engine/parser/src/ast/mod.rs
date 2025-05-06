@@ -48,7 +48,7 @@ pub(crate) fn read_and_resolve_nodes(
         drop(parser);
     }
     reset(parser);
-    resolve_conflicts(results, parser, from)
+    resolve_conflicts(results, parser)
 }
 
 impl TryReadOneOf<LinkedNode, NodeTarget<'_>> for LinkedNode {

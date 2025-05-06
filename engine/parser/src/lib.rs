@@ -35,7 +35,7 @@ pub struct Parser {
     cwd: Option<PathBuf>,
     srcs: Rc<RefCell<CodeSources>>,
     pub errs: Rc<RefCell<Errors<E>>>,
-    bindings: Rc<RefCell<HashMap<Uuid, Vec<(usize, usize)>>>>,
+    bindings: Rc<RefCell<Vec<(Uuid, usize, usize)>>>,
     end: usize,
     pos: Cell<usize>,
     resilience: bool,
@@ -57,7 +57,7 @@ impl Parser {
             cwd: None,
             srcs: Rc::new(RefCell::new(CodeSources::unbound(content, src))),
             errs: Rc::new(RefCell::new(Errors::default())),
-            bindings: Rc::new(RefCell::new(HashMap::new())),
+            bindings: Rc::new(RefCell::new(Vec::new())),
             end,
             resilience,
         }
@@ -72,7 +72,7 @@ impl Parser {
             filename: Some(filename.clone()),
             srcs: Rc::new(RefCell::new(CodeSources::bound(filename, &src)?)),
             errs: Rc::new(RefCell::new(Errors::default())),
-            bindings: Rc::new(RefCell::new(HashMap::new())),
+            bindings: Rc::new(RefCell::new(Vec::new())),
             cwd: Some(cwd),
             end,
             resilience,
@@ -90,7 +90,7 @@ impl Parser {
             srcs: self.srcs.clone(),
             errs: self.errs.clone(),
             cwd: Some(cwd),
-            bindings: Rc::new(RefCell::new(HashMap::new())),
+            bindings: Rc::new(RefCell::new(Vec::new())),
             end,
             resilience: self.resilience,
         })
@@ -160,19 +160,17 @@ impl Parser {
         self.bindings
             .try_borrow()?
             .iter()
-            .for_each(|(owner, location)| {
-                location.into_iter().for_each(|(from, to)| {
-                    tokens[*from..*to].iter_mut().for_each(|tk| {
-                        let _ = tk.set_owner(owner);
-                    })
-                });
+            .for_each(|(owner, from, to)| {
+                tokens[*from..*to].iter_mut().for_each(|tk| {
+                    let _ = tk.set_owner(owner);
+                })
             });
         Ok(())
     }
 
     fn add_binding(&self, from: usize, to: usize, uuid: &Uuid) {
         let mut bindings = self.bindings.borrow_mut();
-        bindings.entry(*uuid).or_default().push((from, to));
+        bindings.push((*uuid, from, to));
     }
 
     fn inherit(&self, from: usize, to: usize) -> Self {
