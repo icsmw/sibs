@@ -6,7 +6,7 @@ use std::{
 
 use crate::*;
 use diagnostics::*;
-use lexer::{KindId, LexerErr, Token};
+use lexer::{KindId, LexerError, Token};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -191,12 +191,12 @@ pub enum E {
 
     /// Lexer error
     #[error("Lexer error: {0}")]
-    LexerErr(LexerErr),
+    LexerError(LexerError),
 }
 
-impl From<LexerErr> for E {
-    fn from(err: LexerErr) -> Self {
-        Self::LexerErr(err)
+impl From<LexerError> for E {
+    fn from(err: LexerError) -> Self {
+        Self::LexerError(err)
     }
 }
 

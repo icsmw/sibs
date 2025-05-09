@@ -133,18 +133,26 @@ impl Parser {
         Some(err)
     }
 
-    pub fn get_token_by_pos(&self, pos: usize) -> Option<Ref<Token>> {
+    pub fn get_token(&self, idx: isize) -> Option<Ref<Token>> {
+        if idx < 0 {
+            return None;
+        }
+        let tokens_ref = self.tokens.borrow();
+        if (idx as usize) < tokens_ref.len() {
+            Some(Ref::map(tokens_ref, |tokens| &tokens[idx as usize]))
+        } else {
+            None
+        }
+    }
+
+    pub fn get_token_by_pos(&self, pos: usize) -> Option<(Ref<Token>, usize)> {
         let tokens_ref = self.tokens.borrow();
         let index = tokens_ref.iter().position(|tk| tk.pos.is_in(pos))?;
-        Some(Ref::map(tokens_ref, |vec| &vec[index]))
+        Some((Ref::map(tokens_ref, |vec| &vec[index]), index))
     }
 
     pub fn len(&self) -> usize {
-        self.tokens
-            .borrow()
-            .last()
-            .map(|tk| tk.pos.to)
-            .unwrap_or_default()
+        self.tokens.borrow().len()
     }
 
     pub fn pos(&self) -> usize {

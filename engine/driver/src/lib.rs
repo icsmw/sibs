@@ -1,3 +1,4 @@
+mod completion;
 mod error;
 mod errors;
 mod locator;
@@ -11,25 +12,56 @@ pub(crate) use lexer::*;
 pub(crate) use parser::*;
 pub(crate) use semantic::*;
 
+pub(crate) use completion::*;
 pub(crate) use error::*;
 pub(crate) use errors::*;
 pub(crate) use locator::*;
 
 pub use error::E as DriverError;
 
-fn find_node<'a>(nodes: Vec<&'a LinkedNode>, src: &Uuid, pos: usize) -> Option<&'a LinkedNode> {
-    let Some(found) = nodes.iter().find(|n| n.located(src, pos)) else {
+fn find_node<'a>(
+    nodes: Vec<&'a LinkedNode>,
+    src: &Uuid,
+    token: &Ref<Token>,
+) -> Option<&'a LinkedNode> {
+    let Some(owner) = token.owner.as_ref() else {
         return None;
     };
-    Some(find_node(found.childs(), src, pos).unwrap_or(&found))
+    if let Some(found) = nodes.iter().find(|n| n.uuid() == owner) {
+        Some(&found)
+    } else {
+        for node in nodes.iter() {
+            if let Some(found) = find_node(node.childs(), src, token) {
+                return Some(found);
+            }
+        }
+        None
+    }
 }
 
+pub enum CodeSrc {
+    Path(PathBuf),
+    Text(String),
+}
+
+impl fmt::Display for CodeSrc {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Path(path) => path.to_string_lossy().to_string(),
+                Self::Text(..) => String::from("text codebase"),
+            }
+        )
+    }
+}
 pub struct Driver {
     parser: Option<Parser>,
     scx: Option<SemanticCx>,
     anchor: Option<Anchor>,
     errors: Vec<DrivingError>,
-    path: PathBuf,
+    src: CodeSrc,
     resilience: bool,
 }
 
@@ -40,21 +72,35 @@ impl Driver {
             scx: None,
             anchor: None,
             errors: Vec::new(),
-            path: path.into(),
+            src: CodeSrc::Path(path.into()),
+            resilience,
+        }
+    }
+    pub fn unbound<S: ToString>(content: S, resilience: bool) -> Self {
+        Self {
+            parser: None,
+            scx: None,
+            anchor: None,
+            errors: Vec::new(),
+            src: CodeSrc::Text(content.to_string()),
             resilience,
         }
     }
 
     pub fn read(&mut self) -> Result<(), E> {
-        let mut parser = Parser::new(&self.path, self.resilience)?;
+        let mut parser = match &self.src {
+            CodeSrc::Path(path) => Parser::new(&path, self.resilience)?,
+            CodeSrc::Text(content) => {
+                let mut lx = lexer::Lexer::new(&content, 0);
+                Parser::unbound(lx.read()?.tokens, &lx.uuid, &content, self.resilience)
+            }
+        };
         let anchor = match Anchor::read(&mut parser) {
             Ok(Some(anchor)) => anchor,
             Ok(None) => {
                 self.parser = Some(parser);
                 return if !self.resilience {
-                    Err(E::FailExtractAnchorNodeFrom(
-                        self.path.to_string_lossy().to_string(),
-                    ))
+                    Err(E::FailExtractAnchorNodeFrom(self.src.to_string()))
                 } else {
                     Ok(())
                 };
@@ -114,15 +160,24 @@ impl Driver {
         !self.errors.is_empty() || self.anchor.is_none()
     }
 
-    pub fn locator(&self, pos: usize, src: Option<Uuid>) -> Option<LocationIterator<'_>> {
+    pub fn locator(&self, idx: usize, src: Option<Uuid>) -> Option<LocationIterator<'_>> {
         let (Some(anchor), Some(parser)) = (self.anchor.as_ref(), self.parser.as_ref()) else {
             return None;
         };
         Some(LocationIterator::new(
             anchor,
             src.unwrap_or(anchor.uuid),
-            pos,
+            idx,
             parser,
+        ))
+    }
+
+    pub fn completion(&self, pos: usize, src: Option<Uuid>) -> Option<Completion<'_>> {
+        let (token, idx) = self.find_token(pos, src)?;
+        Some(Completion::new(
+            token.clone(),
+            self.locator(idx, src)?,
+            self.scx.as_ref()?,
         ))
     }
 
@@ -138,13 +193,14 @@ impl Driver {
     }
 
     pub fn find_node(&self, pos: usize, src: Option<Uuid>) -> Option<&LinkedNode> {
+        let (token, _idx) = self.find_token(pos, src)?;
         let Some(anchor) = self.anchor.as_ref() else {
             return None;
         };
-        find_node(anchor.childs(), &src.unwrap_or(anchor.uuid), pos)
+        find_node(anchor.childs(), &src.unwrap_or(anchor.uuid), &token)
     }
 
-    pub fn find_token(&self, pos: usize, _src: Option<Uuid>) -> Option<Ref<Token>> {
+    pub fn find_token(&self, pos: usize, _src: Option<Uuid>) -> Option<(Ref<Token>, usize)> {
         // TODO: consider SRC
         self.parser
             .as_ref()

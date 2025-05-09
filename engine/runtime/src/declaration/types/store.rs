@@ -1,5 +1,11 @@
 use crate::*;
 
+/// Represents a storage for types and scopes used in the analysis phase of a task execution.
+///
+/// # Fields
+///
+/// * `scopes` - A mapping of task scopes, where each `Uuid` corresponds to a unique task node (`Root::Task`).
+/// * `location` - A stack that tracks the current analysis path within the node tree, representing the sequence of nodes being processed.
 #[derive(Debug)]
 pub struct TyStore {
     pub scopes: HashMap<Uuid, TyScope>,
@@ -47,6 +53,9 @@ impl TyStore {
         } else {
             Err(E::NoRootContext)
         }
+    }
+    pub fn get_scope(&self, uuid: &Uuid) -> Option<&TyScope> {
+        self.scopes.get(uuid)
     }
 }
 

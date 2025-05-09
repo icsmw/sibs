@@ -12,6 +12,8 @@ pub enum E {
     ScriptAlreadyExecuted,
     #[error("Parser error: {0}")]
     Parser(parser::ParserError),
+    #[error("Lexer error: {0}")]
+    Lexer(lexer::LexerError),
     #[error("Semantic error: {0}")]
     Semantic(semantic::SemanticError),
     #[error("Runtime error: {0}")]
@@ -21,6 +23,12 @@ pub enum E {
 impl From<std::io::Error> for E {
     fn from(err: std::io::Error) -> Self {
         E::IO(err.to_string())
+    }
+}
+
+impl From<lexer::LexerError> for E {
+    fn from(err: lexer::LexerError) -> Self {
+        E::Lexer(err)
     }
 }
 

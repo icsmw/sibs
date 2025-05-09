@@ -8,7 +8,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub use error::E as LexerErr;
+pub use error::E as LexerError;
 pub(crate) use error::*;
 #[cfg(any(test, feature = "proptests"))]
 pub use tests::*;

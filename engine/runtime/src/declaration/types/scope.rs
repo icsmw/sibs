@@ -37,4 +37,25 @@ impl TyScope {
         }
         None
     }
+    pub fn find<S: AsRef<str>>(&self, name: S, location: &[Uuid]) -> Option<&TypeEntity> {
+        for uuid in location.iter() {
+            if let Some(edt) = self.levels.get(uuid)?.get(name.as_ref()) {
+                return Some(edt);
+            }
+        }
+        None
+    }
+    pub fn get_all_variables(&self, location: &[Uuid]) -> Option<Vec<(&String, &TypeEntity)>> {
+        let mut variables = Vec::new();
+        for uuid in location.iter() {
+            variables.extend(
+                self.levels
+                    .get(uuid)?
+                    .iter()
+                    .map(|(name, ty)| (name, ty))
+                    .collect::<Vec<(&String, &TypeEntity)>>(),
+            );
+        }
+        Some(variables)
+    }
 }

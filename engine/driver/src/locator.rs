@@ -59,152 +59,81 @@ impl fmt::Display for NodeStep<'_> {
 pub struct LocationIterator<'a> {
     anchor: &'a Anchor,
     src: Uuid,
-    pos: usize,
-    parser: &'a Parser,
-    fingerprint: Option<String>,
+    idx: isize,
+    initial: isize,
+    recent: Option<Uuid>,
+    pub parser: &'a Parser,
 }
 
 impl<'a> LocationIterator<'a> {
-    pub fn new(anchor: &'a Anchor, src: Uuid, pos: usize, parser: &'a Parser) -> Self {
+    pub fn new(anchor: &'a Anchor, src: Uuid, idx: usize, parser: &'a Parser) -> Self {
         Self {
             anchor,
             src,
-            pos,
+            idx: idx as isize,
+            initial: idx as isize,
+            recent: None,
             parser,
-            fingerprint: None,
         }
+    }
+
+    pub fn drop(&mut self) {
+        self.idx = self.initial;
     }
 
     pub fn prev_node<'s>(&'s mut self) -> Option<NodeStep<'s>> {
         let mut tokens = Vec::new();
         loop {
-            let found = loop {
-                if self.pos == 0 {
-                    break false;
-                }
-                self.pos -= 1;
-                let Some(token) = self.parser.get_token_by_pos(self.pos) else {
-                    break false;
-                };
+            let token = self.parser.get_token(self.idx)?;
+            if let Some(node) = find_node(self.anchor.childs(), &self.src, &token) {
                 if self
-                    .fingerprint
+                    .recent
                     .as_ref()
-                    .map(|fp| &token.fingerprint() != fp)
+                    .map(|recent| recent != node.uuid())
                     .unwrap_or(true)
                 {
-                    self.pos = token.pos.from;
-                    break true;
+                    tokens.push(token);
+                    self.recent = Some(*node.uuid());
+                    return Some(NodeStep::new(tokens, node));
                 }
-            };
-            if !found {
-                return None;
             }
-            let Some(token) = self.parser.get_token_by_pos(self.pos) else {
-                return None;
-            };
-            self.fingerprint = Some(token.fingerprint());
             tokens.push(token);
-            if let Some(node) = find_node(self.anchor.childs(), &self.src, self.pos) {
-                return Some(NodeStep::new(tokens, node));
-            }
+            self.idx -= 1;
         }
     }
 
     pub fn next_node<'s>(&'s mut self) -> Option<NodeStep<'s>> {
         let mut tokens = Vec::new();
-        let len = self.parser.len();
         loop {
-            let found = loop {
-                if self.pos >= len {
-                    break false;
-                }
-                self.pos += 1;
-                let Some(token) = self.parser.get_token_by_pos(self.pos) else {
-                    break false;
-                };
+            let token = self.parser.get_token(self.idx)?;
+            if let Some(node) = find_node(self.anchor.childs(), &self.src, &token) {
                 if self
-                    .fingerprint
+                    .recent
                     .as_ref()
-                    .map(|fp| &token.fingerprint() != fp)
+                    .map(|recent| recent != node.uuid())
                     .unwrap_or(true)
                 {
-                    self.pos = token.pos.to;
-                    break true;
+                    tokens.push(token);
+                    self.recent = Some(*node.uuid());
+                    return Some(NodeStep::new(tokens, node));
                 }
-            };
-            if !found {
-                return None;
             }
-            let Some(token) = self.parser.get_token_by_pos(self.pos) else {
-                return None;
-            };
-            self.fingerprint = Some(token.fingerprint());
             tokens.push(token);
-            if let Some(node) = find_node(self.anchor.childs(), &self.src, self.pos) {
-                return Some(NodeStep::new(tokens, node));
-            }
+            self.idx += 1;
         }
     }
 
     pub fn prev_token<'s>(&'s mut self) -> Option<TokenStep<'s>> {
-        let found = loop {
-            if self.pos == 0 {
-                break false;
-            }
-            self.pos -= 1;
-            let Some(token) = self.parser.get_token_by_pos(self.pos) else {
-                break false;
-            };
-            if self
-                .fingerprint
-                .as_ref()
-                .map(|fp| &token.fingerprint() != fp)
-                .unwrap_or(true)
-            {
-                self.pos = token.pos.from;
-                break true;
-            }
-        };
-        if !found {
-            None
-        } else {
-            self.find()
-        }
+        let token = self.parser.get_token(self.idx)?;
+        let node = find_node(self.anchor.childs(), &self.src, &token);
+        self.idx -= 1;
+        Some(TokenStep::new(token, node))
     }
 
     pub fn next_token<'s>(&'s mut self) -> Option<TokenStep<'s>> {
-        let len = self.parser.len();
-        let found = loop {
-            if self.pos >= len {
-                break false;
-            }
-            self.pos += 1;
-            let Some(token) = self.parser.get_token_by_pos(self.pos) else {
-                break false;
-            };
-            if self
-                .fingerprint
-                .as_ref()
-                .map(|fp| &token.fingerprint() != fp)
-                .unwrap_or(true)
-            {
-                self.pos = token.pos.to;
-                break true;
-            }
-        };
-        if !found {
-            None
-        } else {
-            self.find()
-        }
-    }
-
-    pub fn find<'s>(&'s mut self) -> Option<TokenStep<'s>> {
-        let node = find_node(self.anchor.childs(), &self.src, self.pos);
-        let Some(token) = self.parser.get_token_by_pos(self.pos) else {
-            return None;
-        };
-        self.fingerprint = Some(token.fingerprint());
+        let token = self.parser.get_token(self.idx)?;
+        let node = find_node(self.anchor.childs(), &self.src, &token);
+        self.idx += 1;
         Some(TokenStep::new(token, node))
     }
 }
