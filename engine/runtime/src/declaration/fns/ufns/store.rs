@@ -81,6 +81,22 @@ impl UFns {
             None
         }
     }
+    pub fn collect_by_path(&self, path: &[&str]) -> Vec<(String, &UserFnEntity)> {
+        let prefix = path.join("::");
+        self.funcs
+            .iter()
+            .filter(|(fullname, _entry)| prefix.is_empty() || fullname.starts_with(&prefix))
+            .map(|(fullname, entry)| {
+                if prefix.is_empty() {
+                    (fullname.to_owned(), entry)
+                } else {
+                    let mut parts = fullname.split("::").collect::<Vec<&str>>();
+                    parts.drain(..prefix.split("::").count());
+                    (parts.join("::"), entry)
+                }
+            })
+            .collect()
+    }
 
     fn fullname<S: AsRef<str>>(&self, fn_name: S) -> String {
         let path = self.path.join("::");

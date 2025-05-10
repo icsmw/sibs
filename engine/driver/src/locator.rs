@@ -81,6 +81,10 @@ impl<'a> LocationIterator<'a> {
         self.idx = self.initial;
     }
 
+    pub fn get_ownership_tree(&self, pos: usize) -> Vec<&LinkedNode> {
+        get_ownership_tree(self.anchor.childs(), &self.src, pos)
+    }
+
     pub fn prev_node<'s>(&'s mut self) -> Option<NodeStep<'s>> {
         let mut tokens = Vec::new();
         loop {

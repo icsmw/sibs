@@ -10,6 +10,7 @@ pub(crate) use asttree::*;
 pub(crate) use diagnostics::*;
 pub(crate) use lexer::*;
 pub(crate) use parser::*;
+pub(crate) use runtime::{Fns, Ty, TyScope};
 pub(crate) use semantic::*;
 
 pub(crate) use completion::*;
@@ -37,6 +38,35 @@ fn find_node<'a>(
         }
         None
     }
+}
+
+fn get_ownership_tree<'a>(
+    nodes: Vec<&'a LinkedNode>,
+    src: &Uuid,
+    pos: usize,
+) -> Vec<&'a LinkedNode> {
+    fn fill<'a>(
+        list: &mut Vec<&'a LinkedNode>,
+        nodes: Vec<&'a LinkedNode>,
+        src: &Uuid,
+        pos: usize,
+    ) {
+        list.extend(
+            nodes
+                .iter()
+                .filter(|n| n.get_node().located(src, pos))
+                .map(|n| *n)
+                .collect::<Vec<&'a LinkedNode>>(),
+        );
+        for node in nodes.into_iter() {
+            if !node.childs().is_empty() {
+                fill(list, node.childs(), src, pos);
+            }
+        }
+    }
+    let mut collected = Vec::new();
+    fill(&mut collected, nodes, src, pos);
+    collected
 }
 
 pub enum CodeSrc {
@@ -175,9 +205,9 @@ impl Driver {
     pub fn completion(&self, pos: usize, src: Option<Uuid>) -> Option<Completion<'_>> {
         let (token, idx) = self.find_token(pos, src)?;
         Some(Completion::new(
-            token.clone(),
             self.locator(idx, src)?,
             self.scx.as_ref()?,
+            token.to_string()[..pos.saturating_sub(token.pos.from)].to_owned(),
         ))
     }
 

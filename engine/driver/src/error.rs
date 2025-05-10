@@ -1,5 +1,6 @@
 use diagnostics::LinkedErr;
 use thiserror::Error;
+use uuid::Uuid;
 
 #[derive(Error, Debug)]
 pub enum E {
@@ -10,6 +11,10 @@ pub enum E {
     FailExtractAnchorNodeFrom(String),
     #[error("Script has been executed already")]
     ScriptAlreadyExecuted,
+    #[error("Detected task inside function ({0}) declaration")]
+    TaskInsideFuncDeclaration(Uuid),
+    #[error("Detected nested tasks (nested task's uuid {0})")]
+    NestedTasks(Uuid),
     #[error("Parser error: {0}")]
     Parser(parser::ParserError),
     #[error("Lexer error: {0}")]

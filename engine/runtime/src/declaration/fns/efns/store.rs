@@ -47,6 +47,12 @@ impl EFns {
             })
         }
     }
+    pub fn collect(&self) -> Vec<(String, &EmbeddedFnEntity)> {
+        self.funcs
+            .iter()
+            .map(|(name, entry)| (name.to_owned(), entry))
+            .collect()
+    }
     fn link<S: AsRef<str>>(&mut self, fn_name: S, caller: &Uuid) -> Option<String> {
         if let Some(name) = if self.funcs.contains_key(fn_name.as_ref()) {
             Some(fn_name.as_ref().to_owned())
