@@ -17,6 +17,8 @@ impl ReadNode<Block> for Block {
             return Ok(None);
         };
         let mut nodes = Vec::new();
+        let mut from = None;
+        let mut skipped = Vec::new();
         loop {
             'semicolons: loop {
                 if inner.is_next(KindId::Semicolon) {
@@ -25,7 +27,10 @@ impl ReadNode<Block> for Block {
                     break 'semicolons;
                 }
             }
-            let Some(node) = LinkedNode::try_oneof(
+            from = inner
+                .next()
+                .map(|tk| (tk.to_string(), SrcLink::from_tk(&tk)));
+            if let Some(node) = LinkedNode::try_oneof(
                 &mut inner,
                 &[
                     NodeTarget::Declaration(&[
@@ -63,11 +68,26 @@ impl ReadNode<Block> for Block {
                         ValueId::Error,
                     ]),
                 ],
-            )?
-            else {
-                break;
+            )? {
+                nodes.push(node);
+            } else {
+                if !parser.is_resilience() {
+                    break;
+                }
+                if let Some(info) = from {
+                    skipped.push(info);
+                }
+                // In resilience mode try to shift parser to next position
+                if inner.token().is_none() {
+                    break;
+                }
             };
-            nodes.push(node);
+        }
+        for (code, link) in skipped.into_iter() {
+            parser
+                .errs
+                .borrow_mut()
+                .add(E::UnrecognizedCode(code).from(&link));
         }
         if !inner.is_done() {
             Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner))

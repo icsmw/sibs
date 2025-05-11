@@ -25,7 +25,7 @@ fn find_node<'a>(
     src: &Uuid,
     token: &Ref<Token>,
 ) -> Option<&'a LinkedNode> {
-    let Some(owner) = token.owner.as_ref() else {
+    let Some((owner, ..)) = token.owner.as_ref() else {
         return None;
     };
     if let Some(found) = nodes.iter().find(|n| n.uuid() == owner) {
@@ -236,6 +236,25 @@ impl Driver {
             .as_ref()
             .map(|parser| parser.get_token_by_pos(pos))
             .flatten()
+    }
+
+    pub fn print_errs(&self) -> Result<(), E> {
+        let Some(parser) = self.parser.as_ref() else {
+            return Ok(());
+        };
+        for err in parser.errs.borrow().errors.iter() {
+            println!("{}", parser.report_err(err)?);
+        }
+        for err in self.errors.iter() {
+            println!(
+                "{}",
+                match err {
+                    DrivingError::Parsing(err) => parser.report_err(err)?,
+                    DrivingError::Semantic(err) => parser.report_err(err)?,
+                }
+            );
+        }
+        Ok(())
     }
 }
 

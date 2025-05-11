@@ -4,7 +4,7 @@ use crate::LinkedErr;
 
 #[derive(Debug)]
 pub struct Errors<E: Display> {
-    errors: Vec<LinkedErr<E>>,
+    pub errors: Vec<LinkedErr<E>>,
 }
 
 impl<E: Display> Errors<E> {

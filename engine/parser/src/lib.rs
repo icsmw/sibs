@@ -20,7 +20,6 @@ use diagnostics::*;
 use lexer::*;
 use std::{
     cell::{Cell, Ref, RefCell},
-    collections::HashMap,
     fmt::{self, Display},
     path::{Path, PathBuf},
     rc::Rc,
@@ -170,7 +169,7 @@ impl Parser {
             .iter()
             .for_each(|(owner, from, to)| {
                 tokens[*from..*to].iter_mut().for_each(|tk| {
-                    let _ = tk.set_owner(owner);
+                    let _ = tk.set_owner(owner, to.saturating_sub(*from));
                 })
             });
         Ok(())

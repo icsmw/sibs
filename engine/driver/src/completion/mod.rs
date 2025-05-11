@@ -116,7 +116,9 @@ impl<'a> Completion<'a> {
                 break None;
             };
             let point_kind = info.token.id();
-            match prev.token.kind {
+            let prev_kind = prev.token.kind.clone();
+            drop(prev);
+            match prev_kind {
                 Kind::Dot => match point_kind {
                     KindId::Identifier => {
                         break Some(Filter::Functions);
@@ -141,6 +143,9 @@ impl<'a> Completion<'a> {
                 Kind::Colon => {}
                 Kind::Comma => {}
                 Kind::Semicolon => {
+                    break Some(Filter::All);
+                }
+                Kind::Equals => {
                     break Some(Filter::All);
                 }
                 _ => {}
@@ -187,12 +192,13 @@ mod aaa {
 };      
 component component_a() {
     task task_a() {
-        let sumvariable = 2;
+        let eeevariaeee = 2;
+        sumvariable.sum;
         let variable_a = 1;
         let variable_b = 1;
         let variable_c = variable_a + variable_b;
-        let varibale_d = if sumvariable > 1 {
-            let sub_var = 2;
+        let varibale_d = if eeevariaeee > 1 {
+            let sub_var = env;
             variable_a;
         } else {
             variable_b;
@@ -204,6 +210,7 @@ component component_a() {
         true,
     );
     driver.read().unwrap();
-    let mut completion = driver.completion(280, None).unwrap();
+    driver.print_errs().unwrap();
+    let mut completion = driver.completion(168, None).unwrap();
     println!("Suggestions: {:?}", completion.suggest());
 }

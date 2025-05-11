@@ -101,7 +101,7 @@ pub(crate) trait TryRead<
         reset(parser);
         match resolve_conflicts(results, parser)? {
             Some(node) => {
-                parser.add_binding(from, parser.pos().saturating_sub(1), node.uuid());
+                parser.add_binding(from, parser.pos(), node.uuid());
                 Ok(Some(node))
             }
             None => Ok(None),

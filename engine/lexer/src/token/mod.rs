@@ -38,7 +38,9 @@ pub struct Token {
     /// The position of the token in the source code.
     pub pos: Position,
     /// Owner (Node) of token. Can be empty if parsing of Node was failed
-    pub owner: Option<Uuid>,
+    /// - `Uuid` - uuid of owner node
+    /// - `usize` - score, which is used during setup ownership
+    pub owner: Option<(Uuid, usize)>,
 }
 
 impl Token {
@@ -54,11 +56,18 @@ impl Token {
     pub fn fingerprint(&self) -> String {
         format!("{}:{}:{}", self.src, self.pos.from, self.pos.to)
     }
-    pub fn set_owner(&mut self, uuid: &Uuid) -> bool {
-        if self.owner.is_some() {
-            false
+    pub fn set_owner(&mut self, uuid: &Uuid, score: usize) -> bool {
+        if let Some((ow, sc)) = self.owner {
+            if sc < score {
+                self.owner = Some((ow, sc));
+                false
+            } else {
+                // Rewrite owner because it sets in context of less region (score).
+                self.owner = Some((*uuid, score));
+                true
+            }
         } else {
-            self.owner = Some(*uuid);
+            self.owner = Some((*uuid, score));
             true
         }
     }

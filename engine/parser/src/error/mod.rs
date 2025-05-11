@@ -234,4 +234,10 @@ impl E {
     pub fn link(self, node: &LinkedNode) -> LinkedErr<E> {
         LinkedErr::from(self, node)
     }
+    pub fn from(self, link: &SrcLink) -> LinkedErr<E> {
+        LinkedErr {
+            e: self,
+            link: link.into(),
+        }
+    }
 }

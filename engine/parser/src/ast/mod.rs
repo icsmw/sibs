@@ -58,22 +58,19 @@ impl TryReadOneOf<LinkedNode, NodeTarget<'_>> for LinkedNode {
     ) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         let origin = parser.pin();
         let mut shifted = parser.pin();
-        let mut resilience = false;
+        let from = parser.pos();
+        let uuid = Uuid::new_v4();
         loop {
             match read_and_resolve_nodes(parser, targets) {
-                Ok(node) => {
-                    if !parser.is_resilience() || !resilience || node.is_some() {
-                        return Ok(node.or_else(|| {
-                            origin(parser);
-                            None
-                        }));
-                    }
+                Ok(Some(node)) => return Ok(Some(node)),
+                Ok(None) => {
+                    origin(parser);
+                    return Ok(None);
                 }
                 Err(err) => {
                     if !parser.is_resilience() {
                         return Err(err);
                     }
-                    resilience = true;
                     parser.errs.borrow_mut().add(err);
                 }
             };
