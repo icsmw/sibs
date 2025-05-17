@@ -37,6 +37,18 @@ impl TyScope {
         }
         None
     }
+    pub fn lookup_by_node(&self, node: &LinkedNode) -> Option<&Ty> {
+        let name = match node.get_node() {
+            Node::Expression(Expression::Variable(node)) => Some(&node.ident),
+            _ => None,
+        }?;
+        for uuid in self.location.iter().rev() {
+            if let Some(edt) = self.levels.get(uuid)?.get(name) {
+                return edt.ty();
+            }
+        }
+        None
+    }
     pub fn find<S: AsRef<str>>(&self, name: S, location: &[Uuid]) -> Option<&TypeEntity> {
         for uuid in location.iter() {
             if let Some(edt) = self.levels.get(uuid)?.get(name.as_ref()) {
@@ -44,6 +56,17 @@ impl TyScope {
             }
         }
         None
+    }
+    pub fn get_by_node(&self, uuid: &Uuid) -> Option<&Ty> {
+        self.levels.iter().find_map(|(_, level)| {
+            level.iter().find_map(|(_, entity)| {
+                if &entity.node == uuid {
+                    entity.ty()
+                } else {
+                    None
+                }
+            })
+        })
     }
     pub fn get_all_variables(&self, location: &[Uuid]) -> Option<Vec<(&String, &TypeEntity)>> {
         let mut variables = Vec::new();

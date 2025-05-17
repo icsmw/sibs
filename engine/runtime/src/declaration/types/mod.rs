@@ -13,7 +13,7 @@ pub use store::*;
 pub use table::*;
 
 use crate::*;
-use std::fmt;
+use std::{fmt, ops::Deref};
 
 #[enum_ids::enum_ids(display_variant)]
 #[derive(Debug, Clone, PartialEq, PartialOrd)]

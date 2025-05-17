@@ -4,20 +4,21 @@ impl InferType for Assignation {
     fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         let variable =
             if let Node::Expression(Expression::Variable(variable)) = self.left.get_node() {
-                variable.ident.to_owned()
+                variable
             } else {
                 return Err(LinkedErr::from(
                     E::UnexpectedNode(self.left.get_node().id()),
                     &self.left,
                 ));
             };
+        let variable_name = variable.ident.to_owned();
         let left = scx
             .tys
-            .lookup(&variable)
+            .lookup(&variable_name)
             .map_err(|err| LinkedErr::from(err.into(), &self.left))?
             .cloned()
             .ok_or(LinkedErr::from(
-                E::VariableIsNotDefined(variable.clone()),
+                E::VariableIsNotDefined(variable_name.clone()),
                 &self.left,
             ))?;
         let right = self.right.infer_type(scx)?;
@@ -30,8 +31,8 @@ impl InferType for Assignation {
         if annot.reassignable(&right) {
             scx.tys
                 .insert(
-                    variable,
-                    TypeEntity::new(Some(right), Some(annot.to_owned())),
+                    variable_name,
+                    TypeEntity::new(variable.uuid, Some(right), Some(annot.to_owned())),
                 )
                 .map_err(|err| LinkedErr::from(err.into(), self))?;
             Ok(DeterminedTy::Void.into())

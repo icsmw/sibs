@@ -57,6 +57,11 @@ impl TyStore {
     pub fn get_scope(&self, uuid: &Uuid) -> Option<&TyScope> {
         self.scopes.get(uuid)
     }
+    pub fn get_by_node(&self, uuid: &Uuid) -> Option<&Ty> {
+        self.scopes
+            .iter()
+            .find_map(|(_, scope)| scope.get_by_node(uuid))
+    }
 }
 
 impl Default for TyStore {

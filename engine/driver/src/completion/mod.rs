@@ -2,12 +2,14 @@ mod search;
 mod suggestions;
 
 use crate::*;
-use suggestions::*;
+use runtime::DeterminedTy;
+use suggestions::{funcs::FnTypeKind, *};
 
 enum Filter {
-    Variables,
-    Functions,
-    All,
+    Variables(Option<Ty>),
+    FunctionArgument(Option<Ty>),
+    FunctionCall(Option<Ty>),
+    All(Option<Ty>),
 }
 #[derive(Debug)]
 enum Ownership {
@@ -119,12 +121,19 @@ impl<'a> Completion<'a> {
             let prev_kind = prev.token.kind.clone();
             drop(prev);
             match prev_kind {
-                Kind::Dot => match point_kind {
-                    KindId::Identifier => {
-                        break Some(Filter::Functions);
+                Kind::Dot => {
+                    let ty = self
+                        .locator
+                        .prev_token()
+                        .map(|prev| prev.node.map(|node| scope.lookup_by_node(node)).flatten())
+                        .flatten();
+                    match point_kind {
+                        KindId::Identifier => {
+                            break Some(Filter::FunctionArgument(ty.cloned()));
+                        }
+                        _ => {}
                     }
-                    _ => {}
-                },
+                }
                 Kind::Keyword(Keyword::Let) => match point_kind {
                     KindId::Identifier => {
                         break None;
@@ -133,7 +142,7 @@ impl<'a> Completion<'a> {
                 },
                 Kind::Keyword(Keyword::If) => match point_kind {
                     KindId::Identifier => {
-                        break Some(Filter::All);
+                        break Some(Filter::All(None));
                     }
                     _ => {}
                 },
@@ -143,10 +152,28 @@ impl<'a> Completion<'a> {
                 Kind::Colon => {}
                 Kind::Comma => {}
                 Kind::Semicolon => {
-                    break Some(Filter::All);
+                    break Some(Filter::All(None));
                 }
                 Kind::Equals => {
-                    break Some(Filter::All);
+                    let ty = self
+                        .locator
+                        .prev_token()
+                        .map(|prev| prev.node.map(|node| scope.lookup_by_node(node)).flatten())
+                        .flatten();
+                    break match point_kind {
+                        KindId::Identifier => Some(Filter::All(ty.cloned())),
+                        _ => Some(Filter::All(None)),
+                    };
+                }
+                Kind::Plus
+                | Kind::Minus
+                | Kind::Star
+                | Kind::Slash
+                | Kind::Less
+                | Kind::Greater
+                | Kind::LessEqual
+                | Kind::GreaterEqual => {
+                    break Some(Filter::All(Some(Ty::Determined(DeterminedTy::Num))));
                 }
                 _ => {}
             };
@@ -154,21 +181,30 @@ impl<'a> Completion<'a> {
         let Some(filter) = filter else {
             return Ok(None);
         };
-        let suggestion = match filter {
-            Filter::Variables => Some(vars::collect(&scope, &info.blocks, &self.fragment, None)),
-            Filter::Functions => Some(funcs::collect(
+        let suggestion = match &filter {
+            Filter::Variables(ty) => Some(vars::collect(
+                &scope,
+                &info.blocks,
+                &self.fragment,
+                ty.as_ref(),
+            )),
+            Filter::FunctionArgument(ty) | Filter::FunctionCall(ty) => Some(funcs::collect(
                 &self.scx.fns,
                 &info.mods.iter().map(|s| s.as_str()).collect::<Vec<&str>>(),
                 &self.fragment,
-                None,
+                if matches!(filter, Filter::FunctionArgument(..)) {
+                    FnTypeKind::FirstArg(ty.as_ref())
+                } else {
+                    FnTypeKind::Returns(ty.as_ref())
+                },
             )),
-            Filter::All => {
+            Filter::All(ty) => {
                 let mut suggestions = vars::collect(&scope, &info.blocks, &self.fragment, None);
                 suggestions.extend(funcs::collect(
                     &self.scx.fns,
                     &info.mods.iter().map(|s| s.as_str()).collect::<Vec<&str>>(),
                     &self.fragment,
-                    None,
+                    FnTypeKind::Returns(ty.as_ref()),
                 ));
                 if suggestions.is_empty() {
                     None
@@ -192,8 +228,11 @@ mod aaa {
 };      
 component component_a() {
     task task_a() {
-        let eeevariaeee = 2;
+        let sumvariable: num;
         sumvariable.sum;
+        let strvariable = "hey";
+        strvariable.sub;
+        let newstring: str = strvariable;
         let variable_a = 1;
         let variable_b = 1;
         let variable_c = variable_a + variable_b;
@@ -211,6 +250,6 @@ component component_a() {
     );
     driver.read().unwrap();
     driver.print_errs().unwrap();
-    let mut completion = driver.completion(168, None).unwrap();
+    let mut completion = driver.completion(368, None).unwrap();
     println!("Suggestions: {:?}", completion.suggest());
 }

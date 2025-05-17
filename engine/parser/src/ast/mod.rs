@@ -21,7 +21,6 @@ pub(crate) fn read_and_resolve_nodes(
 ) -> Result<Option<LinkedNode>, LinkedErr<E>> {
     let mut results = Vec::new();
     let reset = parser.pin();
-    let from = parser.pos();
     for target in targets {
         let drop = parser.pin();
         if let (Some(node), id) = match target {
@@ -58,8 +57,6 @@ impl TryReadOneOf<LinkedNode, NodeTarget<'_>> for LinkedNode {
     ) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         let origin = parser.pin();
         let mut shifted = parser.pin();
-        let from = parser.pos();
-        let uuid = Uuid::new_v4();
         loop {
             match read_and_resolve_nodes(parser, targets) {
                 Ok(Some(node)) => return Ok(Some(node)),

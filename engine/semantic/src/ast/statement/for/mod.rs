@@ -25,29 +25,35 @@ impl Initialize for For {
             _ => return Err(LinkedErr::from(E::InvalidIterationSource, &self.elements)),
         };
         let el = if let Node::Expression(Expression::Variable(el)) = self.element.get_node() {
-            el.ident.to_owned()
+            el
         } else {
             return Err(LinkedErr::from(
                 E::UnexpectedNode(self.element.get_node().id()),
                 &self.element,
             ));
         };
+        let el_name = el.ident.to_owned();
         scx.tys
-            .insert(el, TypeEntity::new(Some(ty.clone()), Some(ty)))
+            .insert(
+                el_name,
+                TypeEntity::new(el.uuid, Some(ty.clone()), Some(ty)),
+            )
             .map_err(|err| LinkedErr::from(err.into(), self))?;
         if let Some(index) = self.index.as_ref() {
             let el = if let Node::Expression(Expression::Variable(el)) = index.get_node() {
-                el.ident.to_owned()
+                el
             } else {
                 return Err(LinkedErr::from(
                     E::UnexpectedNode(index.get_node().id()),
                     index.get_node(),
                 ));
             };
+            let el_name = el.ident.to_owned();
             scx.tys
                 .insert(
-                    el,
+                    el_name,
                     TypeEntity::new(
+                        el.uuid,
                         Some(Ty::Determined(DeterminedTy::Num)),
                         Some(Ty::Determined(DeterminedTy::Num)),
                     ),

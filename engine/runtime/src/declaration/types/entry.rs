@@ -4,13 +4,15 @@ use crate::*;
 pub struct TypeEntity {
     pub assigned: Option<Ty>,
     pub annotated: Option<Ty>,
+    pub node: Uuid,
 }
 
 impl TypeEntity {
-    pub fn new(assigned: Option<Ty>, annotated: Option<Ty>) -> Self {
+    pub fn new(node: Uuid, assigned: Option<Ty>, annotated: Option<Ty>) -> Self {
         Self {
             assigned,
             annotated,
+            node,
         }
     }
     pub fn ty(&self) -> Option<&Ty> {

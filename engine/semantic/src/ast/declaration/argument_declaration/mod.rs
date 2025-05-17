@@ -12,7 +12,10 @@ impl Initialize for ArgumentDeclaration {
         if let Node::Declaration(Declaration::VariableName(variable)) = self.variable.get_node() {
             let ty = self.infer_type(scx)?;
             scx.tys
-                .insert(&variable.ident, TypeEntity::new(Some(ty.clone()), Some(ty)))
+                .insert(
+                    &variable.ident,
+                    TypeEntity::new(variable.uuid, Some(ty.clone()), Some(ty)),
+                )
                 .map_err(|err| LinkedErr::from(err.into(), self))?;
             self.variable.initialize(scx)?;
             Ok(())
