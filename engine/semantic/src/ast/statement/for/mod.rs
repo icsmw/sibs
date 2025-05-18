@@ -36,7 +36,7 @@ impl Initialize for For {
         scx.tys
             .insert(
                 el_name,
-                TypeEntity::new(el.uuid, Some(ty.clone()), Some(ty)),
+                TypeEntity::new(*&self.uuid, self.get_position(), Some(ty.clone()), Some(ty)),
             )
             .map_err(|err| LinkedErr::from(err.into(), self))?;
         if let Some(index) = self.index.as_ref() {
@@ -54,6 +54,7 @@ impl Initialize for For {
                     el_name,
                     TypeEntity::new(
                         el.uuid,
+                        el.get_position(),
                         Some(Ty::Determined(DeterminedTy::Num)),
                         Some(Ty::Determined(DeterminedTy::Num)),
                     ),

@@ -11,12 +11,28 @@ component component_a() {
 };
 "#,
     Ty::Determined(DeterminedTy::Str),
-    ["strvariable", "newstring"],
+    ["strvariable"],
     112
 );
 
 completion_fn_return!(
     test_2,
+    r#" 
+component component_a() {
+    task task_a() {
+        let strvariable_a = "hey";
+        let strvariable_b = "hey";
+        let newstring: str = strvariable_b;
+    }
+};
+"#,
+    Ty::Determined(DeterminedTy::Str),
+    ["strvariable_a", "strvariable_b"],
+    150
+);
+
+completion_fn_return!(
+    test_3,
     r#"
 mod aaa {
     fn sum(a: num, b: num) {

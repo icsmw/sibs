@@ -208,6 +208,7 @@ impl Driver {
             self.locator(idx, src)?,
             self.scx.as_ref()?,
             token.to_string()[..pos.saturating_sub(token.pos.from)].to_owned(),
+            pos,
         ))
     }
 

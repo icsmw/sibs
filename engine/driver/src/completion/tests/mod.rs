@@ -28,6 +28,10 @@ macro_rules! completion_fn_return {
                         CompletionMatch::Function(..) => None,
                     })
                     .collect();
+                if suggested_variables.len() != $expected_variables.len() {
+                    eprintln!("Expected variables: {:?}", $expected_variables);
+                    eprintln!("Suggested variables: {:?}", suggested_variables);
+                }
                 assert_eq!(suggested_variables.len(), $expected_variables.len());
                 for (name, ty) in suggested_variables {
                     let Some(ty) = ty else {

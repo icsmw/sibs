@@ -14,7 +14,7 @@ impl Initialize for ArgumentDeclaration {
             scx.tys
                 .insert(
                     &variable.ident,
-                    TypeEntity::new(variable.uuid, Some(ty.clone()), Some(ty)),
+                    TypeEntity::new(*&self.uuid, self.get_position(), Some(ty.clone()), Some(ty)),
                 )
                 .map_err(|err| LinkedErr::from(err.into(), self))?;
             self.variable.initialize(scx)?;

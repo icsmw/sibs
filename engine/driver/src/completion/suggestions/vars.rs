@@ -6,8 +6,14 @@ pub fn collect(
     cxs: &[Uuid],
     fragment: &str,
     ty: Option<&Ty>,
+    from: usize,
 ) -> Vec<CompletionSuggestion> {
-    let Some(variables) = scope.get_all_variables(cxs) else {
+    let Some(variables) = scope.get_all_variables(cxs).map(|variables| {
+        variables
+            .into_iter()
+            .filter(|(_, ty)| ty.position.to <= from)
+            .collect::<Vec<(&String, &TypeEntity)>>()
+    }) else {
         return Vec::new();
     };
     let mut suggestions = Vec::new();

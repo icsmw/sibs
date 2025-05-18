@@ -48,15 +48,22 @@ impl LocationData {
 pub struct Completion<'a> {
     locator: LocationIterator<'a>,
     scx: &'a SemanticCx,
+    from: usize,
     fragment: String,
 }
 
 impl<'a> Completion<'a> {
-    pub fn new(locator: LocationIterator<'a>, scx: &'a SemanticCx, fragment: String) -> Self {
+    pub fn new(
+        locator: LocationIterator<'a>,
+        scx: &'a SemanticCx,
+        fragment: String,
+        from: usize,
+    ) -> Self {
         Self {
             locator,
             scx,
             fragment,
+            from,
         }
     }
     fn get_location_data(&mut self) -> Result<Option<LocationData>, E> {
@@ -186,6 +193,7 @@ impl<'a> Completion<'a> {
                 &info.blocks,
                 &self.fragment,
                 ty.as_ref(),
+                self.from,
             )),
             Filter::FunctionArgument(ty) | Filter::FunctionCall(ty) => Some(funcs::collect(
                 &self.scx.fns,
@@ -198,7 +206,8 @@ impl<'a> Completion<'a> {
                 },
             )),
             Filter::All(ty) => {
-                let mut suggestions = vars::collect(&scope, &info.blocks, &self.fragment, None);
+                let mut suggestions =
+                    vars::collect(&scope, &info.blocks, &self.fragment, None, self.from);
                 suggestions.extend(funcs::collect(
                     &self.scx.fns,
                     &info.mods.iter().map(|s| s.as_str()).collect::<Vec<&str>>(),

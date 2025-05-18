@@ -32,7 +32,12 @@ impl InferType for Assignation {
             scx.tys
                 .insert(
                     variable_name,
-                    TypeEntity::new(variable.uuid, Some(right), Some(annot.to_owned())),
+                    TypeEntity::new(
+                        *&self.uuid,
+                        self.get_position(),
+                        Some(right),
+                        Some(annot.to_owned()),
+                    ),
                 )
                 .map_err(|err| LinkedErr::from(err.into(), self))?;
             Ok(DeterminedTy::Void.into())

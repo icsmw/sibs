@@ -53,7 +53,7 @@ impl Initialize for VariableDeclaration {
             scx.tys
                 .insert(
                     &variable.ident,
-                    TypeEntity::new(variable.uuid, Some(assig), Some(annot)),
+                    TypeEntity::new(*&self.uuid, self.get_position(), Some(assig), Some(annot)),
                 )
                 .map_err(|err| LinkedErr::from(err.into(), &self.variable))?;
         } else if let Some(node) = self.assignation.as_ref() {
@@ -64,7 +64,12 @@ impl Initialize for VariableDeclaration {
             scx.tys
                 .insert(
                     &variable.ident,
-                    TypeEntity::new(variable.uuid, Some(assig.clone()), Some(assig)),
+                    TypeEntity::new(
+                        *&self.uuid,
+                        self.get_position(),
+                        Some(assig.clone()),
+                        Some(assig),
+                    ),
                 )
                 .map_err(|err| LinkedErr::from(err.into(), &self.variable))?;
         } else if let Some(node) = self.r#type.as_ref() {
@@ -75,14 +80,14 @@ impl Initialize for VariableDeclaration {
             scx.tys
                 .insert(
                     &variable.ident,
-                    TypeEntity::new(variable.uuid, None, Some(annot)),
+                    TypeEntity::new(*&self.uuid, self.get_position(), None, Some(annot)),
                 )
                 .map_err(|err| LinkedErr::from(err.into(), &self.variable))?;
         } else {
             scx.tys
                 .insert(
                     &variable.ident,
-                    TypeEntity::new(variable.uuid, None, Some(Ty::Undefined)),
+                    TypeEntity::new(*&self.uuid, self.get_position(), None, Some(Ty::Undefined)),
                 )
                 .map_err(|err| LinkedErr::from(err.into(), &self.variable))?;
         }
