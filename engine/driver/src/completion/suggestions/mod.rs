@@ -5,8 +5,13 @@ use crate::completion::*;
 
 #[derive(Debug)]
 pub enum CompletionMatch {
-    Variable(String),
-    Function(String),
+    /// `String` - name of variable
+    /// `Option<Ty>` - type of variable
+    Variable(String, Option<Ty>),
+    /// `String` - function name
+    /// `Option<Ty>` - type of the first argument
+    /// `Option<Ty>` - return type
+    Function(String, Option<Ty>, Option<Ty>),
 }
 
 #[derive(Debug)]

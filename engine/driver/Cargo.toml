@@ -25,3 +25,4 @@ functions = { path = "../functions" }
 runtime = { path = "../runtime" }
 
 [dev-dependencies]
+paste.workspace = true

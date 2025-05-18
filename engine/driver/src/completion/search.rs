@@ -70,15 +70,6 @@ impl SearchResult {
 ///
 /// # Returns
 /// A `Vec<SearchResult>` containing the ranked matches, sorted in descending order of relevance.
-///
-/// # Example
-/// ```rust
-/// let inputs = vec!["Rust programming language".to_string(), "Rust".to_string(), "rusty nails".to_string()];
-/// let results = find_matches(&inputs, "Rust");
-/// for result in results {
-///     println!("{:?}", result);
-/// }
-/// ```
 pub fn find_matches<I: AsRef<str>, F: AsRef<str>>(inputs: &[I], fragment: F) -> SearchResults {
     let fragment_ref = fragment.as_ref();
     let mut results: Vec<SearchResult> = inputs
@@ -118,12 +109,6 @@ pub fn rank_match<I: AsRef<str>, F: AsRef<str>>(input: I, fragment: F) -> Option
 /// 2. **Case-Insensitive Match (40 points)**: Adds 40 if the content matches the fragment regardless of case.
 /// 3. **Position-Based Score (10-30 points)**: Scores higher if the fragment appears earlier in the content.
 /// 4. **Frequency Bonus (up to 20 points)**: Adds points based on the number of fragment occurrences, reduced by a length penalty.
-///
-/// # Example
-/// ```rust
-/// let score = calculate_rank("Rust programming language", "Rust");
-/// assert!(score > 0);
-/// ```
 fn calculate_rank(content: &str, fragment: &str) -> u8 {
     if fragment.is_empty() || content.is_empty() {
         return 0;

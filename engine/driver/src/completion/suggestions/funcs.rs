@@ -3,6 +3,7 @@ use runtime::{EmbeddedFnEntity, UserFnEntity};
 use crate::completion::*;
 use crate::*;
 
+#[derive(Debug)]
 pub enum FnTypeKind<'a> {
     FirstArg(Option<&'a Ty>),
     Returns(Option<&'a Ty>),
@@ -30,14 +31,14 @@ impl<'a> FnTypeKind<'a> {
                     fn_entity
                         .args
                         .first()
-                        .map(|arg| arg == ty)
+                        .map(|arg| arg.compatible(ty))
                         .unwrap_or_default()
                 })
-                .unwrap_or(true),
+                .unwrap_or(false),
             Self::Returns(ty) => ty
                 .map(|ty| {
                     if let Ty::Determined(ty) = ty {
-                        &fn_entity.result == ty
+                        fn_entity.result.compatible(ty)
                     } else {
                         false
                     }
@@ -63,12 +64,20 @@ pub fn collect(
             }
             if fragment.trim().is_empty() {
                 Some(CompletionSuggestion {
-                    target: CompletionMatch::Function(name.to_string()),
+                    target: CompletionMatch::Function(
+                        name.to_string(),
+                        fn_entity.args.first().map(|arg| arg.ty.clone()),
+                        Some(fn_entity.result.clone()),
+                    ),
                     score: search::MAX_SCORE,
                 })
             } else if let Some(ranked) = search::rank_match(&name, fragment) {
                 Some(CompletionSuggestion {
-                    target: CompletionMatch::Function(name.to_string()),
+                    target: CompletionMatch::Function(
+                        name.to_string(),
+                        fn_entity.args.first().map(|arg| arg.ty.clone()),
+                        Some(fn_entity.result.clone()),
+                    ),
                     score: ranked.score,
                 })
             } else {
@@ -86,12 +95,20 @@ pub fn collect(
                 }
                 if fragment.trim().is_empty() {
                     Some(CompletionSuggestion {
-                        target: CompletionMatch::Function(name.to_string()),
+                        target: CompletionMatch::Function(
+                            name.to_string(),
+                            fn_entity.args.first().cloned(),
+                            Some(Ty::Determined(fn_entity.result.clone())),
+                        ),
                         score: search::MAX_SCORE,
                     })
                 } else if let Some(ranked) = search::rank_match(&name, fragment) {
                     Some(CompletionSuggestion {
-                        target: CompletionMatch::Function(name.to_string()),
+                        target: CompletionMatch::Function(
+                            name.to_string(),
+                            fn_entity.args.first().cloned(),
+                            Some(Ty::Determined(fn_entity.result.clone())),
+                        ),
                         score: ranked.score,
                     })
                 } else {

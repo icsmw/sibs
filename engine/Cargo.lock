@@ -291,6 +291,7 @@ dependencies = [
  "functions",
  "lexer",
  "parser",
+ "paste",
  "runtime",
  "semantic",
  "thiserror 2.0.12",

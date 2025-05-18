@@ -140,4 +140,49 @@ impl<'a> LocationIterator<'a> {
         self.idx += 1;
         Some(TokenStep::new(token, node))
     }
+    pub fn prev<'s>(&'s mut self) -> Option<TokenStep<'s>> {
+        let token = loop {
+            let token = self.parser.get_token(self.idx)?;
+            if matches!(
+                token.id(),
+                KindId::BOF
+                    | KindId::Whitespace
+                    | KindId::LF
+                    | KindId::CR
+                    | KindId::CRLF
+                    | KindId::EOF
+            ) {
+                self.idx -= 1;
+                continue;
+            } else {
+                break token;
+            }
+        };
+        let node = find_node(self.anchor.childs(), &self.src, &token);
+        self.idx -= 1;
+        Some(TokenStep::new(token, node))
+    }
+
+    pub fn next<'s>(&'s mut self) -> Option<TokenStep<'s>> {
+        let token = loop {
+            let token = self.parser.get_token(self.idx)?;
+            if matches!(
+                token.id(),
+                KindId::BOF
+                    | KindId::Whitespace
+                    | KindId::LF
+                    | KindId::CR
+                    | KindId::CRLF
+                    | KindId::EOF
+            ) {
+                self.idx += 1;
+                continue;
+            } else {
+                break token;
+            }
+        };
+        let node = find_node(self.anchor.childs(), &self.src, &token);
+        self.idx += 1;
+        Some(TokenStep::new(token, node))
+    }
 }

@@ -1,8 +1,14 @@
+#[cfg(test)]
+mod tests;
+
 mod search;
 mod suggestions;
 
+pub use search::*;
+pub use suggestions::*;
+
 use crate::*;
-use runtime::DeterminedTy;
+use runtime::{DeterminedTy, TyCompatibility, TypeEntity};
 use suggestions::{funcs::FnTypeKind, *};
 
 enum Filter {
@@ -11,6 +17,7 @@ enum Filter {
     FunctionCall(Option<Ty>),
     All(Option<Ty>),
 }
+
 #[derive(Debug)]
 enum Ownership {
     Task(Uuid),
@@ -122,14 +129,10 @@ impl<'a> Completion<'a> {
             drop(prev);
             match prev_kind {
                 Kind::Dot => {
-                    let ty = self
-                        .locator
-                        .prev_token()
-                        .map(|prev| prev.node.map(|node| scope.lookup_by_node(node)).flatten())
-                        .flatten();
+                    let ty = find_ty(&mut self.locator, scope, self.scx);
                     match point_kind {
                         KindId::Identifier => {
-                            break Some(Filter::FunctionArgument(ty.cloned()));
+                            break Some(Filter::FunctionArgument(ty));
                         }
                         _ => {}
                     }
@@ -155,13 +158,9 @@ impl<'a> Completion<'a> {
                     break Some(Filter::All(None));
                 }
                 Kind::Equals => {
-                    let ty = self
-                        .locator
-                        .prev_token()
-                        .map(|prev| prev.node.map(|node| scope.lookup_by_node(node)).flatten())
-                        .flatten();
+                    let ty = find_ty(&mut self.locator, scope, self.scx);
                     break match point_kind {
-                        KindId::Identifier => Some(Filter::All(ty.cloned())),
+                        KindId::Identifier => Some(Filter::All(ty)),
                         _ => Some(Filter::All(None)),
                     };
                 }
@@ -217,39 +216,28 @@ impl<'a> Completion<'a> {
     }
 }
 
-#[test]
-fn test() {
-    let mut driver = Driver::unbound(
-        r#"
-mod aaa {
-    fn sum(a: num, b: num) {
-        a + b;
-    };
-};      
-component component_a() {
-    task task_a() {
-        let sumvariable: num;
-        sumvariable.sum;
-        let strvariable = "hey";
-        strvariable.sub;
-        let newstring: str = strvariable;
-        let variable_a = 1;
-        let variable_b = 1;
-        let variable_c = variable_a + variable_b;
-        let varibale_d = if eeevariaeee > 1 {
-            let sub_var = env;
-            variable_a;
-        } else {
-            variable_b;
+fn find_ty<'a>(
+    locator: &mut LocationIterator<'a>,
+    scope: &TyScope,
+    scx: &SemanticCx,
+) -> Option<Ty> {
+    let prev = locator.prev()?.node?;
+    match prev.get_node() {
+        Node::Expression(Expression::Variable(node)) => scope
+            .lookup(&node.ident)
+            .map(|entity| entity.ty())
+            .flatten()
+            .cloned(),
+        Node::Declaration(Declaration::VariableName(node)) => scope
+            .lookup(&node.ident)
+            .map(|entity| entity.ty())
+            .flatten()
+            .cloned(),
+        Node::Declaration(Declaration::VariableType(node)) => scx.table.get(&node.uuid),
+        Node::Declaration(Declaration::VariableVariants(..))
+        | Node::Declaration(Declaration::VariableTypeDeclaration(..)) => {
+            find_ty(locator, scope, scx)
         }
-        variable.fns::sum(a);
+        _ => None,
     }
-};
-"#,
-        true,
-    );
-    driver.read().unwrap();
-    driver.print_errs().unwrap();
-    let mut completion = driver.completion(368, None).unwrap();
-    println!("Suggestions: {:?}", completion.suggest());
 }

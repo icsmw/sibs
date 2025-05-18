@@ -80,7 +80,10 @@ impl Finalization for VariableTypeDef {
 
 impl Initialize for VariableType {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
-        self.r#type.initialize(scx)
+        self.r#type.initialize(scx)?;
+        let ty = self.r#type.infer_type(scx)?;
+        scx.table.set(&self.uuid, ty);
+        Ok(())
     }
 }
 
