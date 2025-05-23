@@ -17,16 +17,16 @@ thiserror.workspace = true
 uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }
 tokio.workspace = true
 
-asttree = { path = "../asttree" }
-diagnostics = { path = "../diagnostics" }
-semantic = { path = "../semantic" }
-lexer = { path = "../lexer" }
-common = { path = "../common" }
-parser = { path = "../parser" }
-interpreter = { path = "../interpreter" }
-runtime = { path = "../runtime" }
-functions = { path = "../functions" }
-boxed = { path = "../support/boxed" }
-term = { path = "../support/term" }
+asttree = { path = "../../engine/asttree" }
+diagnostics = { path = "../../engine/diagnostics" }
+semantic = { path = "../../engine/semantic" }
+lexer = { path = "../../engine/lexer" }
+common = { path = "../../engine/common" }
+parser = { path = "../../engine/parser" }
+interpreter = { path = "../../engine/interpreter" }
+runtime = { path = "../../engine/runtime" }
+functions = { path = "../../engine/functions" }
+boxed = { path = "../../engine/support/boxed" }
+term = { path = "../../engine/support/term" }
 
 [dev-dependencies]

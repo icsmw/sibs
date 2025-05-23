@@ -61,8 +61,28 @@ macro_rules! completion_fn_return {
                         })
                         .unwrap_or_default(),
                 }));
+            }
+        }
+    };
+}
 
+#[macro_export]
+macro_rules! no_completion {
+    ($test_name:ident, $content:literal, $pos:expr ) => {
+        paste::item! {
+            #[test]
+            fn [< no_completion_ $test_name >]() {
+                use $crate::*;
 
+                let mut driver = Driver::unbound($content, true);
+                driver.read().unwrap_or_else(|err| panic!("{err}"));
+                let mut completion = driver
+                    .completion($pos, None)
+                    .unwrap_or_else(|| panic!("Fail to get completion"));
+                let suggestions = completion
+                    .suggest()
+                    .unwrap_or_else(|err| panic!("{err}"));
+                assert!(suggestions.is_none());
             }
         }
     };

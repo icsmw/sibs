@@ -1,7 +1,7 @@
 use super::*;
 
 completion_fn_return!(
-    test_1,
+    test_001,
     r#" 
 component component_a() {
     task task_a() {
@@ -16,7 +16,7 @@ component component_a() {
 );
 
 completion_fn_return!(
-    test_2,
+    test_002,
     r#" 
 component component_a() {
     task task_a() {
@@ -31,8 +31,23 @@ component component_a() {
     150
 );
 
+no_completion!(
+    test_000,
+    r#" 
+component component_a() {
+    task task_a() {
+        let strvariable_a = "hey";
+        let 
+        if strvariable == "hey" {
+        }
+    }
+};
+"#,
+    95
+);
+
 completion_fn_return!(
-    test_3,
+    test_4,
     r#"
 mod aaa {
     fn sum(a: num, b: num) {
@@ -60,7 +75,7 @@ component component_a() {
 };
 "#,
     Ty::Determined(DeterminedTy::Str),
-    ["strvariable", "newstring"],
+    ["strvariable"],
     261
 );
 

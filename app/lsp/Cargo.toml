@@ -1,0 +1,21 @@
+[package]
+name = "lsp"
+version = "0.1.0"
+edition = "2021"
+authors = ["d.astafyev@outlook.com"]
+description = ""
+license = "Apache-2.0"
+repository = "https://github.com/icsmw/sibs.git"
+homepage = "https://github.com/icsmw/sibs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+enum_ids = "0.7"
+regex.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "io-std"]}
+tower-lsp.workspace = true
+uuid = { workspace = true, features = ["fast-rng", "macro-diagnostics", "v4"] }
+
+[dev-dependencies]

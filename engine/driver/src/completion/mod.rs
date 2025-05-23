@@ -11,6 +11,7 @@ use crate::*;
 use runtime::{DeterminedTy, TyCompatibility, TypeEntity};
 use suggestions::{funcs::FnTypeKind, *};
 
+#[derive(Debug)]
 enum Filter {
     Variables(Option<Ty>),
     FunctionArgument(Option<Ty>),
@@ -128,12 +129,13 @@ impl<'a> Completion<'a> {
             return Ok(None);
         };
         let filter = loop {
-            let Some(prev) = self.locator.prev_token() else {
+            let Some(prev) = self.locator.prev() else {
                 break None;
             };
             let point_kind = info.token.id();
             let prev_kind = prev.token.kind.clone();
             drop(prev);
+            println!(">>>>>>>>>>>>>>>>>>> 0000: {prev_kind:?}");
             match prev_kind {
                 Kind::Dot => {
                     let ty = find_ty(&mut self.locator, scope, self.scx);
@@ -144,12 +146,9 @@ impl<'a> Completion<'a> {
                         _ => {}
                     }
                 }
-                Kind::Keyword(Keyword::Let) => match point_kind {
-                    KindId::Identifier => {
-                        break None;
-                    }
-                    _ => {}
-                },
+                Kind::Keyword(Keyword::Let) => {
+                    break None;
+                }
                 Kind::Keyword(Keyword::If) => match point_kind {
                     KindId::Identifier => {
                         break Some(Filter::All(None));
@@ -184,6 +183,8 @@ impl<'a> Completion<'a> {
                 _ => {}
             };
         };
+        println!(">>>>>>>>>>>>>>>>>>> 0002: {:?}", filter);
+
         let Some(filter) = filter else {
             return Ok(None);
         };

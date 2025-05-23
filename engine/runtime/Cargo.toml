@@ -12,7 +12,7 @@ homepage = "https://github.com/icsmw/sibs"
 
 [dependencies]
 tokio-util = { workspace = true, features = ["codec"] }
-tokio = { workspace = true, features = ["time"] }
+tokio = { workspace = true, features = ["rt", "rt-multi-thread", "process", "sync", "macros", "time"] }
 tokio-stream.workspace = true
 enum_ids.workspace = true
 thiserror.workspace = true

@@ -1,35 +1,22 @@
 [workspace]
 resolver = "2"
 members = [
-    "lexer", 
-    "asttree",
-    "parser",
-    "diagnostics",
-    "semantic",
-    "interpreter",
-    "common",
-    "runtime",
-    "functions",
-    "driver",
-    "support/boxed",
-    "support/importer",
-    "support/term",
-    "tests/cmds/test_utils",
-    "tests/cmds/exit",
-    "tests/cmds/noise"
+    "cli",
+    "lsp"
 ]
 
 [workspace.dependencies]
 enum_ids = "0.7"
 thiserror = "2.0"
-uuid = "1.8"
 proptest = "1.4"
 paste = "1.0"
 syn = "2.0"
 quote = "1.0"
 proc-macro2 = "1.0"
 tokio-util = "0.7"
-tokio = "1.42"
+tokio = "1.44"
+tower-lsp = "0.20"
+uuid = "1.16"
 tokio-stream = "0.1"
 tracing = "0.1"
 tracing-subscriber = "0.3"
