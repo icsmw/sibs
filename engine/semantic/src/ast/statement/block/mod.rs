@@ -54,3 +54,12 @@ impl Finalization for Block {
         Ok(())
     }
 }
+
+impl SemanticTokensGetter for Block {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        self.nodes
+            .iter()
+            .flat_map(|n| n.get_semantic_tokens(stcx))
+            .collect()
+    }
+}

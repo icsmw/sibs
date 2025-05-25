@@ -26,3 +26,9 @@ impl Finalization for BinaryExpGroup {
         self.node.finalize(scx)
     }
 }
+
+impl SemanticTokensGetter for BinaryExpGroup {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        self.node.get_semantic_tokens(stcx)
+    }
+}

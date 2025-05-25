@@ -101,3 +101,23 @@ impl Finalization for TaskCall {
         Ok(())
     }
 }
+
+impl SemanticTokensGetter for TaskCall {
+    fn get_semantic_tokens(&self, _stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        let (Some((_, left)), Some((_, right))) = (self.reference.first(), self.reference.last())
+        else {
+            return Vec::new();
+        };
+        let mut tokens = vec![LinkedSemanticToken::between_tokens(
+            left,
+            right,
+            SemanticToken::Task,
+        )];
+        tokens.extend(
+            self.args
+                .iter()
+                .flat_map(|n| n.get_semantic_tokens(SemanticTokenContext::FunctionCall)),
+        );
+        tokens
+    }
+}

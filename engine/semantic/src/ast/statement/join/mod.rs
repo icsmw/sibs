@@ -19,3 +19,18 @@ impl Finalization for Join {
         Ok(())
     }
 }
+
+impl SemanticTokensGetter for Join {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        let mut tokens = vec![LinkedSemanticToken::from_token(
+            &self.token,
+            SemanticToken::Keyword,
+        )];
+        tokens.extend(
+            self.commands
+                .iter()
+                .flat_map(|n| n.get_semantic_tokens(stcx)),
+        );
+        tokens
+    }
+}

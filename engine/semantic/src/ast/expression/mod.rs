@@ -93,3 +93,28 @@ impl Finalization for Expression {
         }
     }
 }
+
+impl SemanticTokensGetter for Expression {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        match self {
+            Expression::Accessor(n) => n.get_semantic_tokens(stcx),
+            Expression::BinaryExp(n) => n.get_semantic_tokens(stcx),
+            Expression::BinaryExpGroup(n) => n.get_semantic_tokens(stcx),
+            Expression::BinaryExpSeq(n) => n.get_semantic_tokens(stcx),
+            Expression::BinaryOp(n) => n.get_semantic_tokens(stcx),
+            Expression::Call(n) => n.get_semantic_tokens(stcx),
+            Expression::Command(n) => n.get_semantic_tokens(stcx),
+            Expression::Comparison(n) => n.get_semantic_tokens(stcx),
+            Expression::ComparisonGroup(n) => n.get_semantic_tokens(stcx),
+            Expression::ComparisonOp(n) => n.get_semantic_tokens(stcx),
+            Expression::ComparisonSeq(n) => n.get_semantic_tokens(stcx),
+            Expression::CompoundAssignments(n) => n.get_semantic_tokens(stcx),
+            Expression::CompoundAssignmentsOp(n) => n.get_semantic_tokens(stcx),
+            Expression::FunctionCall(n) => n.get_semantic_tokens(stcx),
+            Expression::LogicalOp(n) => n.get_semantic_tokens(stcx),
+            Expression::Range(n) => n.get_semantic_tokens(stcx),
+            Expression::TaskCall(n) => n.get_semantic_tokens(stcx),
+            Expression::Variable(n) => n.get_semantic_tokens(stcx),
+        }
+    }
+}

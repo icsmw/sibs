@@ -91,3 +91,30 @@ impl Finalization for Task {
         Ok(())
     }
 }
+
+impl SemanticTokensGetter for Task {
+    fn get_semantic_tokens(&self, _stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        let mut tokens = vec![
+            LinkedSemanticToken::from_token(&self.sig, SemanticToken::Keyword),
+            LinkedSemanticToken::from_token(&self.name, SemanticToken::Task),
+        ];
+        self.vis
+            .as_ref()
+            .map(|tk| LinkedSemanticToken::from_token(tk, SemanticToken::Keyword));
+        tokens.extend(
+            self.args
+                .iter()
+                .flat_map(|n| n.get_semantic_tokens(SemanticTokenContext::ArgumentDeclaration)),
+        );
+        tokens.extend(
+            self.gts
+                .iter()
+                .flat_map(|n| n.get_semantic_tokens(SemanticTokenContext::Ignored)),
+        );
+        tokens.extend(
+            self.block
+                .get_semantic_tokens(SemanticTokenContext::Ignored),
+        );
+        tokens
+    }
+}

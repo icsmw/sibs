@@ -17,3 +17,12 @@ impl Finalization for Break {
         Ok(())
     }
 }
+
+impl SemanticTokensGetter for Break {
+    fn get_semantic_tokens(&self, _stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        vec![LinkedSemanticToken::from_token(
+            &self.token,
+            SemanticToken::Keyword,
+        )]
+    }
+}

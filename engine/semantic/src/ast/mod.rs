@@ -50,6 +50,20 @@ impl Finalization for Node {
     }
 }
 
+impl SemanticTokensGetter for Node {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        match self {
+            Node::ControlFlowModifier(n) => n.get_semantic_tokens(stcx),
+            Node::Declaration(n) => n.get_semantic_tokens(stcx),
+            Node::Expression(n) => n.get_semantic_tokens(stcx),
+            Node::Miscellaneous(n) => n.get_semantic_tokens(stcx),
+            Node::Root(n) => n.get_semantic_tokens(stcx),
+            Node::Statement(n) => n.get_semantic_tokens(stcx),
+            Node::Value(n) => n.get_semantic_tokens(stcx),
+        }
+    }
+}
+
 impl InferType for LinkedNode {
     fn infer_type(&self, scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         fn infer_type(
@@ -131,5 +145,24 @@ impl Finalization for LinkedNode {
             scx.by_node(self.get_node())?;
         }
         Ok(())
+    }
+}
+
+impl SemanticTokensGetter for LinkedNode {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        let mut tokens = self.get_node().get_semantic_tokens(stcx);
+        tokens.extend(
+            self.get_md()
+                .ppm
+                .iter()
+                .flat_map(|n| n.get_semantic_tokens(stcx)),
+        );
+        tokens.extend(
+            self.get_md()
+                .meta
+                .iter()
+                .flat_map(|n| n.get_semantic_tokens(stcx)),
+        );
+        tokens
     }
 }

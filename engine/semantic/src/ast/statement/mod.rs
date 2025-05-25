@@ -77,3 +77,24 @@ impl Finalization for Statement {
         }
     }
 }
+
+impl SemanticTokensGetter for Statement {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        match self {
+            Statement::Assignation(n) => n.get_semantic_tokens(stcx),
+            Statement::AssignedValue(n) => n.get_semantic_tokens(stcx),
+            Statement::ArgumentAssignation(n) => n.get_semantic_tokens(stcx),
+            Statement::ArgumentAssignedValue(n) => n.get_semantic_tokens(stcx),
+            Statement::Block(n) => n.get_semantic_tokens(stcx),
+            Statement::Break(n) => n.get_semantic_tokens(stcx),
+            Statement::For(n) => n.get_semantic_tokens(stcx),
+            Statement::If(n) => n.get_semantic_tokens(stcx),
+            Statement::Join(n) => n.get_semantic_tokens(stcx),
+            Statement::Loop(n) => n.get_semantic_tokens(stcx),
+            Statement::OneOf(n) => n.get_semantic_tokens(stcx),
+            Statement::Optional(n) => n.get_semantic_tokens(stcx),
+            Statement::Return(n) => n.get_semantic_tokens(stcx),
+            Statement::While(n) => n.get_semantic_tokens(stcx),
+        }
+    }
+}

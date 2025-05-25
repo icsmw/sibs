@@ -27,3 +27,16 @@ impl Finalization for Return {
         Ok(())
     }
 }
+
+impl SemanticTokensGetter for Return {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        let mut tokens = vec![LinkedSemanticToken::from_token(
+            &self.token,
+            SemanticToken::Keyword,
+        )];
+        self.node
+            .as_ref()
+            .map(|n| tokens.extend(n.get_semantic_tokens(stcx)));
+        tokens
+    }
+}

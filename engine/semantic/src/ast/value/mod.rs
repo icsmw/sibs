@@ -49,3 +49,17 @@ impl Finalization for Value {
         }
     }
 }
+
+impl SemanticTokensGetter for Value {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        match self {
+            Value::Array(n) => n.get_semantic_tokens(stcx),
+            Value::Boolean(n) => n.get_semantic_tokens(stcx),
+            Value::Error(n) => n.get_semantic_tokens(stcx),
+            Value::InterpolatedString(n) => n.get_semantic_tokens(stcx),
+            Value::Number(n) => n.get_semantic_tokens(stcx),
+            Value::PrimitiveString(n) => n.get_semantic_tokens(stcx),
+            Value::Closure(n) => n.get_semantic_tokens(stcx),
+        }
+    }
+}

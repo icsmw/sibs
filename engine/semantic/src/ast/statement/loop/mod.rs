@@ -66,3 +66,14 @@ impl Finalization for Loop {
         self.block.finalize(scx)
     }
 }
+
+impl SemanticTokensGetter for Loop {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        let mut tokens = vec![LinkedSemanticToken::from_token(
+            &self.token,
+            SemanticToken::Keyword,
+        )];
+        tokens.extend(self.block.get_semantic_tokens(stcx));
+        tokens
+    }
+}

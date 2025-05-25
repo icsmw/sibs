@@ -32,3 +32,12 @@ impl Finalization for BinaryExpSeq {
         Ok(())
     }
 }
+
+impl SemanticTokensGetter for BinaryExpSeq {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        self.nodes
+            .iter()
+            .flat_map(|n| n.get_semantic_tokens(stcx))
+            .collect()
+    }
+}

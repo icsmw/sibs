@@ -45,3 +45,14 @@ impl Finalization for Module {
         Ok(())
     }
 }
+
+impl SemanticTokensGetter for Module {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        let mut tokens = vec![
+            LinkedSemanticToken::from_token(&self.sig, SemanticToken::Keyword),
+            LinkedSemanticToken::from_token(&self.name, SemanticToken::Module),
+        ];
+        tokens.extend(self.nodes.iter().flat_map(|n| n.get_semantic_tokens(stcx)));
+        tokens
+    }
+}

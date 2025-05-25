@@ -17,3 +17,12 @@ impl Finalization for CompoundAssignmentsOp {
         Ok(())
     }
 }
+
+impl SemanticTokensGetter for CompoundAssignmentsOp {
+    fn get_semantic_tokens(&self, _stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        vec![LinkedSemanticToken::from_token(
+            &self.token,
+            SemanticToken::Operator,
+        )]
+    }
+}

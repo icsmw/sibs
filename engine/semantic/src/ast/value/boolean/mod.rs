@@ -17,3 +17,12 @@ impl Finalization for Boolean {
         Ok(())
     }
 }
+
+impl SemanticTokensGetter for Boolean {
+    fn get_semantic_tokens(&self, _stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        vec![LinkedSemanticToken::from_token(
+            &self.token,
+            SemanticToken::Bool,
+        )]
+    }
+}

@@ -61,3 +61,20 @@ impl Finalization for Declaration {
         }
     }
 }
+
+impl SemanticTokensGetter for Declaration {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        match self {
+            Declaration::ArgumentDeclaration(n) => n.get_semantic_tokens(stcx),
+            Declaration::FunctionDeclaration(n) => n.get_semantic_tokens(stcx),
+            Declaration::VariableDeclaration(n) => n.get_semantic_tokens(stcx),
+            Declaration::VariableType(n) => n.get_semantic_tokens(stcx),
+            Declaration::VariableTypeDeclaration(n) => n.get_semantic_tokens(stcx),
+            Declaration::VariableVariants(n) => n.get_semantic_tokens(stcx),
+            Declaration::VariableName(n) => n.get_semantic_tokens(stcx),
+            Declaration::ModuleDeclaration(n) => n.get_semantic_tokens(stcx),
+            Declaration::IncludeDeclaration(n) => n.get_semantic_tokens(stcx),
+            Declaration::ClosureDeclaration(n) => n.get_semantic_tokens(stcx),
+        }
+    }
+}

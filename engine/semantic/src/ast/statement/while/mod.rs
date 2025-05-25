@@ -72,3 +72,15 @@ impl Finalization for While {
         Ok(())
     }
 }
+
+impl SemanticTokensGetter for While {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        let mut tokens = vec![LinkedSemanticToken::from_token(
+            &self.token,
+            SemanticToken::Keyword,
+        )];
+        tokens.extend(self.comparison.get_semantic_tokens(stcx));
+        tokens.extend(self.block.get_semantic_tokens(stcx));
+        tokens
+    }
+}

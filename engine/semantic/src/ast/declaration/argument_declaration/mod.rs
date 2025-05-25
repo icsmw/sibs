@@ -34,3 +34,16 @@ impl Finalization for ArgumentDeclaration {
         self.variable.finalize(scx)
     }
 }
+
+impl SemanticTokensGetter for ArgumentDeclaration {
+    fn get_semantic_tokens(&self, _stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        let mut tokens = self
+            .variable
+            .get_semantic_tokens(SemanticTokenContext::ArgumentDeclaration);
+        tokens.extend(
+            self.r#type
+                .get_semantic_tokens(SemanticTokenContext::ArgumentDeclaration),
+        );
+        tokens
+    }
+}

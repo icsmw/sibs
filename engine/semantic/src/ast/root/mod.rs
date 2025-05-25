@@ -37,3 +37,14 @@ impl Finalization for Root {
         }
     }
 }
+
+impl SemanticTokensGetter for Root {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        match self {
+            Root::Task(n) => n.get_semantic_tokens(stcx),
+            Root::Component(n) => n.get_semantic_tokens(stcx),
+            Root::Module(n) => n.get_semantic_tokens(stcx),
+            Root::Anchor(n) => n.get_semantic_tokens(stcx),
+        }
+    }
+}

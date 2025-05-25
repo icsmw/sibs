@@ -39,3 +39,12 @@ impl Finalization for VariableTypeDeclaration {
         Ok(())
     }
 }
+
+impl SemanticTokensGetter for VariableTypeDeclaration {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        self.types
+            .iter()
+            .flat_map(|n| n.get_semantic_tokens(stcx))
+            .collect()
+    }
+}

@@ -26,3 +26,9 @@ impl Finalization for ComparisonGroup {
         self.node.finalize(scx)
     }
 }
+
+impl SemanticTokensGetter for ComparisonGroup {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        self.node.get_semantic_tokens(stcx)
+    }
+}

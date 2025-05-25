@@ -33,3 +33,12 @@ impl Finalization for BinaryExp {
         self.right.finalize(scx)
     }
 }
+
+impl SemanticTokensGetter for BinaryExp {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        let mut tokens = self.left.get_semantic_tokens(stcx);
+        tokens.extend(self.operator.get_semantic_tokens(stcx));
+        tokens.extend(self.right.get_semantic_tokens(stcx));
+        tokens
+    }
+}

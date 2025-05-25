@@ -17,3 +17,12 @@ impl Finalization for BinaryOp {
         Ok(())
     }
 }
+
+impl SemanticTokensGetter for BinaryOp {
+    fn get_semantic_tokens(&self, _stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        vec![LinkedSemanticToken::from_token(
+            &self.token,
+            SemanticToken::Operator,
+        )]
+    }
+}

@@ -17,3 +17,12 @@ impl Finalization for PrimitiveString {
         Ok(())
     }
 }
+
+impl SemanticTokensGetter for PrimitiveString {
+    fn get_semantic_tokens(&self, _stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        vec![LinkedSemanticToken::from_token(
+            &self.token,
+            SemanticToken::String,
+        )]
+    }
+}

@@ -111,3 +111,19 @@ impl Finalization for For {
         Ok(())
     }
 }
+
+impl SemanticTokensGetter for For {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        let mut tokens = vec![
+            LinkedSemanticToken::from_token(&self.token_for, SemanticToken::Keyword),
+            LinkedSemanticToken::from_token(&self.token_in, SemanticToken::Keyword),
+        ];
+        self.index
+            .as_ref()
+            .map(|n| tokens.extend(n.get_semantic_tokens(stcx)));
+        tokens.extend(self.element.get_semantic_tokens(stcx));
+        tokens.extend(self.elements.get_semantic_tokens(stcx));
+        tokens.extend(self.block.get_semantic_tokens(stcx));
+        tokens
+    }
+}

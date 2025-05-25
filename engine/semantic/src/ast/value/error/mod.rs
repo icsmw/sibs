@@ -17,3 +17,14 @@ impl Finalization for Error {
         self.node.finalize(scx)
     }
 }
+
+impl SemanticTokensGetter for Error {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        let mut tokens = vec![LinkedSemanticToken::from_token(
+            &self.token,
+            SemanticToken::Class,
+        )];
+        tokens.extend(self.node.get_semantic_tokens(stcx));
+        tokens
+    }
+}

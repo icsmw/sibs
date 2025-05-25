@@ -19,3 +19,15 @@ impl Finalization for Optional {
         self.action.finalize(scx)
     }
 }
+
+impl SemanticTokensGetter for Optional {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        let mut tokens = vec![LinkedSemanticToken::from_token(
+            &self.token,
+            SemanticToken::Operator,
+        )];
+        tokens.extend(self.comparison.get_semantic_tokens(stcx));
+        tokens.extend(self.action.get_semantic_tokens(stcx));
+        tokens
+    }
+}

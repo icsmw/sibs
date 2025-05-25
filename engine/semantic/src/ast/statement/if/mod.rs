@@ -58,6 +58,24 @@ impl Finalization for IfCase {
     }
 }
 
+impl SemanticTokensGetter for IfCase {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        match self {
+            IfCase::If(con, blk, tk) => {
+                let mut tokens = vec![LinkedSemanticToken::from_token(tk, SemanticToken::Keyword)];
+                tokens.extend(con.get_semantic_tokens(stcx));
+                tokens.extend(blk.get_semantic_tokens(stcx));
+                tokens
+            }
+            IfCase::Else(blk, tk) => {
+                let mut tokens = vec![LinkedSemanticToken::from_token(tk, SemanticToken::Keyword)];
+                tokens.extend(blk.get_semantic_tokens(stcx));
+                tokens
+            }
+        }
+    }
+}
+
 impl Initialize for If {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         self.cases.iter().try_for_each(|n| n.initialize(scx))?;
@@ -69,5 +87,14 @@ impl Finalization for If {
     fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         self.cases.iter().try_for_each(|n| n.finalize(scx))?;
         Ok(())
+    }
+}
+
+impl SemanticTokensGetter for If {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        self.cases
+            .iter()
+            .flat_map(|n| n.get_semantic_tokens(stcx))
+            .collect()
     }
 }

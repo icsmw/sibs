@@ -40,3 +40,12 @@ impl Finalization for VariableVariants {
         Ok(())
     }
 }
+
+impl SemanticTokensGetter for VariableVariants {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        self.variants
+            .iter()
+            .flat_map(|n| n.get_semantic_tokens(stcx))
+            .collect()
+    }
+}

@@ -29,3 +29,12 @@ impl Finalization for Miscellaneous {
         }
     }
 }
+
+impl SemanticTokensGetter for Miscellaneous {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        match self {
+            Miscellaneous::Comment(n) => n.get_semantic_tokens(stcx),
+            Miscellaneous::Meta(n) => n.get_semantic_tokens(stcx),
+        }
+    }
+}

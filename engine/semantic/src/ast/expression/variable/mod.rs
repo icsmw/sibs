@@ -43,3 +43,16 @@ impl Finalization for Variable {
         Ok(())
     }
 }
+
+impl SemanticTokensGetter for Variable {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        vec![match stcx {
+            SemanticTokenContext::ArgumentDeclaration | SemanticTokenContext::FunctionCall => {
+                LinkedSemanticToken::from_token(&self.token, SemanticToken::Parameter)
+            }
+            SemanticTokenContext::VariableDeclaration | SemanticTokenContext::Ignored => {
+                LinkedSemanticToken::from_token(&self.token, SemanticToken::Variable)
+            }
+        }]
+    }
+}

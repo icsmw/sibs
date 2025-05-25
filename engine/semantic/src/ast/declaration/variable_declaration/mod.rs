@@ -106,3 +106,23 @@ impl Finalization for VariableDeclaration {
         self.variable.finalize(scx)
     }
 }
+
+impl SemanticTokensGetter for VariableDeclaration {
+    fn get_semantic_tokens(&self, _stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        let mut tokens = vec![LinkedSemanticToken::from_token(
+            &self.token,
+            SemanticToken::Keyword,
+        )];
+        tokens.extend(
+            self.variable
+                .get_semantic_tokens(SemanticTokenContext::VariableDeclaration),
+        );
+        self.r#type.as_ref().map(|n| {
+            tokens.extend(n.get_semantic_tokens(SemanticTokenContext::VariableDeclaration))
+        });
+        self.assignation.as_ref().map(|n| {
+            tokens.extend(n.get_semantic_tokens(SemanticTokenContext::VariableDeclaration))
+        });
+        tokens
+    }
+}

@@ -32,3 +32,12 @@ impl Finalization for ComparisonSeq {
         Ok(())
     }
 }
+
+impl SemanticTokensGetter for ComparisonSeq {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        self.nodes
+            .iter()
+            .flat_map(|n| n.get_semantic_tokens(stcx))
+            .collect()
+    }
+}

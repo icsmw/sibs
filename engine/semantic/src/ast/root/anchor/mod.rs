@@ -23,3 +23,12 @@ impl Finalization for Anchor {
         Ok(())
     }
 }
+
+impl SemanticTokensGetter for Anchor {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        self.nodes
+            .iter()
+            .flat_map(|n| n.get_semantic_tokens(stcx))
+            .collect()
+    }
+}

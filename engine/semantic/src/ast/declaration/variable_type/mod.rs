@@ -60,6 +60,16 @@ impl Finalization for VariableCompoundType {
     }
 }
 
+impl SemanticTokensGetter for VariableCompoundType {
+    fn get_semantic_tokens(&self, _stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        match self {
+            VariableCompoundType::Vec(tk, ..) => {
+                vec![LinkedSemanticToken::from_token(tk, SemanticToken::Type)]
+            }
+        }
+    }
+}
+
 impl Initialize for VariableTypeDef {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         match self {
@@ -78,6 +88,17 @@ impl Finalization for VariableTypeDef {
     }
 }
 
+impl SemanticTokensGetter for VariableTypeDef {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        match self {
+            VariableTypeDef::Primitive(tk) => {
+                vec![LinkedSemanticToken::from_token(tk, SemanticToken::Type)]
+            }
+            VariableTypeDef::Compound(ty) => ty.get_semantic_tokens(stcx),
+        }
+    }
+}
+
 impl Initialize for VariableType {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         self.r#type.initialize(scx)?;
@@ -90,5 +111,11 @@ impl Initialize for VariableType {
 impl Finalization for VariableType {
     fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         self.r#type.finalize(scx)
+    }
+}
+
+impl SemanticTokensGetter for VariableType {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        self.r#type.get_semantic_tokens(stcx)
     }
 }

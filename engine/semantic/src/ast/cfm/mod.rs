@@ -29,3 +29,12 @@ impl Finalization for ControlFlowModifier {
         }
     }
 }
+
+impl SemanticTokensGetter for ControlFlowModifier {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        match self {
+            ControlFlowModifier::Gatekeeper(n) => n.get_semantic_tokens(stcx),
+            ControlFlowModifier::Skip(n) => n.get_semantic_tokens(stcx),
+        }
+    }
+}

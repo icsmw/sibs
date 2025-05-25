@@ -87,3 +87,14 @@ impl Finalization for FunctionDeclaration {
         Ok(())
     }
 }
+
+impl SemanticTokensGetter for FunctionDeclaration {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        let mut tokens = vec![
+            LinkedSemanticToken::from_token(&self.sig, SemanticToken::Keyword),
+            LinkedSemanticToken::from_token(&self.name, SemanticToken::Function),
+        ];
+        tokens.extend(self.args.iter().flat_map(|n| n.get_semantic_tokens(stcx)));
+        tokens
+    }
+}

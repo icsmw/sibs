@@ -19,3 +19,14 @@ impl Finalization for Gatekeeper {
         Ok(())
     }
 }
+
+impl SemanticTokensGetter for Gatekeeper {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        let mut tokens = vec![LinkedSemanticToken::from_token(
+            &self.token,
+            SemanticToken::Function,
+        )];
+        tokens.extend(self.nodes.iter().flat_map(|n| n.get_semantic_tokens(stcx)));
+        tokens
+    }
+}

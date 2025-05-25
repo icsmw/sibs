@@ -44,3 +44,12 @@ impl Finalization for Array {
         Ok(())
     }
 }
+
+impl SemanticTokensGetter for Array {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        self.els
+            .iter()
+            .flat_map(|n| n.get_semantic_tokens(stcx))
+            .collect()
+    }
+}

@@ -51,3 +51,9 @@ impl Finalization for Accessor {
         self.node.finalize(scx)
     }
 }
+
+impl SemanticTokensGetter for Accessor {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        self.node.get_semantic_tokens(stcx)
+    }
+}

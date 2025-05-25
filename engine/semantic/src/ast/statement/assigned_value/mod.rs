@@ -18,3 +18,9 @@ impl Finalization for AssignedValue {
         self.node.finalize(scx)
     }
 }
+
+impl SemanticTokensGetter for AssignedValue {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        self.node.get_semantic_tokens(stcx)
+    }
+}

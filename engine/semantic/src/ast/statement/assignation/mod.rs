@@ -64,3 +64,11 @@ impl Finalization for Assignation {
         self.right.finalize(scx)
     }
 }
+
+impl SemanticTokensGetter for Assignation {
+    fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
+        let mut tokens = self.left.get_semantic_tokens(stcx);
+        tokens.extend(self.right.get_semantic_tokens(stcx));
+        tokens
+    }
+}
