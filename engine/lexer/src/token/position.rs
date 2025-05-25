@@ -1,5 +1,20 @@
 use crate::*;
 
+#[derive(Debug, Clone, Default, Copy)]
+pub struct TextPosition {
+    pub abs: usize,
+    pub col: usize,
+    pub ln: usize,
+}
+
+impl PartialEq for TextPosition {
+    fn eq(&self, other: &Self) -> bool {
+        self.abs == other.abs
+    }
+    fn ne(&self, other: &Self) -> bool {
+        self.abs != other.abs
+    }
+}
 /// Represents the position of a token or element in the source code.
 ///
 /// The `Position` struct holds the starting and ending indices,
@@ -7,9 +22,9 @@ use crate::*;
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct Position {
     /// The starting index (inclusive).
-    pub from: usize,
+    pub from: TextPosition,
     /// The ending index (exclusive).
-    pub to: usize,
+    pub to: TextPosition,
 }
 
 impl Position {
@@ -19,7 +34,7 @@ impl Position {
     ///
     /// * `from` - The starting index.
     /// * `to` - The ending index.
-    pub fn new(from: usize, to: usize) -> Self {
+    pub fn new(from: TextPosition, to: TextPosition) -> Self {
         Self { from, to }
     }
     pub fn tokens(from: &Token, to: &Token) -> Self {
@@ -29,7 +44,7 @@ impl Position {
         }
     }
     pub fn is_in(&self, pos: usize) -> bool {
-        pos >= self.from && pos <= self.to
+        pos >= self.from.abs && pos <= self.to.abs
     }
 }
 
@@ -41,9 +56,9 @@ impl Position {
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct LinkedPosition {
     /// The starting index (inclusive).
-    pub from: usize,
+    pub from: TextPosition,
     /// The ending index (exclusive).
-    pub to: usize,
+    pub to: TextPosition,
     /// The uuid of source code file
     pub src: Uuid,
 }
@@ -55,7 +70,7 @@ impl LinkedPosition {
     ///
     /// * `from` - The starting index.
     /// * `to` - The ending index.
-    pub fn new(from: usize, to: usize, src: &Uuid) -> Self {
+    pub fn new(from: TextPosition, to: TextPosition, src: &Uuid) -> Self {
         Self {
             from,
             to,

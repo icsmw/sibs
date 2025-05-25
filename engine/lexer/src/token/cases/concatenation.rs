@@ -38,7 +38,7 @@ fn process(lx: &mut Lexer, token: Token, kind: KindId) -> Result<Option<Vec<Toke
     let left_brace: char = KindId::LeftBrace.try_into()?;
     let right_brace: char = KindId::RightBrace.try_into()?;
     loop {
-        let from = lx.pos;
+        let from = lx.current_pos();
         let Some((literal, ch)) = lx.read_until(&[stop_char, left_brace]) else {
             return Err(E::NoClosingSymbol(stop_char));
         };
@@ -47,18 +47,24 @@ fn process(lx: &mut Lexer, token: Token, kind: KindId) -> Result<Option<Vec<Toke
                 Kind::Literal(literal),
                 &lx.uuid,
                 from,
-                lx.pos,
+                lx.current_pos(),
             ));
         }
         lx.advance();
         if ch == stop_char {
-            tokens.push(Token::by_pos(target, &lx.uuid, lx.pos - 1, lx.pos));
+            tokens.push(Token::by_pos(
+                target,
+                &lx.uuid,
+                lx.prev_pos(),
+                lx.current_pos(),
+            ));
             break;
         }
-        let offset = lx.pos;
+        let from = lx.current_pos();
+        let brace_from = lx.prev_pos();
         let content = until_groupend(lx, left_brace, right_brace);
         let mut inner = lx.inherit(&content);
-        tokens.push(Token::by_pos(Kind::LeftBrace, &lx.uuid, offset - 1, offset));
+        tokens.push(Token::by_pos(Kind::LeftBrace, &lx.uuid, brace_from, from));
         tokens.extend(
             inner
                 .read()?
@@ -66,17 +72,14 @@ fn process(lx: &mut Lexer, token: Token, kind: KindId) -> Result<Option<Vec<Toke
                 .into_iter()
                 .filter(|tk| !matches!(tk.id(), KindId::BOF | KindId::EOF))
                 .map(|mut tk| {
-                    tk.offset(offset);
+                    tk.offset(from.abs);
                     tk
                 })
                 .collect::<Vec<Token>>(),
         );
-        tokens.push(Token::by_pos(
-            Kind::RightBrace,
-            &lx.uuid,
-            offset + content.len(),
-            offset + content.len() + 1,
-        ));
+        let from = lx.prev_pos();
+        let to = lx.current_pos();
+        tokens.push(Token::by_pos(Kind::RightBrace, &lx.uuid, from, to));
     }
     Ok(Some(tokens))
 }

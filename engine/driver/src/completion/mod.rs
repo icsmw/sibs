@@ -73,7 +73,7 @@ impl<'a> Completion<'a> {
         };
         let token = current.token.clone();
         drop(current);
-        let tree = self.locator.get_ownership_tree(token.pos.from);
+        let tree = self.locator.get_ownership_tree(token.pos.from.abs);
         let mut blocks = Vec::new();
         let mut mods = Vec::new();
         let mut ownership = None;

@@ -118,11 +118,16 @@ impl Read for Token {
     }
 
     fn try_read(lx: &mut Lexer, id: KindId, tks: &Tokens) -> Result<Option<Token>, E> {
-        let from = lx.pos;
+        let from = lx.current_pos();
         match id {
             KindId::Keyword => Ok(
                 if let Ok(kw) = TryInto::<Keyword>::try_into(lx.read_identifier()) {
-                    Some(Token::by_pos(Kind::Keyword(kw), &lx.uuid, from, lx.pos))
+                    Some(Token::by_pos(
+                        Kind::Keyword(kw),
+                        &lx.uuid,
+                        from,
+                        lx.current_pos(),
+                    ))
                 } else {
                     None
                 },
@@ -132,7 +137,12 @@ impl Read for Token {
                 Ok(if ws.is_empty() {
                     None
                 } else {
-                    Some(Token::by_pos(Kind::Whitespace(ws), &lx.uuid, from, lx.pos))
+                    Some(Token::by_pos(
+                        Kind::Whitespace(ws),
+                        &lx.uuid,
+                        from,
+                        lx.current_pos(),
+                    ))
                 })
             }
             KindId::Identifier => {
@@ -149,7 +159,7 @@ impl Read for Token {
                         Kind::Identifier(ident),
                         &lx.uuid,
                         from,
-                        lx.pos,
+                        lx.current_pos(),
                     ))
                 })
             }
@@ -170,11 +180,11 @@ impl Read for Token {
                         break;
                     }
                 }
-                if lx.input[from..lx.pos].ends_with('.') {
+                if lx.input[from.abs..lx.pos].ends_with('.') {
                     restore(lx);
                 };
-                let to = lx.pos;
-                let snum = &lx.input[from..to];
+                let to = lx.current_pos();
+                let snum = &lx.input[from.abs..to.abs];
                 match snum.parse::<f64>() {
                     Ok(num) => Ok(Some(Token::by_pos(Kind::Number(num), &lx.uuid, from, to))),
                     Err(_) => Err(E::InvalidNumber),
@@ -189,7 +199,7 @@ impl Read for Token {
                             Kind::String(str),
                             &lx.uuid,
                             from,
-                            lx.pos,
+                            lx.current_pos(),
                         )))
                     } else {
                         Err(E::NoClosingSymbol('\"'))
@@ -209,7 +219,7 @@ impl Read for Token {
                             Kind::Comment(content),
                             &lx.uuid,
                             from,
-                            lx.pos,
+                            lx.current_pos(),
                         ))
                     } else {
                         drop(lx);
@@ -217,7 +227,7 @@ impl Read for Token {
                             Kind::Comment(lx.read_to_end()),
                             &lx.uuid,
                             from,
-                            lx.pos,
+                            lx.current_pos(),
                         ))
                     })
                 } else {
@@ -231,14 +241,19 @@ impl Read for Token {
                 if id.as_str() == lx.read_nth(3) {
                     let drop = lx.pin();
                     Ok(if let Some((content, ..)) = lx.read_until(&['\n']) {
-                        Some(Token::by_pos(Kind::Meta(content), &lx.uuid, from, lx.pos))
+                        Some(Token::by_pos(
+                            Kind::Meta(content),
+                            &lx.uuid,
+                            from,
+                            lx.current_pos(),
+                        ))
                     } else {
                         drop(lx);
                         Some(Token::by_pos(
                             Kind::Meta(lx.read_to_end()),
                             &lx.uuid,
                             from,
-                            lx.pos,
+                            lx.current_pos(),
                         ))
                     })
                 } else {
@@ -290,7 +305,12 @@ impl Read for Token {
             | KindId::LF
             | KindId::CR
             | KindId::CRLF => Ok(if id.as_str() == lx.read_nth(id.length()?) {
-                Some(Token::by_pos(id.try_into()?, &lx.uuid, from, lx.pos))
+                Some(Token::by_pos(
+                    id.try_into()?,
+                    &lx.uuid,
+                    from,
+                    lx.current_pos(),
+                ))
             } else {
                 None
             }),

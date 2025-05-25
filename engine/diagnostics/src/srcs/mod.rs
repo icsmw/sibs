@@ -88,12 +88,12 @@ impl CodeSources {
         };
         let src = code_src.content()?;
         let num_rate = src.split('\n').count().to_string().len() + 1;
-        let from_ln = &src[0..from]
+        let from_ln = &src[0..from.abs]
             .split('\n')
             .next_back()
             .map(|s| s.len())
             .unwrap_or(0);
-        let error_range = from..to;
+        let error_range = from.abs..to.abs;
         let mut cursor: usize = 0;
         let error_lns = src
             .split('\n')
@@ -101,8 +101,8 @@ impl CodeSources {
             .filter_map(|(i, ln)| {
                 let range = cursor..=cursor + ln.len();
                 cursor += ln.len() + 1;
-                if range.contains(&from)
-                    || range.contains(&to)
+                if range.contains(&from.abs)
+                    || range.contains(&to.abs)
                     || error_range.contains(range.start())
                     || error_range.contains(range.end())
                 {
@@ -133,7 +133,7 @@ impl CodeSources {
                         format!(
                             "{}{filler}│ {ln}\n{offset}{}\n{offset}{}\n",
                             i + 1,
-                            style.apply_to("^".repeat(to - from)),
+                            style.apply_to("^".repeat(to.abs - from.abs)),
                             err.e
                         )
                     } else if error_last_ln != i {
@@ -180,7 +180,17 @@ fn test_sl() -> Result<(), io::Error> {
     let srcs = CodeSources { sources };
     let msg = srcs.err(&LinkedErr {
         e: String::from("Test Error Messaging"),
-        link: lexer::LinkedPosition::new(3, 3 + 4, &uuid),
+        link: lexer::LinkedPosition::new(
+            lexer::TextPosition {
+                abs: 3,
+                ..Default::default()
+            },
+            lexer::TextPosition {
+                abs: 3 + 4,
+                ..Default::default()
+            },
+            &uuid,
+        ),
     })?;
     println!("{msg}");
     Ok(())
@@ -207,7 +217,17 @@ fn test_ml() -> Result<(), io::Error> {
     let srcs = CodeSources { sources };
     let msg = srcs.err(&LinkedErr {
         e: String::from("Test Error Messaging"),
-        link: lexer::LinkedPosition::new(15, 50, &uuid),
+        link: lexer::LinkedPosition::new(
+            lexer::TextPosition {
+                abs: 15,
+                ..Default::default()
+            },
+            lexer::TextPosition {
+                abs: 50,
+                ..Default::default()
+            },
+            &uuid,
+        ),
     })?;
     println!("{msg}");
     Ok(())

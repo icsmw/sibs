@@ -29,6 +29,7 @@ pub struct Lexer<'a> {
     pub(crate) ln: usize,
     /// The current offset in current like
     pub(crate) column: usize,
+    pub(crate) prev: Option<TextPosition>,
     /// Uuid of lexer's instance
     pub uuid: Uuid,
 }
@@ -46,6 +47,7 @@ impl<'a> Lexer<'a> {
             pos: offset,
             ln: 0,
             column: 0,
+            prev: None,
             uuid: Uuid::new_v4(),
         }
     }
@@ -54,8 +56,9 @@ impl<'a> Lexer<'a> {
         Lexer {
             input,
             pos: 0,
-            ln: 0,
-            column: 0,
+            ln: self.ln,
+            column: self.column,
+            prev: None,
             uuid: self.uuid,
         }
     }
@@ -148,6 +151,11 @@ impl<'a> Lexer<'a> {
 
     /// Advances the current position by one character.
     pub(crate) fn advance(&mut self) {
+        self.prev = Some(TextPosition {
+            abs: self.pos,
+            col: self.column,
+            ln: self.ln,
+        });
         if let Some(ch) = self.char() {
             if ch == '\n' && ch == '\r' {
                 self.ln += 1;
@@ -244,7 +252,12 @@ impl<'a> Lexer<'a> {
     /// * `Ok(Tokens)` containing the parsed tokens.
     /// * `Err(E)` if an error occurs during lexing.
     pub fn read(&mut self) -> Result<Tokens, E> {
-        let mut tokens = Tokens::with(vec![Token::by_pos(Kind::BOF, &self.uuid, 0, 0)]);
+        let mut tokens = Tokens::with(vec![Token::by_pos(
+            Kind::BOF,
+            &self.uuid,
+            TextPosition::default(),
+            TextPosition::default(),
+        )]);
         while let Some(tk) = Token::read(self, &tokens)? {
             if let Some(tks) = cases::check(self, &tk)? {
                 tokens.extend(tks);
@@ -255,9 +268,32 @@ impl<'a> Lexer<'a> {
         if !self.completed() {
             Err(E::FailRecognizeContent(self.pos))
         } else {
-            tokens.add(Token::by_pos(Kind::EOF, &self.uuid, self.pos, self.pos));
+            tokens.add(Token::by_pos(
+                Kind::EOF,
+                &self.uuid,
+                self.current_pos(),
+                self.current_pos(),
+            ));
             Ok(tokens)
         }
+    }
+
+    pub fn current_pos(&self) -> TextPosition {
+        TextPosition {
+            abs: self.pos,
+            col: self.column,
+            ln: self.ln,
+        }
+    }
+    pub fn prev_pos(&self) -> TextPosition {
+        self.prev.clone().unwrap_or_default()
+    }
+    pub fn next_pos(&mut self) -> TextPosition {
+        let pin = self.pin();
+        self.advance();
+        let next = self.current_pos();
+        pin(self);
+        next
     }
 }
 

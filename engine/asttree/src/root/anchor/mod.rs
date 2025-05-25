@@ -56,7 +56,7 @@ impl Diagnostic for Anchor {
         if let (Some(first), Some(last)) = (self.nodes.first(), self.nodes.last()) {
             Position::new(first.md.link.from(), last.md.link.to())
         } else {
-            Position::new(0, 0)
+            Position::new(TextPosition::default(), TextPosition::default())
         }
     }
     fn childs(&self) -> Vec<&LinkedNode> {

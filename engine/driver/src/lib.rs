@@ -186,6 +186,13 @@ impl Driver {
         Ok(())
     }
 
+    pub fn get_semantic_tokens(&self) -> Vec<LinkedSemanticToken> {
+        self.anchor
+            .as_ref()
+            .map(|n| n.get_semantic_tokens(SemanticTokenContext::Ignored))
+            .unwrap_or_default()
+    }
+
     pub fn is_valid(&self) -> bool {
         !self.errors.is_empty() || self.anchor.is_none()
     }
@@ -207,7 +214,7 @@ impl Driver {
         Some(Completion::new(
             self.locator(idx, src)?,
             self.scx.as_ref()?,
-            token.to_string()[..pos.saturating_sub(token.pos.from)].to_owned(),
+            token.to_string()[..pos.saturating_sub(token.pos.from.abs)].to_owned(),
             pos,
         ))
     }
@@ -257,6 +264,7 @@ impl Driver {
         }
         Ok(())
     }
+    // TODO: give flat list of tokens
 }
 
 #[test]

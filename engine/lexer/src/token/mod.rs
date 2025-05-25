@@ -54,7 +54,7 @@ impl Token {
         &self.src == src
     }
     pub fn fingerprint(&self) -> String {
-        format!("{}:{}:{}", self.src, self.pos.from, self.pos.to)
+        format!("{}:{}:{}", self.src, self.pos.from.abs, self.pos.to.abs)
     }
     pub fn set_owner(&mut self, uuid: &Uuid, score: usize) -> bool {
         if let Some((ow, sc)) = self.owner {
@@ -71,9 +71,9 @@ impl Token {
             true
         }
     }
-    pub fn offset(&mut self, offset: usize) {
-        self.pos.from += offset;
-        self.pos.to += offset;
+    pub fn offset(&mut self, abs: usize) {
+        self.pos.from.abs += abs;
+        self.pos.to.abs += abs;
     }
 }
 
@@ -96,7 +96,7 @@ impl Token {
     /// * `src` - Uuid of source; equal to Lexer's uuid
     /// * `from` - The starting index of the token.
     /// * `to` - The ending index of the token.
-    pub fn by_pos(kind: Kind, src: &Uuid, from: usize, to: usize) -> Self {
+    pub fn by_pos(kind: Kind, src: &Uuid, from: TextPosition, to: TextPosition) -> Self {
         Self {
             src: src.to_owned(),
             kind,
@@ -115,7 +115,7 @@ impl Token {
         Self {
             src: Uuid::new_v4(),
             kind,
-            pos: Position::new(0, 0),
+            pos: Position::new(TextPosition::default(), TextPosition::default()),
             owner: None,
         }
     }

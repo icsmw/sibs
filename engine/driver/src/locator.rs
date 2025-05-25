@@ -18,8 +18,8 @@ impl fmt::Display for TokenStep<'_> {
         write!(
             f,
             "{}-{} [owner:{:?}][{}/{}]",
-            self.token.pos.from,
-            self.token.pos.to,
+            self.token.pos.from.abs,
+            self.token.pos.to.abs,
             self.token.owner,
             self.token.kind.id().to_string(),
             self.node
@@ -47,9 +47,12 @@ impl fmt::Display for NodeStep<'_> {
             "{}-{} [{} tokens]:{}",
             self.tokens
                 .first()
-                .map(|tk| tk.pos.from)
+                .map(|tk| tk.pos.from.abs)
                 .unwrap_or_default(),
-            self.tokens.last().map(|tk| tk.pos.from).unwrap_or_default(),
+            self.tokens
+                .last()
+                .map(|tk| tk.pos.from.abs)
+                .unwrap_or_default(),
             self.tokens.len(),
             self.node.ident()
         )

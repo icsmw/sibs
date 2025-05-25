@@ -55,7 +55,7 @@ impl<'a> Iterator for ErrorsIterator<'a> {
         let link = err.link();
         Some(ErrorLocator::new(
             err,
-            LocationIterator::new(self.anchor, link.src.clone(), link.from, &self.parser),
+            LocationIterator::new(self.anchor, link.src.clone(), link.from.abs, &self.parser),
         ))
     }
 }

@@ -11,7 +11,7 @@ pub fn collect(
     let Some(variables) = scope.get_all_variables(cxs).map(|variables| {
         variables
             .into_iter()
-            .filter(|(_, ty)| ty.position.to <= from)
+            .filter(|(_, ty)| ty.position.to.abs <= from)
             .collect::<Vec<(&String, &TypeEntity)>>()
     }) else {
         return Vec::new();

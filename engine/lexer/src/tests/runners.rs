@@ -16,10 +16,10 @@ impl Token {
     ///
     /// * The updated `to` position of the token.
     pub fn set_pos(&mut self, from: usize) -> usize {
-        self.pos.from = from;
+        self.pos.from.abs = from;
         match &mut self.kind {
             Kind::Keyword(kw) => {
-                self.pos.to = from + kw.length();
+                self.pos.to.abs = from + kw.length();
             }
             Kind::Question
             | Kind::Dollar
@@ -68,7 +68,8 @@ impl Token {
             | Kind::Tilde
             | Kind::Backtick
             | Kind::Backslash => {
-                self.pos.to = from + self.kind.id().length().expect("Fail to get element length");
+                self.pos.to.abs =
+                    from + self.kind.id().length().expect("Fail to get element length");
             }
             Kind::Identifier(..)
             | Kind::String(..)
@@ -77,10 +78,10 @@ impl Token {
             | Kind::Meta(..)
             | Kind::Number(..)
             | Kind::Whitespace(..) => {
-                self.pos.to = from + self.to_string().len();
+                self.pos.to.abs = from + self.to_string().len();
             }
         };
-        self.pos.to
+        self.pos.to.abs
     }
 }
 
@@ -101,7 +102,15 @@ fn kinds_into(knds: Vec<Kind>) -> (Vec<Token>, String) {
     let tokens = knds
         .into_iter()
         .map(|knd| {
-            let mut token = Token::by_pos(knd, &Uuid::new_v4(), pos, 0);
+            let mut token = Token::by_pos(
+                knd,
+                &Uuid::new_v4(),
+                TextPosition {
+                    abs: pos,
+                    ..Default::default()
+                },
+                TextPosition::default(),
+            );
             content.push_str(token.to_string().as_str());
             token.set_pos(pos);
             pos = content.len();
@@ -121,7 +130,15 @@ fn kinds_into(knds: Vec<Kind>) -> (Vec<Token>, String) {
 /// * `kinds` - A vector of `Kind` instances to test.
 pub fn test_tokens_by_kinds(kinds: Vec<Kind>) {
     let (mut generated, origin) = kinds_into(kinds);
-    generated.insert(0, Token::by_pos(Kind::BOF, &Uuid::new_v4(), 0, 0));
+    generated.insert(
+        0,
+        Token::by_pos(
+            Kind::BOF,
+            &Uuid::new_v4(),
+            TextPosition::default(),
+            TextPosition::default(),
+        ),
+    );
     if let Some(tk) = generated.last() {
         generated.push(Token::by_pos(
             Kind::EOF,
@@ -140,7 +157,7 @@ pub fn test_tokens_by_kinds(kinds: Vec<Kind>) {
                 .join("");
             assert_eq!(restored, origin);
             for tk in tokens.iter() {
-                assert_eq!(lx.input[tk.pos.from..tk.pos.to], tk.to_string());
+                assert_eq!(lx.input[tk.pos.from.abs..tk.pos.to.abs], tk.to_string());
             }
             assert_eq!(tokens.count(), generated.len());
             for (n, tk) in tokens.iter().enumerate() {

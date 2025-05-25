@@ -339,7 +339,11 @@ impl Parser {
             link: self
                 .current()
                 .map(|tk| (&tk.to_owned()).into())
-                .unwrap_or(LinkedPosition::new(0, 0, &self.src)),
+                .unwrap_or(LinkedPosition::new(
+                    TextPosition::default(),
+                    TextPosition::default(),
+                    &self.src,
+                )),
             e: err,
         }
     }
@@ -348,7 +352,11 @@ impl Parser {
             link: self
                 .until_end()
                 .map(|(from, to)| (&from.to_owned(), &to.to_owned()).into())
-                .unwrap_or(LinkedPosition::new(0, 0, &self.src)),
+                .unwrap_or(LinkedPosition::new(
+                    TextPosition::default(),
+                    TextPosition::default(),
+                    &self.src,
+                )),
             e: err,
         }
     }

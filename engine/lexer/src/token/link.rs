@@ -59,19 +59,19 @@ impl SrcLink {
         &self.src == src
     }
 
-    pub fn from(&self) -> usize {
+    pub fn from(&self) -> TextPosition {
         self.pos.from
     }
 
-    pub fn to(&self) -> usize {
+    pub fn to(&self) -> TextPosition {
         self.pos.to
     }
 
-    pub fn exfrom(&self) -> usize {
+    pub fn exfrom(&self) -> TextPosition {
         self.expos.from
     }
 
-    pub fn exto(&self) -> usize {
+    pub fn exto(&self) -> TextPosition {
         self.expos.to
     }
 

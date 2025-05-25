@@ -8,7 +8,7 @@ pub(crate) fn resolve_conflicts<K: Display + Clone + PartialEq + ConflictResolve
     let Some((n, (ppos, node, id))) = results
         .iter()
         .enumerate()
-        .max_by_key(|(_, (_, n, ..))| n.get_md().link.exto())
+        .max_by_key(|(_, (_, n, ..))| n.get_md().link.exto().abs)
     else {
         return Ok(None);
     };
