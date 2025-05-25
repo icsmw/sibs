@@ -25,6 +25,10 @@ pub struct Lexer<'a> {
     pub(crate) input: &'a str,
     /// The current position in the input string.
     pub(crate) pos: usize,
+    /// The current line number
+    pub(crate) ln: usize,
+    /// The current offset in current like
+    pub(crate) column: usize,
     /// Uuid of lexer's instance
     pub uuid: Uuid,
 }
@@ -40,6 +44,8 @@ impl<'a> Lexer<'a> {
         Lexer {
             input,
             pos: offset,
+            ln: 0,
+            column: 0,
             uuid: Uuid::new_v4(),
         }
     }
@@ -48,6 +54,8 @@ impl<'a> Lexer<'a> {
         Lexer {
             input,
             pos: 0,
+            ln: 0,
+            column: 0,
             uuid: self.uuid,
         }
     }
@@ -141,6 +149,12 @@ impl<'a> Lexer<'a> {
     /// Advances the current position by one character.
     pub(crate) fn advance(&mut self) {
         if let Some(ch) = self.char() {
+            if ch == '\n' && ch == '\r' {
+                self.ln += 1;
+                self.column = 0;
+            } else {
+                self.column += 1;
+            }
             self.pos += ch.len_utf8();
         }
     }
@@ -161,22 +175,6 @@ impl<'a> Lexer<'a> {
         let result = self.char().map(|nch| nch == ch).unwrap_or(false);
         pin(self);
         result
-    }
-
-    /// Decrease current position to given number
-    ///
-    /// # Arguments
-    ///
-    /// * `n` - The number to decrease position.
-    ///
-    /// # Warning
-    ///
-    /// Position could be increased to value > 1, because of `ch.len_utf8()`.
-    /// This method should be used only `n` is know for previous char.
-    pub(crate) fn decrease(&mut self, n: usize) {
-        if self.pos > n {
-            self.pos -= n;
-        }
     }
 
     /// Reads characters until a specified stop character is encountered.
@@ -225,9 +223,13 @@ impl<'a> Lexer<'a> {
     /// * A closure that takes a mutable reference to a `Lexer` and restores its position.
     pub(crate) fn pin(&mut self) -> impl Fn(&mut Lexer) -> usize {
         let pos = self.pos;
+        let ln = self.ln;
+        let column = self.column;
         move |lexer: &mut Lexer| {
             let to_restore = lexer.pos;
             lexer.pos = pos;
+            lexer.ln = ln;
+            lexer.column = column;
             to_restore
         }
     }

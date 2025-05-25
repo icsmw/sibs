@@ -154,18 +154,24 @@ impl Read for Token {
                 })
             }
             KindId::Number => {
+                let mut restore = lx.pin();
+                let mut dot = false;
                 while let Some(c) = lx.char() {
+                    if !dot {
+                        restore = lx.pin();
+                    }
                     if c.is_ascii_digit() || c == '.' {
                         if c == '.' && lx.is_next('.') {
                             break;
                         }
+                        dot = c == '.';
                         lx.advance();
                     } else {
                         break;
                     }
                 }
-                if lx.pos > 0 && lx.input[from..lx.pos].ends_with('.') {
-                    lx.decrease(1);
+                if lx.input[from..lx.pos].ends_with('.') {
+                    restore(lx);
                 };
                 let to = lx.pos;
                 let snum = &lx.input[from..to];
