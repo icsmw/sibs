@@ -264,7 +264,6 @@ impl Driver {
         }
         Ok(())
     }
-    // TODO: give flat list of tokens
 }
 
 #[test]
@@ -291,4 +290,6 @@ fn test() {
             println!("{:?}", error.err);
         }
     }
+
+    println!("{:?}", driver.get_semantic_tokens());
 }

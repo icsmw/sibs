@@ -135,7 +135,6 @@ impl<'a> Completion<'a> {
             let point_kind = info.token.id();
             let prev_kind = prev.token.kind.clone();
             drop(prev);
-            println!(">>>>>>>>>>>>>>>>>>> 0000: {prev_kind:?}");
             match prev_kind {
                 Kind::Dot => {
                     let ty = find_ty(&mut self.locator, scope, self.scx);
@@ -183,8 +182,6 @@ impl<'a> Completion<'a> {
                 _ => {}
             };
         };
-        println!(">>>>>>>>>>>>>>>>>>> 0002: {:?}", filter);
-
         let Some(filter) = filter else {
             return Ok(None);
         };

@@ -1,5 +1,6 @@
 use lexer::{LinkedPosition, Token};
 
+#[derive(Debug)]
 pub enum SemanticToken {
     Keyword,
     Function,
@@ -31,6 +32,7 @@ pub enum SemanticTokenContext {
     Ignored,
 }
 
+#[derive(Debug)]
 pub struct LinkedSemanticToken {
     pub token: SemanticToken,
     pub position: LinkedPosition,

@@ -24,12 +24,12 @@ pub struct Lexer<'a> {
     /// The input string to be lexed.
     pub(crate) input: &'a str,
     /// The current position in the input string.
-    pub(crate) pos: usize,
+    pos: usize,
     /// The current line number
-    pub(crate) ln: usize,
+    ln: usize,
     /// The current offset in current like
-    pub(crate) column: usize,
-    pub(crate) prev: Option<TextPosition>,
+    column: usize,
+    prev: Option<TextPosition>,
     /// Uuid of lexer's instance
     pub uuid: Uuid,
 }
@@ -150,21 +150,24 @@ impl<'a> Lexer<'a> {
     }
 
     /// Advances the current position by one character.
-    pub(crate) fn advance(&mut self) {
+    pub(crate) fn advance(&mut self) -> bool {
         self.prev = Some(TextPosition {
             abs: self.pos,
             col: self.column,
             ln: self.ln,
         });
-        if let Some(ch) = self.char() {
-            if ch == '\n' && ch == '\r' {
-                self.ln += 1;
-                self.column = 0;
-            } else {
-                self.column += 1;
-            }
-            self.pos += ch.len_utf8();
-        }
+        self.char()
+            .map(|ch| {
+                if ch == '\n' || ch == '\r' {
+                    self.ln += 1;
+                    self.column = 0;
+                } else {
+                    self.column += ch.len_utf8();
+                }
+                self.pos += ch.len_utf8();
+                true
+            })
+            .unwrap_or(false)
     }
 
     /// Checks next char
@@ -218,7 +221,8 @@ impl<'a> Lexer<'a> {
     /// * A `String` containing the rest of the input.
     pub(crate) fn read_to_end(&mut self) -> String {
         let rest = self.rest();
-        self.pos = self.input.len();
+        // Iterate to the end
+        while self.advance() {}
         rest
     }
 
@@ -276,6 +280,12 @@ impl<'a> Lexer<'a> {
             ));
             Ok(tokens)
         }
+    }
+
+    pub fn set_pos(&mut self, pos: TextPosition) {
+        self.pos = pos.abs;
+        self.ln = pos.ln;
+        self.column = pos.col;
     }
 
     pub fn current_pos(&self) -> TextPosition {

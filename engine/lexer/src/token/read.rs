@@ -38,25 +38,25 @@ pub(crate) trait Read {
 impl Read for Token {
     fn read(lx: &mut Lexer, tks: &Tokens) -> Result<Option<Token>, E> {
         fn select(
-            results: &mut Vec<(usize, Token, KindId)>,
+            results: &mut Vec<(TextPosition, Token, KindId)>,
             lx: &mut Lexer,
         ) -> Result<Option<Token>, E> {
             if let Some((n, (pos, tk, id))) =
-                results.iter().enumerate().max_by_key(|(_, (a, ..))| a)
+                results.iter().enumerate().max_by_key(|(_, (a, ..))| a.abs)
             {
                 let conflicted = results
                     .iter()
                     .filter(|(p, _, oid)| p == pos && oid != id)
                     .cloned()
-                    .collect::<Vec<(usize, Token, KindId)>>();
+                    .collect::<Vec<(TextPosition, Token, KindId)>>();
 
                 if conflicted.is_empty() {
-                    lx.pos = *pos;
+                    lx.set_pos(*pos);
                     Ok(Some(results.remove(n).1))
                 } else if let (Some((_, c_tk, c_id)), true) =
                     (conflicted.first(), conflicted.len() == 1)
                 {
-                    lx.pos = *pos;
+                    lx.set_pos(*pos);
                     if &id.resolve_conflict(c_id) == id {
                         Ok(Some(tk.clone()))
                     } else {
@@ -90,7 +90,7 @@ impl Read for Token {
         for id in interested.iter() {
             let drop = lx.pin();
             if let Some(tk) = Token::try_read(lx, id.clone(), tks)? {
-                results.push((lx.pos, tk, id.clone()));
+                results.push((lx.current_pos(), tk, id.clone()));
             }
             drop(lx);
         }
@@ -110,7 +110,7 @@ impl Read for Token {
         for id in interested.iter() {
             let drop = lx.pin();
             if let Some(tk) = Token::try_read(lx, id.clone(), tks)? {
-                results.push((lx.pos, tk, id.clone()));
+                results.push((lx.current_pos(), tk, id.clone()));
             }
             drop(lx);
         }
