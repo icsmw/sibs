@@ -64,10 +64,6 @@
             "end": "'",
             "patterns": [
                 {
-                    "name": "meta.embedded.block.sibs",
-                    "match": "\\{[^}]*\\}"
-                },
-                {
                     "name": "constant.character.escape.sibs",
                     "match": "\\\\."
                 }
@@ -79,10 +75,6 @@
             "begin": "`",
             "end": "`",
             "patterns": [
-                {
-                    "name": "meta.embedded.block.sibs",
-                    "match": "\\{[^}]*\\}"
-                },
                 {
                     "name": "constant.character.escape.sibs",
                     "match": "\\\\."
