@@ -2,7 +2,8 @@
 resolver = "2"
 members = [
     "cli",
-    "lsp"
+    "lsp",
+    "scenario"
 ]
 
 [workspace.dependencies]

@@ -1,3 +1,6 @@
+mod semantic;
+
+use driver::Driver;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{jsonrpc, Client, LanguageServer, LspService, Server};
 
@@ -13,13 +16,68 @@ impl LanguageServer for Backend {
             capabilities: ServerCapabilities {
                 completion_provider: Some(CompletionOptions {
                     resolve_provider: Some(false),
-                    trigger_characters: Some(vec![":".into(), "::".into()]),
+                    trigger_characters: Some(vec![":".into(), "::".into(), ".".into()]),
                     ..Default::default()
                 }),
+                semantic_tokens_provider: Some(
+                    SemanticTokensServerCapabilities::SemanticTokensOptions(
+                        SemanticTokensOptions {
+                            full: Some(SemanticTokensFullOptions::Bool(true)),
+                            legend: SemanticTokensLegend {
+                                token_types: vec![
+                                    SemanticTokenType::KEYWORD,
+                                    SemanticTokenType::FUNCTION,
+                                    SemanticTokenType::VARIABLE,
+                                    SemanticTokenType::STRING,
+                                    SemanticTokenType::NAMESPACE,
+                                    SemanticTokenType::PARAMETER,
+                                    SemanticTokenType::TYPE,
+                                    SemanticTokenType::METHOD,
+                                    SemanticTokenType::NUMBER,
+                                    SemanticTokenType::OPERATOR,
+                                    SemanticTokenType::EVENT,
+                                    SemanticTokenType::COMMENT,
+                                ],
+                                token_modifiers: vec![],
+                            },
+                            ..Default::default()
+                        },
+                    ),
+                ),
                 ..Default::default()
             },
             ..Default::default()
         })
+    }
+
+    async fn semantic_tokens_full(
+        &self,
+        params: SemanticTokensParams,
+    ) -> jsonrpc::Result<Option<SemanticTokensResult>> {
+        let filepath = params
+            .text_document
+            .uri
+            .to_file_path()
+            .map_err(|_| jsonrpc::Error {
+                message: "Fail to get filepath".into(),
+                code: jsonrpc::ErrorCode::ParseError,
+                data: None,
+            })?;
+        self.client
+            .log_message(MessageType::LOG, format!("will read: {filepath:?}"))
+            .await;
+        let mut driver = Driver::new(filepath, true);
+        driver.read().map_err(|err| jsonrpc::Error {
+            message: format!("Fail to parse source code: {err}").into(),
+            code: jsonrpc::ErrorCode::ParseError,
+            data: None,
+        })?;
+        let mut tokens = driver.get_semantic_tokens();
+        tokens.sort_by(|a, b| a.position.from.abs.cmp(&b.position.from.abs));
+        Ok(Some(SemanticTokensResult::Tokens(SemanticTokens {
+            result_id: None,
+            data: semantic::to_lsp_tokens(&tokens),
+        })))
     }
 
     async fn initialized(&self, _: InitializedParams) {
