@@ -55,6 +55,23 @@ impl LinkedSemanticToken {
             },
         }
     }
+    pub fn extract_by_relative<'a>(&self, content: &'a str) -> Option<&'a str> {
+        let lines: Vec<&str> = content.split('\n').collect();
+        let mut from_offset = 0;
+
+        for ln in 0..self.position.from.ln {
+            from_offset += lines.get(ln)?.len() + 1; // +1 for \n
+        }
+        from_offset += self.position.from.col;
+
+        let mut to_offset = 0;
+        for ln in 0..self.position.to.ln {
+            to_offset += lines.get(ln)?.len() + 1; // +1 for \n
+        }
+        to_offset += self.position.to.col;
+        println!("absolute cors based on ln,col: (from: {from_offset}; to: {to_offset})",);
+        content.get(from_offset..to_offset)
+    }
 }
 
 pub trait SemanticTokensGetter {

@@ -21,6 +21,7 @@ use lexer::*;
 use std::{
     cell::{Cell, Ref, RefCell},
     fmt::{self, Display},
+    io,
     path::{Path, PathBuf},
     rc::Rc,
 };
@@ -173,6 +174,10 @@ impl Parser {
                 })
             });
         Ok(())
+    }
+
+    pub fn get_src_content(&self, src: Option<&Uuid>) -> Result<Option<String>, io::Error> {
+        self.srcs.borrow().get_content(src.unwrap_or(&self.src))
     }
 
     fn add_binding(&self, from: usize, to: usize, uuid: &Uuid) {

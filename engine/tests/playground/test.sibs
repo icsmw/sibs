@@ -1,9 +1,18 @@
 /// This is description component_a
-component component_a() {
+component component_aaa() {
     /// This description is task_a
-    task task_a() {
-        let a = 5;
-        dsfsdfsdf---fsd;
+    task task_aaa() {
+        let my_string = "fdsfsdfsd";
+        let a: num = 5;
+        let b: num = 41112323;
+        let vvv = "string";
+        let ttt: str = "asasjkdsa";
+        let c = 'qwert{a}yuiopsdfgh{b}';
         a.fns::sum(a);
+        if ddd == 3 && ddd == 5 && ddd != 6 {
+            return true;
+        } else {
+            return false;
+        }
     }
 };

@@ -9,7 +9,7 @@ use std::fmt;
 pub enum InterpolatedStringPart {
     Open(Token),
     Literal(Token),
-    Expression(LinkedNode),
+    Expression(Token, LinkedNode, Token),
     Close(Token),
 }
 
@@ -25,7 +25,7 @@ impl Diagnostic for InterpolatedStringPart {
                     self.get_position().is_in(pos)
                 }
             }
-            InterpolatedStringPart::Expression(n) => {
+            InterpolatedStringPart::Expression(_, n, _) => {
                 if !n.md.link.belongs(src) {
                     false
                 } else {
@@ -39,7 +39,7 @@ impl Diagnostic for InterpolatedStringPart {
             InterpolatedStringPart::Open(tk)
             | InterpolatedStringPart::Close(tk)
             | InterpolatedStringPart::Literal(tk, ..) => tk.pos.clone(),
-            InterpolatedStringPart::Expression(n) => n.md.link.pos.clone(),
+            InterpolatedStringPart::Expression(_, n, _) => n.md.link.pos.clone(),
         }
     }
     fn childs(&self) -> Vec<&LinkedNode> {
@@ -47,7 +47,7 @@ impl Diagnostic for InterpolatedStringPart {
             InterpolatedStringPart::Open(..)
             | InterpolatedStringPart::Close(..)
             | InterpolatedStringPart::Literal(..) => Vec::new(),
-            InterpolatedStringPart::Expression(n) => vec![n],
+            InterpolatedStringPart::Expression(_, n, _) => vec![n],
         }
     }
 }
@@ -58,7 +58,7 @@ impl<'a> LookupInner<'a> for &'a InterpolatedStringPart {
             InterpolatedStringPart::Open(..)
             | InterpolatedStringPart::Close(..)
             | InterpolatedStringPart::Literal(..) => Vec::new(),
-            InterpolatedStringPart::Expression(n) => n.lookup_inner(owner, trgs),
+            InterpolatedStringPart::Expression(_, n, _) => n.lookup_inner(owner, trgs),
         }
     }
 }
@@ -69,7 +69,7 @@ impl FindMutByUuid for InterpolatedStringPart {
             InterpolatedStringPart::Open(..)
             | InterpolatedStringPart::Close(..)
             | InterpolatedStringPart::Literal(..) => None,
-            InterpolatedStringPart::Expression(n) => n.find_mut_by_uuid(uuid),
+            InterpolatedStringPart::Expression(_, n, _) => n.find_mut_by_uuid(uuid),
         }
     }
 }
@@ -83,7 +83,7 @@ impl fmt::Display for InterpolatedStringPart {
                 Self::Open(tk) => tk.to_string(),
                 Self::Close(tk) => tk.to_string(),
                 Self::Literal(tk) => tk.to_string(),
-                Self::Expression(n) => format!("{} {n} {}", Kind::LeftBrace, Kind::RightBrace),
+                Self::Expression(open, n, close) => format!("{open} {n} {close}"),
             }
         )
     }

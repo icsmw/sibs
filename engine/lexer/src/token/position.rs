@@ -7,6 +7,13 @@ pub struct TextPosition {
     pub ln: usize,
 }
 
+impl TextPosition {
+    pub(crate) fn abs(mut self, v: usize) -> Self {
+        self.abs = v;
+        self
+    }
+}
+
 impl PartialEq for TextPosition {
     fn eq(&self, other: &Self) -> bool {
         self.abs == other.abs

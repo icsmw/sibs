@@ -52,7 +52,7 @@ impl ReadNode<Command> for Command {
                     if !matches!(next.id(), KindId::RightBrace) {
                         return Err(E::NoClosing(KindId::RightBrace).link(&node));
                     }
-                    nodes.push(CommandPart::Expression(node));
+                    nodes.push(CommandPart::Expression(token.clone(), node, next.clone()));
                 }
                 KindId::Backtick => {
                     nodes.push(CommandPart::Close(token.clone()));

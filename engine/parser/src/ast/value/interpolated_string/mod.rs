@@ -52,7 +52,11 @@ impl ReadNode<InterpolatedString> for InterpolatedString {
                     if !matches!(next.id(), KindId::RightBrace) {
                         return Err(E::NoClosing(KindId::RightBrace).link(&node));
                     }
-                    nodes.push(InterpolatedStringPart::Expression(node));
+                    nodes.push(InterpolatedStringPart::Expression(
+                        token.clone(),
+                        node,
+                        next.clone(),
+                    ));
                 }
                 KindId::SingleQuote => {
                     nodes.push(InterpolatedStringPart::Close(token.clone()));

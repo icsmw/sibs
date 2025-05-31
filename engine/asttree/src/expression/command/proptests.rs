@@ -78,7 +78,13 @@ impl Arbitrary for CommandPart {
         }
         .prop_map(move |n| (n, deep + 1))
         .prop_flat_map(LinkedNode::arbitrary_with)
-        .prop_map(CommandPart::Expression)
+        .prop_map(|n| {
+            CommandPart::Expression(
+                Token::for_test(Kind::LeftBrace),
+                n,
+                Token::for_test(Kind::RightBrace),
+            )
+        })
         .boxed()
     }
 }

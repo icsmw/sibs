@@ -3,7 +3,7 @@ mod error;
 mod errors;
 mod locator;
 
-use std::{cell::Ref, fmt, path::PathBuf};
+use std::{cell::Ref, fmt, io, path::PathBuf};
 use uuid::Uuid;
 
 pub(crate) use asttree::*;
@@ -186,6 +186,14 @@ impl Driver {
         Ok(())
     }
 
+    /// If src is `None` will return content of root file
+    pub fn get_src_content(&self, src: Option<&Uuid>) -> Result<Option<String>, io::Error> {
+        let Some(parser) = self.parser.as_ref() else {
+            return Ok(None);
+        };
+        parser.get_src_content(src)
+    }
+
     pub fn get_semantic_tokens(&self) -> Vec<LinkedSemanticToken> {
         self.anchor
             .as_ref()
@@ -290,6 +298,19 @@ fn test() {
             println!("{:?}", error.err);
         }
     }
-
-    println!("{:?}", driver.get_semantic_tokens());
+    let mut tokens = driver.get_semantic_tokens();
+    tokens.sort_by(|a, b| a.position.from.abs.cmp(&b.position.from.abs));
+    println!("{tokens:?}");
+    let content = driver
+        .get_src_content(None)
+        .expect("Source isn't available")
+        .expect("Source isn't found");
+    println!("\n{}\n{content}\n{}\n", "=".repeat(50), "=".repeat(50));
+    for tk in tokens.iter() {
+        println!(
+            "token: {}",
+            tk.extract_by_relative(&content)
+                .expect("Token extracted by (ln, col) coors")
+        );
+    }
 }

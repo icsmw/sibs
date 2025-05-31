@@ -64,6 +64,7 @@ fn process(lx: &mut Lexer, token: Token, kind: KindId) -> Result<Option<Vec<Toke
         let brace_from = lx.prev_pos();
         let content = until_groupend(lx, left_brace, right_brace);
         let mut inner = lx.inherit(&content);
+        inner.rewind(from.clone().abs(0));
         tokens.push(Token::by_pos(Kind::LeftBrace, &lx.uuid, brace_from, from));
         tokens.extend(
             inner

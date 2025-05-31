@@ -246,6 +246,12 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    pub(crate) fn rewind(&mut self, pos: TextPosition) {
+        self.pos = pos.abs;
+        self.ln = pos.ln;
+        self.column = pos.col;
+    }
+
     /// Reads tokens from the input and returns a `Tokens` collection.
     ///
     /// If `new_file` is `true`, it inserts a `BOF` (beginning of file) token at the start

@@ -8,7 +8,7 @@ impl InferType for Command {
 
 impl Initialize for CommandPart {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
-        if let CommandPart::Expression(n) = self {
+        if let CommandPart::Expression(_, n, _) = self {
             n.initialize(scx)
         } else {
             Ok(())
@@ -18,7 +18,7 @@ impl Initialize for CommandPart {
 
 impl Finalization for CommandPart {
     fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
-        if let CommandPart::Expression(n) = self {
+        if let CommandPart::Expression(_, n, _) = self {
             n.finalize(scx)
         } else {
             Ok(())
@@ -35,7 +35,14 @@ impl SemanticTokensGetter for CommandPart {
                     SemanticToken::Delimiter,
                 )]
             }
-            CommandPart::Expression(n) => n.get_semantic_tokens(stcx),
+            CommandPart::Expression(open, n, close) => {
+                let mut tokens = vec![
+                    LinkedSemanticToken::from_token(open, SemanticToken::Operator),
+                    LinkedSemanticToken::from_token(close, SemanticToken::Operator),
+                ];
+                tokens.extend(n.get_semantic_tokens(stcx));
+                tokens
+            }
             CommandPart::Literal(tk) => {
                 vec![LinkedSemanticToken::from_token(tk, SemanticToken::String)]
             }

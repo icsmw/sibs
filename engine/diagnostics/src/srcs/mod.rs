@@ -49,6 +49,12 @@ impl CodeSources {
         sources.insert(*uuid, CodeSource::Inline(content.as_ref().to_owned()));
         Self { sources }
     }
+    pub fn get_content(&self, src: &Uuid) -> Result<Option<String>, io::Error> {
+        let Some(source) = self.sources.get(src) else {
+            return Ok(None);
+        };
+        Ok(Some(source.content()?))
+    }
     pub fn add_file_src<P: AsRef<Path>>(
         &mut self,
         filename: P,
