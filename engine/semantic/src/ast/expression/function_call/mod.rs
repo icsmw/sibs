@@ -133,11 +133,11 @@ impl SemanticTokensGetter for FunctionCall {
         else {
             return Vec::new();
         };
-        let mut tokens = vec![LinkedSemanticToken::between_tokens(
-            left,
-            right,
-            SemanticToken::Function,
-        )];
+        let mut tokens = vec![
+            LinkedSemanticToken::between_tokens(left, right, SemanticToken::Function),
+            LinkedSemanticToken::from_token(&self.open, SemanticToken::Delimiter),
+            LinkedSemanticToken::from_token(&self.close, SemanticToken::Delimiter),
+        ];
         tokens.extend(
             self.args
                 .iter()

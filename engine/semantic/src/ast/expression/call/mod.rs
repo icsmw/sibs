@@ -44,6 +44,11 @@ impl Finalization for Call {
 
 impl SemanticTokensGetter for Call {
     fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
-        self.node.get_semantic_tokens(stcx)
+        let mut tokens = vec![LinkedSemanticToken::from_token(
+            &self.token,
+            SemanticToken::Delimiter,
+        )];
+        tokens.extend(self.node.get_semantic_tokens(stcx));
+        tokens
     }
 }

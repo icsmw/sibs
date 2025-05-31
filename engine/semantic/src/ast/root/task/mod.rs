@@ -97,6 +97,8 @@ impl SemanticTokensGetter for Task {
         let mut tokens = vec![
             LinkedSemanticToken::from_token(&self.sig, SemanticToken::Keyword),
             LinkedSemanticToken::from_token(&self.name, SemanticToken::Task),
+            LinkedSemanticToken::from_token(&self.open, SemanticToken::Delimiter),
+            LinkedSemanticToken::from_token(&self.close, SemanticToken::Delimiter),
         ];
         self.vis
             .as_ref()

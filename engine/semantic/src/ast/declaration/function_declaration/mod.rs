@@ -93,6 +93,8 @@ impl SemanticTokensGetter for FunctionDeclaration {
         let mut tokens = vec![
             LinkedSemanticToken::from_token(&self.sig, SemanticToken::Keyword),
             LinkedSemanticToken::from_token(&self.name, SemanticToken::Function),
+            LinkedSemanticToken::from_token(&self.open, SemanticToken::Delimiter),
+            LinkedSemanticToken::from_token(&self.close, SemanticToken::Delimiter),
         ];
         tokens.extend(self.args.iter().flat_map(|n| n.get_semantic_tokens(stcx)));
         tokens

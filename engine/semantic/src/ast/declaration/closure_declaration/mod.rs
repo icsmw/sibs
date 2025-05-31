@@ -84,7 +84,11 @@ impl Finalization for ClosureDeclaration {
 
 impl SemanticTokensGetter for ClosureDeclaration {
     fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
-        let mut tokens = self.ty.get_semantic_tokens(stcx);
+        let mut tokens = vec![
+            LinkedSemanticToken::from_token(&self.open, SemanticToken::Delimiter),
+            LinkedSemanticToken::from_token(&self.close, SemanticToken::Delimiter),
+        ];
+        tokens.extend(self.ty.get_semantic_tokens(stcx));
         tokens.extend(self.args.iter().flat_map(|n| n.get_semantic_tokens(stcx)));
         tokens
     }

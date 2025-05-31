@@ -27,6 +27,8 @@ impl SemanticTokensGetter for Component {
         let mut tokens = vec![
             LinkedSemanticToken::from_token(&self.sig, SemanticToken::Keyword),
             LinkedSemanticToken::from_token(&self.name, SemanticToken::Component),
+            LinkedSemanticToken::from_token(&self.open_bl, SemanticToken::Delimiter),
+            LinkedSemanticToken::from_token(&self.close_bl, SemanticToken::Delimiter),
         ];
         tokens.extend(self.nodes.iter().flat_map(|n| n.get_semantic_tokens(stcx)));
         tokens
