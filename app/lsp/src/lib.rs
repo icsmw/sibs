@@ -1,8 +1,9 @@
 mod semantic;
 
 use std::collections::HashMap;
+use std::fs;
 
-use driver::Driver;
+use driver::{CompletionMatch, Driver};
 use tokio::sync::RwLock;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{jsonrpc, Client, LanguageServer, LspService, Server};
@@ -42,6 +43,50 @@ impl Backend {
                 )
                 .await;
             Ok(Driver::new(filepath, true))
+        }
+    }
+    pub async fn get_abs_pos(&self, uri: &Url, pos: Position) -> jsonrpc::Result<usize> {
+        fn get_pos(content: &str, pos: Position) -> usize {
+            let mut abs = 0;
+            let mut lines = content.lines();
+
+            for _ in 0..pos.line {
+                if let Some(line) = lines.next() {
+                    abs += line.len() + 1;
+                } else {
+                    return content.len();
+                }
+            }
+
+            if let Some(line) = lines.next() {
+                abs + (pos.character as usize).min(line.len())
+            } else {
+                content.len()
+            }
+        }
+        if let Some(content) = self.docs.read().await.get(uri) {
+            Ok(get_pos(content, pos))
+        } else {
+            let filepath = uri.to_file_path().map_err(|_| jsonrpc::Error {
+                message: "Fail to get filepath".into(),
+                code: jsonrpc::ErrorCode::ParseError,
+                data: None,
+            })?;
+            self.docs.write().await.insert(
+                uri.clone(),
+                fs::read_to_string(filepath).map_err(|err| jsonrpc::Error {
+                    code: jsonrpc::ErrorCode::InternalError,
+                    message: format!("Fail read {}: {err}", uri.path()).into(),
+                    data: None,
+                })?,
+            );
+            let reader = self.docs.read().await;
+            let content = reader.get(uri).ok_or(jsonrpc::Error {
+                code: jsonrpc::ErrorCode::InternalError,
+                message: format!("Cannot access to {}", uri.path()).into(),
+                data: None,
+            })?;
+            Ok(get_pos(content, pos))
         }
     }
 }
@@ -153,15 +198,54 @@ impl LanguageServer for Backend {
             .await;
     }
 
-    async fn completion(&self, _: CompletionParams) -> jsonrpc::Result<Option<CompletionResponse>> {
-        let items = vec![
-            CompletionItem::new_simple("component".into(), "Component detection".into()),
-            CompletionItem::new_simple("task".into(), "Task detection".into()),
-            CompletionItem::new_simple("mod".into(), "Module declaration".into()),
-            CompletionItem::new_simple("include".into(), "Including".into()),
-        ];
+    async fn completion(
+        &self,
+        params: CompletionParams,
+    ) -> jsonrpc::Result<Option<CompletionResponse>> {
+        let uri = &params.text_document_position.text_document.uri;
+        let pos = self
+            .get_abs_pos(uri, params.text_document_position.position)
+            .await?;
+        self.client
+            .log_message(
+                MessageType::LOG,
+                format!("will find suggestions for position {pos}"),
+            )
+            .await;
+        let driver = self.get_driver_by_url(uri).await?;
+        let Some(mut completion) = driver.completion(pos, None) else {
+            return Ok(None);
+        };
+        let suggestions = completion.suggest().map_err(|err| jsonrpc::Error {
+            code: jsonrpc::ErrorCode::InternalError,
+            message: format!("Fail to get suggestions for ({}): {err}", uri.path()).into(),
+            data: None,
+        })?;
+        let Some(mut suggestions) = suggestions else {
+            return Ok(None);
+        };
+        suggestions.sort_by(|a, b| a.score.cmp(&b.score));
+        let items = suggestions
+            .into_iter()
+            .map(|suggestion| {
+                let mut completion = match &suggestion.target {
+                    CompletionMatch::Function(name, ..) => {
+                        CompletionItem::new_simple(name.to_owned(), name.to_owned())
+                    }
+                    CompletionMatch::Variable(name, ..) => {
+                        CompletionItem::new_simple(name.to_owned(), name.to_owned())
+                    }
+                };
+                completion.kind = Some(match &suggestion.target {
+                    CompletionMatch::Function(..) => CompletionItemKind::FUNCTION,
+                    CompletionMatch::Variable(..) => CompletionItemKind::VARIABLE,
+                });
+                completion
+            })
+            .collect::<Vec<CompletionItem>>();
         Ok(Some(CompletionResponse::Array(items)))
     }
+
     async fn shutdown(&self) -> jsonrpc::Result<()> {
         Ok(())
     }

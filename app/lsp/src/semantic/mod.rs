@@ -1,21 +1,6 @@
 use semantic::{self, LinkedSemanticToken};
 use tower_lsp::lsp_types::SemanticToken;
-/**
 
-                                   SemanticTokenType::KEYWORD,     0
-                                   SemanticTokenType::FUNCTION,    1
-                                   SemanticTokenType::VARIABLE,    2
-                                   SemanticTokenType::STRING,      3
-                                   SemanticTokenType::NAMESPACE,    4
-                                   SemanticTokenType::PARAMETER,    5
-                                   SemanticTokenType::TYPE,         6
-                                   SemanticTokenType::METHOD,       7
-                                   SemanticTokenType::NUMBER,       8
-                                   SemanticTokenType::OPERATOR,     9
-                                   SemanticTokenType::EVENT,        10
-                                   SemanticTokenType::COMMENT,      11
-
-*/
 fn map_token_type(token: &semantic::SemanticToken) -> u32 {
     match token {
         semantic::SemanticToken::Keyword => 0,

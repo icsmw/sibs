@@ -3,15 +3,15 @@ component component_aaa() {
     /// This description is task_a
     task task_aaa() {
         let my_string = "fdsfsdfsd";
-        let a: num = 5;
+        let aaa: num = 5;
         let b: bool = true;
         let b: num = 411123233232;
         let vvv = "string";
         let ttt: str = "asasjkdsa";
         let command = `some{inject}command`;
         let c = 'qwhjerkslft{ttt}ofpsdfgfreddh{bbb}fdsfsd{if a == 4 { "fdfsdf"; } else { "dfsd"; } }';
-        a.fns::sum(a);
-        if ddd == 3 && ddd == 5 && ddd != 6 {
+        aaa.fns::sum(aaa);
+        if aaa == 5 && ddd == 5 && ddd != 6 {
             return true;
         } else {
             return false;

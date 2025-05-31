@@ -13,7 +13,7 @@ pub(crate) use parser::*;
 pub(crate) use runtime::{Fns, Ty, TyScope};
 pub(crate) use semantic::*;
 
-pub(crate) use completion::*;
+pub use completion::*;
 pub(crate) use error::*;
 pub(crate) use errors::*;
 pub(crate) use locator::*;
