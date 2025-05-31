@@ -17,6 +17,11 @@ thiserror.workspace = true
 uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }
 tokio.workspace = true
 
+scenario = { path = "../scenario" }
+lsp = { path = "../lsp" }
+
+driver = { path = "../../engine/driver" }
+
 asttree = { path = "../../engine/asttree" }
 diagnostics = { path = "../../engine/diagnostics" }
 semantic = { path = "../../engine/semantic" }

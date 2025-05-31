@@ -25,6 +25,8 @@ pub enum E {
     FailToGetCwd(String),
     #[error("Component \"{0}\" doesn't exists")]
     ComponentNotFound(String),
+    #[error("LTS should be run without addition arguments")]
+    SelfishLts,
 
     #[error("Fail to read valid scenario from \"{0}\"")]
     FailExtractAnchorNodeFrom(String),
@@ -36,11 +38,19 @@ pub enum E {
     Semantic(semantic::SemanticError),
     #[error("Runtime error: {0}")]
     Runtime(runtime::RtError),
+    #[error("Scenario error: {0}")]
+    Scenario(scenario::ScenarioError),
 }
 
 impl From<std::io::Error> for E {
     fn from(err: std::io::Error) -> Self {
         E::IO(err.to_string())
+    }
+}
+
+impl From<scenario::ScenarioError> for E {
+    fn from(err: scenario::ScenarioError) -> Self {
+        E::Scenario(err)
     }
 }
 

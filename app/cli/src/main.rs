@@ -1,7 +1,6 @@
 mod actions;
 mod error;
 mod params;
-mod scenario;
 mod script;
 
 pub(crate) use actions::*;
@@ -32,11 +31,25 @@ async fn main() -> Result<(), E> {
     for act in actions.into_iter() {
         post_actions.push(act.run(artifacts.clone())?);
     }
+    if post_actions
+        .iter()
+        .any(|art| matches!(art, RunArtifact::Lsp))
+    {
+        if post_actions
+            .iter()
+            .any(|art| !matches!(art, RunArtifact::Lsp) && !matches!(art, RunArtifact::Void))
+        {
+            return Err(E::SelfishLts);
+        }
+    }
     // Run post actions, if exists
     for artifact in post_actions.into_iter() {
         match artifact {
             RunArtifact::Script(mut script) => {
                 let _ = script.run().await?;
+            }
+            RunArtifact::Lsp => {
+                lsp::run().await;
             }
             RunArtifact::Void => {}
         }

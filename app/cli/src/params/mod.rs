@@ -1,10 +1,12 @@
 mod help;
+mod lsp;
 mod scenario;
 mod version;
 
 use crate::*;
 
 pub(crate) use help::*;
+pub(crate) use lsp::*;
 pub(crate) use scenario::*;
 pub(crate) use version::*;
 
@@ -19,6 +21,7 @@ pub enum Parameters {
     Help,
     Scenario,
     Version,
+    Lsp,
 }
 
 impl Parameters {
@@ -27,6 +30,7 @@ impl Parameters {
             Self::Help => HelpParameter::keys(),
             Self::Scenario => ScenarioParameter::keys(),
             Self::Version => VersionParameter::keys(),
+            Self::Lsp => LspParameter::keys(),
         }
     }
     pub fn desc(&self) -> String {
@@ -34,6 +38,7 @@ impl Parameters {
             Self::Help => HelpParameter::desc(),
             Self::Scenario => ScenarioParameter::desc(),
             Self::Version => VersionParameter::desc(),
+            Self::Lsp => LspParameter::desc(),
         }
     }
     pub fn actions() -> Result<Vec<Action>, E> {
@@ -47,6 +52,7 @@ impl Parameters {
                 Parameters::Help => HelpParameter::action(&mut args),
                 Parameters::Scenario => ScenarioParameter::action(&mut args),
                 Parameters::Version => VersionParameter::action(&mut args),
+                Parameters::Lsp => LspParameter::action(&mut args),
             } {
                 actions.push(action?);
             }
