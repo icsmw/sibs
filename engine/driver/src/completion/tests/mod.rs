@@ -21,6 +21,9 @@ macro_rules! completion_fn_return {
                     .unwrap_or_else(|err| panic!("{err}"))
                     .unwrap_or_else(|| panic!("Fail to get suggestions"));
                 assert!(!suggestions.is_empty());
+
+                println!("Suggested: {:?}", suggestions);
+
                 let suggested_variables: Vec<(&String, &Option<Ty>)> = suggestions
                     .iter()
                     .filter_map(|suggestion| match &suggestion.target {

@@ -79,6 +79,33 @@ component component_a() {
     261
 );
 
+// completion_fn_return!(
+//     test_5,
+//     r#"/// This is description component_a
+// component component_aaa() {
+//     /// This description is task_a
+//     task task_aaa() {
+//         let my_string = "fdsfsdfsd";
+//         let aaa: num = 5;
+//         let b: bool = true;
+//         let b: num = 411123233232;
+//         let vvv = a
+//         let ttt: str = "asasjkdsa";
+//         let command = `some{inject}command`;
+//         let c = 'qwhjerkslft{ttt}ofpsdfgfreddh{bbb}fdsfsd{if a == 4 { "fdfsdf"; } else { "dfsd"; } }';
+//         aaa.fns::sum(aaa);
+//         if aaa == 5 && ddd == 5 && ddd != 6 {
+//             return true;
+//         } else {
+//             return false;
+//         }
+//     }
+// };"#,
+//     Ty::Determined(DeterminedTy::Num),
+//     ["aaa"],
+//     266
+// );
+
 // #[test]
 // fn test2() {
 //     let pos = 261;

@@ -14,6 +14,7 @@ homepage = "https://github.com/icsmw/sibs"
 enum_ids.workspace = true
 thiserror.workspace = true
 uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }
+tracing.workspace = true
 
 asttree = { path = "../asttree" }
 diagnostics = { path = "../diagnostics" }

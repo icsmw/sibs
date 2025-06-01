@@ -6,7 +6,7 @@ component component_aaa() {
         let aaa: num = 5;
         let b: bool = true;
         let b: num = 411123233232;
-        let vvv = "string";
+        let vvv = my_string;
         let ttt: str = "asasjkdsa";
         let command = `some{inject}command`;
         let c = 'qwhjerkslft{ttt}ofpsdfgfreddh{bbb}fdsfsd{if a == 4 { "fdfsdf"; } else { "dfsd"; } }';

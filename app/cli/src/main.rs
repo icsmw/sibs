@@ -1,5 +1,6 @@
 mod actions;
 mod error;
+mod logs;
 mod params;
 mod script;
 
@@ -11,6 +12,7 @@ pub(crate) use script::*;
 
 #[tokio::main]
 async fn main() -> Result<(), E> {
+    let guard = logs::init()?;
     // Get all actions from parameters
     let actions = Parameters::actions()?;
     // Validate actions
@@ -54,5 +56,6 @@ async fn main() -> Result<(), E> {
             RunArtifact::Void => {}
         }
     }
+    drop(guard);
     Ok(())
 }

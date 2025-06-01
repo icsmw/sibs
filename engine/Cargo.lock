@@ -274,6 +274,7 @@ dependencies = [
  "runtime",
  "semantic",
  "thiserror 2.0.12",
+ "tracing",
  "uuid",
 ]
 

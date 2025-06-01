@@ -16,6 +16,9 @@ enum_ids.workspace = true
 thiserror.workspace = true
 uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }
 tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber = { workspace = true,  features = ["fmt", "env-filter"] }
+tracing-appender.workspace = true
 
 scenario = { path = "../scenario" }
 lsp = { path = "../lsp" }

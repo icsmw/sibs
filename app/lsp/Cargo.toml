@@ -17,6 +17,7 @@ thiserror.workspace = true
 tokio = { workspace = true, features = ["rt-multi-thread", "macros", "io-std"]}
 tower-lsp.workspace = true
 uuid = { workspace = true, features = ["fast-rng", "macro-diagnostics", "v4"] }
+tracing.workspace = true
 
 driver = { path = "../../engine/driver" }
 semantic = { path = "../../engine/semantic" }

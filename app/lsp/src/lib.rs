@@ -7,6 +7,7 @@ use driver::{CompletionMatch, Driver};
 use tokio::sync::RwLock;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{jsonrpc, Client, LanguageServer, LspService, Server};
+use tracing::debug;
 
 #[derive(Debug)]
 struct Backend {
@@ -98,7 +99,18 @@ impl LanguageServer for Backend {
             capabilities: ServerCapabilities {
                 completion_provider: Some(CompletionOptions {
                     resolve_provider: Some(false),
-                    trigger_characters: Some(vec![":".into(), "::".into(), ".".into()]),
+                    trigger_characters: Some(vec![
+                        "=".into(),
+                        "==".into(),
+                        "!=".into(),
+                        ">=".into(),
+                        "<=".into(),
+                        ">".into(),
+                        "<".into(),
+                        ":".into(),
+                        "::".into(),
+                        ".".into(),
+                    ]),
                     ..Default::default()
                 }),
                 text_document_sync: Some(TextDocumentSyncCapability::Options(
@@ -212,8 +224,15 @@ impl LanguageServer for Backend {
                 format!("will find suggestions for position {pos}"),
             )
             .await;
-        let driver = self.get_driver_by_url(uri).await?;
+        debug!("will find suggestions for position {pos}");
+        let mut driver = self.get_driver_by_url(uri).await?;
+        driver.read().map_err(|err| jsonrpc::Error {
+            message: format!("Fail to parse source code: {err}").into(),
+            code: jsonrpc::ErrorCode::ParseError,
+            data: None,
+        })?;
         let Some(mut completion) = driver.completion(pos, None) else {
+            debug!("no completion has been gotten for pos: {pos}");
             return Ok(None);
         };
         let suggestions = completion.suggest().map_err(|err| jsonrpc::Error {
@@ -222,25 +241,27 @@ impl LanguageServer for Backend {
             data: None,
         })?;
         let Some(mut suggestions) = suggestions else {
+            debug!("no suggestions has been gotten for pos: {pos}");
             return Ok(None);
         };
+        debug!(
+            "for pos: {pos} has been found {} suggestions",
+            suggestions.len()
+        );
         suggestions.sort_by(|a, b| a.score.cmp(&b.score));
         let items = suggestions
             .into_iter()
-            .map(|suggestion| {
-                let mut completion = match &suggestion.target {
-                    CompletionMatch::Function(name, ..) => {
-                        CompletionItem::new_simple(name.to_owned(), name.to_owned())
-                    }
-                    CompletionMatch::Variable(name, ..) => {
-                        CompletionItem::new_simple(name.to_owned(), name.to_owned())
-                    }
-                };
-                completion.kind = Some(match &suggestion.target {
-                    CompletionMatch::Function(..) => CompletionItemKind::FUNCTION,
-                    CompletionMatch::Variable(..) => CompletionItemKind::VARIABLE,
-                });
-                completion
+            .map(|suggestion| match &suggestion.target {
+                CompletionMatch::Function(name, ..) => CompletionItem {
+                    label: name.to_owned(),
+                    kind: Some(CompletionItemKind::FUNCTION),
+                    ..Default::default()
+                },
+                CompletionMatch::Variable(name, ..) => CompletionItem {
+                    label: name.to_owned(),
+                    kind: Some(CompletionItemKind::VARIABLE),
+                    ..Default::default()
+                },
             })
             .collect::<Vec<CompletionItem>>();
         Ok(Some(CompletionResponse::Array(items)))

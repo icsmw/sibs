@@ -4,6 +4,7 @@ mod errors;
 mod locator;
 
 use std::{cell::Ref, fmt, io, path::PathBuf};
+use tracing::debug;
 use uuid::Uuid;
 
 pub(crate) use asttree::*;
@@ -218,7 +219,10 @@ impl Driver {
     }
 
     pub fn completion(&self, pos: usize, src: Option<Uuid>) -> Option<Completion<'_>> {
-        let (token, idx) = self.find_token(pos, src)?;
+        let Some((token, idx)) = self.find_token(pos, src) else {
+            debug!("Fail to find token for pos: {pos} (src {src:?})");
+            return None;
+        };
         Some(Completion::new(
             self.locator(idx, src)?,
             self.scx.as_ref()?,
@@ -247,6 +251,9 @@ impl Driver {
     }
 
     pub fn find_token(&self, pos: usize, _src: Option<Uuid>) -> Option<(Ref<Token>, usize)> {
+        if self.parser.is_none() {
+            debug!("Parser isn't inited. No way to find tokens");
+        }
         // TODO: consider SRC
         self.parser
             .as_ref()
