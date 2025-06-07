@@ -97,6 +97,12 @@ impl LanguageServer for Backend {
     async fn initialize(&self, _: InitializeParams) -> jsonrpc::Result<InitializeResult> {
         Ok(InitializeResult {
             capabilities: ServerCapabilities {
+                hover_provider: Some(HoverProviderCapability::Simple(true)),
+                signature_help_provider: Some(SignatureHelpOptions {
+                    trigger_characters: Some(vec!["(".to_string(), ",".to_string()]),
+                    retrigger_characters: None,
+                    work_done_progress_options: Default::default(),
+                }),
                 completion_provider: Some(CompletionOptions {
                     resolve_provider: Some(false),
                     trigger_characters: Some(vec![
@@ -210,6 +216,13 @@ impl LanguageServer for Backend {
             .await;
     }
 
+    async fn signature_help(
+        &self,
+        params: SignatureHelpParams,
+    ) -> jsonrpc::Result<Option<SignatureHelp>> {
+        Ok(None)
+    }
+
     async fn completion(
         &self,
         params: CompletionParams,
@@ -252,11 +265,25 @@ impl LanguageServer for Backend {
         let items = suggestions
             .into_iter()
             .map(|suggestion| match &suggestion.target {
-                CompletionMatch::Function(name, ..) => CompletionItem {
-                    label: name.to_owned(),
-                    kind: Some(CompletionItemKind::FUNCTION),
-                    ..Default::default()
-                },
+                CompletionMatch::Function(name, docs, ..) => {
+                    let detail = if let Some(docs) = &docs {
+                        docs.split('\n').next().map(|str| str.to_owned())
+                    } else {
+                        None
+                    };
+                    CompletionItem {
+                        label: name.to_owned(),
+                        kind: Some(CompletionItemKind::FUNCTION),
+                        detail,
+                        // documentation: docs.clone().map(|docs| {
+                        //     Documentation::MarkupContent(MarkupContent {
+                        //         kind: MarkupKind::Markdown,
+                        //         value: docs,
+                        //     })
+                        // }),
+                        ..Default::default()
+                    }
+                }
                 CompletionMatch::Variable(name, ..) => CompletionItem {
                     label: name.to_owned(),
                     kind: Some(CompletionItemKind::VARIABLE),
@@ -265,6 +292,39 @@ impl LanguageServer for Backend {
             })
             .collect::<Vec<CompletionItem>>();
         Ok(Some(CompletionResponse::Array(items)))
+    }
+
+    async fn hover(&self, params: HoverParams) -> jsonrpc::Result<Option<Hover>> {
+        let uri = &params.text_document_position_params.text_document.uri;
+        let pos = self
+            .get_abs_pos(uri, params.text_document_position_params.position)
+            .await?;
+        self.client
+            .log_message(
+                MessageType::LOG,
+                format!("will process hover for position {pos}"),
+            )
+            .await;
+        debug!("will process hover for position {pos}");
+        let mut driver = self.get_driver_by_url(uri).await?;
+        driver.read().map_err(|err| jsonrpc::Error {
+            message: format!("Fail to parse source code: {err}").into(),
+            code: jsonrpc::ErrorCode::ParseError,
+            data: None,
+        })?;
+        let Some(positioning) = driver.positioning(pos, None) else {
+            return Ok(None);
+        };
+        let Some(docs) = positioning.docs() else {
+            return Ok(None);
+        };
+        Ok(Some(Hover {
+            contents: HoverContents::Markup(MarkupContent {
+                kind: MarkupKind::Markdown,
+                value: docs,
+            }),
+            range: None,
+        }))
     }
 
     async fn shutdown(&self) -> jsonrpc::Result<()> {

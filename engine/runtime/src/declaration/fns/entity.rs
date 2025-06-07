@@ -36,6 +36,19 @@ impl FnEntity<'_> {
             Self::CFn(en) => en.args.iter().map(|arg| &arg.ty).collect::<Vec<&Ty>>(),
         }
     }
+    pub fn docs(&self) -> Option<String> {
+        match self {
+            Self::UFn(_en) => None,
+            Self::EFn(en) => {
+                if en.docs.is_empty() {
+                    None
+                } else {
+                    Some(en.docs.clone())
+                }
+            }
+            Self::CFn(_en) => None,
+        }
+    }
     pub async fn execute(
         &self,
         rt: Runtime,

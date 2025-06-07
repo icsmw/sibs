@@ -12,6 +12,7 @@ members = [
     "functions",
     "driver",
     "support/boxed",
+    "support/docs",
     "support/importer",
     "support/term",
     "tests/cmds/test_utils",

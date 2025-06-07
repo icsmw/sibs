@@ -7,7 +7,7 @@ use quote::{format_ident, quote};
 use refs::*;
 use std::borrow::Borrow;
 use syn::{
-    parse_macro_input, GenericArgument, ItemFn, PathArguments, ReturnType, Signature, Type,
+    parse_macro_input, GenericArgument, ItemFn, Meta, PathArguments, ReturnType, Signature, Type,
     TypePath,
 };
 
@@ -34,8 +34,60 @@ fn get_result_type(sig: &Signature) -> Option<(&Type, &Type)> {
     };
     Some((type_ok, type_err))
 }
+
+fn get_docs(input: pm::TokenStream) -> Result<syn::LitStr, pm::TokenStream> {
+    let input: syn::Item = syn::parse(input).unwrap();
+
+    let attrs = match &input {
+        syn::Item::Fn(inner) => &inner.attrs,
+        syn::Item::Struct(inner) => &inner.attrs,
+        syn::Item::Mod(inner) => &inner.attrs,
+        _ => {
+            return Err(syn::Error::new_spanned(
+                &input,
+                "#[docs] is only supported on functions, structs or modules",
+            )
+            .to_compile_error()
+            .into());
+        }
+    };
+
+    let docs = attrs
+        .iter()
+        .filter_map(|attr| {
+            if attr.path().is_ident("doc") {
+                match &attr.meta {
+                    Meta::NameValue(nv) => {
+                        if let syn::Expr::Lit(syn::ExprLit {
+                            lit: syn::Lit::Str(lit),
+                            ..
+                        }) = &nv.value
+                        {
+                            Some(lit.value())
+                        } else {
+                            None
+                        }
+                    }
+                    _ => None,
+                }
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<String>>()
+        .join("\n");
+
+    Ok(syn::LitStr::new(&docs, proc_macro2::Span::call_site()))
+}
+
 #[proc_macro_attribute]
 pub fn import(args: pm::TokenStream, input: pm::TokenStream) -> pm::TokenStream {
+    let doc_literal = match get_docs(input.clone()) {
+        Ok(docs) => docs,
+        Err(err) => {
+            return err;
+        }
+    };
     let opt: Opt = parse_macro_input!(args as Opt);
     let item_fn = parse_macro_input!(input as ItemFn);
     let fn_name = &item_fn.sig.ident;
@@ -116,6 +168,7 @@ pub fn import(args: pm::TokenStream, input: pm::TokenStream) -> pm::TokenStream 
                 uuid: Uuid::new_v4(),
                 fullname: #reference.to_string(),
                 name: stringify!(#fn_name).to_string(),
+                docs: String::from(#doc_literal),
                 args: vec![#(#declarations,)*],
                 result: #type_ok,
                 exec: #func_name,

@@ -260,6 +260,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "docs"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "driver"
 version = "0.1.0"
 dependencies = [
@@ -377,6 +386,7 @@ dependencies = [
  "boxed",
  "bstorage",
  "diagnostics",
+ "docs",
  "fshasher",
  "importer",
  "lexer",
@@ -1024,6 +1034,7 @@ dependencies = [
  "proptest",
  "runtime",
  "thiserror 2.0.12",
+ "tracing",
  "uuid",
 ]
 

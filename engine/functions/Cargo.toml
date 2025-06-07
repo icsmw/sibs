@@ -22,6 +22,7 @@ bstorage.workspace = true
 
 runtime = { path = "../runtime" }
 boxed = { path = "../support/boxed" }
+docs = { path = "../support/docs" }
 importer = { path = "../support/importer" }
 diagnostics = { path = "../diagnostics" }
 lexer = { path = "../lexer" }

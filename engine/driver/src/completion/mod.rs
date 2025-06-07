@@ -69,10 +69,12 @@ impl<'a> Completion<'a> {
     }
     fn get_location_data(&mut self) -> Result<Option<LocationData>, E> {
         let Some(current) = self.locator.prev_token() else {
+            self.locator.drop();
             return Ok(None);
         };
         let token = current.token.clone();
         drop(current);
+        debug!("Prev token: {}", token.id());
         let tree = self.locator.get_ownership_tree(token.pos.from.abs);
         let mut blocks = Vec::new();
         let mut mods = Vec::new();
@@ -122,33 +124,89 @@ impl<'a> Completion<'a> {
     }
 
     pub fn suggest(&mut self) -> Result<Option<Vec<CompletionSuggestion>>, E> {
+        debug!(
+            "looking for suggestions based on fragment: \"{}\"",
+            self.fragment
+        );
         let Some(info) = self.get_location_data()? else {
             return Ok(None);
         };
+        debug!("location data has been gotten");
         let Some(scope) = self.scx.tys.get_scope(&*info.get_scx_uuid()) else {
             return Ok(None);
         };
+        debug!("scope has been detected");
+        let cursor = info.token.id();
+        // shift position to the right before cursor
+        let before = self.locator.prev();
+        if let Some(before) = &before {
+            if matches!(before.token.kind, Kind::Keyword(Keyword::Let)) {
+                return Ok(None);
+            }
+        }
+        drop(before);
+
         let filter = loop {
             let Some(prev) = self.locator.prev() else {
                 break None;
             };
-            let point_kind = info.token.id();
             let prev_kind = prev.token.kind.clone();
+            debug!("cursor token: {cursor}; prev token: {}", prev_kind.id());
             drop(prev);
+            match &cursor {
+                KindId::Dot => {
+                    let Some(before) = self.locator.prev_node() else {
+                        return Ok(None);
+                    };
+                    let ty = find_ty_by_node(&before.node, scope, self.scx);
+                    break Some(Filter::FunctionArgument(ty));
+                }
+                _ => {}
+            }
             match prev_kind {
                 Kind::Dot => {
                     let ty = find_ty(&mut self.locator, scope, self.scx);
-                    match point_kind {
-                        KindId::Identifier => {
+                    match cursor {
+                        KindId::Identifier | KindId::Dot => {
                             break Some(Filter::FunctionArgument(ty));
                         }
                         _ => {}
                     }
                 }
+                Kind::Number(..) => match cursor {
+                    KindId::Dot => {
+                        break Some(Filter::FunctionArgument(Some(Ty::Determined(
+                            DeterminedTy::Num,
+                        ))));
+                    }
+                    _ => {
+                        break None;
+                    }
+                },
+                Kind::String(..) | Kind::SingleQuote => match cursor {
+                    KindId::Dot => {
+                        break Some(Filter::FunctionArgument(Some(Ty::Determined(
+                            DeterminedTy::Str,
+                        ))));
+                    }
+                    _ => {
+                        break None;
+                    }
+                },
                 Kind::Keyword(Keyword::Let) => {
                     break None;
                 }
-                Kind::Keyword(Keyword::If) => match point_kind {
+                Kind::Keyword(Keyword::True) | Kind::Keyword(Keyword::False) => match cursor {
+                    KindId::Dot => {
+                        break Some(Filter::FunctionArgument(Some(Ty::Determined(
+                            DeterminedTy::Bool,
+                        ))));
+                    }
+                    _ => {
+                        break None;
+                    }
+                },
+                Kind::Keyword(Keyword::If) => match cursor {
                     KindId::Identifier => {
                         break Some(Filter::All(None));
                     }
@@ -164,7 +222,7 @@ impl<'a> Completion<'a> {
                 }
                 Kind::Equals => {
                     let ty = find_ty(&mut self.locator, scope, self.scx);
-                    break match point_kind {
+                    break match cursor {
                         KindId::Identifier => Some(Filter::All(ty)),
                         _ => Some(Filter::All(None)),
                     };
@@ -196,7 +254,11 @@ impl<'a> Completion<'a> {
             Filter::FunctionArgument(ty) | Filter::FunctionCall(ty) => Some(funcs::collect(
                 &self.scx.fns,
                 &info.mods.iter().map(|s| s.as_str()).collect::<Vec<&str>>(),
-                &self.fragment,
+                if self.fragment.trim() == "." {
+                    ""
+                } else {
+                    &self.fragment
+                },
                 if matches!(filter, Filter::FunctionArgument(..)) {
                     FnTypeKind::FirstArg(ty.as_ref())
                 } else {
@@ -228,23 +290,32 @@ fn find_ty<'a>(
     scope: &TyScope,
     scx: &SemanticCx,
 ) -> Option<Ty> {
-    let prev = locator.prev()?.node?;
-    match prev.get_node() {
-        Node::Expression(Expression::Variable(node)) => scope
-            .lookup(&node.ident)
-            .map(|entity| entity.ty())
-            .flatten()
-            .cloned(),
+    find_ty_by_node(locator.prev()?.node?, scope, scx)
+}
+
+fn find_ty_by_node<'a>(node: &LinkedNode, scope: &TyScope, scx: &SemanticCx) -> Option<Ty> {
+    match node.get_node() {
+        Node::Expression(Expression::Variable(node)) => {
+            scx.find_linked_ty(&node.uuid).or_else(|| {
+                scope
+                    .lookup(&node.ident)
+                    .map(|entity| entity.ty())
+                    .flatten()
+                    .cloned()
+            })
+        }
         Node::Declaration(Declaration::VariableName(node)) => scope
             .lookup(&node.ident)
             .map(|entity| entity.ty())
             .flatten()
             .cloned(),
         Node::Declaration(Declaration::VariableType(node)) => scx.table.get(&node.uuid),
-        Node::Declaration(Declaration::VariableVariants(..))
-        | Node::Declaration(Declaration::VariableTypeDeclaration(..)) => {
-            find_ty(locator, scope, scx)
-        }
+        // Node::Declaration(Declaration::VariableVariants(..))
+        Node::Declaration(Declaration::VariableTypeDeclaration(node)) => node
+            .types
+            .first()
+            .map(|n| find_ty_by_node(n, scope, scx))
+            .flatten(),
         _ => None,
     }
 }

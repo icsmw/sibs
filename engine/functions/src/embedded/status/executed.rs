@@ -5,6 +5,8 @@ declare_embedded_fn!(
     DeterminedTy::ExecuteResult
 );
 
+#[docs]
+/// Documentation placeholder
 #[boxed]
 pub fn executor(
     mut args: Vec<FnArgValue>,

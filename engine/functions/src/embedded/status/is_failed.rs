@@ -5,6 +5,8 @@ declare_embedded_fn!(
     DeterminedTy::Bool
 );
 
+#[docs]
+/// Documentation placeholder
 #[boxed]
 pub fn executor(
     args: Vec<FnArgValue>,

@@ -54,7 +54,7 @@ macro_rules! completion_fn_return {
                     CompletionMatch::Variable(..) => {
                         false
                     }
-                    CompletionMatch::Function(name, _, return_ty) => return_ty
+                    CompletionMatch::Function(name, _, _, return_ty) => return_ty
                         .as_ref()
                         .map(|arg_ty| if !arg_ty.compatible(&$expected_ty) {
                             eprintln!("Function {name} has unexpected type of the first argument: {return_ty:?} vs {:?}", $expected_ty);
@@ -85,6 +85,7 @@ macro_rules! no_completion {
                 let suggestions = completion
                     .suggest()
                     .unwrap_or_else(|err| panic!("{err}"));
+                println!(">>>>>>>>>>>>>>> {suggestions:?}");
                 assert!(suggestions.is_none());
             }
         }

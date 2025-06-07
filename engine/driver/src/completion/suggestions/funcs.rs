@@ -54,6 +54,7 @@ pub fn collect(
     fragment: &str,
     ty: FnTypeKind,
 ) -> Vec<CompletionSuggestion> {
+    debug!("try to find function for \"{fragment}\", {ty:?}");
     let mut collected: Vec<CompletionSuggestion> = fns
         .ufns
         .collect_by_path(mods)
@@ -66,6 +67,7 @@ pub fn collect(
                 Some(CompletionSuggestion {
                     target: CompletionMatch::Function(
                         name.to_string(),
+                        None,
                         fn_entity.args.first().map(|arg| arg.ty.clone()),
                         Some(fn_entity.result.clone()),
                     ),
@@ -75,6 +77,7 @@ pub fn collect(
                 Some(CompletionSuggestion {
                     target: CompletionMatch::Function(
                         name.to_string(),
+                        None,
                         fn_entity.args.first().map(|arg| arg.ty.clone()),
                         Some(fn_entity.result.clone()),
                     ),
@@ -97,6 +100,7 @@ pub fn collect(
                     Some(CompletionSuggestion {
                         target: CompletionMatch::Function(
                             name.to_string(),
+                            Some(fn_entity.docs.clone()),
                             fn_entity.args.first().cloned(),
                             Some(Ty::Determined(fn_entity.result.clone())),
                         ),
@@ -106,6 +110,7 @@ pub fn collect(
                     Some(CompletionSuggestion {
                         target: CompletionMatch::Function(
                             name.to_string(),
+                            Some(fn_entity.docs.clone()),
                             fn_entity.args.first().cloned(),
                             Some(Ty::Determined(fn_entity.result.clone())),
                         ),

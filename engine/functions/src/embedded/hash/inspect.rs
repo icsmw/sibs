@@ -40,6 +40,8 @@ struct PrevHash {
     hash: Vec<u8>,
 }
 
+#[docs]
+/// Documentation placeholder
 #[boxed]
 pub fn executor(
     args: Vec<FnArgValue>,

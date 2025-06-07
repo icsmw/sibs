@@ -115,12 +115,12 @@ impl Finalization for LinkedNode {
                     .get_mut()
                     .map_err(|err| LinkedErr::from(err.into(), ppm))?
                     .parent
-                    .set(ppm.uuid(), ty);
+                    .set(ppm.uuid(), ty.to_owned());
                 ppm.initialize(scx)?;
                 ppm.finalize(scx)?;
-                scx.register(ppm.uuid(), &Ty::Indeterminate);
+                scx.link_ty_with_node(ppm.uuid(), Ty::Indeterminate);
                 ty = ppm.infer_type(scx)?;
-                scx.register(ppm.uuid(), &ty);
+                scx.link_ty_with_node(ppm.uuid(), ty.to_owned());
             }
             Ok(())
         }

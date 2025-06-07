@@ -9,9 +9,10 @@ pub enum CompletionMatch {
     /// `Option<Ty>` - type of variable
     Variable(String, Option<Ty>),
     /// `String` - function name
+    /// `Option<String>` - function docs
     /// `Option<Ty>` - type of the first argument
     /// `Option<Ty>` - return type
-    Function(String, Option<Ty>, Option<Ty>),
+    Function(String, Option<String>, Option<Ty>, Option<Ty>),
 }
 
 #[derive(Debug)]

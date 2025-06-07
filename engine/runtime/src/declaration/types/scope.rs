@@ -1,3 +1,5 @@
+use tracing::debug;
+
 use crate::*;
 
 #[derive(Debug, Default)]
@@ -14,7 +16,7 @@ impl TyScope {
     }
     pub fn leave(&mut self) -> Result<(), E> {
         if !self.location.is_empty() {
-            self.location.pop();
+            let _ = self.location.pop();
             Ok(())
         } else {
             Err(E::AttemptToLeaveRootContextLevel)

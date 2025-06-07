@@ -1,17 +1,14 @@
 use crate::*;
 
-pub type ExecutorEmbeddedFn = fn(
-    Vec<FnArgValue>,
-    Runtime,
-    Context,
-    caller: SrcLink,
-) -> RtPinnedResult<'static, LinkedErr<E>>;
+pub type ExecutorEmbeddedFn =
+    fn(Vec<FnArgValue>, Runtime, Context, caller: SrcLink) -> RtPinnedResult<'static, LinkedErr<E>>;
 
 #[derive(Debug)]
 pub struct EmbeddedFnEntity {
     pub uuid: Uuid,
     pub fullname: String,
     pub name: String,
+    pub docs: String,
     pub args: Vec<Ty>,
     pub result: DeterminedTy,
     pub exec: ExecutorEmbeddedFn,

@@ -2,30 +2,37 @@ use crate::*;
 
 pub fn register(efns: &mut EFns) -> Result<(), E> {
     #[import(strs)]
+    /// Documentation placeholder
     fn repeat(target: String, count: usize) -> Result<String, E> {
         Ok(target.repeat(count))
     }
     #[import(strs)]
+    /// Documentation placeholder
     fn to_ascii_lowercase(target: String) -> Result<String, E> {
         Ok(target.to_ascii_lowercase())
     }
     #[import(strs)]
+    /// Documentation placeholder
     fn to_ascii_uppercase(target: String) -> Result<String, E> {
         Ok(target.to_ascii_uppercase())
     }
     #[import(strs)]
+    /// Documentation placeholder
     fn to_lowercase(target: String) -> Result<String, E> {
         Ok(target.to_lowercase())
     }
     #[import(strs)]
+    /// Documentation placeholder
     fn to_uppercase(target: String) -> Result<String, E> {
         Ok(target.to_uppercase())
     }
     #[import(strs)]
+    /// Documentation placeholder
     fn replace(target: String, old: String, new: String) -> Result<String, E> {
         Ok(target.replace(old.as_str(), &new))
     }
     #[import(strs)]
+    /// Documentation placeholder
     fn sub(target: String, from: usize, count: usize) -> Result<String, E> {
         let len = target.chars().count();
         if from >= len {
@@ -39,30 +46,37 @@ pub fn register(efns: &mut EFns) -> Result<(), E> {
             .collect())
     }
     #[import(strs)]
+    /// Documentation placeholder
     fn split_off(mut target: String, at: usize) -> Result<String, E> {
         Ok(target.split_off(at))
     }
     #[import(strs)]
+    /// Documentation placeholder
     fn trim(target: String) -> Result<String, E> {
         Ok(target.trim().to_string())
     }
     #[import(strs)]
+    /// Documentation placeholder
     fn trim_end(target: String) -> Result<String, E> {
         Ok(target.trim_end().to_string())
     }
     #[import(strs)]
+    /// Documentation placeholder
     fn trim_start(target: String) -> Result<String, E> {
         Ok(target.trim_start().to_string())
     }
     #[import(strs)]
+    /// Documentation placeholder
     fn is_empty(target: String) -> Result<bool, E> {
         Ok(target.is_empty())
     }
     #[import(strs)]
+    /// Documentation placeholder
     fn len(target: String) -> Result<usize, E> {
         Ok(target.len())
     }
     #[import(strs)]
+    /// Documentation placeholder
     fn is_trimmed_empty(target: String) -> Result<bool, E> {
         Ok(target.trim().is_empty())
     }

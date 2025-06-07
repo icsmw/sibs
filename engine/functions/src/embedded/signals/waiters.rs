@@ -2,6 +2,8 @@ use crate::*;
 
 declare_embedded_fn!(vec![Ty::Determined(DeterminedTy::Str)], DeterminedTy::Num);
 
+#[docs]
+/// Documentation placeholder
 #[boxed]
 pub fn executor(
     mut args: Vec<FnArgValue>,

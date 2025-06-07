@@ -4,6 +4,7 @@ mod utils;
 
 pub(crate) use boxed::boxed;
 pub(crate) use diagnostics::*;
+pub(crate) use docs::docs;
 pub(crate) use importer::*;
 pub(crate) use lexer::*;
 pub(crate) use runtime::error::E;

@@ -2,6 +2,7 @@ mod completion;
 mod error;
 mod errors;
 mod locator;
+mod positioning;
 
 use std::{cell::Ref, fmt, io, path::PathBuf};
 use tracing::debug;
@@ -15,6 +16,8 @@ pub(crate) use runtime::{Fns, Ty, TyScope};
 pub(crate) use semantic::*;
 
 pub use completion::*;
+pub use positioning::*;
+
 pub(crate) use error::*;
 pub(crate) use errors::*;
 pub(crate) use locator::*;
@@ -216,6 +219,14 @@ impl Driver {
             idx,
             parser,
         ))
+    }
+
+    pub fn positioning(&self, pos: usize, src: Option<Uuid>) -> Option<Positioning> {
+        let Some(node) = self.find_node(pos, src) else {
+            debug!("Fail to find token for pos: {pos} (src {src:?})");
+            return None;
+        };
+        Positioning::from_node(node, self.scx.as_ref())
     }
 
     pub fn completion(&self, pos: usize, src: Option<Uuid>) -> Option<Completion<'_>> {

@@ -9,7 +9,6 @@ import {
 let client: LanguageClient;
 
 export function activate(context: vscode.ExtensionContext) {
-    console.log(`>>>>>>>>>>>>>>>>> hello world!`);
     const output = vscode.window.createOutputChannel("SIBS");
     output.show();
     const item = vscode.window.createStatusBarItem(

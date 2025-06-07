@@ -14,7 +14,9 @@ impl InferType for Variable {
             if let (Some(..), false) = (self.negation.as_ref(), ty.bool()) {
                 Err(LinkedErr::sfrom(E::NegationToNotBool, self))
             } else {
-                Ok(ty.to_owned())
+                let ty = ty.clone();
+                scx.link_ty_with_node(&self.uuid, ty.clone());
+                Ok(ty)
             }
         } else {
             Err(LinkedErr::from(

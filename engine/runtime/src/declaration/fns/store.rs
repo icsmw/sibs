@@ -8,6 +8,13 @@ pub struct Fns {
 }
 
 impl Fns {
+    pub fn find<S: AsRef<str>>(&self, name: S) -> Option<FnEntity<'_>> {
+        self.efns
+            .funcs
+            .get(name.as_ref())
+            .map(FnEntity::EFn)
+            .or_else(|| self.ufns.funcs.get(name.as_ref()).map(FnEntity::UFn))
+    }
     pub fn lookup<S: AsRef<str>>(&mut self, name: S, caller: &Uuid) -> Option<FnEntity<'_>> {
         if let Some(entity) = self.ufns.lookup(name.as_ref(), caller) {
             Some(FnEntity::UFn(entity))

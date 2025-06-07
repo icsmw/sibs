@@ -36,6 +36,7 @@ macro_rules! import_embedded_fn {
                     uuid: Uuid::new_v4(),
                     fullname: $module_ref::fullname(),
                     name: $module_ref::name(),
+                    docs: $module_ref::DOCS.to_owned(),
                     args: $module_ref::args(),
                     result: $module_ref::returning(),
                     exec: $module_ref::executor,

@@ -2,6 +2,8 @@ use crate::*;
 
 declare_embedded_fn!(vec![Ty::Repeated(DeterminedTy::Any)], DeterminedTy::Void);
 
+#[docs]
+/// Documentation placeholder
 #[boxed]
 pub fn executor(
     args: Vec<FnArgValue>,

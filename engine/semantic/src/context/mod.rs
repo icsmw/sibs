@@ -66,7 +66,13 @@ impl SemanticCx {
         self.table.set(node.uuid(), ty);
         Ok(())
     }
-    pub fn register(&mut self, uuid: &Uuid, ty: &Ty) {
-        self.table.set(uuid, ty.clone());
+    pub fn link_ty_with_node(&mut self, uuid: &Uuid, ty: Ty) {
+        if self.table.has(uuid) {
+            return;
+        }
+        self.table.set(uuid, ty);
+    }
+    pub fn find_linked_ty(&self, node: &Uuid) -> Option<Ty> {
+        self.table.get(node)
     }
 }
