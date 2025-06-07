@@ -6,6 +6,7 @@ mod suggestions;
 
 pub use search::*;
 pub use suggestions::*;
+use tracing::warn;
 
 use crate::*;
 use runtime::{DeterminedTy, TyCompatibility, TypeEntity};
@@ -33,7 +34,9 @@ struct LocationData {
     blocks: Vec<Uuid>,
     /// Location in modules
     mods: Vec<String>,
-    token: Token,
+    cursor: Token,
+    before_token: Option<Token>,
+    before_node: Option<Uuid>,
 }
 
 impl LocationData {
@@ -72,10 +75,10 @@ impl<'a> Completion<'a> {
             self.locator.drop();
             return Ok(None);
         };
-        let token = current.token.clone();
+        let cursor = current.token.clone();
         drop(current);
-        debug!("Prev token: {}", token.id());
-        let tree = self.locator.get_ownership_tree(token.pos.from.abs);
+        debug!("Prev token: {}", cursor.id());
+        let tree = self.locator.get_ownership_tree(cursor.pos.from.abs);
         let mut blocks = Vec::new();
         let mut mods = Vec::new();
         let mut ownership = None;
@@ -110,13 +113,22 @@ impl<'a> Completion<'a> {
                 _ => {}
             }
         }
+        let restore = self.locator.pin();
+        let before_token = self.locator.prev().map(|prev| prev.token.clone());
+        restore(&mut self.locator);
+        let before_node = self
+            .locator
+            .prev_node()
+            .map(|prev| prev.node.uuid().to_owned());
         self.locator.drop();
         if let Some(ownership) = ownership {
             Ok(Some(LocationData {
                 ownership,
                 blocks,
                 mods,
-                token,
+                cursor,
+                before_token,
+                before_node,
             }))
         } else {
             Ok(None)
@@ -124,108 +136,67 @@ impl<'a> Completion<'a> {
     }
 
     pub fn suggest(&mut self) -> Result<Option<Vec<CompletionSuggestion>>, E> {
-        debug!(
-            "looking for suggestions based on fragment: \"{}\"",
-            self.fragment
-        );
-        let Some(info) = self.get_location_data()? else {
-            return Ok(None);
-        };
-        debug!("location data has been gotten");
-        let Some(scope) = self.scx.tys.get_scope(&*info.get_scx_uuid()) else {
-            return Ok(None);
-        };
-        debug!("scope has been detected");
-        let cursor = info.token.id();
-        // shift position to the right before cursor
-        let before = self.locator.prev();
-        if let Some(before) = &before {
-            if matches!(before.token.kind, Kind::Keyword(Keyword::Let)) {
-                return Ok(None);
-            }
-        }
-        drop(before);
-
-        let filter = loop {
-            let Some(prev) = self.locator.prev() else {
-                break None;
-            };
-            let prev_kind = prev.token.kind.clone();
-            debug!("cursor token: {cursor}; prev token: {}", prev_kind.id());
-            drop(prev);
-            match &cursor {
+        fn get_filter(
+            loc: &LocationData,
+            before_token: &Token,
+            before_node: &LinkedNode,
+            scx: &SemanticCx,
+            ty_scope: &TyScope,
+        ) -> Option<Filter> {
+            match &loc.cursor.id() {
                 KindId::Dot => {
-                    let Some(before) = self.locator.prev_node() else {
-                        return Ok(None);
-                    };
-                    let ty = find_ty_by_node(&before.node, scope, self.scx);
-                    break Some(Filter::FunctionArgument(ty));
+                    let ty = find_ty_by_node(&before_node, ty_scope, scx);
+                    return Some(Filter::FunctionArgument(ty));
                 }
                 _ => {}
             }
-            match prev_kind {
+            match before_token.kind {
                 Kind::Dot => {
-                    let ty = find_ty(&mut self.locator, scope, self.scx);
-                    match cursor {
-                        KindId::Identifier | KindId::Dot => {
-                            break Some(Filter::FunctionArgument(ty));
-                        }
-                        _ => {}
+                    let ty = find_ty_by_node(&before_node, ty_scope, scx);
+                    match loc.cursor.id() {
+                        KindId::Identifier | KindId::Dot => Some(Filter::FunctionArgument(ty)),
+                        _ => None,
                     }
                 }
-                Kind::Number(..) => match cursor {
-                    KindId::Dot => {
-                        break Some(Filter::FunctionArgument(Some(Ty::Determined(
-                            DeterminedTy::Num,
-                        ))));
-                    }
-                    _ => {
-                        break None;
-                    }
+                Kind::Number(..) => match loc.cursor.id() {
+                    KindId::Dot => Some(Filter::FunctionArgument(Some(Ty::Determined(
+                        DeterminedTy::Num,
+                    )))),
+                    _ => None,
                 },
-                Kind::String(..) | Kind::SingleQuote => match cursor {
-                    KindId::Dot => {
-                        break Some(Filter::FunctionArgument(Some(Ty::Determined(
-                            DeterminedTy::Str,
-                        ))));
-                    }
-                    _ => {
-                        break None;
-                    }
+                Kind::String(..) | Kind::SingleQuote => match loc.cursor.id() {
+                    KindId::Dot => Some(Filter::FunctionArgument(Some(Ty::Determined(
+                        DeterminedTy::Str,
+                    )))),
+                    _ => None,
                 },
-                Kind::Keyword(Keyword::Let) => {
-                    break None;
-                }
-                Kind::Keyword(Keyword::True) | Kind::Keyword(Keyword::False) => match cursor {
-                    KindId::Dot => {
-                        break Some(Filter::FunctionArgument(Some(Ty::Determined(
+                Kind::Keyword(Keyword::Let) => None,
+                Kind::Keyword(Keyword::True) | Kind::Keyword(Keyword::False) => {
+                    match loc.cursor.id() {
+                        KindId::Dot => Some(Filter::FunctionArgument(Some(Ty::Determined(
                             DeterminedTy::Bool,
-                        ))));
+                        )))),
+                        _ => None,
                     }
-                    _ => {
-                        break None;
-                    }
+                }
+                Kind::Keyword(Keyword::If) => match loc.cursor.id() {
+                    KindId::Identifier => Some(Filter::All(None)),
+                    _ => None,
                 },
-                Kind::Keyword(Keyword::If) => match cursor {
-                    KindId::Identifier => {
-                        break Some(Filter::All(None));
-                    }
-                    _ => {}
-                },
-                Kind::LeftParen => {}
-                Kind::Whitespace(..) => {}
-                Kind::LeftBrace => {}
-                Kind::Colon => {}
-                Kind::Comma => {}
+                Kind::LeftParen => None,
+                Kind::Whitespace(..) => None,
+                Kind::LeftBrace => None,
+                Kind::Colon => None,
+                Kind::Comma => None,
                 Kind::Semicolon => {
-                    break Some(Filter::All(None));
+                    return Some(Filter::All(None));
                 }
                 Kind::Equals => {
-                    let ty = find_ty(&mut self.locator, scope, self.scx);
-                    break match cursor {
+                    let ty = find_ty_by_node(&before_node, ty_scope, scx);
+                    match loc.cursor.id() {
                         KindId::Identifier => Some(Filter::All(ty)),
                         _ => Some(Filter::All(None)),
-                    };
+                    }
                 }
                 Kind::Plus
                 | Kind::Minus
@@ -234,26 +205,44 @@ impl<'a> Completion<'a> {
                 | Kind::Less
                 | Kind::Greater
                 | Kind::LessEqual
-                | Kind::GreaterEqual => {
-                    break Some(Filter::All(Some(Ty::Determined(DeterminedTy::Num))));
-                }
-                _ => {}
-            };
+                | Kind::GreaterEqual => Some(Filter::All(Some(Ty::Determined(DeterminedTy::Num)))),
+                _ => None,
+            }
+        }
+        debug!(
+            "looking for suggestions based on fragment: \"{}\"",
+            self.fragment
+        );
+        let Some(loc) = self.get_location_data()? else {
+            return Ok(None);
         };
-        let Some(filter) = filter else {
+        debug!("location data has been gotten");
+        let Some(ty_scope) = self.scx.tys.get_scope(&*loc.get_scx_uuid()) else {
+            return Ok(None);
+        };
+        debug!("scope has been detected");
+        let (Some(before_token), Some(before_node)) = (&loc.before_token, &loc.before_node) else {
+            return Ok(None);
+        };
+        let Some(before_node) = self.locator.find(&before_node) else {
+            warn!("Fail to find node {before_node}");
+            return Ok(None);
+        };
+        let Some(filter) = get_filter(&loc, &before_token, before_node, &self.scx, &ty_scope)
+        else {
             return Ok(None);
         };
         let suggestion = match &filter {
             Filter::Variables(ty) => Some(vars::collect(
-                &scope,
-                &info.blocks,
+                &ty_scope,
+                &loc.blocks,
                 &self.fragment,
                 ty.as_ref(),
                 self.from,
             )),
             Filter::FunctionArgument(ty) | Filter::FunctionCall(ty) => Some(funcs::collect(
                 &self.scx.fns,
-                &info.mods.iter().map(|s| s.as_str()).collect::<Vec<&str>>(),
+                &loc.mods.iter().map(|s| s.as_str()).collect::<Vec<&str>>(),
                 if self.fragment.trim() == "." {
                     ""
                 } else {
@@ -267,10 +256,10 @@ impl<'a> Completion<'a> {
             )),
             Filter::All(ty) => {
                 let mut suggestions =
-                    vars::collect(&scope, &info.blocks, &self.fragment, None, self.from);
+                    vars::collect(&ty_scope, &loc.blocks, &self.fragment, None, self.from);
                 suggestions.extend(funcs::collect(
                     &self.scx.fns,
-                    &info.mods.iter().map(|s| s.as_str()).collect::<Vec<&str>>(),
+                    &loc.mods.iter().map(|s| s.as_str()).collect::<Vec<&str>>(),
                     &self.fragment,
                     FnTypeKind::Returns(ty.as_ref()),
                 ));
@@ -283,14 +272,6 @@ impl<'a> Completion<'a> {
         };
         Ok(suggestion)
     }
-}
-
-fn find_ty<'a>(
-    locator: &mut LocationIterator<'a>,
-    scope: &TyScope,
-    scx: &SemanticCx,
-) -> Option<Ty> {
-    find_ty_by_node(locator.prev()?.node?, scope, scx)
 }
 
 fn find_ty_by_node<'a>(node: &LinkedNode, scope: &TyScope, scx: &SemanticCx) -> Option<Ty> {

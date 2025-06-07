@@ -80,8 +80,35 @@ impl<'a> LocationIterator<'a> {
         }
     }
 
+    pub fn pin(&self) -> impl Fn(&mut LocationIterator) {
+        let idx = self.idx;
+        move |loc: &mut LocationIterator| {
+            loc.idx = idx;
+        }
+    }
+
     pub fn drop(&mut self) {
         self.idx = self.initial;
+    }
+
+    pub fn find(&self, uuid: &Uuid) -> Option<&'a LinkedNode> {
+        fn find<'a>(uuid: &Uuid, nodes: Vec<&'a LinkedNode>) -> Option<&'a LinkedNode> {
+            if let Some(node) = nodes.iter().find(|n| n.uuid() == uuid) {
+                Some(&node)
+            } else {
+                for node in nodes.into_iter() {
+                    if let Some(node) = find(uuid, node.childs()) {
+                        return Some(node);
+                    }
+                }
+                None
+            }
+        }
+        if &self.anchor.uuid == uuid {
+            None
+        } else {
+            find(uuid, self.anchor.childs())
+        }
     }
 
     pub fn get_ownership_tree(&self, pos: usize) -> Vec<&LinkedNode> {

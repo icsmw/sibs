@@ -85,7 +85,6 @@ macro_rules! no_completion {
                 let suggestions = completion
                     .suggest()
                     .unwrap_or_else(|err| panic!("{err}"));
-                println!(">>>>>>>>>>>>>>> {suggestions:?}");
                 assert!(suggestions.is_none());
             }
         }
