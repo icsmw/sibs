@@ -2,6 +2,7 @@ mod completion;
 mod error;
 mod errors;
 mod locator;
+mod map;
 mod signature;
 
 use std::{cell::Ref, fmt, io, path::PathBuf};
@@ -11,6 +12,7 @@ use uuid::Uuid;
 pub(crate) use asttree::*;
 pub(crate) use diagnostics::*;
 pub(crate) use lexer::*;
+pub(crate) use map::*;
 pub(crate) use parser::*;
 pub(crate) use runtime::{Fns, Ty, TyScope};
 pub(crate) use semantic::*;
@@ -157,7 +159,7 @@ impl Driver {
                 .into_iter()
                 .map(|err| DrivingError::Parsing(err)),
         );
-        parser.bind()?;
+        parser.bind(anchor.nodes())?;
         self.parser = Some(parser);
         let mut scx = SemanticCx::new(self.resilience);
         functions::register(&mut scx.fns.efns)?;
@@ -222,13 +224,14 @@ impl Driver {
     }
 
     pub fn signature(&self, pos: usize, src: Option<Uuid>) -> Option<Signature> {
-        let Some(node) = self.find_node(pos, src) else {
-            debug!("Fail to find token for pos: {pos} (src {src:?})");
-            println!("no node");
+        let Some(anchor) = self.anchor.as_ref() else {
             return None;
         };
-        println!("Node: {node:?}");
-        Signature::from_node(node, self.scx.as_ref(), pos)
+        let Some(node) = self.find_node(pos, src) else {
+            debug!("Fail to find token for pos: {pos} (src {src:?})");
+            return None;
+        };
+        Signature::from_node(anchor, node, self.scx.as_ref(), pos)
     }
 
     pub fn completion(&self, pos: usize, src: Option<Uuid>) -> Option<Completion<'_>> {
@@ -257,10 +260,7 @@ impl Driver {
 
     pub fn find_node(&self, pos: usize, src: Option<Uuid>) -> Option<&LinkedNode> {
         let (token, _idx) = self.find_token(pos, src)?;
-        println!("token: {token:?}");
-        println!("anchor: {:?}", self.anchor);
         let Some(anchor) = self.anchor.as_ref() else {
-            println!("no anchor");
             return None;
         };
         find_node(anchor.childs(), &src.unwrap_or(anchor.uuid), &token)

@@ -15,7 +15,7 @@ component component_a() {
     );
     driver.read().unwrap_or_else(|err| panic!("{err}"));
     let mut signature = driver
-        .signature(108, None)
+        .signature(107, None)
         .unwrap_or_else(|| panic!("Fail to get signature"));
     println!("{signature:?}");
 }

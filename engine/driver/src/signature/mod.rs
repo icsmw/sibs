@@ -14,10 +14,24 @@ pub struct Signature {
 
 impl Signature {
     pub(crate) fn from_node(
+        anchor: &Anchor,
         node: &LinkedNode,
         scx: Option<&SemanticCx>,
         pos: usize,
     ) -> Option<Self> {
+        let is_func_call = |node: &LinkedNode| {
+            matches!(
+                node.get_node(),
+                Node::Expression(Expression::FunctionCall(..))
+            )
+        };
+        let node = if is_func_call(node) {
+            node
+        } else if let Some(node) = AnchorMap::map(anchor).find_parent(node.uuid(), is_func_call) {
+            node
+        } else {
+            return None;
+        };
         match node.get_node() {
             Node::Expression(Expression::FunctionCall(node)) => {
                 let scx = scx?;

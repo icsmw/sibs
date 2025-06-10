@@ -764,6 +764,7 @@ dependencies = [
  "paste",
  "proptest",
  "thiserror 2.0.12",
+ "tracing",
  "uuid",
 ]
 

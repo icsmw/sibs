@@ -11,6 +11,17 @@ pub struct Anchor {
 }
 
 impl Anchor {
+    pub fn nodes(&self) -> Vec<Uuid> {
+        fn collect(uuids: &mut Vec<Uuid>, nodes: Vec<&LinkedNode>) {
+            nodes.into_iter().for_each(|n| {
+                uuids.push(*n.uuid());
+                collect(uuids, n.childs());
+            });
+        }
+        let mut uuids = vec![self.uuid];
+        collect(&mut uuids, self.childs());
+        uuids
+    }
     pub fn get_component<S: AsRef<str>>(&self, name: S) -> Option<&LinkedNode> {
         self.nodes.iter().find_map(|n| match &n.node {
             Node::Root(Root::Component(comp)) => {
