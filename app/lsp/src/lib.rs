@@ -220,7 +220,51 @@ impl LanguageServer for Backend {
         &self,
         params: SignatureHelpParams,
     ) -> jsonrpc::Result<Option<SignatureHelp>> {
-        Ok(None)
+        let uri = &params.text_document_position_params.text_document.uri;
+        let pos = self
+            .get_abs_pos(uri, params.text_document_position_params.position)
+            .await?;
+        self.client
+            .log_message(
+                MessageType::LOG,
+                format!("will find signature_help for position {pos}"),
+            )
+            .await;
+        debug!("will find signature_help for position {pos}");
+        let mut driver = self.get_driver_by_url(uri).await?;
+        driver.read().map_err(|err| jsonrpc::Error {
+            message: format!("Fail to parse source code: {err}").into(),
+            code: jsonrpc::ErrorCode::ParseError,
+            data: None,
+        })?;
+        let Some(signature) = driver.signature(pos, None) else {
+            return Ok(None);
+        };
+        let sig = SignatureInformation {
+            label: signature.signature,
+            documentation: signature.docs.map(|value| {
+                Documentation::MarkupContent(MarkupContent {
+                    kind: MarkupKind::Markdown,
+                    value,
+                })
+            }),
+            parameters: Some(
+                signature
+                    .args
+                    .into_iter()
+                    .map(|arg| ParameterInformation {
+                        label: ParameterLabel::Simple(arg),
+                        documentation: None,
+                    })
+                    .collect(),
+            ),
+            active_parameter: Some(0),
+        };
+        Ok(Some(SignatureHelp {
+            signatures: vec![sig],
+            active_parameter: Some(0),
+            active_signature: Some(0),
+        }))
     }
 
     async fn completion(
@@ -312,10 +356,10 @@ impl LanguageServer for Backend {
             code: jsonrpc::ErrorCode::ParseError,
             data: None,
         })?;
-        let Some(positioning) = driver.positioning(pos, None) else {
+        let Some(signature) = driver.signature(pos, None) else {
             return Ok(None);
         };
-        let Some(docs) = positioning.docs() else {
+        let Some(docs) = signature.docs else {
             return Ok(None);
         };
         Ok(Some(Hover {

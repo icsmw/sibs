@@ -4,30 +4,41 @@ pub type ExecutorEmbeddedFn =
     fn(Vec<FnArgValue>, Runtime, Context, caller: SrcLink) -> RtPinnedResult<'static, LinkedErr<E>>;
 
 #[derive(Debug)]
+pub struct FnArgDesc {
+    pub name: Option<String>,
+    pub docs: Option<String>,
+    pub ty: Ty,
+}
+
+#[derive(Debug)]
 pub struct EmbeddedFnEntity {
     pub uuid: Uuid,
     pub fullname: String,
     pub name: String,
     pub docs: String,
-    pub args: Vec<Ty>,
+    pub args: Vec<FnArgDesc>,
     pub result: DeterminedTy,
     pub exec: ExecutorEmbeddedFn,
 }
 
 impl EmbeddedFnEntity {
     pub fn verify(&self) -> Result<(), E> {
-        if self.args.iter().any(|arg| matches!(arg, Ty::Repeated(..))) {
+        if self
+            .args
+            .iter()
+            .any(|arg| matches!(arg.ty, Ty::Repeated(..)))
+        {
             if self
                 .args
                 .iter()
-                .filter(|arg| matches!(arg, Ty::Repeated(..)))
+                .filter(|arg| matches!(arg.ty, Ty::Repeated(..)))
                 .count()
                 > 1
             {
                 return Err(E::MultipleRepeatedFnArgsDeclared);
             }
             if let Some(last) = self.args.last() {
-                if !matches!(last, Ty::Repeated(..)) {
+                if !matches!(last.ty, Ty::Repeated(..)) {
                     return Err(E::NotLastRepeatedFnArg);
                 }
             }
@@ -56,6 +67,9 @@ impl EmbeddedFnEntity {
         (self.exec)(args, rt, cx, caller.clone()).await
     }
     pub fn compatible(&self, incomes: &[&Ty]) -> bool {
-        FnEntity::args_compatible(&self.args.iter().collect::<Vec<&Ty>>(), incomes)
+        FnEntity::args_compatible(
+            &self.args.iter().map(|arg| &arg.ty).collect::<Vec<&Ty>>(),
+            incomes,
+        )
     }
 }

@@ -32,8 +32,15 @@ impl FnEntity<'_> {
     pub fn args_tys(&self) -> Vec<&Ty> {
         match self {
             Self::UFn(en) => en.args.iter().map(|arg| &arg.ty).collect::<Vec<&Ty>>(),
-            Self::EFn(en) => en.args.iter().collect::<Vec<&Ty>>(),
+            Self::EFn(en) => en.args.iter().map(|arg| &arg.ty).collect::<Vec<&Ty>>(),
             Self::CFn(en) => en.args.iter().map(|arg| &arg.ty).collect::<Vec<&Ty>>(),
+        }
+    }
+    pub fn args_desc(&self) -> &[FnArgDesc] {
+        match self {
+            Self::UFn(_en) => &[],
+            Self::EFn(en) => &en.args,
+            Self::CFn(_en) => &[],
         }
     }
     pub fn docs(&self) -> Option<String> {

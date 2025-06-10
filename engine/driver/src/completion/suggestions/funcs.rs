@@ -31,7 +31,7 @@ impl<'a> FnTypeKind<'a> {
                     fn_entity
                         .args
                         .first()
-                        .map(|arg| arg.compatible(ty))
+                        .map(|arg| arg.ty.compatible(ty))
                         .unwrap_or_default()
                 })
                 .unwrap_or(false),
@@ -101,7 +101,7 @@ pub fn collect(
                         target: CompletionMatch::Function(
                             name.to_string(),
                             Some(fn_entity.docs.clone()),
-                            fn_entity.args.first().cloned(),
+                            fn_entity.args.first().map(|arg| &arg.ty).cloned(),
                             Some(Ty::Determined(fn_entity.result.clone())),
                         ),
                         score: search::MAX_SCORE,
@@ -111,7 +111,7 @@ pub fn collect(
                         target: CompletionMatch::Function(
                             name.to_string(),
                             Some(fn_entity.docs.clone()),
-                            fn_entity.args.first().cloned(),
+                            fn_entity.args.first().map(|arg| &arg.ty).cloned(),
                             Some(Ty::Determined(fn_entity.result.clone())),
                         ),
                         score: ranked.score,

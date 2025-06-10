@@ -1,7 +1,7 @@
 use crate::*;
 
 declare_embedded_fn!(
-    vec![Ty::Determined(DeterminedTy::ExecuteResult)],
+    vec![(None, None, Ty::Determined(DeterminedTy::ExecuteResult))],
     DeterminedTy::Bool
 );
 

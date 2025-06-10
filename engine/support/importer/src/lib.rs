@@ -97,6 +97,16 @@ pub fn import(args: pm::TokenStream, input: pm::TokenStream) -> pm::TokenStream 
     let mut declarations: Vec<pm2::TokenStream> = Vec::new();
     for (i, arg) in args.iter().enumerate() {
         if let syn::FnArg::Typed(pat_type) = arg {
+            let name = if let syn::Pat::Ident(pat_ident) = &*pat_type.pat {
+                let name = (&pat_ident.ident).clone();
+                quote! {
+                    Some(stringify!(#name).to_string())
+                }
+            } else {
+                quote! {
+                    None
+                }
+            };
             match pat_type.ty.borrow() {
                 Type::Path(_ty) => {
                     arguments.push(quote! {
@@ -104,7 +114,14 @@ pub fn import(args: pm::TokenStream, input: pm::TokenStream) -> pm::TokenStream 
                     });
                     match get_ty(&pat_type.ty) {
                         Ok(ty) => {
-                            declarations.push(quote! { #ty.into() });
+                            declarations.push(quote! {
+                                FnArgDesc {
+                                    ty: #ty.into(),
+                                    name: #name,
+                                    docs: None,
+                                }
+
+                            });
                         }
                         Err(err) => {
                             return syn::Error::new_spanned(pat_type, err)

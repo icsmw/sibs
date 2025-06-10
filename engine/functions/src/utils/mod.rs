@@ -56,8 +56,8 @@ macro_rules! declare_embedded_fn {
             pub fn fullname() -> String {
                 get_fullname(module_path!())
             }
-            pub fn args() -> Vec<Ty> {
-                $args
+            pub fn args() -> Vec<FnArgDesc> {
+                $args.into_iter().map(|(name, docs, ty)| FnArgDesc { name, docs, ty }).collect()
             }
             pub fn returning() -> DeterminedTy {
                 $returning

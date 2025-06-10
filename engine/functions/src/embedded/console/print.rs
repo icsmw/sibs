@@ -1,6 +1,9 @@
 use crate::*;
 
-declare_embedded_fn!(vec![Ty::Repeated(DeterminedTy::Any)], DeterminedTy::Void);
+declare_embedded_fn!(
+    vec![(None, None, Ty::Repeated(DeterminedTy::Any))],
+    DeterminedTy::Void
+);
 
 #[docs]
 /// Documentation placeholder

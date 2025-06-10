@@ -2,7 +2,7 @@ mod completion;
 mod error;
 mod errors;
 mod locator;
-mod positioning;
+mod signature;
 
 use std::{cell::Ref, fmt, io, path::PathBuf};
 use tracing::debug;
@@ -16,7 +16,7 @@ pub(crate) use runtime::{Fns, Ty, TyScope};
 pub(crate) use semantic::*;
 
 pub use completion::*;
-pub use positioning::*;
+pub use signature::*;
 
 pub(crate) use error::*;
 pub(crate) use errors::*;
@@ -221,12 +221,14 @@ impl Driver {
         ))
     }
 
-    pub fn positioning(&self, pos: usize, src: Option<Uuid>) -> Option<Positioning> {
+    pub fn signature(&self, pos: usize, src: Option<Uuid>) -> Option<Signature> {
         let Some(node) = self.find_node(pos, src) else {
             debug!("Fail to find token for pos: {pos} (src {src:?})");
+            println!("no node");
             return None;
         };
-        Positioning::from_node(node, self.scx.as_ref())
+        println!("Node: {node:?}");
+        Signature::from_node(node, self.scx.as_ref(), pos)
     }
 
     pub fn completion(&self, pos: usize, src: Option<Uuid>) -> Option<Completion<'_>> {
@@ -255,7 +257,10 @@ impl Driver {
 
     pub fn find_node(&self, pos: usize, src: Option<Uuid>) -> Option<&LinkedNode> {
         let (token, _idx) = self.find_token(pos, src)?;
+        println!("token: {token:?}");
+        println!("anchor: {:?}", self.anchor);
         let Some(anchor) = self.anchor.as_ref() else {
+            println!("no anchor");
             return None;
         };
         find_node(anchor.childs(), &src.unwrap_or(anchor.uuid), &token)

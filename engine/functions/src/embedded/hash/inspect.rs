@@ -2,19 +2,27 @@ use crate::*;
 
 declare_embedded_fn!(
     vec![
-        Ty::OneOf(vec![
-            DeterminedTy::PathBuf,
-            DeterminedTy::Str,
-            DeterminedTy::Vec(Some(Box::new(DeterminedTy::Str))),
-            DeterminedTy::Vec(Some(Box::new(DeterminedTy::PathBuf))),
-            DeterminedTy::Vec(Some(Box::new(DeterminedTy::Void))),
-        ]),
-        Ty::OneOf(vec![
-            DeterminedTy::Str,
-            DeterminedTy::Vec(Some(Box::new(DeterminedTy::Str))),
-            DeterminedTy::Vec(Some(Box::new(DeterminedTy::Void))),
-        ]),
-        Ty::Determined(DeterminedTy::Bool),
+        (
+            None,
+            None,
+            Ty::OneOf(vec![
+                DeterminedTy::PathBuf,
+                DeterminedTy::Str,
+                DeterminedTy::Vec(Some(Box::new(DeterminedTy::Str))),
+                DeterminedTy::Vec(Some(Box::new(DeterminedTy::PathBuf))),
+                DeterminedTy::Vec(Some(Box::new(DeterminedTy::Void))),
+            ])
+        ),
+        (
+            None,
+            None,
+            Ty::OneOf(vec![
+                DeterminedTy::Str,
+                DeterminedTy::Vec(Some(Box::new(DeterminedTy::Str))),
+                DeterminedTy::Vec(Some(Box::new(DeterminedTy::Void))),
+            ])
+        ),
+        (None, None, Ty::Determined(DeterminedTy::Bool)),
     ],
     DeterminedTy::Bool
 );
