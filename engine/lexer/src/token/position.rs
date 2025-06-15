@@ -51,7 +51,7 @@ impl Position {
         }
     }
     pub fn is_in(&self, pos: usize) -> bool {
-        pos >= self.from.abs && pos <= self.to.abs
+        pos >= self.from.abs && pos < self.to.abs
     }
 }
 

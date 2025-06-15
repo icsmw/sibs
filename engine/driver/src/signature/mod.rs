@@ -41,7 +41,13 @@ impl Signature {
                     .args
                     .iter()
                     .position(|arg| arg.get_position().is_in(pos))
-                    .unwrap_or(node.args.len());
+                    .or_else(|| {
+                        if node.args.is_empty() {
+                            None
+                        } else {
+                            Some(node.args.len() - 1)
+                        }
+                    });
                 let args = func
                     .args_desc()
                     .iter()
@@ -53,7 +59,7 @@ impl Signature {
                     signature,
                     docs: func.docs(),
                     args,
-                    active: Some(active),
+                    active,
                 })
             }
             _ => None,

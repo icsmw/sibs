@@ -20,11 +20,11 @@ macro_rules! completion_fn_return {
                     .suggest()
                     .unwrap_or_else(|err| panic!("{err}"))
                     .unwrap_or_else(|| panic!("Fail to get suggestions"));
-                assert!(!suggestions.is_empty());
+                assert!(!suggestions.suggestions.is_empty());
 
                 println!("Suggested: {:?}", suggestions);
 
-                let suggested_variables: Vec<(&String, &Option<Ty>)> = suggestions
+                let suggested_variables: Vec<(&String, &Option<Ty>)> = suggestions.suggestions
                     .iter()
                     .filter_map(|suggestion| match &suggestion.target {
                         CompletionMatch::Variable(name, var_ty) => Some((name, var_ty)),
@@ -48,7 +48,7 @@ macro_rules! completion_fn_return {
                     }
                 }
 
-                assert!(!suggestions
+                assert!(!suggestions.suggestions
                 .iter()
                 .any(|suggestion| match &suggestion.target {
                     CompletionMatch::Variable(..) => {

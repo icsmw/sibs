@@ -1,6 +1,7 @@
 mod completion;
 mod error;
 mod errors;
+mod location;
 mod locator;
 mod map;
 mod signature;
@@ -12,6 +13,7 @@ use uuid::Uuid;
 pub(crate) use asttree::*;
 pub(crate) use diagnostics::*;
 pub(crate) use lexer::*;
+pub(crate) use location::*;
 pub(crate) use map::*;
 pub(crate) use parser::*;
 pub(crate) use runtime::{Fns, Ty, TyScope};

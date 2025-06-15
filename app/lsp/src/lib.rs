@@ -303,10 +303,13 @@ impl LanguageServer for Backend {
         };
         debug!(
             "for pos: {pos} has been found {} suggestions",
-            suggestions.len()
+            suggestions.suggestions.len()
         );
-        suggestions.sort_by(|a, b| a.score.cmp(&b.score));
+        suggestions
+            .suggestions
+            .sort_by(|a, b| a.score.cmp(&b.score));
         let items = suggestions
+            .suggestions
             .into_iter()
             .map(|suggestion| match &suggestion.target {
                 CompletionMatch::Function(name, docs, ..) => {
@@ -319,6 +322,21 @@ impl LanguageServer for Backend {
                         label: name.to_owned(),
                         kind: Some(CompletionItemKind::FUNCTION),
                         detail,
+                        text_edit: suggestions.replacement.map(|(start, end)| {
+                            CompletionTextEdit::Edit(TextEdit {
+                                new_text: name.to_owned(),
+                                range: Range {
+                                    start: Position {
+                                        line: start.ln as u32,
+                                        character: start.col as u32,
+                                    },
+                                    end: Position {
+                                        line: end.ln as u32,
+                                        character: end.col as u32,
+                                    },
+                                },
+                            })
+                        }),
                         // documentation: docs.clone().map(|docs| {
                         //     Documentation::MarkupContent(MarkupContent {
                         //         kind: MarkupKind::Markdown,

@@ -153,10 +153,10 @@ impl LinkedNode {
 
 impl Diagnostic for LinkedNode {
     fn located(&self, src: &Uuid, pos: usize) -> bool {
-        self.md.located(src, pos)
+        self.node.located(src, pos)
     }
     fn get_position(&self) -> Position {
-        self.md.get_position()
+        self.node.get_position()
     }
     fn childs(&self) -> Vec<&LinkedNode> {
         [self.md.childs(), self.node.childs()].concat()

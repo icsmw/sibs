@@ -4,6 +4,12 @@ pub mod vars;
 use crate::completion::*;
 
 #[derive(Debug)]
+pub struct CompletionResult {
+    pub suggestions: Vec<CompletionSuggestion>,
+    pub replacement: Option<(TextPosition, TextPosition)>,
+}
+
+#[derive(Debug)]
 pub enum CompletionMatch {
     /// `String` - name of variable
     /// `Option<Ty>` - type of variable

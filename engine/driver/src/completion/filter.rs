@@ -1,4 +1,3 @@
-use super::LocationData;
 use crate::*;
 use runtime::DeterminedTy;
 
@@ -11,73 +10,79 @@ pub enum Filter {
 }
 
 pub fn get_filter(
-    loc: &LocationData,
+    loc: &Location,
     before_token: &Token,
     before_node: &LinkedNode,
     scx: &SemanticCx,
     ty_scope: &TyScope,
 ) -> Option<Filter> {
-    match &loc.cursor.id() {
-        KindId::Dot => {
-            let ty = find_ty_by_node(&before_node, ty_scope, scx);
-            return Some(Filter::FunctionArgument(ty));
-        }
-        _ => {}
-    }
-    match before_token.kind {
-        Kind::Dot => {
-            let ty = find_ty_by_node(&before_node, ty_scope, scx);
-            match loc.cursor.id() {
-                KindId::Identifier | KindId::Dot => Some(Filter::FunctionArgument(ty)),
+    match &loc.cursor {
+        Cursor::Token(token, ..) => {
+            match &token.id() {
+                KindId::Dot => {
+                    let ty = find_ty_by_node(&before_node, ty_scope, scx);
+                    return Some(Filter::FunctionArgument(ty));
+                }
+                _ => {}
+            }
+            match before_token.kind {
+                Kind::Identifier(..) => Some(Filter::All(None)),
+                Kind::Dot => {
+                    let ty = find_ty_by_node(&before_node, ty_scope, scx);
+                    match token.id() {
+                        KindId::Identifier | KindId::Dot => Some(Filter::FunctionArgument(ty)),
+                        _ => None,
+                    }
+                }
+                Kind::Number(..) => match token.id() {
+                    KindId::Dot => Some(Filter::FunctionArgument(Some(Ty::Determined(
+                        DeterminedTy::Num,
+                    )))),
+                    _ => None,
+                },
+                Kind::String(..) | Kind::SingleQuote => match token.id() {
+                    KindId::Dot => Some(Filter::FunctionArgument(Some(Ty::Determined(
+                        DeterminedTy::Str,
+                    )))),
+                    _ => None,
+                },
+                Kind::Keyword(Keyword::Let) => None,
+                Kind::Keyword(Keyword::True) | Kind::Keyword(Keyword::False) => match token.id() {
+                    KindId::Dot => Some(Filter::FunctionArgument(Some(Ty::Determined(
+                        DeterminedTy::Bool,
+                    )))),
+                    _ => None,
+                },
+                Kind::Keyword(Keyword::If) => match token.id() {
+                    KindId::Identifier => Some(Filter::All(None)),
+                    _ => None,
+                },
+                Kind::LeftParen => None,
+                Kind::LeftBrace => None,
+                Kind::Colon => None,
+                Kind::Comma => None,
+                Kind::Semicolon => {
+                    return Some(Filter::All(None));
+                }
+                Kind::Equals => {
+                    let ty = find_ty_by_node(&before_node, ty_scope, scx);
+                    match token.id() {
+                        KindId::Identifier => Some(Filter::All(ty)),
+                        _ => Some(Filter::All(None)),
+                    }
+                }
+                Kind::Plus
+                | Kind::Minus
+                | Kind::Star
+                | Kind::Slash
+                | Kind::Less
+                | Kind::Greater
+                | Kind::LessEqual
+                | Kind::GreaterEqual => Some(Filter::All(Some(Ty::Determined(DeterminedTy::Num)))),
                 _ => None,
             }
         }
-        Kind::Number(..) => match loc.cursor.id() {
-            KindId::Dot => Some(Filter::FunctionArgument(Some(Ty::Determined(
-                DeterminedTy::Num,
-            )))),
-            _ => None,
-        },
-        Kind::String(..) | Kind::SingleQuote => match loc.cursor.id() {
-            KindId::Dot => Some(Filter::FunctionArgument(Some(Ty::Determined(
-                DeterminedTy::Str,
-            )))),
-            _ => None,
-        },
-        Kind::Keyword(Keyword::Let) => None,
-        Kind::Keyword(Keyword::True) | Kind::Keyword(Keyword::False) => match loc.cursor.id() {
-            KindId::Dot => Some(Filter::FunctionArgument(Some(Ty::Determined(
-                DeterminedTy::Bool,
-            )))),
-            _ => None,
-        },
-        Kind::Keyword(Keyword::If) => match loc.cursor.id() {
-            KindId::Identifier => Some(Filter::All(None)),
-            _ => None,
-        },
-        Kind::LeftParen => None,
-        Kind::LeftBrace => None,
-        Kind::Colon => None,
-        Kind::Comma => None,
-        Kind::Semicolon => {
-            return Some(Filter::All(None));
-        }
-        Kind::Equals => {
-            let ty = find_ty_by_node(&before_node, ty_scope, scx);
-            match loc.cursor.id() {
-                KindId::Identifier => Some(Filter::All(ty)),
-                _ => Some(Filter::All(None)),
-            }
-        }
-        Kind::Plus
-        | Kind::Minus
-        | Kind::Star
-        | Kind::Slash
-        | Kind::Less
-        | Kind::Greater
-        | Kind::LessEqual
-        | Kind::GreaterEqual => Some(Filter::All(Some(Ty::Determined(DeterminedTy::Num)))),
-        _ => None,
+        Cursor::Path(path, ..) => Some(Filter::All(None)),
     }
 }
 

@@ -1,15 +1,16 @@
-use std::cell::Ref;
+use std::{cell::Ref, ops::RangeInclusive};
 
 use crate::*;
 
 pub struct TokenStep<'a> {
     pub node: Option<&'a LinkedNode>,
     pub token: Ref<'a, Token>,
+    pub idx: isize,
 }
 
 impl<'a> TokenStep<'a> {
-    pub fn new(token: Ref<'a, Token>, node: Option<&'a LinkedNode>) -> Self {
-        Self { node, token }
+    pub fn new(token: Ref<'a, Token>, node: Option<&'a LinkedNode>, idx: isize) -> Self {
+        Self { node, token, idx }
     }
 }
 
@@ -62,7 +63,7 @@ impl fmt::Display for NodeStep<'_> {
 pub struct LocationIterator<'a> {
     anchor: &'a Anchor,
     src: Uuid,
-    idx: isize,
+    pub idx: isize,
     initial: isize,
     recent: Option<Uuid>,
     pub parser: &'a Parser,
@@ -89,6 +90,22 @@ impl<'a> LocationIterator<'a> {
 
     pub fn drop(&mut self) {
         self.idx = self.initial;
+    }
+
+    pub fn set_idx(&mut self, idx: isize) {
+        self.idx = idx;
+    }
+
+    pub fn nth_token(&self, idx: isize) -> Option<Ref<Token>> {
+        self.parser.get_token(idx)
+    }
+
+    pub fn nth_tokens(&self, range: RangeInclusive<usize>) -> Vec<Option<Ref<Token>>> {
+        let mut tokens = Vec::new();
+        for idx in range {
+            tokens.push(self.parser.get_token(idx as isize));
+        }
+        tokens
     }
 
     pub fn find(&self, uuid: &Uuid) -> Option<&'a LinkedNode> {
@@ -161,14 +178,14 @@ impl<'a> LocationIterator<'a> {
         let token = self.parser.get_token(self.idx)?;
         let node = find_node(self.anchor.childs(), &self.src, &token);
         self.idx -= 1;
-        Some(TokenStep::new(token, node))
+        Some(TokenStep::new(token, node, self.idx + 1))
     }
 
     pub fn next_token<'s>(&'s mut self) -> Option<TokenStep<'s>> {
         let token = self.parser.get_token(self.idx)?;
         let node = find_node(self.anchor.childs(), &self.src, &token);
         self.idx += 1;
-        Some(TokenStep::new(token, node))
+        Some(TokenStep::new(token, node, self.idx - 1))
     }
     pub fn prev<'s>(&'s mut self) -> Option<TokenStep<'s>> {
         let token = loop {
@@ -190,7 +207,7 @@ impl<'a> LocationIterator<'a> {
         };
         let node = find_node(self.anchor.childs(), &self.src, &token);
         self.idx -= 1;
-        Some(TokenStep::new(token, node))
+        Some(TokenStep::new(token, node, self.idx + 1))
     }
 
     pub fn next<'s>(&'s mut self) -> Option<TokenStep<'s>> {
@@ -213,6 +230,18 @@ impl<'a> LocationIterator<'a> {
         };
         let node = find_node(self.anchor.childs(), &self.src, &token);
         self.idx += 1;
-        Some(TokenStep::new(token, node))
+        Some(TokenStep::new(token, node, self.idx - 1))
+    }
+
+    pub fn prev_find_id<P>(&mut self, mut predicate: P) -> Option<KindId>
+    where
+        P: FnMut(&TokenStep) -> bool,
+    {
+        while let Some(prev) = self.prev() {
+            if predicate(&prev) {
+                return Some(prev.token.id());
+            }
+        }
+        None
     }
 }
