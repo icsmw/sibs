@@ -1,3 +1,7 @@
+mod code;
+
+pub use code::*;
+
 use asttree::SrcLinking;
 use lexer::{LinkedPosition, Token};
 use std::fmt;

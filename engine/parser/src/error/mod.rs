@@ -1,3 +1,5 @@
+mod codes;
+
 use std::{
     cell::{BorrowError, BorrowMutError},
     io,
@@ -6,10 +8,12 @@ use std::{
 
 use crate::*;
 use diagnostics::*;
+use enum_ids::enum_ids;
 use lexer::{KindId, LexerError, Token};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
+#[enum_ids(derive = "Debug")]
 pub enum E {
     #[error("Next nodes are in conflict: {0}")]
     NodesAreInConflict(String),

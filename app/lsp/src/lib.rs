@@ -7,7 +7,7 @@ use driver::{CompletionMatch, Driver};
 use tokio::sync::RwLock;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{jsonrpc, Client, LanguageServer, LspService, Server};
-use tracing::debug;
+use tracing::{debug, error};
 
 #[derive(Debug)]
 struct Backend {
@@ -90,6 +90,37 @@ impl Backend {
             Ok(get_pos(content, pos))
         }
     }
+    async fn get_diagnostics<S: ToString>(&self, content: S) -> jsonrpc::Result<Vec<Diagnostic>> {
+        let mut driver = Driver::unbound(content, true);
+        driver.read().map_err(|err| jsonrpc::Error {
+            message: format!("Fail to parse source code: {err}").into(),
+            code: jsonrpc::ErrorCode::ParseError,
+            data: None,
+        })?;
+        let Some(errors) = driver.errors() else {
+            return Ok(Vec::new());
+        };
+        Ok(errors
+            .map(|err| {
+                let link = err.err.link();
+                Diagnostic {
+                    range: Range {
+                        start: Position {
+                            line: link.from.ln as u32,
+                            character: link.from.col as u32,
+                        },
+                        end: Position {
+                            line: link.to.ln as u32,
+                            character: link.to.col as u32,
+                        },
+                    },
+                    severity: Some(DiagnosticSeverity::ERROR),
+                    message: err.err.to_string(),
+                    ..Default::default()
+                }
+            })
+            .collect())
+    }
 }
 
 #[tower_lsp::async_trait]
@@ -168,14 +199,39 @@ impl LanguageServer for Backend {
                 format!("document ({}) has been opened", uri.path()),
             )
             .await;
-        self.docs.write().await.insert(uri, text);
+        let diagnostics = self.get_diagnostics(&text).await;
+        self.docs.write().await.insert(uri.clone(), text);
+        match diagnostics {
+            Ok(diagnostics) => {
+                self.client
+                    .publish_diagnostics(uri, diagnostics, None)
+                    .await;
+            }
+            Err(err) => {
+                error!("fail to get diagnostics: {err}");
+            }
+        }
     }
 
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
         let uri = params.text_document.uri;
         let changes = &params.content_changes;
         if let Some(change) = changes.last() {
-            self.docs.write().await.insert(uri, change.text.clone());
+            let diagnostics = self.get_diagnostics(&change.text).await;
+            self.docs
+                .write()
+                .await
+                .insert(uri.clone(), change.text.clone());
+            match diagnostics {
+                Ok(diagnostics) => {
+                    self.client
+                        .publish_diagnostics(uri, diagnostics, None)
+                        .await;
+                }
+                Err(err) => {
+                    error!("fail to get diagnostics: {err}");
+                }
+            }
         }
     }
 

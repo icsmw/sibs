@@ -6,6 +6,15 @@ pub enum DrivingError {
     Semantic(LinkedErr<SemanticError>),
 }
 
+impl fmt::Display for DrivingError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            DrivingError::Parsing(err) => write!(f, "{}", err.e),
+            DrivingError::Semantic(err) => write!(f, "{}", err.e),
+        }
+    }
+}
+
 impl DrivingError {
     pub fn link(&self) -> &LinkedPosition {
         match self {

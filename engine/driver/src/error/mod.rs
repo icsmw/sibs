@@ -1,8 +1,12 @@
+mod codes;
+
 use diagnostics::LinkedErr;
+use enum_ids::enum_ids;
 use thiserror::Error;
 use uuid::Uuid;
 
 #[derive(Error, Debug)]
+#[enum_ids(derive = "Debug")]
 pub enum E {
     #[error("IO error: {0}")]
     IO(String),

@@ -1,8 +1,12 @@
+mod codes;
+
 use crate::*;
 
+use enum_ids::enum_ids;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
+#[enum_ids(derive = "Debug")]
 pub enum E {
     #[error("Token isn't bound to known Ty")]
     TokenIsNotBoundToKnownTy,

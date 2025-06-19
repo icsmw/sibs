@@ -1,9 +1,13 @@
+mod codes;
+
 use crate::*;
+use enum_ids::enum_ids;
 use std::{io, time::SystemTimeError};
 use thiserror::Error;
 use tokio::task::JoinError;
 
 #[derive(Error, Debug)]
+#[enum_ids(derive = "Debug")]
 pub enum E {
     #[error("Attempt to leave global context")]
     AttemptToLeaveGlobalContext,
@@ -110,9 +114,9 @@ pub enum E {
     #[error("IO error: {0}")]
     IO(io::Error),
     #[error("System time error: {0}")]
-    SysTime(SystemTimeError),
+    SysTime(String),
     #[error("Storage error: {0}")]
-    Storage(bstorage::E),
+    Storage(String),
 
     #[error("Fn {0} is using keyword: {1}")]
     FnUsesKeyword(String, String),
@@ -146,7 +150,7 @@ pub enum E {
     ReturnValueAlreadyExist(Uuid),
 
     #[error("Render progress error: {0}")]
-    RenderTemplateErr(indicatif::style::TemplateError),
+    RenderTemplateErr(String),
     #[error("No progress has been found for parent task: {0}")]
     NoProgressForTask(Uuid),
 
@@ -166,7 +170,7 @@ pub enum E {
     JobDoesNotExist(Uuid),
 
     #[error("Join error: {0}")]
-    JoinError(JoinError),
+    JoinError(String),
     #[error("Fail to find join result {0}")]
     FailToFindJoinResult(Uuid),
     #[error("Some nodes had same UUIDs, cannot order results")]
@@ -181,7 +185,7 @@ pub enum E {
 
 impl From<indicatif::style::TemplateError> for E {
     fn from(err: indicatif::style::TemplateError) -> Self {
-        E::RenderTemplateErr(err)
+        E::RenderTemplateErr(err.to_string())
     }
 }
 
@@ -193,19 +197,19 @@ impl From<io::Error> for E {
 
 impl From<bstorage::E> for E {
     fn from(err: bstorage::E) -> Self {
-        E::Storage(err)
+        E::Storage(err.to_string())
     }
 }
 
 impl From<JoinError> for E {
     fn from(err: JoinError) -> Self {
-        E::JoinError(err)
+        E::JoinError(err.to_string())
     }
 }
 
 impl From<SystemTimeError> for E {
     fn from(err: SystemTimeError) -> Self {
-        E::SysTime(err)
+        E::SysTime(err.to_string())
     }
 }
 
