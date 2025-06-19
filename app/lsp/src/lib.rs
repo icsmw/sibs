@@ -1,9 +1,9 @@
 mod semantic;
 
+use diagnostics::ErrorCode;
+use driver::{CompletionMatch, Driver};
 use std::collections::HashMap;
 use std::fs;
-
-use driver::{CompletionMatch, Driver};
 use tokio::sync::RwLock;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{jsonrpc, Client, LanguageServer, LspService, Server};
@@ -114,6 +114,7 @@ impl Backend {
                             character: link.to.col as u32,
                         },
                     },
+                    code: Some(NumberOrString::String(err.err.formattable())),
                     severity: Some(DiagnosticSeverity::ERROR),
                     message: err.err.to_string(),
                     ..Default::default()

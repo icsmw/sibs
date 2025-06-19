@@ -21,5 +21,6 @@ tracing.workspace = true
 
 driver = { path = "../../engine/driver" }
 semantic = { path = "../../engine/semantic" }
+diagnostics = { path = "../../engine/diagnostics" }
 
 [dev-dependencies]

@@ -1,13 +1,13 @@
 use std::fmt::Display;
 
-use crate::LinkedErr;
+use crate::*;
 
 #[derive(Debug)]
-pub struct Errors<E: Display> {
+pub struct Errors<E: Display + ErrorCode> {
     pub errors: Vec<LinkedErr<E>>,
 }
 
-impl<E: Display> Errors<E> {
+impl<E: Display + ErrorCode> Errors<E> {
     pub fn add(&mut self, err: LinkedErr<E>) {
         self.errors.push(err);
     }
@@ -27,7 +27,7 @@ impl<E: Display> Errors<E> {
     }
 }
 
-impl<E: Display> Default for Errors<E> {
+impl<E: Display + ErrorCode> Default for Errors<E> {
     fn default() -> Self {
         Self { errors: Vec::new() }
     }

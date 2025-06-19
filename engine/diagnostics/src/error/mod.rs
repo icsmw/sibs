@@ -7,12 +7,12 @@ use lexer::{LinkedPosition, Token};
 use std::fmt;
 
 #[derive(Clone, Debug)]
-pub struct LinkedErr<T: fmt::Display> {
+pub struct LinkedErr<T: fmt::Display + ErrorCode> {
     pub link: LinkedPosition,
     pub e: T,
 }
 
-impl<T: fmt::Display> LinkedErr<T> {
+impl<T: fmt::Display + ErrorCode> LinkedErr<T> {
     pub fn from<N: SrcLinking>(err: T, n: &N) -> Self {
         Self {
             link: (&n.link()).into(),

@@ -7,7 +7,7 @@ use std::{
 };
 use uuid::Uuid;
 
-use crate::LinkedErr;
+use crate::*;
 
 const REPORT_LN_AROUND: usize = 6;
 
@@ -83,7 +83,7 @@ impl CodeSources {
         self.sources
             .insert(*uuid, CodeSource::Inline(content.as_ref().to_owned()));
     }
-    pub fn err<T: Display>(&self, err: &LinkedErr<T>) -> Result<String, io::Error> {
+    pub fn err<T: Display + ErrorCode>(&self, err: &LinkedErr<T>) -> Result<String, io::Error> {
         let from = err.link.from;
         let to = err.link.to;
         let Some(code_src) = self.sources.get(&err.link.src) else {
@@ -165,51 +165,35 @@ impl CodeSources {
     }
 }
 
-#[test]
-fn test_sl() -> Result<(), io::Error> {
-    let mut sources = HashMap::new();
-    let uuid = Uuid::new_v4();
-    sources.insert(
-        uuid,
-        CodeSource::Inline(
-            r#"fn test() {
-    let a = 4 + 5;
-    b - c;
-    if c > 100 {
-        exit;
-    }
-}
-    "#
-            .to_string(),
-        ),
-    );
-    let srcs = CodeSources { sources };
-    let msg = srcs.err(&LinkedErr {
-        e: String::from("Test Error Messaging"),
-        link: lexer::LinkedPosition::new(
-            lexer::TextPosition {
-                abs: 3,
-                ..Default::default()
-            },
-            lexer::TextPosition {
-                abs: 3 + 4,
-                ..Default::default()
-            },
-            &uuid,
-        ),
-    })?;
-    println!("{msg}");
-    Ok(())
-}
+#[cfg(test)]
+mod test {
+    use crate::*;
+    use std::{collections::HashMap, io};
+    use thiserror::Error;
+    use uuid::Uuid;
 
-#[test]
-fn test_ml() -> Result<(), io::Error> {
-    let mut sources = HashMap::new();
-    let uuid = Uuid::new_v4();
-    sources.insert(
-        uuid,
-        CodeSource::Inline(
-            r#"fn test() {
+    #[derive(Error, Debug)]
+    pub enum E {
+        #[error("Nothing test error")]
+        Nothing,
+    }
+    impl ErrorCode for E {
+        fn code(&self) -> &'static str {
+            "TEST00000"
+        }
+        fn src(&self) -> ErrorSource {
+            ErrorSource::Semantic
+        }
+    }
+
+    #[test]
+    fn test_sl() -> Result<(), io::Error> {
+        let mut sources = HashMap::new();
+        let uuid = Uuid::new_v4();
+        sources.insert(
+            uuid,
+            CodeSource::Inline(
+                r#"fn test() {
     let a = 4 + 5;
     b - c;
     if c > 100 {
@@ -217,24 +201,62 @@ fn test_ml() -> Result<(), io::Error> {
     }
 }
     "#
-            .to_string(),
-        ),
-    );
-    let srcs = CodeSources { sources };
-    let msg = srcs.err(&LinkedErr {
-        e: String::from("Test Error Messaging"),
-        link: lexer::LinkedPosition::new(
-            lexer::TextPosition {
-                abs: 15,
-                ..Default::default()
-            },
-            lexer::TextPosition {
-                abs: 50,
-                ..Default::default()
-            },
-            &uuid,
-        ),
-    })?;
-    println!("{msg}");
-    Ok(())
+                .to_string(),
+            ),
+        );
+        let srcs = CodeSources { sources };
+        let msg = srcs.err(&LinkedErr {
+            e: E::Nothing,
+            link: lexer::LinkedPosition::new(
+                lexer::TextPosition {
+                    abs: 3,
+                    ..Default::default()
+                },
+                lexer::TextPosition {
+                    abs: 3 + 4,
+                    ..Default::default()
+                },
+                &uuid,
+            ),
+        })?;
+        println!("{msg}");
+        Ok(())
+    }
+
+    #[test]
+    fn test_ml() -> Result<(), io::Error> {
+        let mut sources = HashMap::new();
+        let uuid = Uuid::new_v4();
+        sources.insert(
+            uuid,
+            CodeSource::Inline(
+                r#"fn test() {
+    let a = 4 + 5;
+    b - c;
+    if c > 100 {
+        exit;
+    }
+}
+    "#
+                .to_string(),
+            ),
+        );
+        let srcs = CodeSources { sources };
+        let msg = srcs.err(&LinkedErr {
+            e: E::Nothing,
+            link: lexer::LinkedPosition::new(
+                lexer::TextPosition {
+                    abs: 15,
+                    ..Default::default()
+                },
+                lexer::TextPosition {
+                    abs: 50,
+                    ..Default::default()
+                },
+                &uuid,
+            ),
+        })?;
+        println!("{msg}");
+        Ok(())
+    }
 }

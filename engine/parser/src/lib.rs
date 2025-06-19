@@ -124,7 +124,7 @@ impl Parser {
         self.new_child(filename)
     }
 
-    pub fn report_err<T: Display>(&self, err: &LinkedErr<T>) -> Result<String, E> {
+    pub fn report_err<T: Display + ErrorCode>(&self, err: &LinkedErr<T>) -> Result<String, E> {
         self.srcs.borrow().err(err).map_err(E::IOError)
     }
 
