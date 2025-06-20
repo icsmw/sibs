@@ -129,7 +129,7 @@ impl Parser {
     }
 
     pub fn get_err_report(&self) -> Option<LinkedErr<E>> {
-        let Some(err) = self.errs.borrow_mut().first() else {
+        let Some(err) = self.errs.borrow_mut().extract_first() else {
             return None;
         };
         Some(err)

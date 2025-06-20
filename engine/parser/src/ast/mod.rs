@@ -74,7 +74,11 @@ impl TryReadOneOf<LinkedNode, NodeTarget<'_>> for LinkedNode {
             shifted(parser);
             if parser.token().is_none() {
                 origin(parser);
-                return Err(parser.errs.borrow_mut().first().unwrap());
+                return Err(parser
+                    .errs
+                    .borrow_mut()
+                    .extract_first()
+                    .unwrap_or(LinkedErr::unlinked(E::Unlinked)));
             }
             shifted = parser.pin();
         }

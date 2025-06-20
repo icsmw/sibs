@@ -95,6 +95,8 @@ impl ErrorCode for E {
             Self::InvalidReturnValue => "00072",
 
             Self::LexerError(..) => "00073",
+
+            Self::Unlinked => "00074",
         }
     }
     fn src(&self) -> ErrorSource {
@@ -202,6 +204,7 @@ mod test {
                 EId::InvalidReturnValue => E::InvalidReturnValue,
 
                 EId::LexerError => E::LexerError(LexerError::InvalidNumber),
+                EId::Unlinked => E::Unlinked
             }
         }
     }

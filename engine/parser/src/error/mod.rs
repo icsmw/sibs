@@ -196,6 +196,9 @@ pub enum E {
     /// Lexer error
     #[error("Lexer error: {0}")]
     LexerError(LexerError),
+
+    #[error("Unlinked error: no tokens, no errors")]
+    Unlinked,
 }
 
 impl From<LexerError> for E {

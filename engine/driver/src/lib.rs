@@ -157,7 +157,7 @@ impl Driver {
             parser
                 .errs
                 .borrow_mut()
-                .extract()
+                .drain()
                 .into_iter()
                 .map(|err| DrivingError::Parsing(err)),
         );
@@ -185,7 +185,7 @@ impl Driver {
         }
         self.errors.extend(
             scx.errs
-                .extract()
+                .drain()
                 .into_iter()
                 .map(|err| DrivingError::Semantic(err)),
         );
@@ -283,9 +283,6 @@ impl Driver {
         let Some(parser) = self.parser.as_ref() else {
             return Ok(());
         };
-        for err in parser.errs.borrow().errors.iter() {
-            println!("{}", parser.report_err(err)?);
-        }
         for err in self.errors.iter() {
             println!(
                 "{}",
