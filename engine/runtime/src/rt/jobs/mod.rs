@@ -14,11 +14,12 @@ pub struct RtJobs {
 }
 
 impl RtJobs {
-    pub fn new() -> Result<Self, E> {
+    #[tracing::instrument]
+    pub fn new(root: &PathBuf) -> Result<Self, E> {
         let (tx, mut rx) = unbounded_channel();
         let instance = Self { tx };
         let progress = RtProgress::new()?;
-        let journal = RtJournal::new()?;
+        let journal = RtJournal::new(root)?;
         let inner = instance.clone();
         spawn(async move {
             tracing::info!("init demand's listener");

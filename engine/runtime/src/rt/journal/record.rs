@@ -1,20 +1,13 @@
+use std::mem;
+
 use crate::*;
 
 #[derive(Debug)]
-pub enum RecordContent {
-    Stdout(String),
-    Stderr(String),
-    Debug(String),
-    Err(String),
-    Warn(String),
-    Info(String),
-}
-
-#[derive(Debug)]
 pub struct Record {
-    ts: u64,
-    owner: Uuid,
-    content: RecordContent,
+    pub ts: u64,
+    pub owner: Uuid,
+    pub ty: scheme::RecordTy,
+    pub msg: String,
 }
 
 impl Record {
@@ -29,7 +22,8 @@ impl Record {
         Ok(Self {
             ts: Self::tm()?,
             owner,
-            content: RecordContent::Stdout(msg.into()),
+            ty: scheme::RecordTy::Stdout,
+            msg: msg.into(),
         })
     }
 
@@ -37,7 +31,8 @@ impl Record {
         Ok(Self {
             ts: Self::tm()?,
             owner,
-            content: RecordContent::Stderr(msg.into()),
+            ty: scheme::RecordTy::Stderr,
+            msg: msg.into(),
         })
     }
 
@@ -45,7 +40,8 @@ impl Record {
         Ok(Self {
             ts: Self::tm()?,
             owner,
-            content: RecordContent::Info(msg.into()),
+            ty: scheme::RecordTy::Info,
+            msg: msg.into(),
         })
     }
 
@@ -53,7 +49,8 @@ impl Record {
         Ok(Self {
             ts: Self::tm()?,
             owner,
-            content: RecordContent::Debug(msg.into()),
+            ty: scheme::RecordTy::Debug,
+            msg: msg.into(),
         })
     }
 
@@ -61,7 +58,8 @@ impl Record {
         Ok(Self {
             ts: Self::tm()?,
             owner,
-            content: RecordContent::Err(msg.into()),
+            ty: scheme::RecordTy::Err,
+            msg: msg.into(),
         })
     }
 
@@ -69,7 +67,19 @@ impl Record {
         Ok(Self {
             ts: Self::tm()?,
             owner,
-            content: RecordContent::Warn(msg.into()),
+            ty: scheme::RecordTy::Warn,
+            msg: msg.into(),
         })
+    }
+    pub fn as_packet(mut self, session: &Uuid) -> scheme::Packet {
+        scheme::Packet::new(
+            vec![scheme::Block::Signature(scheme::Signature {
+                ts: mem::take(&mut self.ts),
+                owner: *self.owner.as_bytes(),
+                ty: mem::take(&mut self.ty),
+                session: *session.as_bytes(),
+            })],
+            Some(scheme::Payload::String(mem::take(&mut self.msg))),
+        )
     }
 }

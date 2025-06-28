@@ -98,6 +98,8 @@ impl ErrorCode for E {
             Self::MultipleSignalEmit(..) => "00077",
 
             Self::Other(..) => "00078",
+
+            Self::Journal(..) => "00079",
         }
     }
     fn src(&self) -> ErrorSource {
@@ -208,6 +210,8 @@ mod test {
                 EId::MultipleSignalEmit => E::MultipleSignalEmit(String::new()),
 
                 EId::Other => E::Other(String::new()),
+
+                EId::Journal => E::Journal(String::new()),
             }
         }
     }

@@ -115,7 +115,7 @@ impl RtProgress {
 }
 
 #[ignore]
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn visual_test() {
     use tokio::time::{self, Duration};
     let progressor = RtProgress::new().expect("RtProgress has been created");

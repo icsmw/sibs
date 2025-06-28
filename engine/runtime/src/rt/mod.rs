@@ -58,8 +58,8 @@ impl Runtime {
             fns: Arc::new(fns),
             tasks: Arc::new(tasks),
         };
-        let cx = RtContext::new(params.cwd.clone());
-        let jobs = RtJobs::new()?;
+        let cx = RtContext::new(&params.cwd);
+        let jobs = RtJobs::new(&params.cwd)?;
         let mut signals = Signals::default();
         spawn(async move {
             tracing::info!("init demand's listener");

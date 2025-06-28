@@ -4,7 +4,7 @@ mod efns;
 macro_rules! test_value_expectation {
     ($fn_name:ident, $element_ref:expr, $expectation:expr, $content:literal) => {
         paste::item! {
-            #[tokio::test]
+            #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
             async fn [< test_value_expectation_ $fn_name >]() {
                 use $crate::*;
                 let mut lx = lexer::Lexer::new(&$content, 0);
@@ -58,7 +58,7 @@ macro_rules! test_value_expectation {
 macro_rules! test_fail {
     ($fn_name:ident, $element_ref:expr, $content:literal) => {
         paste::item! {
-            #[tokio::test]
+            #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
             async fn [< test_fail $fn_name >]() {
                 use $crate::*;
                 let mut lx = lexer::Lexer::new(&$content, 0);
@@ -101,7 +101,7 @@ macro_rules! test_fail {
 macro_rules! test_task_results {
     ($fn_name:ident, $component_name:literal, $task_name:literal, $expectation:expr, $content:literal) => {
         paste::item! {
-            #[tokio::test]
+            #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
             async fn [< test_value_expectation_ $fn_name >]() {
                 use $crate::*;
 
@@ -157,7 +157,7 @@ macro_rules! test_task_results {
 macro_rules! test_task_results_from_file {
     ($fn_name:ident, $component_name:literal, $task_name:literal, $expectation:expr, $filename:literal) => {
         paste::item! {
-            #[tokio::test]
+            #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
             async fn [< test_value_expectation_ $fn_name >]() {
                 use $crate::*;
                 let filepath = std::env::current_dir()

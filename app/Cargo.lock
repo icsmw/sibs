@@ -186,6 +186,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "brec"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e89f4e5e7ff5b41c54d4db1c4022f35999f23d3b51a5c67e1862e95cca9486d4"
+dependencies = [
+ "brec_macros",
+ "crc32fast",
+ "enum_ids",
+ "thiserror 2.0.12",
+]
+
+[[package]]
+name = "brec_macros"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1e9809e8ce55621cf3e6b8f399f73d6b5b2a333e6744c4041854e5429bcd845"
+dependencies = [
+ "crc32fast",
+ "enum_ids",
+ "lazy_static",
+ "proc-macro2",
+ "quote",
+ "syn",
+ "thiserror 2.0.12",
+]
+
+[[package]]
 name = "bstorage"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -286,6 +313,15 @@ name = "constant_time_eq"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7c74b8349d32d297c9134b8c88677813a227df8f779daa29bfc29c183fe3dca6"
+
+[[package]]
+name = "crc32fast"
+version = "1.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a97769d94ddab943e4510d138150169a2758b5ef3eb191a9ee688de3e23ef7b3"
+dependencies = [
+ "cfg-if",
+]
 
 [[package]]
 name = "crossbeam-channel"
@@ -1204,6 +1240,7 @@ name = "runtime"
 version = "0.1.0"
 dependencies = [
  "asttree",
+ "brec",
  "bstorage",
  "common",
  "console",

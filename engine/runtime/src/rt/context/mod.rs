@@ -20,8 +20,9 @@ pub struct RtContext {
 
 impl RtContext {
     #[tracing::instrument]
-    pub fn new(cwd: PathBuf) -> Self {
+    pub fn new(cwd: &PathBuf) -> Self {
         let (tx, mut rx) = unbounded_channel();
+        let cwd = cwd.clone();
         spawn(async move {
             let mut stores: HashMap<Uuid, Store> = HashMap::new();
             tracing::info!("init demand's listener");

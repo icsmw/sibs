@@ -10,7 +10,7 @@ pub(crate) use params::*;
 pub(crate) use scenario::*;
 pub(crate) use script::*;
 
-#[tokio::main]
+#[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() -> Result<(), E> {
     let guard = logs::init()?;
     // Get all actions from parameters

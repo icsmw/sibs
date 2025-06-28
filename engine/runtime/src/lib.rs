@@ -31,3 +31,4 @@ pub(crate) use uuid::Uuid;
 
 pub(crate) const SIBS_FOLDER: &str = ".sibs";
 pub(crate) const STORAGE_FOLDER: &str = "storage";
+pub(crate) const SESSIONS_FILENAME: &str = "sessions.brec";

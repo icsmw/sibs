@@ -26,6 +26,7 @@ indexmap.workspace = true
 bstorage.workspace = true
 terminal_size.workspace = true
 regex.workspace = true
+brec = { workspace = true, features = ["locked_storage"] }
 
 asttree = { path = "../asttree" }
 diagnostics = { path = "../diagnostics" }
@@ -33,4 +34,5 @@ lexer = { path = "../lexer" }
 common = { path = "../common" }
 parser = { path = "../parser" }
 
-[dev-dependencies]
+[build-dependencies]
+brec = { workspace = true, features=["build"] }

@@ -8,7 +8,6 @@ mod suggestions;
 use filter::*;
 pub use search::*;
 pub use suggestions::*;
-use tracing::warn;
 
 use crate::*;
 use runtime::TypeEntity;

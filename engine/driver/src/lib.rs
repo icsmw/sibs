@@ -7,7 +7,7 @@ mod map;
 mod signature;
 
 use std::{cell::Ref, fmt, io, path::PathBuf};
-use tracing::debug;
+use tracing::{debug, warn};
 use uuid::Uuid;
 
 pub(crate) use asttree::*;

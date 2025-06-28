@@ -167,15 +167,23 @@ mod test {
             .into_iter()
             .map(|err| {
                 let err: E = (&err).into();
-                err.code()
+                match err {
+                    E::RtError(..) => format!("RT{}", err.code()),
+                    _ => err.code().to_owned(),
+                }
             })
             .collect();
-        // Make sure: order is correct and format
         assert_eq!(codes.len(), EId::as_vec().len());
+        // Make sure: order is correct and format
         for (idx, eid) in EId::as_vec().into_iter().enumerate() {
             let err: E = (&eid).into();
-            let expected = format!("{:05}", idx + 1); // "00001"
-            assert_eq!(err.code(), expected, "Mismatch for {eid:?}");
+            match err {
+                E::RtError(..) => {}
+                _ => {
+                    let expected = format!("{:05}", idx + 1); // "00001"
+                    assert_eq!(err.code(), expected, "Mismatch for {eid:?}");
+                }
+            }
         }
     }
 }

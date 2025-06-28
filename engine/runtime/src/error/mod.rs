@@ -181,6 +181,9 @@ pub enum E {
 
     #[error("Error: ")]
     Other(String),
+
+    #[error("Journal: ")]
+    Journal(String),
 }
 
 impl From<indicatif::style::TemplateError> for E {
@@ -222,5 +225,11 @@ impl From<oneshot::error::RecvError> for E {
 impl<T> From<tokio::sync::mpsc::error::SendError<T>> for E {
     fn from(_: tokio::sync::mpsc::error::SendError<T>) -> Self {
         E::SendError
+    }
+}
+
+impl From<brec::Error> for E {
+    fn from(err: brec::Error) -> Self {
+        Self::Journal(err.to_string())
     }
 }
