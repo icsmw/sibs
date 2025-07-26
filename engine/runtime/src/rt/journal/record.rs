@@ -82,4 +82,18 @@ impl Record {
             Some(scheme::Payload::String(mem::take(&mut self.msg))),
         )
     }
+    pub fn from_packet(pkg: scheme::Packet) -> Option<Self> {
+        if let (Some(scheme::Block::Signature(sig)), Some(scheme::Payload::String(msg))) =
+            (pkg.blocks.first(), pkg.payload)
+        {
+            Some(Record {
+                ts: sig.ts,
+                owner: Uuid::from_bytes(sig.owner),
+                ty: sig.ty.clone(),
+                msg,
+            })
+        } else {
+            None
+        }
+    }
 }

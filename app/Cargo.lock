@@ -187,21 +187,22 @@ dependencies = [
 
 [[package]]
 name = "brec"
-version = "0.1.4"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e89f4e5e7ff5b41c54d4db1c4022f35999f23d3b51a5c67e1862e95cca9486d4"
+checksum = "17e34c4ba96d06707979c17e5d3c3515613862ba73bf75723d1353a22583bc48"
 dependencies = [
  "brec_macros",
  "crc32fast",
  "enum_ids",
+ "fs4",
  "thiserror 2.0.12",
 ]
 
 [[package]]
 name = "brec_macros"
-version = "0.1.4"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1e9809e8ce55621cf3e6b8f399f73d6b5b2a333e6744c4041854e5429bcd845"
+checksum = "de3a111bc0d841582ceed43e77926e79e439465d2d30e68de9b8e5095249a33a"
 dependencies = [
  "crc32fast",
  "enum_ids",
@@ -474,6 +475,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e13624c2627564efccf4934284bdd98cbaa14e79b0b5a141218e507b3a823456"
 dependencies = [
  "percent-encoding",
+]
+
+[[package]]
+name = "fs4"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8640e34b88f7652208ce9e88b1a37a2ae95227d84abec377ccd3c5cfeb141ed4"
+dependencies = [
+ "rustix",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]

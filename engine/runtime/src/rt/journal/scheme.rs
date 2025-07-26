@@ -1,5 +1,29 @@
+use std::path::Path;
+
 use crate::*;
-use brec::block;
+use brec::{block, payload};
+
+#[derive(Debug)]
+pub struct SessionInfo {
+    pub md: SessionMetadata,
+    pub open: u64,
+    pub close: u64,
+    pub uuid: Uuid,
+}
+
+impl SessionInfo {
+    pub fn new(uuid: Uuid, open: u64, md: SessionMetadata) -> Self {
+        SessionInfo {
+            uuid,
+            md,
+            open,
+            close: 0,
+        }
+    }
+    pub fn set_close_tm(&mut self, close: u64) {
+        self.close = close;
+    }
+}
 
 #[derive(Debug, Default)]
 #[block]
@@ -8,13 +32,10 @@ pub struct SessionOpenData {
     pub uuid: [u8; 16],
 }
 
-impl SessionOpenData {
-    pub fn new(uuid: &Uuid) -> Result<Self, E> {
-        Ok(Self {
-            tm: Record::tm()?,
-            uuid: *uuid.as_bytes(),
-        })
-    }
+#[payload(bincode)]
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+pub struct SessionMetadata {
+    pub cwd: PathBuf,
 }
 
 #[derive(Debug, Default)]
@@ -24,16 +45,7 @@ pub struct SessionCloseData {
     pub uuid: [u8; 16],
 }
 
-impl SessionCloseData {
-    pub fn new(uuid: &Uuid) -> Result<Self, E> {
-        Ok(Self {
-            tm: Record::tm()?,
-            uuid: *uuid.as_bytes(),
-        })
-    }
-}
-
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub enum RecordTy {
     Stdout,
     Stderr,
@@ -105,14 +117,40 @@ pub struct Signature {
 
 brec::generate!();
 
-impl From<SessionOpenData> for Packet {
-    fn from(msg: SessionOpenData) -> Self {
-        Packet::new(vec![Block::SessionOpenData(msg)], None)
+impl SessionOpenData {
+    pub fn new(uuid: &Uuid) -> Result<Self, E> {
+        Ok(Self {
+            tm: Record::tm()?,
+            uuid: *uuid.as_bytes(),
+        })
+    }
+    pub fn packet<P: AsRef<Path>>(uuid: &Uuid, cwd: P) -> Result<Packet, E> {
+        Ok(Packet::new(
+            vec![Block::SessionOpenData(SessionOpenData::new(uuid)?)],
+            Some(Payload::SessionMetadata(SessionMetadata::new(cwd))),
+        ))
     }
 }
 
-impl From<SessionCloseData> for Packet {
-    fn from(msg: SessionCloseData) -> Self {
-        Packet::new(vec![Block::SessionCloseData(msg)], None)
+impl SessionCloseData {
+    pub fn new(uuid: &Uuid) -> Result<Self, E> {
+        Ok(Self {
+            tm: Record::tm()?,
+            uuid: *uuid.as_bytes(),
+        })
+    }
+    pub fn packet(uuid: &Uuid) -> Result<Packet, E> {
+        Ok(Packet::new(
+            vec![Block::SessionCloseData(SessionCloseData::new(uuid)?)],
+            None,
+        ))
+    }
+}
+
+impl SessionMetadata {
+    pub fn new<P: AsRef<Path>>(cwd: P) -> SessionMetadata {
+        SessionMetadata {
+            cwd: cwd.as_ref().to_path_buf(),
+        }
     }
 }
