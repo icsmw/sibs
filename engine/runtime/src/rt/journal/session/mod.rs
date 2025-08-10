@@ -23,19 +23,27 @@ impl RtJournal {
         let mut journal =
             scheme::FileStorage::new(&journal_filename, Some(Duration::from_secs(4)), None)?;
         sessions.insert(scheme::SessionOpenData::packet(&uuid, root)?)?;
+        drop(sessions);
         spawn(async move {
             tracing::info!("init demand's listener");
             while let Some(demand) = rx.recv().await {
                 match demand {
                     Demand::Destroy(tx) => {
                         tracing::info!("got shutdown signal");
-                        let _ = scheme::SessionCloseData::packet(&uuid)
-                            .map(|pkg| {
-                                sessions
-                                    .insert(pkg)
-                                    .map_err(|err| error!("fail write rec: {err}"))
-                            })
-                            .map_err(|err| error!("fail to get SessionCloseData: {err}"));
+                        match get_sessions_storage(&sessions_filename) {
+                            Ok(mut sessions) => {
+                                let _ = scheme::SessionCloseData::packet(&uuid)
+                                    .map(|pkg| {
+                                        sessions
+                                            .insert(pkg)
+                                            .map_err(|err| error!("fail write rec: {err}"))
+                                    })
+                                    .map_err(|err| error!("fail to get SessionCloseData: {err}"));
+                            }
+                            Err(err) => {
+                                error!("Fail to write session close data: {err}");
+                            }
+                        }
                         chk_send_err!(tx.send(()), DemandId::Destroy);
                         break;
                     }

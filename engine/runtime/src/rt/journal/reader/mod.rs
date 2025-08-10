@@ -68,6 +68,7 @@ impl RtJournalReader {
         self.tx.send(Demand::Close(*uuid, tx))?;
         Ok(rx.await?)
     }
+
     pub async fn read(
         &mut self,
         uuid: &Uuid,
