@@ -40,6 +40,9 @@ pub enum E {
     Runtime(runtime::RtError),
     #[error("Scenario error: {0}")]
     Scenario(scenario::ScenarioError),
+
+    #[error("Scenario error: {0}")]
+    InvalidUuid(String),
 }
 
 impl From<std::io::Error> for E {

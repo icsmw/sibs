@@ -1,6 +1,7 @@
 mod help;
 mod lsp;
 mod scenario;
+mod sessions;
 mod version;
 
 use crate::*;
@@ -8,6 +9,7 @@ use crate::*;
 pub(crate) use help::*;
 pub(crate) use lsp::*;
 pub(crate) use scenario::*;
+pub(crate) use sessions::*;
 pub(crate) use version::*;
 
 pub trait Parameter {
@@ -21,6 +23,7 @@ pub enum Parameters {
     Help,
     Scenario,
     Version,
+    Sessions,
     Lsp,
 }
 
@@ -30,6 +33,7 @@ impl Parameters {
             Self::Help => HelpParameter::keys(),
             Self::Scenario => ScenarioParameter::keys(),
             Self::Version => VersionParameter::keys(),
+            Self::Sessions => SessionsParameter::keys(),
             Self::Lsp => LspParameter::keys(),
         }
     }
@@ -38,6 +42,7 @@ impl Parameters {
             Self::Help => HelpParameter::desc(),
             Self::Scenario => ScenarioParameter::desc(),
             Self::Version => VersionParameter::desc(),
+            Self::Sessions => SessionsParameter::desc(),
             Self::Lsp => LspParameter::desc(),
         }
     }
@@ -52,6 +57,7 @@ impl Parameters {
                 Parameters::Help => HelpParameter::action(&mut args),
                 Parameters::Scenario => ScenarioParameter::action(&mut args),
                 Parameters::Version => VersionParameter::action(&mut args),
+                Parameters::Sessions => SessionsParameter::action(&mut args),
                 Parameters::Lsp => LspParameter::action(&mut args),
             } {
                 actions.push(action?);

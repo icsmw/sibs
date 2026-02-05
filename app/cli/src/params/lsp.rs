@@ -11,7 +11,9 @@ impl Parameter for LspParameter {
     fn desc() -> String {
         "Run LSP server".to_owned()
     }
-    fn action(_args: &mut Vec<String>) -> Option<Result<Action, E>> {
+    fn action(args: &mut Vec<String>) -> Option<Result<Action, E>> {
+        let pos = args.iter().position(|arg| ARGS.contains(&arg.as_str()))?;
+        args.remove(pos);
         Some(Ok(Action::Lsp(LspAction::default())))
     }
 }

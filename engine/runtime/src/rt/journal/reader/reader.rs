@@ -1,4 +1,7 @@
-use std::fs::{File, OpenOptions};
+use std::{
+    fs::{File, OpenOptions},
+    path::Path,
+};
 
 use tracing::warn;
 
@@ -11,10 +14,11 @@ pub struct JournalReader<'a> {
 }
 
 impl<'a> JournalReader<'a> {
-    pub fn new(path: &PathBuf) -> Result<JournalReader<'a>, E> {
+    pub fn new(root: &Path) -> Result<JournalReader<'a>, E> {
+        let path = root.join(SIBS_FOLDER);
         Ok(JournalReader {
-            root: path.to_owned(),
-            sessions: get_storage(path)?,
+            root: path.clone(),
+            sessions: get_storage(&path.join(SESSIONS_FILENAME))?,
             journals: HashMap::new(),
         })
     }
@@ -23,23 +27,44 @@ impl<'a> JournalReader<'a> {
         let mut list: HashMap<Uuid, scheme::SessionInfo> = HashMap::new();
         self.sessions.iter().for_each(|pkg| match pkg {
             Ok(pkg) => {
-                if let (
-                    Some(scheme::Block::SessionOpenData(data)),
-                    Some(scheme::Payload::SessionMetadata(md)),
-                ) = (pkg.blocks.first(), pkg.payload)
-                {
-                    list.insert(
-                        Uuid::from_bytes(data.uuid),
-                        scheme::SessionInfo::new(Uuid::from_bytes(data.uuid), data.tm, md),
-                    );
-                } else if let Some(scheme::Block::SessionCloseData(data)) = pkg.blocks.first() {
-                    if let Some(entry) = list.get_mut(&Uuid::from_bytes(data.uuid)) {
-                        entry.set_close_tm(data.tm);
-                    } else {
-                        warn!(
-                            "Found closing session data for {}; but no opening data",
-                            Uuid::from_bytes(data.uuid)
-                        )
+                if let Some(block) = pkg.blocks.first() {
+                    match block {
+                        scheme::Block::SessionOpenData(data) => {
+                            if let Some(scheme::Payload::SessionMetadata(md)) = pkg.payload {
+                                list.insert(
+                                    Uuid::from_bytes(data.uuid),
+                                    scheme::SessionInfo::new(
+                                        Uuid::from_bytes(data.uuid),
+                                        data.tm,
+                                        md,
+                                    ),
+                                );
+                            } else {
+                                warn!(
+                                    "Found opening session data for {}; but no metadata",
+                                    Uuid::from_bytes(data.uuid)
+                                );
+                            }
+                        }
+                        scheme::Block::SessionCloseData(data) => {
+                            if let Some(entry) = list.get_mut(&Uuid::from_bytes(data.uuid)) {
+                                entry.set_close_tm(data.tm);
+                                if let Some(scheme::Payload::SessionStat(stat)) = pkg.payload {
+                                    entry.set_stat(stat);
+                                } else {
+                                    warn!(
+                                        "No session stat found for closing session {}",
+                                        Uuid::from_bytes(data.uuid)
+                                    );
+                                }
+                            } else {
+                                warn!(
+                                    "Found closing session data for {}; but no opening data",
+                                    Uuid::from_bytes(data.uuid)
+                                )
+                            }
+                        }
+                        _ => {}
                     }
                 }
             }
@@ -63,9 +88,7 @@ impl<'a> JournalReader<'a> {
         let _ = self.journals.remove(uuid);
     }
     pub fn read(&mut self, uuid: &Uuid, from: usize, len: usize) -> Option<Vec<Record>> {
-        let Some(journal) = self.journals.get_mut(&uuid) else {
-            return None;
-        };
+        let journal = self.journals.get_mut(uuid)?;
         let mut records: Vec<Record> = Vec::new();
         journal.range(from, len).for_each(|pkg| match pkg {
             Ok(pkg) => {

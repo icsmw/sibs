@@ -16,6 +16,13 @@ component component_a() {
         let a = 5;
         a.fns::sum(a);
     }
+    /// This description is task_a
+    task task_b() {
+        print("component_a:task_b started");
+        `ls -lsa`;
+        print("component_a:task_b done");
+
+    }
 };
 
 /// This is description component_b

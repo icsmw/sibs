@@ -21,7 +21,7 @@ async fn main() -> Result<(), E> {
         .map(|act| act.validate(&actions))
         .collect::<Result<Vec<()>, _>>()?;
     // Collect artifacts
-    let artifacts: Vec<ActionArtifact> = actions
+    let mut artifacts: Vec<ActionArtifact> = actions
         .iter()
         .map(|act| act.artifact(&actions))
         .collect::<Result<Vec<Vec<_>>, _>>()?
@@ -31,7 +31,7 @@ async fn main() -> Result<(), E> {
     // Run actions
     let mut post_actions = Vec::new();
     for act in actions.into_iter() {
-        post_actions.push(act.run(artifacts.clone())?);
+        post_actions.push(act.run(&mut artifacts)?);
     }
     if post_actions
         .iter()

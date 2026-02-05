@@ -24,7 +24,7 @@ impl ActionMethods for TaskAction {
             self.args.clone(),
         )])
     }
-    fn run(&self, artifacts: Vec<ActionArtifact>) -> Result<RunArtifact, E> {
+    fn run(&self, artifacts: &mut Vec<ActionArtifact>) -> Result<RunArtifact, E> {
         if artifacts
             .iter()
             .any(|art| matches!(art, ActionArtifact::HelpRequest))
@@ -41,8 +41,8 @@ impl ActionMethods for TaskAction {
             return Err(E::NoComponentParameter);
         };
         let scenario = if let Some(ActionArtifact::Scenario(scenario)) = artifacts
-            .into_iter()
-            .find(|art| matches!(art, ActionArtifact::Scenario(..)))
+            .iter()
+            .find(|art| matches!(art, ActionArtifact::Scenario(..))).cloned()
         {
             scenario
         } else {

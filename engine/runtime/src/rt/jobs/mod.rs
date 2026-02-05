@@ -29,6 +29,8 @@ impl RtJobs {
                 match demand {
                     Demand::Destroy(tx) => {
                         tracing::info!("got shutdown signal");
+                        chk_send_err!(journal.destroy().await, DemandId::Destroy);
+                        chk_send_err!(progress.destroy().await, DemandId::Destroy);
                         chk_send_err!(tx.send(()), DemandId::Destroy);
                         break;
                     }

@@ -6,7 +6,7 @@ use std::{
     path::{self, Component, Path, PathBuf},
 };
 
-const DEFAULT_SIBS_SCENARIO: &str = "scenario.sibs";
+const DEFAULT_SIBS_SCENARIO: [&str; 4] = ["scenario", "main", "default", "index"];
 const SIBS_SCENARIO_EXT: &str = "sibs";
 
 #[derive(Clone, Debug)]
@@ -58,8 +58,12 @@ impl Scenario {
     }
 
     fn search(location: &PathBuf) -> Result<Option<PathBuf>, E> {
-        if location.join(DEFAULT_SIBS_SCENARIO).exists() {
-            return Ok(Some(location.join(DEFAULT_SIBS_SCENARIO)));
+        for filename in DEFAULT_SIBS_SCENARIO {
+            let mut filepath = location.join(filename);
+            filepath.set_extension(SIBS_SCENARIO_EXT);
+            if filepath.exists() {
+                return Ok(Some(filepath));
+            }
         }
         let mut filename: Option<PathBuf> = None;
         for entry in read_dir(location)? {

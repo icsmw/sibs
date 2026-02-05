@@ -14,7 +14,7 @@ impl ActionMethods for VersionAction {
             Ok(())
         }
     }
-    fn run(&self, _artifacts: Vec<ActionArtifact>) -> Result<RunArtifact, E> {
+    fn run(&self, _artifacts: &mut Vec<ActionArtifact>) -> Result<RunArtifact, E> {
         println!("{VERSION}");
         Ok(RunArtifact::Void)
     }

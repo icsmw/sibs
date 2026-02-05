@@ -14,9 +14,7 @@ impl<E: Display + ErrorCode> Errors<E> {
             self.first = Some((&err).into());
         }
         let stamp: ErrorStamp = (&err).into();
-        if !self.errors.contains_key(&stamp) {
-            self.errors.insert(stamp, err);
-        }
+        self.errors.entry(stamp).or_insert(err);
     }
     pub fn extract_first(&mut self) -> Option<LinkedErr<E>> {
         self.first

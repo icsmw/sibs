@@ -7,7 +7,7 @@ impl ActionMethods for LspAction {
     fn artifact(&self, _actions: &[Action]) -> Result<Vec<ActionArtifact>, E> {
         Ok(Vec::new())
     }
-    fn run(&self, _artifacts: Vec<ActionArtifact>) -> Result<RunArtifact, E> {
+    fn run(&self, _artifacts: &mut Vec<ActionArtifact>) -> Result<RunArtifact, E> {
         Ok(RunArtifact::Lsp)
     }
 }

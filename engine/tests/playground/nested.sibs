@@ -1,6 +1,6 @@
 /// This is description component_c
 component component_c() {
-    /// This description is task_a
+    /// This description is task_aaa
     task task_a() {
         let a = 5;
         a.fns::sum(a);

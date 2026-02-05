@@ -23,6 +23,9 @@ impl SessionInfo {
     pub fn set_close_tm(&mut self, close: u64) {
         self.close = close;
     }
+    pub fn set_stat(&mut self, stat: SessionStat) {
+        self.md.stat = Some(stat);
+    }
 }
 
 #[derive(Debug, Default)]
@@ -36,6 +39,31 @@ pub struct SessionOpenData {
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct SessionMetadata {
     pub cwd: PathBuf,
+    pub stat: Option<SessionStat>,
+}
+
+#[payload(bincode)]
+#[derive(Debug, Clone, Copy, Default, serde::Deserialize, serde::Serialize)]
+pub struct SessionStat {
+    pub errs: u32,
+    pub warns: u32,
+    pub infos: u32,
+    pub debugs: u32,
+    pub stdouts: u32,
+    pub stderrs: u32,
+}
+
+impl SessionStat {
+    pub fn inc(&mut self, ty: &RecordTy) {
+        match ty {
+            RecordTy::Err => self.errs += 1,
+            RecordTy::Warn => self.warns += 1,
+            RecordTy::Info => self.infos += 1,
+            RecordTy::Debug => self.debugs += 1,
+            RecordTy::Stdout => self.stdouts += 1,
+            RecordTy::Stderr => self.stderrs += 1,
+        }
+    }
 }
 
 #[derive(Debug, Default)]
@@ -139,10 +167,10 @@ impl SessionCloseData {
             uuid: *uuid.as_bytes(),
         })
     }
-    pub fn packet(uuid: &Uuid) -> Result<Packet, E> {
+    pub fn packet(uuid: &Uuid, stat: SessionStat) -> Result<Packet, E> {
         Ok(Packet::new(
             vec![Block::SessionCloseData(SessionCloseData::new(uuid)?)],
-            None,
+            Some(Payload::SessionStat(stat)),
         ))
     }
 }
@@ -151,6 +179,7 @@ impl SessionMetadata {
     pub fn new<P: AsRef<Path>>(cwd: P) -> SessionMetadata {
         SessionMetadata {
             cwd: cwd.as_ref().to_path_buf(),
+            stat: None,
         }
     }
 }

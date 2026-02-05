@@ -26,13 +26,14 @@ impl RtJournal {
         drop(sessions);
         spawn(async move {
             tracing::info!("init demand's listener");
+            let mut stat = scheme::SessionStat::default();
             while let Some(demand) = rx.recv().await {
                 match demand {
                     Demand::Destroy(tx) => {
                         tracing::info!("got shutdown signal");
                         match get_sessions_storage(&sessions_filename) {
                             Ok(mut sessions) => {
-                                let _ = scheme::SessionCloseData::packet(&uuid)
+                                let _ = scheme::SessionCloseData::packet(&uuid, stat)
                                     .map(|pkg| {
                                         sessions
                                             .insert(pkg)
@@ -48,6 +49,7 @@ impl RtJournal {
                         break;
                     }
                     Demand::Write(record) => {
+                        stat.inc(&record.ty);
                         let _ = tokio::task::block_in_place(|| {
                             let packet: scheme::Packet = record.as_packet(&uuid);
                             journal.insert(packet)

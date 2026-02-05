@@ -8,7 +8,7 @@ impl ActionMethods for HelpAction {
     fn artifact(&self, _actions: &[Action]) -> Result<Vec<ActionArtifact>, E> {
         Ok(vec![ActionArtifact::HelpRequest])
     }
-    fn run(&self, artifacts: Vec<ActionArtifact>) -> Result<RunArtifact, E> {
+    fn run(&self, artifacts: &mut Vec<ActionArtifact>) -> Result<RunArtifact, E> {
         if self.inner {
             let lines: Vec<String> = Parameters::as_vec()
                 .iter()
@@ -32,8 +32,9 @@ impl ActionMethods for HelpAction {
             }
         });
         let scenario = if let Some(ActionArtifact::Scenario(scenario)) = artifacts
-            .into_iter()
+            .iter()
             .find(|art| matches!(art, ActionArtifact::Scenario(..)))
+            .cloned()
         {
             scenario
         } else {

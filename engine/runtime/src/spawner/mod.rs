@@ -129,7 +129,7 @@ pub async fn spawn<S: AsRef<str>, P: AsRef<Path>>(
                 },
                 async {
                     while let Some(line) = stderr.next().await {
-                         post_logs(line, &mut cstderr, false, &job)
+                        post_logs(line, &mut cstderr, false, &job)
                     }
                 }
             );
