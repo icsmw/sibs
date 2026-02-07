@@ -1,4 +1,4 @@
-use std::mem;
+use std::{fmt, mem};
 
 use crate::*;
 
@@ -95,5 +95,18 @@ impl Record {
         } else {
             None
         }
+    }
+    pub fn to_string(&self, ty: (bool, u8), ts: (bool, u8)) -> String {
+        let ty_str = if ty.0 { self.ty.to_string() } else { String::new() };
+        let ts_str = if ts.0 { self.ts.to_string() } else { String::new() };
+        let ty_pad = format!("{:width$}", ty_str, width = ty.1 as usize);
+        let ts_pad = format!("{:width$}", ts_str, width = ts.1 as usize);
+        format!("[{}][{}]: {}", ty_pad, ts_pad, self.msg)
+    }
+}
+
+impl fmt::Display for Record {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "[{}][{}]: {}", self.ty, self.ts, self.msg)
     }
 }

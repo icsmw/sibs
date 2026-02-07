@@ -30,14 +30,14 @@ impl Header {
                 if opts.short_headers {
                     "E"
                 } else {
-                    "Errors"
+                    "Errs"
                 }
             }
             Header::Warnings => {
                 if opts.short_headers {
                     "W"
                 } else {
-                    "Warnings"
+                    "Warns"
                 }
             }
             Header::Debugs => {

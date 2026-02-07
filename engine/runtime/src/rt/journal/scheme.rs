@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{fmt, path::Path};
 
 use crate::*;
 use brec::{block, payload};
@@ -73,7 +73,7 @@ pub struct SessionCloseData {
     pub uuid: [u8; 16],
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub enum RecordTy {
     Stdout,
     Stderr,
@@ -82,6 +82,19 @@ pub enum RecordTy {
     Err,
     Warn,
     Info,
+}
+
+impl fmt::Display for RecordTy {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            RecordTy::Stdout => write!(f, "STDOUT"),
+            RecordTy::Stderr => write!(f, "STDERR"),
+            RecordTy::Debug => write!(f, "DEBUG "),
+            RecordTy::Err => write!(f, "ERROR "),
+            RecordTy::Warn => write!(f, "WARN  "),
+            RecordTy::Info => write!(f, "INFO  "),
+        }
+    }
 }
 
 impl From<&RecordTy> for u8 {

@@ -1,4 +1,5 @@
 mod header;
+mod rows;
 mod table;
 
 use crate::*;
@@ -9,14 +10,11 @@ use header::*;
 use table::*;
 
 pub struct SessionsAction {
-    session: Option<Uuid>,
+    session: Option<String>,
 }
 
 impl SessionsAction {
     pub fn new(session: Option<String>) -> Result<Self, E> {
-        let session = session
-            .map(|s| Uuid::parse_str(&s).map_err(|e| E::InvalidUuid(e.to_string())))
-            .transpose()?;
         Ok(Self { session })
     }
 }
@@ -41,10 +39,26 @@ impl ActionMethods for SessionsAction {
         } else {
             Scenario::new()?
         };
-        if let Some(session) = self.session {
-            // todo: implement session handling
+        let mut reader = JournalReader::new(&scenario.cwd()?)?;
+        if let Some(session) = self.session.as_ref() {
+            let uuid = match Uuid::parse_str(session) {
+                Ok(uuid) => uuid,
+                Err(err) => {
+                    let sessions = reader.list();
+                    sessions
+                        .keys()
+                        .find(|key| key.to_string().starts_with(session))
+                        .cloned()
+                        .ok_or(E::InvalidUuid(err.to_string()))?
+                }
+            };
+            if let Some(count) = reader.open(&uuid)? {
+                println!("Session {} has {} records", session, count);
+                rows::render(&mut reader, &uuid);
+            } else {
+                println!("Session {} not found", session);
+            }
         } else {
-            let mut reader = JournalReader::new(&scenario.cwd()?)?;
             let sessions = reader.list();
             let opts = TableOptions::default().analize(sessions.values());
             let mut table = Table::default();
