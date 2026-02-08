@@ -97,6 +97,19 @@ impl fmt::Display for RecordTy {
     }
 }
 
+impl RecordTy {
+    pub fn colored(&self) -> String {
+        match self {
+            RecordTy::Stdout => format!("\x1b[32m{}\x1b[0m", self),
+            RecordTy::Stderr => format!("\x1b[31m{}\x1b[0m", self),
+            RecordTy::Debug => format!("\x1b[34m{}\x1b[0m", self),
+            RecordTy::Err => format!("\x1b[31m{}\x1b[0m", self),
+            RecordTy::Warn => format!("\x1b[33m{}\x1b[0m", self),
+            RecordTy::Info => format!("\x1b[36m{}\x1b[0m", self),
+        }
+    }
+}
+
 impl From<&RecordTy> for u8 {
     fn from(ty: &RecordTy) -> Self {
         match ty {
@@ -138,6 +151,46 @@ impl TryFrom<u8> for RecordTy {
     }
 }
 
+#[derive(Debug, Default, Clone, PartialEq)]
+pub enum EventTy {
+    #[default]
+    Log,
+    JobOpened,
+    JobClosed,
+}
+
+impl From<&EventTy> for u8 {
+    fn from(ty: &EventTy) -> Self {
+        match ty {
+            EventTy::Log => 0,
+            EventTy::JobOpened => 1,
+            EventTy::JobClosed => 2,
+        }
+    }
+}
+
+impl From<EventTy> for u8 {
+    fn from(ty: EventTy) -> Self {
+        match ty {
+            EventTy::Log => 0,
+            EventTy::JobOpened => 1,
+            EventTy::JobClosed => 2,
+        }
+    }
+}
+
+impl TryFrom<u8> for EventTy {
+    type Error = String;
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(EventTy::Log),
+            1 => Ok(EventTy::JobOpened),
+            2 => Ok(EventTy::JobClosed),
+            _ => Err(format!("{value} isn't valid EventTy")),
+        }
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct Owner(Uuid);
 
@@ -152,8 +205,10 @@ impl From<&Owner> for [u8; 16] {
 pub struct Signature {
     pub ts: u64,
     pub owner: [u8; 16],
+    pub parent: [u8; 16],
     pub session: [u8; 16],
     pub ty: RecordTy,
+    pub event: EventTy,
 }
 
 brec::generate!();

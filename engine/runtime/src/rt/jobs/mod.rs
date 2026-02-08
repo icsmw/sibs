@@ -2,7 +2,7 @@ mod api;
 mod entry;
 mod job;
 
-use crate::*;
+use crate::{rt::journal, *};
 use api::*;
 use entry::*;
 pub use job::*;
@@ -59,12 +59,10 @@ impl RtJobs {
                                 continue;
                             }
                         };
+                        let journal = journal.create(owner, parent);
+                        journal.job_open(alias);
                         chk_send_err!(
-                            tx.send(Ok(job.as_job(
-                                journal.create(owner, parent),
-                                progress,
-                                inner.clone()
-                            ))),
+                            tx.send(Ok(job.as_job(journal, progress, inner.clone()))),
                             DemandId::Create
                         );
                     }

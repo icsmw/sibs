@@ -15,28 +15,37 @@ impl Journal {
             journal,
         }
     }
+
+    pub fn job_open<S: Into<String>>(&self, msg: S) {
+        self.journal.job_open(self.owner, self.parent, msg);
+    }
+
+    pub fn job_close(&self) {
+        self.journal.job_close(self.owner, self.parent);
+    }
+
     pub fn stdout<S: Into<String>>(&self, msg: S) {
-        self.journal.stdout(self.owner, msg);
+        self.journal.stdout(self.owner, self.parent, msg);
     }
 
     pub fn stderr<S: Into<String>>(&self, msg: S) {
-        self.journal.stderr(self.owner, msg);
+        self.journal.stderr(self.owner, self.parent, msg);
     }
 
     pub fn info<S: Into<String>>(&self, msg: S) {
-        self.journal.info(self.owner, msg);
+        self.journal.info(self.owner, self.parent, msg);
     }
 
     pub fn debug<S: Into<String>>(&self, msg: S) {
-        self.journal.debug(self.owner, msg);
+        self.journal.debug(self.owner, self.parent, msg);
     }
 
     pub fn err<S: Into<String>>(&self, msg: S) {
-        self.journal.err(self.owner, msg);
+        self.journal.err(self.owner, self.parent, msg);
     }
 
     pub fn warn<S: Into<String>>(&self, msg: S) {
-        self.journal.warn(self.owner, msg);
+        self.journal.warn(self.owner, self.parent, msg);
     }
 
     pub fn child(&self, owner: Uuid) -> Journal {

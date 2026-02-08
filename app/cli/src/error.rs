@@ -43,6 +43,9 @@ pub enum E {
 
     #[error("Scenario error: {0}")]
     InvalidUuid(String),
+
+    #[error("No sessions found")]
+    NoSessions,
 }
 
 impl From<std::io::Error> for E {

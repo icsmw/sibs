@@ -13,12 +13,14 @@ impl Done<'_> {
             self.job.journal.debug(msg.to_string());
         }
         self.job.progress.success(msg);
+        self.job.close();
     }
     pub fn failed<S: ToString>(&self, msg: Option<S>) {
         if let Some(msg) = msg.as_ref() {
             self.job.journal.err(msg.to_string());
         }
         self.job.progress.failed(msg);
+        self.job.close();
     }
 }
 
@@ -90,7 +92,7 @@ impl Job {
     }
 
     pub fn close(&self) {
-        self.journal.debug("job is closed");
+        self.journal.job_close();
         // TODO: Change state of progress?
     }
 }

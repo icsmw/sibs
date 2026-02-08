@@ -73,28 +73,35 @@ impl RtJournal {
         Journal::new(owner, parent, self.clone())
     }
 
-    pub fn stdout<S: Into<String>>(&self, owner: Uuid, msg: S) {
-        send(&self.tx, Record::stdout(owner, msg));
+    pub fn job_open<S: Into<String>>(&self, owner: Uuid, parent: Option<Uuid>, msg: S) {
+        send(&self.tx, Record::job_open(owner, parent, msg));
     }
 
-    pub fn stderr<S: Into<String>>(&self, owner: Uuid, msg: S) {
-        send(&self.tx, Record::stderr(owner, msg));
+    pub fn job_close(&self, owner: Uuid, parent: Option<Uuid>) {
+        send(&self.tx, Record::job_close(owner, parent));
     }
 
-    pub fn info<S: Into<String>>(&self, owner: Uuid, msg: S) {
-        send(&self.tx, Record::info(owner, msg));
+    pub fn stdout<S: Into<String>>(&self, owner: Uuid, parent: Option<Uuid>, msg: S) {
+        send(&self.tx, Record::stdout(owner, parent, msg));
+    }
+    pub fn stderr<S: Into<String>>(&self, owner: Uuid, parent: Option<Uuid>, msg: S) {
+        send(&self.tx, Record::stderr(owner, parent, msg));
     }
 
-    pub fn debug<S: Into<String>>(&self, owner: Uuid, msg: S) {
-        send(&self.tx, Record::debug(owner, msg));
+    pub fn info<S: Into<String>>(&self, owner: Uuid, parent: Option<Uuid>, msg: S) {
+        send(&self.tx, Record::info(owner, parent, msg));
     }
 
-    pub fn err<S: Into<String>>(&self, owner: Uuid, msg: S) {
-        send(&self.tx, Record::err(owner, msg));
+    pub fn debug<S: Into<String>>(&self, owner: Uuid, parent: Option<Uuid>, msg: S) {
+        send(&self.tx, Record::debug(owner, parent, msg));
     }
 
-    pub fn warn<S: Into<String>>(&self, owner: Uuid, msg: S) {
-        send(&self.tx, Record::warn(owner, msg));
+    pub fn err<S: Into<String>>(&self, owner: Uuid, parent: Option<Uuid>, msg: S) {
+        send(&self.tx, Record::err(owner, parent, msg));
+    }
+
+    pub fn warn<S: Into<String>>(&self, owner: Uuid, parent: Option<Uuid>, msg: S) {
+        send(&self.tx, Record::warn(owner, parent, msg));
     }
 }
 

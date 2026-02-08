@@ -174,7 +174,7 @@ impl Context {
     pub(crate) async fn child<S: ToString>(&self, owner: Uuid, alias: S) -> Result<Context, E> {
         Ok(self.rt.create(owner, self.job.child(owner, alias).await?))
     }
-    pub(crate) async fn close(&self) -> Result<(), E> {
+    pub async fn close(&self) -> Result<(), E> {
         self.rt.close_cx(self.owner).await?;
         self.job.close();
         Ok(())

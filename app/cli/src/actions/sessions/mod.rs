@@ -9,6 +9,8 @@ use uuid::Uuid;
 use header::*;
 use table::*;
 
+const LAST_SESSIONS: &str = "recent";
+
 pub struct SessionsAction {
     session: Option<String>,
 }
@@ -45,11 +47,21 @@ impl ActionMethods for SessionsAction {
                 Ok(uuid) => uuid,
                 Err(err) => {
                     let sessions = reader.list();
-                    sessions
-                        .keys()
-                        .find(|key| key.to_string().starts_with(session))
-                        .cloned()
-                        .ok_or(E::InvalidUuid(err.to_string()))?
+                    if session == LAST_SESSIONS {
+                        if let Some((last_uuid, _)) =
+                            sessions.iter().max_by_key(|(_, info)| info.open)
+                        {
+                            *last_uuid
+                        } else {
+                            return Err(E::NoSessions);
+                        }
+                    } else {
+                        sessions
+                            .keys()
+                            .find(|key| key.to_string().starts_with(session))
+                            .cloned()
+                            .ok_or(E::InvalidUuid(err.to_string()))?
+                    }
                 }
             };
             if let Some(count) = reader.open(&uuid)? {
