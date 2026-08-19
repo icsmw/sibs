@@ -1,9 +1,7 @@
 use std::{
-    fmt::{self, format, Display},
+    fmt::{self, Display},
     mem,
 };
-
-use chrono::offset;
 
 use crate::*;
 

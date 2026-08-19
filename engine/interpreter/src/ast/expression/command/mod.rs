@@ -6,7 +6,7 @@ use runtime::spawner;
 
 impl Interpret for CommandPart {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
         match self {
             Self::Literal(tk) => Ok(RtValue::Str(tk.to_string())),
             Self::Expression(_, n, _) => n.interpret(rt, cx).await,
@@ -17,7 +17,7 @@ impl Interpret for CommandPart {
 
 impl Interpret for Command {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
         let mut vls = Vec::new();
         for p in self.nodes.iter() {
             vls.push(

@@ -11,6 +11,7 @@ pub(crate) use diagnostics::*;
 pub use error::E as RtError;
 pub(crate) use error::*;
 pub(crate) use lexer::*;
+pub use rt::scheme::{Payload, ProtocolContext};
 pub use rt::*;
 pub use value::*;
 

@@ -2,7 +2,7 @@ use crate::*;
 
 impl Interpret for Comparison {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
         let RtValue::ComparisonOperator(op) =
             self.operator.interpret(rt.clone(), cx.clone()).await?
         else {

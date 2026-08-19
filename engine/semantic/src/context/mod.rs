@@ -51,7 +51,7 @@ impl SemanticCx {
         name: S,
         incomes: &[&Ty],
         caller: &Uuid,
-    ) -> Option<FnEntity> {
+    ) -> Option<FnEntity<'_>> {
         self.fns.lookup_by_inps(name, incomes, caller)
     }
     pub fn lookup_task<S: AsRef<str>>(&mut self, name: S, caller: &Uuid) -> Option<&TaskEntity> {

@@ -5,7 +5,7 @@ use crate::*;
 
 impl Interpret for Task {
     #[boxed]
-    fn interpret(&self, _rt: Runtime, _cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, _rt: Runtime, _cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
         Ok(RtValue::Void)
     }
 }
@@ -21,7 +21,7 @@ impl Execute for Task {
         &self.uuid
     }
     #[boxed]
-    fn before(&self, rt: Runtime, cx: Context) -> GtPinnedResult<LinkedErr<E>> {
+    fn before(&self, rt: Runtime, cx: Context) -> GtPinnedResult<'_, LinkedErr<E>> {
         if self.gts.is_empty() {
             return Ok(true);
         }

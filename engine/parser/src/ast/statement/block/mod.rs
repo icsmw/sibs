@@ -11,13 +11,11 @@ impl Interest for Block {
 
 impl ReadNode<Block> for Block {
     fn read(parser: &Parser) -> Result<Option<Block>, LinkedErr<E>> {
-        let Some((mut inner, open, close)) =
-            parser.between(KindId::LeftBrace, KindId::RightBrace)?
+        let Some((inner, open, close)) = parser.between(KindId::LeftBrace, KindId::RightBrace)?
         else {
             return Ok(None);
         };
         let mut nodes = Vec::new();
-        let mut from = None;
         let mut skipped = Vec::new();
         loop {
             'semicolons: loop {
@@ -27,11 +25,11 @@ impl ReadNode<Block> for Block {
                     break 'semicolons;
                 }
             }
-            from = inner
+            let from = inner
                 .next()
                 .map(|tk| (tk.to_string(), SrcLink::from_tk(&tk)));
             if let Some(node) = LinkedNode::try_oneof(
-                &mut inner,
+                &inner,
                 &[
                     NodeTarget::Declaration(&[
                         DeclarationId::VariableDeclaration,

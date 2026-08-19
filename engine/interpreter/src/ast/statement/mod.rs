@@ -16,7 +16,7 @@ mod r#while;
 use crate::*;
 
 impl Interpret for Statement {
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
         match self {
             Statement::Assignation(n) => n.interpret(rt, cx),
             Statement::AssignedValue(n) => n.interpret(rt, cx),

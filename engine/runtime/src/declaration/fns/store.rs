@@ -44,7 +44,7 @@ impl Fns {
         name: S,
         incomes: &[&Ty],
         caller: &Uuid,
-    ) -> Option<FnEntity> {
+    ) -> Option<FnEntity<'_>> {
         let uen = self.ufns.lookup_by_inps(name.as_ref(), incomes, caller);
         let een = self.efns.lookup_by_inps(name, incomes, caller);
         if uen.is_some() && een.is_some() {

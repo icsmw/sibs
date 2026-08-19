@@ -1,4 +1,5 @@
 mod api;
+#[allow(clippy::module_inception)]
 mod reader;
 
 use crate::*;
@@ -33,7 +34,8 @@ impl RtJournalReader {
                         chk_send_err!(tx.send(reader.open(&uuid)), DemandId::Open);
                     }
                     Demand::Close(uuid, tx) => {
-                        chk_send_err!(tx.send(reader.close(&uuid)), DemandId::Close);
+                        reader.close(&uuid);
+                        chk_send_err!(tx.send(()), DemandId::Close);
                     }
                     Demand::Read(uuid, from, len, tx) => {
                         chk_send_err!(tx.send(reader.read(&uuid, from, len)), DemandId::Read);

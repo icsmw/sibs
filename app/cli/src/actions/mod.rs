@@ -23,7 +23,7 @@ pub enum ActionArtifact {
     Scenario(Scenario),
     /// * `String` - name of task
     /// * `Vec<String>` - task's arguments
-    Task(String, Vec<String>),
+    Task(String, #[allow(dead_code)] Vec<String>),
     /// `String` - name of component
     Component(String),
     HelpRequest,

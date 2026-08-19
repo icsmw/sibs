@@ -36,21 +36,13 @@ pub fn get_ty(ty: &Type) -> Result<TokenStream, String> {
                             DeterminedTy::Vec(Some(Box::new(#inner_ref)))
                         })
                     }
-                    "HashMap" => {
-                        return Err("HashMap not implemented".to_owned());
-                    }
-                    "Option" => {
-                        return Err("Option not implemented".to_owned());
-                    }
-                    "Result" => {
-                        return Err("Result not implemented".to_owned());
-                    }
-                    _ => {
-                        return Err("Only Vec is supported".to_owned());
-                    }
+                    "HashMap" => Err("HashMap not implemented".to_owned()),
+                    "Option" => Err("Option not implemented".to_owned()),
+                    "Result" => Err("Result not implemented".to_owned()),
+                    _ => Err("Only Vec is supported".to_owned()),
                 }
             } else {
-                return Err("Only Type::Path are supported".to_owned());
+                Err("Only Type::Path are supported".to_owned())
             }
         }
         Type::Tuple(tuple) => {

@@ -51,7 +51,9 @@ pub struct Job {
     pub journal: Journal,
     pub progress: Progress,
     pub(crate) owner: Uuid,
+    #[allow(dead_code)]
     pub(crate) parent: Option<Uuid>,
+    #[allow(dead_code)]
     pub(crate) alias: String,
     pub cancel: CancellationToken,
     rt: RtJobs,

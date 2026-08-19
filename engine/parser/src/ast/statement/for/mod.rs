@@ -18,11 +18,11 @@ impl ReadNode<For> for For {
             return Ok(None);
         }
         let restore = parser.pin();
-        let (el, index) = if let Some((mut inner, ..)) =
+        let (el, index) = if let Some((inner, ..)) =
             parser.between(KindId::LeftParen, KindId::RightParen)?
         {
             let el = LinkedNode::try_oneof(
-                &mut inner,
+                &inner,
                 &[NodeTarget::Expression(&[ExpressionId::Variable])],
             )?
             .ok_or_else(|| E::MissedElementDeclarationInFor.link_with_token(&token_for))?;
@@ -32,7 +32,7 @@ impl ReadNode<For> for For {
                 let _ = inner.token();
             }
             let index_ref = LinkedNode::try_oneof(
-                &mut inner,
+                &inner,
                 &[NodeTarget::Expression(&[ExpressionId::Variable])],
             )?
             .ok_or_else(|| E::MissedIndexDeclarationInFor.link_by_current(&inner))?;

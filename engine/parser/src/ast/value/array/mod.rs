@@ -11,14 +11,14 @@ impl Interest for Array {
 
 impl ReadNode<Array> for Array {
     fn read(parser: &Parser) -> Result<Option<Array>, LinkedErr<E>> {
-        let Some((mut inner, open, close)) =
+        let Some((inner, open, close)) =
             parser.between(KindId::LeftBracket, KindId::RightBracket)?
         else {
             return Ok(None);
         };
         let mut els = Vec::new();
         while let Some(node) = LinkedNode::try_oneof(
-            &mut inner,
+            &inner,
             &[
                 NodeTarget::Value(&[
                     ValueId::Number,

@@ -34,9 +34,9 @@ impl SemanticTokensGetter for Return {
             &self.token,
             SemanticToken::Keyword,
         )];
-        self.node
-            .as_ref()
-            .map(|n| tokens.extend(n.get_semantic_tokens(stcx)));
+        if let Some(n) = self.node.as_ref() {
+            tokens.extend(n.get_semantic_tokens(stcx))
+        }
         tokens
     }
 }

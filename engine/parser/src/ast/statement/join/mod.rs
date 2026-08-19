@@ -17,14 +17,13 @@ impl ReadNode<Join> for Join {
         if !matches!(token.kind, Kind::Keyword(Keyword::Join)) {
             return Ok(None);
         }
-        let Some((mut inner, open, close)) =
-            parser.between(KindId::LeftParen, KindId::RightParen)?
+        let Some((inner, open, close)) = parser.between(KindId::LeftParen, KindId::RightParen)?
         else {
             return Ok(None);
         };
         let mut commands = Vec::new();
         while let Some(node) = LinkedNode::try_oneof(
-            &mut inner,
+            &inner,
             &[NodeTarget::Expression(&[
                 ExpressionId::Command,
                 ExpressionId::TaskCall,

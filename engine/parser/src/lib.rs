@@ -43,6 +43,8 @@ pub struct Parser {
     resilience: bool,
 }
 
+type BetweenResult<'a> = Result<Option<(Parser, Ref<'a, Token>, Ref<'a, Token>)>, LinkedErr<E>>;
+
 impl Parser {
     pub fn unbound<S: AsRef<str>>(
         tokens: Vec<Token>,
@@ -129,13 +131,11 @@ impl Parser {
     }
 
     pub fn get_err_report(&self) -> Option<LinkedErr<E>> {
-        let Some(err) = self.errs.borrow_mut().extract_first() else {
-            return None;
-        };
+        let err = self.errs.borrow_mut().extract_first()?;
         Some(err)
     }
 
-    pub fn get_token(&self, idx: isize) -> Option<Ref<Token>> {
+    pub fn get_token(&self, idx: isize) -> Option<Ref<'_, Token>> {
         if idx < 0 {
             return None;
         }
@@ -147,7 +147,7 @@ impl Parser {
         }
     }
 
-    pub fn get_token_by_pos(&self, pos: usize) -> Option<(Ref<Token>, usize)> {
+    pub fn get_token_by_pos(&self, pos: usize) -> Option<(Ref<'_, Token>, usize)> {
         let tokens_ref = self.tokens.borrow();
         let index = tokens_ref.iter().position(|tk| tk.pos.is_in(pos))?;
         Some((Ref::map(tokens_ref, |vec| &vec[index]), index))
@@ -155,6 +155,10 @@ impl Parser {
 
     pub fn len(&self) -> usize {
         self.tokens.borrow().len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.tokens.borrow().is_empty()
     }
 
     pub fn pos(&self) -> usize {
@@ -236,14 +240,14 @@ impl Parser {
         None
     }
 
-    fn token(&self) -> Option<Ref<Token>> {
+    fn token(&self) -> Option<Ref<'_, Token>> {
         let pos = self.next_token_pos()?;
         self.pos.set(pos + 1);
         let tokens_ref = self.tokens.borrow();
         Some(Ref::map(tokens_ref, |vec| &vec[pos]))
     }
 
-    fn current(&self) -> Option<Ref<Token>> {
+    fn current(&self) -> Option<Ref<'_, Token>> {
         let tokens_ref = self.tokens.borrow();
         let index = self.pos();
         let token_ref = tokens_ref.get(index).or_else(|| tokens_ref.get(self.end))?;
@@ -253,7 +257,7 @@ impl Parser {
         Some(Ref::map(tokens_ref, move |vec| &vec[idx]))
     }
 
-    fn until_end(&self) -> Option<(Ref<Token>, Ref<Token>)> {
+    fn until_end(&self) -> Option<(Ref<'_, Token>, Ref<'_, Token>)> {
         let tokens_ref = self.tokens.borrow();
         let pos = self.pos().min(self.end);
         let from_index = tokens_ref
@@ -270,7 +274,7 @@ impl Parser {
         Some((from_ref, to_ref))
     }
 
-    fn tokens(&self, nm: usize) -> Option<Vec<Ref<Token>>> {
+    fn tokens(&self, nm: usize) -> Option<Vec<Ref<'_, Token>>> {
         let mut tokens = Vec::new();
         while let Some(tk) = self.token() {
             tokens.push(tk);
@@ -291,7 +295,7 @@ impl Parser {
         false
     }
 
-    fn next(&self) -> Option<Ref<Token>> {
+    fn next(&self) -> Option<Ref<'_, Token>> {
         let tokens = self.tokens.borrow();
         let pos = self.next_token_pos()?;
         Some(Ref::map(tokens, |tokens| &tokens[pos]))
@@ -306,11 +310,7 @@ impl Parser {
         }
     }
 
-    fn between(
-        &self,
-        left: KindId,
-        right: KindId,
-    ) -> Result<Option<(Parser, Ref<Token>, Ref<Token>)>, LinkedErr<E>> {
+    fn between(&self, left: KindId, right: KindId) -> BetweenResult<'_> {
         let Some(from_tk) = self.token() else {
             return Ok(None);
         };
@@ -357,7 +357,7 @@ impl Parser {
         LinkedErr {
             link: self
                 .current()
-                .map(|tk| (&tk.to_owned()).into())
+                .map(|tk| (&*tk).into())
                 .unwrap_or(LinkedPosition::new(
                     TextPosition::default(),
                     TextPosition::default(),
@@ -370,7 +370,7 @@ impl Parser {
         LinkedErr {
             link: self
                 .until_end()
-                .map(|(from, to)| (&from.to_owned(), &to.to_owned()).into())
+                .map(|(from, to)| (&*from, &*to).into())
                 .unwrap_or(LinkedPosition::new(
                     TextPosition::default(),
                     TextPosition::default(),

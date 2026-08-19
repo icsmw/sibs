@@ -27,8 +27,7 @@ impl ReadNode<Module> for Module {
             // This is declaration
             return Ok(None);
         }
-        let Some((mut inner, open, close)) =
-            parser.between(KindId::LeftBrace, KindId::RightBrace)?
+        let Some((inner, open, close)) = parser.between(KindId::LeftBrace, KindId::RightBrace)?
         else {
             return Err(E::MissedModuleBody.link_with_token(&name));
         };
@@ -42,7 +41,7 @@ impl ReadNode<Module> for Module {
                 }
             }
             let Some(node) = LinkedNode::try_oneof(
-                &mut inner,
+                &inner,
                 &[
                     NodeTarget::Declaration(&[
                         DeclarationId::FunctionDeclaration,

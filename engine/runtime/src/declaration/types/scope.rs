@@ -1,5 +1,3 @@
-use tracing::debug;
-
 use crate::*;
 
 #[derive(Debug, Default)]
@@ -77,7 +75,6 @@ impl TyScope {
                 self.levels
                     .get(uuid)?
                     .iter()
-                    .map(|(name, ty)| (name, ty))
                     .collect::<Vec<(&String, &TypeEntity)>>(),
             );
         }

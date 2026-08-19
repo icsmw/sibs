@@ -260,7 +260,7 @@ impl LanguageServer for Backend {
             data: None,
         })?;
         let mut tokens = driver.get_semantic_tokens();
-        tokens.sort_by(|a, b| a.position.from.abs.cmp(&b.position.from.abs));
+        tokens.sort_by_key(|token| token.position.from.abs);
         Ok(Some(SemanticTokensResult::Tokens(SemanticTokens {
             result_id: None,
             data: semantic::to_lsp_tokens(&tokens),
@@ -364,7 +364,7 @@ impl LanguageServer for Backend {
         );
         suggestions
             .suggestions
-            .sort_by(|a, b| a.score.cmp(&b.score));
+            .sort_by_key(|suggestion| suggestion.score);
         let items = suggestions
             .suggestions
             .into_iter()

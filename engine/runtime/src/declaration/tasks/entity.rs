@@ -125,9 +125,6 @@ impl TaskEntity {
             .close()
             .await
             .map_err(|err| LinkedErr::by_link(err, caller.into()))?;
-        cx.close()
-            .await
-            .map_err(|err| LinkedErr::by_link(err, caller.into()))?;
         result
     }
 

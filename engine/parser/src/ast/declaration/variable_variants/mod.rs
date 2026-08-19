@@ -19,17 +19,13 @@ impl ReadNode<VariableVariants> for VariableVariants {
         }
         let mut variants = Vec::new();
         let mut vbar = None;
-        loop {
-            let Some(node) = LinkedNode::try_oneof(
-                parser,
-                &[NodeTarget::Value(&[
-                    ValueId::PrimitiveString,
-                    ValueId::Number,
-                ])],
-            )?
-            else {
-                break;
-            };
+        while let Some(node) = LinkedNode::try_oneof(
+            parser,
+            &[NodeTarget::Value(&[
+                ValueId::PrimitiveString,
+                ValueId::Number,
+            ])],
+        )? {
             vbar = None;
             variants.push(node);
             let restore = parser.pin();

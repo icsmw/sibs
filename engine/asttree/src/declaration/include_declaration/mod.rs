@@ -37,7 +37,7 @@ impl IncludeDeclaration {
             None
         }
     }
-    pub fn get_components_md(&self) -> AnchorMetadata {
+    pub fn get_components_md(&self) -> AnchorMetadata<'_> {
         if let Node::Root(Root::Anchor(anchor)) = &self.root.node {
             anchor.get_components_md()
         } else {

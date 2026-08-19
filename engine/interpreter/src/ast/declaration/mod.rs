@@ -12,7 +12,7 @@ mod variable_variants;
 use crate::*;
 
 impl Interpret for Declaration {
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
         match self {
             Declaration::ArgumentDeclaration(n) => n.interpret(rt, cx),
             Declaration::ClosureDeclaration(n) => n.interpret(rt, cx),

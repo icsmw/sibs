@@ -28,7 +28,9 @@ impl Diagnostic for For {
     }
     fn childs(&self) -> Vec<&LinkedNode> {
         let mut nodes = vec![&*self.element, &*self.elements, &*self.block];
-        self.index.as_ref().map(|n| nodes.push(&*n));
+        if let Some(n) = self.index.as_ref() {
+            nodes.push(n)
+        }
         nodes
     }
 }

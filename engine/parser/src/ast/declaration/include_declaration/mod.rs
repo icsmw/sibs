@@ -50,11 +50,10 @@ impl ReadNode<IncludeDeclaration> for IncludeDeclaration {
                 )
                 .link(&filename_node));
             };
-            let mut inner = parser
+            let inner = parser
                 .from_file(&filename.inner)
                 .map_err(|e| e.link(&filename_node))?;
-            let Some(root) =
-                LinkedNode::try_oneof(&mut inner, &[NodeTarget::Root(&[RootId::Anchor])])?
+            let Some(root) = LinkedNode::try_oneof(&inner, &[NodeTarget::Root(&[RootId::Anchor])])?
             else {
                 return Err(E::FailToFindNode(RootId::Anchor.to_string()).link(&filename_node));
             };

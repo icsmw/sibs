@@ -25,6 +25,6 @@ impl TypeEntity {
         }
     }
     pub fn ty(&self) -> Option<&Ty> {
-        self.assigned.as_ref().or_else(|| self.annotated.as_ref())
+        self.assigned.as_ref().or(self.annotated.as_ref())
     }
 }

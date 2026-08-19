@@ -1,18 +1,25 @@
 [package]
-name = "runtime"
-version = "0.1.0"
-edition = "2021"
-authors = ["d.astafyev@outlook.com"]
+name        = "runtime"
+version     = "0.1.0"
+edition     = "2021"
+authors     = ["d.astafyev@outlook.com"]
 description = ""
-license = "Apache-2.0"
-repository = "https://github.com/icsmw/sibs.git"
-homepage = "https://github.com/icsmw/sibs"
+license     = "Apache-2.0"
+repository  = "https://github.com/icsmw/sibs.git"
+homepage    = "https://github.com/icsmw/sibs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 tokio-util = { workspace = true, features = ["codec"] }
-tokio = { workspace = true, features = ["rt", "rt-multi-thread", "process", "sync", "macros", "time"] }
+tokio = { workspace = true, features = [
+    "rt",
+    "rt-multi-thread",
+    "process",
+    "sync",
+    "macros",
+    "time",
+] }
 tokio-stream.workspace = true
 enum_ids.workspace = true
 thiserror.workspace = true
@@ -30,11 +37,8 @@ chrono.workspace = true
 brec = { workspace = true, features = ["locked_storage", "bincode"] }
 serde = { workspace = true, features = ["derive"] }
 
-asttree = { path = "../asttree" }
+asttree     = { path = "../asttree" }
 diagnostics = { path = "../diagnostics" }
-lexer = { path = "../lexer" }
-common = { path = "../common" }
-parser = { path = "../parser" }
-
-[build-dependencies]
-brec = { workspace = true, features=["build"] }
+lexer       = { path = "../lexer" }
+common      = { path = "../common" }
+parser      = { path = "../parser" }

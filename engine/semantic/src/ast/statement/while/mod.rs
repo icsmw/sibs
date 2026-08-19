@@ -47,10 +47,8 @@ impl Initialize for While {
                         return Err(LinkedErr::from(E::NotAssignedBreak, node));
                     }
                 }
-                Node::Statement(Statement::Return(node)) => {
-                    if !node.is_assigned() {
-                        return Err(LinkedErr::from(E::NotAssignedReturn, node));
-                    }
+                Node::Statement(Statement::Return(node)) if !node.is_assigned() => {
+                    return Err(LinkedErr::from(E::NotAssignedReturn, node));
                 }
                 _ => {}
             }

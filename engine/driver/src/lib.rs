@@ -30,17 +30,15 @@ pub use error::E as DriverError;
 
 fn find_node<'a>(
     nodes: Vec<&'a LinkedNode>,
-    src: &Uuid,
+    _src: &Uuid,
     token: &Ref<Token>,
 ) -> Option<&'a LinkedNode> {
-    let Some((owner, ..)) = token.owner.as_ref() else {
-        return None;
-    };
+    let (owner, ..) = token.owner.as_ref()?;
     if let Some(found) = nodes.iter().find(|n| n.uuid() == owner) {
-        Some(&found)
+        Some(found)
     } else {
         for node in nodes.iter() {
-            if let Some(found) = find_node(node.childs(), src, token) {
+            if let Some(found) = find_node(node.childs(), _src, token) {
                 return Some(found);
             }
         }
@@ -63,7 +61,7 @@ fn get_ownership_tree<'a>(
             nodes
                 .iter()
                 .filter(|n| n.get_node().located(src, pos))
-                .map(|n| *n)
+                .copied()
                 .collect::<Vec<&'a LinkedNode>>(),
         );
         for node in nodes.into_iter() {
@@ -126,14 +124,14 @@ impl Driver {
     }
 
     pub fn read(&mut self) -> Result<(), E> {
-        let mut parser = match &self.src {
-            CodeSrc::Path(path) => Parser::new(&path, self.resilience)?,
+        let parser = match &self.src {
+            CodeSrc::Path(path) => Parser::new(path, self.resilience)?,
             CodeSrc::Text(content) => {
-                let mut lx = lexer::Lexer::new(&content, 0);
-                Parser::unbound(lx.read()?.tokens, &lx.uuid, &content, self.resilience)
+                let mut lx = lexer::Lexer::new(content, 0);
+                Parser::unbound(lx.read()?.tokens, &lx.uuid, content, self.resilience)
             }
         };
-        let anchor = match Anchor::read(&mut parser) {
+        let anchor = match Anchor::read(&parser) {
             Ok(Some(anchor)) => anchor,
             Ok(None) => {
                 self.parser = Some(parser);
@@ -159,7 +157,7 @@ impl Driver {
                 .borrow_mut()
                 .drain()
                 .into_iter()
-                .map(|err| DrivingError::Parsing(err)),
+                .map(DrivingError::Parsing),
         );
         parser.bind(anchor.nodes())?;
         self.parser = Some(parser);
@@ -183,12 +181,8 @@ impl Driver {
             }
             self.errors.push(DrivingError::Semantic(err));
         }
-        self.errors.extend(
-            scx.errs
-                .drain()
-                .into_iter()
-                .map(|err| DrivingError::Semantic(err)),
-        );
+        self.errors
+            .extend(scx.errs.drain().into_iter().map(DrivingError::Semantic));
         self.scx = Some(scx);
         self.anchor = Some(anchor);
         Ok(())
@@ -226,9 +220,7 @@ impl Driver {
     }
 
     pub fn signature(&self, pos: usize, src: Option<Uuid>) -> Option<Signature> {
-        let Some(anchor) = self.anchor.as_ref() else {
-            return None;
-        };
+        let anchor = self.anchor.as_ref()?;
         let Some(node) = self.find_node(pos, src) else {
             debug!("Fail to find token for pos: {pos} (src {src:?})");
             return None;
@@ -262,21 +254,18 @@ impl Driver {
 
     pub fn find_node(&self, pos: usize, src: Option<Uuid>) -> Option<&LinkedNode> {
         let (token, _idx) = self.find_token(pos, src)?;
-        let Some(anchor) = self.anchor.as_ref() else {
-            return None;
-        };
+        let anchor = self.anchor.as_ref()?;
         find_node(anchor.childs(), &src.unwrap_or(anchor.uuid), &token)
     }
 
-    pub fn find_token(&self, pos: usize, _src: Option<Uuid>) -> Option<(Ref<Token>, usize)> {
+    pub fn find_token(&self, pos: usize, _src: Option<Uuid>) -> Option<(Ref<'_, Token>, usize)> {
         if self.parser.is_none() {
             debug!("Parser isn't inited. No way to find tokens");
         }
         // TODO: consider SRC
         self.parser
             .as_ref()
-            .map(|parser| parser.get_token_by_pos(pos))
-            .flatten()
+            .and_then(|parser| parser.get_token_by_pos(pos))
     }
 
     pub fn print_errs(&self) -> Result<(), E> {
@@ -306,22 +295,22 @@ fn test() {
     driver.read().unwrap();
     if let Some(mut locator) = driver.locator(1, None) {
         while let Some(fragment) = locator.next_token() {
-            println!("{}", fragment.to_string());
+            println!("{}", fragment);
         }
     }
     if let Some(mut locator) = driver.locator(153, None) {
         while let Some(fragment) = locator.next_node() {
-            println!("{}", fragment.to_string());
+            println!("{}", fragment);
         }
     }
 
-    if let Some(mut errors) = driver.errors() {
-        while let Some(error) = errors.next() {
+    if let Some(errors) = driver.errors() {
+        for error in errors {
             println!("{:?}", error.err);
         }
     }
     let mut tokens = driver.get_semantic_tokens();
-    tokens.sort_by(|a, b| a.position.from.abs.cmp(&b.position.from.abs));
+    tokens.sort_by_key(|a| a.position.from.abs);
     println!("{tokens:?}");
     let content = driver
         .get_src_content(None)

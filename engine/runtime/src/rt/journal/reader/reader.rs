@@ -9,8 +9,8 @@ use crate::*;
 
 pub struct JournalReader<'a> {
     root: PathBuf,
-    sessions: scheme::Storage<'a, File>,
-    journals: HashMap<Uuid, scheme::Storage<'a, File>>,
+    sessions: scheme::BorrowedReader<'a, File>,
+    journals: HashMap<Uuid, scheme::BorrowedReader<'a, File>>,
 }
 
 impl<'a> JournalReader<'a> {
@@ -25,7 +25,8 @@ impl<'a> JournalReader<'a> {
 
     pub fn list(&mut self) -> HashMap<Uuid, scheme::SessionInfo> {
         let mut list: HashMap<Uuid, scheme::SessionInfo> = HashMap::new();
-        self.sessions.iter().for_each(|pkg| match pkg {
+        let mut ctx = ();
+        self.sessions.iter(&mut ctx).for_each(|pkg| match pkg {
             Ok(pkg) => {
                 if let Some(block) = pkg.blocks.first() {
                     match block {
@@ -90,21 +91,24 @@ impl<'a> JournalReader<'a> {
     pub fn read(&mut self, uuid: &Uuid, from: usize, len: usize) -> Option<Vec<Record>> {
         let journal = self.journals.get_mut(uuid)?;
         let mut records: Vec<Record> = Vec::new();
-        journal.range(from, len).for_each(|pkg| match pkg {
-            Ok(pkg) => {
-                if let Some(record) = Record::from_packet(pkg) {
-                    records.push(record);
+        let mut ctx = ();
+        journal
+            .range(from, len, &mut ctx)
+            .for_each(|pkg| match pkg {
+                Ok(pkg) => {
+                    if let Some(record) = Record::from_packet(pkg) {
+                        records.push(record);
+                    }
                 }
-            }
-            Err(err) => {
-                warn!("Fail extract record: {err}");
-            }
-        });
+                Err(err) => {
+                    warn!("Fail extract record: {err}");
+                }
+            });
         Some(records)
     }
 }
 
-fn get_storage<'a>(path: &PathBuf) -> Result<scheme::Storage<'a, File>, E> {
+fn get_storage<'a>(path: &PathBuf) -> Result<scheme::BorrowedReader<'a, File>, E> {
     if !path.exists() {
         return Err(E::Storage(format!(
             "Storage file {} doesn't exist",
@@ -112,5 +116,5 @@ fn get_storage<'a>(path: &PathBuf) -> Result<scheme::Storage<'a, File>, E> {
         )));
     }
     let file = OpenOptions::new().read(true).open(path)?;
-    Ok(scheme::Storage::new(file)?)
+    Ok(scheme::BorrowedReader::new(file)?)
 }

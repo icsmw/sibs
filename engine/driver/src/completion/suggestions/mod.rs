@@ -37,7 +37,7 @@ impl CompletionSuggestion {
             n => n as u8,
         };
     }
-    pub fn drop(&mut self) {
+    pub fn suppress(&mut self) {
         self.score = 0;
     }
 }

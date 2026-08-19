@@ -20,10 +20,7 @@ impl AsVec<DeclarationId> for DeclarationId {
 }
 
 impl TryRead<Declaration, DeclarationId> for Declaration {
-    fn try_read(
-        parser: &Parser,
-        id: DeclarationId,
-    ) -> Result<Option<LinkedNode>, LinkedErr<E>> {
+    fn try_read(parser: &Parser, id: DeclarationId) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         Ok(match id {
             DeclarationId::ModuleDeclaration => ModuleDeclaration::read_as_linked(parser)?,
             DeclarationId::IncludeDeclaration => IncludeDeclaration::read_as_linked(parser)?,

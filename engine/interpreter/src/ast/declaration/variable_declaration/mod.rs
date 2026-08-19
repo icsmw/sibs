@@ -2,7 +2,7 @@ use crate::*;
 
 impl Interpret for VariableDeclaration {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
         let variable = if let Node::Declaration(Declaration::VariableName(variable)) =
             self.variable.get_node()
         {

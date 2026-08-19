@@ -24,10 +24,8 @@ impl ReadNode<BinaryExp> for BinaryExp {
         else {
             return Ok(None);
         };
-        let Some(operator) = LinkedNode::try_oneof(
-            parser,
-            &[NodeTarget::Expression(&[ExpressionId::BinaryOp])],
-        )?
+        let Some(operator) =
+            LinkedNode::try_oneof(parser, &[NodeTarget::Expression(&[ExpressionId::BinaryOp])])?
         else {
             return Ok(None);
         };

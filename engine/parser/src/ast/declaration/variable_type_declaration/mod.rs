@@ -19,14 +19,10 @@ impl ReadNode<VariableTypeDeclaration> for VariableTypeDeclaration {
         }
         let mut types = Vec::new();
         let mut vbar = None;
-        loop {
-            let Some(node) = LinkedNode::try_oneof(
-                parser,
-                &[NodeTarget::Declaration(&[DeclarationId::VariableType])],
-            )?
-            else {
-                break;
-            };
+        while let Some(node) = LinkedNode::try_oneof(
+            parser,
+            &[NodeTarget::Declaration(&[DeclarationId::VariableType])],
+        )? {
             vbar = None;
             types.push(node);
             let restore = parser.pin();

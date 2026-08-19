@@ -27,10 +27,8 @@ impl Signature {
         };
         let node = if is_func_call(node) {
             node
-        } else if let Some(node) = AnchorMap::map(anchor).find_parent(node.uuid(), is_func_call) {
-            node
         } else {
-            return None;
+            AnchorMap::map(anchor).find_parent(node.uuid(), is_func_call)?
         };
         match node.get_node() {
             Node::Expression(Expression::FunctionCall(node)) => {

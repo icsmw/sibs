@@ -53,7 +53,7 @@ impl Initialize for VariableDeclaration {
             scx.tys
                 .insert(
                     &variable.ident,
-                    TypeEntity::new(*&self.uuid, self.get_position(), Some(assig), Some(annot)),
+                    TypeEntity::new(self.uuid, self.get_position(), Some(assig), Some(annot)),
                 )
                 .map_err(|err| LinkedErr::from(err.into(), &self.variable))?;
         } else if let Some(node) = self.assignation.as_ref() {
@@ -65,7 +65,7 @@ impl Initialize for VariableDeclaration {
                 .insert(
                     &variable.ident,
                     TypeEntity::new(
-                        *&self.uuid,
+                        self.uuid,
                         self.get_position(),
                         Some(assig.clone()),
                         Some(assig),
@@ -80,14 +80,14 @@ impl Initialize for VariableDeclaration {
             scx.tys
                 .insert(
                     &variable.ident,
-                    TypeEntity::new(*&self.uuid, self.get_position(), None, Some(annot)),
+                    TypeEntity::new(self.uuid, self.get_position(), None, Some(annot)),
                 )
                 .map_err(|err| LinkedErr::from(err.into(), &self.variable))?;
         } else {
             scx.tys
                 .insert(
                     &variable.ident,
-                    TypeEntity::new(*&self.uuid, self.get_position(), None, Some(Ty::Undefined)),
+                    TypeEntity::new(self.uuid, self.get_position(), None, Some(Ty::Undefined)),
                 )
                 .map_err(|err| LinkedErr::from(err.into(), &self.variable))?;
         }
@@ -117,12 +117,12 @@ impl SemanticTokensGetter for VariableDeclaration {
             self.variable
                 .get_semantic_tokens(SemanticTokenContext::VariableDeclaration),
         );
-        self.r#type.as_ref().map(|n| {
+        if let Some(n) = self.r#type.as_ref() {
             tokens.extend(n.get_semantic_tokens(SemanticTokenContext::VariableDeclaration))
-        });
-        self.assignation.as_ref().map(|n| {
+        }
+        if let Some(n) = self.assignation.as_ref() {
             tokens.extend(n.get_semantic_tokens(SemanticTokenContext::VariableDeclaration))
-        });
+        }
         tokens
     }
 }

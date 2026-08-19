@@ -27,7 +27,7 @@ impl ReadNode<Component> for Component {
             .between(KindId::LeftParen, KindId::RightParen)?
             .ok_or_else(|| E::MissedComponentCWD.link_with_token(&sig))?;
         let path = inner.to_string().trim().to_owned();
-        let (mut inner, open_bl, close_bl) = parser
+        let (inner, open_bl, close_bl) = parser
             .between(KindId::LeftBrace, KindId::RightBrace)?
             .ok_or_else(|| E::MissedComponentBlock.link_with_token(&sig))?;
         let mut nodes = Vec::new();
@@ -39,8 +39,7 @@ impl ReadNode<Component> for Component {
                     break 'semicolons;
                 }
             }
-            let Some(node) =
-                LinkedNode::try_oneof(&mut inner, &[NodeTarget::Root(&[RootId::Task])])?
+            let Some(node) = LinkedNode::try_oneof(&inner, &[NodeTarget::Root(&[RootId::Task])])?
             else {
                 break;
             };

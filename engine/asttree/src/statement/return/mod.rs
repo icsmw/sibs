@@ -38,10 +38,7 @@ impl Diagnostic for Return {
         self.token.pos.clone()
     }
     fn childs(&self) -> Vec<&LinkedNode> {
-        self.node
-            .as_ref()
-            .map(|n| vec![&**n])
-            .unwrap_or_else(|| Vec::new())
+        self.node.as_ref().map(|n| vec![&**n]).unwrap_or_default()
     }
 }
 

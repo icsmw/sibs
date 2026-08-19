@@ -204,7 +204,7 @@ mod test {
                 EId::InvalidReturnValue => E::InvalidReturnValue,
 
                 EId::LexerError => E::LexerError(LexerError::InvalidNumber),
-                EId::Unlinked => E::Unlinked
+                EId::Unlinked => E::Unlinked,
             }
         }
     }

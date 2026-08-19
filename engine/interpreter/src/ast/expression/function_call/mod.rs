@@ -5,7 +5,7 @@ use crate::*;
 
 impl Interpret for FunctionCall {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
         let mut args = Vec::new();
         if let Some(parent) = cx
             .values()

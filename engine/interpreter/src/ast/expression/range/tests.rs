@@ -9,7 +9,6 @@ test_value_expectation!(
     "{ let a = 10..20; a; }"
 );
 
-
 test_value_expectation!(
     range_001,
     Block,

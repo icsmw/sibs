@@ -29,7 +29,7 @@ impl Diagnostic for VariableCompoundType {
     }
     fn childs(&self) -> Vec<&LinkedNode> {
         match self {
-            VariableCompoundType::Vec(_, n) => vec![&*n],
+            VariableCompoundType::Vec(_, n) => vec![n],
         }
     }
 }

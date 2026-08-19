@@ -2,7 +2,7 @@ use crate::*;
 
 impl Interpret for ComparisonGroup {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
         let vl = self.node.interpret(rt, cx).await?;
         if !matches!(vl, RtValue::Bool(..)) {
             return Err(LinkedErr::from(

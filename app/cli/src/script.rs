@@ -27,8 +27,8 @@ impl Script {
         task: Option<String>,
         args: Option<Vec<String>>,
     ) -> Result<Self, E> {
-        let mut parser = Parser::new(&scenario.filepath, false)?;
-        let anchor = Anchor::read(&mut parser);
+        let parser = Parser::new(&scenario.filepath, false)?;
+        let anchor = Anchor::read(&parser);
         if let Err(err) = &anchor {
             eprintln!("{}", parser.report_err(err)?);
         }

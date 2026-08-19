@@ -22,7 +22,7 @@ impl fmt::Display for TokenStep<'_> {
             self.token.pos.from.abs,
             self.token.pos.to.abs,
             self.token.owner,
-            self.token.kind.id().to_string(),
+            self.token.kind.id(),
             self.node
                 .map(|n| format!("{}:{}", n.ident(), n.uuid()))
                 .unwrap_or(String::from("None"))
@@ -96,11 +96,11 @@ impl<'a> LocationIterator<'a> {
         self.idx = idx;
     }
 
-    pub fn nth_token(&self, idx: isize) -> Option<Ref<Token>> {
+    pub fn nth_token(&self, idx: isize) -> Option<Ref<'_, Token>> {
         self.parser.get_token(idx)
     }
 
-    pub fn nth_tokens(&self, range: RangeInclusive<usize>) -> Vec<Option<Ref<Token>>> {
+    pub fn nth_tokens(&self, range: RangeInclusive<usize>) -> Vec<Option<Ref<'_, Token>>> {
         let mut tokens = Vec::new();
         for idx in range {
             tokens.push(self.parser.get_token(idx as isize));
@@ -111,7 +111,7 @@ impl<'a> LocationIterator<'a> {
     pub fn find(&self, uuid: &Uuid) -> Option<&'a LinkedNode> {
         fn find<'a>(uuid: &Uuid, nodes: Vec<&'a LinkedNode>) -> Option<&'a LinkedNode> {
             if let Some(node) = nodes.iter().find(|n| n.uuid() == uuid) {
-                Some(&node)
+                Some(node)
             } else {
                 for node in nodes.into_iter() {
                     if let Some(node) = find(uuid, node.childs()) {

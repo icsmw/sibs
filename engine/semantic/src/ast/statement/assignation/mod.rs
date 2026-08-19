@@ -33,7 +33,7 @@ impl InferType for Assignation {
                 .insert(
                     variable_name,
                     TypeEntity::new(
-                        *&self.uuid,
+                        self.uuid,
                         self.get_position(),
                         Some(right),
                         Some(annot.to_owned()),

@@ -5,7 +5,7 @@ use crate::*;
 
 impl Interpret for Optional {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
         let comparison = self.comparison.interpret(rt.clone(), cx.clone()).await?;
         let RtValue::Bool(comparison) = comparison else {
             return Err(LinkedErr::from(

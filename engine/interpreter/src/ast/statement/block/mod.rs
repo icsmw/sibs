@@ -2,7 +2,7 @@ use crate::*;
 
 impl Interpret for Block {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
         cx.location()
             .enter(&self.uuid)
             .await

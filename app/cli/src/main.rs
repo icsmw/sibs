@@ -36,13 +36,11 @@ async fn main() -> Result<(), E> {
     if post_actions
         .iter()
         .any(|art| matches!(art, RunArtifact::Lsp))
-    {
-        if post_actions
+        && post_actions
             .iter()
             .any(|art| !matches!(art, RunArtifact::Lsp) && !matches!(art, RunArtifact::Void))
-        {
-            return Err(E::SelfishLts);
-        }
+    {
+        return Err(E::SelfishLts);
     }
     // Run post actions, if exists
     for artifact in post_actions.into_iter() {

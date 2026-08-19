@@ -18,9 +18,6 @@ impl PartialEq for TextPosition {
     fn eq(&self, other: &Self) -> bool {
         self.abs == other.abs
     }
-    fn ne(&self, other: &Self) -> bool {
-        self.abs != other.abs
-    }
 }
 /// Represents the position of a token or element in the source code.
 ///

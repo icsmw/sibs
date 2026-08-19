@@ -13,10 +13,10 @@ pub use store::*;
 pub use table::*;
 
 use crate::*;
-use std::{fmt, ops::Deref};
+use std::fmt;
 
+#[derive(Debug, Clone, Default, PartialEq, PartialOrd)]
 #[enum_ids::enum_ids(display_variant)]
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum Ty {
     /// Can be in If statement. Reflects the fact that the resulting type cannot
     /// be cast to a single type. For example, the branches of an if condition
@@ -27,18 +27,13 @@ pub enum Ty {
     OneOf(Vec<DeterminedTy>),
     Optional(DeterminedTy),
     Repeated(DeterminedTy),
+    #[default]
     Undefined,
 }
 
 impl From<DeterminedTy> for Ty {
     fn from(ty: DeterminedTy) -> Self {
         Ty::Determined(ty)
-    }
-}
-
-impl Default for Ty {
-    fn default() -> Self {
-        Self::Undefined
     }
 }
 

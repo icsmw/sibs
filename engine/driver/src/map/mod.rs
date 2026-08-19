@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use crate::*;
 
 pub type KinshipMap<'a> = HashMap<Uuid, &'a LinkedNode>;
+#[allow(dead_code)]
 pub struct AnchorMap<'a> {
     anchor: &'a Anchor,
     kinship: KinshipMap<'a>,
@@ -17,7 +18,7 @@ impl<'a> AnchorMap<'a> {
         ) {
             childs.iter().for_each(|child| {
                 map.insert(*child.uuid(), parent);
-                mapping(*child, child.childs(), map);
+                mapping(child, child.childs(), map);
             });
         }
         let mut kinship = HashMap::new();
@@ -32,15 +33,11 @@ impl<'a> AnchorMap<'a> {
         predicate: P,
     ) -> Option<&'a LinkedNode> {
         let mut current = uuid;
-        loop {
-            if let Some(parent) = self.kinship.get(current) {
-                if predicate(*parent) {
-                    return Some(&parent);
-                }
-                current = parent.uuid();
-            } else {
-                break;
+        while let Some(parent) = self.kinship.get(current) {
+            if predicate(parent) {
+                return Some(parent);
             }
+            current = parent.uuid();
         }
         None
     }

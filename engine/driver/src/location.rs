@@ -5,13 +5,18 @@ pub enum Cursor {
     /// Uses if token doesn't bellow to namespace reference
     /// * `Token` - cursor token
     /// * `isize` - `idx` of token in tokens flow
-    Token(Token, isize),
+    Token(Token, #[allow(dead_code)] isize),
     /// Uses if token is a part of namespace reference (fs::create)
     /// * `String` - parts of namespace reference; for example `fs::create`
     /// * `isize` - is `idx` of token in tokens flow (from left, meaning the first one)
     /// * `TextPosition` - `from` position of the first identifier
     /// * `TextPosition` - `to` position of the last identifier
-    Path(String, isize, TextPosition, TextPosition),
+    Path(
+        String,
+        #[allow(dead_code)] isize,
+        TextPosition,
+        TextPosition,
+    ),
 }
 #[derive(Debug)]
 pub enum Ownership {
@@ -29,6 +34,7 @@ pub struct Location {
     pub mods: Vec<String>,
     pub cursor: Cursor,
     /// IDX of token in tokens flow
+    #[allow(dead_code)]
     pub idx: isize,
     pub before_token: Option<Token>,
     pub before_node: Option<Uuid>,
@@ -48,7 +54,7 @@ impl Location {
         let mut blocks = Vec::new();
         let mut mods = Vec::new();
         let mut ownership = None;
-        for node in tree.iter().rev().into_iter() {
+        for node in tree.iter().rev() {
             match node.get_node() {
                 Node::Statement(Statement::Block(..)) => {
                     blocks.push(*node.uuid());
@@ -89,9 +95,8 @@ impl Location {
                 | KindId::CRLF
                 | KindId::EOF
         ) {
-            let mut path = Vec::new();
             let mut idx = idx - 1;
-            path = if let Kind::Identifier(ident) = &cursor.kind {
+            let mut path = if let Kind::Identifier(ident) = &cursor.kind {
                 vec![ident.to_owned()]
             } else {
                 Vec::new()
@@ -114,9 +119,9 @@ impl Location {
                     Kind::Identifier(ident) => {
                         path.push(ident.to_owned());
                         if to.is_none() {
-                            to = Some(token.pos.to.clone());
+                            to = Some(token.pos.to);
                         }
-                        from = Some(token.pos.from.clone());
+                        from = Some(token.pos.from);
                     }
                     _ => {
                         break;
@@ -124,9 +129,9 @@ impl Location {
                 }
             }
             path.reverse();
-            if !path.is_empty() && from.is_some() && to.is_some() {
+            if let (false, Some(from), Some(to)) = (path.is_empty(), from, to) {
                 locator.set_idx(idx);
-                Cursor::Path(path.join("::"), idx, from.unwrap(), to.unwrap())
+                Cursor::Path(path.join("::"), idx, from, to)
             } else {
                 Cursor::Token(cursor, locator.idx)
             }

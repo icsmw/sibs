@@ -44,7 +44,7 @@ impl ReadNode<Command> for Command {
                         ],
                     )?
                     .ok_or_else(|| {
-                        E::NotSupportedStringInjection(parser.to_string()).link_until_end(&parser)
+                        E::NotSupportedStringInjection(parser.to_string()).link_until_end(parser)
                     })?;
                     let Some(next) = parser.token() else {
                         return Err(E::NoClosing(KindId::RightBrace).link(&node));

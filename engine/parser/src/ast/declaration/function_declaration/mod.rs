@@ -31,12 +31,12 @@ impl ReadNode<FunctionDeclaration> for FunctionDeclaration {
         if !matches!(name.kind, Kind::Identifier(..)) {
             return Err(E::MissedFnName.link_with_token(&sig));
         }
-        let (mut inner, open_tk, close_tk) = parser
+        let (inner, open_tk, close_tk) = parser
             .between(KindId::LeftParen, KindId::RightParen)?
             .ok_or_else(|| E::MissedFnArguments.link_between(&sig, &name))?;
         let mut args = Vec::new();
         while let Some(arg) = LinkedNode::try_oneof(
-            &mut inner,
+            &inner,
             &[NodeTarget::Declaration(&[
                 DeclarationId::ArgumentDeclaration,
             ])],

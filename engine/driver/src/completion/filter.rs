@@ -1,6 +1,7 @@
 use crate::*;
 use runtime::DeterminedTy;
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub enum Filter {
     Variables(Option<Ty>),
@@ -18,17 +19,14 @@ pub fn get_filter(
 ) -> Option<Filter> {
     match &loc.cursor {
         Cursor::Token(token, ..) => {
-            match &token.id() {
-                KindId::Dot => {
-                    let ty = find_ty_by_node(&before_node, ty_scope, scx);
-                    return Some(Filter::FunctionArgument(ty));
-                }
-                _ => {}
+            if token.id() == KindId::Dot {
+                let ty = find_ty_by_node(before_node, ty_scope, scx);
+                return Some(Filter::FunctionArgument(ty));
             }
             match before_token.kind {
                 Kind::Identifier(..) => Some(Filter::All(None)),
                 Kind::Dot => {
-                    let ty = find_ty_by_node(&before_node, ty_scope, scx);
+                    let ty = find_ty_by_node(before_node, ty_scope, scx);
                     match token.id() {
                         KindId::Identifier | KindId::Dot => Some(Filter::FunctionArgument(ty)),
                         _ => None,
@@ -61,11 +59,9 @@ pub fn get_filter(
                 Kind::LeftBrace => None,
                 Kind::Colon => None,
                 Kind::Comma => None,
-                Kind::Semicolon => {
-                    return Some(Filter::All(None));
-                }
+                Kind::Semicolon => Some(Filter::All(None)),
                 Kind::Equals => {
-                    let ty = find_ty_by_node(&before_node, ty_scope, scx);
+                    let ty = find_ty_by_node(before_node, ty_scope, scx);
                     match token.id() {
                         KindId::Identifier => Some(Filter::All(ty)),
                         _ => Some(Filter::All(None)),
@@ -82,33 +78,30 @@ pub fn get_filter(
                 _ => None,
             }
         }
-        Cursor::Path(path, ..) => Some(Filter::All(None)),
+        Cursor::Path(_path, ..) => Some(Filter::All(None)),
     }
 }
 
-fn find_ty_by_node<'a>(node: &LinkedNode, scope: &TyScope, scx: &SemanticCx) -> Option<Ty> {
+fn find_ty_by_node(node: &LinkedNode, scope: &TyScope, scx: &SemanticCx) -> Option<Ty> {
     match node.get_node() {
         Node::Expression(Expression::Variable(node)) => {
             scx.find_linked_ty(&node.uuid).or_else(|| {
                 scope
                     .lookup(&node.ident)
-                    .map(|entity| entity.ty())
-                    .flatten()
+                    .and_then(|entity| entity.ty())
                     .cloned()
             })
         }
         Node::Declaration(Declaration::VariableName(node)) => scope
             .lookup(&node.ident)
-            .map(|entity| entity.ty())
-            .flatten()
+            .and_then(|entity| entity.ty())
             .cloned(),
         Node::Declaration(Declaration::VariableType(node)) => scx.table.get(&node.uuid),
         // Node::Declaration(Declaration::VariableVariants(..))
         Node::Declaration(Declaration::VariableTypeDeclaration(node)) => node
             .types
             .first()
-            .map(|n| find_ty_by_node(n, scope, scx))
-            .flatten(),
+            .and_then(|n| find_ty_by_node(n, scope, scx)),
         _ => None,
     }
 }

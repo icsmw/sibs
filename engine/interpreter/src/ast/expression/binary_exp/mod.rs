@@ -2,7 +2,7 @@ use crate::*;
 
 impl Interpret for BinaryExp {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
         let RtValue::Num(left) = self.left.interpret(rt.clone(), cx.clone()).await? else {
             return Err(LinkedErr::from(
                 E::InvalidValueType(RtValueId::Num.to_string()),

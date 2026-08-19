@@ -37,7 +37,7 @@ impl Anchor {
             _ => None,
         })
     }
-    pub fn get_components_md(&self) -> AnchorMetadata {
+    pub fn get_components_md(&self) -> AnchorMetadata<'_> {
         let mut components = HashMap::new();
         self.nodes.iter().for_each(|n| match &n.node {
             Node::Root(Root::Component(comp)) => {

@@ -1,7 +1,7 @@
 use std::{fmt, path::Path};
 
 use crate::*;
-use brec::{block, payload};
+use brec::prelude::*;
 
 #[derive(Debug)]
 pub struct SessionInfo {
@@ -211,8 +211,6 @@ pub struct Signature {
     pub event: EventTy,
 }
 
-brec::generate!();
-
 impl SessionOpenData {
     pub fn new(uuid: &Uuid) -> Result<Self, E> {
         Ok(Self {
@@ -251,3 +249,5 @@ impl SessionMetadata {
         }
     }
 }
+
+brec::generate!();

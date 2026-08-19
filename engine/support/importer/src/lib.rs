@@ -98,7 +98,7 @@ pub fn import(args: pm::TokenStream, input: pm::TokenStream) -> pm::TokenStream 
     for (i, arg) in args.iter().enumerate() {
         if let syn::FnArg::Typed(pat_type) = arg {
             let name = if let syn::Pat::Ident(pat_ident) = &*pat_type.pat {
-                let name = (&pat_ident.ident).clone();
+                let name = pat_ident.ident.clone();
                 quote! {
                     Some(stringify!(#name).to_string())
                 }

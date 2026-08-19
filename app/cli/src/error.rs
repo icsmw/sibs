@@ -1,6 +1,7 @@
 use diagnostics::LinkedErr;
 use thiserror::Error;
 
+#[allow(dead_code)]
 #[derive(Error, Debug)]
 pub enum E {
     #[error("Path doesn't exist: {0}")]

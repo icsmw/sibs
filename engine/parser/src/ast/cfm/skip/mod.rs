@@ -20,7 +20,7 @@ impl ReadNode<Skip> for Skip {
         if ident != "skip" {
             return Ok(None);
         }
-        let (mut inner, open, close) = parser
+        let (inner, open, close) = parser
             .between(KindId::LeftParen, KindId::RightParen)?
             .ok_or_else(|| E::NoSkipDirectiveArgs.link_with_token(&token))?;
         let mut args = Vec::new();
@@ -31,7 +31,7 @@ impl ReadNode<Skip> for Skip {
                 continue;
             }
             let Some(node) = LinkedNode::try_oneof(
-                &mut inner,
+                &inner,
                 &[
                     NodeTarget::Statement(&[StatementId::ArgumentAssignation]),
                     NodeTarget::Expression(&[ExpressionId::FunctionCall]),

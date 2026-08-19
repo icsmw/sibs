@@ -42,7 +42,8 @@ impl ActionMethods for TaskAction {
         };
         let scenario = if let Some(ActionArtifact::Scenario(scenario)) = artifacts
             .iter()
-            .find(|art| matches!(art, ActionArtifact::Scenario(..))).cloned()
+            .find(|art| matches!(art, ActionArtifact::Scenario(..)))
+            .cloned()
         {
             scenario
         } else {

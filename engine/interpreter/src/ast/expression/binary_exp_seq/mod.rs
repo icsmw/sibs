@@ -5,7 +5,7 @@ use crate::*;
 
 impl Interpret for BinaryExpSeq {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
         let mut assemble: f64 = 0.0;
         let mut operator = None;
         for (n, next) in self.nodes.iter().enumerate() {

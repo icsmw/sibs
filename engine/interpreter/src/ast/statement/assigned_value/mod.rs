@@ -2,7 +2,7 @@ use crate::*;
 
 impl Interpret for AssignedValue {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
         let vl = self.node.interpret(rt.clone(), cx.clone()).await?;
         chk_ty(&self.node, &vl, &rt).await?;
         Ok(vl)

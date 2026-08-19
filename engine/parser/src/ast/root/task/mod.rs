@@ -54,12 +54,12 @@ impl ReadNode<Task> for Task {
         if !matches!(name.kind, Kind::Identifier(..)) {
             return Err(E::MissedTaskName.link_with_token(&sig));
         }
-        let (mut inner, open, close) = parser
+        let (inner, open, close) = parser
             .between(KindId::LeftParen, KindId::RightParen)?
             .ok_or_else(|| E::MissedTaskArguments.link_with_token(&sig))?;
         let mut args = Vec::new();
         while let Some(arg) = LinkedNode::try_oneof(
-            &mut inner,
+            &inner,
             &[NodeTarget::Declaration(&[
                 DeclarationId::ArgumentDeclaration,
             ])],

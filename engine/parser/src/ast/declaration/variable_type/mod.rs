@@ -28,11 +28,11 @@ impl ReadNode<VariableType> for VariableType {
                 uuid: Uuid::new_v4(),
             })),
             Kind::Keyword(Keyword::Vec) => {
-                let (mut inner, ..) = parser
+                let (inner, ..) = parser
                     .between(KindId::Less, KindId::Greater)?
                     .ok_or_else(|| E::MissedVariableTypeDefinition.link_with_token(&token))?;
                 let ty = LinkedNode::try_oneof(
-                    &mut inner,
+                    &inner,
                     &[NodeTarget::Declaration(&[DeclarationId::VariableType])],
                 )?
                 .ok_or_else(|| E::MissedVariableTypeDefinition.link_with_token(&token))?;

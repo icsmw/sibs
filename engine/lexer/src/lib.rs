@@ -302,7 +302,7 @@ impl<'a> Lexer<'a> {
         }
     }
     pub fn prev_pos(&self) -> TextPosition {
-        self.prev.clone().unwrap_or_default()
+        self.prev.unwrap_or_default()
     }
     pub fn next_pos(&mut self) -> TextPosition {
         let pin = self.pin();

@@ -2,17 +2,17 @@ use std::collections::HashMap;
 
 use crate::*;
 
+#[allow(dead_code)]
 #[derive(Debug, Default)]
 pub struct Errors {
     errors: HashMap<String, DrivingError>,
 }
 
+#[allow(dead_code)]
 impl Errors {
     pub fn insert(&mut self, err: DrivingError) {
         let stamp = err.stamp();
-        if !self.errors.contains_key(&stamp) {
-            self.errors.insert(stamp, err);
-        }
+        self.errors.entry(stamp).or_insert(err);
     }
     pub fn extend<I>(&mut self, iter: I)
     where
@@ -114,14 +114,12 @@ impl<'a> Iterator for ErrorsIterator<'a> {
     type Item = ErrorLocator<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let Some(err) = self.errors.get(self.index) else {
-            return None;
-        };
+        let err = self.errors.get(self.index)?;
         self.index += 1;
         let link = err.link();
         Some(ErrorLocator::new(
             err,
-            LocationIterator::new(self.anchor, link.src.clone(), link.from.abs, &self.parser),
+            LocationIterator::new(self.anchor, link.src, link.from.abs, self.parser),
         ))
     }
 }

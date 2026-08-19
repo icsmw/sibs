@@ -2,7 +2,7 @@ mod api;
 
 use crate::*;
 use api::*;
-use std::{fs, time::Duration};
+use std::{fs, path::Path, time::Duration};
 use tracing::{error, warn};
 
 const LOCK_JOURNAL_WAIT_TIMEOUT_MS: u64 = 8000;
@@ -118,7 +118,7 @@ fn send(tx: &UnboundedSender<Demand>, msg: Result<Record, E>) {
     }
 }
 
-fn get_journal_md(root: &PathBuf) -> Result<(Uuid, PathBuf, PathBuf), E> {
+fn get_journal_md(root: &Path) -> Result<(Uuid, PathBuf, PathBuf), E> {
     let journal_path = root.join(SIBS_FOLDER);
     if !journal_path.exists() {
         fs::create_dir_all(&journal_path)?;
@@ -131,7 +131,7 @@ fn get_journal_md(root: &PathBuf) -> Result<(Uuid, PathBuf, PathBuf), E> {
     ))
 }
 
-fn get_sessions_storage<'a>(path: &PathBuf) -> Result<scheme::FileStorage<'a>, E> {
+fn get_sessions_storage(path: &PathBuf) -> Result<scheme::FileStorage, E> {
     let mut attempts = 0;
     let storage = loop {
         // If mutliple processes running, we might be using same journal file. In this case we should wait
@@ -156,7 +156,7 @@ fn get_sessions_storage<'a>(path: &PathBuf) -> Result<scheme::FileStorage<'a>, E
                         "Storage file {} has been damaged. It will be dropped.",
                         path.to_string_lossy()
                     );
-                    fs::remove_file(&path)?;
+                    fs::remove_file(path)?;
                     attempts += 1;
                     continue;
                 }

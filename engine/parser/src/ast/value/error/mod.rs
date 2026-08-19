@@ -17,13 +17,12 @@ impl ReadNode<Error> for Error {
         if !matches!(token.kind, Kind::Keyword(Keyword::Error)) {
             return Ok(None);
         }
-        let Some((mut inner, open, close)) =
-            parser.between(KindId::LeftParen, KindId::RightParen)?
+        let Some((inner, open, close)) = parser.between(KindId::LeftParen, KindId::RightParen)?
         else {
             return Ok(None);
         };
         let node = LinkedNode::try_oneof(
-            &mut inner,
+            &inner,
             &[
                 NodeTarget::Value(&[
                     ValueId::Number,

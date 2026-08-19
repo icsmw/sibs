@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::*;
 
 #[derive(Debug)]
@@ -27,6 +29,7 @@ pub enum DemandCommand {
     CloseContext(Uuid, oneshot::Sender<()>),
 }
 
+#[allow(dead_code)]
 #[derive(Debug)]
 #[enum_ids::enum_ids(display)]
 pub enum Demand {

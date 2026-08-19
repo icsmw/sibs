@@ -21,13 +21,12 @@ impl ReadNode<ComparisonGroup> for ComparisonGroup {
             restore(parser);
             None
         };
-        let Some((mut inner, open, close)) =
-            parser.between(KindId::LeftParen, KindId::RightParen)?
+        let Some((inner, open, close)) = parser.between(KindId::LeftParen, KindId::RightParen)?
         else {
             return Ok(None);
         };
         let Some(node) = LinkedNode::try_oneof(
-            &mut inner,
+            &inner,
             &[NodeTarget::Expression(&[ExpressionId::ComparisonSeq])],
         )?
         else {

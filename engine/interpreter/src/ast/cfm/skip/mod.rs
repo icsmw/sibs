@@ -5,7 +5,7 @@ use crate::*;
 
 impl Interpret for Skip {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
         for arg in self.args.iter() {
             let value = arg.interpret(rt.clone(), cx.clone()).await?;
             let RtValue::NamedArgumentValue(name, expected) = value else {

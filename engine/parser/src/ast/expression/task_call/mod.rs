@@ -31,14 +31,13 @@ impl ReadNode<TaskCall> for TaskCall {
             }
             return Ok(None);
         }
-        let Some((mut inner, open, close)) =
-            parser.between(KindId::LeftParen, KindId::RightParen)?
+        let Some((inner, open, close)) = parser.between(KindId::LeftParen, KindId::RightParen)?
         else {
             return Ok(None);
         };
         let mut args = Vec::new();
         while let Some(node) = LinkedNode::try_oneof(
-            &mut inner,
+            &inner,
             &[
                 NodeTarget::Value(&[
                     ValueId::Number,

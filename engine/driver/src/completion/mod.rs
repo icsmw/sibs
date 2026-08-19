@@ -44,7 +44,7 @@ impl<'a> Completion<'a> {
             return Ok(None);
         };
         debug!("location data has been gotten");
-        let Some(ty_scope) = self.scx.tys.get_scope(&*loc.get_scx_uuid()) else {
+        let Some(ty_scope) = self.scx.tys.get_scope(loc.get_scx_uuid()) else {
             return Ok(None);
         };
         debug!("scope has been detected");
@@ -52,12 +52,11 @@ impl<'a> Completion<'a> {
             return Ok(None);
         };
         debug!("token before: {:?}", before_token.id());
-        let Some(before_node) = self.locator.find(&before_node) else {
+        let Some(before_node) = self.locator.find(before_node) else {
             warn!("Fail to find node {before_node}");
             return Ok(None);
         };
-        let Some(filter) = get_filter(&loc, &before_token, before_node, &self.scx, &ty_scope)
-        else {
+        let Some(filter) = get_filter(&loc, before_token, before_node, self.scx, ty_scope) else {
             debug!("no filters for pos: {}", self.from);
             return Ok(None);
         };
@@ -68,7 +67,7 @@ impl<'a> Completion<'a> {
         };
         let suggestion = match &filter {
             Filter::Variables(ty) => Some(vars::collect(
-                &ty_scope,
+                ty_scope,
                 &loc.blocks,
                 fragment,
                 ty.as_ref(),
@@ -77,11 +76,7 @@ impl<'a> Completion<'a> {
             Filter::FunctionArgument(ty) | Filter::FunctionCall(ty) => Some(funcs::collect(
                 &self.scx.fns,
                 &loc.mods.iter().map(|s| s.as_str()).collect::<Vec<&str>>(),
-                if fragment.trim() == "." {
-                    ""
-                } else {
-                    &fragment
-                },
+                if fragment.trim() == "." { "" } else { fragment },
                 if matches!(filter, Filter::FunctionArgument(..)) {
                     FnTypeKind::FirstArg(ty.as_ref())
                 } else {
@@ -90,7 +85,7 @@ impl<'a> Completion<'a> {
             )),
             Filter::All(ty) => {
                 let mut suggestions =
-                    vars::collect(&ty_scope, &loc.blocks, fragment, None, self.from);
+                    vars::collect(ty_scope, &loc.blocks, fragment, None, self.from);
                 suggestions.extend(funcs::collect(
                     &self.scx.fns,
                     &loc.mods.iter().map(|s| s.as_str()).collect::<Vec<&str>>(),

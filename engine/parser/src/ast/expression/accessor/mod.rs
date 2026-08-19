@@ -11,13 +11,13 @@ impl Interest for Accessor {
 
 impl ReadNode<Accessor> for Accessor {
     fn read(parser: &Parser) -> Result<Option<Accessor>, LinkedErr<E>> {
-        let Some((mut inner, open, close)) =
+        let Some((inner, open, close)) =
             parser.between(KindId::LeftBracket, KindId::RightBracket)?
         else {
             return Ok(None);
         };
         let Some(node) = LinkedNode::try_oneof(
-            &mut inner,
+            &inner,
             &[
                 NodeTarget::Value(&[ValueId::Number]),
                 NodeTarget::Expression(&[

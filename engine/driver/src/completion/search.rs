@@ -77,7 +77,7 @@ pub fn find_matches<I: AsRef<str>, F: AsRef<str>>(inputs: &[I], fragment: F) -> 
         .filter_map(|input| rank_match(input, fragment_ref))
         .collect();
     // Sort results by rank in descending order (higher scores first)
-    results.sort_by(|a, b| b.score.cmp(&a.score));
+    results.sort_by_key(|result| std::cmp::Reverse(result.score));
     SearchResults { results }
 }
 

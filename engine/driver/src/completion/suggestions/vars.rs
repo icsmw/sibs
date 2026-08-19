@@ -34,7 +34,7 @@ pub fn collect(
         if let (Some(completion_match), Some(target_ty)) = (completion_match.as_mut(), ty) {
             if let Some(ty) = ty_entity.ty() {
                 if !ty.compatible(target_ty) {
-                    completion_match.drop();
+                    completion_match.suppress();
                 }
             }
         }

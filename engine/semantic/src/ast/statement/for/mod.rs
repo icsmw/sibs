@@ -36,7 +36,7 @@ impl Initialize for For {
         scx.tys
             .insert(
                 el_name,
-                TypeEntity::new(*&self.uuid, self.get_position(), Some(ty.clone()), Some(ty)),
+                TypeEntity::new(self.uuid, self.get_position(), Some(ty.clone()), Some(ty)),
             )
             .map_err(|err| LinkedErr::from(err.into(), self))?;
         if let Some(index) = self.index.as_ref() {
@@ -86,10 +86,8 @@ impl Initialize for For {
                         return Err(LinkedErr::from(E::NotAssignedBreak, node));
                     }
                 }
-                Node::Statement(Statement::Return(node)) => {
-                    if !node.is_assigned() {
-                        return Err(LinkedErr::from(E::NotAssignedReturn, node));
-                    }
+                Node::Statement(Statement::Return(node)) if !node.is_assigned() => {
+                    return Err(LinkedErr::from(E::NotAssignedReturn, node));
                 }
                 _ => {}
             }
@@ -118,9 +116,9 @@ impl SemanticTokensGetter for For {
             LinkedSemanticToken::from_token(&self.token_for, SemanticToken::Keyword),
             LinkedSemanticToken::from_token(&self.token_in, SemanticToken::Keyword),
         ];
-        self.index
-            .as_ref()
-            .map(|n| tokens.extend(n.get_semantic_tokens(stcx)));
+        if let Some(n) = self.index.as_ref() {
+            tokens.extend(n.get_semantic_tokens(stcx))
+        }
         tokens.extend(self.element.get_semantic_tokens(stcx));
         tokens.extend(self.elements.get_semantic_tokens(stcx));
         tokens.extend(self.block.get_semantic_tokens(stcx));
