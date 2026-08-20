@@ -4,7 +4,7 @@ test_task_results!(
     skip_000,
     "comp",
     "task_a",
-    RtValue::Bool(true),
+    RtValue::Skipped,
     r#"
     component comp() {
         #[skip(debugging::out(true))];
@@ -19,7 +19,7 @@ test_task_results!(
     skip_001,
     "comp",
     "task_a",
-    RtValue::Skipped,
+    RtValue::Bool(true),
     r#"
     component comp() {
         #[skip(debugging::out(false))];
@@ -34,7 +34,7 @@ test_task_results!(
     skip_002,
     "comp",
     "task_a",
-    RtValue::Skipped,
+    RtValue::Bool(true),
     r#"
     component comp() {
         task task_a() {
@@ -55,7 +55,7 @@ test_task_results!(
     RtValue::Num(5.0),
     r#"
     component comp() {
-        #[skip(debugging::out(true))];
+        #[skip(debugging::out(false))];
         task task_a() {
             :comp:task_b(5);
         }
@@ -77,14 +77,15 @@ test_task_results!(
         task task_a() {
             :comp:task_b(5);
         }
-        #[skip(v = 5, debugging::out(false))];
+        #[skip(v = 5, debugging::out(true))];
         task task_b(v: num) {
             v;
         }
     };
     "#
 );
-// TODO: Revisit logic for skip and hash::inspect. Idea of test - with 1st run hash does not match, so task is skipped. With 2nd run hash matches, so task is executed and returns value.
+
+// Make `cargo clean` if this test takes too long
 test_task_results!(
     skip_005,
     "comp",
@@ -93,9 +94,10 @@ test_task_results!(
     r#"
     component comp() {
         task task_a() {
+            hash::inspect(["../target"], [], false);
             :comp:task_b(5);
         }
-        #[skip(!hash::inspect(["../target"], [], false))];
+        #[skip(hash::inspect(["../target"], [], false))];
         task task_b(v: num) {
             v;
         }

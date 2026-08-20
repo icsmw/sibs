@@ -2,7 +2,7 @@
 mod tests;
 
 use crate::*;
-// TODO: Revisit logic for skip
+
 impl Interpret for Skip {
     #[boxed]
     fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
@@ -44,7 +44,7 @@ impl Interpret for Skip {
         }
         let value = self.func.interpret(rt, cx).await?;
         if let RtValue::Bool(value) = value {
-            Ok(RtValue::Bool(value))
+            Ok(RtValue::Bool(!value))
         } else {
             Err(LinkedErr::from(
                 E::DismatchValueType(RtValueId::Bool.to_string(), value.id().to_string()),
