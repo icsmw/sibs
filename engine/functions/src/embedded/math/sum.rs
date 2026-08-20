@@ -11,7 +11,7 @@ declare_embedded_fn!(
 pub fn executor(
     args: Vec<FnArgValue>,
     _rt: Runtime,
-    _cx: Context,
+    _cx: ExecutionContext,
     _caller: SrcLink,
 ) -> RtPinnedResult<'static, LinkedErr<E>> {
     let mut sum: f64 = 0.0;

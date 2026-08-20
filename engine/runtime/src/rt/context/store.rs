@@ -3,8 +3,8 @@ use std::sync::Arc;
 use crate::*;
 
 #[derive(Debug)]
-pub struct Store {
-    pub(crate) scopes: HashMap<Uuid, VlContext>,
+pub struct ContextState {
+    pub(crate) scopes: HashMap<Uuid, ValueScopes>,
     pub(crate) location: Vec<Uuid>,
     pub(crate) breaks: HashSet<Uuid>,
     pub(crate) loops: Vec<Uuid>,
@@ -13,11 +13,11 @@ pub struct Store {
     pub(crate) cwd: PathBuf,
 }
 
-impl Store {
+impl ContextState {
     pub fn new(cwd: PathBuf) -> Self {
         let root = Uuid::new_v4();
         let mut scopes = HashMap::new();
-        scopes.insert(root, VlContext::default());
+        scopes.insert(root, ValueScopes::default());
         Self {
             scopes,
             location: vec![root],
@@ -67,14 +67,14 @@ impl Store {
     pub fn lookup<S: AsRef<str>>(&self, name: S) -> Result<Option<Arc<RtValue>>, E> {
         Ok(self.get()?.lookup(name))
     }
-    fn get(&self) -> Result<&VlContext, E> {
+    fn get(&self) -> Result<&ValueScopes, E> {
         if let Some(sc) = self.location.last() {
             self.scopes.get(sc).ok_or(E::FailToFindContext(*sc))
         } else {
             Err(E::NoRootContext)
         }
     }
-    fn get_mut(&mut self) -> Result<&mut VlContext, E> {
+    fn get_mut(&mut self) -> Result<&mut ValueScopes, E> {
         if let Some(sc) = self.location.last() {
             self.scopes.get_mut(sc).ok_or(E::FailToFindContext(*sc))
         } else {

@@ -14,22 +14,24 @@ pub(crate) use scope::*;
 use store::*;
 
 #[derive(Debug, Clone)]
-pub struct RtContext {
+pub struct ExecutionContexts {
     tx: UnboundedSender<Demand>,
 }
 
-impl RtContext {
+impl ExecutionContexts {
     #[tracing::instrument]
     pub fn new(cwd: &PathBuf) -> Self {
         let (tx, mut rx) = unbounded_channel();
         let cwd = cwd.clone();
         spawn(async move {
-            let mut stores: HashMap<Uuid, Store> = HashMap::new();
+            let mut stores: HashMap<Uuid, ContextState> = HashMap::new();
             tracing::info!("init demand's listener");
             while let Some(demand) = rx.recv().await {
                 match demand {
                     Demand::Command(owner, command) => {
-                        let store = stores.entry(owner).or_insert(Store::new(cwd.clone()));
+                        let store = stores
+                            .entry(owner)
+                            .or_insert(ContextState::new(cwd.clone()));
                         match command {
                             DemandCommand::OpenScope(uuid, tx) => {
                                 chk_send_err!(
@@ -239,8 +241,8 @@ impl RtContext {
         Self { tx }
     }
 
-    pub fn create(&self, owner: Uuid, job: Job) -> Context {
-        Context::new(owner, self.clone(), job)
+    pub fn create(&self, owner: Uuid, job: Job) -> ExecutionContext {
+        ExecutionContext::new(owner, self.clone(), job)
     }
 
     pub(crate) async fn set_parent_vl(&self, owner: Uuid, vl: ParentValue) -> Result<(), E> {

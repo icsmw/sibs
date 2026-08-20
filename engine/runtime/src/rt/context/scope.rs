@@ -3,13 +3,13 @@ use std::sync::Arc;
 use crate::*;
 
 #[derive(Debug, Default)]
-pub struct VlContext {
+pub struct ValueScopes {
     pub levels: HashMap<Uuid, HashMap<String, Arc<RtValue>>>,
     pub location: Vec<Uuid>,
     pub parent: RtParent,
 }
 
-impl VlContext {
+impl ValueScopes {
     pub fn enter(&mut self, uuid: &Uuid) {
         self.levels.entry(*uuid).or_default();
         self.location.push(*uuid);

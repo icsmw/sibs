@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use crate::*;
 
 pub type UserFnExecutor =
-    Box<dyn Fn(Runtime, Context) -> RtPinnedResult<'static, LinkedErr<E>> + Send + Sync>;
+    Box<dyn Fn(Runtime, ExecutionContext) -> RtPinnedResult<'static, LinkedErr<E>> + Send + Sync>;
 
 #[allow(clippy::large_enum_variant)]
 pub enum UserFnBody {
@@ -74,7 +74,7 @@ impl UserFnEntity {
     pub async fn execute(
         &self,
         rt: Runtime,
-        cx: Context,
+        cx: ExecutionContext,
         args: Vec<FnArgValue>,
         fns: &Fns,
         caller: &SrcLink,
@@ -85,7 +85,7 @@ impl UserFnEntity {
                 caller.into(),
             ));
         };
-        if let Err(err) = cx.location().enter(&self.uuid).await {
+        if let Err(err) = cx.scopes().enter(&self.uuid).await {
             return Err(LinkedErr::by_link(err, link.into()));
         }
         let mut err = None;
@@ -126,13 +126,13 @@ impl UserFnEntity {
             }
         }
         if let Some(err) = err.take() {
-            if let Err(err) = cx.location().leave().await {
+            if let Err(err) = cx.scopes().leave().await {
                 return Err(LinkedErr::by_link(err, link.into()));
             }
             return Err(err);
         }
         let result = exec(rt.clone(), cx.clone()).await;
-        if let Err(err) = cx.location().leave().await {
+        if let Err(err) = cx.scopes().leave().await {
             return Err(LinkedErr::by_link(err, link.into()));
         }
         result

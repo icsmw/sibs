@@ -7,7 +7,7 @@ use crate::*;
 
 impl Interpret for Range {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
         Ok(RtValue::Range(RangeInclusive::new(
             self.left
                 .interpret(rt.clone(), cx.clone())

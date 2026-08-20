@@ -57,7 +57,7 @@ impl ClosureFnEntity {
     pub async fn execute(
         &self,
         rt: Runtime,
-        cx: Context,
+        cx: ExecutionContext,
         args: Vec<FnArgValue>,
         _fns: &Fns,
         caller: &SrcLink,
@@ -68,7 +68,7 @@ impl ClosureFnEntity {
                 caller.into(),
             ));
         };
-        if let Err(err) = cx.location().enter(&self.uuid).await {
+        if let Err(err) = cx.scopes().enter(&self.uuid).await {
             return Err(LinkedErr::by_link(err, link.into()));
         }
         let mut err = None;
@@ -97,13 +97,13 @@ impl ClosureFnEntity {
             }
         }
         if let Some(err) = err.take() {
-            if let Err(err) = cx.location().leave().await {
+            if let Err(err) = cx.scopes().leave().await {
                 return Err(LinkedErr::by_link(err, link.into()));
             }
             return Err(err);
         }
         let result = exec(rt.clone(), cx.clone()).await;
-        if let Err(err) = cx.location().leave().await {
+        if let Err(err) = cx.scopes().leave().await {
             return Err(LinkedErr::by_link(err, link.into()));
         }
         result

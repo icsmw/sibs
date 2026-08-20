@@ -56,7 +56,7 @@ pub async fn spawn<S: AsRef<str>, P: AsRef<Path>>(
     cmd: S,
     cwd: P,
     _owner: Uuid,
-    cx: Context,
+    cx: ExecutionContext,
 ) -> Result<SpawnStatus, E> {
     fn post_logs(
         line: Result<String, LinesCodecError>,

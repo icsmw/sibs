@@ -5,7 +5,7 @@ use crate::*;
 
 impl Interpret for While {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
         cx.loops()
             .open(&self.uuid)
             .await

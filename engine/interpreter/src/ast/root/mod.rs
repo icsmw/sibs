@@ -6,7 +6,7 @@ mod task;
 use crate::*;
 
 impl Interpret for Root {
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
         match self {
             Root::Task(n) => n.interpret(rt, cx),
             Root::Component(n) => n.interpret(rt, cx),

@@ -9,7 +9,7 @@ mod primitive_string;
 use crate::*;
 
 impl Interpret for Value {
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
         match self {
             Value::Array(n) => n.interpret(rt, cx),
             Value::Boolean(n) => n.interpret(rt, cx),

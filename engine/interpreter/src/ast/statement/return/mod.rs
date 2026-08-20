@@ -5,7 +5,7 @@ use crate::*;
 
 impl Interpret for Return {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
         let vl = if let Some(n) = self.node.as_ref() {
             n.interpret(rt.clone(), cx.clone()).await?
         } else {

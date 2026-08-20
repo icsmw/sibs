@@ -5,7 +5,7 @@ use crate::*;
 
 impl Interpret for Break {
     #[boxed]
-    fn interpret(&self, _rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, _rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
         cx.loops()
             .set_break()
             .await

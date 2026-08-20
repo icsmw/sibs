@@ -58,7 +58,7 @@ impl Runtime {
             fns: Arc::new(fns),
             tasks: Arc::new(tasks),
         };
-        let cx = RtContext::new(&params.cwd);
+        let cx = ExecutionContexts::new(&params.cwd);
         let jobs = RtJobs::new(&params.cwd)?;
         let mut signals = Signals::default();
         spawn(async move {
@@ -112,7 +112,7 @@ impl Runtime {
         owner: Uuid,
         alias: S,
         parent: Option<Uuid>,
-    ) -> Result<Context, E> {
+    ) -> Result<ExecutionContext, E> {
         let (tx, rx) = oneshot::channel();
         self.tx
             .send(Demand::CreateContext(owner, alias.to_string(), parent, tx))?;

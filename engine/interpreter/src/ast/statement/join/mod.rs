@@ -39,7 +39,7 @@ async fn wait(
 
 impl Interpret for Join {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
         let order = self
             .commands
             .iter()

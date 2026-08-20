@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use crate::*;
 
 pub type TaskExecutor =
-    Box<dyn Fn(Runtime, Context) -> RtPinnedResult<'static, LinkedErr<E>> + Send + Sync>;
+    Box<dyn Fn(Runtime, ExecutionContext) -> RtPinnedResult<'static, LinkedErr<E>> + Send + Sync>;
 
 #[allow(clippy::large_enum_variant)]
 pub enum TaskBody {
@@ -69,7 +69,7 @@ impl TaskEntity {
     pub async fn execute(
         &self,
         rt: Runtime,
-        cx: Context,
+        cx: ExecutionContext,
         args: Vec<FnArgValue>,
         caller: &SrcLink,
     ) -> Result<RtValue, LinkedErr<E>> {
@@ -83,7 +83,7 @@ impl TaskEntity {
             .child(self.uuid, self.name.clone())
             .await
             .map_err(|err| LinkedErr::by_link(err, caller.into()))?;
-        if let Err(err) = task_cx.location().enter(&self.uuid).await {
+        if let Err(err) = task_cx.scopes().enter(&self.uuid).await {
             return Err(LinkedErr::by_link(err, link.into()));
         }
         let mut err = None;
@@ -112,13 +112,13 @@ impl TaskEntity {
             }
         }
         if let Some(err) = err.take() {
-            if let Err(err) = task_cx.location().leave().await {
+            if let Err(err) = task_cx.scopes().leave().await {
                 return Err(LinkedErr::by_link(err, link.into()));
             }
             return Err(err);
         }
         let result = exec(rt.clone(), task_cx.clone()).await;
-        if let Err(err) = task_cx.location().leave().await {
+        if let Err(err) = task_cx.scopes().leave().await {
             return Err(LinkedErr::by_link(err, link.into()));
         }
         task_cx

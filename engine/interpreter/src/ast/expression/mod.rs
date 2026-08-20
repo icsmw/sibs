@@ -20,7 +20,7 @@ mod variable;
 use crate::*;
 
 impl Interpret for Expression {
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
         match self {
             Expression::Accessor(n) => n.interpret(rt, cx),
             Expression::BinaryExp(n) => n.interpret(rt, cx),

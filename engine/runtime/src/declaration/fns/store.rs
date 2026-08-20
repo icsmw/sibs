@@ -79,7 +79,7 @@ impl Fns {
         &self,
         uuid: &Uuid,
         rt: Runtime,
-        cx: Context,
+        cx: ExecutionContext,
         args: Vec<FnArgValue>,
         caller: &SrcLink,
     ) -> Result<RtValue, LinkedErr<E>> {

@@ -2,12 +2,12 @@ use bstorage::Storage;
 
 use crate::*;
 
-pub struct ContextValues<'a> {
+pub struct ValueAccess<'a> {
     owner: &'a Uuid,
-    rt: &'a RtContext,
+    rt: &'a ExecutionContexts,
 }
 
-impl ContextValues<'_> {
+impl ValueAccess<'_> {
     pub async fn set_parent_vl(&self, vl: ParentValue) -> Result<(), E> {
         self.rt.set_parent_vl(*self.owner, vl).await
     }
@@ -33,12 +33,12 @@ impl ContextValues<'_> {
     }
 }
 
-pub struct ContextLocation<'a> {
+pub struct ScopeAccess<'a> {
     owner: &'a Uuid,
-    rt: &'a RtContext,
+    rt: &'a ExecutionContexts,
 }
 
-impl ContextLocation<'_> {
+impl ScopeAccess<'_> {
     pub async fn open(&self, uuid: &Uuid) -> Result<(), E> {
         self.rt.open(*self.owner, uuid).await
     }
@@ -56,12 +56,12 @@ impl ContextLocation<'_> {
     }
 }
 
-pub struct ContextLoop<'a> {
+pub struct LoopAccess<'a> {
     owner: &'a Uuid,
-    rt: &'a RtContext,
+    rt: &'a ExecutionContexts,
 }
 
-impl ContextLoop<'_> {
+impl LoopAccess<'_> {
     pub async fn open(&self, uuid: &Uuid) -> Result<(), E> {
         self.rt.open_loop(*self.owner, uuid).await
     }
@@ -79,12 +79,12 @@ impl ContextLoop<'_> {
     }
 }
 
-pub struct ContextReturns<'a> {
+pub struct ReturnAccess<'a> {
     owner: &'a Uuid,
-    rt: &'a RtContext,
+    rt: &'a ExecutionContexts,
 }
 
-impl ContextReturns<'_> {
+impl ReturnAccess<'_> {
     pub async fn open_cx(&self, uuid: &Uuid) -> Result<(), E> {
         self.rt.open_return_cx(*self.owner, uuid).await
     }
@@ -102,12 +102,12 @@ impl ContextReturns<'_> {
     }
 }
 
-pub struct ContextCwd<'a> {
+pub struct CwdAccess<'a> {
     owner: &'a Uuid,
-    rt: &'a RtContext,
+    rt: &'a ExecutionContexts,
 }
 
-impl ContextCwd<'_> {
+impl CwdAccess<'_> {
     pub async fn set(&self, path: PathBuf) -> Result<(), E> {
         self.rt.set_cwd(*self.owner, path).await
     }
@@ -122,42 +122,42 @@ impl ContextCwd<'_> {
 }
 
 #[derive(Debug, Clone)]
-pub struct Context {
+pub struct ExecutionContext {
     owner: Uuid,
-    rt: RtContext,
+    rt: ExecutionContexts,
     pub job: Job,
 }
 
-impl Context {
-    pub fn new(owner: Uuid, rt: RtContext, job: Job) -> Self {
+impl ExecutionContext {
+    pub fn new(owner: Uuid, rt: ExecutionContexts, job: Job) -> Self {
         Self { owner, rt, job }
     }
-    pub fn loops(&self) -> ContextLoop<'_> {
-        ContextLoop {
+    pub fn loops(&self) -> LoopAccess<'_> {
+        LoopAccess {
             owner: &self.owner,
             rt: &self.rt,
         }
     }
-    pub fn returns(&self) -> ContextReturns<'_> {
-        ContextReturns {
+    pub fn returns(&self) -> ReturnAccess<'_> {
+        ReturnAccess {
             owner: &self.owner,
             rt: &self.rt,
         }
     }
-    pub fn location(&self) -> ContextLocation<'_> {
-        ContextLocation {
+    pub fn scopes(&self) -> ScopeAccess<'_> {
+        ScopeAccess {
             owner: &self.owner,
             rt: &self.rt,
         }
     }
-    pub fn values(&self) -> ContextValues<'_> {
-        ContextValues {
+    pub fn values(&self) -> ValueAccess<'_> {
+        ValueAccess {
             owner: &self.owner,
             rt: &self.rt,
         }
     }
-    pub fn cwd(&self) -> ContextCwd<'_> {
-        ContextCwd {
+    pub fn cwd(&self) -> CwdAccess<'_> {
+        CwdAccess {
             owner: &self.owner,
             rt: &self.rt,
         }
@@ -171,7 +171,11 @@ impl Context {
                 .join(STORAGE_FOLDER),
         )?)
     }
-    pub(crate) async fn child<S: ToString>(&self, owner: Uuid, alias: S) -> Result<Context, E> {
+    pub(crate) async fn child<S: ToString>(
+        &self,
+        owner: Uuid,
+        alias: S,
+    ) -> Result<ExecutionContext, E> {
         Ok(self.rt.create(owner, self.job.child(owner, alias).await?))
     }
     pub async fn close(&self) -> Result<(), E> {

@@ -9,7 +9,7 @@ mod value;
 use crate::*;
 
 impl Interpret for Node {
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
         match self {
             Node::ControlFlowModifier(n) => n.interpret(rt, cx),
             Node::Declaration(n) => n.interpret(rt, cx),
@@ -24,7 +24,7 @@ impl Interpret for Node {
 
 impl Interpret for LinkedNode {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
         let mut vl = self.get_node().interpret(rt.clone(), cx.clone()).await?;
         let mut linked_node = self;
         for ppm in self.get_md().ppm.iter() {

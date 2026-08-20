@@ -84,7 +84,7 @@ test_task_results!(
     };
     "#
 );
-
+// TODO: Revisit logic for skip and hash::inspect. Idea of test - with 1st run hash does not match, so task is skipped. With 2nd run hash matches, so task is executed and returns value.
 test_task_results!(
     skip_005,
     "comp",
@@ -95,7 +95,7 @@ test_task_results!(
         task task_a() {
             :comp:task_b(5);
         }
-        #[skip(hash::inspect(["../target"], [], false))];
+        #[skip(!hash::inspect(["../target"], [], false))];
         task task_b(v: num) {
             v;
         }

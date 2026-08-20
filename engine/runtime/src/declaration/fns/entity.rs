@@ -59,7 +59,7 @@ impl FnEntity<'_> {
     pub async fn execute(
         &self,
         rt: Runtime,
-        cx: Context,
+        cx: ExecutionContext,
         args: Vec<FnArgValue>,
         fns: &Fns,
         caller: &SrcLink,

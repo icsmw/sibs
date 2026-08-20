@@ -5,7 +5,7 @@ use crate::*;
 
 impl Interpret for If {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
         for case in self.cases.iter() {
             match case {
                 IfCase::If(cnd, blk, _) => {

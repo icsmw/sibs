@@ -1,7 +1,11 @@
 use crate::*;
 
-pub type ExecutorEmbeddedFn =
-    fn(Vec<FnArgValue>, Runtime, Context, caller: SrcLink) -> RtPinnedResult<'static, LinkedErr<E>>;
+pub type ExecutorEmbeddedFn = fn(
+    Vec<FnArgValue>,
+    Runtime,
+    ExecutionContext,
+    caller: SrcLink,
+) -> RtPinnedResult<'static, LinkedErr<E>>;
 
 #[derive(Debug)]
 pub struct FnArgDesc {
@@ -59,7 +63,7 @@ impl EmbeddedFnEntity {
     pub async fn execute(
         &self,
         rt: Runtime,
-        cx: Context,
+        cx: ExecutionContext,
         args: Vec<FnArgValue>,
         _fns: &Fns,
         caller: &SrcLink,

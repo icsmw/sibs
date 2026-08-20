@@ -2,7 +2,7 @@ use crate::*;
 
 impl Interpret for Component {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
         let rt_params = rt
             .get_rt_parameters()
             .await

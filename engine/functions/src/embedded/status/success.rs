@@ -11,7 +11,7 @@ declare_embedded_fn!(
 pub fn executor(
     mut args: Vec<FnArgValue>,
     _rt: Runtime,
-    _cx: Context,
+    _cx: ExecutionContext,
     caller: SrcLink,
 ) -> RtPinnedResult<'static, LinkedErr<E>> {
     if args.len() != 1 {

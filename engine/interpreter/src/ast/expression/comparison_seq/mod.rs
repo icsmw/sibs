@@ -2,7 +2,7 @@ use crate::*;
 
 impl Interpret for ComparisonSeq {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: Context) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
         let Some(node) = self.nodes.first() else {
             return Err(LinkedErr::from(E::InvalidComparisonSeq, self));
         };

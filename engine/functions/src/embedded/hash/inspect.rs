@@ -54,7 +54,7 @@ struct PrevHash {
 pub fn executor(
     args: Vec<FnArgValue>,
     _rt: Runtime,
-    cx: Context,
+    cx: ExecutionContext,
     caller: SrcLink,
 ) -> RtPinnedResult<'static, LinkedErr<E>> {
     if args.len() != 3 {
@@ -107,9 +107,9 @@ pub fn executor(
             ));
         }
     };
-    // Get expections
+    // Get exceptions
     let arg = &args[1];
-    let mut expections = match &arg.value {
+    let mut exceptions = match &arg.value {
         RtValue::Str(exp) => {
             vec![exp.to_owned()]
         }
@@ -140,7 +140,7 @@ pub fn executor(
             ));
         }
     };
-    expections = expections
+    exceptions = exceptions
         .into_iter()
         .filter_map(|v| {
             if v.trim().is_empty() {
@@ -169,7 +169,7 @@ pub fn executor(
         });
         cx.job
         .journal
-        .warn("Hasher will not procceed oparation and returns false-state because there are not exist paths");
+        .warn("Hasher will not proceed operation and returns false-state because there are not exist paths");
         return Ok(RtValue::Bool(false));
     }
     // Get storage
@@ -189,11 +189,11 @@ pub fn executor(
             p.to_string_lossy()
         ));
     });
-    expections.push("**/.sibs".to_string());
+    exceptions.push("**/.sibs".to_string());
     for path in paths.iter() {
         let mut entry = Entry::from(path)
             .map_err(|err| LinkedErr::by_link(E::Other(err.to_string()), (&caller).into()))?;
-        for rule in expections.iter() {
+        for rule in exceptions.iter() {
             entry = entry
                 .exclude(Filter::Common(rule))
                 .map_err(|err| LinkedErr::by_link(E::Other(err.to_string()), (&caller).into()))?;

@@ -42,7 +42,7 @@ impl Tasks {
         &self,
         uuid: &Uuid,
         rt: Runtime,
-        cx: Context,
+        cx: ExecutionContext,
         args: Vec<FnArgValue>,
         caller: &SrcLink,
     ) -> Result<RtValue, LinkedErr<E>> {
@@ -59,7 +59,7 @@ impl Tasks {
         master: &Uuid,
         name: S,
         rt: Runtime,
-        cx: Context,
+        cx: ExecutionContext,
         args: Vec<FnArgValue>,
         caller: &SrcLink,
     ) -> Result<RtValue, LinkedErr<E>> {
