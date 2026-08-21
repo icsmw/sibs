@@ -11,7 +11,7 @@ declare_embedded_fn!(
 pub fn executor(
     mut args: Vec<FnArgValue>,
     rt: Runtime,
-    _cx: ExecutionContext,
+    cx: ExecutionContext,
     caller: SrcLink,
 ) -> RtPinnedResult<'static, LinkedErr<E>> {
     if args.len() != 1 {
@@ -34,7 +34,10 @@ pub fn executor(
         .map_err(|err| LinkedErr::by_link(err, (&caller).into()))?
     {
         if !tk.is_cancelled() {
-            tk.cancelled().await;
+            tokio::select! {
+                _ = tk.cancelled() => {}
+                _ = cx.job.cancelled() => {}
+            }
         }
     }
     Ok(RtValue::Void)

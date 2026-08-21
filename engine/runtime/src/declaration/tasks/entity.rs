@@ -80,7 +80,7 @@ impl TaskEntity {
             ));
         };
         let task_cx = cx
-            .child(self.uuid, self.name.clone())
+            .child(Uuid::new_v4(), self.name.clone())
             .await
             .map_err(|err| LinkedErr::by_link(err, caller.into()))?;
         if let Err(err) = task_cx.scopes().enter(&self.uuid).await {

@@ -35,8 +35,7 @@ impl RtJobs {
                         break;
                     }
                     Demand::Create(owner, alias, parent, tx) => {
-                        let job = JobEntry::new(&alias, owner, parent, root.cancel.clone());
-                        if let Some(parent_uuid) = parent {
+                        let job = if let Some(parent_uuid) = parent {
                             let Some(parent_entry) = root.find(&parent_uuid) else {
                                 chk_send_err!(
                                     tx.send(Err(E::JobDoesNotExist(parent_uuid))),
@@ -44,14 +43,26 @@ impl RtJobs {
                                 );
                                 continue;
                             };
+                            let job = JobEntry::new(
+                                &alias,
+                                owner,
+                                parent,
+                                parent_entry.cancel_child_token(),
+                            );
                             if let Err(err) = parent_entry.add_child(&job) {
                                 chk_send_err!(tx.send(Err(err)), DemandId::Create);
                                 continue;
                             }
-                        } else if let Err(err) = root.add_child(&job) {
-                            chk_send_err!(tx.send(Err(err)), DemandId::Create);
-                            continue;
-                        }
+                            job
+                        } else {
+                            let job =
+                                JobEntry::new(&alias, owner, parent, root.cancel_child_token());
+                            if let Err(err) = root.add_child(&job) {
+                                chk_send_err!(tx.send(Err(err)), DemandId::Create);
+                                continue;
+                            }
+                            job
+                        };
                         let progress = match progress.create(owner, &alias, parent).await {
                             Ok(progress) => progress,
                             Err(err) => {

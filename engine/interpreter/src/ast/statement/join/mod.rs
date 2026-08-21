@@ -5,13 +5,12 @@ use crate::*;
 use futures::stream::{FuturesUnordered, StreamExt};
 use std::collections::HashMap;
 use tokio::{spawn, task::JoinHandle};
-use tokio_util::sync::CancellationToken;
 
 type LinkedJoinHandle = (SrcLink, JoinHandle<(Uuid, Result<RtValue, LinkedErr<E>>)>);
 
 async fn wait(
     tasks: Vec<LinkedJoinHandle>,
-    token: CancellationToken,
+    job: &Job,
 ) -> Result<HashMap<Uuid, Result<RtValue, LinkedErr<E>>>, LinkedErr<E>> {
     let mut results: HashMap<Uuid, Result<RtValue, LinkedErr<E>>> = HashMap::new();
     let mut futures = FuturesUnordered::new();
@@ -24,8 +23,8 @@ async fn wait(
                 results.insert(uuid, Ok(result));
             }
             Ok((uuid, Err(err))) => {
-                if !token.is_cancelled() {
-                    token.cancel();
+                if !job.is_cancelled() {
+                    job.cancel().failed(Some(err.e.to_string()));
                 }
                 results.insert(uuid, Err(err));
             }
@@ -40,6 +39,10 @@ async fn wait(
 impl Interpret for Join {
     #[boxed]
     fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
+        let join_cx = cx
+            .child(Uuid::new_v4(), "join")
+            .await
+            .map_err(|err| LinkedErr::by_link(err, (&self.link()).into()))?;
         let order = self
             .commands
             .iter()
@@ -50,14 +53,19 @@ impl Interpret for Join {
             .iter()
             .cloned()
             .map(|node| {
-                let (rt, cx) = (rt.clone(), cx.clone());
+                let (rt, cx) = (rt.clone(), join_cx.clone());
                 (
                     node.link(),
                     spawn(async move { (*node.uuid(), node.interpret(rt, cx).await) }),
                 )
             })
             .collect::<Vec<LinkedJoinHandle>>();
-        match wait(tasks, cx.job.cancel).await {
+        let result = wait(tasks, &join_cx.job).await;
+        join_cx
+            .close()
+            .await
+            .map_err(|err| LinkedErr::by_link(err, (&self.link()).into()))?;
+        match result {
             Ok(mut results) => {
                 if order.len() != results.len() {
                     return Err(LinkedErr::by_link(

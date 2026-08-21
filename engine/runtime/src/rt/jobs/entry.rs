@@ -8,7 +8,7 @@ pub struct JobEntry {
     pub(crate) parent: Option<Uuid>,
     pub(crate) alias: String,
     pub(crate) childs: HashMap<Uuid, JobEntry>,
-    pub cancel: CancellationToken,
+    cancel: CancellationToken,
 }
 
 impl JobEntry {
@@ -47,11 +47,15 @@ impl JobEntry {
         self.childs.insert(job.owner, job.clone());
         Ok(())
     }
+    pub(crate) fn cancel_child_token(&self) -> CancellationToken {
+        self.cancel.child_token()
+    }
     pub(crate) fn as_job(&self, journal: Journal, progress: Progress, rt: RtJobs) -> Job {
         Job::new(
             self.alias.clone(),
             self.owner,
             self.parent,
+            self.cancel.clone(),
             journal,
             progress,
             rt,

@@ -1,4 +1,4 @@
-use tokio_util::sync::CancellationToken;
+use tokio_util::sync::{CancellationToken, WaitForCancellationFuture};
 
 use crate::*;
 
@@ -31,12 +31,14 @@ pub struct Cancel<'a> {
 
 impl Cancel<'_> {
     pub fn success<S: ToString>(&self, msg: Option<S>) {
+        self.job.cancel.cancel();
         if let Some(msg) = msg.as_ref() {
             self.job.journal.debug(msg.to_string());
         }
         self.job.progress.cancelled(msg);
     }
     pub fn failed<S: ToString>(&self, msg: Option<S>) {
+        self.job.cancel.cancel();
         if let Some(msg) = msg.as_ref() {
             self.job
                 .journal
@@ -55,7 +57,7 @@ pub struct Job {
     pub(crate) parent: Option<Uuid>,
     #[allow(dead_code)]
     pub(crate) alias: String,
-    pub cancel: CancellationToken,
+    cancel: CancellationToken,
     rt: RtJobs,
 }
 
@@ -64,6 +66,7 @@ impl Job {
         alias: S,
         owner: Uuid,
         parent: Option<Uuid>,
+        cancel: CancellationToken,
         journal: Journal,
         progress: Progress,
         rt: RtJobs,
@@ -74,7 +77,7 @@ impl Job {
             owner,
             parent,
             alias: alias.to_string(),
-            cancel: CancellationToken::new(),
+            cancel,
             rt,
         }
     }
@@ -83,8 +86,20 @@ impl Job {
         Done { job: self }
     }
 
-    pub fn cancel(&self) -> Done<'_> {
-        Done { job: self }
+    pub fn cancel(&self) -> Cancel<'_> {
+        Cancel { job: self }
+    }
+
+    pub fn cancellation(&self) -> WaitForCancellationFuture<'_> {
+        self.cancel.cancelled()
+    }
+
+    pub fn is_cancelled(&self) -> bool {
+        self.cancel.is_cancelled()
+    }
+
+    pub async fn cancelled(&self) {
+        self.cancel.cancelled().await
     }
 
     pub async fn child<S: ToString>(&self, owner: Uuid, alias: S) -> Result<Job, E> {

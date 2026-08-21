@@ -118,7 +118,7 @@ pub async fn spawn<S: AsRef<str>, P: AsRef<Path>>(
         })?,
         LinesCodec::default(),
     );
-    let token = job.cancel.clone();
+    let cancellation = job.cancellation();
     let status = select! {
         res = async {
             join!(
@@ -138,9 +138,7 @@ pub async fn spawn<S: AsRef<str>, P: AsRef<Path>>(
             res.map(|status| get_status(status, [cstdout, cstderr].concat(), &job))
                 .map_err(|err| E::SpawnError(err.to_string(), cwd_str))?
         }
-        _ = async {
-            token.cancelled().await;
-        } => {
+        _ = cancellation => {
             job.journal.debug("Cancel signal has been gotten");
             match child.try_wait() {
                 Ok(Some(status)) => {

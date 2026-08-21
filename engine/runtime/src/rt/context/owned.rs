@@ -171,11 +171,7 @@ impl ExecutionContext {
                 .join(STORAGE_FOLDER),
         )?)
     }
-    pub(crate) async fn child<S: ToString>(
-        &self,
-        owner: Uuid,
-        alias: S,
-    ) -> Result<ExecutionContext, E> {
+    pub async fn child<S: ToString>(&self, owner: Uuid, alias: S) -> Result<ExecutionContext, E> {
         Ok(self.rt.create(owner, self.job.child(owner, alias).await?))
     }
     pub async fn close(&self) -> Result<(), E> {
