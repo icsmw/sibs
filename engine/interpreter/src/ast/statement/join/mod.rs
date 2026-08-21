@@ -39,10 +39,12 @@ async fn wait(
 impl Interpret for Join {
     #[boxed]
     fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
-        let join_cx = cx
-            .child(Uuid::new_v4(), "join")
-            .await
-            .map_err(|err| LinkedErr::by_link(err, (&self.link()).into()))?;
+        let join_cx = cx.with_job(
+            cx.job
+                .child(Uuid::new_v4(), "join")
+                .await
+                .map_err(|err| LinkedErr::by_link(err, (&self.link()).into()))?,
+        );
         let order = self
             .commands
             .iter()
@@ -61,10 +63,7 @@ impl Interpret for Join {
             })
             .collect::<Vec<LinkedJoinHandle>>();
         let result = wait(tasks, &join_cx.job).await;
-        join_cx
-            .close()
-            .await
-            .map_err(|err| LinkedErr::by_link(err, (&self.link()).into()))?;
+        join_cx.job.close();
         match result {
             Ok(mut results) => {
                 if order.len() != results.len() {

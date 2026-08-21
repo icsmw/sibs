@@ -172,8 +172,16 @@ impl ExecutionContext {
         )?)
     }
     pub async fn child<S: ToString>(&self, owner: Uuid, alias: S) -> Result<ExecutionContext, E> {
-        Ok(self.rt.create(owner, self.job.child(owner, alias).await?))
+        Ok(Self::new(
+            owner,
+            self.rt.clone(),
+            self.job.child(owner, alias).await?,
+        ))
     }
+    pub fn with_job(&self, job: Job) -> ExecutionContext {
+        Self::new(self.owner, self.rt.clone(), job)
+    }
+
     pub async fn close(&self) -> Result<(), E> {
         self.rt.close_cx(self.owner).await?;
         self.job.close();
