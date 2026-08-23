@@ -116,9 +116,9 @@ async fn test_fail_join_004() {
     };
     "#;
 
-    let mut lx = lexer::Lexer::new(&content, 0);
-    let mut parser = Parser::unbound(lx.read().unwrap().tokens, &lx.uuid, content, false);
-    let node = Anchor::read(&mut parser)
+    let mut lx = lexer::Lexer::new(content, 0);
+    let parser = Parser::unbound(lx.read().unwrap().tokens, &lx.uuid, content, false);
+    let node = Anchor::read(&parser)
         .expect("Node is parsed without errors")
         .expect("Node is parsed");
     let mut scx = SemanticCx::new(false);
