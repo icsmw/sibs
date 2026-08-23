@@ -5,7 +5,7 @@ use crate::*;
 
 impl Interpret for Task {
     #[boxed]
-    fn interpret(&self, _rt: Runtime, _cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, _env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
         Ok(RtValue::Void)
     }
 }
@@ -21,12 +21,12 @@ impl Execute for Task {
         &self.uuid
     }
     #[boxed]
-    fn before(&self, rt: Runtime, cx: ExecutionContext) -> GtPinnedResult<'_, LinkedErr<E>> {
+    fn before(&self, env: InterpreterEnvironment) -> GtPinnedResult<'_, LinkedErr<E>> {
         if self.gts.is_empty() {
             return Ok(true);
         }
         for gt in self.gts.iter() {
-            let value = gt.interpret(rt.clone(), cx.clone()).await?;
+            let value = gt.interpret(env.clone()).await?;
             if let RtValue::Bool(value) = value {
                 if !value {
                     return Ok(false);

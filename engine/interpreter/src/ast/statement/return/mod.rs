@@ -5,9 +5,10 @@ use crate::*;
 
 impl Interpret for Return {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
+        let InterpreterEnvironment { cx, .. } = env.clone();
         let vl = if let Some(n) = self.node.as_ref() {
-            n.interpret(rt.clone(), cx.clone()).await?
+            n.interpret(env.clone()).await?
         } else {
             RtValue::Void
         };

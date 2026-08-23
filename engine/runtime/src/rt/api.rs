@@ -9,11 +9,11 @@ pub enum Demand {
     WaitSignal(String, oneshot::Sender<Option<CancellationToken>>),
     WaitersSignal(String, oneshot::Sender<usize>),
     GetRtParameters(oneshot::Sender<RtParameters>),
-    CreateContext(
+    CreateInterpreterEnvironment(
         Uuid,
         String,
         Option<Uuid>,
-        oneshot::Sender<Result<ExecutionContext, E>>,
+        oneshot::Sender<Result<InterpreterEnvironment, E>>,
     ),
     Destroy(oneshot::Sender<()>),
 }

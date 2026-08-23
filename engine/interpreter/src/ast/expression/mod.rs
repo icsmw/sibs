@@ -20,26 +20,26 @@ mod variable;
 use crate::*;
 
 impl Interpret for Expression {
-    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
         match self {
-            Expression::Accessor(n) => n.interpret(rt, cx),
-            Expression::BinaryExp(n) => n.interpret(rt, cx),
-            Expression::BinaryExpGroup(n) => n.interpret(rt, cx),
-            Expression::BinaryExpSeq(n) => n.interpret(rt, cx),
-            Expression::BinaryOp(n) => n.interpret(rt, cx),
-            Expression::Call(n) => n.interpret(rt, cx),
-            Expression::Command(n) => n.interpret(rt, cx),
-            Expression::Comparison(n) => n.interpret(rt, cx),
-            Expression::ComparisonGroup(n) => n.interpret(rt, cx),
-            Expression::ComparisonOp(n) => n.interpret(rt, cx),
-            Expression::ComparisonSeq(n) => n.interpret(rt, cx),
-            Expression::CompoundAssignments(n) => n.interpret(rt, cx),
-            Expression::CompoundAssignmentsOp(n) => n.interpret(rt, cx),
-            Expression::FunctionCall(n) => n.interpret(rt, cx),
-            Expression::LogicalOp(n) => n.interpret(rt, cx),
-            Expression::Range(n) => n.interpret(rt, cx),
-            Expression::TaskCall(n) => n.interpret(rt, cx),
-            Expression::Variable(n) => n.interpret(rt, cx),
+            Expression::Accessor(n) => n.interpret(env),
+            Expression::BinaryExp(n) => n.interpret(env),
+            Expression::BinaryExpGroup(n) => n.interpret(env),
+            Expression::BinaryExpSeq(n) => n.interpret(env),
+            Expression::BinaryOp(n) => n.interpret(env),
+            Expression::Call(n) => n.interpret(env),
+            Expression::Command(n) => n.interpret(env),
+            Expression::Comparison(n) => n.interpret(env),
+            Expression::ComparisonGroup(n) => n.interpret(env),
+            Expression::ComparisonOp(n) => n.interpret(env),
+            Expression::ComparisonSeq(n) => n.interpret(env),
+            Expression::CompoundAssignments(n) => n.interpret(env),
+            Expression::CompoundAssignmentsOp(n) => n.interpret(env),
+            Expression::FunctionCall(n) => n.interpret(env),
+            Expression::LogicalOp(n) => n.interpret(env),
+            Expression::Range(n) => n.interpret(env),
+            Expression::TaskCall(n) => n.interpret(env),
+            Expression::Variable(n) => n.interpret(env),
         }
     }
 }

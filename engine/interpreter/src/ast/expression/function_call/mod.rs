@@ -5,7 +5,8 @@ use crate::*;
 
 impl Interpret for FunctionCall {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
+        let InterpreterEnvironment { rt, cx, .. } = env.clone();
         let mut args = Vec::new();
         if let Some(parent) = cx
             .values()
@@ -16,10 +17,7 @@ impl Interpret for FunctionCall {
             args.push(parent.into());
         }
         for n in self.args.iter() {
-            args.push(FnArgValue::by_node(
-                n.interpret(rt.clone(), cx.clone()).await?,
-                n,
-            ));
+            args.push(FnArgValue::by_node(n.interpret(env.clone()).await?, n));
         }
         let uuid = if let Some(RtValue::Closure(uuid)) = cx
             .values()
@@ -34,7 +32,7 @@ impl Interpret for FunctionCall {
         };
         rt.clone()
             .fns
-            .execute(&uuid, rt, cx, args, &self.link())
+            .execute(&uuid, FnEnv::from_interpreter_env(&env, args, self.link()))
             .await
     }
 }

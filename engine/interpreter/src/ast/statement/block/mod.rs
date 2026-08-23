@@ -2,7 +2,8 @@ use crate::*;
 
 impl Interpret for Block {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
+        let InterpreterEnvironment { cx, .. } = env.clone();
         cx.scopes()
             .enter(&self.uuid)
             .await
@@ -17,7 +18,7 @@ impl Interpret for Block {
             {
                 break;
             }
-            last = Some(n.interpret(rt.clone(), cx.clone()).await?);
+            last = Some(n.interpret(env.clone()).await?);
         }
         cx.scopes()
             .leave()

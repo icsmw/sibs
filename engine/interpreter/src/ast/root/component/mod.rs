@@ -2,7 +2,8 @@ use crate::*;
 
 impl Interpret for Component {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
+        let InterpreterEnvironment { rt, .. } = env.clone();
         let rt_params = rt
             .get_rt_parameters()
             .await
@@ -12,8 +13,7 @@ impl Interpret for Component {
             .execute_by_name(
                 &self.uuid,
                 rt_params.task,
-                rt,
-                cx,
+                env,
                 rt_params
                     .args
                     .into_iter()

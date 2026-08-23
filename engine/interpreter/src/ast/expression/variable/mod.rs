@@ -4,7 +4,8 @@ use crate::*;
 
 impl Interpret for Variable {
     #[boxed]
-    fn interpret(&self, _rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
+        let InterpreterEnvironment { cx, .. } = env;
         let vl = cx
             .values()
             .lookup(&self.ident)

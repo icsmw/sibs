@@ -8,12 +8,8 @@ declare_embedded_fn!(
 #[docs]
 /// Documentation placeholder
 #[boxed]
-pub fn executor(
-    args: Vec<FnArgValue>,
-    _rt: Runtime,
-    _cx: ExecutionContext,
-    _caller: SrcLink,
-) -> RtPinnedResult<'static, LinkedErr<E>> {
+pub fn executor(env: FnEnv) -> RtPinnedResult<'static, LinkedErr<E>> {
+    let FnEnv { args, .. } = env;
     for arg in args.iter() {
         println!("{:?}", arg.value);
     }

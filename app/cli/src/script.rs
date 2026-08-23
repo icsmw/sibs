@@ -67,10 +67,10 @@ impl Script {
         let args = self.args.take().ok_or(E::ScriptAlreadyExecuted)?;
         let params = RtParameters::new(component.clone(), task.clone(), args, self.scenario.cwd()?);
         let rt = interpreter::runtime(params, scx)?;
-        let cx = rt
-            .create_cx(Uuid::new_v4(), format!("{component}:{task}"), None)
+        let env = rt
+            .create_interpreter_env(Uuid::new_v4(), format!("{component}:{task}"), None)
             .await?;
-        let vl = self.anchor.interpret(rt.clone(), cx).await;
+        let vl = self.anchor.interpret(env).await;
         let _ = rt.destroy().await;
         match vl {
             Ok(vl) => Ok(vl),

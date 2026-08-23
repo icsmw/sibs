@@ -34,8 +34,8 @@ macro_rules! test_value_expectation {
                 assert!(result.is_ok());
                 let params = RtParameters::default_from_cwd().expect("RtParameter created");
                 let rt = runtime(params, scx).expect("Runtime created");
-                let cx = rt.create_cx(Uuid::new_v4(), "Test", None).await.expect("ExecutionContext created");
-                let vl = node.interpret(rt.clone(), cx.clone()).await;
+                let env = rt.create_interpreter_env(Uuid::new_v4(), "Test", None).await.expect("InterpreterEnvironment created");
+                let vl = node.interpret(env).await;
                 if let Err(err) = &vl {
                     eprintln!("{err:?}");
                     eprintln!("{}", parser.report_err(err).expect("Reporting error"));
@@ -88,8 +88,8 @@ macro_rules! test_fail {
                 assert!(result.is_ok());
                 let params = RtParameters::default_from_cwd().expect("RtParameter created");
                 let rt = runtime(params, scx).expect("Runtime created");
-                let cx = rt.create_cx(Uuid::new_v4(), "Test", None).await.expect("ExecutionContext created");
-                let vl = node.interpret(rt.clone(), cx.clone()).await;
+                let env = rt.create_interpreter_env(Uuid::new_v4(), "Test", None).await.expect("InterpreterEnvironment created");
+                let vl = node.interpret(env).await;
                 assert!(vl.is_err());
                 let _ = rt.destroy().await;
             }
@@ -133,8 +133,8 @@ macro_rules! test_task_results {
                 assert!(result.is_ok());
                 let params = RtParameters::new($component_name, $task_name, Vec::new(), std::env::current_dir().expect("Current folder detected"));
                 let rt = runtime(params, scx).expect("Runtime created");
-                let cx = rt.create_cx(Uuid::new_v4(), "Test", None).await.expect("ExecutionContext created");
-                let vl = node.interpret(rt.clone(), cx.clone()).await;
+                let env = rt.create_interpreter_env(Uuid::new_v4(), "Test", None).await.expect("InterpreterEnvironment created");
+                let vl = node.interpret(env).await;
                 if let Err(err) = &vl {
                     eprintln!("{err:?}");
                     eprintln!("{}", parser.report_err(err).expect("Reporting error"));
@@ -190,8 +190,8 @@ macro_rules! test_task_results_from_file {
                 assert!(result.is_ok());
                 let params = RtParameters::new($component_name, $task_name, Vec::new(), std::env::current_dir().expect("Current folder detected"));
                 let rt = runtime(params, scx).expect("Runtime created");
-                let cx = rt.create_cx(Uuid::new_v4(), "Test", None).await.expect("ExecutionContext created");
-                let vl = node.interpret(rt.clone(), cx.clone()).await;
+                let env = rt.create_interpreter_env(Uuid::new_v4(), "Test", None).await.expect("InterpreterEnvironment created");
+                let vl = node.interpret(env).await;
                 if let Err(err) = &vl {
                     eprintln!("{err:?}");
                     eprintln!("{}", parser.report_err(err).expect("Reporting error"));

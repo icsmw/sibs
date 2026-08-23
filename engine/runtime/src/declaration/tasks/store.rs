@@ -41,8 +41,7 @@ impl Tasks {
     pub async fn execute(
         &self,
         uuid: &Uuid,
-        rt: Runtime,
-        cx: ExecutionContext,
+        env: InterpreterEnvironment,
         args: Vec<FnArgValue>,
         caller: &SrcLink,
     ) -> Result<RtValue, LinkedErr<E>> {
@@ -52,14 +51,13 @@ impl Tasks {
                 caller.into(),
             ));
         };
-        entity.execute(rt, cx, args, caller).await
+        entity.execute(env, args, caller).await
     }
     pub async fn execute_by_name<S: AsRef<str>>(
         &self,
         master: &Uuid,
         name: S,
-        rt: Runtime,
-        cx: ExecutionContext,
+        env: InterpreterEnvironment,
         args: Vec<FnArgValue>,
         caller: &SrcLink,
     ) -> Result<RtValue, LinkedErr<E>> {
@@ -73,7 +71,7 @@ impl Tasks {
                 caller.into(),
             ));
         };
-        entity.execute(rt, cx, args, caller).await
+        entity.execute(env, args, caller).await
     }
     fn link<S: AsRef<str>>(&mut self, name: S, caller: &Uuid) -> Option<String> {
         if let Some(name) = if self.table.contains_key(name.as_ref()) {

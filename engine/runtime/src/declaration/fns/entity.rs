@@ -56,18 +56,11 @@ impl FnEntity<'_> {
             Self::CFn(_en) => None,
         }
     }
-    pub async fn execute(
-        &self,
-        rt: Runtime,
-        cx: ExecutionContext,
-        args: Vec<FnArgValue>,
-        fns: &Fns,
-        caller: &SrcLink,
-    ) -> Result<RtValue, LinkedErr<E>> {
+    pub async fn execute(&self, fns: &Fns, env: FnEnv) -> Result<RtValue, LinkedErr<E>> {
         match self {
-            Self::UFn(en) => en.execute(rt, cx, args, fns, caller).await,
-            Self::EFn(en) => en.execute(rt, cx, args, fns, caller).await,
-            Self::CFn(en) => en.execute(rt, cx, args, fns, caller).await,
+            Self::UFn(en) => en.execute(env, fns).await,
+            Self::EFn(en) => en.execute(env).await,
+            Self::CFn(en) => en.execute(env).await,
         }
     }
 

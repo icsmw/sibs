@@ -12,18 +12,18 @@ mod variable_variants;
 use crate::*;
 
 impl Interpret for Declaration {
-    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
         match self {
-            Declaration::ArgumentDeclaration(n) => n.interpret(rt, cx),
-            Declaration::ClosureDeclaration(n) => n.interpret(rt, cx),
-            Declaration::FunctionDeclaration(n) => n.interpret(rt, cx),
-            Declaration::VariableDeclaration(n) => n.interpret(rt, cx),
-            Declaration::VariableType(n) => n.interpret(rt, cx),
-            Declaration::VariableTypeDeclaration(n) => n.interpret(rt, cx),
-            Declaration::VariableVariants(n) => n.interpret(rt, cx),
-            Declaration::VariableName(n) => n.interpret(rt, cx),
-            Declaration::ModuleDeclaration(n) => n.interpret(rt, cx),
-            Declaration::IncludeDeclaration(n) => n.interpret(rt, cx),
+            Declaration::ArgumentDeclaration(n) => n.interpret(env),
+            Declaration::ClosureDeclaration(n) => n.interpret(env),
+            Declaration::FunctionDeclaration(n) => n.interpret(env),
+            Declaration::VariableDeclaration(n) => n.interpret(env),
+            Declaration::VariableType(n) => n.interpret(env),
+            Declaration::VariableTypeDeclaration(n) => n.interpret(env),
+            Declaration::VariableVariants(n) => n.interpret(env),
+            Declaration::VariableName(n) => n.interpret(env),
+            Declaration::ModuleDeclaration(n) => n.interpret(env),
+            Declaration::IncludeDeclaration(n) => n.interpret(env),
         }
     }
 }

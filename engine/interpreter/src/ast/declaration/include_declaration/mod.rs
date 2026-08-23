@@ -5,7 +5,7 @@ use crate::*;
 
 impl Interpret for IncludeDeclaration {
     #[boxed]
-    fn interpret(&self, _rt: Runtime, _cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, _env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
         Ok(RtValue::Void)
     }
 }

@@ -5,9 +5,10 @@ use crate::*;
 
 impl Interpret for Skip {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
+        let InterpreterEnvironment { cx, .. } = env.clone();
         for arg in self.args.iter() {
-            let value = arg.interpret(rt.clone(), cx.clone()).await?;
+            let value = arg.interpret(env.clone()).await?;
             let RtValue::NamedArgumentValue(name, expected) = value else {
                 return Err(LinkedErr::from(
                     E::DismatchValueType(
@@ -42,7 +43,7 @@ impl Interpret for Skip {
                 return Ok(RtValue::Bool(true));
             }
         }
-        let value = self.func.interpret(rt, cx).await?;
+        let value = self.func.interpret(env.clone()).await?;
         if let RtValue::Bool(value) = value {
             Ok(RtValue::Bool(!value))
         } else {

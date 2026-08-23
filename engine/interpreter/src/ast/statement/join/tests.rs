@@ -134,16 +134,13 @@ async fn test_fail_join_004() {
         std::env::current_dir().expect("Current folder detected"),
     );
     let rt = runtime(params, scx).expect("Runtime created");
-    let cx = rt
-        .create_cx(Uuid::new_v4(), "Test", None)
+    let env = rt
+        .create_interpreter_env(Uuid::new_v4(), "Test", None)
         .await
-        .expect("ExecutionContext created");
-    let result = timeout(
-        Duration::from_secs(5),
-        node.interpret(rt.clone(), cx.clone()),
-    )
-    .await
-    .expect("Join finished without hanging");
+        .expect("InterpreterEnvironment created");
+    let result = timeout(Duration::from_secs(5), node.interpret(env))
+        .await
+        .expect("Join finished without hanging");
     let _ = rt.destroy().await;
 
     assert!(result.is_err());

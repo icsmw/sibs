@@ -2,7 +2,7 @@ use crate::*;
 
 impl Interpret for PrimitiveString {
     #[boxed]
-    fn interpret(&self, _rt: Runtime, _cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, _env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
         if let Kind::String(s) = &self.token.kind {
             Ok(RtValue::Str(s.to_owned()))
         } else {

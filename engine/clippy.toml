@@ -1,0 +1,3 @@
+# LinkedErr<E> carries source location and structured runtime errors by value.
+# The default 128-byte threshold is too strict for this interpreter diagnostic type.
+large-error-threshold = 256

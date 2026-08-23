@@ -38,13 +38,16 @@ async fn wait(
 
 impl Interpret for Join {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
-        let join_cx = cx.with_job(
-            cx.job
+    fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
+        let InterpreterEnvironment { rt, cx, job } = env.clone();
+        let join_env = InterpreterEnvironment {
+            rt: rt.clone(),
+            cx: cx.clone(),
+            job: job
                 .child(Uuid::new_v4(), "join")
                 .await
                 .map_err(|err| LinkedErr::by_link(err, (&self.link()).into()))?,
-        );
+        };
         let order = self
             .commands
             .iter()
@@ -55,15 +58,15 @@ impl Interpret for Join {
             .iter()
             .cloned()
             .map(|node| {
-                let (rt, cx) = (rt.clone(), join_cx.clone());
+                let join_env_inner = join_env.clone();
                 (
                     node.link(),
-                    spawn(async move { (*node.uuid(), node.interpret(rt, cx).await) }),
+                    spawn(async move { (*node.uuid(), node.interpret(join_env_inner).await) }),
                 )
             })
             .collect::<Vec<LinkedJoinHandle>>();
-        let result = wait(tasks, &join_cx.job).await;
-        join_cx.job.close();
+        let result = wait(tasks, &join_env.job).await;
+        join_env.job.close();
         match result {
             Ok(mut results) => {
                 if order.len() != results.len() {

@@ -45,10 +45,10 @@ fn ufn_into_exec(body: UserFnBody) -> UserFnBody {
         UserFnBody::Executor(link, ex) => UserFnBody::Executor(link, ex),
         UserFnBody::Node(node) => {
             let link = node.slink();
-            let func = move |rt: Runtime, cx: ExecutionContext| -> RtPinnedResult<LinkedErr<E>> {
+            let func = move |env: InterpreterEnvironment| -> RtPinnedResult<LinkedErr<E>> {
                 Box::pin({
                     let node = node.clone();
-                    async move { node.exec(rt, cx).await }
+                    async move { node.exec(env).await }
                 })
             };
             UserFnBody::Executor(link, Box::new(func))
@@ -62,10 +62,10 @@ fn cfn_into_exec(body: ClosureFnBody) -> ClosureFnBody {
         ClosureFnBody::Executor(link, ex) => ClosureFnBody::Executor(link, ex),
         ClosureFnBody::Node(node) => {
             let link = node.slink();
-            let func = move |rt: Runtime, cx: ExecutionContext| -> RtPinnedResult<LinkedErr<E>> {
+            let func = move |env: InterpreterEnvironment| -> RtPinnedResult<LinkedErr<E>> {
                 Box::pin({
                     let node = node.clone();
-                    async move { node.exec(rt, cx).await }
+                    async move { node.exec(env).await }
                 })
             };
             ClosureFnBody::Executor(link, Box::new(func))
@@ -91,10 +91,10 @@ fn task_node_into_exec(body: TaskBody) -> TaskBody {
         TaskBody::Executor(md, ex) => TaskBody::Executor(md, ex),
         TaskBody::Node(node) => {
             let link = node.slink();
-            let func = move |rt: Runtime, cx: ExecutionContext| -> RtPinnedResult<LinkedErr<E>> {
+            let func = move |env: InterpreterEnvironment| -> RtPinnedResult<LinkedErr<E>> {
                 Box::pin({
                     let node = node.clone();
-                    async move { node.exec(rt, cx).await }
+                    async move { node.exec(env).await }
                 })
             };
             TaskBody::Executor(link, Box::new(func))

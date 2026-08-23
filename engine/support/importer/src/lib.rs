@@ -110,7 +110,7 @@ pub fn import(args: pm::TokenStream, input: pm::TokenStream) -> pm::TokenStream 
             match pat_type.ty.borrow() {
                 Type::Path(_ty) => {
                     arguments.push(quote! {
-                        args[#i].take().unwrap().value.try_to_rs().map_err(|err| LinkedErr::by_link(err, (&caller).into()))?,
+                        args[#i].take().unwrap().value.try_to_rs().map_err(|err| LinkedErr::by_link(err, caller.into()))?,
                     });
                     match get_ty(&pat_type.ty) {
                         Ok(ty) => {
@@ -163,10 +163,12 @@ pub fn import(args: pm::TokenStream, input: pm::TokenStream) -> pm::TokenStream 
     };
 
     pm::TokenStream::from(quote! {
-        fn #func_name(args: Vec<FnArgValue>, _rt: Runtime, _cx: ExecutionContext, caller: SrcLink) -> RtPinnedResult<'static, LinkedErr<E>> {
+        fn #func_name(env: FnEnv) -> RtPinnedResult<'static, LinkedErr<E>> {
             Box::pin(async move {
+                let FnEnv { args, caller, .. } = env;
+                let caller = &caller;
                 if args.len() != #args_required {
-                    return Err(LinkedErr::by_link(E::InvalidFnArgument, (&caller).into()));
+                    return Err(LinkedErr::by_link(E::InvalidFnArgument, caller.into()));
                 }
                 #item_fn;
                 let mut args = args
@@ -174,8 +176,8 @@ pub fn import(args: pm::TokenStream, input: pm::TokenStream) -> pm::TokenStream 
                     .map(Some)
                     .collect::<Vec<Option<FnArgValue>>>();
                 let result = #fn_name(#(#arguments)*)
-                    .map_err(|err| LinkedErr::by_link(err, (&caller).into()))?;
-                result.try_to_rtv().map_err(|err| LinkedErr::by_link(err, (&caller).into()))
+                    .map_err(|err| LinkedErr::by_link(err, caller.into()))?;
+                result.try_to_rtv().map_err(|err| LinkedErr::by_link(err, caller.into()))
             })
         }
 

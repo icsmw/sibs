@@ -18,7 +18,7 @@ pub use utils::*;
 use uuid::Uuid;
 
 pub trait Interpret {
-    fn interpret(&self, _rt: Runtime, _cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>>;
+    fn interpret(&self, _env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>>;
 }
 
 pub trait Execute
@@ -29,20 +29,21 @@ where
     fn block(&self) -> &LinkedNode;
     fn link(&self) -> SrcLink;
     #[boxed]
-    fn before(&self, _rt: Runtime, _cx: ExecutionContext) -> GtPinnedResult<'_, LinkedErr<E>> {
+    fn before(&self, _env: InterpreterEnvironment) -> GtPinnedResult<'_, LinkedErr<E>> {
         Ok(true)
     }
     #[boxed]
-    fn exec(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
-        let before = self.before(rt.clone(), cx.clone()).await?;
+    fn exec(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
+        let before = self.before(env.clone()).await?;
         if !before {
             return Ok(RtValue::Skipped);
         }
+        let InterpreterEnvironment { cx, .. } = env.clone();
         cx.returns()
             .open_cx(self.uuid())
             .await
             .map_err(|err| LinkedErr::by_link(err, (&self.link()).into()))?;
-        let mut result = self.block().interpret(rt.clone(), cx.clone()).await?;
+        let mut result = self.block().interpret(env.clone()).await?;
         result = if let Some(result) = cx
             .returns()
             .withdraw_vl(self.uuid())

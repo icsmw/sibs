@@ -1,5 +1,6 @@
 mod api;
 mod context;
+mod env;
 mod jobs;
 mod journal;
 mod progressor;
@@ -8,6 +9,7 @@ mod signals;
 use crate::*;
 use api::*;
 pub use context::*;
+pub use env::*;
 pub use jobs::*;
 pub use journal::*;
 pub use progressor::*;
@@ -61,6 +63,7 @@ impl Runtime {
         let cx = ExecutionContexts::new(&params.cwd);
         let jobs = RtJobs::new(&params.cwd)?;
         let mut signals = Signals::default();
+        let rt_inner = inst.clone();
         spawn(async move {
             tracing::info!("init demand's listener");
             while let Some(demand) = rx.recv().await {
@@ -68,15 +71,20 @@ impl Runtime {
                     Demand::GetRtParameters(tx) => {
                         chk_send_err!(tx.send(params.clone()), DemandId::GetRtParameters);
                     }
-                    Demand::CreateContext(owner, alias, parent, tx) => {
+                    Demand::CreateInterpreterEnvironment(owner, alias, parent, tx) => {
                         let job = match jobs.create(owner, alias, parent).await {
                             Ok(job) => job,
                             Err(err) => {
-                                chk_send_err!(tx.send(Err(err)), DemandId::CreateContext);
+                                chk_send_err!(
+                                    tx.send(Err(err)),
+                                    DemandId::CreateInterpreterEnvironment
+                                );
                                 continue;
                             }
                         };
-                        chk_send_err!(tx.send(Ok(cx.create(owner, job))), DemandId::CreateContext);
+                        let env =
+                            InterpreterEnvironment::new(rt_inner.clone(), cx.create(owner), job);
+                        chk_send_err!(tx.send(Ok(env)), DemandId::CreateInterpreterEnvironment);
                     }
                     Demand::EmitSignal(key, tx) => {
                         chk_send_err!(tx.send(signals.emit(key)), DemandId::EmitSignal);
@@ -107,15 +115,19 @@ impl Runtime {
         Ok(rx.await?)
     }
 
-    pub async fn create_cx<S: ToString>(
+    pub async fn create_interpreter_env<S: ToString>(
         &self,
         owner: Uuid,
         alias: S,
         parent: Option<Uuid>,
-    ) -> Result<ExecutionContext, E> {
+    ) -> Result<InterpreterEnvironment, E> {
         let (tx, rx) = oneshot::channel();
-        self.tx
-            .send(Demand::CreateContext(owner, alias.to_string(), parent, tx))?;
+        self.tx.send(Demand::CreateInterpreterEnvironment(
+            owner,
+            alias.to_string(),
+            parent,
+            tx,
+        ))?;
         rx.await?
     }
 

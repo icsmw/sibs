@@ -5,7 +5,8 @@ use crate::*;
 
 impl Interpret for For {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
+        let InterpreterEnvironment { cx, .. } = env.clone();
         let el = if let Node::Expression(Expression::Variable(el)) = self.element.get_node() {
             el.ident.to_owned()
         } else {
@@ -26,7 +27,7 @@ impl Interpret for For {
         } else {
             None
         };
-        let vls = match self.elements.interpret(rt.clone(), cx.clone()).await? {
+        let vls = match self.elements.interpret(env.clone()).await? {
             RtValue::Vec(els) => els,
             RtValue::Range(range) => range
                 .collect::<Vec<isize>>()
@@ -64,7 +65,7 @@ impl Interpret for For {
                     .await
                     .map_err(|err| LinkedErr::from(err, *node))?;
             }
-            self.block.interpret(rt.clone(), cx.clone()).await?;
+            self.block.interpret(env.clone()).await?;
         }
         cx.loops()
             .close()

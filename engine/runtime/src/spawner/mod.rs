@@ -55,8 +55,7 @@ fn parse_command(cmd: &str) -> (&str, Vec<&str>) {
 pub async fn spawn<S: AsRef<str>, P: AsRef<Path>>(
     cmd: S,
     cwd: P,
-    _owner: Uuid,
-    cx: ExecutionContext,
+    job: Job,
 ) -> Result<SpawnStatus, E> {
     fn post_logs(
         line: Result<String, LinesCodecError>,
@@ -99,7 +98,7 @@ pub async fn spawn<S: AsRef<str>, P: AsRef<Path>>(
     let cwd_str = cwd.as_ref().to_string_lossy().to_string();
     let mut cstdout = Vec::new();
     let mut cstderr = Vec::new();
-    let job = cx.job.child(Uuid::new_v4(), cmd.as_ref()).await?;
+    let job = job.child(Uuid::new_v4(), cmd.as_ref()).await?;
     let mut child = match setup(cmd, cwd) {
         Ok(child) => child,
         Err(err) => {

@@ -1,11 +1,6 @@
 use crate::*;
 
-pub type ExecutorEmbeddedFn = fn(
-    Vec<FnArgValue>,
-    Runtime,
-    ExecutionContext,
-    caller: SrcLink,
-) -> RtPinnedResult<'static, LinkedErr<E>>;
+pub type ExecutorEmbeddedFn = fn(FnEnv) -> RtPinnedResult<'static, LinkedErr<E>>;
 
 #[derive(Debug)]
 pub struct FnArgDesc {
@@ -60,15 +55,8 @@ impl EmbeddedFnEntity {
             Ok(())
         }
     }
-    pub async fn execute(
-        &self,
-        rt: Runtime,
-        cx: ExecutionContext,
-        args: Vec<FnArgValue>,
-        _fns: &Fns,
-        caller: &SrcLink,
-    ) -> Result<RtValue, LinkedErr<E>> {
-        (self.exec)(args, rt, cx, caller.clone()).await
+    pub async fn execute(&self, env: FnEnv) -> Result<RtValue, LinkedErr<E>> {
+        (self.exec)(env).await
     }
     pub fn compatible(&self, incomes: &[&Ty]) -> bool {
         FnEntity::args_compatible(

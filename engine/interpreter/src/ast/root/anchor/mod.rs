@@ -2,7 +2,8 @@ use crate::*;
 
 impl Interpret for Anchor {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
+        let InterpreterEnvironment { rt, .. } = env.clone();
         let rt_params = rt
             .get_rt_parameters()
             .await
@@ -10,6 +11,6 @@ impl Interpret for Anchor {
         let Some(component) = self.get_component(&rt_params.component) else {
             return Err(LinkedErr::from(E::CompNotFound(rt_params.component), self));
         };
-        component.interpret(rt, cx).await
+        component.interpret(env).await
     }
 }

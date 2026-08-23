@@ -54,14 +54,14 @@ impl ClosureFnEntity {
         }
         Ok(())
     }
-    pub async fn execute(
-        &self,
-        rt: Runtime,
-        cx: ExecutionContext,
-        args: Vec<FnArgValue>,
-        _fns: &Fns,
-        caller: &SrcLink,
-    ) -> Result<RtValue, LinkedErr<E>> {
+    pub async fn execute(&self, env: FnEnv) -> Result<RtValue, LinkedErr<E>> {
+        let FnEnv {
+            args,
+            cx,
+            job,
+            caller,
+            ..
+        } = &env;
         let ClosureFnBody::Executor(link, exec) = &self.body else {
             return Err(LinkedErr::by_link(
                 E::NotInitedClosure(self.uuid),
@@ -72,7 +72,7 @@ impl ClosureFnEntity {
             return Err(LinkedErr::by_link(err, link.into()));
         }
         let mut err = None;
-        for (n, arg_vl) in args.into_iter().enumerate() {
+        for (n, arg_vl) in args.iter().enumerate() {
             let Some(decl) = self.args.get(n) else {
                 err = Some(LinkedErr::by_link(E::InvalidFnArgument, link.into()));
                 break;
@@ -91,7 +91,7 @@ impl ClosureFnEntity {
                 ));
                 break;
             }
-            if let Err(e) = cx.values().insert(&decl.ident, arg_vl.value).await {
+            if let Err(e) = cx.values().insert(&decl.ident, arg_vl.value.clone()).await {
                 err = Some(LinkedErr::by_link(e, (&arg_vl.link).into()));
                 break;
             }
@@ -102,7 +102,14 @@ impl ClosureFnEntity {
             }
             return Err(err);
         }
-        let result = exec(rt.clone(), cx.clone()).await;
+        let result = exec(
+            env.to_interpreter_env(
+                job.child(self.uuid, "closure")
+                    .await
+                    .map_err(|err| LinkedErr::by_link(err, link.into()))?,
+            ),
+        )
+        .await;
         if let Err(err) = cx.scopes().leave().await {
             return Err(LinkedErr::by_link(err, link.into()));
         }

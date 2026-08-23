@@ -2,7 +2,7 @@ use crate::*;
 
 impl Interpret for ArgumentAssignation {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
         let variable =
             if let Node::Expression(Expression::Variable(variable)) = self.left.get_node() {
                 variable.ident.to_owned()
@@ -12,7 +12,7 @@ impl Interpret for ArgumentAssignation {
                     &self.left,
                 ));
             };
-        let vl = self.right.interpret(rt.clone(), cx.clone()).await?;
+        let vl = self.right.interpret(env).await?;
         Ok(RtValue::NamedArgumentValue(variable, Box::new(vl)))
     }
 }

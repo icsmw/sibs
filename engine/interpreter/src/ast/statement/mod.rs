@@ -16,22 +16,22 @@ mod r#while;
 use crate::*;
 
 impl Interpret for Statement {
-    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
         match self {
-            Statement::Assignation(n) => n.interpret(rt, cx),
-            Statement::AssignedValue(n) => n.interpret(rt, cx),
-            Statement::ArgumentAssignation(n) => n.interpret(rt, cx),
-            Statement::ArgumentAssignedValue(n) => n.interpret(rt, cx),
-            Statement::Block(n) => n.interpret(rt, cx),
-            Statement::Break(n) => n.interpret(rt, cx),
-            Statement::For(n) => n.interpret(rt, cx),
-            Statement::If(n) => n.interpret(rt, cx),
-            Statement::Join(n) => n.interpret(rt, cx),
-            Statement::Loop(n) => n.interpret(rt, cx),
-            Statement::OneOf(n) => n.interpret(rt, cx),
-            Statement::Optional(n) => n.interpret(rt, cx),
-            Statement::Return(n) => n.interpret(rt, cx),
-            Statement::While(n) => n.interpret(rt, cx),
+            Statement::Assignation(n) => n.interpret(env),
+            Statement::AssignedValue(n) => n.interpret(env),
+            Statement::ArgumentAssignation(n) => n.interpret(env),
+            Statement::ArgumentAssignedValue(n) => n.interpret(env),
+            Statement::Block(n) => n.interpret(env),
+            Statement::Break(n) => n.interpret(env),
+            Statement::For(n) => n.interpret(env),
+            Statement::If(n) => n.interpret(env),
+            Statement::Join(n) => n.interpret(env),
+            Statement::Loop(n) => n.interpret(env),
+            Statement::OneOf(n) => n.interpret(env),
+            Statement::Optional(n) => n.interpret(env),
+            Statement::Return(n) => n.interpret(env),
+            Statement::While(n) => n.interpret(env),
         }
     }
 }

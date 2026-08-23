@@ -241,8 +241,8 @@ impl ExecutionContexts {
         Self { tx }
     }
 
-    pub fn create(&self, owner: Uuid, job: Job) -> ExecutionContext {
-        ExecutionContext::new(owner, self.clone(), job)
+    pub fn create(&self, owner: Uuid) -> ExecutionContext {
+        ExecutionContext::new(owner, self.clone())
     }
 
     pub(crate) async fn set_parent_vl(&self, owner: Uuid, vl: ParentValue) -> Result<(), E> {

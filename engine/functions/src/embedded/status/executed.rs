@@ -8,12 +8,10 @@ declare_embedded_fn!(
 #[docs]
 /// Documentation placeholder
 #[boxed]
-pub fn executor(
-    mut args: Vec<FnArgValue>,
-    _rt: Runtime,
-    _cx: ExecutionContext,
-    caller: SrcLink,
-) -> RtPinnedResult<'static, LinkedErr<E>> {
+pub fn executor(env: FnEnv) -> RtPinnedResult<'static, LinkedErr<E>> {
+    let FnEnv {
+        mut args, caller, ..
+    } = env;
     if args.len() != 1 {
         return Err(LinkedErr::by_link(
             E::MissedFnArgument(RtValueId::ExecuteResult.to_string()),

@@ -5,7 +5,9 @@ use crate::*;
 
 impl Interpret for Break {
     #[boxed]
-    fn interpret(&self, _rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
+        let InterpreterEnvironment { cx, .. } = env;
+
         cx.loops()
             .set_break()
             .await

@@ -9,15 +9,15 @@ mod primitive_string;
 use crate::*;
 
 impl Interpret for Value {
-    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
         match self {
-            Value::Array(n) => n.interpret(rt, cx),
-            Value::Boolean(n) => n.interpret(rt, cx),
-            Value::Error(n) => n.interpret(rt, cx),
-            Value::InterpolatedString(n) => n.interpret(rt, cx),
-            Value::Number(n) => n.interpret(rt, cx),
-            Value::PrimitiveString(n) => n.interpret(rt, cx),
-            Value::Closure(n) => n.interpret(rt, cx),
+            Value::Array(n) => n.interpret(env),
+            Value::Boolean(n) => n.interpret(env),
+            Value::Error(n) => n.interpret(env),
+            Value::InterpolatedString(n) => n.interpret(env),
+            Value::Number(n) => n.interpret(env),
+            Value::PrimitiveString(n) => n.interpret(env),
+            Value::Closure(n) => n.interpret(env),
         }
     }
 }

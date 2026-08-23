@@ -51,12 +51,14 @@ struct PrevHash {
 #[docs]
 /// Documentation placeholder
 #[boxed]
-pub fn executor(
-    args: Vec<FnArgValue>,
-    _rt: Runtime,
-    cx: ExecutionContext,
-    caller: SrcLink,
-) -> RtPinnedResult<'static, LinkedErr<E>> {
+pub fn executor(env: FnEnv) -> RtPinnedResult<'static, LinkedErr<E>> {
+    let FnEnv {
+        args,
+        caller,
+        job,
+        cx,
+        ..
+    } = env;
     if args.len() != 3 {
         return Err(LinkedErr::by_link(
             E::InvalidFnArgumentsNumber(3, args.len()),
@@ -163,11 +165,10 @@ pub fn executor(
         .collect::<Vec<&PathBuf>>();
     if !not_exist.is_empty() {
         not_exist.iter().for_each(|p| {
-            cx.job
-                .journal
+            job.journal
                 .warn(format!("{}: doesn't exist", p.to_string_lossy()));
         });
-        cx.job
+        job
         .journal
         .warn("Hasher will not proceed operation and returns false-state because there are not exist paths");
         return Ok(RtValue::Bool(false));
@@ -184,7 +185,7 @@ pub fn executor(
         .collect::<Result<Vec<PathBuf>, _>>()
         .map_err(|err| LinkedErr::by_link(err.into(), (&caller).into()))?;
     paths.iter().for_each(|p| {
-        cx.job.journal.info(format!(
+        job.journal.info(format!(
             "{}: will be inspected by hasher",
             p.to_string_lossy()
         ));

@@ -4,162 +4,161 @@ use crate::*;
 
 pub struct ValueAccess<'a> {
     owner: &'a Uuid,
-    rt: &'a ExecutionContexts,
+    cxs: &'a ExecutionContexts,
 }
 
 impl ValueAccess<'_> {
     pub async fn set_parent_vl(&self, vl: ParentValue) -> Result<(), E> {
-        self.rt.set_parent_vl(*self.owner, vl).await
+        self.cxs.set_parent_vl(*self.owner, vl).await
     }
 
     pub async fn withdraw_parent_vl(&self) -> Result<Option<ParentValue>, E> {
-        self.rt.withdraw_parent_vl(*self.owner).await
+        self.cxs.withdraw_parent_vl(*self.owner).await
     }
 
     pub async fn drop_parent_vl(&self) -> Result<(), E> {
-        self.rt.drop_parent_vl(*self.owner).await
+        self.cxs.drop_parent_vl(*self.owner).await
     }
 
     pub async fn insert<S: ToString>(&self, name: S, vl: RtValue) -> Result<(), E> {
-        self.rt.insert(*self.owner, name, vl).await
+        self.cxs.insert(*self.owner, name, vl).await
     }
 
     pub async fn update<S: ToString>(&self, name: S, vl: RtValue) -> Result<(), E> {
-        self.rt.update(*self.owner, name, vl).await
+        self.cxs.update(*self.owner, name, vl).await
     }
 
     pub async fn lookup<S: ToString>(&self, name: S) -> Result<Option<Arc<RtValue>>, E> {
-        self.rt.lookup(*self.owner, name).await
+        self.cxs.lookup(*self.owner, name).await
     }
 }
 
 pub struct ScopeAccess<'a> {
     owner: &'a Uuid,
-    rt: &'a ExecutionContexts,
+    cxs: &'a ExecutionContexts,
 }
 
 impl ScopeAccess<'_> {
     pub async fn open(&self, uuid: &Uuid) -> Result<(), E> {
-        self.rt.open(*self.owner, uuid).await
+        self.cxs.open(*self.owner, uuid).await
     }
 
     pub async fn close(&self) -> Result<(), E> {
-        self.rt.close(*self.owner).await
+        self.cxs.close(*self.owner).await
     }
 
     pub async fn enter(&self, uuid: &Uuid) -> Result<(), E> {
-        self.rt.enter(*self.owner, uuid).await
+        self.cxs.enter(*self.owner, uuid).await
     }
 
     pub async fn leave(&self) -> Result<(), E> {
-        self.rt.leave(*self.owner).await
+        self.cxs.leave(*self.owner).await
     }
 }
 
 pub struct LoopAccess<'a> {
     owner: &'a Uuid,
-    rt: &'a ExecutionContexts,
+    cxs: &'a ExecutionContexts,
 }
 
 impl LoopAccess<'_> {
     pub async fn open(&self, uuid: &Uuid) -> Result<(), E> {
-        self.rt.open_loop(*self.owner, uuid).await
+        self.cxs.open_loop(*self.owner, uuid).await
     }
 
     pub async fn close(&self) -> Result<(), E> {
-        self.rt.close_loop(*self.owner).await
+        self.cxs.close_loop(*self.owner).await
     }
 
     pub async fn set_break(&self) -> Result<(), E> {
-        self.rt.set_break(*self.owner).await
+        self.cxs.set_break(*self.owner).await
     }
 
     pub async fn is_stopped(&self) -> Result<bool, E> {
-        self.rt.is_loop_stopped(*self.owner).await
+        self.cxs.is_loop_stopped(*self.owner).await
     }
 }
 
 pub struct ReturnAccess<'a> {
     owner: &'a Uuid,
-    rt: &'a ExecutionContexts,
+    cxs: &'a ExecutionContexts,
 }
 
 impl ReturnAccess<'_> {
     pub async fn open_cx(&self, uuid: &Uuid) -> Result<(), E> {
-        self.rt.open_return_cx(*self.owner, uuid).await
+        self.cxs.open_return_cx(*self.owner, uuid).await
     }
 
     pub async fn close_cx(&self) -> Result<(), E> {
-        self.rt.close_return_cx(*self.owner).await
+        self.cxs.close_return_cx(*self.owner).await
     }
 
     pub async fn set_vl(&self, vl: RtValue) -> Result<(), E> {
-        self.rt.set_return_vl(*self.owner, vl).await
+        self.cxs.set_return_vl(*self.owner, vl).await
     }
 
     pub async fn withdraw_vl(&self, uuid: &Uuid) -> Result<Option<RtValue>, E> {
-        self.rt.withdraw_return_vl(*self.owner, uuid).await
+        self.cxs.withdraw_return_vl(*self.owner, uuid).await
     }
 }
 
 pub struct CwdAccess<'a> {
     owner: &'a Uuid,
-    rt: &'a ExecutionContexts,
+    cxs: &'a ExecutionContexts,
 }
 
 impl CwdAccess<'_> {
     pub async fn set(&self, path: PathBuf) -> Result<(), E> {
-        self.rt.set_cwd(*self.owner, path).await
+        self.cxs.set_cwd(*self.owner, path).await
     }
 
     pub async fn get(&self) -> Result<PathBuf, E> {
-        self.rt.get_cwd(*self.owner).await
+        self.cxs.get_cwd(*self.owner).await
     }
 
     pub async fn root(&self) -> Result<PathBuf, E> {
-        self.rt.get_root_cwd(*self.owner).await
+        self.cxs.get_root_cwd(*self.owner).await
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct ExecutionContext {
     owner: Uuid,
-    rt: ExecutionContexts,
-    pub job: Job,
+    cxs: ExecutionContexts,
 }
 
 impl ExecutionContext {
-    pub fn new(owner: Uuid, rt: ExecutionContexts, job: Job) -> Self {
-        Self { owner, rt, job }
+    pub fn new(owner: Uuid, cxs: ExecutionContexts) -> Self {
+        Self { owner, cxs }
     }
     pub fn loops(&self) -> LoopAccess<'_> {
         LoopAccess {
             owner: &self.owner,
-            rt: &self.rt,
+            cxs: &self.cxs,
         }
     }
     pub fn returns(&self) -> ReturnAccess<'_> {
         ReturnAccess {
             owner: &self.owner,
-            rt: &self.rt,
+            cxs: &self.cxs,
         }
     }
     pub fn scopes(&self) -> ScopeAccess<'_> {
         ScopeAccess {
             owner: &self.owner,
-            rt: &self.rt,
+            cxs: &self.cxs,
         }
     }
     pub fn values(&self) -> ValueAccess<'_> {
         ValueAccess {
             owner: &self.owner,
-            rt: &self.rt,
+            cxs: &self.cxs,
         }
     }
     pub fn cwd(&self) -> CwdAccess<'_> {
         CwdAccess {
             owner: &self.owner,
-            rt: &self.rt,
+            cxs: &self.cxs,
         }
     }
     pub async fn storage(&self) -> Result<Storage, E> {
@@ -171,20 +170,11 @@ impl ExecutionContext {
                 .join(STORAGE_FOLDER),
         )?)
     }
-    pub async fn child<S: ToString>(&self, owner: Uuid, alias: S) -> Result<ExecutionContext, E> {
-        Ok(Self::new(
-            owner,
-            self.rt.clone(),
-            self.job.child(owner, alias).await?,
-        ))
-    }
-    pub fn with_job(&self, job: Job) -> ExecutionContext {
-        Self::new(self.owner, self.rt.clone(), job)
+    pub async fn child(&self, owner: Uuid) -> Result<ExecutionContext, E> {
+        Ok(Self::new(owner, self.cxs.clone()))
     }
 
     pub async fn close(&self) -> Result<(), E> {
-        self.rt.close_cx(self.owner).await?;
-        self.job.close();
-        Ok(())
+        self.cxs.close_cx(self.owner).await
     }
 }

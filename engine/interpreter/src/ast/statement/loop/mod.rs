@@ -5,7 +5,8 @@ use crate::*;
 
 impl Interpret for Loop {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
+        let InterpreterEnvironment { cx, .. } = env.clone();
         cx.loops()
             .open(&self.uuid)
             .await
@@ -20,7 +21,7 @@ impl Interpret for Loop {
             {
                 break;
             }
-            vl = Some(self.block.interpret(rt.clone(), cx.clone()).await?);
+            vl = Some(self.block.interpret(env.clone()).await?);
         }
         cx.loops()
             .close()

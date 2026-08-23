@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use crate::*;
 
 pub type TaskExecutor =
-    Box<dyn Fn(Runtime, ExecutionContext) -> RtPinnedResult<'static, LinkedErr<E>> + Send + Sync>;
+    Box<dyn Fn(InterpreterEnvironment) -> RtPinnedResult<'static, LinkedErr<E>> + Send + Sync>;
 
 #[allow(clippy::large_enum_variant)]
 pub enum TaskBody {
@@ -68,8 +68,7 @@ impl TaskEntity {
     }
     pub async fn execute(
         &self,
-        rt: Runtime,
-        cx: ExecutionContext,
+        parent: InterpreterEnvironment,
         args: Vec<FnArgValue>,
         caller: &SrcLink,
     ) -> Result<RtValue, LinkedErr<E>> {
@@ -79,11 +78,21 @@ impl TaskEntity {
                 caller.into(),
             ));
         };
-        let task_cx = cx
-            .child(Uuid::new_v4(), self.name.clone())
-            .await
-            .map_err(|err| LinkedErr::by_link(err, caller.into()))?;
-        if let Err(err) = task_cx.scopes().enter(&self.uuid).await {
+        let owner = Uuid::new_v4();
+        let env = InterpreterEnvironment::new(
+            parent.rt.clone(),
+            parent
+                .cx
+                .child(owner)
+                .await
+                .map_err(|err| LinkedErr::by_link(err, caller.into()))?,
+            parent
+                .job
+                .child(owner, &self.name)
+                .await
+                .map_err(|err| LinkedErr::by_link(err, caller.into()))?,
+        );
+        if let Err(err) = env.cx.scopes().enter(&self.uuid).await {
             return Err(LinkedErr::by_link(err, link.into()));
         }
         let mut err = None;
@@ -106,22 +115,23 @@ impl TaskEntity {
                 ));
                 break;
             }
-            if let Err(e) = task_cx.values().insert(&decl.ident, arg_vl.value).await {
+            if let Err(e) = env.cx.values().insert(&decl.ident, arg_vl.value).await {
                 err = Some(LinkedErr::by_link(e, (&arg_vl.link).into()));
                 break;
             }
         }
         if let Some(err) = err.take() {
-            if let Err(err) = task_cx.scopes().leave().await {
+            if let Err(err) = env.cx.scopes().leave().await {
                 return Err(LinkedErr::by_link(err, link.into()));
             }
             return Err(err);
         }
-        let result = exec(rt.clone(), task_cx.clone()).await;
-        if let Err(err) = task_cx.scopes().leave().await {
+
+        let result = exec(env.clone()).await;
+        if let Err(err) = env.cx.scopes().leave().await {
             return Err(LinkedErr::by_link(err, link.into()));
         }
-        task_cx
+        env.cx
             .close()
             .await
             .map_err(|err| LinkedErr::by_link(err, caller.into()))?;

@@ -5,7 +5,8 @@ use crate::*;
 
 impl Interpret for While {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
+        let InterpreterEnvironment { cx, .. } = env.clone();
         cx.loops()
             .open(&self.uuid)
             .await
@@ -19,7 +20,7 @@ impl Interpret for While {
             {
                 break;
             }
-            let vl = self.comparison.interpret(rt.clone(), cx.clone()).await?;
+            let vl = self.comparison.interpret(env.clone()).await?;
             let RtValue::Bool(vl) = vl else {
                 return Err(LinkedErr::from(
                     E::InvalidValueType(format!("returns {vl} instead bool")),
@@ -29,7 +30,7 @@ impl Interpret for While {
             if !vl {
                 break;
             }
-            self.block.interpret(rt.clone(), cx.clone()).await?;
+            self.block.interpret(env.clone()).await?;
         }
         cx.loops()
             .close()

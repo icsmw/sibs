@@ -5,7 +5,7 @@ use crate::*;
 
 impl Interpret for Call {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
-        self.node.interpret(rt, cx).await
+    fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
+        self.node.interpret(env).await
     }
 }

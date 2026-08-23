@@ -2,8 +2,8 @@ use crate::*;
 
 impl Interpret for ComparisonGroup {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
-        let vl = self.node.interpret(rt, cx).await?;
+    fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
+        let vl = self.node.interpret(env).await?;
         if !matches!(vl, RtValue::Bool(..)) {
             return Err(LinkedErr::from(
                 E::InvalidValueType(RtValueId::Bool.to_string()),

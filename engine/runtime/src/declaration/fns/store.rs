@@ -75,14 +75,8 @@ impl Fns {
     /// This function returns an error if:
     /// * Sending the execution demand to the runtime fails.
     /// * Awaiting the response from the runtime fails.
-    pub async fn execute(
-        &self,
-        uuid: &Uuid,
-        rt: Runtime,
-        cx: ExecutionContext,
-        args: Vec<FnArgValue>,
-        caller: &SrcLink,
-    ) -> Result<RtValue, LinkedErr<E>> {
+    pub async fn execute(&self, uuid: &Uuid, env: FnEnv) -> Result<RtValue, LinkedErr<E>> {
+        let caller = &env.caller;
         let Some(fn_entity) = self
             .lookup_by_caller(uuid)
             .or_else(|| self.lookup_closure(uuid))
@@ -92,6 +86,6 @@ impl Fns {
                 caller.into(),
             ));
         };
-        fn_entity.execute(rt, cx, args, self, caller).await
+        fn_entity.execute(self, env).await
     }
 }

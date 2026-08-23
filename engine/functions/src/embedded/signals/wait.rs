@@ -8,12 +8,10 @@ declare_embedded_fn!(
 #[docs]
 /// Documentation placeholder
 #[boxed]
-pub fn executor(
-    mut args: Vec<FnArgValue>,
-    rt: Runtime,
-    cx: ExecutionContext,
-    caller: SrcLink,
-) -> RtPinnedResult<'static, LinkedErr<E>> {
+pub fn executor(env: FnEnv) -> RtPinnedResult<'static, LinkedErr<E>> {
+    let FnEnv {
+        mut args, caller, ..
+    } = env;
     if args.len() != 1 {
         return Err(LinkedErr::by_link(
             E::MissedFnArgument(RtValueId::ExecuteResult.to_string()),
@@ -27,7 +25,8 @@ pub fn executor(
             (&caller).into(),
         ));
     };
-    if let Some(tk) = rt
+    if let Some(tk) = env
+        .rt
         .signals()
         .wait_signal(key)
         .await
@@ -36,7 +35,7 @@ pub fn executor(
         if !tk.is_cancelled() {
             tokio::select! {
                 _ = tk.cancelled() => {}
-                _ = cx.job.cancelled() => {}
+                _ = env.job.cancelled() => {}
             }
         }
     }

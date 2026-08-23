@@ -5,7 +5,8 @@ use crate::*;
 
 impl Interpret for CompoundAssignments {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
+        let InterpreterEnvironment { rt, cx, .. } = env.clone();
         let variable =
             if let Node::Expression(Expression::Variable(variable)) = self.left.get_node() {
                 variable.ident.to_owned()
@@ -31,7 +32,7 @@ impl Interpret for CompoundAssignments {
                 E::VariableNotFound(variable.clone()),
                 &self.left,
             ))?;
-        let right = self.right.interpret(rt.clone(), cx.clone()).await?;
+        let right = self.right.interpret(env.clone()).await?;
         chk_ty(&self.left, &right, &rt).await?;
         match &right {
             RtValue::Num(vl) => {

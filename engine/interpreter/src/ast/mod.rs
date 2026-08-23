@@ -9,30 +9,31 @@ mod value;
 use crate::*;
 
 impl Interpret for Node {
-    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
+    fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
         match self {
-            Node::ControlFlowModifier(n) => n.interpret(rt, cx),
-            Node::Declaration(n) => n.interpret(rt, cx),
-            Node::Expression(n) => n.interpret(rt, cx),
-            Node::Miscellaneous(n) => n.interpret(rt, cx),
-            Node::Root(n) => n.interpret(rt, cx),
-            Node::Statement(n) => n.interpret(rt, cx),
-            Node::Value(n) => n.interpret(rt, cx),
+            Node::ControlFlowModifier(n) => n.interpret(env),
+            Node::Declaration(n) => n.interpret(env),
+            Node::Expression(n) => n.interpret(env),
+            Node::Miscellaneous(n) => n.interpret(env),
+            Node::Root(n) => n.interpret(env),
+            Node::Statement(n) => n.interpret(env),
+            Node::Value(n) => n.interpret(env),
         }
     }
 }
 
 impl Interpret for LinkedNode {
     #[boxed]
-    fn interpret(&self, rt: Runtime, cx: ExecutionContext) -> RtPinnedResult<'_, LinkedErr<E>> {
-        let mut vl = self.get_node().interpret(rt.clone(), cx.clone()).await?;
+    fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
+        let InterpreterEnvironment { cx, .. } = env.clone();
+        let mut vl = self.get_node().interpret(env.clone()).await?;
         let mut linked_node = self;
         for ppm in self.get_md().ppm.iter() {
             cx.values()
                 .set_parent_vl(ParentValue::by_node(vl, linked_node))
                 .await
                 .map_err(|err| LinkedErr::by_link(err, (&self.get_md().link).into()))?;
-            vl = ppm.interpret(rt.clone(), cx.clone()).await?;
+            vl = ppm.interpret(env.clone()).await?;
             linked_node = ppm;
         }
         cx.values()

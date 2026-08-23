@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use crate::*;
 
 pub type UserFnExecutor =
-    Box<dyn Fn(Runtime, ExecutionContext) -> RtPinnedResult<'static, LinkedErr<E>> + Send + Sync>;
+    Box<dyn Fn(InterpreterEnvironment) -> RtPinnedResult<'static, LinkedErr<E>> + Send + Sync>;
 
 #[allow(clippy::large_enum_variant)]
 pub enum UserFnBody {
@@ -71,14 +71,14 @@ impl UserFnEntity {
             Ok(())
         }
     }
-    pub async fn execute(
-        &self,
-        rt: Runtime,
-        cx: ExecutionContext,
-        args: Vec<FnArgValue>,
-        fns: &Fns,
-        caller: &SrcLink,
-    ) -> Result<RtValue, LinkedErr<E>> {
+    pub async fn execute(&self, env: FnEnv, fns: &Fns) -> Result<RtValue, LinkedErr<E>> {
+        let FnEnv {
+            args,
+            cx,
+            job,
+            caller,
+            ..
+        } = &env;
         let UserFnBody::Executor(link, exec) = &self.body else {
             return Err(LinkedErr::by_link(
                 E::NotInitedFunction(self.name.to_owned()),
@@ -89,7 +89,7 @@ impl UserFnEntity {
             return Err(LinkedErr::by_link(err, link.into()));
         }
         let mut err = None;
-        for (n, arg_vl) in args.into_iter().enumerate() {
+        for (n, arg_vl) in args.iter().enumerate() {
             let Some(decl) = self.args.get(n) else {
                 err = Some(LinkedErr::by_link(E::InvalidFnArgument, link.into()));
                 break;
@@ -120,7 +120,7 @@ impl UserFnEntity {
                 ));
                 break;
             }
-            if let Err(e) = cx.values().insert(&decl.ident, arg_vl.value).await {
+            if let Err(e) = cx.values().insert(&decl.ident, arg_vl.value.clone()).await {
                 err = Some(LinkedErr::by_link(e, (&arg_vl.link).into()));
                 break;
             }
@@ -131,7 +131,14 @@ impl UserFnEntity {
             }
             return Err(err);
         }
-        let result = exec(rt.clone(), cx.clone()).await;
+        let result = exec(
+            env.to_interpreter_env(
+                job.child(self.uuid, &self.name)
+                    .await
+                    .map_err(|err| LinkedErr::by_link(err, link.into()))?,
+            ),
+        )
+        .await;
         if let Err(err) = cx.scopes().leave().await {
             return Err(LinkedErr::by_link(err, link.into()));
         }
