@@ -174,6 +174,7 @@ impl Parser {
     /// to consider only real nodes. That's why we are expecting `Vec<Uuid>` with a list of
     /// accepted nodes.
     pub fn bind(&self, nodes: Vec<Uuid>) -> Result<(), E> {
+        // TODO: instead of final filtering, use local storage during parsing to avoid creating phantom nodes in the first place.
         let mut tokens = self.tokens.try_borrow_mut()?;
         self.bindings
             .try_borrow()?

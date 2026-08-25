@@ -1,4 +1,5 @@
 mod ast;
+mod executor;
 mod utils;
 
 #[cfg(test)]
@@ -14,6 +15,7 @@ pub(crate) use lexer::{Keyword, Kind};
 pub(crate) use runtime::error::E;
 pub(crate) use runtime::*;
 pub(crate) use semantic::*;
+pub use executor::*;
 pub use utils::*;
 use uuid::Uuid;
 
