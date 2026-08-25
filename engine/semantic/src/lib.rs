@@ -6,6 +6,7 @@ mod tests;
 mod ast;
 mod context;
 mod error;
+mod script;
 mod token;
 
 pub(crate) use asttree::*;
@@ -14,6 +15,7 @@ pub(crate) use diagnostics::*;
 pub use error::E as SemanticError;
 pub(crate) use error::*;
 pub(crate) use runtime::*;
+pub use script::*;
 pub use token::*;
 pub(crate) use uuid::Uuid;
 
