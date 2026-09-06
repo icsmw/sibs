@@ -20,6 +20,12 @@ impl<T> Candidate<T> {
     pub fn is_same_position(&self, other: &Self) -> bool {
         self.node.get_md().link.exto() == other.node.get_md().link.exto()
     }
+    pub fn node(self) -> LinkedNode {
+        self.node
+    }
+    pub fn pos(&self) -> usize {
+        self.pos
+    }
 }
 
 impl<T> Candidate<T>
@@ -53,10 +59,7 @@ impl<T> CandidateList<T>
 where
     T: Display + Clone + PartialEq + ConflictResolver<T>,
 {
-    pub fn resolve_conflicts(
-        &self,
-        parser: &Parser,
-    ) -> Result<Option<LinkedNode>, LinkedErr<E>> {
+    pub fn resolve_conflicts(&self) -> Result<Option<Candidate<T>>, LinkedErr<E>> {
         let Some(candidate) = self
             .candidates
             .iter()
@@ -73,8 +76,7 @@ where
             .cloned()
             .collect::<Vec<Candidate<T>>>();
         if conflicted_list.is_empty() {
-            parser.set_pos(candidate.pos);
-            return Ok(Some(candidate.node.clone()));
+            return Ok(Some(candidate.clone()));
         };
         let mut candidate = candidate.clone();
         let mut ignored = Vec::new();
@@ -100,8 +102,7 @@ where
                 }
             }
         }
-        parser.set_pos(candidate.pos);
-        Ok(Some(candidate.node))
+        Ok(Some(candidate))
     }
 }
 

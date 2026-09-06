@@ -51,10 +51,11 @@ pub(crate) trait TryRead<
             drop(parser);
         }
         reset(parser);
-        match candidates.resolve_conflicts(parser)? {
-            Some(node) => {
-                let uuid = node.uuid();
-                parser.add_binding(from, parser.pos(), uuid);
+        match candidates.resolve_conflicts()? {
+            Some(candidate) => {
+                parser.set_pos(candidate.pos());
+                let node = candidate.node();
+                parser.add_binding(from, parser.pos(), node.uuid());
                 Ok(Some(node))
             }
             None => Ok(None),

@@ -18,7 +18,7 @@ use diagnostics::*;
 pub(crate) fn read_and_resolve_nodes(
     parser: &Parser,
     targets: &[NodeTarget],
-) -> Result<Option<LinkedNode>, LinkedErr<E>> {
+) -> Result<Option<Candidate<NodeId>>, LinkedErr<E>> {
     let mut candidates = CandidateList::<NodeId>::default();
     let reset = parser.pin();
     for target in targets {
@@ -47,7 +47,7 @@ pub(crate) fn read_and_resolve_nodes(
         drop(parser);
     }
     reset(parser);
-    candidates.resolve_conflicts(parser)
+    candidates.resolve_conflicts()
 }
 
 impl TryReadOneOf<LinkedNode, NodeTarget<'_>> for LinkedNode {
@@ -59,7 +59,10 @@ impl TryReadOneOf<LinkedNode, NodeTarget<'_>> for LinkedNode {
         let mut shifted = parser.pin();
         loop {
             match read_and_resolve_nodes(parser, targets) {
-                Ok(Some(node)) => return Ok(Some(node)),
+                Ok(Some(candidate)) => {
+                    parser.set_pos(candidate.pos());
+                    return Ok(Some(candidate.node()));
+                }
                 Ok(None) => {
                     origin(parser);
                     return Ok(None);
