@@ -19,7 +19,7 @@ pub(crate) fn read_and_resolve_nodes(
     parser: &Parser,
     targets: &[NodeTarget],
 ) -> Result<Option<LinkedNode>, LinkedErr<E>> {
-    let mut results = Vec::new();
+    let mut candidates = CandidateList::<NodeId>::default();
     let reset = parser.pin();
     for target in targets {
         let drop = parser.pin();
@@ -42,12 +42,12 @@ pub(crate) fn read_and_resolve_nodes(
                 NodeId::Miscellaneous,
             ),
         } {
-            results.push((parser.pos(), node, id));
+            candidates.add(parser.pos(), node, id);
         }
         drop(parser);
     }
     reset(parser);
-    resolve_conflicts(results, parser)
+    candidates.resolve_conflicts(parser)
 }
 
 impl TryReadOneOf<LinkedNode, NodeTarget<'_>> for LinkedNode {
