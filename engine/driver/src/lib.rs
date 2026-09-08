@@ -151,6 +151,7 @@ impl Driver {
                 };
             }
         };
+        parser.flush()?;
         self.errors.extend(
             parser
                 .errs
@@ -159,7 +160,6 @@ impl Driver {
                 .into_iter()
                 .map(DrivingError::Parsing),
         );
-        parser.bind(anchor.nodes())?;
         self.parser = Some(parser);
         let mut scx = SemanticCx::new(self.resilience);
         functions::register(&mut scx.fns.efns)?;

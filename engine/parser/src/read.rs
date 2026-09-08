@@ -6,7 +6,7 @@ pub trait ReadNode<T: Clone + Debug + Into<Node>>: Interest {
     fn read_as_linked(parser: &Parser) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         let mut md = Metadata::default();
         md.read_md_before(parser)?;
-        let Some(tk_from) = parser.next() else {
+        let Some(tk_from) = parser.next().map(|tk| tk.clone()) else {
             return Ok(None);
         };
         if !Self::intrested(&tk_from) {
@@ -53,10 +53,12 @@ pub(crate) trait TryRead<
         reset(parser);
         match candidates.resolve_conflicts()? {
             Some(candidate) => {
-                parser.set_pos(candidate.pos());
-                let node = candidate.node();
-                parser.add_binding(from, parser.pos(), node.uuid());
-                Ok(Some(node))
+                let to = candidate.pos();
+                parser.set_pos(to);
+                candidates
+                    .bind(parser, &candidate, from, to)
+                    .map_err(|err| LinkedErr::from(err, &candidate.as_node()))?;
+                Ok(Some(candidate.node()))
             }
             None => Ok(None),
         }

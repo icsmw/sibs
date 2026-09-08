@@ -71,6 +71,9 @@ impl Token {
             true
         }
     }
+    pub fn drop_owner(&mut self) {
+        self.owner = None;
+    }
     pub fn offset(&mut self, abs: usize) {
         self.pos.from.abs += abs;
         self.pos.to.abs += abs;

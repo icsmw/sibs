@@ -23,8 +23,25 @@ impl<T> Candidate<T> {
     pub fn node(self) -> LinkedNode {
         self.node
     }
+    pub fn as_node(&self) -> &LinkedNode {
+        &self.node
+    }
     pub fn pos(&self) -> usize {
         self.pos
+    }
+    pub fn uuid(&self) -> &Uuid {
+        self.node.uuid()
+    }
+    pub fn get_uuids(&self) -> Vec<&Uuid> {
+        fn collect_uuids<'a>(uuids: &mut Vec<&'a Uuid>, node: &'a LinkedNode) {
+            uuids.push(node.uuid());
+            node.childs()
+                .into_iter()
+                .for_each(|child| collect_uuids(uuids, child));
+        }
+        let mut uuids = Vec::new();
+        collect_uuids(&mut uuids, &self.node);
+        uuids
     }
 }
 
@@ -52,6 +69,29 @@ impl<T> Default for CandidateList<T> {
 impl<T> CandidateList<T> {
     pub fn add(&mut self, pos: usize, node: LinkedNode, id: T) {
         self.candidates.push(Candidate::new(pos, node, id));
+    }
+    pub fn get_rejected_uuids(&self, winner: &Candidate<T>) -> Vec<&Uuid> {
+        self.candidates
+            .iter()
+            .filter(|candidate| candidate.node.uuid() != winner.node.uuid())
+            .flat_map(|candidate| candidate.get_uuids())
+            .collect()
+    }
+    pub fn bind(
+        &self,
+        parser: &Parser,
+        winner: &Candidate<T>,
+        from: usize,
+        to: usize,
+    ) -> Result<(), E> {
+        let mut bindings = parser
+            .bindings
+            .try_borrow_mut()
+            .map_err(|err| E::EarlyFlushCall(err.to_string()))?;
+        bindings.add_rejected(self.get_rejected_uuids(winner).to_vec());
+        bindings.add(*winner.uuid(), from, to);
+        bindings.try_flush(parser.tokens.clone())?;
+        Ok(())
     }
 }
 

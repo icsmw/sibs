@@ -21,6 +21,7 @@ pub(crate) fn read_and_resolve_nodes(
 ) -> Result<Option<Candidate<NodeId>>, LinkedErr<E>> {
     let mut candidates = CandidateList::<NodeId>::default();
     let reset = parser.pin();
+    let from = parser.pos();
     for target in targets {
         let drop = parser.pin();
         if let (Some(node), id) = match target {
@@ -47,7 +48,13 @@ pub(crate) fn read_and_resolve_nodes(
         drop(parser);
     }
     reset(parser);
-    candidates.resolve_conflicts()
+    let Some(candidate) = candidates.resolve_conflicts()? else {
+        return Ok(None);
+    };
+    candidates
+        .bind(parser, &candidate, from, candidate.pos())
+        .map_err(|err| err.link(candidate.as_node()))?;
+    Ok(Some(candidate))
 }
 
 impl TryReadOneOf<LinkedNode, NodeTarget<'_>> for LinkedNode {

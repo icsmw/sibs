@@ -41,12 +41,14 @@ impl Script {
                         .into_iter()
                         .map(DiagnosticError::convert),
                 );
+                parser.flush().map_err(ScriptError::Parser)?;
                 return Err(ScriptError::Diagnostics(ScriptDiagnostics::new(
                     parser,
                     diagnostics,
                 )));
             }
         };
+        parser.flush()?;
         let mut diagnostics = parser
             .errs
             .borrow_mut()
@@ -54,7 +56,6 @@ impl Script {
             .into_iter()
             .map(DiagnosticError::convert)
             .collect::<Vec<_>>();
-        parser.bind(anchor.nodes())?;
 
         let mut scx = SemanticCx::new(options.resilience);
         functions::register(&mut scx.fns.efns)?;

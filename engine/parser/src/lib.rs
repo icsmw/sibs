@@ -3,6 +3,7 @@ mod error;
 
 pub use error::E as ParserError;
 use error::*;
+mod bindings;
 mod conflict;
 mod interest;
 mod nodes;
@@ -16,17 +17,16 @@ use paths::*;
 pub use read::*;
 
 use asttree::*;
+use bindings::*;
 use diagnostics::*;
 use lexer::*;
 use std::{
     cell::{Cell, Ref, RefCell},
-    collections::HashMap,
     fmt::{self, Display},
     io,
     path::{Path, PathBuf},
     rc::Rc,
 };
-use tracing::warn;
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -37,7 +37,7 @@ pub struct Parser {
     cwd: Option<PathBuf>,
     srcs: Rc<RefCell<CodeSources>>,
     pub errs: Rc<RefCell<Errors<E>>>,
-    bindings: Rc<RefCell<HashMap<Uuid, (usize, usize)>>>,
+    bindings: Rc<RefCell<BindingsList>>,
     end: usize,
     pos: Cell<usize>,
     resilience: bool,
@@ -61,7 +61,7 @@ impl Parser {
             cwd: None,
             srcs: Rc::new(RefCell::new(CodeSources::unbound(content, src))),
             errs: Rc::new(RefCell::new(Errors::default())),
-            bindings: Rc::new(RefCell::new(HashMap::new())),
+            bindings: Rc::new(RefCell::new(BindingsList::default())),
             end,
             resilience,
         }
@@ -76,7 +76,7 @@ impl Parser {
             filename: Some(filename.clone()),
             srcs: Rc::new(RefCell::new(CodeSources::bound(filename, &src)?)),
             errs: Rc::new(RefCell::new(Errors::default())),
-            bindings: Rc::new(RefCell::new(HashMap::new())),
+            bindings: Rc::new(RefCell::new(BindingsList::default())),
             cwd: Some(cwd),
             end,
             resilience,
@@ -93,8 +93,8 @@ impl Parser {
             filename: Some(filename.clone()),
             srcs: self.srcs.clone(),
             errs: self.errs.clone(),
+            bindings: self.bindings.clone(),
             cwd: Some(cwd),
-            bindings: Rc::new(RefCell::new(HashMap::new())),
             end,
             resilience: self.resilience,
         })
@@ -169,39 +169,17 @@ impl Parser {
         self.pos.set(pos);
     }
 
-    /// During parsing might be would be created phantom nodes (which could be for example in
-    /// conflict with others). At final point of parsing such nodes doesn't exist and we have
-    /// to consider only real nodes. That's why we are expecting `Vec<Uuid>` with a list of
-    /// accepted nodes.
-    pub fn bind(&self, nodes: Vec<Uuid>) -> Result<(), E> {
-        // TODO: instead of final filtering, use local storage during parsing to avoid creating phantom nodes in the first place.
-        let mut tokens = self.tokens.try_borrow_mut()?;
-        self.bindings
-            .try_borrow()?
-            .iter()
-            .for_each(|(owner, (from, to))| {
-                if !nodes.contains(owner) {
-                    return;
-                }
-                tokens[*from..*to].iter_mut().for_each(|tk| {
-                    let _ = tk.set_owner(owner, to.saturating_sub(*from));
-                })
-            });
-        self.bindings.try_borrow_mut()?.clear();
-        Ok(())
-    }
-
     pub fn get_src_content(&self, src: Option<&Uuid>) -> Result<Option<String>, io::Error> {
         self.srcs.borrow().get_content(src.unwrap_or(&self.src))
     }
 
-    fn add_binding(&self, from: usize, to: usize, uuid: &Uuid) {
-        let mut bindings = self.bindings.borrow_mut();
-        if bindings.contains_key(uuid) {
-            warn!("Attempt to bind node {uuid} multiple times");
-            return;
-        }
-        bindings.insert(*uuid, (from, to));
+    pub fn flush(&self) -> Result<(), E> {
+        let mut bindings = self
+            .bindings
+            .try_borrow_mut()
+            .map_err(|err| E::EarlyFlushCall(err.to_string()))?;
+        bindings.flush(self.tokens.clone())?;
+        Ok(())
     }
 
     fn inherit(&self, from: usize, to: usize) -> Self {

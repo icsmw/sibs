@@ -38,65 +38,66 @@ impl ErrorCode for E {
             Self::PoisonError => "00032",
             Self::BorrowMutError => "00033",
             Self::BorrowError => "00034",
+            Self::EarlyFlushCall(..) => "00035",
 
-            Self::MissedCallExpression => "00035",
+            Self::MissedCallExpression => "00036",
 
-            Self::MissedElementDeclarationInEach => "00036",
-            Self::MissedIndexDeclarationInEach => "00037",
-            Self::FailRecognizeElementsInEach(..) => "00038",
+            Self::MissedElementDeclarationInEach => "00037",
+            Self::MissedIndexDeclarationInEach => "00038",
+            Self::FailRecognizeElementsInEach(..) => "00039",
 
-            Self::MissedElementDeclarationInFor => "00039",
-            Self::MissedIndexDeclarationInFor => "00040",
-            Self::FailRecognizeElementsInFor(..) => "00041",
-            Self::InvalidForSyntax => "00042",
-            Self::MissedInKeywordInFor => "00043",
+            Self::MissedElementDeclarationInFor => "00040",
+            Self::MissedIndexDeclarationInFor => "00041",
+            Self::FailRecognizeElementsInFor(..) => "00042",
+            Self::InvalidForSyntax => "00043",
+            Self::MissedInKeywordInFor => "00044",
 
-            Self::MissedComparisonInWhile => "00044",
+            Self::MissedComparisonInWhile => "00045",
 
-            Self::MissedActionInOptional => "00045",
+            Self::MissedActionInOptional => "00046",
 
-            Self::MissedVariableDefinition => "00046",
-            Self::MissedVariableName => "00047",
-            Self::MissedVariableTypeDefinition => "00048",
+            Self::MissedVariableDefinition => "00047",
+            Self::MissedVariableName => "00048",
+            Self::MissedVariableTypeDefinition => "00049",
 
-            Self::KeywordUsing => "00049",
+            Self::KeywordUsing => "00050",
 
-            Self::MissedNestedTypeDefinition => "00050",
-            Self::UnknownType(..) => "00051",
+            Self::MissedNestedTypeDefinition => "00051",
+            Self::UnknownType(..) => "00052",
 
-            Self::MissedArgumentTypeDefinition => "00052",
+            Self::MissedArgumentTypeDefinition => "00053",
 
-            Self::MissedClosureBlock => "00053",
-            Self::MissedClosureReturnType => "00054",
+            Self::MissedClosureBlock => "00054",
+            Self::MissedClosureReturnType => "00055",
 
-            Self::MissedFnName => "00055",
-            Self::MissedFnBlock => "00056",
-            Self::MissedFnArguments => "00057",
+            Self::MissedFnName => "00056",
+            Self::MissedFnBlock => "00057",
+            Self::MissedFnArguments => "00058",
 
-            Self::MissedModulePath => "00058",
-            Self::MissedModuleBody => "00059",
+            Self::MissedModulePath => "00059",
+            Self::MissedModuleBody => "00060",
 
-            Self::InvalidPrivateKeyUsage => "00060",
-            Self::MissedTaskName => "00061",
-            Self::MissedTaskBlock => "00062",
-            Self::MissedTaskArguments => "00063",
+            Self::InvalidPrivateKeyUsage => "00061",
+            Self::MissedTaskName => "00062",
+            Self::MissedTaskBlock => "00063",
+            Self::MissedTaskArguments => "00064",
 
-            Self::MissedComponentName => "00064",
-            Self::MissedComponentBlock => "00065",
-            Self::MissedComponentCWD => "00066",
-            Self::NoTasksInComponent => "00067",
+            Self::MissedComponentName => "00065",
+            Self::MissedComponentBlock => "00066",
+            Self::MissedComponentCWD => "00067",
+            Self::NoTasksInComponent => "00068",
 
-            Self::NoGatekeeperDirective => "00068",
+            Self::NoGatekeeperDirective => "00069",
 
-            Self::NoSkipDirectiveArgs => "00069",
-            Self::NoSkipDirectiveTaskArgs => "00070",
-            Self::NoSkipDirectiveFuncCall => "00071",
+            Self::NoSkipDirectiveArgs => "00070",
+            Self::NoSkipDirectiveTaskArgs => "00071",
+            Self::NoSkipDirectiveFuncCall => "00072",
 
-            Self::InvalidReturnValue => "00072",
+            Self::InvalidReturnValue => "00073",
 
-            Self::LexerError(..) => "00073",
+            Self::LexerError(..) => "00074",
 
-            Self::Unlinked => "00074",
+            Self::Unlinked => "00075",
         }
     }
     fn src(&self) -> ErrorSource {
@@ -147,6 +148,7 @@ mod test {
                 EId::PoisonError => E::PoisonError,
                 EId::BorrowMutError => E::BorrowMutError,
                 EId::BorrowError => E::BorrowError,
+                EId::EarlyFlushCall => E::EarlyFlushCall(String::new()),
 
                 EId::MissedCallExpression => E::MissedCallExpression,
 

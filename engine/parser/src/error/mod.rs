@@ -83,6 +83,8 @@ pub enum E {
     BorrowMutError,
     #[error("Fail to get read access to locked data")]
     BorrowError,
+    #[error("Early call to flush bindings caused by: {0}")]
+    EarlyFlushCall(String),
 
     /// Call
     #[error("Missed expression after dot")]
