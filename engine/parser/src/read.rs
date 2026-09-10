@@ -6,7 +6,7 @@ pub trait ReadNode<T: Clone + Debug + Into<Node>>: Interest {
     fn read_as_linked(parser: &Parser) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         let mut md = Metadata::default();
         md.read_md_before(parser)?;
-        let Some(tk_from) = parser.next().map(|tk| tk.clone()) else {
+        let Some(tk_from) = parser.next() else {
             return Ok(None);
         };
         if !Self::intrested(&tk_from) {
