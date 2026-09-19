@@ -22,7 +22,7 @@ impl FnEnv {
             caller,
         }
     }
-    pub fn to_interpreter_env(&self, job: Job) -> InterpreterEnvironment {
+    pub fn from_job(&self, job: Job) -> InterpreterEnvironment {
         InterpreterEnvironment {
             rt: self.rt.clone(),
             cx: self.cx.clone(),

@@ -10,17 +10,21 @@ pub(crate) use parser::*;
 pub(crate) use asttree::*;
 pub(crate) use boxed::boxed;
 pub(crate) use diagnostics::*;
+pub use executor::*;
 use lexer::SrcLink;
 pub(crate) use lexer::{Keyword, Kind};
 pub(crate) use runtime::error::E;
 pub(crate) use runtime::*;
 pub(crate) use semantic::*;
-pub use executor::*;
 pub use utils::*;
 use uuid::Uuid;
 
 pub trait Interpret {
     fn interpret(&self, _env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>>;
+}
+
+trait InterpretInner {
+    fn inner_interpret(&self, _env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>>;
 }
 
 pub trait Execute

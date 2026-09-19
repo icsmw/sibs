@@ -2,78 +2,63 @@ use crate::*;
 use std::time::Instant;
 
 #[derive(Debug, Clone)]
-pub struct Progress {
+pub struct JobProgress {
     progressor: RtProgress,
-    pub alias: String,
-    pub owner: Uuid,
-    pub parent: Option<Uuid>,
+    identity: JobIdentity,
     pub ts: Instant,
 }
 
-impl Progress {
-    pub fn new<S: ToString>(
-        owner: Uuid,
-        alias: S,
-        parent: Option<Uuid>,
-        progressor: RtProgress,
-    ) -> Self {
-        Self {
+impl JobProgress {
+    pub(super) async fn new(identity: JobIdentity, progressor: RtProgress) -> Result<Self, E> {
+        progressor.register(&identity).await?;
+        Ok(Self {
             progressor,
-            alias: alias.to_string(),
-            owner,
-            parent,
+            identity,
             ts: Instant::now(),
-        }
+        })
     }
 
     pub fn msg<S: ToString>(&self, msg: S) {
-        self.progressor.set_msg(&self.owner, msg);
+        self.progressor.set_msg(&self.identity, msg);
     }
 
     pub fn progress(&self, done: u64, total: u64) {
         self.progressor
-            .set_state(&self.owner, ProgressState::Progress(None, done, total));
+            .set_state(&self.identity, ProgressState::Progress(None, done, total));
     }
 
     pub fn success<S: ToString>(&self, msg: Option<S>) {
         self.progressor.set_state(
-            &self.owner,
+            &self.identity,
             ProgressState::Success(msg.map(|s| s.to_string())),
         );
     }
 
     pub fn failed<S: ToString>(&self, msg: Option<S>) {
         self.progressor.set_state(
-            &self.owner,
+            &self.identity,
             ProgressState::Failed(msg.map(|s| s.to_string())),
         );
     }
 
     pub fn pending<S: ToString>(&self, msg: Option<S>) {
         self.progressor.set_state(
-            &self.owner,
+            &self.identity,
             ProgressState::Pending(msg.map(|s| s.to_string())),
         );
     }
 
     pub fn working<S: ToString>(&self, msg: Option<S>) {
         self.progressor.set_state(
-            &self.owner,
+            &self.identity,
             ProgressState::Working(msg.map(|s| s.to_string())),
         );
     }
 
     pub fn cancelled<S: ToString>(&self, msg: Option<S>) {
         self.progressor.set_state(
-            &self.owner,
+            &self.identity,
             ProgressState::Cancelled(msg.map(|s| s.to_string())),
         );
-    }
-
-    #[cfg(test)]
-    pub(crate) async fn child<S: ToString>(&self, job: S) -> Result<Progress, E> {
-        self.progressor
-            .create(Uuid::new_v4(), job, Some(self.owner))
-            .await
     }
 }

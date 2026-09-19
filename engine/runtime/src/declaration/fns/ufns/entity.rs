@@ -132,8 +132,8 @@ impl UserFnEntity {
             return Err(err);
         }
         let result = exec(
-            env.to_interpreter_env(
-                job.child(self.uuid, &self.name)
+            env.from_job(
+                job.child(&self.name)
                     .await
                     .map_err(|err| LinkedErr::by_link(err, link.into()))?,
             ),

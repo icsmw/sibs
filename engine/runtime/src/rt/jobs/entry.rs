@@ -1,33 +1,31 @@
-use tokio_util::sync::CancellationToken;
+use super::*;
+use crate::{
+    rt::jobs::state::{JobState, JobStateError},
+    *,
+};
 
-use crate::*;
-
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct JobEntry {
-    pub(crate) owner: Uuid,
-    pub(crate) parent: Option<Uuid>,
-    pub(crate) alias: String,
-    pub(crate) childs: HashMap<Uuid, JobEntry>,
-    cancel: CancellationToken,
+    identity: JobIdentity,
+    childs: HashMap<Uuid, JobEntry>,
+    sensors: JobSensonrs,
+    state: JobState,
 }
 
 impl JobEntry {
-    pub fn new<S: ToString>(
-        alias: S,
-        owner: Uuid,
-        parent: Option<Uuid>,
-        cancel: CancellationToken,
-    ) -> Self {
+    pub fn new(identity: JobIdentity) -> Self {
         Self {
-            owner,
-            parent,
-            alias: alias.to_string(),
+            identity,
             childs: HashMap::new(),
-            cancel,
+            sensors: JobSensonrs::default(),
+            state: JobState::default(),
         }
     }
-    pub(crate) fn find(&mut self, uuid: &Uuid) -> Option<&mut JobEntry> {
-        if &self.owner == uuid {
+    pub fn identity(&self) -> &JobIdentity {
+        &self.identity
+    }
+    pub fn find(&mut self, uuid: &Uuid) -> Option<&mut JobEntry> {
+        if &self.identity.uuid() == uuid {
             return Some(self);
         }
         for (job_uuid, job) in self.childs.iter_mut() {
@@ -40,25 +38,58 @@ impl JobEntry {
         }
         None
     }
-    pub(crate) fn add_child(&mut self, job: &JobEntry) -> Result<(), E> {
-        if self.childs.contains_key(&job.owner) {
-            return Err(E::JobAlreadyExists(job.owner, job.alias.to_owned()));
+    pub fn child<S: ToString>(&mut self, alias: S) -> Result<&JobEntry, E> {
+        if !match self.state() {
+            JobState::Created | JobState::Started(_) => true,
+            JobState::Cancelling
+            | JobState::Cancelled(_)
+            | JobState::Failed(_)
+            | JobState::Success(_) => false,
+        } {
+            return Err(
+                JobStateError::InvalidState(self.identity.uuid(), self.state().clone()).into(),
+            );
         }
-        self.childs.insert(job.owner, job.clone());
-        Ok(())
+        let parent = self.identity.uuid();
+        let job = Self {
+            identity: JobIdentity::new(alias, Some(parent.clone())),
+            childs: HashMap::new(),
+            sensors: self.sensors.child(),
+            state: JobState::default(),
+        };
+        if self.childs.contains_key(&job.identity.uuid()) {
+            return Err(E::JobAlreadyExists(
+                job.identity.uuid(),
+                job.identity.alias().to_string(),
+            ));
+        }
+        self.childs.insert(job.identity.uuid(), job);
+        self.childs.get(&parent).ok_or(E::JobDoesNotExist(parent))
     }
-    pub(crate) fn cancel_child_token(&self) -> CancellationToken {
-        self.cancel.child_token()
-    }
-    pub(crate) fn as_job(&self, journal: Journal, progress: Progress, rt: RtJobs) -> Job {
+    pub fn job(&self, jobs: RtJobs, journal: RtJournal, progress: RtProgress) -> Job {
         Job::new(
-            self.alias.clone(),
-            self.owner,
-            self.parent,
-            self.cancel.clone(),
+            self.identity.clone(),
+            self.sensors.clone(),
             journal,
             progress,
-            rt,
+            jobs,
         )
+    }
+    pub fn state(&self) -> &JobState {
+        &self.state
+    }
+    pub fn update(&mut self, state: JobState) -> Result<(), E> {
+        self.state.update(self.identity.uuid(), state.clone())?;
+        match state {
+            JobState::Cancelling => {
+                self.sensors.cancel();
+            }
+            JobState::Success(_)
+            | JobState::Failed(_)
+            | JobState::Cancelled(_)
+            | JobState::Created
+            | JobState::Started(_) => {}
+        }
+        Ok(())
     }
 }

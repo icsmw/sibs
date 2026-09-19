@@ -1,9 +1,7 @@
 mod api;
-mod progress;
 mod render;
 mod state;
 
-pub(crate) use progress::*;
 pub(crate) use state::*;
 
 use crate::*;
@@ -28,7 +26,6 @@ impl RtProgress {
         let (tx, mut rx) = unbounded_channel();
         let mut render: ProgressRender = ProgressRender::new()?;
         let instance = Self { tx };
-        let this = instance.clone();
         spawn(async move {
             let mut interval = time::interval(Duration::from_millis(60));
             tracing::info!("init demand's listener");
@@ -47,13 +44,12 @@ impl RtProgress {
                 };
                 match tick {
                     NextTick::Demand(demand) => match demand {
-                        Demand::Create(owner, alias, parent, tx) => {
-                            let job = Progress::new(owner, alias, parent, this.clone());
-                            if let Err(err) = render.add(&job) {
-                                chk_send_err!(tx.send(Err(err)), DemandId::Create);
+                        Demand::Register(identity, tx) => {
+                            if let Err(err) = render.add(identity) {
+                                chk_send_err!(tx.send(Err(err)), DemandId::Register);
                                 continue;
                             };
-                            chk_send_err!(tx.send(Ok(job)), DemandId::Create);
+                            chk_send_err!(tx.send(Ok(())), DemandId::Register);
                         }
                         Demand::SetState(uuid, state) => {
                             render.set_state(uuid, state);
@@ -81,28 +77,23 @@ impl RtProgress {
         Ok(instance)
     }
 
-    pub(crate) async fn create<S: ToString>(
-        &self,
-        owner: Uuid,
-        alias: S,
-        parent: Option<Uuid>,
-    ) -> Result<Progress, E> {
+    pub(crate) async fn register(&self, identity: &JobIdentity) -> Result<(), E> {
         let (tx, rx) = oneshot::channel();
-        self.tx
-            .send(Demand::Create(owner, alias.to_string(), parent, tx))?;
+        self.tx.send(Demand::Register(identity.clone(), tx))?;
         rx.await?
     }
 
-    pub fn set_state(&self, uuid: &Uuid, state: ProgressState) {
+    pub fn set_state(&self, identity: &JobIdentity, state: ProgressState) {
         chk_send_err!(
-            self.tx.send(Demand::SetState(*uuid, state)),
+            self.tx.send(Demand::SetState(identity.uuid(), state)),
             DemandId::SetState
         );
     }
 
-    pub fn set_msg<S: ToString>(&self, uuid: &Uuid, msg: S) {
+    pub fn set_msg<S: ToString>(&self, identity: &JobIdentity, msg: S) {
         chk_send_err!(
-            self.tx.send(Demand::SetMsg(*uuid, msg.to_string())),
+            self.tx
+                .send(Demand::SetMsg(identity.uuid(), msg.to_string())),
             DemandId::SetMsg
         );
     }

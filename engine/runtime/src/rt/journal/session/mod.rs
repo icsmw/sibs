@@ -69,39 +69,43 @@ impl RtJournal {
         Ok(rx.await?)
     }
 
-    pub(crate) fn create(&self, owner: Uuid, parent: Option<Uuid>) -> Journal {
-        Journal::new(owner, parent, self.clone())
+    // pub(crate) fn create(&self, identity: &JobIdentity) -> Journal {
+    //     Journal::new(owner, parent, self.clone())
+    // }
+
+    pub fn state(&self, identity: &JobIdentity, state: &JobState) {
+        send(&self.tx, Record::event(identity, state.into(), state.msg()));
     }
 
-    pub fn job_open<S: Into<String>>(&self, owner: Uuid, parent: Option<Uuid>, msg: S) {
-        send(&self.tx, Record::job_open(owner, parent, msg));
+    // pub fn job_open<S: Into<String>>(&self, identity: &JobIdentity, msg: S) {
+    //     send(&self.tx, Record::job_open(owner, parent, msg));
+    // }
+
+    // pub fn job_close(&self, identity: &JobIdentity) {
+    //     send(&self.tx, Record::job_close(owner, parent));
+    // }
+
+    pub fn stdout<S: Into<String>>(&self, identity: &JobIdentity, msg: S) {
+        send(&self.tx, Record::stdout(identity, msg));
+    }
+    pub fn stderr<S: Into<String>>(&self, identity: &JobIdentity, msg: S) {
+        send(&self.tx, Record::stderr(identity, msg));
     }
 
-    pub fn job_close(&self, owner: Uuid, parent: Option<Uuid>) {
-        send(&self.tx, Record::job_close(owner, parent));
+    pub fn info<S: Into<String>>(&self, identity: &JobIdentity, msg: S) {
+        send(&self.tx, Record::info(identity, msg));
     }
 
-    pub fn stdout<S: Into<String>>(&self, owner: Uuid, parent: Option<Uuid>, msg: S) {
-        send(&self.tx, Record::stdout(owner, parent, msg));
-    }
-    pub fn stderr<S: Into<String>>(&self, owner: Uuid, parent: Option<Uuid>, msg: S) {
-        send(&self.tx, Record::stderr(owner, parent, msg));
+    pub fn debug<S: Into<String>>(&self, identity: &JobIdentity, msg: S) {
+        send(&self.tx, Record::debug(identity, msg));
     }
 
-    pub fn info<S: Into<String>>(&self, owner: Uuid, parent: Option<Uuid>, msg: S) {
-        send(&self.tx, Record::info(owner, parent, msg));
+    pub fn err<S: Into<String>>(&self, identity: &JobIdentity, msg: S) {
+        send(&self.tx, Record::err(identity, msg));
     }
 
-    pub fn debug<S: Into<String>>(&self, owner: Uuid, parent: Option<Uuid>, msg: S) {
-        send(&self.tx, Record::debug(owner, parent, msg));
-    }
-
-    pub fn err<S: Into<String>>(&self, owner: Uuid, parent: Option<Uuid>, msg: S) {
-        send(&self.tx, Record::err(owner, parent, msg));
-    }
-
-    pub fn warn<S: Into<String>>(&self, owner: Uuid, parent: Option<Uuid>, msg: S) {
-        send(&self.tx, Record::warn(owner, parent, msg));
+    pub fn warn<S: Into<String>>(&self, identity: &JobIdentity, msg: S) {
+        send(&self.tx, Record::warn(identity, msg));
     }
 }
 

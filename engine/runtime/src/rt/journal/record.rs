@@ -8,7 +8,7 @@ use crate::*;
 #[derive(Debug)]
 pub struct Record {
     pub ts: u64,
-    pub owner: Uuid,
+    pub uuid: Uuid,
     pub parent: Option<Uuid>,
     pub ty: scheme::RecordTy,
     pub event: scheme::EventTy,
@@ -23,88 +23,81 @@ impl Record {
             .as_secs())
     }
 
-    pub fn job_open<S: Into<String>>(owner: Uuid, parent: Option<Uuid>, msg: S) -> Result<Self, E> {
+    pub fn event<S: Into<String>>(
+        identity: &JobIdentity,
+        event: scheme::EventTy,
+        msg: Option<S>,
+    ) -> Result<Self, E> {
         Ok(Self {
             ts: Self::tm()?,
-            owner,
-            parent,
-            ty: scheme::RecordTy::Debug,
-            event: scheme::EventTy::JobOpened,
-            msg: format!("Job created: {}", msg.into()),
+            uuid: identity.uuid(),
+            parent: identity.parent(),
+            ty: scheme::RecordTy::Event,
+            event,
+            msg: msg.map(|msg| msg.into()).unwrap_or_default(),
         })
     }
 
-    pub fn job_close(owner: Uuid, parent: Option<Uuid>) -> Result<Self, E> {
+    pub fn stdout<S: Into<String>>(identity: &JobIdentity, msg: S) -> Result<Self, E> {
         Ok(Self {
             ts: Self::tm()?,
-            owner,
-            parent,
-            ty: scheme::RecordTy::Debug,
-            event: scheme::EventTy::JobClosed,
-            msg: "Job closed".to_string(),
-        })
-    }
-
-    pub fn stdout<S: Into<String>>(owner: Uuid, parent: Option<Uuid>, msg: S) -> Result<Self, E> {
-        Ok(Self {
-            ts: Self::tm()?,
-            owner,
-            parent,
+            uuid: identity.uuid(),
+            parent: identity.parent(),
             ty: scheme::RecordTy::Stdout,
             event: scheme::EventTy::Log,
             msg: msg.into(),
         })
     }
 
-    pub fn stderr<S: Into<String>>(owner: Uuid, parent: Option<Uuid>, msg: S) -> Result<Self, E> {
+    pub fn stderr<S: Into<String>>(identity: &JobIdentity, msg: S) -> Result<Self, E> {
         Ok(Self {
             ts: Self::tm()?,
-            owner,
-            parent,
+            uuid: identity.uuid(),
+            parent: identity.parent(),
             ty: scheme::RecordTy::Stderr,
             event: scheme::EventTy::Log,
             msg: msg.into(),
         })
     }
 
-    pub fn info<S: Into<String>>(owner: Uuid, parent: Option<Uuid>, msg: S) -> Result<Self, E> {
+    pub fn info<S: Into<String>>(identity: &JobIdentity, msg: S) -> Result<Self, E> {
         Ok(Self {
             ts: Self::tm()?,
-            owner,
-            parent,
+            uuid: identity.uuid(),
+            parent: identity.parent(),
             ty: scheme::RecordTy::Info,
             event: scheme::EventTy::Log,
             msg: msg.into(),
         })
     }
 
-    pub fn debug<S: Into<String>>(owner: Uuid, parent: Option<Uuid>, msg: S) -> Result<Self, E> {
+    pub fn debug<S: Into<String>>(identity: &JobIdentity, msg: S) -> Result<Self, E> {
         Ok(Self {
             ts: Self::tm()?,
-            owner,
-            parent,
+            uuid: identity.uuid(),
+            parent: identity.parent(),
             ty: scheme::RecordTy::Debug,
             event: scheme::EventTy::Log,
             msg: msg.into(),
         })
     }
 
-    pub fn err<S: Into<String>>(owner: Uuid, parent: Option<Uuid>, msg: S) -> Result<Self, E> {
+    pub fn err<S: Into<String>>(identity: &JobIdentity, msg: S) -> Result<Self, E> {
         Ok(Self {
             ts: Self::tm()?,
-            owner,
-            parent,
+            uuid: identity.uuid(),
+            parent: identity.parent(),
             ty: scheme::RecordTy::Err,
             event: scheme::EventTy::Log,
             msg: msg.into(),
         })
     }
 
-    pub fn warn<S: Into<String>>(owner: Uuid, parent: Option<Uuid>, msg: S) -> Result<Self, E> {
+    pub fn warn<S: Into<String>>(identity: &JobIdentity, msg: S) -> Result<Self, E> {
         Ok(Self {
             ts: Self::tm()?,
-            owner,
-            parent,
+            uuid: identity.uuid(),
+            parent: identity.parent(),
             ty: scheme::RecordTy::Warn,
             event: scheme::EventTy::Log,
             msg: msg.into(),
@@ -114,7 +107,7 @@ impl Record {
         scheme::Packet::new(
             vec![scheme::Block::Signature(scheme::Signature {
                 ts: mem::take(&mut self.ts),
-                owner: *self.owner.as_bytes(),
+                uuid: *self.uuid.as_bytes(),
                 parent: self.parent.map_or([0; 16], |p| *p.as_bytes()),
                 ty: mem::take(&mut self.ty),
                 event: mem::take(&mut self.event),
@@ -129,7 +122,7 @@ impl Record {
         {
             Some(Record {
                 ts: sig.ts,
-                owner: Uuid::from_bytes(sig.owner),
+                uuid: Uuid::from_bytes(sig.uuid),
                 parent: if sig.parent != [0; 16] {
                     Some(Uuid::from_bytes(sig.parent))
                 } else {

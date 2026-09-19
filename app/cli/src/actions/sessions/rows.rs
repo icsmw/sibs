@@ -14,8 +14,9 @@ const COLOR_MIN: u8 = 31;
 const COLOR_MAX: u8 = 36;
 
 enum Marker {
-    JobOpen,
-    JobClose,
+    JobStarted,
+    JobSuccess,
+    JobFailed,
     Child,
 }
 
@@ -25,8 +26,9 @@ impl fmt::Display for Marker {
             f,
             "{}",
             match self {
-                Marker::JobOpen => "•",
-                Marker::JobClose => "×",
+                Marker::JobStarted => "•",
+                Marker::JobSuccess => "×",
+                Marker::JobFailed => "x",
                 Marker::Child => "·",
             }
         )
@@ -36,8 +38,9 @@ impl fmt::Display for Marker {
 impl From<&EventTy> for Marker {
     fn from(event: &EventTy) -> Self {
         match event {
-            EventTy::JobOpened => Marker::JobOpen,
-            EventTy::JobClosed => Marker::JobClose,
+            EventTy::Started => Marker::JobStarted,
+            EventTy::Success => Marker::JobSuccess,
+            EventTy::Failed => Marker::JobFailed,
             _ => Marker::Child,
         }
     }
@@ -102,10 +105,10 @@ pub fn render(reader: &mut JournalReader, session: &Uuid) {
             if let Some(parent) = record.parent.as_ref() {
                 let (offset, _) = *relations.entry(*parent).or_insert((1, colors.next()));
                 relations
-                    .entry(record.owner)
+                    .entry(record.uuid)
                     .or_insert((offset + OFFSET_FILLER, colors.next()));
             }
-            let (offset, color) = *relations.entry(record.owner).or_insert((1, colors.next()));
+            let (offset, color) = *relations.entry(record.uuid).or_insert((1, colors.next()));
             let marker = MarkerInfo::new(&record.event, color);
             println!(
                 "{}",

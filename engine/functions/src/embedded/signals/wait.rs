@@ -33,9 +33,10 @@ pub fn executor(env: FnEnv) -> RtPinnedResult<'static, LinkedErr<E>> {
         .map_err(|err| LinkedErr::by_link(err, (&caller).into()))?
     {
         if !tk.is_cancelled() {
+            let cancel = env.job.cancel();
             tokio::select! {
                 _ = tk.cancelled() => {}
-                _ = env.job.cancelled() => {}
+                _ = cancel.cancellation() => {}
             }
         }
     }

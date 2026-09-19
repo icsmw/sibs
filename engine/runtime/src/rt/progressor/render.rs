@@ -3,8 +3,7 @@ use indexmap::IndexMap;
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 
 struct ProgressRef {
-    pub alias: String,
-    pub uuid: Uuid,
+    pub identity: JobIdentity,
     pub childs: IndexMap<Uuid, ProgressRef>,
     pub bar: ProgressBar,
     pub state: ProgressState,
@@ -15,7 +14,7 @@ impl ProgressRef {
         self.state = state;
     }
     pub fn find(&mut self, uuid: &Uuid) -> Option<&mut ProgressRef> {
-        if &self.uuid == uuid {
+        if &self.identity.uuid() == uuid {
             Some(self)
         } else if self.childs.contains_key(uuid) {
             self.childs.get_mut(uuid)
@@ -24,7 +23,7 @@ impl ProgressRef {
         }
     }
     pub fn add(&mut self, child: ProgressRef) {
-        self.childs.insert(child.uuid, child);
+        self.childs.insert(child.identity.uuid(), child);
     }
     pub fn mount(&mut self, mp: &mut MultiProgress, st: &Styles) {
         self.bar = mp.add(st.get(&self.state));
@@ -43,7 +42,8 @@ impl ProgressRef {
         };
         self.bar.set_prefix(format!(
             "{offset}[{index}/{total}]{filler}[{}][{}]",
-            self.state, self.alias
+            self.state,
+            self.identity.alias()
         ));
         if let Some(msg) = self.state.get_msg() {
             self.bar.set_message(msg);
@@ -103,22 +103,21 @@ impl ProgressRender {
             styles: Styles::new()?,
         })
     }
-    pub fn add(&mut self, progress: &Progress) -> Result<(), E> {
+    pub fn add(&mut self, identity: JobIdentity) -> Result<(), E> {
         let state = ProgressState::default();
         let pref = ProgressRef {
-            alias: progress.alias.clone(),
-            uuid: progress.owner,
+            identity: identity.clone(),
             childs: IndexMap::new(),
             bar: self.styles.get(&state),
             state,
         };
-        if let Some(parent) = progress.parent.as_ref() {
-            let Some(parent) = self.tree.values_mut().find_map(|pref| pref.find(parent)) else {
-                return Err(E::NoProgressForTask(*parent));
+        if let Some(parent) = identity.parent() {
+            let Some(parent) = self.tree.values_mut().find_map(|pref| pref.find(&parent)) else {
+                return Err(E::NoProgressForTask(parent));
             };
             parent.add(pref);
         } else {
-            self.tree.insert(pref.uuid, pref);
+            self.tree.insert(pref.identity.uuid(), pref);
         };
         self.mount();
         Ok(())

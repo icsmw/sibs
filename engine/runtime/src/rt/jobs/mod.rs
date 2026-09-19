@@ -1,12 +1,17 @@
 mod api;
 mod entry;
+mod identity;
 mod job;
+mod sensors;
+mod state;
 
 use crate::*;
 use api::*;
 use entry::*;
+pub(crate) use identity::*;
 pub use job::*;
-use tokio_util::sync::CancellationToken;
+pub(crate) use sensors::*;
+pub(crate) use state::*;
 
 #[derive(Clone, Debug)]
 pub struct RtJobs {
@@ -23,59 +28,58 @@ impl RtJobs {
         let inner = instance.clone();
         spawn(async move {
             tracing::info!("init demand's listener");
-            let mut root: JobEntry =
-                JobEntry::new("root", Uuid::new_v4(), None, CancellationToken::new());
+            let mut root: JobEntry = JobEntry::new(JobIdentity::new("root", None));
             while let Some(demand) = rx.recv().await {
                 match demand {
                     Demand::Destroy(tx) => {
+                        // TODO: jobs shutdown
                         tracing::info!("got shutdown signal");
                         chk_send_err!(journal.destroy().await, DemandId::Destroy);
                         chk_send_err!(progress.destroy().await, DemandId::Destroy);
                         chk_send_err!(tx.send(()), DemandId::Destroy);
                         break;
                     }
-                    Demand::Create(owner, alias, parent, tx) => {
-                        let job = if let Some(parent_uuid) = parent {
-                            let Some(parent_entry) = root.find(&parent_uuid) else {
+                    Demand::Create(alias, parent, tx) => {
+                        let entry = if let Some(parent_uuid) = parent {
+                            let Some(parent) = root.find(&parent_uuid) else {
                                 chk_send_err!(
                                     tx.send(Err(E::JobDoesNotExist(parent_uuid))),
                                     DemandId::Create
                                 );
                                 continue;
                             };
-                            let job = JobEntry::new(
-                                &alias,
-                                owner,
-                                parent,
-                                parent_entry.cancel_child_token(),
-                            );
-                            if let Err(err) = parent_entry.add_child(&job) {
-                                chk_send_err!(tx.send(Err(err)), DemandId::Create);
-                                continue;
+                            match parent.child(alias) {
+                                Ok(job) => job,
+                                Err(err) => {
+                                    chk_send_err!(tx.send(Err(err)), DemandId::Create);
+                                    continue;
+                                }
                             }
-                            job
                         } else {
-                            let job =
-                                JobEntry::new(&alias, owner, parent, root.cancel_child_token());
-                            if let Err(err) = root.add_child(&job) {
-                                chk_send_err!(tx.send(Err(err)), DemandId::Create);
-                                continue;
-                            }
-                            job
-                        };
-                        let progress = match progress.create(owner, &alias, parent).await {
-                            Ok(progress) => progress,
-                            Err(err) => {
-                                chk_send_err!(tx.send(Err(err)), DemandId::Create);
-                                continue;
+                            match root.child(alias) {
+                                Ok(job) => job,
+                                Err(err) => {
+                                    chk_send_err!(tx.send(Err(err)), DemandId::Create);
+                                    continue;
+                                }
                             }
                         };
-                        let journal = journal.create(owner, parent);
-                        journal.job_open(alias);
-                        chk_send_err!(
-                            tx.send(Ok(job.as_job(journal, progress, inner.clone()))),
-                            DemandId::Create
-                        );
+                        let job = entry.job(inner.clone(), journal.clone(), progress.clone());
+                        chk_send_err!(tx.send(Ok(job)), DemandId::Create);
+                    }
+                    Demand::Update(uuid, state, tx) => {
+                        let Some(job) = root.find(&uuid) else {
+                            chk_send_err!(tx.send(Err(E::JobDoesNotExist(uuid))), DemandId::Update);
+                            continue;
+                        };
+                        if let Err(err) = job.update(state) {
+                            chk_send_err!(tx.send(Err(err)), DemandId::Update);
+                            continue;
+                        }
+
+                        journal.state(job.identity(), job.state());
+
+                        chk_send_err!(tx.send(Ok(())), DemandId::Create);
                     }
                 }
             }
@@ -86,13 +90,18 @@ impl RtJobs {
 
     pub(crate) async fn create<S: ToString>(
         &self,
-        owner: Uuid,
         alias: S,
         parent: Option<Uuid>,
     ) -> Result<Job, E> {
         let (tx, rx) = oneshot::channel();
         self.tx
-            .send(Demand::Create(owner, alias.to_string(), parent, tx))?;
+            .send(Demand::Create(alias.to_string(), parent, tx))?;
+        rx.await?
+    }
+
+    pub(crate) async fn update(&self, uuid: Uuid, state: JobState) -> Result<(), E> {
+        let (tx, rx) = oneshot::channel();
+        self.tx.send(Demand::Update(uuid, state, tx))?;
         rx.await?
     }
 

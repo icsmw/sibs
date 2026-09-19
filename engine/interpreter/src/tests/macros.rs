@@ -32,7 +32,7 @@ macro_rules! test_value_expectation {
                 assert!(result.is_ok());
                 let params = RtParameters::default_from_cwd().expect("RtParameter created");
                 let rt = runtime(params, scx).expect("Runtime created");
-                let env = rt.create_interpreter_env(Uuid::new_v4(), "Test", None).await.expect("InterpreterEnvironment created");
+                let env = rt.create_interpreter_env("Test", None).await.expect("InterpreterEnvironment created");
                 let vl = node.interpret(env).await;
                 if let Err(err) = &vl {
                     eprintln!("{err:?}");
@@ -86,7 +86,7 @@ macro_rules! test_fail {
                 assert!(result.is_ok());
                 let params = RtParameters::default_from_cwd().expect("RtParameter created");
                 let rt = runtime(params, scx).expect("Runtime created");
-                let env = rt.create_interpreter_env(Uuid::new_v4(), "Test", None).await.expect("InterpreterEnvironment created");
+                let env = rt.create_interpreter_env("Test", None).await.expect("InterpreterEnvironment created");
                 let vl = node.interpret(env).await;
                 assert!(vl.is_err());
                 let _ = rt.destroy().await;

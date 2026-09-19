@@ -100,6 +100,8 @@ impl ErrorCode for E {
             Self::Other(..) => "00078",
 
             Self::Journal(..) => "00079",
+
+            Self::JobState(..) => "00080",
         }
     }
     fn src(&self) -> ErrorSource {
@@ -212,6 +214,8 @@ mod test {
                 EId::Other => E::Other(String::new()),
 
                 EId::Journal => E::Journal(String::new()),
+
+                EId::JobState => E::JobState(JobStateError::CannotSetPending(Uuid::new_v4())),
             }
         }
     }

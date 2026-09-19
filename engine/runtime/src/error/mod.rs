@@ -184,6 +184,15 @@ pub enum E {
 
     #[error("Journal: ")]
     Journal(String),
+
+    #[error("{0}")]
+    JobState(JobStateError),
+}
+
+impl From<JobStateError> for E {
+    fn from(err: JobStateError) -> Self {
+        E::JobState(err)
+    }
 }
 
 impl From<indicatif::style::TemplateError> for E {

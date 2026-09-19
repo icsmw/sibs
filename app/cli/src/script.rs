@@ -6,8 +6,6 @@ use parser::*;
 use runtime::*;
 use semantic::*;
 
-use uuid::Uuid;
-
 use crate::*;
 
 pub struct Script {
@@ -68,7 +66,7 @@ impl Script {
         let params = RtParameters::new(component.clone(), task.clone(), args, self.scenario.cwd()?);
         let rt = interpreter::runtime(params, scx)?;
         let env = rt
-            .create_interpreter_env(Uuid::new_v4(), format!("{component}:{task}"), None)
+            .create_interpreter_env(format!("{component}:{task}"), None)
             .await?;
         let vl = self.anchor.interpret(env).await;
         let _ = rt.destroy().await;

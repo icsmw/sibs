@@ -163,13 +163,12 @@ pub fn executor(env: FnEnv) -> RtPinnedResult<'static, LinkedErr<E>> {
         .iter()
         .filter(|p| !p.exists())
         .collect::<Vec<&PathBuf>>();
+    let journal = job.journal();
     if !not_exist.is_empty() {
         not_exist.iter().for_each(|p| {
-            job.journal
-                .warn(format!("{}: doesn't exist", p.to_string_lossy()));
+            journal.warn(format!("{}: doesn't exist", p.to_string_lossy()));
         });
-        job
-        .journal
+        journal
         .warn("Hasher will not proceed operation and returns false-state because there are not exist paths");
         return Ok(RtValue::Bool(false));
     }
@@ -185,7 +184,7 @@ pub fn executor(env: FnEnv) -> RtPinnedResult<'static, LinkedErr<E>> {
         .collect::<Result<Vec<PathBuf>, _>>()
         .map_err(|err| LinkedErr::by_link(err.into(), (&caller).into()))?;
     paths.iter().for_each(|p| {
-        job.journal.info(format!(
+        journal.info(format!(
             "{}: will be inspected by hasher",
             p.to_string_lossy()
         ));

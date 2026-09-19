@@ -1,6 +1,5 @@
 use runtime::{RtParameters, RtValue};
 use semantic::Script;
-use uuid::Uuid;
 
 use crate::{runtime, ExecutionFailure, ExecutionOptions, ExecutorError, Interpret};
 
@@ -25,11 +24,7 @@ impl Executor {
         );
         let rt = runtime(params.clone(), script.scx).map_err(ExecutorError::RuntimeSetup)?;
         let env = rt
-            .create_interpreter_env(
-                Uuid::new_v4(),
-                format!("{}:{}", params.component, params.task),
-                None,
-            )
+            .create_interpreter_env(format!("{}:{}", params.component, params.task), None)
             .await
             .map_err(ExecutorError::RuntimeSetup)?;
         let result = script.anchor.interpret(env).await;

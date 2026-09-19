@@ -103,8 +103,8 @@ impl ClosureFnEntity {
             return Err(err);
         }
         let result = exec(
-            env.to_interpreter_env(
-                job.child(self.uuid, "closure")
+            env.from_job(
+                job.child("closure")
                     .await
                     .map_err(|err| LinkedErr::by_link(err, link.into()))?,
             ),

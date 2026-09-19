@@ -71,8 +71,8 @@ impl Runtime {
                     Demand::GetRtParameters(tx) => {
                         chk_send_err!(tx.send(params.clone()), DemandId::GetRtParameters);
                     }
-                    Demand::CreateInterpreterEnvironment(owner, alias, parent, tx) => {
-                        let job = match jobs.create(owner, alias, parent).await {
+                    Demand::CreateInterpreterEnvironment(alias, parent, tx) => {
+                        let job = match jobs.create(alias, parent).await {
                             Ok(job) => job,
                             Err(err) => {
                                 chk_send_err!(
@@ -82,8 +82,11 @@ impl Runtime {
                                 continue;
                             }
                         };
-                        let env =
-                            InterpreterEnvironment::new(rt_inner.clone(), cx.create(owner), job);
+                        let env = InterpreterEnvironment::new(
+                            rt_inner.clone(),
+                            cx.create(job.identity().uuid()),
+                            job,
+                        );
                         chk_send_err!(tx.send(Ok(env)), DemandId::CreateInterpreterEnvironment);
                     }
                     Demand::EmitSignal(key, tx) => {
@@ -117,13 +120,11 @@ impl Runtime {
 
     pub async fn create_interpreter_env<S: ToString>(
         &self,
-        owner: Uuid,
         alias: S,
         parent: Option<Uuid>,
     ) -> Result<InterpreterEnvironment, E> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(Demand::CreateInterpreterEnvironment(
-            owner,
             alias.to_string(),
             parent,
             tx,

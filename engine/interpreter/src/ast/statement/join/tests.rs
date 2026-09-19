@@ -135,7 +135,7 @@ async fn test_fail_join_004() {
     );
     let rt = runtime(params, scx).expect("Runtime created");
     let env = rt
-        .create_interpreter_env(Uuid::new_v4(), "Test", None)
+        .create_interpreter_env("Test", None)
         .await
         .expect("InterpreterEnvironment created");
     let result = timeout(Duration::from_secs(5), node.interpret(env))

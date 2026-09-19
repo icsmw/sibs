@@ -61,44 +61,50 @@ pub async fn spawn<S: AsRef<str>, P: AsRef<Path>>(
         line: Result<String, LinesCodecError>,
         output: &mut Vec<String>,
         stdout: bool,
-        job: &Job,
+        journal: &JobJournal,
+        progress: &JobProgress,
     ) {
         match line {
             Ok(line) => {
                 let trimmed = line.trim_end();
-                job.progress.msg(trimmed);
+                progress.msg(trimmed);
                 if stdout {
-                    job.journal.stdout(trimmed);
+                    journal.stdout(trimmed);
                 } else {
-                    job.journal.stderr(trimmed);
+                    journal.stderr(trimmed);
                 }
                 output.push(trimmed.to_owned());
             }
             Err(err) => {
-                job.journal
-                    .err(format!("Error during decoding cmd output: {err}",));
+                journal.err(format!("Error during decoding cmd output: {err}",));
             }
         }
     }
-    fn get_status(status: ExitStatus, output: Vec<String>, job: &Job) -> SpawnStatus {
+    async fn get_status(
+        status: ExitStatus,
+        output: Vec<String>,
+        job: &Job,
+    ) -> Result<SpawnStatus, E> {
         if status.success() {
-            job.done().success::<&str>(None);
-            SpawnStatus::Success(output)
+            job.done().success::<&str>(None).await?;
+            Ok(SpawnStatus::Success(output))
         } else {
-            job.done().failed(Some(format!(
-                "Finished with error; code: {}",
-                status
-                    .code()
-                    .map(|c| c.to_string())
-                    .unwrap_or("unknown code".to_owned())
-            )));
-            SpawnStatus::Failed(status.code(), output)
+            job.done()
+                .failed(Some(format!(
+                    "Finished with error; code: {}",
+                    status
+                        .code()
+                        .map(|c| c.to_string())
+                        .unwrap_or("unknown code".to_owned())
+                )))
+                .await?;
+            Ok(SpawnStatus::Failed(status.code(), output))
         }
     }
     let cwd_str = cwd.as_ref().to_string_lossy().to_string();
     let mut cstdout = Vec::new();
     let mut cstderr = Vec::new();
-    let job = job.child(Uuid::new_v4(), cmd.as_ref()).await?;
+    let job = job.child(cmd.as_ref()).await?;
     let mut child = match setup(cmd, cwd) {
         Ok(child) => child,
         Err(err) => {
@@ -117,42 +123,48 @@ pub async fn spawn<S: AsRef<str>, P: AsRef<Path>>(
         })?,
         LinesCodec::default(),
     );
-    let cancellation = job.cancellation();
+    let journal = job.journal();
+    let progress = job.progress().await?;
+    let cancel = job.cancel();
     let status = select! {
         res = async {
             join!(
                 async {
                     while let Some(line) = stdout.next().await {
-                        post_logs(line, &mut cstdout, true, &job)
+                        post_logs(line, &mut cstdout, true, &journal, &progress)
                     }
                 },
                 async {
                     while let Some(line) = stderr.next().await {
-                        post_logs(line, &mut cstderr, false, &job)
+                        post_logs(line, &mut cstderr, false, &journal, &progress)
                     }
                 }
             );
             child.wait().await
         } => {
-            res.map(|status| get_status(status, [cstdout, cstderr].concat(), &job))
-                .map_err(|err| E::SpawnError(err.to_string(), cwd_str))?
+            get_status(
+                res.map_err(|err| E::SpawnError(err.to_string(), cwd_str))?,
+                [cstdout, cstderr].concat(),
+                &job
+            ).await?
         }
-        _ = cancellation => {
-            job.journal.debug("Cancel signal has been gotten");
+        _ = cancel.cancellation() => {
+            journal.debug("Cancel signal has been gotten");
             match child.try_wait() {
                 Ok(Some(status)) => {
-                    get_status(status, [cstdout, cstderr].concat(), &job)
+                    let status = get_status(status, [cstdout, cstderr].concat(), &job).await?;
+                    status
                 }
                 Ok(None) => {
                     if let Err(err) = child.kill().await {
-                        job.cancel().failed(Some(err.to_string()));
+                        job.cancel().cancelled(Some(err.to_string())).await?;
                     } else {
-                        job.cancel().success(Some("Process has been killed"));
+                        job.cancel().cancelled::<String>(None).await?;
                     }
                     SpawnStatus::Cancelled
                 }
                 Err(err) => {
-                    job.cancel().failed(Some(format!("Fail to kill process: {err}")));
+                    job.cancel().cancelled(Some(format!("Fail to kill process: {err}"))).await?;
                     SpawnStatus::Cancelled
                 }
             }

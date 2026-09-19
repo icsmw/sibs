@@ -10,7 +10,6 @@ pub enum Demand {
     WaitersSignal(String, oneshot::Sender<usize>),
     GetRtParameters(oneshot::Sender<RtParameters>),
     CreateInterpreterEnvironment(
-        Uuid,
         String,
         Option<Uuid>,
         oneshot::Sender<Result<InterpreterEnvironment, E>>,

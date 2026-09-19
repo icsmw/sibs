@@ -51,6 +51,7 @@ pub struct SessionStat {
     pub debugs: u32,
     pub stdouts: u32,
     pub stderrs: u32,
+    pub events: u32,
 }
 
 impl SessionStat {
@@ -62,6 +63,7 @@ impl SessionStat {
             RecordTy::Debug => self.debugs += 1,
             RecordTy::Stdout => self.stdouts += 1,
             RecordTy::Stderr => self.stderrs += 1,
+            RecordTy::Event => self.events += 1,
         }
     }
 }
@@ -75,6 +77,7 @@ pub struct SessionCloseData {
 
 #[derive(Debug, Default, Clone, PartialEq)]
 pub enum RecordTy {
+    Event,
     Stdout,
     Stderr,
     #[default]
@@ -87,6 +90,7 @@ pub enum RecordTy {
 impl fmt::Display for RecordTy {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            RecordTy::Event => write!(f, "EVENT"),
             RecordTy::Stdout => write!(f, "STDOUT"),
             RecordTy::Stderr => write!(f, "STDERR"),
             RecordTy::Debug => write!(f, "DEBUG "),
@@ -100,6 +104,7 @@ impl fmt::Display for RecordTy {
 impl RecordTy {
     pub fn colored(&self) -> String {
         match self {
+            RecordTy::Event => format!("\x1b[32m{}\x1b[0m", self),
             RecordTy::Stdout => format!("\x1b[32m{}\x1b[0m", self),
             RecordTy::Stderr => format!("\x1b[31m{}\x1b[0m", self),
             RecordTy::Debug => format!("\x1b[34m{}\x1b[0m", self),
@@ -119,6 +124,7 @@ impl From<&RecordTy> for u8 {
             RecordTy::Info => 3,
             RecordTy::Stdout => 4,
             RecordTy::Stderr => 5,
+            RecordTy::Event => 6,
         }
     }
 }
@@ -132,6 +138,7 @@ impl From<RecordTy> for u8 {
             RecordTy::Info => 3,
             RecordTy::Stdout => 4,
             RecordTy::Stderr => 5,
+            RecordTy::Event => 6,
         }
     }
 }
@@ -146,6 +153,7 @@ impl TryFrom<u8> for RecordTy {
             3 => Ok(RecordTy::Info),
             4 => Ok(RecordTy::Stdout),
             5 => Ok(RecordTy::Stderr),
+            6 => Ok(RecordTy::Event),
             _ => Err(format!("{value} isn't valid RecordTy")),
         }
     }
@@ -155,16 +163,24 @@ impl TryFrom<u8> for RecordTy {
 pub enum EventTy {
     #[default]
     Log,
-    JobOpened,
-    JobClosed,
+    Created,
+    Started,
+    Cancelling,
+    Cancelled,
+    Success,
+    Failed,
 }
 
 impl From<&EventTy> for u8 {
     fn from(ty: &EventTy) -> Self {
         match ty {
             EventTy::Log => 0,
-            EventTy::JobOpened => 1,
-            EventTy::JobClosed => 2,
+            EventTy::Created => 1,
+            EventTy::Started => 2,
+            EventTy::Cancelling => 3,
+            EventTy::Cancelled => 4,
+            EventTy::Success => 5,
+            EventTy::Failed => 6,
         }
     }
 }
@@ -173,8 +189,12 @@ impl From<EventTy> for u8 {
     fn from(ty: EventTy) -> Self {
         match ty {
             EventTy::Log => 0,
-            EventTy::JobOpened => 1,
-            EventTy::JobClosed => 2,
+            EventTy::Created => 1,
+            EventTy::Started => 2,
+            EventTy::Cancelling => 3,
+            EventTy::Cancelled => 4,
+            EventTy::Success => 5,
+            EventTy::Failed => 6,
         }
     }
 }
@@ -184,8 +204,12 @@ impl TryFrom<u8> for EventTy {
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(EventTy::Log),
-            1 => Ok(EventTy::JobOpened),
-            2 => Ok(EventTy::JobClosed),
+            1 => Ok(EventTy::Created),
+            2 => Ok(EventTy::Started),
+            3 => Ok(EventTy::Cancelling),
+            4 => Ok(EventTy::Cancelled),
+            5 => Ok(EventTy::Success),
+            6 => Ok(EventTy::Failed),
             _ => Err(format!("{value} isn't valid EventTy")),
         }
     }
@@ -204,7 +228,7 @@ impl From<&Owner> for [u8; 16] {
 #[block]
 pub struct Signature {
     pub ts: u64,
-    pub owner: [u8; 16],
+    pub uuid: [u8; 16],
     pub parent: [u8; 16],
     pub session: [u8; 16],
     pub ty: RecordTy,
