@@ -131,13 +131,16 @@ impl UserFnEntity {
             }
             return Err(err);
         }
-        let result = exec(
-            env.from_job(
-                job.child(&self.name, JobVisibility::Hidden)
-                    .await
-                    .map_err(|err| LinkedErr::by_link(err, link.into()))?,
-            ),
-        )
+        let result = async {
+            exec(
+                env.from_job(
+                    job.child(&self.name, JobVisibility::Hidden)
+                        .await
+                        .map_err(|err| LinkedErr::by_link(err, link.into()))?,
+                ),
+            )
+            .await
+        }
         .await;
         if let Err(err) = cx.scopes().leave().await {
             return Err(LinkedErr::by_link(err, link.into()));

@@ -93,6 +93,10 @@ impl TaskEntity {
                 .map_err(|err| LinkedErr::by_link(err, caller.into()))?,
         );
         if let Err(err) = env.cx.scopes().enter(&self.uuid).await {
+            env.cx
+                .close()
+                .await
+                .map_err(|err| LinkedErr::by_link(err, caller.into()))?;
             return Err(LinkedErr::by_link(err, link.into()));
         }
         let mut err = None;
@@ -120,21 +124,15 @@ impl TaskEntity {
                 break;
             }
         }
-        if let Some(err) = err.take() {
-            if let Err(err) = env.cx.scopes().leave().await {
-                return Err(LinkedErr::by_link(err, link.into()));
-            }
-            return Err(err);
-        }
-
-        let result = exec(env.clone()).await;
-        if let Err(err) = env.cx.scopes().leave().await {
-            return Err(LinkedErr::by_link(err, link.into()));
-        }
-        env.cx
-            .close()
-            .await
-            .map_err(|err| LinkedErr::by_link(err, caller.into()))?;
+        let result = match err {
+            Some(err) => Err(err),
+            None => exec(env.clone()).await,
+        };
+        // Always release the task context, even if leaving its scope fails.
+        let leave = env.cx.scopes().leave().await;
+        let close = env.cx.close().await;
+        leave.map_err(|err| LinkedErr::by_link(err, link.into()))?;
+        close.map_err(|err| LinkedErr::by_link(err, caller.into()))?;
         result
     }
 
