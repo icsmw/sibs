@@ -46,31 +46,35 @@ impl Interpret for For {
             .open(&self.uuid)
             .await
             .map_err(|err| LinkedErr::by_link(err, (&self.slink()).into()))?;
-        for (n, vl) in vls.into_iter().enumerate() {
-            if cx
-                .loops()
-                .is_stopped()
-                .await
-                .map_err(|err| LinkedErr::by_link(err, (&self.slink()).into()))?
-            {
-                break;
-            }
-            cx.values()
-                .insert(&el, vl)
-                .await
-                .map_err(|err| LinkedErr::from(err, &self.element))?;
-            if let Some((variable, node)) = indx.as_ref() {
-                cx.values()
-                    .insert(variable, RtValue::Num(n as f64))
+        let result = async {
+            for (n, vl) in vls.into_iter().enumerate() {
+                if cx
+                    .loops()
+                    .is_stopped()
                     .await
-                    .map_err(|err| LinkedErr::from(err, *node))?;
+                    .map_err(|err| LinkedErr::by_link(err, (&self.slink()).into()))?
+                {
+                    break;
+                }
+                cx.values()
+                    .insert(&el, vl)
+                    .await
+                    .map_err(|err| LinkedErr::from(err, &self.element))?;
+                if let Some((variable, node)) = indx.as_ref() {
+                    cx.values()
+                        .insert(variable, RtValue::Num(n as f64))
+                        .await
+                        .map_err(|err| LinkedErr::from(err, *node))?;
+                }
+                self.block.interpret(env.clone()).await?;
             }
-            self.block.interpret(env.clone()).await?;
+            Ok(RtValue::Void)
         }
+        .await;
         cx.loops()
             .close()
             .await
             .map_err(|err| LinkedErr::by_link(err, (&self.slink()).into()))?;
-        Ok(RtValue::Void)
+        result
     }
 }

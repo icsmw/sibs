@@ -8,22 +8,26 @@ impl Interpret for Block {
             .enter(&self.uuid)
             .await
             .map_err(|err| LinkedErr::from(err, self))?;
-        let mut last = None;
-        for n in self.nodes.iter() {
-            if cx
-                .loops()
-                .is_stopped()
-                .await
-                .map_err(|err| LinkedErr::from(err, self))?
-            {
-                break;
+        let result = async {
+            let mut last = None;
+            for n in self.nodes.iter() {
+                if cx
+                    .loops()
+                    .is_stopped()
+                    .await
+                    .map_err(|err| LinkedErr::from(err, self))?
+                {
+                    break;
+                }
+                last = Some(n.interpret(env.clone()).await?);
             }
-            last = Some(n.interpret(env.clone()).await?);
+            Ok(last.unwrap_or(RtValue::Void))
         }
+        .await;
         cx.scopes()
             .leave()
             .await
             .map_err(|err| LinkedErr::from(err, self))?;
-        Ok(last.unwrap_or(RtValue::Void))
+        result
     }
 }

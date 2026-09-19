@@ -11,31 +11,35 @@ impl Interpret for While {
             .open(&self.uuid)
             .await
             .map_err(|err| LinkedErr::by_link(err, (&self.slink()).into()))?;
-        loop {
-            if cx
-                .loops()
-                .is_stopped()
-                .await
-                .map_err(|err| LinkedErr::by_link(err, (&self.slink()).into()))?
-            {
-                break;
+        let result = async {
+            loop {
+                if cx
+                    .loops()
+                    .is_stopped()
+                    .await
+                    .map_err(|err| LinkedErr::by_link(err, (&self.slink()).into()))?
+                {
+                    break;
+                }
+                let vl = self.comparison.interpret(env.clone()).await?;
+                let RtValue::Bool(vl) = vl else {
+                    return Err(LinkedErr::from(
+                        E::InvalidValueType(format!("returns {vl} instead bool")),
+                        &self.comparison,
+                    ));
+                };
+                if !vl {
+                    break;
+                }
+                self.block.interpret(env.clone()).await?;
             }
-            let vl = self.comparison.interpret(env.clone()).await?;
-            let RtValue::Bool(vl) = vl else {
-                return Err(LinkedErr::from(
-                    E::InvalidValueType(format!("returns {vl} instead bool")),
-                    &self.comparison,
-                ));
-            };
-            if !vl {
-                break;
-            }
-            self.block.interpret(env.clone()).await?;
+            Ok(RtValue::Void)
         }
+        .await;
         cx.loops()
             .close()
             .await
             .map_err(|err| LinkedErr::by_link(err, (&self.slink()).into()))?;
-        Ok(RtValue::Void)
+        result
     }
 }
