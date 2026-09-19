@@ -40,6 +40,38 @@ fn into_rt_ufns(mut fns: Fns) -> Fns {
     fns
 }
 
+async fn execution<N>(
+    env: InterpreterEnvironment,
+    node: &N,
+    name: Option<String>,
+) -> Result<RtValue, LinkedErr<E>>
+where
+    N: Execute + SrcLinking,
+{
+    env.job
+        .start()
+        .started(name)
+        .await
+        .map_err(|err| LinkedErr::from(err, node))?;
+    let result = node.exec(env.clone()).await;
+    match &result {
+        Ok(_) => {
+            env.job
+                .done()
+                .success::<String>(None)
+                .await
+                .map_err(|err| LinkedErr::from(err, node))?;
+        }
+        Err(err) => {
+            env.job
+                .done()
+                .failed::<String>(Some(err.e.to_string()))
+                .await
+                .map_err(|err| LinkedErr::from(err, node))?;
+        }
+    }
+    result
+}
 fn ufn_into_exec(body: UserFnBody) -> UserFnBody {
     match body {
         UserFnBody::Executor(link, ex) => UserFnBody::Executor(link, ex),
@@ -48,7 +80,7 @@ fn ufn_into_exec(body: UserFnBody) -> UserFnBody {
             let func = move |env: InterpreterEnvironment| -> RtPinnedResult<LinkedErr<E>> {
                 Box::pin({
                     let node = node.clone();
-                    async move { node.exec(env).await }
+                    async move { execution(env, &node, None).await }
                 })
             };
             UserFnBody::Executor(link, Box::new(func))
@@ -65,7 +97,7 @@ fn cfn_into_exec(body: ClosureFnBody) -> ClosureFnBody {
             let func = move |env: InterpreterEnvironment| -> RtPinnedResult<LinkedErr<E>> {
                 Box::pin({
                     let node = node.clone();
-                    async move { node.exec(env).await }
+                    async move { execution(env, &node, None).await }
                 })
             };
             ClosureFnBody::Executor(link, Box::new(func))
@@ -94,7 +126,7 @@ fn task_node_into_exec(body: TaskBody) -> TaskBody {
             let func = move |env: InterpreterEnvironment| -> RtPinnedResult<LinkedErr<E>> {
                 Box::pin({
                     let node = node.clone();
-                    async move { node.exec(env).await }
+                    async move { execution(env, &node, Some(node.get_name())).await }
                 })
             };
             TaskBody::Executor(link, Box::new(func))

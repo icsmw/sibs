@@ -13,4 +13,12 @@ pub enum JobStateError {
     InvalidOrder(Uuid, JobState, JobState),
     #[error("Attempt to create child of job {0} in state {1}")]
     InvalidState(Uuid, JobState),
+    #[error("Cannot finish job {parent} from {current} as {requested}: descendant {child} is still {child_state}")]
+    UnfinishedDescendant {
+        parent: Uuid,
+        current: JobState,
+        requested: JobState,
+        child: Uuid,
+        child_state: JobState,
+    },
 }

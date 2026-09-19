@@ -83,7 +83,7 @@ impl RtJobs {
 
                         journal.state(job.identity(), job.state());
 
-                        chk_send_err!(tx.send(Ok(())), DemandId::Create);
+                        chk_send_err!(tx.send(Ok(())), DemandId::Update);
                     }
                 }
             }
@@ -172,6 +172,54 @@ mod path_tests {
             ]
         );
         jobs.destroy().await.unwrap();
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}
+
+#[cfg(test)]
+mod lifecycle_tests {
+    use super::*;
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn rejected_completion_is_returned_without_a_journal_event() {
+        let dir = std::env::temp_dir().join(format!("sibs-lifecycle-{}", Uuid::new_v4()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let jobs = RtJobs::new(&dir).unwrap();
+        let parent = jobs
+            .create("parent", None, JobVisibility::Hidden)
+            .await
+            .unwrap();
+        parent.start().started::<String>(None).await.unwrap();
+        let child = parent.child("child", JobVisibility::Hidden).await.unwrap();
+        let outcome = JobState::Failed(Some("original execution error".into()));
+        let err = jobs
+            .update(parent.identity().uuid(), outcome.clone())
+            .await
+            .unwrap_err();
+        assert!(
+            matches!(err, E::JobState(JobStateError::UnfinishedDescendant {
+            parent: id, requested, child: child_id, child_state: JobState::Created, ..
+        }) if id == parent.identity().uuid() && child_id == child.identity().uuid() && requested == outcome)
+        );
+        // The actor remains alive, the child is untouched, and the parent can retry.
+        child.start().started::<String>(None).await.unwrap();
+        child.done().failed::<String>(None).await.unwrap();
+        parent.done().success::<String>(None).await.unwrap();
+        jobs.destroy().await.unwrap();
+        let mut reader = JournalReader::new(&dir).unwrap();
+        let session = *reader.list().keys().next().unwrap();
+        let count = reader.open(&session).unwrap().unwrap();
+        let records = reader.read(&session, 0, count).unwrap();
+        let events: Vec<_> = records
+            .iter()
+            .filter(|r| r.uuid == parent.identity().uuid())
+            .map(|r| r.event.clone())
+            .collect();
+        assert_eq!(
+            events,
+            vec![scheme::EventTy::Started, scheme::EventTy::Success]
+        );
+        drop(reader);
         std::fs::remove_dir_all(dir).unwrap();
     }
 }

@@ -21,6 +21,13 @@ pub enum JobState {
 }
 
 impl JobState {
+    pub fn is_finished(&self) -> bool {
+        match self {
+            Self::Success(_) | Self::Failed(_) | Self::Cancelled(_) => true,
+            Self::Created | Self::Started(_) | Self::Cancelling => false,
+        }
+    }
+
     pub fn update(&mut self, uuid: Uuid, other: JobState) -> Result<(), JobStateError> {
         if self == &other {
             return Err(JobStateError::JobStateAlreadySet(uuid, other));

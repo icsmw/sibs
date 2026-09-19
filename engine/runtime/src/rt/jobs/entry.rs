@@ -112,9 +112,34 @@ impl JobEntry {
     pub fn state(&self) -> &JobState {
         &self.state
     }
+
     pub fn update(&mut self, state: JobState) -> Result<(), E> {
-        self.state.update(self.identity.uuid(), state.clone())?;
-        match state {
+        fn nested(state: &JobEntry) -> Option<&JobEntry> {
+            state.childs.values().find_map(|child| {
+                if !child.state.is_finished() {
+                    Some(child)
+                } else {
+                    nested(child)
+                }
+            })
+        }
+        // Validate the transition without committing it or triggering sensors.
+        let mut next = self.state.clone();
+        next.update(self.identity.uuid(), state)?;
+        if next.is_finished() {
+            if let Some(child) = nested(self) {
+                return Err(JobStateError::UnfinishedDescendant {
+                    parent: self.identity.uuid(),
+                    current: self.state.clone(),
+                    requested: next,
+                    child: child.identity.uuid(),
+                    child_state: child.state.clone(),
+                }
+                .into());
+            }
+        }
+        self.state = next;
+        match &self.state {
             JobState::Cancelling => {
                 self.sensors.cancel();
             }
@@ -131,6 +156,68 @@ impl JobEntry {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn unfinished_descendant_rejects_each_terminal_transition_atomically() {
+        for child_state in [
+            JobState::Created,
+            JobState::Started("child".into()),
+            JobState::Cancelling,
+        ] {
+            for outcome in [
+                JobState::Success(None),
+                JobState::Failed(Some("cause".into())),
+                JobState::Cancelled(None),
+            ] {
+                let mut parent =
+                    JobEntry::new(JobIdentity::new("parent", None, JobVisibility::Hidden));
+                let child_id = parent
+                    .child("child", JobVisibility::Hidden)
+                    .unwrap()
+                    .identity()
+                    .uuid();
+                parent.find(&child_id).unwrap().state = child_state.clone();
+                parent.update(JobState::Started("parent".into())).unwrap();
+                if matches!(outcome, JobState::Cancelled(_)) {
+                    parent.update(JobState::Cancelling).unwrap();
+                }
+                let previous = parent.state.clone();
+                assert!(
+                    matches!(parent.update(outcome.clone()), Err(E::JobState(JobStateError::UnfinishedDescendant {
+                    requested, child, child_state: actual, ..
+                })) if requested == outcome && child == child_id && actual == child_state)
+                );
+                assert_eq!(parent.state, previous);
+                assert_eq!(parent.find(&child_id).unwrap().state, child_state);
+                parent.find(&child_id).unwrap().state = JobState::Failed(None);
+                parent.update(outcome.clone()).unwrap();
+                assert_eq!(parent.state, outcome);
+            }
+        }
+    }
+
+    #[test]
+    fn finished_child_does_not_hide_an_unfinished_grandchild() {
+        let mut parent = JobEntry::new(JobIdentity::new("parent", None, JobVisibility::Hidden));
+        let child = parent
+            .child("child", JobVisibility::Hidden)
+            .unwrap()
+            .identity()
+            .uuid();
+        let grandchild = parent
+            .find(&child)
+            .unwrap()
+            .child("grandchild", JobVisibility::Hidden)
+            .unwrap()
+            .identity()
+            .uuid();
+        // Simulate an existing inconsistent subtree.
+        parent.find(&child).unwrap().state = JobState::Success(None);
+        parent.update(JobState::Started(String::new())).unwrap();
+        assert!(
+            matches!(parent.update(JobState::Success(None)), Err(E::JobState(JobStateError::UnfinishedDescendant { child: id, .. })) if id == grandchild)
+        );
+    }
 
     #[test]
     fn path_filters_only_the_ancestor_chain_in_order() {
