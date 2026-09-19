@@ -85,7 +85,7 @@ impl JobEntry {
         }
         let parent = self.identity.uuid();
         let job = Self {
-            identity: JobIdentity::new(alias, Some(parent.clone()), visibility),
+            identity: JobIdentity::new(alias, Some(parent), visibility),
             childs: HashMap::new(),
             sensors: self.sensors.child(),
             state: JobState::default(),

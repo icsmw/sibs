@@ -64,6 +64,38 @@ impl JobState {
     }
 }
 
+impl fmt::Display for JobState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Created => "Created".to_string(),
+                Self::Started(msg) => format!("Started({msg})"),
+                Self::Cancelling => "Cancelling".to_string(),
+                Self::Cancelled(msg) =>
+                    format!("Cancelled({})", msg.as_ref().unwrap_or(&String::new())),
+                Self::Success(msg) =>
+                    format!("Success({})", msg.as_ref().unwrap_or(&String::new())),
+                Self::Failed(msg) => format!("Failed({})", msg.as_ref().unwrap_or(&String::new())),
+            }
+        )
+    }
+}
+
+impl From<&JobState> for scheme::EventTy {
+    fn from(state: &JobState) -> Self {
+        match state {
+            JobState::Created => scheme::EventTy::Created,
+            JobState::Started(_) => scheme::EventTy::Started,
+            JobState::Cancelling => scheme::EventTy::Cancelling,
+            JobState::Cancelled(_) => scheme::EventTy::Cancelled,
+            JobState::Success(_) => scheme::EventTy::Success,
+            JobState::Failed(_) => scheme::EventTy::Failed,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -104,38 +136,6 @@ mod tests {
                 Err(JobStateError::InvalidOrder(..))
             ));
             assert_eq!(state, JobState::Created);
-        }
-    }
-}
-
-impl fmt::Display for JobState {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Self::Created => "Created".to_string(),
-                Self::Started(msg) => format!("Started({msg})"),
-                Self::Cancelling => "Cancelling".to_string(),
-                Self::Cancelled(msg) =>
-                    format!("Cancelled({})", msg.as_ref().unwrap_or(&String::new())),
-                Self::Success(msg) =>
-                    format!("Success({})", msg.as_ref().unwrap_or(&String::new())),
-                Self::Failed(msg) => format!("Failed({})", msg.as_ref().unwrap_or(&String::new())),
-            }
-        )
-    }
-}
-
-impl From<&JobState> for scheme::EventTy {
-    fn from(state: &JobState) -> Self {
-        match state {
-            JobState::Created => scheme::EventTy::Created,
-            JobState::Started(_) => scheme::EventTy::Started,
-            JobState::Cancelling => scheme::EventTy::Cancelling,
-            JobState::Cancelled(_) => scheme::EventTy::Cancelled,
-            JobState::Success(_) => scheme::EventTy::Success,
-            JobState::Failed(_) => scheme::EventTy::Failed,
         }
     }
 }
