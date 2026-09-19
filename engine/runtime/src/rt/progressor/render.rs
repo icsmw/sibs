@@ -104,21 +104,41 @@ impl ProgressRender {
         })
     }
     pub fn add(&mut self, identity: JobIdentity) -> Result<(), E> {
+        // Getting another handle must not reset an existing bar or its children.
+        if self
+            .tree
+            .values_mut()
+            .any(|pref| pref.find(&identity.uuid()).is_some())
+        {
+            return Ok(());
+        }
         let state = ProgressState::default();
-        let pref = ProgressRef {
+        let mut pref = ProgressRef {
             identity: identity.clone(),
             childs: IndexMap::new(),
             bar: self.styles.get(&state),
             state,
         };
-        if let Some(parent) = identity.parent() {
-            let Some(parent) = self.tree.values_mut().find_map(|pref| pref.find(&parent)) else {
-                return Err(E::NoProgressForTask(parent));
-            };
+        // Children may have requested progress before their parent did.
+        let children: Vec<_> = self
+            .tree
+            .iter()
+            .filter_map(|(id, child)| {
+                (child.identity.parent() == Some(identity.uuid())).then_some(*id)
+            })
+            .collect();
+        for id in children {
+            pref.add(self.tree.shift_remove(&id).expect("existing progress"));
+        }
+        if let Some(parent) = identity
+            .parent()
+            .and_then(|id| self.tree.values_mut().find_map(|pref| pref.find(&id)))
+        {
             parent.add(pref);
         } else {
-            self.tree.insert(pref.identity.uuid(), pref);
-        };
+            // A job parent does not necessarily have a visible progress bar.
+            self.tree.insert(identity.uuid(), pref);
+        }
         self.mount();
         Ok(())
     }
@@ -164,5 +184,61 @@ impl ProgressRender {
             .values_mut()
             .for_each(|bar| bar.mount(&mut self.mp, &self.styles));
         self.print();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn child_can_have_progress_without_its_parent() {
+        let mut render = ProgressRender::new().unwrap();
+        let parent = JobIdentity::new("hidden", None);
+        let child = JobIdentity::new("visible", Some(parent.uuid()));
+        render.add(child.clone()).unwrap();
+        assert_eq!(render.tree.len(), 1);
+        assert!(render.tree.contains_key(&child.uuid()));
+        assert!(!render.tree.contains_key(&parent.uuid()));
+    }
+
+    #[test]
+    fn late_parent_adopts_child_without_resetting_progress() {
+        let mut render = ProgressRender::new().unwrap();
+        let parent = JobIdentity::new("parent", None);
+        let child = JobIdentity::new("child", Some(parent.uuid()));
+        render.add(child.clone()).unwrap();
+        render.set_state(
+            child.uuid(),
+            ProgressState::Progress(Some("half".into()), 5, 10),
+        );
+        render.add(parent.clone()).unwrap();
+        assert_eq!(render.tree.len(), 1);
+        let child_ref = &render.tree[&parent.uuid()].childs[&child.uuid()];
+        assert!(matches!(child_ref.state, ProgressState::Progress(_, 5, 10)));
+        assert_eq!(child_ref.state.get_msg().as_deref(), Some("half"));
+    }
+
+    #[test]
+    fn repeated_registration_preserves_state_and_children() {
+        let mut render = ProgressRender::new().unwrap();
+        let parent = JobIdentity::new("parent", None);
+        let child = JobIdentity::new("child", Some(parent.uuid()));
+        render.add(parent.clone()).unwrap();
+        render.add(child.clone()).unwrap();
+        render.set_state(
+            parent.uuid(),
+            ProgressState::Pending(Some("waiting".into())),
+        );
+        render.set_state(child.uuid(), ProgressState::Success(None));
+        render.add(parent.clone()).unwrap();
+        render.add(child.clone()).unwrap();
+        let parent_ref = &render.tree[&parent.uuid()];
+        assert!(matches!(parent_ref.state, ProgressState::Pending(_)));
+        assert_eq!(parent_ref.childs.len(), 1);
+        assert!(matches!(
+            parent_ref.childs[&child.uuid()].state,
+            ProgressState::Success(_)
+        ));
     }
 }

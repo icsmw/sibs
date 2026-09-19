@@ -1,10 +1,18 @@
 use uuid::Uuid;
 
+#[derive(Default, Debug, Clone)]
+pub enum JobVisibility {
+    #[default]
+    Hidden,
+    Visible,
+}
+
 #[derive(Debug, Clone)]
 pub struct JobIdentity {
     uuid: Uuid,
     parent: Option<Uuid>,
     alias: String,
+    visibility: JobVisibility,
 }
 
 impl JobIdentity {
@@ -13,6 +21,16 @@ impl JobIdentity {
             uuid: Uuid::new_v4(),
             parent,
             alias: alias.to_string(),
+            visibility: JobVisibility::default(),
+        }
+    }
+
+    pub fn visible<S: ToString>(alias: S, parent: Option<Uuid>) -> Self {
+        Self {
+            uuid: Uuid::new_v4(),
+            parent,
+            alias: alias.to_string(),
+            visibility: JobVisibility::Visible,
         }
     }
 
@@ -21,7 +39,7 @@ impl JobIdentity {
     }
 
     pub fn parent(&self) -> Option<Uuid> {
-        self.parent.clone()
+        self.parent
     }
 
     pub fn alias(&self) -> &str {

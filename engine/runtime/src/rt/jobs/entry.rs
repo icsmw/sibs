@@ -63,8 +63,9 @@ impl JobEntry {
                 job.identity.alias().to_string(),
             ));
         }
-        self.childs.insert(job.identity.uuid(), job);
-        self.childs.get(&parent).ok_or(E::JobDoesNotExist(parent))
+        let uuid = job.identity.uuid();
+        self.childs.insert(uuid, job);
+        self.childs.get(&uuid).ok_or(E::JobDoesNotExist(uuid))
     }
     pub fn job(&self, jobs: RtJobs, journal: RtJournal, progress: RtProgress) -> Job {
         Job::new(
@@ -91,5 +92,39 @@ impl JobEntry {
             | JobState::Started(_) => {}
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn child_returns_the_registered_entry() {
+        let mut parent = JobEntry::new(JobIdentity::new("parent", None));
+        let parent_uuid = parent.identity().uuid();
+        let first_uuid = {
+            let child = parent.child("child").expect("child created");
+            assert_eq!(child.identity().parent(), Some(parent_uuid));
+            assert_eq!(child.identity().alias(), "child");
+            assert_eq!(child.state(), &JobState::Created);
+            child.identity().uuid()
+        };
+        let second_uuid = parent
+            .child("child")
+            .expect("second child created")
+            .identity()
+            .uuid();
+        assert_ne!(first_uuid, parent_uuid);
+        assert_ne!(first_uuid, second_uuid);
+        assert_eq!(parent.childs.len(), 2);
+        assert_eq!(
+            parent.find(&first_uuid).unwrap().identity().uuid(),
+            first_uuid
+        );
+        assert_eq!(
+            parent.find(&second_uuid).unwrap().identity().uuid(),
+            second_uuid
+        );
     }
 }

@@ -25,7 +25,7 @@ impl JobState {
         if self == &other {
             return Err(JobStateError::JobStateAlreadySet(uuid, other));
         }
-        if self == &Self::Created {
+        if other == Self::Created {
             return Err(JobStateError::CannotSetPending(uuid));
         }
         if !match self {
@@ -53,6 +53,50 @@ impl JobState {
             Self::Created | Self::Cancelling => None,
             Self::Started(msg) => Some(msg.to_string()),
             Self::Cancelled(msg) | Self::Success(msg) | Self::Failed(msg) => msg.clone(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn created_can_start_or_begin_cancellation() {
+        let uuid = Uuid::new_v4();
+        for next in [JobState::Started("work".into()), JobState::Cancelling] {
+            let mut state = JobState::Created;
+            state.update(uuid, next.clone()).expect("valid transition");
+            assert_eq!(state, next);
+        }
+    }
+
+    #[test]
+    fn returning_to_created_preserves_the_current_state() {
+        let uuid = Uuid::new_v4();
+        let mut state = JobState::Started("work".into());
+        let previous = state.clone();
+        assert!(matches!(
+            state.update(uuid, JobState::Created),
+            Err(JobStateError::CannotSetPending(id)) if id == uuid
+        ));
+        assert_eq!(state, previous);
+    }
+
+    #[test]
+    fn created_cannot_finish_without_starting() {
+        let uuid = Uuid::new_v4();
+        for next in [
+            JobState::Success(None),
+            JobState::Failed(None),
+            JobState::Cancelled(None),
+        ] {
+            let mut state = JobState::Created;
+            assert!(matches!(
+                state.update(uuid, next),
+                Err(JobStateError::InvalidOrder(..))
+            ));
+            assert_eq!(state, JobState::Created);
         }
     }
 }

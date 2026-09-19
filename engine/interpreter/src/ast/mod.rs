@@ -52,21 +52,26 @@ impl Interpret for LinkedNode {
 
         let InterpreterEnvironment { job, .. } = env.clone();
 
-        job.start()
+        let owned_job = job.child(self.get_node().id()).await.map_err(link_err)?;
+        let owned_env = env.from_job(owned_job.clone());
+        owned_job
+            .start()
             .started(Some(self.get_node().id().to_string()))
             .await
             .map_err(link_err)?;
 
-        match self.inner_interpret(env).await {
+        match self.inner_interpret(owned_env).await {
             Ok(vl) => {
-                job.done()
+                owned_job
+                    .done()
                     .success(Some(vl.to_string()))
                     .await
                     .map_err(link_err)?;
                 Ok(vl)
             }
             Err(err) => {
-                job.done()
+                owned_job
+                    .done()
                     .failed(Some(err.e.to_string()))
                     .await
                     .map_err(link_err)?;

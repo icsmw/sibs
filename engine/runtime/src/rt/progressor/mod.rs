@@ -110,23 +110,22 @@ impl RtProgress {
 async fn visual_test() {
     use tokio::time::{self, Duration};
     let progressor = RtProgress::new().expect("RtProgress has been created");
-    let mut jobs = Vec::new();
     for job in ["a", "b", "c", "d"] {
-        let master = progressor
-            .create(Uuid::new_v4(), format!("Job {job}"), None)
+        let master = JobIdentity::new(format!("Job {job}"), None);
+        progressor
+            .register(&master)
             .await
-            .expect("Job's progress created");
+            .expect("Job's progress registered");
         for sub in 0..5 {
-            let child = master
-                .child(format!("sub job {job} #{sub}"))
+            let child = JobIdentity::new(format!("sub job {job} #{sub}"), Some(master.uuid()));
+            progressor
+                .register(&child)
                 .await
-                .expect("Sub job is created");
+                .expect("Sub job's progress registered");
             if sub % 2 == 0 {
-                child.pending(Some("Pending task"));
+                progressor.set_state(&child, ProgressState::Pending(Some("Pending task".into())));
             }
-            jobs.push(child);
         }
-        jobs.push(master);
     }
     let interval_duration = Duration::from_millis(500);
     let mut interval = time::interval(interval_duration);
@@ -138,4 +137,8 @@ async fn visual_test() {
             break;
         }
     }
+    progressor
+        .destroy()
+        .await
+        .expect("Progress renderer stopped");
 }
