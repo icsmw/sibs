@@ -133,7 +133,7 @@ impl UserFnEntity {
         }
         let result = exec(
             env.from_job(
-                job.child(&self.name)
+                job.child(&self.name, JobVisibility::Hidden)
                     .await
                     .map_err(|err| LinkedErr::by_link(err, link.into()))?,
             ),

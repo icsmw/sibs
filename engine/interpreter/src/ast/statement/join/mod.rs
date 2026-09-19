@@ -46,16 +46,6 @@ async fn wait(
 impl Interpret for Join {
     #[boxed]
     fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
-        let InterpreterEnvironment { job, .. } = env.clone();
-        let join_env = env.from_job(
-            job.child("join")
-                .await
-                .map_err(|err| LinkedErr::by_link(err, (&self.link()).into()))?,
-        );
-        job.start()
-            .started::<String>(None)
-            .await
-            .map_err(|err| LinkedErr::by_link(err, (&self.link()).into()))?;
         let order = self
             .commands
             .iter()
@@ -66,14 +56,14 @@ impl Interpret for Join {
             .iter()
             .cloned()
             .map(|node| {
-                let join_env_inner = join_env.clone();
+                let join_env_inner = env.clone();
                 (
                     node.link(),
                     spawn(async move { (*node.uuid(), node.interpret(join_env_inner).await) }),
                 )
             })
             .collect::<Vec<LinkedJoinHandle>>();
-        let result = wait(tasks, &join_env.job).await;
+        let result = wait(tasks, &env.job).await;
         match result {
             Ok(mut results) => {
                 if order.len() != results.len() {
@@ -99,10 +89,6 @@ impl Interpret for Join {
                         }
                     }
                 }
-                job.done()
-                    .success::<String>(None)
-                    .await
-                    .map_err(|err| LinkedErr::by_link(err, (&self.link()).into()))?;
                 Ok(RtValue::Vec(output))
             }
             Err(err) => Err(err),

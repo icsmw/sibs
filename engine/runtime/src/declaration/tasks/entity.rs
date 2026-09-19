@@ -88,7 +88,7 @@ impl TaskEntity {
                 .map_err(|err| LinkedErr::by_link(err, caller.into()))?,
             parent
                 .job
-                .child(&self.name)
+                .child(&self.name, JobVisibility::Visible)
                 .await
                 .map_err(|err| LinkedErr::by_link(err, caller.into()))?,
         );

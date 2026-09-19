@@ -104,7 +104,7 @@ impl ClosureFnEntity {
         }
         let result = exec(
             env.from_job(
-                job.child("closure")
+                job.child("closure", JobVisibility::Hidden)
                     .await
                     .map_err(|err| LinkedErr::by_link(err, link.into()))?,
             ),

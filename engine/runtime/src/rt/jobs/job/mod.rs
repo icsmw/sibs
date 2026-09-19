@@ -61,12 +61,19 @@ impl Job {
     }
 
     pub async fn progress(&self) -> Result<JobProgress, E> {
-        JobProgress::new(self.identity.clone(), self.progress.clone()).await
+        let uuid = self.identity.uuid();
+        let path = self
+            .jobs
+            .path(uuid, move |identity| {
+                identity.uuid() == uuid || matches!(identity.visibility(), JobVisibility::Visible)
+            })
+            .await?;
+        JobProgress::new(self.identity.clone(), self.progress.clone(), path).await
     }
 
-    pub async fn child<S: ToString>(&self, alias: S) -> Result<Job, E> {
+    pub async fn child<S: ToString>(&self, alias: S, visibility: JobVisibility) -> Result<Job, E> {
         self.jobs
-            .create(alias.to_string(), Some(self.identity.uuid()))
+            .create(alias.to_string(), Some(self.identity.uuid()), visibility)
             .await
     }
 

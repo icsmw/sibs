@@ -72,7 +72,7 @@ impl Runtime {
                         chk_send_err!(tx.send(params.clone()), DemandId::GetRtParameters);
                     }
                     Demand::CreateInterpreterEnvironment(alias, parent, tx) => {
-                        let job = match jobs.create(alias, parent).await {
+                        let job = match jobs.create(alias, parent, JobVisibility::Hidden).await {
                             Ok(job) => job,
                             Err(err) => {
                                 chk_send_err!(

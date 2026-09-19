@@ -1,6 +1,7 @@
 mod cfm;
 mod declaration;
 mod expression;
+mod job;
 mod miscellaneous;
 mod root;
 mod statement;
@@ -27,24 +28,23 @@ impl InterpretInner for LinkedNode {
     fn inner_interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
         let link_err = |err: E| LinkedErr::by_link(err, (&self.get_md().link).into());
 
-        let InterpreterEnvironment { cx, job, .. } = env.clone();
+        let InterpreterEnvironment { cx, .. } = env.clone();
 
-        let node_env = env.from_job(job.child(self.get_node().id()).await.map_err(link_err)?);
-        let mut vl = self.get_node().interpret(node_env.clone()).await?;
+        let mut vl = self.get_node().interpret(env.clone()).await?;
         let mut linked_node = self;
         for ppm in self.get_md().ppm.iter() {
-            let ppm_env = env.from_job(job.child(self.get_node().id()).await.map_err(link_err)?);
             cx.values()
                 .set_parent_vl(ParentValue::by_node(vl, linked_node))
                 .await
                 .map_err(link_err)?;
-            vl = ppm.interpret(ppm_env.clone()).await?;
+            vl = ppm.interpret(env.clone()).await?;
             linked_node = ppm;
         }
         cx.values().drop_parent_vl().await.map_err(link_err)?;
         Ok(vl)
     }
 }
+
 impl Interpret for LinkedNode {
     #[boxed]
     fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
@@ -52,11 +52,14 @@ impl Interpret for LinkedNode {
 
         let InterpreterEnvironment { job, .. } = env.clone();
 
-        let owned_job = job.child(self.get_node().id()).await.map_err(link_err)?;
+        let owned_job = job
+            .child(self.get_job_name(), self.get_visibility())
+            .await
+            .map_err(link_err)?;
         let owned_env = env.from_job(owned_job.clone());
         owned_job
             .start()
-            .started(Some(self.get_node().id().to_string()))
+            .started(Some(self.get_job_name().to_string()))
             .await
             .map_err(link_err)?;
 

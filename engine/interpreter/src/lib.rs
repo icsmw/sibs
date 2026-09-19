@@ -27,6 +27,14 @@ trait InterpretInner {
     fn inner_interpret(&self, _env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>>;
 }
 
+trait NodeJobVisibility {
+    fn get_visibility(&self) -> JobVisibility;
+}
+
+trait NodeJobName {
+    fn get_job_name(&self) -> String;
+}
+
 pub trait Execute
 where
     Self: Sync,

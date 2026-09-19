@@ -9,8 +9,12 @@ pub struct JobProgress {
 }
 
 impl JobProgress {
-    pub(super) async fn new(identity: JobIdentity, progressor: RtProgress) -> Result<Self, E> {
-        progressor.register(&identity).await?;
+    pub(super) async fn new(
+        identity: JobIdentity,
+        progressor: RtProgress,
+        path: Vec<JobElement>,
+    ) -> Result<Self, E> {
+        progressor.register(path).await?;
         Ok(Self {
             progressor,
             identity,

@@ -44,8 +44,8 @@ impl RtProgress {
                 };
                 match tick {
                     NextTick::Demand(demand) => match demand {
-                        Demand::Register(identity, tx) => {
-                            if let Err(err) = render.add(identity) {
+                        Demand::Register(path, tx) => {
+                            if let Err(err) = render.add(path) {
                                 chk_send_err!(tx.send(Err(err)), DemandId::Register);
                                 continue;
                             };
@@ -77,9 +77,9 @@ impl RtProgress {
         Ok(instance)
     }
 
-    pub(crate) async fn register(&self, identity: &JobIdentity) -> Result<(), E> {
+    pub(crate) async fn register(&self, path: Vec<JobElement>) -> Result<(), E> {
         let (tx, rx) = oneshot::channel();
-        self.tx.send(Demand::Register(identity.clone(), tx))?;
+        self.tx.send(Demand::Register(path, tx))?;
         rx.await?
     }
 
@@ -111,15 +111,19 @@ async fn visual_test() {
     use tokio::time::{self, Duration};
     let progressor = RtProgress::new().expect("RtProgress has been created");
     for job in ["a", "b", "c", "d"] {
-        let master = JobIdentity::new(format!("Job {job}"), None);
+        let master = JobIdentity::new(format!("Job {job}"), None, JobVisibility::Visible);
         progressor
-            .register(&master)
+            .register(vec![JobElement::from(&master)])
             .await
             .expect("Job's progress registered");
         for sub in 0..5 {
-            let child = JobIdentity::new(format!("sub job {job} #{sub}"), Some(master.uuid()));
+            let child = JobIdentity::new(
+                format!("sub job {job} #{sub}"),
+                Some(master.uuid()),
+                JobVisibility::Visible,
+            );
             progressor
-                .register(&child)
+                .register(vec![JobElement::from(&master), JobElement::from(&child)])
                 .await
                 .expect("Sub job's progress registered");
             if sub % 2 == 0 {

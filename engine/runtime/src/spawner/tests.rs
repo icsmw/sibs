@@ -35,7 +35,10 @@ impl Drop for TestDir {
 async fn setup_failure_finishes_the_job() {
     let dir = TestDir::new();
     let jobs = RtJobs::new(&dir.0).unwrap();
-    let job = jobs.create("root", None).await.unwrap();
+    let job = jobs
+        .create("root", None, JobVisibility::Visible)
+        .await
+        .unwrap();
     let cmd = dir
         .0
         .join("missing-executable")
@@ -63,7 +66,10 @@ async fn inherited_cancellation_finishes_the_process_job() {
     )
     .unwrap();
     let jobs = RtJobs::new(&dir.0).unwrap();
-    let job = jobs.create("root", None).await.unwrap();
+    let job = jobs
+        .create("root", None, JobVisibility::Visible)
+        .await
+        .unwrap();
     let process_job = job.clone();
     let cwd = dir.0.clone();
     let process = tokio::spawn(async move { spawn("/bin/sh wait.sh", cwd, process_job).await });

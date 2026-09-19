@@ -93,7 +93,7 @@ pub async fn spawn<S: AsRef<str>, P: AsRef<Path>>(
     let cwd_str = cwd.as_ref().to_string_lossy().to_string();
     let mut cstdout = Vec::new();
     let mut cstderr = Vec::new();
-    let job = job.child(cmd.as_ref()).await?;
+    let job = job.child(cmd.as_ref(), JobVisibility::Visible).await?;
     job.start().started(Some(cmd.as_ref())).await?;
     let journal = job.journal();
     let mut progress = None;
