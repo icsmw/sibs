@@ -1,4 +1,6 @@
-use tokio_util::sync::{CancellationToken, WaitForCancellationFuture};
+use tokio_util::sync::{
+    CancellationToken, WaitForCancellationFuture, WaitForCancellationFutureOwned,
+};
 
 #[derive(Debug, Clone, Default)]
 pub struct JobSensonrs {
@@ -16,6 +18,9 @@ impl JobSensonrs {
     }
     pub fn cancellation(&self) -> WaitForCancellationFuture<'_> {
         self.cancel.cancelled()
+    }
+    pub fn cancellation_owned(&self) -> WaitForCancellationFutureOwned {
+        self.cancel.clone().cancelled_owned()
     }
     pub fn is_cancelled(&self) -> bool {
         self.cancel.is_cancelled()

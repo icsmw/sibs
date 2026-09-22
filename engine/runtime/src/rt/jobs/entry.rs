@@ -72,6 +72,9 @@ impl JobEntry {
         alias: S,
         visibility: JobVisibility,
     ) -> Result<&JobEntry, E> {
+        if self.sensors.is_cancelled() {
+            return Err(E::Cancelled);
+        }
         if !match self.state() {
             JobState::Created | JobState::Started(_) => true,
             JobState::Cancelling

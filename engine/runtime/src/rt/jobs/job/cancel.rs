@@ -1,3 +1,5 @@
+use tokio_util::sync::WaitForCancellationFutureOwned;
+
 use super::*;
 
 #[derive(Debug, Clone)]
@@ -12,7 +14,10 @@ impl<'a> Cancel<'a> {
 }
 
 impl Cancel<'_> {
-    pub async fn cancel(&self) -> Result<(), E> {
+    /// Begin cancellation of this job and signal its descendants.
+    /// The lifecycle owner must call this once; repeated transitions are errors.
+    pub async fn cancelling(&self) -> Result<(), E> {
+        self.job.sensors.cancel();
         self.job.update_state(JobState::Cancelling).await
     }
     pub async fn cancelled<S: ToString>(&self, msg: Option<S>) -> Result<(), E> {
@@ -22,6 +27,9 @@ impl Cancel<'_> {
     }
     pub fn cancellation(&self) -> WaitForCancellationFuture<'_> {
         self.job.sensors.cancellation()
+    }
+    pub fn cancellation_owned(&self) -> WaitForCancellationFutureOwned {
+        self.job.sensors.cancellation_owned()
     }
     pub fn is_cancelled(&self) -> bool {
         self.job.sensors.is_cancelled()

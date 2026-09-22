@@ -72,6 +72,9 @@ impl Job {
     }
 
     pub async fn child<S: ToString>(&self, alias: S, visibility: JobVisibility) -> Result<Job, E> {
+        if self.cancel().is_cancelled() {
+            return Err(E::Cancelled);
+        }
         self.jobs
             .create(alias.to_string(), Some(self.identity.uuid()), visibility)
             .await

@@ -11,7 +11,7 @@ pub enum JobState {
     #[default]
     Created,
     Started(String),
-    // Cancel has been triggered. Waiting for a confirmation
+    // Cancellation has begun; execution and cleanup may still be running.
     Cancelling,
     // Task cancelled
     Cancelled(Option<String>),
@@ -46,7 +46,10 @@ impl JobState {
                 )
             }
             Self::Cancelling => {
-                matches!(other, Self::Cancelled(..))
+                matches!(
+                    other,
+                    Self::Cancelled(..) | Self::Success(..) | Self::Failed(..)
+                )
             }
             Self::Cancelled(_) | Self::Success(_) | Self::Failed(_) => false,
         } {
@@ -108,6 +111,16 @@ mod tests {
             state.update(uuid, next.clone()).expect("valid transition");
             assert_eq!(state, next);
         }
+    }
+
+    #[test]
+    fn cancellation_cleanup_can_report_a_failure() {
+        let uuid = Uuid::new_v4();
+        let mut state = JobState::Cancelling;
+        state
+            .update(uuid, JobState::Failed(Some("cleanup failed".into())))
+            .unwrap();
+        assert_eq!(state, JobState::Failed(Some("cleanup failed".into())));
     }
 
     #[test]

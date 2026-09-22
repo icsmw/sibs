@@ -53,12 +53,30 @@ where
         .started(name)
         .await
         .map_err(|err| LinkedErr::from(err, node))?;
-    let result = node.exec(env.clone()).await;
+
+    let result = if env.job.cancel().is_cancelled() {
+        Err(LinkedErr::from(E::Cancelled, node))
+    } else {
+        node.exec(env.clone()).await
+    };
+
     match &result {
         Ok(_) => {
             env.job
                 .done()
                 .success::<String>(None)
+                .await
+                .map_err(|err| LinkedErr::from(err, node))?;
+        }
+        Err(err) if matches!(err.e, E::Cancelled) => {
+            env.job
+                .cancel()
+                .cancelling()
+                .await
+                .map_err(|err| LinkedErr::from(err, node))?;
+            env.job
+                .cancel()
+                .cancelled::<String>(None)
                 .await
                 .map_err(|err| LinkedErr::from(err, node))?;
         }

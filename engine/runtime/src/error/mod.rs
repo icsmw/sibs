@@ -154,12 +154,14 @@ pub enum E {
     #[error("No progress has been found for parent task: {0}")]
     NoProgressForTask(Uuid),
 
-    #[error("Fail to spawn command: \"{0}\"; cwd: \"{1}\"")]
-    SpawnSetup(String, String),
-    #[error("Executing command error: \"{0}\"; cwd: \"{1}\"")]
-    SpawnError(String, String),
+    #[error("Fail to setup spawn")]
+    SpawnSetup(String),
+    #[error("Executing command error: \"{0}\"")]
+    SpawnError(String),
     #[error("Failed command: {0};")]
     SpawnFailed(String),
+    #[error("Attempt to spawn empty command")]
+    SpawnEmptyCommand,
 
     #[error("Fail to get time with UNIX_EPOCH")]
     Timestamp,
@@ -187,6 +189,9 @@ pub enum E {
 
     #[error("{0}")]
     JobState(JobStateError),
+
+    #[error("Execution cancelled")]
+    Cancelled,
 }
 
 impl From<JobStateError> for E {

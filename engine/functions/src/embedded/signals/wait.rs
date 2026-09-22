@@ -25,6 +25,9 @@ pub fn executor(env: FnEnv) -> RtPinnedResult<'static, LinkedErr<E>> {
             (&caller).into(),
         ));
     };
+    if env.job.cancel().is_cancelled() {
+        return Err(LinkedErr::by_link(E::Cancelled, (&caller).into()));
+    }
     if let Some(tk) = env
         .rt
         .signals()
@@ -36,9 +39,64 @@ pub fn executor(env: FnEnv) -> RtPinnedResult<'static, LinkedErr<E>> {
             let cancel = env.job.cancel();
             tokio::select! {
                 _ = tk.cancelled() => {}
-                _ = cancel.cancellation() => {}
+                _ = cancel.cancellation() => {
+                    return Err(LinkedErr::by_link(E::Cancelled, (&caller).into()));
+                }
             }
         }
     }
     Ok(RtValue::Void)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn cancelled_wait_returns_cancellation_without_a_following_node() {
+        use tokio::time::{timeout, Duration};
+        let rt = Runtime::new(
+            RtParameters::default_from_cwd().unwrap(),
+            TypesTable::default(),
+            Fns::default(),
+            Tasks::default(),
+        )
+        .unwrap();
+        let env = rt
+            .create_interpreter_env("signal wait", None)
+            .await
+            .unwrap();
+        let job = env.job.clone();
+        job.start().started::<String>(None).await.unwrap();
+        let call = FnEnv::from_interpreter_env(
+            &env,
+            vec![FnArgValue::new(
+                RtValue::Str("Never".into()),
+                SrcLink::default(),
+            )],
+            SrcLink::default(),
+        );
+        let execution = tokio::spawn(executor(call));
+        timeout(Duration::from_secs(5), async {
+            while rt.signals().waiters_signal("Never").await.unwrap() == 0 {
+                tokio::task::yield_now().await;
+            }
+        })
+        .await
+        .unwrap();
+        job.cancel().cancelling().await.unwrap();
+        let result = timeout(Duration::from_secs(5), execution)
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(matches!(
+            result,
+            Err(LinkedErr {
+                e: E::Cancelled,
+                ..
+            })
+        ));
+        job.cancel().cancelled::<String>(None).await.unwrap();
+        rt.destroy().await.unwrap();
+    }
 }

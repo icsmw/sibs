@@ -2,96 +2,31 @@
 mod tests;
 
 use crate::*;
-use futures::stream::{FuturesUnordered, StreamExt};
-use std::collections::HashMap;
-use tokio::{spawn, task::JoinHandle};
-
-type LinkedJoinHandle = (SrcLink, JoinHandle<(Uuid, Result<RtValue, LinkedErr<E>>)>);
-
-async fn wait(
-    tasks: Vec<LinkedJoinHandle>,
-    job: &Job,
-) -> Result<HashMap<Uuid, Result<RtValue, LinkedErr<E>>>, LinkedErr<E>> {
-    let mut results: HashMap<Uuid, Result<RtValue, LinkedErr<E>>> = HashMap::new();
-    let mut futures = FuturesUnordered::new();
-    for (link, task) in tasks {
-        futures.push(async move { task.await.map_err(|err| (link, err)) });
-    }
-    while let Some(result) = futures.next().await {
-        match result {
-            Ok((uuid, Ok(result))) => {
-                results.insert(uuid, Ok(result));
-            }
-            Ok((uuid, Err(err))) => {
-                if !job.cancel().is_cancelled() {
-                    job.cancel()
-                        .cancelled(Some(err.e.to_string()))
-                        .await
-                        .map_err(|e| LinkedErr::by_link(e, err.link.clone()))?;
-                }
-                results.insert(uuid, Err(err));
-            }
-            Err((link, err)) => {
-                job.done()
-                    .failed(Some(err.to_string()))
-                    .await
-                    .map_err(|err| LinkedErr::by_link(err, (&link).into()))?;
-                return Err(LinkedErr::by_link(err.into(), (&link).into()));
-            }
-        }
-    }
-    Ok(results)
-}
+use futures::future::join_all;
+use tokio::spawn;
 
 impl Interpret for Join {
     #[boxed]
     fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
-        let order = self
-            .commands
-            .iter()
-            .map(|node| *node.uuid())
-            .collect::<Vec<Uuid>>();
         let tasks = self
             .commands
             .iter()
             .cloned()
             .map(|node| {
-                let join_env_inner = env.clone();
-                (
-                    node.link(),
-                    spawn(async move { (*node.uuid(), node.interpret(join_env_inner).await) }),
-                )
+                let branch_env = env.clone();
+                spawn(async move { node.interpret(branch_env).await })
             })
-            .collect::<Vec<LinkedJoinHandle>>();
-        let result = wait(tasks, &env.job).await;
-        match result {
-            Ok(mut results) => {
-                if order.len() != results.len() {
-                    return Err(LinkedErr::by_link(
-                        E::SomeNodesHadSameUuid,
-                        (&self.link()).into(),
-                    ));
-                }
-                let mut output: Vec<RtValue> = Vec::new();
-                for uuid in order.into_iter() {
-                    match results.remove(&uuid) {
-                        Some(Ok(value)) => {
-                            output.push(value);
-                        }
-                        Some(Err(err)) => {
-                            return Err(err);
-                        }
-                        None => {
-                            return Err(LinkedErr::by_link(
-                                E::FailToFindJoinResult(uuid),
-                                (&self.link()).into(),
-                            ));
-                        }
-                    }
-                }
-                Ok(RtValue::Vec(output))
-            }
-            Err(err) => Err(err),
-        }
+            .collect::<Vec<_>>();
+        // Await every branch and retain source order, including errors.
+        let output = join_all(tasks)
+            .await
+            .into_iter()
+            .map(|result| match result {
+                Ok(Ok(value)) => value,
+                Ok(Err(err)) => RtValue::Error(err.e.to_string()),
+                Err(err) => RtValue::Error(E::from(err).to_string()),
+            })
+            .collect();
+        Ok(RtValue::Vec(output))
     }
 }

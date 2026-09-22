@@ -57,21 +57,25 @@ where
             .open_cx(self.uuid())
             .await
             .map_err(|err| LinkedErr::by_link(err, (&self.link()).into()))?;
-        let mut result = self.block().interpret(env.clone()).await?;
-        result = if let Some(result) = cx
-            .returns()
-            .withdraw_vl(self.uuid())
-            .await
-            .map_err(|err| LinkedErr::by_link(err, (&self.link()).into()))?
-        {
-            result
-        } else {
-            result
-        };
+        let result = async {
+            let mut result = self.block().interpret(env.clone()).await?;
+            result = if let Some(result) = cx
+                .returns()
+                .withdraw_vl(self.uuid())
+                .await
+                .map_err(|err| LinkedErr::by_link(err, (&self.link()).into()))?
+            {
+                result
+            } else {
+                result
+            };
+            Ok(result)
+        }
+        .await;
         cx.returns()
             .close_cx()
             .await
             .map_err(|err| LinkedErr::by_link(err, (&self.link()).into()))?;
-        Ok(result)
+        result
     }
 }

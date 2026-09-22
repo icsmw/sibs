@@ -85,23 +85,25 @@ impl ErrorCode for E {
             Self::SpawnSetup(..) => "00068",
             Self::SpawnError(..) => "00069",
             Self::SpawnFailed(..) => "00070",
+            Self::SpawnEmptyCommand => "00071",
 
-            Self::Timestamp => "00071",
+            Self::Timestamp => "00072",
 
-            Self::JobAlreadyExists(..) => "00072",
-            Self::JobDoesNotExist(..) => "00073",
+            Self::JobAlreadyExists(..) => "00073",
+            Self::JobDoesNotExist(..) => "00074",
 
-            Self::JoinError(..) => "00074",
-            Self::FailToFindJoinResult(..) => "00075",
-            Self::SomeNodesHadSameUuid => "00076",
+            Self::JoinError(..) => "00075",
+            Self::FailToFindJoinResult(..) => "00076",
+            Self::SomeNodesHadSameUuid => "00077",
 
-            Self::MultipleSignalEmit(..) => "00077",
+            Self::MultipleSignalEmit(..) => "00078",
 
-            Self::Other(..) => "00078",
+            Self::Other(..) => "00079",
 
-            Self::Journal(..) => "00079",
+            Self::Journal(..) => "00080",
 
-            Self::JobState(..) => "00080",
+            Self::JobState(..) => "00081",
+            Self::Cancelled => "00082",
         }
     }
     fn src(&self) -> ErrorSource {
@@ -143,7 +145,7 @@ mod test {
                 EId::FailCovertToRsType => E::FailCovertToRsType(String::new(), String::new()),
                 EId::VariableNotFound => E::VariableNotFound(String::new()),
                 EId::NotApplicableToTypeOperation => E::NotApplicableToTypeOperation,
-                EId::InvalidType => E::InvalidType(Ty::Undefined, RtValue::Error),
+                EId::InvalidType => E::InvalidType(Ty::Undefined, RtValue::Error(String::new())),
                 EId::DismatchValueType => E::DismatchValueType(String::new(), String::new()),
 
                 EId::FuncAlreadyRegistered => E::FuncAlreadyRegistered(String::new()),
@@ -196,9 +198,10 @@ mod test {
                 EId::RenderTemplateErr => E::RenderTemplateErr(String::new()),
                 EId::NoProgressForTask => E::NoProgressForTask(Uuid::new_v4()),
 
-                EId::SpawnSetup => E::SpawnSetup(String::new(), String::new()),
-                EId::SpawnError => E::SpawnError(String::new(), String::new()),
+                EId::SpawnSetup => E::SpawnSetup(String::new()),
+                EId::SpawnError => E::SpawnError(String::new()),
                 EId::SpawnFailed => E::SpawnFailed(String::new()),
+                EId::SpawnEmptyCommand => E::SpawnEmptyCommand,
 
                 EId::Timestamp => E::Timestamp,
 
@@ -216,6 +219,7 @@ mod test {
                 EId::Journal => E::Journal(String::new()),
 
                 EId::JobState => E::JobState(JobStateError::CannotSetPending(Uuid::new_v4())),
+                EId::Cancelled => E::Cancelled,
             }
         }
     }

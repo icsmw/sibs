@@ -56,7 +56,6 @@ impl From<SpawnStatus> for ExecuteResult {
                 ExecuteResult::Failed(code, output.into_iter().map(RtValue::Str).collect())
             }
             SpawnStatus::RunError(err) => ExecuteResult::RunError(err),
-            SpawnStatus::Cancelled => ExecuteResult::Cancelled,
         }
     }
 }
@@ -73,7 +72,7 @@ pub enum RtValue {
     PathBuf(PathBuf),
     Str(String),
     Vec(Vec<RtValue>),
-    Error,
+    Error(String),
     Closure(Uuid),
     BinaryOperator(BinaryOperator),
     ComparisonOperator(ComparisonOperator),
@@ -93,7 +92,7 @@ impl RtValue {
         match self {
             Self::ExecuteResult(..)
             | Self::NamedArgumentValue(..)
-            | Self::Error
+            | Self::Error(..)
             | Self::Closure(..)
             | Self::BinaryOperator(..)
             | Self::ComparisonOperator(..)
@@ -131,7 +130,7 @@ impl RtValue {
             Self::PathBuf(..) => Some(DeterminedTy::PathBuf.into()),
             Self::Str(..) => Some(DeterminedTy::Str.into()),
             Self::Range(..) => Some(DeterminedTy::Range.into()),
-            Self::Error => Some(DeterminedTy::Error.into()),
+            Self::Error(..) => Some(DeterminedTy::Error.into()),
             Self::ExecuteResult(..) => Some(DeterminedTy::ExecuteResult.into()),
             Self::Closure(uuid) => Some(DeterminedTy::Closure(*uuid, None).into()),
             Self::Void => Some(DeterminedTy::Void.into()),
@@ -164,7 +163,7 @@ impl RtValue {
             | Self::LogicalOperator(..)
             | Self::Closure(..)
             | Self::ComparisonOperator(..)
-            | Self::Error
+            | Self::Error(..)
             | Self::ExecuteResult(..)
             | Self::Range(..)
             | Self::Vec(..)
@@ -198,7 +197,7 @@ impl fmt::Display for RtValue {
                 Self::PathBuf(v) => format!("PathBuf({})", v.to_string_lossy()),
                 Self::Str(v) => format!("Str({v})"),
                 Self::Vec(v) => format!("Vec({v:?})"),
-                Self::Error => String::from("Error"),
+                Self::Error(message) => format!("Error({message})"),
                 Self::Closure(v) => format!("Closure({v})"),
                 Self::BinaryOperator(..) => String::from("BinaryOperator"),
                 Self::ComparisonOperator(..) => String::from("ComparisonOperator"),

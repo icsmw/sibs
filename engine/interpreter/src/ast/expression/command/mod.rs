@@ -28,7 +28,7 @@ impl Interpret for Command {
             );
         }
         let cmd = vls.join("");
-        spawner::spawn(
+        spawner::SpawnerBuilder::new(
             &cmd,
             env.cx
                 .cwd()
@@ -38,7 +38,10 @@ impl Interpret for Command {
             env.job,
         )
         .await
-        .map(|ss| ss.into())
+        .map_err(|err| LinkedErr::from(err, self))?
+        .spawn()
+        .await
+        .map(Into::into)
         .map_err(|err| LinkedErr::from(err, self))
     }
 }
