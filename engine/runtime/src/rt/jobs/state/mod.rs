@@ -4,7 +4,7 @@ mod error;
 pub use error::*;
 use uuid::Uuid;
 
-use crate::scheme;
+use crate::*;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub enum JobState {
@@ -21,6 +21,15 @@ pub enum JobState {
 }
 
 impl JobState {
+    pub(super) fn is_cancelling(&self) -> bool {
+        matches!(self, JobState::Cancelling)
+    }
+    pub(super) fn is_locked(&self) -> bool {
+        !matches!(self, JobState::Created | JobState::Started(_))
+    }
+    pub(super) fn lock(&mut self, uuid: Uuid) -> Result<(), JobStateError> {
+        self.update(uuid, JobState::Cancelling)
+    }
     pub fn is_finished(&self) -> bool {
         match self {
             Self::Success(_) | Self::Failed(_) | Self::Cancelled(_) => true,
@@ -28,11 +37,11 @@ impl JobState {
         }
     }
 
-    pub fn update(&mut self, uuid: Uuid, other: JobState) -> Result<(), JobStateError> {
-        if self == &other {
-            return Err(JobStateError::JobStateAlreadySet(uuid, other));
+    pub fn would_update(&self, uuid: Uuid, other: &JobState) -> Result<(), JobStateError> {
+        if self == other {
+            return Err(JobStateError::JobStateAlreadySet(uuid, other.clone()));
         }
-        if other == Self::Created {
+        if other == &Self::Created {
             return Err(JobStateError::CannotSetPending(uuid));
         }
         if !match self {
@@ -53,8 +62,18 @@ impl JobState {
             }
             Self::Cancelled(_) | Self::Success(_) | Self::Failed(_) => false,
         } {
-            return Err(JobStateError::InvalidOrder(uuid, self.clone(), other));
+            Err(JobStateError::InvalidOrder(
+                uuid,
+                self.clone(),
+                other.clone(),
+            ))
+        } else {
+            Ok(())
         }
+    }
+
+    pub fn update(&mut self, uuid: Uuid, other: JobState) -> Result<(), JobStateError> {
+        self.would_update(uuid, &other)?;
         *self = other;
         Ok(())
     }

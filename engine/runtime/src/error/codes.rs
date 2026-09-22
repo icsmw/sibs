@@ -104,6 +104,8 @@ impl ErrorCode for E {
 
             Self::JobState(..) => "00081",
             Self::Cancelled => "00082",
+            Self::JobsShutdowning => "00083",
+            Self::JobsShutdownTimeout(_) => "00084",
         }
     }
     fn src(&self) -> ErrorSource {
@@ -220,6 +222,8 @@ mod test {
 
                 EId::JobState => E::JobState(JobStateError::CannotSetPending(Uuid::new_v4())),
                 EId::Cancelled => E::Cancelled,
+                EId::JobsShutdowning => E::JobsShutdowning,
+                EId::JobsShutdownTimeout => E::JobsShutdownTimeout(5000),
             }
         }
     }

@@ -1,8 +1,18 @@
+mod identity;
+mod sensors;
+mod snapshot;
+
 use super::*;
 use crate::{
     rt::jobs::state::{JobState, JobStateError},
     *,
 };
+
+pub use identity::*;
+pub(crate) use sensors::*;
+pub(crate) use snapshot::*;
+
+pub(crate) type JobStateUpdate = Arc<Notify>;
 
 #[derive(Debug)]
 pub struct JobEntry {
@@ -10,17 +20,37 @@ pub struct JobEntry {
     childs: HashMap<Uuid, JobEntry>,
     sensors: JobSensonrs,
     state: JobState,
+    state_update: JobStateUpdate,
 }
 
 impl JobEntry {
-    pub fn new(identity: JobIdentity) -> Self {
+    pub fn new(identity: JobIdentity, state_update: JobStateUpdate) -> Self {
         Self {
             identity,
             childs: HashMap::new(),
             sensors: JobSensonrs::default(),
             state: JobState::default(),
+            state_update,
         }
     }
+    pub(super) fn is_locked(&self) -> bool {
+        self.state.is_locked()
+    }
+    pub(super) fn lock(&mut self) -> Result<(), E> {
+        self.sensors.cancel();
+        self.state
+            .lock(self.identity.uuid())
+            .map_err(|err| err.into())
+    }
+
+    pub(super) fn snapshot(&self) -> JobStateSnapshot {
+        let mut snapshot = JobStateSnapshot::new(self.sensors.finished(), self.identity.uuid());
+        for (uuid, entry) in self.childs.iter() {
+            snapshot.childs.insert(*uuid, entry.snapshot());
+        }
+        snapshot
+    }
+
     pub fn identity(&self) -> &JobIdentity {
         &self.identity
     }
@@ -75,15 +105,9 @@ impl JobEntry {
         if self.sensors.is_cancelled() {
             return Err(E::Cancelled);
         }
-        if !match self.state() {
-            JobState::Created | JobState::Started(_) => true,
-            JobState::Cancelling
-            | JobState::Cancelled(_)
-            | JobState::Failed(_)
-            | JobState::Success(_) => false,
-        } {
+        if self.state.is_locked() {
             return Err(
-                JobStateError::InvalidState(self.identity.uuid(), self.state().clone()).into(),
+                JobStateError::InvalidState(self.identity.uuid(), self.state.clone()).into(),
             );
         }
         let parent = self.identity.uuid();
@@ -92,6 +116,7 @@ impl JobEntry {
             childs: HashMap::new(),
             sensors: self.sensors.child(),
             state: JobState::default(),
+            state_update: self.state_update.clone(),
         };
         if self.childs.contains_key(&job.identity.uuid()) {
             return Err(E::JobAlreadyExists(
@@ -103,6 +128,7 @@ impl JobEntry {
         self.childs.insert(uuid, job);
         self.childs.get(&uuid).ok_or(E::JobDoesNotExist(uuid))
     }
+
     pub fn job(&self, jobs: RtJobs, journal: RtJournal, progress: RtProgress) -> Job {
         Job::new(
             self.identity.clone(),
@@ -126,32 +152,36 @@ impl JobEntry {
                 }
             })
         }
+
+        self.state.would_update(self.identity.uuid(), &state)?;
+
         // Validate the transition without committing it or triggering sensors.
-        let mut next = self.state.clone();
-        next.update(self.identity.uuid(), state)?;
-        if next.is_finished() {
+        if state.is_finished() {
             if let Some(child) = nested(self) {
                 return Err(JobStateError::UnfinishedDescendant {
                     parent: self.identity.uuid(),
                     current: self.state.clone(),
-                    requested: next,
+                    requested: state.clone(),
                     child: child.identity.uuid(),
                     child_state: child.state.clone(),
                 }
                 .into());
             }
         }
-        self.state = next;
-        match &self.state {
-            JobState::Cancelling => {
-                self.sensors.cancel();
-            }
-            JobState::Success(_)
-            | JobState::Failed(_)
-            | JobState::Cancelled(_)
-            | JobState::Created
-            | JobState::Started(_) => {}
+
+        self.state.update(self.identity.uuid(), state)?;
+
+        if self.state.is_finished() {
+            // Publish completion before notifying the shutdown observer.
+            self.sensors.finish();
         }
+
+        self.state_update.notify_one();
+
+        if self.state.is_cancelling() {
+            self.sensors.cancel();
+        }
+
         Ok(())
     }
 }
@@ -172,8 +202,10 @@ mod tests {
                 JobState::Failed(Some("cause".into())),
                 JobState::Cancelled(None),
             ] {
-                let mut parent =
-                    JobEntry::new(JobIdentity::new("parent", None, JobVisibility::Hidden));
+                let mut parent = JobEntry::new(
+                    JobIdentity::new("parent", None, JobVisibility::Hidden),
+                    Arc::new(Notify::new()),
+                );
                 let child_id = parent
                     .child("child", JobVisibility::Hidden)
                     .unwrap()
@@ -201,7 +233,10 @@ mod tests {
 
     #[test]
     fn finished_child_does_not_hide_an_unfinished_grandchild() {
-        let mut parent = JobEntry::new(JobIdentity::new("parent", None, JobVisibility::Hidden));
+        let mut parent = JobEntry::new(
+            JobIdentity::new("parent", None, JobVisibility::Hidden),
+            Arc::new(Notify::new()),
+        );
         let child = parent
             .child("child", JobVisibility::Hidden)
             .unwrap()
@@ -224,7 +259,10 @@ mod tests {
 
     #[test]
     fn path_filters_only_the_ancestor_chain_in_order() {
-        let mut root = JobEntry::new(JobIdentity::new("root", None, JobVisibility::Visible));
+        let mut root = JobEntry::new(
+            JobIdentity::new("root", None, JobVisibility::Visible),
+            Arc::new(Notify::new()),
+        );
         let hidden = root
             .child("hidden", JobVisibility::Hidden)
             .unwrap()
@@ -274,7 +312,10 @@ mod tests {
 
     #[test]
     fn child_returns_the_registered_entry() {
-        let mut parent = JobEntry::new(JobIdentity::new("parent", None, JobVisibility::default()));
+        let mut parent = JobEntry::new(
+            JobIdentity::new("parent", None, JobVisibility::default()),
+            Arc::new(Notify::new()),
+        );
         let parent_uuid = parent.identity().uuid();
         let first_uuid = {
             let child = parent
@@ -301,5 +342,68 @@ mod tests {
             parent.find(&second_uuid).unwrap().identity().uuid(),
             second_uuid
         );
+    }
+}
+
+#[cfg(test)]
+mod snapshot_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn snapshot_tracks_descendants_and_rejected_updates_do_not_notify() {
+        let changed = Arc::new(Notify::new());
+        let mut root = JobEntry::new(
+            JobIdentity::new("root", None, JobVisibility::Hidden),
+            changed.clone(),
+        );
+        let parent = root
+            .child("parent", JobVisibility::Hidden)
+            .unwrap()
+            .identity()
+            .uuid();
+        let child = root
+            .find(&parent)
+            .unwrap()
+            .child("child", JobVisibility::Hidden)
+            .unwrap()
+            .identity()
+            .uuid();
+        let snapshot = root.snapshot();
+
+        root.find(&parent)
+            .unwrap()
+            .update(JobState::Started(String::new()))
+            .unwrap();
+        changed.notified().await;
+        assert!(root
+            .find(&parent)
+            .unwrap()
+            .update(JobState::Success(None))
+            .is_err());
+        assert!(
+            tokio::time::timeout(Duration::from_millis(20), changed.notified())
+                .await
+                .is_err()
+        );
+        assert_eq!(snapshot.unfinished().len(), 2);
+
+        root.find(&child)
+            .unwrap()
+            .update(JobState::Cancelling)
+            .unwrap();
+        changed.notified().await;
+        assert_eq!(snapshot.unfinished().len(), 2);
+        root.find(&child)
+            .unwrap()
+            .update(JobState::Cancelled(None))
+            .unwrap();
+        changed.notified().await;
+        assert_eq!(snapshot.unfinished(), vec![parent]);
+        root.find(&parent)
+            .unwrap()
+            .update(JobState::Success(None))
+            .unwrap();
+        changed.notified().await;
+        assert!(snapshot.unfinished().is_empty());
     }
 }

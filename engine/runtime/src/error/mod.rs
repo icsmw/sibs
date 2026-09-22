@@ -192,6 +192,12 @@ pub enum E {
 
     #[error("Execution cancelled")]
     Cancelled,
+
+    #[error("Jobs are locked because shutdown is processing")]
+    JobsShutdowning,
+
+    #[error("Fail to shutdown Jobs in {0}ms")]
+    JobsShutdownTimeout(u128),
 }
 
 impl From<JobStateError> for E {

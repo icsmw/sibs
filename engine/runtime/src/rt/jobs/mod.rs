@@ -1,17 +1,18 @@
 mod api;
 mod entry;
-mod identity;
 mod job;
-mod sensors;
 mod state;
 
 use crate::*;
 use api::*;
-use entry::*;
-pub use identity::*;
+pub(crate) use entry::*;
+pub use entry::{JobElement, JobIdentity, JobVisibility};
 pub use job::*;
-pub(crate) use sensors::*;
 pub(crate) use state::*;
+
+use tokio::{sync::Notify, time::Duration};
+
+const SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(5);
 
 #[derive(Clone, Debug)]
 pub struct RtJobs {
@@ -22,25 +23,64 @@ impl RtJobs {
     #[tracing::instrument]
     pub fn new(root: &PathBuf) -> Result<Self, E> {
         let (tx, mut rx) = unbounded_channel();
+        let mut master_tx = Some(tx.clone());
         let instance = Self { tx };
         let progress = RtProgress::new()?;
         let journal = RtJournal::new(root)?;
         let inner = instance.clone();
         spawn(async move {
             tracing::info!("init demand's listener");
-            let mut root: JobEntry =
-                JobEntry::new(JobIdentity::new("root", None, JobVisibility::Hidden));
+            let state_listener = Arc::new(Notify::new());
+            let mut root: JobEntry = JobEntry::new(
+                JobIdentity::new("root", None, JobVisibility::Hidden),
+                state_listener.clone(),
+            );
             while let Some(demand) = rx.recv().await {
                 match demand {
                     Demand::Destroy(tx) => {
-                        // TODO: jobs shutdown
+                        let Some(master_tx) = master_tx.take() else {
+                            chk_send_err!(tx.send(Err(E::JobsShutdowning)), DemandId::Destroy);
+                            continue;
+                        };
+                        if root.is_locked() {
+                            chk_send_err!(tx.send(Err(E::JobsShutdowning)), DemandId::Destroy);
+                            continue;
+                        }
                         tracing::info!("got shutdown signal");
-                        chk_send_err!(journal.destroy().await, DemandId::Destroy);
-                        chk_send_err!(progress.destroy().await, DemandId::Destroy);
-                        chk_send_err!(tx.send(()), DemandId::Destroy);
-                        break;
+                        if let Err(err) = root.lock() {
+                            chk_send_err!(tx.send(Err(err)), DemandId::Destroy);
+                            continue;
+                        }
+                        let snapshot = root.snapshot();
+                        let (done_tx, done_rx) = oneshot::channel();
+                        let timeout = tokio::time::Instant::now() + SHUTDOWN_TIMEOUT;
+                        let state_listener_inner = state_listener.clone();
+                        spawn(async move {
+                            let result = match tokio::time::timeout_at(timeout, async {
+                                loop {
+                                    if snapshot.unfinished().is_empty() {
+                                        break;
+                                    }
+                                    state_listener_inner.notified().await;
+                                }
+                            })
+                            .await
+                            {
+                                Ok(_) => Ok(()),
+                                Err(_) => Err(E::JobsShutdownTimeout(SHUTDOWN_TIMEOUT.as_millis())),
+                            };
+                            chk_send_err!(
+                                master_tx.send(Demand::Shutdown(done_tx, result)),
+                                DemandId::Shutdown
+                            );
+                        });
+                        chk_send_err!(tx.send(Ok(done_rx)), DemandId::Destroy);
                     }
                     Demand::Create(alias, parent, visibility, tx) => {
+                        if root.is_locked() {
+                            chk_send_err!(tx.send(Err(E::JobsShutdowning)), DemandId::Create);
+                            continue;
+                        }
                         let entry = if let Some(parent_uuid) = parent {
                             let Some(parent) = root.find(&parent_uuid) else {
                                 chk_send_err!(
@@ -85,6 +125,12 @@ impl RtJobs {
 
                         chk_send_err!(tx.send(Ok(())), DemandId::Update);
                     }
+                    Demand::Shutdown(done_tx, results) => {
+                        chk_send_err!(journal.destroy().await, DemandId::Shutdown);
+                        chk_send_err!(progress.destroy().await, DemandId::Shutdown);
+                        chk_send_err!(done_tx.send(results), DemandId::Shutdown);
+                        break;
+                    }
                 }
             }
             tracing::info!("shutdown demand's listener");
@@ -122,10 +168,10 @@ impl RtJobs {
         rx.await?
     }
 
-    pub async fn destroy(&self) -> Result<(), E> {
+    pub async fn destroy(&self) -> Result<DestroyTokenReceiver, E> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(Demand::Destroy(tx))?;
-        Ok(rx.await?)
+        rx.await?
     }
 }
 
@@ -171,7 +217,11 @@ mod path_tests {
                 JobElement::from(child.identity())
             ]
         );
-        jobs.destroy().await.unwrap();
+        child.cancel().cancelling().await.unwrap();
+        child.cancel().cancelled::<String>(None).await.unwrap();
+        parent.cancel().cancelling().await.unwrap();
+        parent.cancel().cancelled::<String>(None).await.unwrap();
+        jobs.destroy().await.unwrap().await.unwrap().unwrap();
         std::fs::remove_dir_all(dir).unwrap();
     }
 }
@@ -205,7 +255,7 @@ mod lifecycle_tests {
         child.start().started::<String>(None).await.unwrap();
         child.done().failed::<String>(None).await.unwrap();
         parent.done().success::<String>(None).await.unwrap();
-        jobs.destroy().await.unwrap();
+        jobs.destroy().await.unwrap().await.unwrap().unwrap();
         let mut reader = JournalReader::new(&dir).unwrap();
         let session = *reader.list().keys().next().unwrap();
         let count = reader.open(&session).unwrap().unwrap();
@@ -220,6 +270,114 @@ mod lifecycle_tests {
             vec![scheme::EventTy::Started, scheme::EventTy::Success]
         );
         drop(reader);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}
+
+#[cfg(test)]
+mod shutdown_tests {
+    use super::*;
+
+    fn directory() -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("sibs-shutdown-{}", Uuid::new_v4()));
+        std::fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn empty_tree_shuts_down_without_waiting_for_timeout() {
+        let dir = directory();
+        let jobs = RtJobs::new(&dir).unwrap();
+        tokio::time::timeout(Duration::from_secs(2), async {
+            jobs.destroy().await.unwrap().await.unwrap().unwrap();
+        })
+        .await
+        .unwrap();
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn shutdown_waits_for_terminal_states_and_keeps_servicing_updates() {
+        let dir = directory();
+        let jobs = RtJobs::new(&dir).unwrap();
+        let parent = jobs
+            .create("parent", None, JobVisibility::Hidden)
+            .await
+            .unwrap();
+        let child = parent.child("child", JobVisibility::Hidden).await.unwrap();
+        parent.start().started::<String>(None).await.unwrap();
+        child.start().started::<String>(None).await.unwrap();
+
+        tokio::time::timeout(Duration::from_secs(2), async {
+            let mut done = jobs.destroy().await.unwrap();
+            assert!(parent.cancel().is_cancelled());
+            assert!(child.cancel().is_cancelled());
+            assert!(matches!(jobs.destroy().await, Err(E::JobsShutdowning)));
+            assert!(matches!(
+                jobs.create("late", None, JobVisibility::Hidden).await,
+                Err(E::JobsShutdowning)
+            ));
+            assert!(matches!(
+                jobs.create(
+                    "late child",
+                    Some(parent.identity().uuid()),
+                    JobVisibility::Hidden
+                )
+                .await,
+                Err(E::JobsShutdowning)
+            ));
+            assert!(!jobs
+                .path(child.identity().uuid(), |_| true)
+                .await
+                .unwrap()
+                .is_empty());
+
+            child.cancel().cancelling().await.unwrap();
+            parent.cancel().cancelling().await.unwrap();
+            assert!(matches!(
+                done.try_recv(),
+                Err(oneshot::error::TryRecvError::Empty)
+            ));
+            child.cancel().cancelled::<String>(None).await.unwrap();
+            assert!(matches!(
+                done.try_recv(),
+                Err(oneshot::error::TryRecvError::Empty)
+            ));
+            parent.cancel().cancelled::<String>(None).await.unwrap();
+            done.await.unwrap().unwrap();
+        })
+        .await
+        .unwrap();
+
+        // The completion receiver must include journal shutdown and its final records.
+        let mut reader = JournalReader::new(&dir).unwrap();
+        let session = *reader.list().keys().next().unwrap();
+        let count = reader.open(&session).unwrap().unwrap();
+        let records = reader.read(&session, 0, count).unwrap();
+        assert!(records
+            .iter()
+            .any(|r| r.uuid == parent.identity().uuid() && r.event == scheme::EventTy::Cancelled));
+        drop(reader);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn unfinished_job_returns_timeout() {
+        let dir = directory();
+        let jobs = RtJobs::new(&dir).unwrap();
+        let job = jobs
+            .create("unfinished", None, JobVisibility::Hidden)
+            .await
+            .unwrap();
+        let result = tokio::time::timeout(SHUTDOWN_TIMEOUT + Duration::from_secs(2), async {
+            jobs.destroy().await.unwrap().await.unwrap()
+        })
+        .await
+        .unwrap();
+        assert!(
+            matches!(result, Err(E::JobsShutdownTimeout(ms)) if ms == SHUTDOWN_TIMEOUT.as_millis())
+        );
+        assert!(job.cancel().is_cancelled());
         std::fs::remove_dir_all(dir).unwrap();
     }
 }
