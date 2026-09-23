@@ -57,7 +57,7 @@ async fn setup_failure_finishes_the_job() {
     ));
     job.cancel().cancelling().await.unwrap();
     job.cancel().cancelled::<String>(None).await.unwrap();
-    jobs.destroy().await.unwrap().await.unwrap().unwrap();
+    jobs.destroy().await.unwrap();
     assert_eq!(
         dir.events(&cmd),
         vec![scheme::EventTy::Started, scheme::EventTy::Failed]
@@ -103,7 +103,7 @@ async fn inherited_cancellation_finishes_the_process_job() {
         Err(E::Cancelled)
     ));
     job.cancel().cancelled::<String>(None).await.unwrap();
-    jobs.destroy().await.unwrap().await.unwrap().unwrap();
+    jobs.destroy().await.unwrap();
     assert_eq!(
         dir.events("/bin/sh"),
         vec![
@@ -148,7 +148,7 @@ async fn cancellation_transition_is_strict_and_preserves_completion() {
     // Actual completion can still win the race with cancellation.
     child.done().success::<String>(None).await.unwrap();
     parent.done().success::<String>(None).await.unwrap();
-    jobs.destroy().await.unwrap().await.unwrap().unwrap();
+    jobs.destroy().await.unwrap();
     assert_eq!(
         dir.events("parent"),
         vec![
@@ -180,7 +180,7 @@ async fn cancelled_parent_does_not_launch_a_command() {
     ));
     assert!(!dir.0.join("launched").exists());
     job.cancel().cancelled::<String>(None).await.unwrap();
-    jobs.destroy().await.unwrap().await.unwrap().unwrap();
+    jobs.destroy().await.unwrap();
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -201,7 +201,7 @@ async fn empty_command_is_rejected_before_creating_a_job() {
         .success::<String>(None)
         .await
         .expect("no unfinished process job");
-    jobs.destroy().await.unwrap().await.unwrap().unwrap();
+    jobs.destroy().await.unwrap();
 }
 
 #[cfg(unix)]
@@ -239,7 +239,7 @@ exit 7
     );
     assert!(!parent.cancel().is_cancelled());
     parent.done().success::<String>(None).await.unwrap();
-    jobs.destroy().await.unwrap().await.unwrap().unwrap();
+    jobs.destroy().await.unwrap();
     assert_eq!(
         dir.events("/bin/sh"),
         vec![scheme::EventTy::Started, scheme::EventTy::Failed]
@@ -271,5 +271,5 @@ async fn shutdown_accepts_an_already_finished_process() {
     spawner.shutdown().await.unwrap();
     spawner.shutdown().await.unwrap();
     job.done().success::<String>(None).await.unwrap();
-    jobs.destroy().await.unwrap().await.unwrap().unwrap();
+    jobs.destroy().await.unwrap();
 }

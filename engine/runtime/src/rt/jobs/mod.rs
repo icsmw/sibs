@@ -46,7 +46,7 @@ impl RtJobs {
                             chk_send_err!(tx.send(Err(E::JobsShutdowning)), DemandId::Destroy);
                             continue;
                         }
-                        tracing::info!("got shutdown signal");
+                        tracing::info!("got jobs shutdown signal");
                         if let Err(err) = root.lock() {
                             chk_send_err!(tx.send(Err(err)), DemandId::Destroy);
                             continue;
@@ -56,6 +56,7 @@ impl RtJobs {
                         let timeout = tokio::time::Instant::now() + SHUTDOWN_TIMEOUT;
                         let state_listener_inner = state_listener.clone();
                         spawn(async move {
+                            tracing::info!("jobs shutdown has been started");
                             let result = match tokio::time::timeout_at(timeout, async {
                                 loop {
                                     if snapshot.unfinished().is_empty() {
@@ -129,6 +130,7 @@ impl RtJobs {
                         chk_send_err!(journal.destroy().await, DemandId::Shutdown);
                         chk_send_err!(progress.destroy().await, DemandId::Shutdown);
                         chk_send_err!(done_tx.send(results), DemandId::Shutdown);
+                        tracing::info!("jobs shutdown has been done");
                         break;
                     }
                 }
@@ -168,10 +170,11 @@ impl RtJobs {
         rx.await?
     }
 
-    pub async fn destroy(&self) -> Result<DestroyTokenReceiver, E> {
+    pub async fn destroy(&self) -> Result<(), E> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(Demand::Destroy(tx))?;
-        rx.await?
+        let token = rx.await.map_err(|_| E::RecvError)??;
+        token.await.map_err(|_| E::RecvError)?
     }
 }
 
@@ -221,7 +224,7 @@ mod path_tests {
         child.cancel().cancelled::<String>(None).await.unwrap();
         parent.cancel().cancelling().await.unwrap();
         parent.cancel().cancelled::<String>(None).await.unwrap();
-        jobs.destroy().await.unwrap().await.unwrap().unwrap();
+        jobs.destroy().await.unwrap();
         std::fs::remove_dir_all(dir).unwrap();
     }
 }
@@ -255,7 +258,7 @@ mod lifecycle_tests {
         child.start().started::<String>(None).await.unwrap();
         child.done().failed::<String>(None).await.unwrap();
         parent.done().success::<String>(None).await.unwrap();
-        jobs.destroy().await.unwrap().await.unwrap().unwrap();
+        jobs.destroy().await.unwrap();
         let mut reader = JournalReader::new(&dir).unwrap();
         let session = *reader.list().keys().next().unwrap();
         let count = reader.open(&session).unwrap().unwrap();
@@ -289,7 +292,7 @@ mod shutdown_tests {
         let dir = directory();
         let jobs = RtJobs::new(&dir).unwrap();
         tokio::time::timeout(Duration::from_secs(2), async {
-            jobs.destroy().await.unwrap().await.unwrap().unwrap();
+            jobs.destroy().await.unwrap();
         })
         .await
         .unwrap();
@@ -309,7 +312,9 @@ mod shutdown_tests {
         child.start().started::<String>(None).await.unwrap();
 
         tokio::time::timeout(Duration::from_secs(2), async {
-            let mut done = jobs.destroy().await.unwrap();
+            let shutting_down = jobs.clone();
+            let done = tokio::spawn(async move { shutting_down.destroy().await });
+            child.cancel().cancellation().await;
             assert!(parent.cancel().is_cancelled());
             assert!(child.cancel().is_cancelled());
             assert!(matches!(jobs.destroy().await, Err(E::JobsShutdowning)));
@@ -334,15 +339,9 @@ mod shutdown_tests {
 
             child.cancel().cancelling().await.unwrap();
             parent.cancel().cancelling().await.unwrap();
-            assert!(matches!(
-                done.try_recv(),
-                Err(oneshot::error::TryRecvError::Empty)
-            ));
+            assert!(!done.is_finished());
             child.cancel().cancelled::<String>(None).await.unwrap();
-            assert!(matches!(
-                done.try_recv(),
-                Err(oneshot::error::TryRecvError::Empty)
-            ));
+            assert!(!done.is_finished());
             parent.cancel().cancelled::<String>(None).await.unwrap();
             done.await.unwrap().unwrap();
         })
@@ -370,7 +369,7 @@ mod shutdown_tests {
             .await
             .unwrap();
         let result = tokio::time::timeout(SHUTDOWN_TIMEOUT + Duration::from_secs(2), async {
-            jobs.destroy().await.unwrap().await.unwrap()
+            jobs.destroy().await
         })
         .await
         .unwrap();

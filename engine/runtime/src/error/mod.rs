@@ -198,6 +198,12 @@ pub enum E {
 
     #[error("Fail to shutdown Jobs in {0}ms")]
     JobsShutdownTimeout(u128),
+
+    #[error("Runtime are locked because shutdown is processing")]
+    RtShutdowning,
+
+    #[error("Runtime to shutdown Jobs in {0}ms")]
+    RtShutdownTimeout(u128),
 }
 
 impl From<JobStateError> for E {

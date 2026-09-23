@@ -106,6 +106,8 @@ impl ErrorCode for E {
             Self::Cancelled => "00082",
             Self::JobsShutdowning => "00083",
             Self::JobsShutdownTimeout(_) => "00084",
+            Self::RtShutdowning => "00085",
+            Self::RtShutdownTimeout(_) => "00086",
         }
     }
     fn src(&self) -> ErrorSource {
@@ -224,6 +226,8 @@ mod test {
                 EId::Cancelled => E::Cancelled,
                 EId::JobsShutdowning => E::JobsShutdowning,
                 EId::JobsShutdownTimeout => E::JobsShutdownTimeout(5000),
+                EId::RtShutdowning => E::RtShutdowning,
+                EId::RtShutdownTimeout => E::RtShutdownTimeout(5000),
             }
         }
     }

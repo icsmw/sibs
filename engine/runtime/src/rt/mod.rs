@@ -54,6 +54,7 @@ impl Runtime {
     #[tracing::instrument]
     pub fn new(params: RtParameters, tys: TypesTable, fns: Fns, tasks: Tasks) -> Result<Self, E> {
         let (tx, mut rx) = unbounded_channel();
+        let mut master_tx = Some(tx.clone());
         let inst = Self {
             tx,
             tys: Arc::new(tys),
@@ -61,7 +62,7 @@ impl Runtime {
             tasks: Arc::new(tasks),
         };
         let cx = ExecutionContexts::new(&params.cwd);
-        let jobs = RtJobs::new(&params.cwd)?;
+        let mut jobs = Some(RtJobs::new(&params.cwd)?);
         let mut signals = Signals::default();
         let rt_inner = inst.clone();
         spawn(async move {
@@ -72,6 +73,10 @@ impl Runtime {
                         chk_send_err!(tx.send(params.clone()), DemandId::GetRtParameters);
                     }
                     Demand::CreateInterpreterEnvironment(alias, parent, tx) => {
+                        let Some(jobs) = jobs.as_ref() else {
+                            chk_send_err!(tx.send(Err(E::RtShutdowning)), DemandId::Destroy);
+                            continue;
+                        };
                         let job = match jobs.create(alias, parent, JobVisibility::Hidden).await {
                             Ok(job) => job,
                             Err(err) => {
@@ -100,9 +105,24 @@ impl Runtime {
                     }
                     Demand::Destroy(tx) => {
                         tracing::info!("got shutdown signal");
+                        let (Some(master_tx), Some(jobs)) = (master_tx.take(), jobs.take()) else {
+                            chk_send_err!(tx.send(Err(E::RtShutdowning)), DemandId::Destroy);
+                            continue;
+                        };
+                        let (done_tx, done_rx) = oneshot::channel();
+                        spawn(async move {
+                            tracing::info!("shutdown has been started");
+                            chk_send_err!(
+                                master_tx.send(Demand::Shutdown(done_tx, jobs.destroy().await)),
+                                DemandId::Shutdown
+                            );
+                        });
+                        chk_send_err!(tx.send(Ok(done_rx)), DemandId::Destroy);
+                    }
+                    Demand::Shutdown(done_tx, results) => {
                         chk_err!(cx.destroy().await);
-                        chk_err!(jobs.destroy().await);
-                        chk_send_err!(tx.send(()), DemandId::Destroy);
+                        chk_send_err!(done_tx.send(results), DemandId::Shutdown);
+                        tracing::info!("shutdown has been done");
                         break;
                     }
                 }
@@ -160,6 +180,7 @@ impl Runtime {
     pub async fn destroy(&self) -> Result<(), E> {
         let (tx, rx) = oneshot::channel();
         self.tx.send(Demand::Destroy(tx))?;
-        Ok(rx.await?)
+        let token = rx.await.map_err(|_| E::RecvError)??;
+        token.await.map_err(|_| E::RecvError)?
     }
 }
