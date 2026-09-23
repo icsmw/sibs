@@ -73,3 +73,12 @@ impl From<Array> for Node {
         Node::Value(Value::Array(val))
     }
 }
+
+impl Extract for Array {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Value::extract(node)? {
+            Value::Array(node) => Some(node),
+            _ => None,
+        }
+    }
+}

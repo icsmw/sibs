@@ -75,3 +75,12 @@ impl From<Join> for Node {
         Node::Statement(Statement::Join(val))
     }
 }
+
+impl Extract for Join {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Statement::extract(node)? {
+            Statement::Join(node) => Some(node),
+            _ => None,
+        }
+    }
+}

@@ -75,3 +75,12 @@ impl From<Gatekeeper> for Node {
         Node::ControlFlowModifier(ControlFlowModifier::Gatekeeper(val))
     }
 }
+
+impl Extract for Gatekeeper {
+    fn extract(node: &Node) -> Option<&Self> {
+        match ControlFlowModifier::extract(node)? {
+            ControlFlowModifier::Gatekeeper(node) => Some(node),
+            _ => None,
+        }
+    }
+}

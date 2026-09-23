@@ -65,3 +65,12 @@ impl From<Range> for Node {
         Node::Expression(Expression::Range(val))
     }
 }
+
+impl Extract for Range {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Expression::extract(node)? {
+            Expression::Range(node) => Some(node),
+            _ => None,
+        }
+    }
+}

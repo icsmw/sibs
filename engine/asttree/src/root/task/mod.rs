@@ -109,3 +109,12 @@ impl From<Task> for Node {
         Node::Root(Root::Task(val))
     }
 }
+
+impl Extract for Task {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Root::extract(node)? {
+            Root::Task(node) => Some(node),
+            _ => None,
+        }
+    }
+}

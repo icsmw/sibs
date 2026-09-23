@@ -96,3 +96,12 @@ impl From<Component> for Node {
         Node::Root(Root::Component(val))
     }
 }
+
+impl Extract for Component {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Root::extract(node)? {
+            Root::Component(node) => Some(node),
+            _ => None,
+        }
+    }
+}

@@ -71,3 +71,12 @@ impl From<ComparisonGroup> for Node {
         Node::Expression(Expression::ComparisonGroup(val))
     }
 }
+
+impl Extract for ComparisonGroup {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Expression::extract(node)? {
+            Expression::ComparisonGroup(node) => Some(node),
+            _ => None,
+        }
+    }
+}

@@ -122,3 +122,12 @@ impl From<Anchor> for Node {
         Node::Root(Root::Anchor(val))
     }
 }
+
+impl Extract for Anchor {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Root::extract(node)? {
+            Root::Anchor(node) => Some(node),
+            _ => None,
+        }
+    }
+}

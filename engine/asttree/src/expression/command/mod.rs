@@ -166,3 +166,12 @@ impl From<Command> for Node {
         Node::Expression(Expression::Command(val))
     }
 }
+
+impl Extract for Command {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Expression::extract(node)? {
+            Expression::Command(node) => Some(node),
+            _ => None,
+        }
+    }
+}

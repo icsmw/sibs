@@ -69,3 +69,12 @@ impl From<ComparisonOp> for Node {
         Node::Expression(Expression::ComparisonOp(val))
     }
 }
+
+impl Extract for ComparisonOp {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Expression::extract(node)? {
+            Expression::ComparisonOp(node) => Some(node),
+            _ => None,
+        }
+    }
+}

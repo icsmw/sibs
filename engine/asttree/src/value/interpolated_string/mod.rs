@@ -175,3 +175,12 @@ impl From<InterpolatedString> for Node {
         Node::Value(Value::InterpolatedString(val))
     }
 }
+
+impl Extract for InterpolatedString {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Value::extract(node)? {
+            Value::InterpolatedString(node) => Some(node),
+            _ => None,
+        }
+    }
+}

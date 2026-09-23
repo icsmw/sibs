@@ -66,3 +66,12 @@ impl From<While> for Node {
         Node::Statement(Statement::While(val))
     }
 }
+
+impl Extract for While {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Statement::extract(node)? {
+            Statement::While(node) => Some(node),
+            _ => None,
+        }
+    }
+}

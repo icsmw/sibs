@@ -84,3 +84,12 @@ impl From<ClosureDeclaration> for Node {
         Node::Declaration(Declaration::ClosureDeclaration(val))
     }
 }
+
+impl Extract for ClosureDeclaration {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Declaration::extract(node)? {
+            Declaration::ClosureDeclaration(node) => Some(node),
+            _ => None,
+        }
+    }
+}

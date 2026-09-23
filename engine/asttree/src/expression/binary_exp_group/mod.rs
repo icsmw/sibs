@@ -60,3 +60,12 @@ impl From<BinaryExpGroup> for Node {
         Node::Expression(Expression::BinaryExpGroup(val))
     }
 }
+
+impl Extract for BinaryExpGroup {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Expression::extract(node)? {
+            Expression::BinaryExpGroup(node) => Some(node),
+            _ => None,
+        }
+    }
+}

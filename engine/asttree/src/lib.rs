@@ -2,6 +2,7 @@ mod cfm;
 mod declaration;
 mod diagnostic;
 mod expression;
+mod extract;
 mod linking;
 mod lookup;
 mod metadata;
@@ -15,6 +16,7 @@ pub use cfm::*;
 pub use declaration::*;
 pub use diagnostic::*;
 pub use expression::*;
+pub use extract::*;
 pub use linking::*;
 pub use lookup::*;
 pub use metadata::*;
@@ -148,6 +150,10 @@ impl LinkedNode {
     }
     pub fn get_mut_md(&mut self) -> &mut Metadata {
         &mut self.md
+    }
+
+    pub fn extract<N: Extract>(&self) -> Option<&N> {
+        N::extract(self.get_node())
     }
 }
 

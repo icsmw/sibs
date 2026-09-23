@@ -80,3 +80,12 @@ impl From<BinaryExpSeq> for Node {
         Node::Expression(Expression::BinaryExpSeq(val))
     }
 }
+
+impl Extract for BinaryExpSeq {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Expression::extract(node)? {
+            Expression::BinaryExpSeq(node) => Some(node),
+            _ => None,
+        }
+    }
+}

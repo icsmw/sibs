@@ -113,3 +113,12 @@ impl From<FunctionCall> for Node {
         Node::Expression(Expression::FunctionCall(val))
     }
 }
+
+impl Extract for FunctionCall {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Expression::extract(node)? {
+            Expression::FunctionCall(node) => Some(node),
+            _ => None,
+        }
+    }
+}

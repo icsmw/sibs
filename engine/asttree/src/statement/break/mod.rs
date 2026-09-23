@@ -76,3 +76,12 @@ impl From<Break> for Node {
         Node::Statement(Statement::Break(val))
     }
 }
+
+impl Extract for Break {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Statement::extract(node)? {
+            Statement::Break(node) => Some(node),
+            _ => None,
+        }
+    }
+}

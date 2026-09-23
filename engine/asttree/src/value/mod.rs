@@ -140,3 +140,12 @@ impl From<Value> for Node {
         Node::Value(val)
     }
 }
+
+impl Extract for Value {
+    fn extract(node: &Node) -> Option<&Self> {
+        match node {
+            Node::Value(node) => Some(node),
+            _ => None,
+        }
+    }
+}

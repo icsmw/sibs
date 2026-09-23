@@ -86,3 +86,12 @@ impl From<Return> for Node {
         Node::Statement(Statement::Return(val))
     }
 }
+
+impl Extract for Return {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Statement::extract(node)? {
+            Statement::Return(node) => Some(node),
+            _ => None,
+        }
+    }
+}

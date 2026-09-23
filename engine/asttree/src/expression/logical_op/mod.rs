@@ -65,3 +65,12 @@ impl From<LogicalOp> for Node {
         Node::Expression(Expression::LogicalOp(val))
     }
 }
+
+impl Extract for LogicalOp {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Expression::extract(node)? {
+            Expression::LogicalOp(node) => Some(node),
+            _ => None,
+        }
+    }
+}

@@ -87,3 +87,12 @@ impl From<Module> for Node {
         Node::Root(Root::Module(val))
     }
 }
+
+impl Extract for Module {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Root::extract(node)? {
+            Root::Module(node) => Some(node),
+            _ => None,
+        }
+    }
+}

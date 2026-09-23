@@ -100,3 +100,12 @@ impl From<TaskCall> for Node {
         Node::Expression(Expression::TaskCall(val))
     }
 }
+
+impl Extract for TaskCall {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Expression::extract(node)? {
+            Expression::TaskCall(node) => Some(node),
+            _ => None,
+        }
+    }
+}

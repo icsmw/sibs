@@ -75,3 +75,12 @@ impl From<OneOf> for Node {
         Node::Statement(Statement::OneOf(val))
     }
 }
+
+impl Extract for OneOf {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Statement::extract(node)? {
+            Statement::OneOf(node) => Some(node),
+            _ => None,
+        }
+    }
+}

@@ -64,3 +64,12 @@ impl From<ModuleDeclaration> for Node {
         Node::Declaration(Declaration::ModuleDeclaration(val))
     }
 }
+
+impl Extract for ModuleDeclaration {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Declaration::extract(node)? {
+            Declaration::ModuleDeclaration(node) => Some(node),
+            _ => None,
+        }
+    }
+}

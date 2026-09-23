@@ -78,3 +78,12 @@ impl From<Block> for Node {
         Node::Statement(Statement::Block(val))
     }
 }
+
+impl Extract for Block {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Statement::extract(node)? {
+            Statement::Block(node) => Some(node),
+            _ => None,
+        }
+    }
+}

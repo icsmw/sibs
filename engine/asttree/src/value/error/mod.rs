@@ -65,3 +65,12 @@ impl From<Error> for Node {
         Node::Value(Value::Error(val))
     }
 }
+
+impl Extract for Error {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Value::extract(node)? {
+            Value::Error(node) => Some(node),
+            _ => None,
+        }
+    }
+}

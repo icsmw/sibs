@@ -59,3 +59,12 @@ impl From<VariableName> for Node {
         Node::Declaration(Declaration::VariableName(val))
     }
 }
+
+impl Extract for VariableName {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Declaration::extract(node)? {
+            Declaration::VariableName(node) => Some(node),
+            _ => None,
+        }
+    }
+}

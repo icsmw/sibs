@@ -80,3 +80,12 @@ impl From<ComparisonSeq> for Node {
         Node::Expression(Expression::ComparisonSeq(val))
     }
 }
+
+impl Extract for ComparisonSeq {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Expression::extract(node)? {
+            Expression::ComparisonSeq(node) => Some(node),
+            _ => None,
+        }
+    }
+}

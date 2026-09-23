@@ -92,3 +92,12 @@ impl SrcLinking for ControlFlowModifier {
         }
     }
 }
+
+impl Extract for ControlFlowModifier {
+    fn extract(node: &Node) -> Option<&Self> {
+        match node {
+            Node::ControlFlowModifier(node) => Some(node),
+            _ => None,
+        }
+    }
+}

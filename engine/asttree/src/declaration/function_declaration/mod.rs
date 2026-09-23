@@ -96,3 +96,12 @@ impl From<FunctionDeclaration> for Node {
         Node::Declaration(Declaration::FunctionDeclaration(val))
     }
 }
+
+impl Extract for FunctionDeclaration {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Declaration::extract(node)? {
+            Declaration::FunctionDeclaration(node) => Some(node),
+            _ => None,
+        }
+    }
+}

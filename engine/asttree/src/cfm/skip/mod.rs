@@ -85,3 +85,12 @@ impl From<Skip> for Node {
         Node::ControlFlowModifier(ControlFlowModifier::Skip(val))
     }
 }
+
+impl Extract for Skip {
+    fn extract(node: &Node) -> Option<&Self> {
+        match ControlFlowModifier::extract(node)? {
+            ControlFlowModifier::Skip(node) => Some(node),
+            _ => None,
+        }
+    }
+}

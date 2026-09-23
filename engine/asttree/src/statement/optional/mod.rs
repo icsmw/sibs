@@ -66,3 +66,12 @@ impl From<Optional> for Node {
         Node::Statement(Statement::Optional(val))
     }
 }
+
+impl Extract for Optional {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Statement::extract(node)? {
+            Statement::Optional(node) => Some(node),
+            _ => None,
+        }
+    }
+}

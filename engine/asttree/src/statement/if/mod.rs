@@ -164,3 +164,12 @@ impl From<If> for Node {
         Node::Statement(Statement::If(val))
     }
 }
+
+impl Extract for If {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Statement::extract(node)? {
+            Statement::If(node) => Some(node),
+            _ => None,
+        }
+    }
+}

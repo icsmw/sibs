@@ -59,3 +59,12 @@ impl From<Boolean> for Node {
         Node::Value(Value::Boolean(val))
     }
 }
+
+impl Extract for Boolean {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Value::extract(node)? {
+            Value::Boolean(node) => Some(node),
+            _ => None,
+        }
+    }
+}

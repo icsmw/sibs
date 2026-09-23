@@ -59,3 +59,12 @@ impl From<Loop> for Node {
         Node::Statement(Statement::Loop(val))
     }
 }
+
+impl Extract for Loop {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Statement::extract(node)? {
+            Statement::Loop(node) => Some(node),
+            _ => None,
+        }
+    }
+}

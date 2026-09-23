@@ -59,3 +59,12 @@ impl From<AssignedValue> for Node {
         Node::Statement(Statement::AssignedValue(val))
     }
 }
+
+impl Extract for AssignedValue {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Statement::extract(node)? {
+            Statement::AssignedValue(node) => Some(node),
+            _ => None,
+        }
+    }
+}

@@ -78,3 +78,12 @@ impl From<Variable> for Node {
         Node::Expression(Expression::Variable(val))
     }
 }
+
+impl Extract for Variable {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Expression::extract(node)? {
+            Expression::Variable(node) => Some(node),
+            _ => None,
+        }
+    }
+}

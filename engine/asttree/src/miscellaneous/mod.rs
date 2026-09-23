@@ -86,3 +86,12 @@ impl SrcLinking for Miscellaneous {
         self.link()
     }
 }
+
+impl Extract for Miscellaneous {
+    fn extract(node: &Node) -> Option<&Self> {
+        match node {
+            Node::Miscellaneous(node) => Some(node),
+            _ => None,
+        }
+    }
+}

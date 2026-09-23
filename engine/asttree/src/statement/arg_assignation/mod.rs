@@ -65,3 +65,12 @@ impl From<ArgumentAssignation> for Node {
         Node::Statement(Statement::ArgumentAssignation(val))
     }
 }
+
+impl Extract for ArgumentAssignation {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Statement::extract(node)? {
+            Statement::ArgumentAssignation(node) => Some(node),
+            _ => None,
+        }
+    }
+}

@@ -82,3 +82,12 @@ impl From<Closure> for Node {
         Node::Value(Value::Closure(val))
     }
 }
+
+impl Extract for Closure {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Value::extract(node)? {
+            Value::Closure(node) => Some(node),
+            _ => None,
+        }
+    }
+}

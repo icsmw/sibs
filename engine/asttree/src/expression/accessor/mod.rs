@@ -60,3 +60,12 @@ impl From<Accessor> for Node {
         Node::Expression(Expression::Accessor(val))
     }
 }
+
+impl Extract for Accessor {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Expression::extract(node)? {
+            Expression::Accessor(node) => Some(node),
+            _ => None,
+        }
+    }
+}

@@ -59,3 +59,12 @@ impl From<Number> for Node {
         Node::Value(Value::Number(val))
     }
 }
+
+impl Extract for Number {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Value::extract(node)? {
+            Value::Number(node) => Some(node),
+            _ => None,
+        }
+    }
+}

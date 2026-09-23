@@ -102,3 +102,12 @@ impl From<VariableDeclaration> for Node {
         Node::Declaration(Declaration::VariableDeclaration(val))
     }
 }
+
+impl Extract for VariableDeclaration {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Declaration::extract(node)? {
+            Declaration::VariableDeclaration(node) => Some(node),
+            _ => None,
+        }
+    }
+}

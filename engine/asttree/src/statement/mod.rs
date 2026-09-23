@@ -253,3 +253,12 @@ impl From<Statement> for Node {
         Node::Statement(val)
     }
 }
+
+impl Extract for Statement {
+    fn extract(node: &Node) -> Option<&Self> {
+        match node {
+            Node::Statement(node) => Some(node),
+            _ => None,
+        }
+    }
+}

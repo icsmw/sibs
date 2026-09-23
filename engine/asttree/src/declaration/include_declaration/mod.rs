@@ -78,3 +78,12 @@ impl From<IncludeDeclaration> for Node {
         Node::Declaration(Declaration::IncludeDeclaration(val))
     }
 }
+
+impl Extract for IncludeDeclaration {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Declaration::extract(node)? {
+            Declaration::IncludeDeclaration(node) => Some(node),
+            _ => None,
+        }
+    }
+}

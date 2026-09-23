@@ -74,3 +74,12 @@ impl From<ArgumentDeclaration> for Node {
         Node::Declaration(Declaration::ArgumentDeclaration(val))
     }
 }
+
+impl Extract for ArgumentDeclaration {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Declaration::extract(node)? {
+            Declaration::ArgumentDeclaration(node) => Some(node),
+            _ => None,
+        }
+    }
+}

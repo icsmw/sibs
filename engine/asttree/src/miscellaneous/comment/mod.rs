@@ -58,3 +58,12 @@ impl From<Comment> for Node {
         Node::Miscellaneous(Miscellaneous::Comment(val))
     }
 }
+
+impl Extract for Comment {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Miscellaneous::extract(node)? {
+            Miscellaneous::Comment(node) => Some(node),
+            _ => None,
+        }
+    }
+}

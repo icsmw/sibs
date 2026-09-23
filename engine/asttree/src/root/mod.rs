@@ -111,3 +111,12 @@ impl From<Root> for Node {
         Node::Root(val)
     }
 }
+
+impl Extract for Root {
+    fn extract(node: &Node) -> Option<&Self> {
+        match node {
+            Node::Root(node) => Some(node),
+            _ => None,
+        }
+    }
+}

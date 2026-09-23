@@ -63,3 +63,12 @@ impl From<Meta> for Node {
         Node::Miscellaneous(Miscellaneous::Meta(val))
     }
 }
+
+impl Extract for Meta {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Miscellaneous::extract(node)? {
+            Miscellaneous::Meta(node) => Some(node),
+            _ => None,
+        }
+    }
+}

@@ -88,3 +88,12 @@ impl From<CompoundAssignmentsOp> for Node {
         Node::Expression(Expression::CompoundAssignmentsOp(val))
     }
 }
+
+impl Extract for CompoundAssignmentsOp {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Expression::extract(node)? {
+            Expression::CompoundAssignmentsOp(node) => Some(node),
+            _ => None,
+        }
+    }
+}

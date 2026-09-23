@@ -97,3 +97,12 @@ impl From<For> for Node {
         Node::Statement(Statement::For(val))
     }
 }
+
+impl Extract for For {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Statement::extract(node)? {
+            Statement::For(node) => Some(node),
+            _ => None,
+        }
+    }
+}

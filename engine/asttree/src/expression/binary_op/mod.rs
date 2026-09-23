@@ -67,3 +67,12 @@ impl From<BinaryOp> for Node {
         Node::Expression(Expression::BinaryOp(val))
     }
 }
+
+impl Extract for BinaryOp {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Expression::extract(node)? {
+            Expression::BinaryOp(node) => Some(node),
+            _ => None,
+        }
+    }
+}

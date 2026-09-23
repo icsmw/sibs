@@ -59,3 +59,12 @@ impl From<PrimitiveString> for Node {
         Node::Value(Value::PrimitiveString(val))
     }
 }
+
+impl Extract for PrimitiveString {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Value::extract(node)? {
+            Value::PrimitiveString(node) => Some(node),
+            _ => None,
+        }
+    }
+}

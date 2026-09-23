@@ -182,3 +182,12 @@ impl SrcLinking for Declaration {
         self.link()
     }
 }
+
+impl Extract for Declaration {
+    fn extract(node: &Node) -> Option<&Self> {
+        match node {
+            Node::Declaration(node) => Some(node),
+            _ => None,
+        }
+    }
+}
