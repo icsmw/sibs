@@ -28,6 +28,9 @@ impl JobSensonrs {
     pub fn is_cancelled(&self) -> bool {
         self.cancel.is_cancelled()
     }
+    pub(super) fn is_finished(&self) -> bool {
+        self.finished.is_done()
+    }
     pub(super) fn finished(&self) -> JobFinishToken {
         self.finished.clone()
     }

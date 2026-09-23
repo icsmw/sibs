@@ -45,8 +45,12 @@ impl JobEntry {
 
     pub(super) fn snapshot(&self) -> JobStateSnapshot {
         let mut snapshot = JobStateSnapshot::new(self.sensors.finished(), self.identity.uuid());
-        for (uuid, entry) in self.childs.iter() {
-            snapshot.childs.insert(*uuid, entry.snapshot());
+        for (uuid, child) in &self.childs {
+            let child_snapshot = child.snapshot();
+            // Keep finished ancestors only when unfinished descendants remain.
+            if !child.sensors.is_finished() || !child_snapshot.childs.is_empty() {
+                snapshot.childs.insert(*uuid, child_snapshot);
+            }
         }
         snapshot
     }
@@ -349,6 +353,45 @@ mod tests {
 mod snapshot_tests {
     use super::*;
 
+    #[test]
+    fn snapshot_preserves_unfinished_descendants_of_finished_ancestors() {
+        let mut root = JobEntry::new(
+            JobIdentity::new("root", None, JobVisibility::Hidden),
+            Arc::new(Notify::new()),
+        );
+        let parent = root
+            .child("parent", JobVisibility::Hidden)
+            .unwrap()
+            .identity()
+            .uuid();
+        let child = root
+            .find(&parent)
+            .unwrap()
+            .child("child", JobVisibility::Hidden)
+            .unwrap()
+            .identity()
+            .uuid();
+        // Simulate a broken lifecycle that normal transitions reject.
+        let entry = root.find(&parent).unwrap();
+        entry.state = JobState::Success(None);
+        entry.sensors.finish();
+
+        let snapshot = root.snapshot();
+        assert_eq!(snapshot.unfinished(), vec![child]);
+        assert!(snapshot.childs[&parent].childs.contains_key(&child));
+
+        root.find(&child)
+            .unwrap()
+            .update(JobState::Cancelling)
+            .unwrap();
+        root.find(&child)
+            .unwrap()
+            .update(JobState::Cancelled(None))
+            .unwrap();
+        assert!(snapshot.unfinished().is_empty());
+        assert!(root.snapshot().childs.is_empty());
+    }
+
     #[tokio::test]
     async fn snapshot_tracks_descendants_and_rejected_updates_do_not_notify() {
         let changed = Arc::new(Notify::new());
@@ -399,11 +442,15 @@ mod snapshot_tests {
             .unwrap();
         changed.notified().await;
         assert_eq!(snapshot.unfinished(), vec![parent]);
+        let remaining = root.snapshot();
+        assert_eq!(remaining.childs.len(), 1);
+        assert!(remaining.childs[&parent].childs.is_empty());
         root.find(&parent)
             .unwrap()
             .update(JobState::Success(None))
             .unwrap();
         changed.notified().await;
         assert!(snapshot.unfinished().is_empty());
+        assert!(root.snapshot().childs.is_empty());
     }
 }
