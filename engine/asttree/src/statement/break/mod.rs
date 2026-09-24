@@ -85,3 +85,9 @@ impl Extract for Break {
         }
     }
 }
+
+impl MetadataContent for Break {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

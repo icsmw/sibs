@@ -69,3 +69,9 @@ impl Extract for Accessor {
         }
     }
 }
+
+impl MetadataContent for Accessor {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

@@ -249,6 +249,22 @@ pub fn kind(id: KindId) -> BoxedStrategy<Kind> {
                 ))
             })
             .boxed(),
+        KindId::RootMeta => gen_string(RangeInclusive::new(0, 200))
+            .prop_map(|str| {
+                Kind::RootMeta(format!(
+                    "root meta:{}",
+                    str.chars()
+                        .map(|ch| {
+                            if ch == '\n' || ch == '\r' || ch == '\\' {
+                                "_".to_string()
+                            } else {
+                                ch.to_string()
+                            }
+                        })
+                        .collect::<String>()
+                ))
+            })
+            .boxed(),
     }
 }
 
@@ -297,7 +313,7 @@ pub fn keyword(id: KeywordId) -> BoxedStrategy<Keyword> {
 /// Adds bound Kinds. For example Comment and Meta needs to be around LF
 pub fn add_bound_kinds(knd: Kind) -> Vec<Kind> {
     match &knd {
-        Kind::Comment(..) | Kind::Meta(..) => {
+        Kind::Comment(..) | Kind::Meta(..) | Kind::RootMeta(..) => {
             vec![Kind::LF, knd, Kind::LF]
         }
         _ => vec![knd],

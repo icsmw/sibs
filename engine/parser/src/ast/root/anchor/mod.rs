@@ -5,9 +5,11 @@ use crate::*;
 
 impl Interest for Anchor {
     fn intrested(token: &Token) -> bool {
+        // The first declaration may start with its own documentation.
         matches!(
             token.kind,
-            Kind::Keyword(Keyword::Component)
+            Kind::Meta(..)
+                | Kind::Keyword(Keyword::Component)
                 | Kind::Keyword(Keyword::Task)
                 | Kind::Keyword(Keyword::Mod)
                 | Kind::Keyword(Keyword::Include)

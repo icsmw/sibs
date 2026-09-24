@@ -9,6 +9,11 @@ pub type TasksMetadata<'a> = Vec<(String, &'a Metadata)>;
 pub type ComponentMetadata<'a> = (&'a Metadata, TasksMetadata<'a>);
 pub type AnchorMetadata<'a> = HashMap<String, ComponentMetadata<'a>>;
 
+/// Declares which leading metadata a concrete AST node accepts.
+pub trait MetadataContent {
+    fn md_includes() -> &'static [MiscellaneousId];
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct Metadata {
     pub ppm: Vec<LinkedNode>,
@@ -49,12 +54,10 @@ impl Metadata {
     pub fn lines(&self) -> Vec<String> {
         self.meta
             .iter()
-            .filter_map(|n| {
-                if let Node::Miscellaneous(Miscellaneous::Meta(mn)) = &n.node {
-                    Some(mn.as_trimmed_string())
-                } else {
-                    None
-                }
+            .filter_map(|n| match &n.node {
+                Node::Miscellaneous(Miscellaneous::Meta(mn)) => Some(mn.as_trimmed_string()),
+                Node::Miscellaneous(Miscellaneous::RootMeta(mn)) => Some(mn.as_trimmed_string()),
+                _ => None,
             })
             .collect()
     }

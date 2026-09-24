@@ -105,3 +105,9 @@ impl Extract for FunctionDeclaration {
         }
     }
 }
+
+impl MetadataContent for FunctionDeclaration {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

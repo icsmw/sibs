@@ -97,3 +97,9 @@ impl Extract for CompoundAssignmentsOp {
         }
     }
 }
+
+impl MetadataContent for CompoundAssignmentsOp {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

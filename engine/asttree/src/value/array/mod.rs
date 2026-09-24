@@ -82,3 +82,9 @@ impl Extract for Array {
         }
     }
 }
+
+impl MetadataContent for Array {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

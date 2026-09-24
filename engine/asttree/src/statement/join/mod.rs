@@ -84,3 +84,9 @@ impl Extract for Join {
         }
     }
 }
+
+impl MetadataContent for Join {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

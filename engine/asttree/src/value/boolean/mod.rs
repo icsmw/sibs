@@ -68,3 +68,9 @@ impl Extract for Boolean {
         }
     }
 }
+
+impl MetadataContent for Boolean {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

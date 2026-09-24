@@ -68,3 +68,9 @@ impl Extract for VariableName {
         }
     }
 }
+
+impl MetadataContent for VariableName {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

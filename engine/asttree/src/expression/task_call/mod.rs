@@ -109,3 +109,9 @@ impl Extract for TaskCall {
         }
     }
 }
+
+impl MetadataContent for TaskCall {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

@@ -74,3 +74,9 @@ impl Extract for Error {
         }
     }
 }
+
+impl MetadataContent for Error {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

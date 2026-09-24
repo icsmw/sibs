@@ -260,6 +260,32 @@ impl Read for Token {
                     Ok(None)
                 }
             }
+            KindId::RootMeta => {
+                if !tks.is_nl() {
+                    return Ok(None);
+                }
+                if id.as_str() == lx.read_nth(3) {
+                    let drop = lx.pin();
+                    Ok(if let Some((content, ..)) = lx.read_until(&['\n']) {
+                        Some(Token::by_pos(
+                            Kind::RootMeta(content),
+                            &lx.uuid,
+                            from,
+                            lx.current_pos(),
+                        ))
+                    } else {
+                        drop(lx);
+                        Some(Token::by_pos(
+                            Kind::RootMeta(lx.read_to_end()),
+                            &lx.uuid,
+                            from,
+                            lx.current_pos(),
+                        ))
+                    })
+                } else {
+                    Ok(None)
+                }
+            }
             KindId::Question
             | KindId::SingleQuote
             | KindId::DoubleQuote

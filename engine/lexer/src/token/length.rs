@@ -64,7 +64,7 @@ impl ConstantLength for KindId {
             | Self::DoubleArrow
             | Self::Comment
             | Self::CRLF => Ok(2),
-            Self::Meta => Ok(3),
+            Self::Meta | Self::RootMeta => Ok(3),
             Self::Identifier
             | Self::Number
             | Self::String

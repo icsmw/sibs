@@ -173,3 +173,9 @@ impl Extract for If {
         }
     }
 }
+
+impl MetadataContent for If {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

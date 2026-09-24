@@ -60,7 +60,7 @@ proptest! {
         KindId::EOF,
         KindId::BOF]), 1..1000)) {
         let mut cases = cases.into_iter().flat_map(|knd| {
-            if matches!(knd.id(), KindId::Comment | KindId::Meta) {
+            if matches!(knd.id(), KindId::Comment | KindId::Meta | KindId::RootMeta) {
                 gens::add_bound_kinds(knd)
             } else {
                 [gens::add_bound_kinds(knd), vec![Kind::Whitespace(String::from(" "))]].concat()

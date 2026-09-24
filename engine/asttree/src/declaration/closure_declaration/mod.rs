@@ -93,3 +93,9 @@ impl Extract for ClosureDeclaration {
         }
     }
 }
+
+impl MetadataContent for ClosureDeclaration {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

@@ -1,17 +1,15 @@
 #[cfg(feature = "proptests")]
 mod proptests;
-
 use crate::*;
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub struct Number {
-    pub inner: f64,
+pub struct RootMeta {
     pub token: Token,
     pub uuid: Uuid,
 }
 
-impl Diagnostic for Number {
+impl Diagnostic for RootMeta {
     fn located(&self, src: &Uuid, pos: usize) -> bool {
         if !self.token.belongs(src) {
             false
@@ -27,19 +25,29 @@ impl Diagnostic for Number {
     }
 }
 
-impl<'a> Lookup<'a> for Number {
+impl RootMeta {
+    pub fn as_trimmed_string(&self) -> String {
+        self.token
+            .to_string()
+            .replacen("//!", "", 1)
+            .trim()
+            .to_owned()
+    }
+}
+
+impl<'a> Lookup<'a> for RootMeta {
     fn lookup(&'a self, _trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         vec![]
     }
 }
 
-impl FindMutByUuid for Number {
+impl FindMutByUuid for RootMeta {
     fn find_mut_by_uuid(&mut self, _uuid: &Uuid) -> Option<&mut LinkedNode> {
         None
     }
 }
 
-impl SrcLinking for Number {
+impl SrcLinking for RootMeta {
     fn link(&self) -> SrcLink {
         src_from::tk(&self.token)
     }
@@ -48,29 +56,29 @@ impl SrcLinking for Number {
     }
 }
 
-impl fmt::Display for Number {
+impl fmt::Display for RootMeta {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.token)
+        write!(f, "{}{}{}", Kind::LF, self.token, Kind::LF)
     }
 }
 
-impl From<Number> for Node {
-    fn from(val: Number) -> Self {
-        Node::Value(Value::Number(val))
+impl From<RootMeta> for Node {
+    fn from(val: RootMeta) -> Self {
+        Node::Miscellaneous(Miscellaneous::RootMeta(val))
     }
 }
 
-impl Extract for Number {
+impl Extract for RootMeta {
     fn extract(node: &Node) -> Option<&Self> {
-        match Value::extract(node)? {
-            Value::Number(node) => Some(node),
+        match Miscellaneous::extract(node)? {
+            Miscellaneous::RootMeta(node) => Some(node),
             _ => None,
         }
     }
 }
 
-impl MetadataContent for Number {
+impl MetadataContent for RootMeta {
     fn md_includes() -> &'static [MiscellaneousId] {
-        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+        &[]
     }
 }

@@ -84,3 +84,9 @@ impl Extract for OneOf {
         }
     }
 }
+
+impl MetadataContent for OneOf {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

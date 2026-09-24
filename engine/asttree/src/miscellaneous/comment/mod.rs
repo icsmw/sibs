@@ -67,3 +67,9 @@ impl Extract for Comment {
         }
     }
 }
+
+impl MetadataContent for Comment {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[]
+    }
+}

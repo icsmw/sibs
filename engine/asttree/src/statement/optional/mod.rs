@@ -75,3 +75,9 @@ impl Extract for Optional {
         }
     }
 }
+
+impl MetadataContent for Optional {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

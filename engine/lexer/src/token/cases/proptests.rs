@@ -26,6 +26,7 @@ pub fn content(id: Kind, deep: u8) -> BoxedStrategy<Vec<Kind>> {
                 KindId::Literal,
                 KindId::Comment,
                 KindId::Meta,
+                KindId::RootMeta,
                 KindId::EOF,
                 KindId::BOF,
             ]),

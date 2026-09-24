@@ -75,3 +75,9 @@ impl Extract for While {
         }
     }
 }
+
+impl MetadataContent for While {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

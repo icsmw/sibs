@@ -95,7 +95,7 @@ impl fmt::Display for CodeSrc {
 pub struct Driver {
     parser: Option<Parser>,
     scx: Option<SemanticCx>,
-    anchor: Option<Anchor>,
+    anchor: Option<LinkedNode>,
     errors: Vec<DrivingError>,
     src: CodeSrc,
     resilience: bool,
@@ -131,7 +131,7 @@ impl Driver {
                 Parser::unbound(lx.read()?.tokens, &lx.uuid, content, self.resilience)
             }
         };
-        let anchor = match Anchor::read(&parser) {
+        let anchor = match LinkedNode::try_read(&parser, NodeTarget::Root(&[RootId::Anchor])) {
             Ok(Some(anchor)) => anchor,
             Ok(None) => {
                 self.parser = Some(parser);
@@ -211,6 +211,7 @@ impl Driver {
         let (Some(anchor), Some(parser)) = (self.anchor.as_ref(), self.parser.as_ref()) else {
             return None;
         };
+        let anchor = anchor.extract::<Anchor>()?;
         Some(LocationIterator::new(
             anchor,
             src.unwrap_or(anchor.uuid),
@@ -225,7 +226,7 @@ impl Driver {
             debug!("Fail to find token for pos: {pos} (src {src:?})");
             return None;
         };
-        Signature::from_node(anchor, node, self.scx.as_ref(), pos)
+        Signature::from_node(anchor.extract::<Anchor>()?, node, self.scx.as_ref(), pos)
     }
 
     pub fn completion(&self, pos: usize, src: Option<Uuid>) -> Option<Completion<'_>> {
@@ -247,7 +248,7 @@ impl Driver {
         };
         Some(ErrorsIterator::new(
             self.errors.iter().collect(),
-            anchor,
+            anchor.extract::<Anchor>()?,
             parser,
         ))
     }
@@ -255,7 +256,7 @@ impl Driver {
     pub fn find_node(&self, pos: usize, src: Option<Uuid>) -> Option<&LinkedNode> {
         let (token, _idx) = self.find_token(pos, src)?;
         let anchor = self.anchor.as_ref()?;
-        find_node(anchor.childs(), &src.unwrap_or(anchor.uuid), &token)
+        find_node(anchor.childs(), &src.unwrap_or(*anchor.uuid()), &token)
     }
 
     pub fn find_token(&self, pos: usize, _src: Option<Uuid>) -> Option<(Ref<'_, Token>, usize)> {
@@ -283,6 +284,28 @@ impl Driver {
         }
         Ok(())
     }
+}
+
+#[test]
+fn root_metadata_is_preserved_and_highlighted() {
+    let mut driver = Driver::unbound(
+        "//! Script docs\n/// Component docs\ncomponent comp() { task run() { true; } };",
+        false,
+    );
+    driver.read().unwrap();
+    let root = driver.anchor.as_ref().unwrap();
+    assert_eq!(root.get_md().lines(), ["Script docs"]);
+    assert_eq!(
+        root.extract::<Anchor>()
+            .unwrap()
+            .get_component("comp")
+            .unwrap()
+            .get_md()
+            .lines(),
+        ["Component docs"]
+    );
+    let tokens = driver.get_semantic_tokens();
+    assert!(tokens.iter().any(|tk| tk.position.from.abs == 0));
 }
 
 #[test]

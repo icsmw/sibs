@@ -184,3 +184,9 @@ impl Extract for InterpolatedString {
         }
     }
 }
+
+impl MetadataContent for InterpolatedString {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

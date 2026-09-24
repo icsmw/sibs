@@ -1,11 +1,11 @@
 use crate::*;
 use std::fmt::{Debug, Display};
 
-pub trait ReadNode<T: Clone + Debug + Into<Node>>: Interest {
+pub trait ReadNode<T: Clone + Debug + Into<Node>>: Interest + MetadataContent {
     fn read(parser: &Parser) -> Result<Option<T>, LinkedErr<E>>;
     fn read_as_linked(parser: &Parser) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         let mut md = Metadata::default();
-        md.read_md_before(parser)?;
+        md.read_md_before(parser, Self::md_includes())?;
         let Some(tk_from) = parser.next() else {
             return Ok(None);
         };
@@ -77,6 +77,10 @@ pub trait AsVec<T> {
 }
 
 pub(crate) trait ReadMetadata {
-    fn read_md_before(&mut self, parser: &Parser) -> Result<(), LinkedErr<E>>;
+    fn read_md_before(
+        &mut self,
+        parser: &Parser,
+        includes: &[MiscellaneousId],
+    ) -> Result<(), LinkedErr<E>>;
     fn read_md_after(&mut self, parser: &Parser) -> Result<(), LinkedErr<E>>;
 }

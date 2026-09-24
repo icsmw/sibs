@@ -83,3 +83,9 @@ impl Extract for ArgumentDeclaration {
         }
     }
 }
+
+impl MetadataContent for ArgumentDeclaration {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

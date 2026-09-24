@@ -84,3 +84,9 @@ impl Extract for Gatekeeper {
         }
     }
 }
+
+impl MetadataContent for Gatekeeper {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

@@ -72,3 +72,9 @@ impl Extract for Meta {
         }
     }
 }
+
+impl MetadataContent for Meta {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[]
+    }
+}

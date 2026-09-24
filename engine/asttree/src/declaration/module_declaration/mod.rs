@@ -73,3 +73,9 @@ impl Extract for ModuleDeclaration {
         }
     }
 }
+
+impl MetadataContent for ModuleDeclaration {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

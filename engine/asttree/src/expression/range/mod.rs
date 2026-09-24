@@ -74,3 +74,9 @@ impl Extract for Range {
         }
     }
 }
+
+impl MetadataContent for Range {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

@@ -1,8 +1,10 @@
 mod comment;
 mod meta;
+mod root_meta;
 
 pub use comment::*;
 pub use meta::*;
+pub use root_meta::*;
 
 use crate::*;
 
@@ -11,6 +13,8 @@ use crate::*;
 pub enum Miscellaneous {
     /// /// message
     Meta(Meta),
+    /// //! message
+    RootMeta(RootMeta),
     /// // comment
     Comment(Comment),
 }
@@ -20,12 +24,14 @@ impl Identification for Miscellaneous {
         match self {
             Self::Comment(n) => &n.uuid,
             Self::Meta(n) => &n.uuid,
+            Self::RootMeta(n) => &n.uuid,
         }
     }
     fn ident(&self) -> String {
         match self {
             Self::Comment(..) => MiscellaneousId::Comment.to_string(),
             Self::Meta(..) => MiscellaneousId::Meta.to_string(),
+            Self::RootMeta(..) => MiscellaneousId::RootMeta.to_string(),
         }
     }
 }
@@ -35,18 +41,21 @@ impl Diagnostic for Miscellaneous {
         match self {
             Self::Comment(n) => n.located(src, pos),
             Self::Meta(n) => n.located(src, pos),
+            Self::RootMeta(n) => n.located(src, pos),
         }
     }
     fn get_position(&self) -> Position {
         match self {
             Self::Comment(n) => n.get_position(),
             Self::Meta(n) => n.get_position(),
+            Self::RootMeta(n) => n.get_position(),
         }
     }
     fn childs(&self) -> Vec<&LinkedNode> {
         match self {
             Self::Comment(n) => n.childs(),
             Self::Meta(n) => n.childs(),
+            Self::RootMeta(n) => n.childs(),
         }
     }
 }
@@ -62,6 +71,7 @@ impl<'a> Lookup<'a> for Miscellaneous {
         match self {
             Self::Comment(n) => n.lookup(trgs),
             Self::Meta(n) => n.lookup(trgs),
+            Self::RootMeta(n) => n.lookup(trgs),
         }
     }
 }
@@ -71,6 +81,7 @@ impl FindMutByUuid for Miscellaneous {
         match self {
             Self::Comment(n) => n.find_mut_by_uuid(uuid),
             Self::Meta(n) => n.find_mut_by_uuid(uuid),
+            Self::RootMeta(n) => n.find_mut_by_uuid(uuid),
         }
     }
 }
@@ -80,6 +91,7 @@ impl SrcLinking for Miscellaneous {
         match self {
             Self::Comment(n) => n.link(),
             Self::Meta(n) => n.link(),
+            Self::RootMeta(n) => n.link(),
         }
     }
     fn slink(&self) -> SrcLink {

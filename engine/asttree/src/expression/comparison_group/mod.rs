@@ -80,3 +80,9 @@ impl Extract for ComparisonGroup {
         }
     }
 }
+
+impl MetadataContent for ComparisonGroup {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

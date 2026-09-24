@@ -2,6 +2,7 @@ mod conflict;
 
 mod comment;
 mod meta;
+mod root_meta;
 
 use crate::*;
 
@@ -16,6 +17,7 @@ impl TryRead<Miscellaneous, MiscellaneousId> for Miscellaneous {
         Ok(match id {
             MiscellaneousId::Comment => Comment::read_as_linked(parser)?,
             MiscellaneousId::Meta => Meta::read_as_linked(parser)?,
+            MiscellaneousId::RootMeta => RootMeta::read_as_linked(parser)?,
         })
     }
 }

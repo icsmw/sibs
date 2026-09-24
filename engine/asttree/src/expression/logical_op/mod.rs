@@ -74,3 +74,9 @@ impl Extract for LogicalOp {
         }
     }
 }
+
+impl MetadataContent for LogicalOp {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

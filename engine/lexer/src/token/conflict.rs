@@ -178,16 +178,17 @@ impl ConflictResolver for KindId {
                 | KindId::Literal
                 | KindId::Whitespace
                 | KindId::Comment
-                | KindId::Meta => self.clone(),
+                | KindId::Meta
+                | KindId::RootMeta => self.clone(),
             },
             Self::Comment => {
-                if matches!(id, KindId::Meta) {
+                if matches!(id, KindId::Meta | KindId::RootMeta) {
                     id.clone()
                 } else {
                     self.clone()
                 }
             }
-            Self::Meta => {
+            Self::Meta | Self::RootMeta => {
                 if matches!(id, KindId::Comment) {
                     self.clone()
                 } else {

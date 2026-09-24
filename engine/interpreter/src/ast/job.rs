@@ -70,7 +70,9 @@ impl NodeJobVisibility for LinkedNode {
                 | Value::Closure(..) => JobVisibility::Hidden,
             },
             Node::Miscellaneous(node) => match node {
-                Miscellaneous::Meta(..) | Miscellaneous::Comment(..) => JobVisibility::Hidden,
+                Miscellaneous::RootMeta(..)
+                | Miscellaneous::Meta(..)
+                | Miscellaneous::Comment(..) => JobVisibility::Hidden,
             },
         }
     }
@@ -148,7 +150,9 @@ impl NodeJobName for LinkedNode {
                 | Value::Closure(..) => node.id().to_string(),
             },
             Node::Miscellaneous(inner) => match inner {
-                Miscellaneous::Meta(..) | Miscellaneous::Comment(..) => node.id().to_string(),
+                Miscellaneous::RootMeta(..)
+                | Miscellaneous::Meta(..)
+                | Miscellaneous::Comment(..) => node.id().to_string(),
             },
         }
     }

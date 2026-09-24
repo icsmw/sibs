@@ -76,3 +76,9 @@ impl Extract for BinaryOp {
         }
     }
 }
+
+impl MetadataContent for BinaryOp {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

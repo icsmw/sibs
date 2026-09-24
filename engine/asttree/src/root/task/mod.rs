@@ -118,3 +118,9 @@ impl Extract for Task {
         }
     }
 }
+
+impl MetadataContent for Task {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

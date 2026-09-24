@@ -89,3 +89,9 @@ impl Extract for BinaryExpSeq {
         }
     }
 }
+
+impl MetadataContent for BinaryExpSeq {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

@@ -175,3 +175,9 @@ impl Extract for Command {
         }
     }
 }
+
+impl MetadataContent for Command {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

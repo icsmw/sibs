@@ -68,3 +68,9 @@ impl Extract for PrimitiveString {
         }
     }
 }
+
+impl MetadataContent for PrimitiveString {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

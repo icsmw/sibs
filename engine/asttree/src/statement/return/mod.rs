@@ -95,3 +95,9 @@ impl Extract for Return {
         }
     }
 }
+
+impl MetadataContent for Return {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

@@ -76,6 +76,7 @@ impl Token {
             | Kind::Literal(..)
             | Kind::Comment(..)
             | Kind::Meta(..)
+            | Kind::RootMeta(..)
             | Kind::Number(..)
             | Kind::Whitespace(..) => {
                 self.pos.to.abs = from + self.to_string().len();

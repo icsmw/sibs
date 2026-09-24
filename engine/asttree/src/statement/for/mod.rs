@@ -106,3 +106,9 @@ impl Extract for For {
         }
     }
 }
+
+impl MetadataContent for For {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

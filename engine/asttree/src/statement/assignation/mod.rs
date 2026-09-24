@@ -74,3 +74,9 @@ impl Extract for Assignation {
         }
     }
 }
+
+impl MetadataContent for Assignation {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

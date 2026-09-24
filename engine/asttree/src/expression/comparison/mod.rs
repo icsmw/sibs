@@ -76,3 +76,9 @@ impl Extract for Comparison {
         }
     }
 }
+
+impl MetadataContent for Comparison {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

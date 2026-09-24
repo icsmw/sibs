@@ -84,3 +84,9 @@ impl Extract for Call {
         }
     }
 }
+
+impl MetadataContent for Call {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

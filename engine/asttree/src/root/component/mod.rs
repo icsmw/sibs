@@ -105,3 +105,9 @@ impl Extract for Component {
         }
     }
 }
+
+impl MetadataContent for Component {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

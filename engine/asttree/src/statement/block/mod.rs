@@ -87,3 +87,9 @@ impl Extract for Block {
         }
     }
 }
+
+impl MetadataContent for Block {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

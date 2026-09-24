@@ -131,3 +131,9 @@ impl Extract for Anchor {
         }
     }
 }
+
+impl MetadataContent for Anchor {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::RootMeta, MiscellaneousId::Comment]
+    }
+}

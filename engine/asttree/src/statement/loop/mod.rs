@@ -68,3 +68,9 @@ impl Extract for Loop {
         }
     }
 }
+
+impl MetadataContent for Loop {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

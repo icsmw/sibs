@@ -94,3 +94,9 @@ impl Extract for Skip {
         }
     }
 }
+
+impl MetadataContent for Skip {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

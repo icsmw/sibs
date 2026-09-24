@@ -110,6 +110,8 @@ pub enum Kind {
     Comment(String),
     /// A meta comment starting with `///`.
     Meta(String),
+    /// A root documentation comment starting with `//!`.
+    RootMeta(String),
     /// A line feed character (`\n`).
     LF,
     /// A carriage return character (`\r`).
@@ -182,6 +184,7 @@ impl fmt::Display for Kind {
                 Self::DoubleArrow => "=>".to_owned(),
                 Self::Comment(s) => format!("//{s}"),
                 Self::Meta(s) => format!("///{s}"),
+                Self::RootMeta(s) => format!("//!{s}"),
                 Self::LF => "\n".to_string(),
                 Self::CR => "\r".to_string(),
                 Self::CRLF => "\r\n".to_owned(),
@@ -238,6 +241,7 @@ impl KindId {
             Self::DoubleArrow => "=>",
             Self::Comment => "//",
             Self::Meta => "///",
+            Self::RootMeta => "//!",
             Self::LF => "\n",
             Self::CR => "\r",
             Self::CRLF => "\r\n",
@@ -316,7 +320,8 @@ impl TryFrom<KindId> for Kind {
             | KindId::Literal
             | KindId::Whitespace
             | KindId::Comment
-            | KindId::Meta => Err(E::CannotConvertToKind(id)),
+            | KindId::Meta
+            | KindId::RootMeta => Err(E::CannotConvertToKind(id)),
         }
     }
 }

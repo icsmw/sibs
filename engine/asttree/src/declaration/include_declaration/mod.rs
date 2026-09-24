@@ -87,3 +87,9 @@ impl Extract for IncludeDeclaration {
         }
     }
 }
+
+impl MetadataContent for IncludeDeclaration {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

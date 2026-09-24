@@ -1,5 +1,6 @@
 mod comment;
 mod meta;
+mod root_meta;
 
 use crate::*;
 
@@ -8,6 +9,7 @@ impl InferType for Miscellaneous {
         match self {
             Miscellaneous::Comment(n) => n.infer_type(scx),
             Miscellaneous::Meta(n) => n.infer_type(scx),
+            Miscellaneous::RootMeta(n) => n.infer_type(scx),
         }
     }
 }
@@ -17,6 +19,7 @@ impl Initialize for Miscellaneous {
         match self {
             Miscellaneous::Comment(n) => n.initialize(scx),
             Miscellaneous::Meta(n) => n.initialize(scx),
+            Miscellaneous::RootMeta(n) => n.initialize(scx),
         }
     }
 }
@@ -26,6 +29,7 @@ impl Finalization for Miscellaneous {
         match self {
             Miscellaneous::Comment(n) => n.finalize(scx),
             Miscellaneous::Meta(n) => n.finalize(scx),
+            Miscellaneous::RootMeta(n) => n.finalize(scx),
         }
     }
 }
@@ -35,6 +39,7 @@ impl SemanticTokensGetter for Miscellaneous {
         match self {
             Miscellaneous::Comment(n) => n.get_semantic_tokens(stcx),
             Miscellaneous::Meta(n) => n.get_semantic_tokens(stcx),
+            Miscellaneous::RootMeta(n) => n.get_semantic_tokens(stcx),
         }
     }
 }

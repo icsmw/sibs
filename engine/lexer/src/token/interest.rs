@@ -79,6 +79,7 @@ impl Interest for KindId {
             Self::DoubleArrow => &'=' == ch,
             Self::Comment => &'/' == ch,
             Self::Meta => &'/' == ch,
+            Self::RootMeta => &'/' == ch,
             Self::LF => &'\n' == ch,
             Self::CR => &'\r' == ch,
             Self::CRLF => &'\r' == ch,
@@ -140,6 +141,7 @@ impl Interest for KindId {
             | Self::DoubleArrow
             | Self::Comment
             | Self::Meta
+            | Self::RootMeta
             | Self::LF
             | Self::CR
             | Self::CRLF
