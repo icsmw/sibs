@@ -84,6 +84,8 @@ async fn task_releases_context_even_when_leaving_scope_fails() {
     )
     .unwrap();
     let env = rt.create_interpreter_env("scope test", None).await.unwrap();
+    let job = env.job.clone();
+    job.start().started::<String>(None).await.unwrap();
     let saved = Arc::new(std::sync::Mutex::new(None));
     let captured = saved.clone();
     let task = TaskEntity {
@@ -125,5 +127,6 @@ async fn task_releases_context_even_when_leaving_scope_fails() {
         std::env::current_dir().unwrap()
     );
     cx.close().await.unwrap();
+    job.done().failed::<String>(None).await.unwrap();
     rt.destroy().await.unwrap();
 }

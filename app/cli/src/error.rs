@@ -47,6 +47,9 @@ pub enum E {
 
     #[error("No sessions found")]
     NoSessions,
+
+    #[error("No anchor node has been found")]
+    NoAnchorNode,
 }
 
 impl From<std::io::Error> for E {

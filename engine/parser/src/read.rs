@@ -67,6 +67,9 @@ pub(crate) trait TryRead<
 
 pub trait TryReadOneOf<T, K> {
     fn try_oneof(parser: &Parser, ids: &[K]) -> Result<Option<T>, LinkedErr<E>>;
+    fn try_read(parser: &Parser, id: K) -> Result<Option<T>, LinkedErr<E>> {
+        Self::try_oneof(parser, &[id])
+    }
 }
 
 pub trait AsVec<T> {

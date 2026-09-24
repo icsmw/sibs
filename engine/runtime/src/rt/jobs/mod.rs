@@ -317,6 +317,12 @@ mod shutdown_tests {
             child.cancel().cancellation().await;
             assert!(parent.cancel().is_cancelled());
             assert!(child.cancel().is_cancelled());
+            assert!(matches!(
+                parent
+                    .child("after cancellation", JobVisibility::Hidden)
+                    .await,
+                Err(E::Cancelled)
+            ));
             assert!(matches!(jobs.destroy().await, Err(E::JobsShutdowning)));
             assert!(matches!(
                 jobs.create("late", None, JobVisibility::Hidden).await,
@@ -357,6 +363,69 @@ mod shutdown_tests {
             .iter()
             .any(|r| r.uuid == parent.identity().uuid() && r.event == scheme::EventTy::Cancelled));
         drop(reader);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[tokio::test]
+    async fn child_creation_reports_cancellation_when_shutdown_wins() {
+        let dir = directory();
+        let jobs = RtJobs::new(&dir).unwrap();
+        let parent = jobs
+            .create("parent", None, JobVisibility::Hidden)
+            .await
+            .unwrap();
+        parent.start().started::<String>(None).await.unwrap();
+
+        tokio::time::timeout(Duration::from_secs(2), async {
+            let (tx, rx) = oneshot::channel();
+            // On this single-threaded runtime the actor cannot process Destroy
+            // until child() has checked cancellation and queued Create behind it.
+            jobs.tx.send(Demand::Destroy(tx)).unwrap();
+            assert!(!parent.cancel().is_cancelled());
+            let result = parent.child("racing child", JobVisibility::Hidden).await;
+            assert!(matches!(result, Err(E::Cancelled)), "{result:?}");
+
+            let done = rx.await.unwrap().unwrap();
+            parent.cancel().cancelling().await.unwrap();
+            parent.cancel().cancelled::<String>(None).await.unwrap();
+            done.await.unwrap().unwrap();
+        })
+        .await
+        .unwrap();
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[tokio::test]
+    async fn child_creation_keeps_the_child_when_creation_wins() {
+        let dir = directory();
+        let jobs = RtJobs::new(&dir).unwrap();
+        let parent = jobs
+            .create("parent", None, JobVisibility::Hidden)
+            .await
+            .unwrap();
+        parent.start().started::<String>(None).await.unwrap();
+
+        tokio::time::timeout(Duration::from_secs(2), async {
+            // Poll child() first, then queue Destroy before yielding to the actor.
+            // The reply contains a real child even though shutdown cancels its token.
+            let (child, done) = tokio::join!(biased;
+                parent.child("racing child", JobVisibility::Hidden),
+                async {
+                    let (tx, rx) = oneshot::channel();
+                    jobs.tx.send(Demand::Destroy(tx)).unwrap();
+                    rx.await.unwrap().unwrap()
+                },
+            );
+            let child = child.unwrap();
+            assert!(child.cancel().is_cancelled());
+            child.cancel().cancelling().await.unwrap();
+            child.cancel().cancelled::<String>(None).await.unwrap();
+            parent.cancel().cancelling().await.unwrap();
+            parent.cancel().cancelled::<String>(None).await.unwrap();
+            done.await.unwrap().unwrap();
+        })
+        .await
+        .unwrap();
         std::fs::remove_dir_all(dir).unwrap();
     }
 

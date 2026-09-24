@@ -1,7 +1,7 @@
 use runtime::{RtParameters, RtValue};
 use semantic::Script;
 
-use crate::{runtime, ExecutionFailure, ExecutionOptions, ExecutorError, Interpret};
+use crate::{runtime, ExecutionFailure, ExecutionOptions, ExecutorError, InterpretOwned};
 
 #[derive(Debug)]
 pub struct Executor {
@@ -27,7 +27,7 @@ impl Executor {
             .create_interpreter_env(format!("{}:{}", params.component, params.task), None)
             .await
             .map_err(ExecutorError::RuntimeSetup)?;
-        let result = script.anchor.interpret(env).await;
+        let result = script.anchor.interpret_owned(env).await;
         let shutdown = rt.destroy().await;
 
         match (result, shutdown) {

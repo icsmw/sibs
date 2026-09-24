@@ -1,4 +1,33 @@
 use crate::*;
+use futures::FutureExt;
+use std::{future::Future, panic::AssertUnwindSafe};
+
+pub(crate) async fn catch_execution_panic<F>(
+    future: F,
+    link: SrcLink,
+) -> Result<RtValue, LinkedErr<E>>
+where
+    F: Future<Output = Result<RtValue, LinkedErr<E>>>,
+{
+    // The panicking future is discarded, never polled again. Returning an error
+    // lets callers run their normal async cleanup before completing their jobs.
+    match AssertUnwindSafe(future).catch_unwind().await {
+        Ok(result) => result,
+        Err(payload) => {
+            let message = if let Some(message) = payload.downcast_ref::<String>() {
+                message.clone()
+            } else if let Some(message) = payload.downcast_ref::<&str>() {
+                (*message).to_owned()
+            } else {
+                "non-string panic payload".to_owned()
+            };
+            Err(LinkedErr::by_link(
+                E::ExecutionPanicked(message),
+                (&link).into(),
+            ))
+        }
+    }
+}
 
 pub(crate) async fn chk_ty(
     node: &LinkedNode,
@@ -57,7 +86,7 @@ where
     let result = if env.job.cancel().is_cancelled() {
         Err(LinkedErr::from(E::Cancelled, node))
     } else {
-        node.exec(env.clone()).await
+        catch_execution_panic(async { node.exec(env.clone()).await }, node.slink()).await
     };
 
     match &result {

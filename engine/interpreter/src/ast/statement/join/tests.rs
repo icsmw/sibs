@@ -257,7 +257,7 @@ async fn join_returns_success_and_failed_command_statuses_in_source_order() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-async fn interpret_collects_branch_and_handle_errors_after_all_branches_finish() {
+async fn interpret_collects_branch_errors_and_panics_after_all_branches_finish() {
     use tokio::time::{timeout, Duration};
 
     fn gate(env: FnEnv) -> RtPinnedResult<'static, LinkedErr<E>> {
@@ -289,15 +289,15 @@ async fn interpret_collects_branch_and_handle_errors_after_all_branches_finish()
         ("test_crash", crash),
         ("test_fail", fail),
     ]);
+    let node = LinkedNode::from_node(Node::Statement(Statement::Join(node)));
     let rt = runtime(RtParameters::default_from_cwd().unwrap(), scx).unwrap();
     let env = rt
         .create_interpreter_env("join outcomes", None)
         .await
         .unwrap();
     let ready = rt.signals().wait_signal("Ready").await.unwrap().unwrap();
-    // Call Join directly: a deliberately panicking node cannot finalize its own
-    // job. This tests aggregation, not recovery of that broken lifecycle.
-    let execution = node.interpret(env);
+    // The root LinkedNode owns the job supplied by the runtime.
+    let execution = node.interpret_owned(env);
     tokio::pin!(execution);
     timeout(Duration::from_secs(5), async {
         tokio::select! {
@@ -318,7 +318,8 @@ async fn interpret_collects_branch_and_handle_errors_after_all_branches_finish()
     };
     assert!(
         matches!(values.as_slice(), [RtValue::Num(42.0), RtValue::Error(panic), RtValue::Error(error)]
-        if panic.contains("injected branch panic") && error == &E::SpawnFailed("injected branch error".into()).to_string()),
+        if panic == &E::ExecutionPanicked("injected branch panic".into()).to_string()
+            && error == &E::SpawnFailed("injected branch error".into()).to_string()),
         "{values:?}"
     );
     rt.destroy().await.unwrap();

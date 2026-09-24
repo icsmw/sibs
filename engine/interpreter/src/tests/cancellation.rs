@@ -6,7 +6,9 @@ async fn cancel_execution(body: &str, waiters: usize) {
         format!("component comp() {{ task run() {{ {body}; signals::emit(\"After\"); }} task wait() {{ signals::wait(\"Never\"); }} }};");
     let mut lx = lexer::Lexer::new(&content, 0);
     let parser = Parser::unbound(lx.read().unwrap().tokens, &lx.uuid, &content, false);
-    let node = Anchor::read(&parser).unwrap().unwrap();
+    let node = LinkedNode::try_read(&parser, NodeTarget::Root(&[RootId::Anchor]))
+        .unwrap()
+        .unwrap();
     let mut scx = SemanticCx::new(false);
     functions::register(&mut scx.fns.efns).unwrap();
     node.initialize(&mut scx).unwrap();
@@ -21,11 +23,9 @@ async fn cancel_execution(body: &str, waiters: usize) {
         .create_interpreter_env("cancellation test", None)
         .await
         .unwrap();
-    let job = env.job.clone();
-    job.start().started::<String>(None).await.unwrap();
     let ready = rt.signals().wait_signal("Ready").await.unwrap().unwrap();
     let after = rt.signals().wait_signal("After").await.unwrap().unwrap();
-    let execution = tokio::spawn(async move { node.interpret(env).await });
+    let execution = tokio::spawn(async move { node.interpret_owned(env).await });
     timeout(Duration::from_secs(5), async {
         if waiters == 0 {
             ready.cancelled().await;
@@ -37,8 +37,9 @@ async fn cancel_execution(body: &str, waiters: usize) {
     })
     .await
     .expect("execution reached the cancellation point");
-    // The caller owns the root transition; executors own their descendant jobs.
-    job.cancel().cancelling().await.unwrap();
+    // Runtime signals cancellation; the root LinkedNode owns the job lifecycle.
+    let stopping = rt.clone();
+    let shutdown = tokio::spawn(async move { stopping.destroy().await });
     let result = timeout(Duration::from_secs(5), execution)
         .await
         .unwrap()
@@ -57,12 +58,11 @@ async fn cancel_execution(body: &str, waiters: usize) {
         !after.is_cancelled(),
         "execution continued after cancellation"
     );
-    // Terminal updates validate the entire subtree, not only direct children.
-    job.cancel()
-        .cancelled::<String>(None)
+    timeout(Duration::from_secs(5), shutdown)
         .await
-        .expect("all descendants finished");
-    rt.destroy().await.unwrap();
+        .unwrap()
+        .unwrap()
+        .unwrap();
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

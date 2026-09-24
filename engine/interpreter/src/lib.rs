@@ -20,7 +20,13 @@ pub use utils::*;
 use uuid::Uuid;
 
 pub trait Interpret {
+    /// A `LinkedNode` creates its own child of the supplied job.
     fn interpret(&self, _env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>>;
+}
+
+pub trait InterpretOwned {
+    /// Run on the supplied job, owning its lifecycle without creating a child.
+    fn interpret_owned(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>>;
 }
 
 trait InterpretInner {

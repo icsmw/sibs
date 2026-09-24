@@ -75,9 +75,16 @@ impl Job {
         if self.cancel().is_cancelled() {
             return Err(E::Cancelled);
         }
-        self.jobs
+        match self
+            .jobs
             .create(alias.to_string(), Some(self.identity.uuid()), visibility)
             .await
+        {
+            // Shutdown may cancel the parent after the check above but before
+            // the actor handles Create. Keep both paths classified as cancellation.
+            Err(E::JobsShutdowning) if self.cancel().is_cancelled() => Err(E::Cancelled),
+            result => result,
+        }
     }
 
     async fn update_state(&self, state: JobState) -> Result<(), E> {

@@ -8,7 +8,7 @@ use crate::*;
 #[derive(Debug)]
 pub struct Script {
     parser: Parser,
-    anchor: Anchor,
+    anchor: LinkedNode,
     scx: SemanticCx,
     source: ScriptSource,
     options: ScriptOptions,
@@ -25,7 +25,7 @@ impl Script {
 
     fn read(source: ScriptSource, options: ScriptOptions) -> Result<Self, ScriptError> {
         let parser = source.parser(options.resilience)?;
-        let anchor = match Anchor::read(&parser) {
+        let anchor = match LinkedNode::try_read(&parser, NodeTarget::Root(&[RootId::Anchor])) {
             Ok(Some(anchor)) => anchor,
             Ok(None) => return Err(ScriptError::FailExtractAnchorNodeFrom(source.to_string())),
             Err(err) => {
@@ -98,8 +98,8 @@ impl Script {
         &self.parser
     }
 
-    pub fn anchor(&self) -> &Anchor {
-        &self.anchor
+    pub fn anchor(&self) -> Option<&Anchor> {
+        self.anchor.extract::<Anchor>()
     }
 
     pub fn semantic(&self) -> &SemanticCx {
@@ -128,7 +128,7 @@ impl Script {
 #[derive(Debug)]
 pub struct ScriptInner {
     pub parser: Parser,
-    pub anchor: Anchor,
+    pub anchor: LinkedNode,
     pub scx: SemanticCx,
     pub source: ScriptSource,
     pub options: ScriptOptions,
@@ -152,7 +152,11 @@ mod tests {
         )
         .expect("script is prepared");
 
-        assert!(script.anchor().get_component("my_component").is_some());
+        assert!(script
+            .anchor()
+            .expect("Anchor parsed")
+            .get_component("my_component")
+            .is_some());
     }
 
     #[test]

@@ -204,6 +204,9 @@ pub enum E {
 
     #[error("Runtime to shutdown Jobs in {0}ms")]
     RtShutdownTimeout(u128),
+
+    #[error("Execution panicked: {0}")]
+    ExecutionPanicked(String),
 }
 
 impl From<JobStateError> for E {

@@ -13,7 +13,7 @@ pub struct Script {
     task: Option<String>,
     args: Option<Vec<String>>,
     scenario: Scenario,
-    anchor: Anchor,
+    anchor: LinkedNode,
     scx: Option<SemanticCx>,
     parser: Parser,
 }
@@ -26,7 +26,7 @@ impl Script {
         args: Option<Vec<String>>,
     ) -> Result<Self, E> {
         let parser = Parser::new(&scenario.filepath, false)?;
-        let anchor = Anchor::read(&parser);
+        let anchor = LinkedNode::try_read(&parser, NodeTarget::Root(&[RootId::Anchor]));
         if let Err(err) = &anchor {
             eprintln!("{}", parser.report_err(err)?);
         }
@@ -68,7 +68,7 @@ impl Script {
         let env = rt
             .create_interpreter_env(format!("{component}:{task}"), None)
             .await?;
-        let vl = self.anchor.interpret(env).await;
+        let vl = self.anchor.interpret_owned(env).await;
         let _ = rt.destroy().await;
         match vl {
             Ok(vl) => Ok(vl),
@@ -92,8 +92,9 @@ impl Script {
     }
 
     fn print_components(&self) -> Result<(), E> {
+        let anchor = self.anchor.extract::<Anchor>().ok_or(E::NoAnchorNode)?;
         let mut lines = Vec::new();
-        self.anchor
+        anchor
             .get_components_md()
             .iter()
             .for_each(|(component, (md, tasks))| {
@@ -112,8 +113,11 @@ impl Script {
         let Some(component) = self.component.clone() else {
             return Err(E::NoComponentParameter);
         };
+
+        let anchor = self.anchor.extract::<Anchor>().ok_or(E::NoAnchorNode)?;
+
         let mut lines = vec![format!("[b]{component}[/b]")];
-        let Some(component) = self.anchor.get_component(&component) else {
+        let Some(component) = anchor.get_component(&component) else {
             return Err(E::ComponentNotFound(component));
         };
         lines.extend(component.get_md().lines());

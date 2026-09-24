@@ -108,6 +108,7 @@ impl ErrorCode for E {
             Self::JobsShutdownTimeout(_) => "00084",
             Self::RtShutdowning => "00085",
             Self::RtShutdownTimeout(_) => "00086",
+            Self::ExecutionPanicked(_) => "00087",
         }
     }
     fn src(&self) -> ErrorSource {
@@ -228,6 +229,7 @@ mod test {
                 EId::JobsShutdownTimeout => E::JobsShutdownTimeout(5000),
                 EId::RtShutdowning => E::RtShutdowning,
                 EId::RtShutdownTimeout => E::RtShutdownTimeout(5000),
+                EId::ExecutionPanicked => E::ExecutionPanicked(String::new()),
             }
         }
     }
