@@ -413,10 +413,11 @@ mod shutdown_tests {
                 async {
                     let (tx, rx) = oneshot::channel();
                     jobs.tx.send(Demand::Destroy(tx)).unwrap();
-                    rx.await.unwrap().unwrap()
+                    rx.await.unwrap()
                 },
             );
             let child = child.unwrap();
+            let done = done.unwrap();
             assert!(child.cancel().is_cancelled());
             child.cancel().cancelling().await.unwrap();
             child.cancel().cancelled::<String>(None).await.unwrap();
