@@ -51,6 +51,13 @@ pub enum ExecutorError {
 
     #[error("Execution finished successfully, but runtime shutdown failed: {value:?}; {err}")]
     ValueAndShutdown { value: RtValue, err: RtError },
+
+    #[error("{err}; runtime shutdown also failed: {shutdown_err}")]
+    ErrorAndShutdown {
+        #[source]
+        err: Box<ExecutorError>,
+        shutdown_err: RtError,
+    },
 }
 
 impl From<RtError> for ExecutorError {
