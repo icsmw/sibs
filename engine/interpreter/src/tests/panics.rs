@@ -181,19 +181,22 @@ async fn join_recovers_from_a_panic_in_a_nested_task() {
         NodeTarget::Root(&[RootId::Anchor]),
         panic_while_polling,
     );
-    let rt = runtime(
-        RtParameters::new("comp", "run", vec![], std::env::current_dir().unwrap()),
-        scx,
+    // Script cannot register the injected panic function before semantic analysis.
+    let mut ctx = InterContext::default();
+    ctx.set_anchor(node);
+    ctx.set_semantic_cx(scx);
+    let result = timeout(
+        Duration::from_secs(2),
+        Executor::new(ExecutionOptions::new(
+            "comp",
+            "run",
+            std::env::current_dir().unwrap(),
+        ))
+        .run(&mut ctx),
     )
+    .await
+    .unwrap()
     .unwrap();
-    let env = rt
-        .create_interpreter_env("nested task panic", None)
-        .await
-        .unwrap();
-    let result = timeout(Duration::from_secs(2), node.interpret_owned(env))
-        .await
-        .unwrap()
-        .unwrap();
     assert_eq!(
         result,
         RtValue::Vec(vec![
@@ -201,8 +204,4 @@ async fn join_recovers_from_a_panic_in_a_nested_task() {
             RtValue::Num(42.0),
         ])
     );
-    timeout(Duration::from_secs(2), rt.destroy())
-        .await
-        .unwrap()
-        .unwrap();
 }

@@ -4,16 +4,12 @@ use tokio::time::{timeout, Duration};
 async fn cancel_execution(body: &str, waiters: usize) {
     let content =
         format!("component comp() {{ task run() {{ {body}; signals::emit(\"After\"); }} task wait() {{ signals::wait(\"Never\"); }} }};");
-    let mut lx = lexer::Lexer::new(&content, 0);
-    let parser = Parser::unbound(lx.read().unwrap().tokens, &lx.uuid, &content, false);
-    let node = LinkedNode::try_read(&parser, NodeTarget::Root(&[RootId::Anchor]))
-        .unwrap()
-        .unwrap();
-    let mut scx = SemanticCx::new(false);
-    functions::register(&mut scx.fns.efns).unwrap();
-    node.initialize(&mut scx).unwrap();
-    node.infer_type(&mut scx).unwrap();
-    node.finalize(&mut scx).unwrap();
+    let mut ctx = InterContext::default();
+    Script::from_text(&content, ScriptOptions::strict(), &mut ctx).unwrap();
+    // Executor does not expose the runtime needed to trigger cancellation and observe signals.
+    let (node, scx) = ctx.get_executor_ctx();
+    let node = node.unwrap().clone();
+    let scx = scx.unwrap();
     let rt = runtime(
         RtParameters::new("comp", "run", Vec::new(), std::env::current_dir().unwrap()),
         scx,

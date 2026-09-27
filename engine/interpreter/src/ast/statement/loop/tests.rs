@@ -65,7 +65,7 @@ test_task_results!(
     "#
 );
 
-test_fail!(
+test_node_fail!(
     loop_000,
     Block,
     r#"{

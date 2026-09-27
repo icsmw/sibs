@@ -116,16 +116,12 @@ async fn join_branch_error_does_not_cancel_a_waiting_branch() {
     };
     "#;
 
-    let mut lx = lexer::Lexer::new(content, 0);
-    let parser = Parser::unbound(lx.read().unwrap().tokens, &lx.uuid, content, false);
-    let node = Anchor::read(&parser)
-        .expect("Node is parsed without errors")
-        .expect("Node is parsed");
-    let mut scx = SemanticCx::new(false);
-    functions::register(&mut scx.fns.efns).expect("functions are registred");
-    assert!(node.initialize(&mut scx).is_ok());
-    assert!(node.infer_type(&mut scx).is_ok());
-    assert!(node.finalize(&mut scx).is_ok());
+    let mut ctx = InterContext::default();
+    Script::from_text(content, ScriptOptions::strict(), &mut ctx).unwrap();
+    // Keep direct execution to observe the job and release a branch through runtime signals.
+    let (node, scx) = ctx.get_executor_ctx();
+    let node = node.unwrap().extract::<Anchor>().unwrap();
+    let scx = scx.unwrap();
 
     let params = RtParameters::new(
         "my_component",
