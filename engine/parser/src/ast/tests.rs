@@ -18,7 +18,8 @@ macro_rules! test_selfnode_reading {
                         let mut parser = $crate::Parser::unbound(lx.read().unwrap().tokens, &lx.uuid, &content, false);
                         let node = $element_ref::read(&mut parser);
                         if let Err(err) = &node {
-                            eprintln!("{}",parser.report_err(err).expect("Reporting error"));
+                            let diagnostics: diagnostics::Diagnostics<$crate::ParserError> = parser.try_into().expect("Parser diagnostics are available");
+                            diagnostics.err(err, &mut std::io::stderr()).expect("Reporting error");
                             eprintln!("fail with:\nErr:{err:?}\n{content}\n{}", "=".repeat(100));
                         }
                         assert!(node.is_ok());
@@ -60,7 +61,8 @@ macro_rules! test_node_reading {
                         let mut parser = $crate::Parser::unbound(tokens.unwrap().tokens, &lx.uuid, &content, false);
                         let node = $element_ref::read_as_linked(&mut parser);
                         if let Err(err) = &node {
-                            eprintln!("{}",parser.report_err(err).expect("Reporting error"));
+                            let diagnostics: diagnostics::Diagnostics<$crate::ParserError> = parser.try_into().expect("Parser diagnostics are available");
+                            diagnostics.err(err, &mut std::io::stderr()).expect("Reporting error");
                             eprintln!("fail with:\nErr:{err:?}\n{content}\n{}", "=".repeat(100));
                         }
                         assert!(node.is_ok());
@@ -88,7 +90,8 @@ macro_rules! test_node_reading_case {
                     let mut parser = $crate::Parser::unbound(lx.read().unwrap().tokens, &lx.uuid, &$content, false);
                     let node = $element_ref::read_as_linked(&mut parser);
                     if let Err(err) = &node {
-                        eprintln!("{}",parser.report_err(err).expect("Reporting error"));
+                        let diagnostics: diagnostics::Diagnostics<$crate::ParserError> = parser.try_into().expect("Parser diagnostics are available");
+                            diagnostics.err(err, &mut std::io::stderr()).expect("Reporting error");
                         eprintln!("fail with:\nErr:{err:?}\n{}\n{}", $content, "=".repeat(100));
                     }
                     assert!(node.is_ok());

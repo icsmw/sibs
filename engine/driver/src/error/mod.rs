@@ -27,11 +27,33 @@ pub enum E {
     Semantic(semantic::SemanticError),
     #[error("Runtime error: {0}")]
     Runtime(runtime::RtError),
+    #[error("Fail to get access to context")]
+    ContextError,
+    #[error("Attempt to reuse InterContext")]
+    UsedContext,
+    #[error("Script is not executable. See diagnostics")]
+    NotExecutable,
 }
 
 impl From<std::io::Error> for E {
     fn from(err: std::io::Error) -> Self {
         E::IO(err.to_string())
+    }
+}
+
+impl From<interpreter::ScriptError> for E {
+    fn from(err: interpreter::ScriptError) -> Self {
+        use interpreter::ScriptError;
+        match err {
+            ScriptError::FailExtractAnchorNodeFrom(src) => Self::FailExtractAnchorNodeFrom(src),
+            ScriptError::Lexer(err) => Self::Lexer(err),
+            ScriptError::Parser(err) => Self::Parser(err),
+            ScriptError::ContextError => Self::ContextError,
+            ScriptError::UsedContext => Self::UsedContext,
+            ScriptError::NotExecutable => Self::NotExecutable,
+            ScriptError::IO(err) => Self::IO(err),
+            ScriptError::Runtime(err) => Self::Runtime(err),
+        }
     }
 }
 

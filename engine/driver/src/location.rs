@@ -48,7 +48,6 @@ impl Location {
         };
         let cursor = current.token.clone();
         let idx = current.idx;
-        drop(current);
         debug!("Cursor token: {}", cursor.id());
         let tree = locator.get_ownership_tree(cursor.pos.from.abs);
         let mut blocks = Vec::new();

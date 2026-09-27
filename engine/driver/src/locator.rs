@@ -1,15 +1,17 @@
-use std::{cell::Ref, ops::RangeInclusive};
+use std::ops::RangeInclusive;
+
+use interpreter::InterContext;
 
 use crate::*;
 
 pub struct TokenStep<'a> {
     pub node: Option<&'a LinkedNode>,
-    pub token: Ref<'a, Token>,
+    pub token: &'a Token,
     pub idx: isize,
 }
 
 impl<'a> TokenStep<'a> {
-    pub fn new(token: Ref<'a, Token>, node: Option<&'a LinkedNode>, idx: isize) -> Self {
+    pub fn new(token: &'a Token, node: Option<&'a LinkedNode>, idx: isize) -> Self {
         Self { node, token, idx }
     }
 }
@@ -32,11 +34,11 @@ impl fmt::Display for TokenStep<'_> {
 
 pub struct NodeStep<'a> {
     pub node: &'a LinkedNode,
-    pub tokens: Vec<Ref<'a, Token>>,
+    pub tokens: Vec<&'a Token>,
 }
 
 impl<'a> NodeStep<'a> {
-    pub fn new(tokens: Vec<Ref<'a, Token>>, node: &'a LinkedNode) -> Self {
+    pub fn new(tokens: Vec<&'a Token>, node: &'a LinkedNode) -> Self {
         Self { node, tokens }
     }
 }
@@ -61,23 +63,21 @@ impl fmt::Display for NodeStep<'_> {
 }
 
 pub struct LocationIterator<'a> {
-    anchor: &'a Anchor,
     src: Uuid,
     pub idx: isize,
     initial: isize,
     recent: Option<Uuid>,
-    pub parser: &'a Parser,
+    pub ctx: &'a InterContext,
 }
 
 impl<'a> LocationIterator<'a> {
-    pub fn new(anchor: &'a Anchor, src: Uuid, idx: usize, parser: &'a Parser) -> Self {
+    pub fn new(src: Uuid, idx: usize, ctx: &'a InterContext) -> Self {
         Self {
-            anchor,
             src,
             idx: idx as isize,
             initial: idx as isize,
             recent: None,
-            parser,
+            ctx,
         }
     }
 
@@ -96,14 +96,17 @@ impl<'a> LocationIterator<'a> {
         self.idx = idx;
     }
 
-    pub fn nth_token(&self, idx: isize) -> Option<Ref<'_, Token>> {
-        self.parser.get_token(idx)
+    pub fn nth_token(&self, idx: isize) -> Option<&Token> {
+        self.ctx.get_diagnostics()?.get_token(idx)
     }
 
-    pub fn nth_tokens(&self, range: RangeInclusive<usize>) -> Vec<Option<Ref<'_, Token>>> {
+    pub fn nth_tokens(&self, range: RangeInclusive<usize>) -> Vec<Option<&Token>> {
         let mut tokens = Vec::new();
+        let Some(diagnostics) = self.ctx.get_diagnostics() else {
+            return tokens;
+        };
         for idx in range {
-            tokens.push(self.parser.get_token(idx as isize));
+            tokens.push(diagnostics.get_token(idx as isize));
         }
         tokens
     }
@@ -121,22 +124,28 @@ impl<'a> LocationIterator<'a> {
                 None
             }
         }
-        if &self.anchor.uuid == uuid {
+        let anchor = self.ctx.get_anchor_inner()?;
+        if &anchor.uuid == uuid {
             None
         } else {
-            find(uuid, self.anchor.childs())
+            find(uuid, anchor.childs())
         }
     }
 
     pub fn get_ownership_tree(&self, pos: usize) -> Vec<&LinkedNode> {
-        get_ownership_tree(self.anchor.childs(), &self.src, pos)
+        let Some(anchor) = self.ctx.get_anchor_inner() else {
+            return Vec::new();
+        };
+        get_ownership_tree(anchor.childs(), &self.src, pos)
     }
 
     pub fn prev_node<'s>(&'s mut self) -> Option<NodeStep<'s>> {
+        let anchor = self.ctx.get_anchor_inner()?;
+        let diagnostics = self.ctx.get_diagnostics()?;
         let mut tokens = Vec::new();
         loop {
-            let token = self.parser.get_token(self.idx)?;
-            if let Some(node) = find_node(self.anchor.childs(), &self.src, &token) {
+            let token = diagnostics.get_token(self.idx)?;
+            if let Some(node) = find_node(anchor.childs(), &self.src, token) {
                 if self
                     .recent
                     .as_ref()
@@ -154,10 +163,12 @@ impl<'a> LocationIterator<'a> {
     }
 
     pub fn next_node<'s>(&'s mut self) -> Option<NodeStep<'s>> {
+        let anchor = self.ctx.get_anchor_inner()?;
+        let diagnostics = self.ctx.get_diagnostics()?;
         let mut tokens = Vec::new();
         loop {
-            let token = self.parser.get_token(self.idx)?;
-            if let Some(node) = find_node(self.anchor.childs(), &self.src, &token) {
+            let token = diagnostics.get_token(self.idx)?;
+            if let Some(node) = find_node(anchor.childs(), &self.src, token) {
                 if self
                     .recent
                     .as_ref()
@@ -175,21 +186,27 @@ impl<'a> LocationIterator<'a> {
     }
 
     pub fn prev_token<'s>(&'s mut self) -> Option<TokenStep<'s>> {
-        let token = self.parser.get_token(self.idx)?;
-        let node = find_node(self.anchor.childs(), &self.src, &token);
+        let anchor = self.ctx.get_anchor_inner()?;
+        let diagnostics = self.ctx.get_diagnostics()?;
+        let token = diagnostics.get_token(self.idx)?;
+        let node = find_node(anchor.childs(), &self.src, token);
         self.idx -= 1;
         Some(TokenStep::new(token, node, self.idx + 1))
     }
 
     pub fn next_token<'s>(&'s mut self) -> Option<TokenStep<'s>> {
-        let token = self.parser.get_token(self.idx)?;
-        let node = find_node(self.anchor.childs(), &self.src, &token);
+        let anchor = self.ctx.get_anchor_inner()?;
+        let diagnostics = self.ctx.get_diagnostics()?;
+        let token = diagnostics.get_token(self.idx)?;
+        let node = find_node(anchor.childs(), &self.src, token);
         self.idx += 1;
         Some(TokenStep::new(token, node, self.idx - 1))
     }
     pub fn prev<'s>(&'s mut self) -> Option<TokenStep<'s>> {
+        let anchor = self.ctx.get_anchor_inner()?;
+        let diagnostics = self.ctx.get_diagnostics()?;
         let token = loop {
-            let token = self.parser.get_token(self.idx)?;
+            let token = diagnostics.get_token(self.idx)?;
             if matches!(
                 token.id(),
                 KindId::BOF
@@ -205,14 +222,16 @@ impl<'a> LocationIterator<'a> {
                 break token;
             }
         };
-        let node = find_node(self.anchor.childs(), &self.src, &token);
+        let node = find_node(anchor.childs(), &self.src, token);
         self.idx -= 1;
         Some(TokenStep::new(token, node, self.idx + 1))
     }
 
     pub fn next<'s>(&'s mut self) -> Option<TokenStep<'s>> {
+        let anchor = self.ctx.get_anchor_inner()?;
+        let diagnostics = self.ctx.get_diagnostics()?;
         let token = loop {
-            let token = self.parser.get_token(self.idx)?;
+            let token = diagnostics.get_token(self.idx)?;
             if matches!(
                 token.id(),
                 KindId::BOF
@@ -228,7 +247,7 @@ impl<'a> LocationIterator<'a> {
                 break token;
             }
         };
-        let node = find_node(self.anchor.childs(), &self.src, &token);
+        let node = find_node(anchor.childs(), &self.src, token);
         self.idx += 1;
         Some(TokenStep::new(token, node, self.idx - 1))
     }

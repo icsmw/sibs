@@ -9,21 +9,22 @@ macro_rules! test_success {
                 let mut lx = lexer::Lexer::new(&$content, 0);
                 let mut parser = Parser::unbound(lx.read().unwrap().tokens, &lx.uuid, $content, false);
                 let node = $element_ref::read(&mut parser).expect("Node is parsed without errors").expect("Node is parsed");
+                let diagnostics: diagnostics::Diagnostics<ParserError> = parser.try_into().expect("Parser diagnostics are available");
                 let mut scx = $crate::SemanticCx::new(false);
                 functions::register(&mut scx.fns.efns).expect("functions are registred");
                 let result = node.initialize(&mut scx);
                 if let Err(err) = &result {
-                    eprintln!("{}",parser.report_err(err).expect("Reporting error"));
+                    diagnostics.err(err, &mut std::io::stderr()).expect("Reporting error");
                 }
                 assert!(result.is_ok());
                 let result = node.infer_type(&mut scx);
                 if let Err(err) = &result {
-                    eprintln!("{}",parser.report_err(err).expect("Reporting error"));
+                    diagnostics.err(err, &mut std::io::stderr()).expect("Reporting error");
                 }
                 assert!(result.is_ok());
                 let result = node.finalize(&mut scx);
                 if let Err(err) = &result {
-                    eprintln!("{}",parser.report_err(err).expect("Reporting error"));
+                    diagnostics.err(err, &mut std::io::stderr()).expect("Reporting error");
                 }
                 assert!(result.is_ok());
             }

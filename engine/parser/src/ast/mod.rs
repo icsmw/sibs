@@ -78,16 +78,15 @@ impl TryReadOneOf<LinkedNode, NodeTarget<'_>> for LinkedNode {
                     if !parser.is_resilience() {
                         return Err(err);
                     }
-                    parser.errs.borrow_mut().add(err);
+                    parser.errs.borrow_mut().push(err);
                 }
             };
             shifted(parser);
             if parser.token().is_none() {
                 origin(parser);
-                return Err(parser
-                    .errs
-                    .borrow_mut()
-                    .extract_first()
+                let mut errs = parser.errs.borrow_mut();
+                return Err(errs
+                    .take_first()
                     .unwrap_or(LinkedErr::unlinked(E::Unlinked)));
             }
             shifted = parser.pin();

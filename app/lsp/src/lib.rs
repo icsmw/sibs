@@ -102,7 +102,7 @@ impl Backend {
         };
         Ok(errors
             .map(|err| {
-                let link = err.err.link();
+                let link = &err.err.link;
                 Diagnostic {
                     range: Range {
                         start: Position {
@@ -114,7 +114,7 @@ impl Backend {
                             character: link.to.col as u32,
                         },
                     },
-                    code: Some(NumberOrString::String(err.err.formattable())),
+                    code: Some(NumberOrString::String(err.err.e.formattable())),
                     severity: Some(DiagnosticSeverity::ERROR),
                     message: err.err.to_string(),
                     ..Default::default()

@@ -22,8 +22,7 @@ use diagnostics::*;
 use lexer::*;
 use std::{
     cell::{Cell, Ref, RefCell},
-    fmt::{self, Display},
-    io,
+    fmt, io,
     path::{Path, PathBuf},
     rc::Rc,
 };
@@ -36,7 +35,7 @@ pub struct Parser {
     filename: Option<PathBuf>,
     cwd: Option<PathBuf>,
     srcs: Rc<RefCell<CodeSources>>,
-    pub errs: Rc<RefCell<Errors<E>>>,
+    errs: Rc<RefCell<Errors<E>>>,
     bindings: Rc<RefCell<BindingsList>>,
     end: usize,
     pos: Cell<usize>,
@@ -124,41 +123,6 @@ impl Parser {
             return Err(E::FileNotFound(filename.to_string_lossy().to_string()));
         }
         self.new_child(filename)
-    }
-
-    pub fn report_err<T: Display + ErrorCode>(&self, err: &LinkedErr<T>) -> Result<String, E> {
-        self.srcs.borrow().err(err).map_err(E::IOError)
-    }
-
-    pub fn get_err_report(&self) -> Option<LinkedErr<E>> {
-        let err = self.errs.borrow_mut().extract_first()?;
-        Some(err)
-    }
-
-    pub fn get_token(&self, idx: isize) -> Option<Ref<'_, Token>> {
-        if idx < 0 {
-            return None;
-        }
-        let tokens_ref = self.tokens.borrow();
-        if (idx as usize) < tokens_ref.len() {
-            Some(Ref::map(tokens_ref, |tokens| &tokens[idx as usize]))
-        } else {
-            None
-        }
-    }
-
-    pub fn get_token_by_pos(&self, pos: usize) -> Option<(Ref<'_, Token>, usize)> {
-        let tokens_ref = self.tokens.borrow();
-        let index = tokens_ref.iter().position(|tk| tk.pos.is_in(pos))?;
-        Some((Ref::map(tokens_ref, |vec| &vec[index]), index))
-    }
-
-    pub fn len(&self) -> usize {
-        self.tokens.borrow().len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.tokens.borrow().is_empty()
     }
 
     pub fn pos(&self) -> usize {
@@ -357,6 +321,26 @@ impl Parser {
                 )),
             e: err,
         }
+    }
+}
+
+impl TryInto<Diagnostics<E>> for Parser {
+    type Error = E;
+    fn try_into(self) -> Result<Diagnostics<E>, E> {
+        let Parser {
+            tokens, srcs, errs, ..
+        } = self;
+        let tokens = Rc::try_unwrap(tokens)
+            .map_err(|_| E::BorrowError)?
+            .into_inner();
+        let sources = Rc::try_unwrap(srcs)
+            .map_err(|_| E::BorrowError)?
+            .into_inner();
+        let errors = Rc::try_unwrap(errs)
+            .map_err(|_| E::BorrowError)?
+            .into_inner();
+
+        Ok(Diagnostics::new(sources, Tokens::with(tokens), errors))
     }
 }
 

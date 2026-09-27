@@ -1,5 +1,7 @@
 mod ast;
+mod context;
 mod executor;
+mod script;
 mod utils;
 
 #[cfg(test)]
@@ -9,12 +11,14 @@ pub(crate) use parser::*;
 
 pub(crate) use asttree::*;
 pub(crate) use boxed::boxed;
+pub use context::*;
 pub(crate) use diagnostics::*;
 pub use executor::*;
 use lexer::SrcLink;
 pub(crate) use lexer::{Keyword, Kind};
 pub(crate) use runtime::error::E;
 pub(crate) use runtime::*;
+pub use script::*;
 pub(crate) use semantic::*;
 pub use utils::*;
 use uuid::Uuid;

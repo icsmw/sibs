@@ -6,7 +6,8 @@ mod locator;
 mod map;
 mod signature;
 
-use std::{cell::Ref, fmt, io, path::PathBuf};
+use interpreter::{DiagnosticError, InterContext, Script, ScriptError, ScriptOptions};
+use std::{fmt, io, path::PathBuf};
 use tracing::{debug, warn};
 use uuid::Uuid;
 
@@ -15,6 +16,7 @@ pub(crate) use diagnostics::*;
 pub(crate) use lexer::*;
 pub(crate) use location::*;
 pub(crate) use map::*;
+#[cfg(test)]
 pub(crate) use parser::*;
 pub(crate) use runtime::{Fns, Ty, TyScope};
 pub(crate) use semantic::*;
@@ -31,7 +33,7 @@ pub use error::E as DriverError;
 fn find_node<'a>(
     nodes: Vec<&'a LinkedNode>,
     _src: &Uuid,
-    token: &Ref<Token>,
+    token: &'a Token,
 ) -> Option<&'a LinkedNode> {
     let (owner, ..) = token.owner.as_ref()?;
     if let Some(found) = nodes.iter().find(|n| n.uuid() == owner) {
@@ -93,10 +95,7 @@ impl fmt::Display for CodeSrc {
     }
 }
 pub struct Driver {
-    parser: Option<Parser>,
-    scx: Option<SemanticCx>,
-    anchor: Option<LinkedNode>,
-    errors: Vec<DrivingError>,
+    ctx: InterContext,
     src: CodeSrc,
     resilience: bool,
 }
@@ -104,129 +103,83 @@ pub struct Driver {
 impl Driver {
     pub fn new<P: Into<PathBuf>>(path: P, resilience: bool) -> Self {
         Self {
-            parser: None,
-            scx: None,
-            anchor: None,
-            errors: Vec::new(),
+            ctx: InterContext::default(),
             src: CodeSrc::Path(path.into()),
             resilience,
         }
     }
     pub fn unbound<S: ToString>(content: S, resilience: bool) -> Self {
         Self {
-            parser: None,
-            scx: None,
-            anchor: None,
-            errors: Vec::new(),
+            ctx: InterContext::default(),
             src: CodeSrc::Text(content.to_string()),
             resilience,
         }
     }
 
     pub fn read(&mut self) -> Result<(), E> {
-        let parser = match &self.src {
-            CodeSrc::Path(path) => Parser::new(path, self.resilience)?,
-            CodeSrc::Text(content) => {
-                let mut lx = lexer::Lexer::new(content, 0);
-                Parser::unbound(lx.read()?.tokens, &lx.uuid, content, self.resilience)
-            }
+        self.ctx = InterContext::default();
+        let options = ScriptOptions {
+            resilience: self.resilience,
         };
-        let anchor = match LinkedNode::try_read(&parser, NodeTarget::Root(&[RootId::Anchor])) {
-            Ok(Some(anchor)) => anchor,
-            Ok(None) => {
-                self.parser = Some(parser);
-                return if !self.resilience {
-                    Err(E::FailExtractAnchorNodeFrom(self.src.to_string()))
-                } else {
-                    Ok(())
-                };
-            }
-            Err(err) => {
-                self.parser = Some(parser);
-                return if !self.resilience {
-                    Err(err.into())
-                } else {
-                    self.errors.push(DrivingError::Parsing(err));
-                    Ok(())
-                };
-            }
+        let result = match &self.src {
+            CodeSrc::Path(path) => Script::from_file(path, options, &mut self.ctx),
+            CodeSrc::Text(content) => Script::from_text(content, options, &mut self.ctx),
         };
-        parser.flush()?;
-        self.errors.extend(
-            parser
-                .errs
-                .borrow_mut()
-                .drain()
-                .into_iter()
-                .map(DrivingError::Parsing),
-        );
-        self.parser = Some(parser);
-        let mut scx = SemanticCx::new(self.resilience);
-        functions::register(&mut scx.fns.efns)?;
-        if let Err(err) = anchor.initialize(&mut scx) {
-            if !self.resilience {
-                return Err(err.into());
-            }
-            self.errors.push(DrivingError::Semantic(err));
+        match result {
+            Err(ScriptError::NotExecutable) if self.resilience => Ok(()),
+            Err(ScriptError::FailExtractAnchorNodeFrom(_)) if self.resilience => Ok(()),
+            result => result.map_err(E::from),
         }
-        if let Err(err) = anchor.infer_type(&mut scx) {
-            if !self.resilience {
-                return Err(err.into());
-            }
-            self.errors.push(DrivingError::Semantic(err));
-        }
-        if let Err(err) = anchor.finalize(&mut scx) {
-            if !self.resilience {
-                return Err(err.into());
-            }
-            self.errors.push(DrivingError::Semantic(err));
-        }
-        self.errors
-            .extend(scx.errs.drain().into_iter().map(DrivingError::Semantic));
-        self.scx = Some(scx);
-        self.anchor = Some(anchor);
-        Ok(())
     }
 
     /// If src is `None` will return content of root file
     pub fn get_src_content(&self, src: Option<&Uuid>) -> Result<Option<String>, io::Error> {
-        let Some(parser) = self.parser.as_ref() else {
+        let Some(diagnostics) = self.ctx.get_diagnostics() else {
             return Ok(None);
         };
-        parser.get_src_content(src)
+        let Some(src) = src.or_else(|| diagnostics.get_token(0).map(|token| &token.src)) else {
+            return Ok(None);
+        };
+        diagnostics.sources().get_content(src)
     }
 
     pub fn get_semantic_tokens(&self) -> Vec<LinkedSemanticToken> {
-        self.anchor
-            .as_ref()
+        self.ctx
+            .get_anchor()
             .map(|n| n.get_semantic_tokens(SemanticTokenContext::Ignored))
             .unwrap_or_default()
     }
 
     pub fn is_valid(&self) -> bool {
-        !self.errors.is_empty() || self.anchor.is_none()
+        self.ctx.get_anchor().is_none()
+            || self
+                .ctx
+                .get_diagnostics()
+                .is_some_and(|d| !d.errors().is_empty())
     }
 
     pub fn locator(&self, idx: usize, src: Option<Uuid>) -> Option<LocationIterator<'_>> {
-        let (Some(anchor), Some(parser)) = (self.anchor.as_ref(), self.parser.as_ref()) else {
-            return None;
-        };
-        let anchor = anchor.extract::<Anchor>()?;
+        let anchor = self.ctx.get_anchor()?.extract::<Anchor>()?;
+        self.ctx.get_diagnostics()?;
         Some(LocationIterator::new(
-            anchor,
             src.unwrap_or(anchor.uuid),
             idx,
-            parser,
+            &self.ctx,
         ))
     }
 
     pub fn signature(&self, pos: usize, src: Option<Uuid>) -> Option<Signature> {
-        let anchor = self.anchor.as_ref()?;
+        let anchor = self.ctx.get_anchor()?;
         let Some(node) = self.find_node(pos, src) else {
             debug!("Fail to find token for pos: {pos} (src {src:?})");
             return None;
         };
-        Signature::from_node(anchor.extract::<Anchor>()?, node, self.scx.as_ref(), pos)
+        Signature::from_node(
+            anchor.extract::<Anchor>()?,
+            node,
+            self.ctx.get_semantic_cx(),
+            pos,
+        )
     }
 
     pub fn completion(&self, pos: usize, src: Option<Uuid>) -> Option<Completion<'_>> {
@@ -236,115 +189,40 @@ impl Driver {
         };
         Some(Completion::new(
             self.locator(idx, src)?,
-            self.scx.as_ref()?,
+            self.ctx.get_semantic_cx()?,
             token.to_string()[..pos.saturating_sub(token.pos.from.abs)].to_owned(),
             pos,
         ))
     }
 
     pub fn errors(&self) -> Option<ErrorsIterator<'_>> {
-        let (Some(anchor), Some(parser)) = (self.anchor.as_ref(), self.parser.as_ref()) else {
-            return None;
-        };
-        Some(ErrorsIterator::new(
-            self.errors.iter().collect(),
-            anchor.extract::<Anchor>()?,
-            parser,
-        ))
+        let diagnostics = self.ctx.get_diagnostics()?;
+        Some(ErrorsIterator::new(diagnostics.errors(), &self.ctx))
     }
 
     pub fn find_node(&self, pos: usize, src: Option<Uuid>) -> Option<&LinkedNode> {
         let (token, _idx) = self.find_token(pos, src)?;
-        let anchor = self.anchor.as_ref()?;
-        find_node(anchor.childs(), &src.unwrap_or(*anchor.uuid()), &token)
+        let anchor = self.ctx.get_anchor()?;
+        find_node(anchor.childs(), &src.unwrap_or(*anchor.uuid()), token)
     }
 
-    pub fn find_token(&self, pos: usize, _src: Option<Uuid>) -> Option<(Ref<'_, Token>, usize)> {
-        if self.parser.is_none() {
-            debug!("Parser isn't inited. No way to find tokens");
-        }
+    pub fn find_token(&self, pos: usize, _src: Option<Uuid>) -> Option<(&Token, usize)> {
         // TODO: consider SRC
-        self.parser
-            .as_ref()
-            .and_then(|parser| parser.get_token_by_pos(pos))
+        self.ctx.get_diagnostics()?.get_token_by_pos(pos)
     }
 
     pub fn print_errs(&self) -> Result<(), E> {
-        let Some(parser) = self.parser.as_ref() else {
+        let Some(diagnostics) = self.ctx.get_diagnostics() else {
             return Ok(());
         };
-        for err in self.errors.iter() {
-            println!(
-                "{}",
-                match err {
-                    DrivingError::Parsing(err) => parser.report_err(err)?,
-                    DrivingError::Semantic(err) => parser.report_err(err)?,
-                }
-            );
+        let mut dest = io::stdout().lock();
+        for err in diagnostics.errors() {
+            diagnostics.err(err, &mut dest)?;
+            io::Write::write_all(&mut dest, b"\n")?;
         }
         Ok(())
     }
 }
 
-#[test]
-fn root_metadata_is_preserved_and_highlighted() {
-    let mut driver = Driver::unbound(
-        "//! Script docs\n/// Component docs\ncomponent comp() { task run() { true; } };",
-        false,
-    );
-    driver.read().unwrap();
-    let root = driver.anchor.as_ref().unwrap();
-    assert_eq!(root.get_md().lines(), ["Script docs"]);
-    assert_eq!(
-        root.extract::<Anchor>()
-            .unwrap()
-            .get_component("comp")
-            .unwrap()
-            .get_md()
-            .lines(),
-        ["Component docs"]
-    );
-    let tokens = driver.get_semantic_tokens();
-    assert!(tokens.iter().any(|tk| tk.position.from.abs == 0));
-}
-
-#[test]
-fn test() {
-    use std::env::current_dir;
-    let mut driver = Driver::new(
-        current_dir().unwrap().join("../tests/playground/test.sibs"),
-        true,
-    );
-    driver.read().unwrap();
-    if let Some(mut locator) = driver.locator(1, None) {
-        while let Some(fragment) = locator.next_token() {
-            println!("{}", fragment);
-        }
-    }
-    if let Some(mut locator) = driver.locator(153, None) {
-        while let Some(fragment) = locator.next_node() {
-            println!("{}", fragment);
-        }
-    }
-
-    if let Some(errors) = driver.errors() {
-        for error in errors {
-            println!("{:?}", error.err);
-        }
-    }
-    let mut tokens = driver.get_semantic_tokens();
-    tokens.sort_by_key(|a| a.position.from.abs);
-    println!("{tokens:?}");
-    let content = driver
-        .get_src_content(None)
-        .expect("Source isn't available")
-        .expect("Source isn't found");
-    println!("\n{}\n{content}\n{}\n", "=".repeat(50), "=".repeat(50));
-    for tk in tokens.iter() {
-        println!(
-            "token: {}",
-            tk.extract_by_relative(&content)
-                .expect("Token extracted by (ln, col) coors")
-        );
-    }
-}
+#[cfg(test)]
+mod tests;

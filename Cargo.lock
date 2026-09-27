@@ -518,6 +518,7 @@ dependencies = [
  "diagnostics",
  "enum_ids",
  "functions",
+ "interpreter",
  "lexer",
  "parser",
  "paste",

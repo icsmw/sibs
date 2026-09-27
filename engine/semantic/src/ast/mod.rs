@@ -90,7 +90,7 @@ impl Initialize for LinkedNode {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         if let Err(err) = self.get_node().initialize(scx) {
             if scx.is_resilience() {
-                scx.errs.add(err);
+                scx.errs.push(err);
             } else {
                 return Err(err);
             }
@@ -126,14 +126,14 @@ impl Finalization for LinkedNode {
         }
         if let Err(err) = initialize_and_finalize(self.get_node(), self.get_md(), scx) {
             if scx.is_resilience() {
-                scx.errs.add(err);
+                scx.errs.push(err);
             } else {
                 return Err(err);
             }
         }
         if let Err(err) = self.get_node().finalize(scx) {
             if scx.is_resilience() {
-                scx.errs.add(err);
+                scx.errs.push(err);
             } else {
                 return Err(err);
             }

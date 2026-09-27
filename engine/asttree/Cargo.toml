@@ -1,28 +1,26 @@
 [package]
-name = "asttree"
-version = "0.1.0"
-edition = "2021"
-authors = ["d.astafyev@outlook.com"]
+name        = "asttree"
+version     = "0.1.0"
+edition     = "2021"
+authors     = ["d.astafyev@outlook.com"]
 description = ""
-license = "Apache-2.0"
-repository = "https://github.com/icsmw/sibs.git"
-homepage = "https://github.com/icsmw/sibs"
+license     = "Apache-2.0"
+repository  = "https://github.com/icsmw/sibs.git"
+homepage    = "https://github.com/icsmw/sibs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-proptests = [
-    "proptest"
-]
+proptests = ["proptest"]
 
 [dependencies]
 
 thiserror.workspace = true
-uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }
-proptest = { version = "1.4", optional = true }
-enum_ids.workspace = true
+uuid                = { workspace = true, features = ["fast-rng", "macro-diagnostics", "v4"] }
+proptest            = { workspace = true, optional = true }
+enum_ids.workspace  = true
 
-lexer = { path = "../lexer" }
+lexer  = { path = "../lexer" }
 common = { path = "../common" }
 
 [dev-dependencies]

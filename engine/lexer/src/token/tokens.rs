@@ -87,4 +87,20 @@ impl Tokens {
     pub fn iter(&self) -> std::slice::Iter<'_, Token> {
         self.tokens.iter()
     }
+
+    pub fn get(&self, idx: isize) -> Option<&Token> {
+        if idx < 0 {
+            return None;
+        }
+        if (idx as usize) < self.tokens.len() {
+            Some(&self.tokens[idx as usize])
+        } else {
+            None
+        }
+    }
+
+    pub fn get_by_pos(&self, pos: usize) -> Option<(&Token, usize)> {
+        let index = self.tokens.iter().position(|tk| tk.pos.is_in(pos))?;
+        Some((&self.tokens[index], index))
+    }
 }

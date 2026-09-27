@@ -1,35 +1,8 @@
 use diagnostics::LinkedErr;
 use enum_ids::enum_ids;
-use parser::Parser;
 use parser::ParserError;
 use runtime::{error::E as RtError, RtValue};
 use thiserror::Error;
-
-#[derive(Debug)]
-pub struct ExecutionFailure {
-    parser: Parser,
-    err: LinkedErr<RtError>,
-}
-
-impl ExecutionFailure {
-    pub(crate) fn new(parser: Parser, err: LinkedErr<RtError>) -> Self {
-        Self { parser, err }
-    }
-
-    pub fn report(&self) -> Result<String, ExecutorError> {
-        Ok(self.parser.report_err(&self.err)?)
-    }
-
-    pub fn inner(&self) -> &LinkedErr<RtError> {
-        &self.err
-    }
-}
-
-impl std::fmt::Display for ExecutionFailure {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.err.e)
-    }
-}
 
 #[derive(Error, Debug)]
 #[enum_ids(derive = "Debug")]
@@ -41,7 +14,10 @@ pub enum ExecutorError {
     RuntimeShutdown(RtError),
 
     #[error("Execution failed: {0}")]
-    Execution(Box<ExecutionFailure>),
+    Execution(LinkedErr<RtError>),
+
+    #[error("Invalid context for execution")]
+    InvalidContext,
 
     #[error("IO error: {0}")]
     IO(String),

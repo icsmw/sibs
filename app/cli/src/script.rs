@@ -1,10 +1,7 @@
-// TODO: switch to Driver
-
 use asttree::*;
-use interpreter::*;
-use parser::*;
-use runtime::*;
-use semantic::*;
+use interpreter::{ExecutionOptions, Executor, ExecutorError, InterContext, ScriptOptions};
+use runtime::RtValue;
+use std::io::{self, Write};
 
 use crate::*;
 
@@ -13,9 +10,7 @@ pub struct Script {
     task: Option<String>,
     args: Option<Vec<String>>,
     scenario: Scenario,
-    anchor: LinkedNode,
-    scx: Option<SemanticCx>,
-    parser: Parser,
+    ctx: InterContext,
 }
 
 impl Script {
@@ -25,33 +20,20 @@ impl Script {
         task: Option<String>,
         args: Option<Vec<String>>,
     ) -> Result<Self, E> {
-        let parser = Parser::new(&scenario.filepath, false)?;
-        let anchor = LinkedNode::try_read(&parser, NodeTarget::Root(&[RootId::Anchor]));
-        if let Err(err) = &anchor {
-            eprintln!("{}", parser.report_err(err)?);
+        let mut ctx = InterContext::default();
+        let preparation =
+            interpreter::Script::from_file(&scenario.filepath, ScriptOptions::strict(), &mut ctx);
+        if let Some(diagnostics) = ctx.get_diagnostics() {
+            let mut dest = io::stderr().lock();
+            for err in diagnostics.errors() {
+                diagnostics.err(err, &mut dest)?;
+                writeln!(dest)?;
+            }
         }
-        let anchor = anchor?.ok_or(E::FailExtractAnchorNodeFrom(
-            scenario.filepath.to_string_lossy().to_string(),
-        ))?;
-        let mut scx = SemanticCx::new(false);
-        functions::register(&mut scx.fns.efns)?;
-        if let Err(err) = anchor.initialize(&mut scx) {
-            eprintln!("{}", parser.report_err(&err)?);
-            return Err(err.into());
-        }
-        if let Err(err) = anchor.infer_type(&mut scx) {
-            eprintln!("{}", parser.report_err(&err)?);
-            return Err(err.into());
-        }
-        if let Err(err) = anchor.finalize(&mut scx) {
-            eprintln!("{}", parser.report_err(&err)?);
-            return Err(err.into());
-        }
+        preparation?;
         Ok(Self {
             scenario,
-            anchor,
-            scx: Some(scx),
-            parser,
+            ctx,
             component,
             task,
             args,
@@ -61,24 +43,23 @@ impl Script {
     pub async fn run(&mut self) -> Result<RtValue, E> {
         let component = self.component.take().ok_or(E::ScriptAlreadyExecuted)?;
         let task = self.task.take().ok_or(E::ScriptAlreadyExecuted)?;
-        let scx = self.scx.take().ok_or(E::ScriptAlreadyExecuted)?;
         let args = self.args.take().ok_or(E::ScriptAlreadyExecuted)?;
-        let params = RtParameters::new(component.clone(), task.clone(), args, self.scenario.cwd()?);
-        let rt = interpreter::runtime(params, scx)?;
-        let env = rt
-            .create_interpreter_env(format!("{component}:{task}"), None)
-            .await?;
-        let vl = self.anchor.interpret_owned(env).await;
-        let _ = rt.destroy().await;
-        match vl {
-            Ok(vl) => Ok(vl),
+        let options = ExecutionOptions::new(component, task, self.scenario.cwd()?).with_args(args);
+        match Executor::new(options).run(&mut self.ctx).await {
+            Ok(value) => Ok(value),
             Err(err) => {
-                eprintln!(
-                    "{}",
-                    self.parser
-                        .report_err(&err)
-                        .map_err(|err| RtError::Other(err.to_string()))?
-                );
+                // A shutdown failure may wrap the execution error with its source position.
+                let mut execution_err = &err;
+                while let ExecutorError::ErrorAndShutdown { err, .. } = execution_err {
+                    execution_err = err;
+                }
+                if let (ExecutorError::Execution(err), Some(diagnostics)) =
+                    (execution_err, self.ctx.get_diagnostics())
+                {
+                    let mut dest = io::stderr().lock();
+                    diagnostics.err(err, &mut dest)?;
+                    writeln!(dest)?;
+                }
                 Err(err.into())
             }
         }
@@ -92,7 +73,7 @@ impl Script {
     }
 
     fn print_components(&self) -> Result<(), E> {
-        let anchor = self.anchor.extract::<Anchor>().ok_or(E::NoAnchorNode)?;
+        let anchor = self.ctx.get_anchor_inner().ok_or(E::NoAnchorNode)?;
         let mut lines = Vec::new();
         anchor
             .get_components_md()
@@ -114,7 +95,7 @@ impl Script {
             return Err(E::NoComponentParameter);
         };
 
-        let anchor = self.anchor.extract::<Anchor>().ok_or(E::NoAnchorNode)?;
+        let anchor = self.ctx.get_anchor_inner().ok_or(E::NoAnchorNode)?;
 
         let mut lines = vec![format!("[b]{component}[/b]")];
         let Some(component) = anchor.get_component(&component) else {

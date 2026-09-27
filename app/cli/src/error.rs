@@ -50,6 +50,18 @@ pub enum E {
 
     #[error("No anchor node has been found")]
     NoAnchorNode,
+
+    #[error("Script preparation error: {0}")]
+    Script(#[from] interpreter::ScriptError),
+
+    #[error("Script execution error: {0}")]
+    Execution(Box<interpreter::ExecutorError>),
+}
+
+impl From<interpreter::ExecutorError> for E {
+    fn from(err: interpreter::ExecutorError) -> Self {
+        Self::Execution(Box::new(err))
+    }
 }
 
 impl From<std::io::Error> for E {

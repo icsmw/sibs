@@ -6,7 +6,7 @@ pub struct SemanticCx {
     pub fns: Fns,
     pub tasks: Tasks,
     pub table: TypesTable,
-    pub errs: Errors<E>,
+    pub errs: Vec<LinkedErr<E>>,
     resilience: bool,
 }
 
@@ -17,7 +17,7 @@ impl SemanticCx {
             fns: Fns::default(),
             tasks: Tasks::default(),
             table: TypesTable::default(),
-            errs: Errors::default(),
+            errs: Vec::new(),
             resilience,
         }
     }

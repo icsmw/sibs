@@ -85,7 +85,7 @@ impl ReadNode<Block> for Block {
             parser
                 .errs
                 .borrow_mut()
-                .add(E::UnrecognizedCode(code).from(&link));
+                .push(E::UnrecognizedCode(code).from(&link));
         }
         if !inner.is_done() {
             Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner))

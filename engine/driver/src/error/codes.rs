@@ -13,6 +13,9 @@ impl ErrorCode for E {
             Self::Lexer(..) => "00006",
             Self::Semantic(err) => err.code(),
             Self::Runtime(err) => err.code(),
+            Self::ContextError => "00007",
+            Self::NotExecutable => "00008",
+            Self::UsedContext => "00009",
         }
     }
     fn src(&self) -> ErrorSource {
@@ -22,6 +25,9 @@ impl ErrorCode for E {
             | Self::ScriptAlreadyExecuted
             | Self::TaskInsideFuncDeclaration(..)
             | Self::NestedTasks(..)
+            | Self::ContextError
+            | Self::UsedContext
+            | Self::NotExecutable
             | Self::Lexer(..) => ErrorSource::Driver,
             Self::Parser(err) => err.src(),
             Self::Semantic(err) => err.src(),
@@ -38,6 +44,9 @@ mod test {
     impl From<&EId> for E {
         fn from(value: &EId) -> Self {
             match value {
+                EId::ContextError => E::ContextError,
+                EId::UsedContext => E::UsedContext,
+                EId::NotExecutable => E::NotExecutable,
                 EId::IO => E::IO(String::new()),
                 EId::FailExtractAnchorNodeFrom => E::FailExtractAnchorNodeFrom(String::new()),
                 EId::ScriptAlreadyExecuted => E::ScriptAlreadyExecuted,

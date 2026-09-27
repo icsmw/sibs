@@ -1,8 +1,5 @@
-use diagnostics::LinkedErr;
 use enum_ids::enum_ids;
 use thiserror::Error;
-
-use crate::ScriptDiagnostics;
 
 #[derive(Error, Debug)]
 #[enum_ids(derive = "Debug")]
@@ -16,20 +13,20 @@ pub enum E {
     #[error("Parser error: {0}")]
     Parser(parser::ParserError),
 
-    #[error("Parsing error: {0:?}")]
-    Parsing(LinkedErr<parser::ParserError>),
-
-    #[error("Semantic error: {0:?}")]
-    Semantic(LinkedErr<crate::SemanticError>),
-
-    #[error("Script has diagnostics: {0:?}")]
-    Diagnostics(ScriptDiagnostics),
-
     #[error("IO error: {0}")]
     IO(String),
 
     #[error("Runtime setup error: {0}")]
     Runtime(runtime::RtError),
+
+    #[error("Fail to get access to context")]
+    ContextError,
+
+    #[error("Attempt to reuse InterContext")]
+    UsedContext,
+
+    #[error("Script is not executable. See diagnostics")]
+    NotExecutable,
 }
 
 impl From<lexer::LexerError> for E {

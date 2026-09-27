@@ -4,29 +4,13 @@ pub use code::*;
 
 use asttree::SrcLinking;
 use lexer::{LinkedPosition, Token};
-use std::fmt;
-use uuid::Uuid;
+use std::{
+    fmt::{self, Display},
+    io,
+};
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ErrorStamp {
-    code: &'static str,
-    source: ErrorSource,
-    src: Uuid,
-    from: usize,
-    to: usize,
-}
+use crate::Diagnostics;
 
-impl<E: fmt::Display + ErrorCode> From<&LinkedErr<E>> for ErrorStamp {
-    fn from(err: &LinkedErr<E>) -> Self {
-        ErrorStamp {
-            code: err.e.code(),
-            source: err.e.src(),
-            src: err.link.src,
-            from: err.link.from.abs,
-            to: err.link.to.abs,
-        }
-    }
-}
 #[derive(Clone, Debug)]
 pub struct LinkedErr<E: fmt::Display + ErrorCode> {
     pub link: LinkedPosition,
@@ -34,6 +18,13 @@ pub struct LinkedErr<E: fmt::Display + ErrorCode> {
 }
 
 impl<E: fmt::Display + ErrorCode> LinkedErr<E> {
+    pub fn report(
+        &self,
+        diagnostics: &Diagnostics<E>,
+        dest: &mut impl io::Write,
+    ) -> Result<(), std::io::Error> {
+        diagnostics.err(self, dest)
+    }
     pub fn from<N: SrcLinking>(err: E, n: &N) -> Self {
         Self {
             link: (&n.link()).into(),
@@ -68,5 +59,11 @@ impl<E: fmt::Display + ErrorCode> LinkedErr<E> {
             link: LinkedPosition::default(),
             e: err,
         }
+    }
+}
+
+impl<E: fmt::Display + ErrorCode> Display for LinkedErr<E> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.e)
     }
 }
