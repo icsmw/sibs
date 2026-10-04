@@ -79,6 +79,7 @@ test_task_results_from_file!(
     RtValue::Str("123 Юникод with spaces".into()),
     "../tests/globals/env_main.sibs",
     env = [
+        ("SIBS_TEST_GLOBAL_OPTIONAL", None),
         (
             "SIBS_TEST_GLOBAL_TEXT",
             Some("123 Юникод with spaces".into())
@@ -93,6 +94,7 @@ test_task_results_from_file!(
     RtValue::Str("".into()),
     "../tests/globals/env_main.sibs",
     env = [
+        ("SIBS_TEST_GLOBAL_OPTIONAL", None),
         ("SIBS_TEST_GLOBAL_TEXT", Some("different run".into())),
         ("SIBS_TEST_GLOBAL_EMPTY", Some("".into()))
     ]
@@ -104,6 +106,7 @@ test_task_results_from_file!(
     RtValue::Str("prefix 007".into()),
     "../tests/globals/env_main.sibs",
     env = [
+        ("SIBS_TEST_GLOBAL_OPTIONAL", None),
         ("SIBS_TEST_GLOBAL_TEXT", Some("007".into())),
         ("SIBS_TEST_GLOBAL_EMPTY", Some("".into()))
     ]
@@ -115,6 +118,7 @@ test_task_error_from_file!(
     E::EnvironmentNotDefined(_),
     "../tests/globals/env_main.sibs",
     env = [
+        ("SIBS_TEST_GLOBAL_OPTIONAL", None),
         ("SIBS_TEST_GLOBAL_TEXT", None),
         ("SIBS_TEST_GLOBAL_EMPTY", Some("".into()))
     ]
@@ -128,10 +132,76 @@ test_task_error_from_file!(
     E::EnvironmentNotUnicode(_),
     "../tests/globals/env_main.sibs",
     env = [
+        ("SIBS_TEST_GLOBAL_OPTIONAL", None),
         (
             "SIBS_TEST_GLOBAL_TEXT",
             Some(<std::ffi::OsString as std::os::unix::ffi::OsStringExt>::from_vec(vec![0xff]))
         ),
         ("SIBS_TEST_GLOBAL_EMPTY", Some("".into()))
     ]
+);
+
+test_task_results_from_file!(
+    env_optional_missing,
+    "env_test",
+    "text",
+    RtValue::Str("".into()),
+    "../tests/globals/optional_main.sibs",
+    env = [("SIBS_TEST_GLOBAL_OPTIONAL", None)]
+);
+test_task_results_from_file!(
+    env_optional_empty,
+    "env_test",
+    "text",
+    RtValue::Str("".into()),
+    "../tests/globals/optional_main.sibs",
+    env = [("SIBS_TEST_GLOBAL_OPTIONAL", Some("".into()))]
+);
+test_task_results_from_file!(
+    env_optional_present,
+    "env_test",
+    "text",
+    RtValue::Str("123 Юникод with spaces".into()),
+    "../tests/globals/optional_main.sibs",
+    env = [(
+        "SIBS_TEST_GLOBAL_OPTIONAL",
+        Some("123 Юникод with spaces".into())
+    )]
+);
+test_task_results_from_file!(
+    env_optional_missing_constant,
+    "env_test",
+    "constant",
+    RtValue::Str("".into()),
+    "../tests/globals/optional_main.sibs",
+    env = [("SIBS_TEST_GLOBAL_OPTIONAL", None)]
+);
+test_task_results_from_file!(
+    env_optional_missing_interpolation,
+    "env_test",
+    "interpolation",
+    RtValue::Str("prefix ".into()),
+    "../tests/globals/optional_main.sibs",
+    env = [("SIBS_TEST_GLOBAL_OPTIONAL", None)]
+);
+test_task_results_from_file!(
+    env_optional_present_interpolation,
+    "env_test",
+    "interpolation",
+    RtValue::Str("prefix 007".into()),
+    "../tests/globals/optional_main.sibs",
+    env = [("SIBS_TEST_GLOBAL_OPTIONAL", Some("007".into()))]
+);
+
+#[cfg(unix)]
+test_task_error_from_file!(
+    env_optional_non_unicode,
+    "env_test",
+    "must_not_run",
+    E::EnvironmentNotUnicode(_),
+    "../tests/globals/optional_main.sibs",
+    env = [(
+        "SIBS_TEST_GLOBAL_OPTIONAL",
+        Some(<std::ffi::OsString as std::os::unix::ffi::OsStringExt>::from_vec(vec![0xff]))
+    )]
 );

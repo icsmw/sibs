@@ -1,0 +1,9 @@
+envs from "optional.envs";
+envs from "./optional.envs";
+globals from "optional_values.sibs";
+component env_test() {
+    task text() { SIBS_TEST_GLOBAL_OPTIONAL; }
+    task constant() { optional_message; }
+    task interpolation() { optional_wrapped; }
+    task must_not_run() { `this-command-must-never-be-executed`; }
+};

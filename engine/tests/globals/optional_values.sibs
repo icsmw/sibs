@@ -1,0 +1,2 @@
+const optional_message: str = SIBS_TEST_GLOBAL_OPTIONAL;
+const optional_wrapped: str = 'prefix {optional_message}';

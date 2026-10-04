@@ -55,6 +55,7 @@ impl NodeJobVisibility for LinkedNode {
             },
             Node::Declaration(node) => match node {
                 Declaration::GlobalDeclaration(..)
+                | Declaration::EnvDeclaration(..)
                 | Declaration::IncludeDeclaration(..)
                 | Declaration::ModuleDeclaration(..)
                 | Declaration::FunctionDeclaration(..)
@@ -141,6 +142,7 @@ impl NodeJobName for LinkedNode {
             },
             Node::Declaration(inner) => match inner {
                 Declaration::GlobalDeclaration(..)
+                | Declaration::EnvDeclaration(..)
                 | Declaration::IncludeDeclaration(..)
                 | Declaration::ModuleDeclaration(..)
                 | Declaration::FunctionDeclaration(..)

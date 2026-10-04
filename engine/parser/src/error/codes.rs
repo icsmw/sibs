@@ -98,6 +98,8 @@ impl ErrorCode for E {
             Self::LexerError(..) => "00074",
 
             Self::Unlinked => "00075",
+            Self::MissedEnvRequirement => "00076",
+            Self::MissedEnvName => "00077",
         }
     }
     fn src(&self) -> ErrorSource {
@@ -207,6 +209,8 @@ mod test {
 
                 EId::LexerError => E::LexerError(LexerError::InvalidNumber),
                 EId::Unlinked => E::Unlinked,
+                EId::MissedEnvRequirement => E::MissedEnvRequirement,
+                EId::MissedEnvName => E::MissedEnvName,
             }
         }
     }

@@ -201,6 +201,12 @@ pub enum E {
 
     #[error("Unlinked error: no tokens, no errors")]
     Unlinked,
+
+    /// Environment declarations
+    #[error("Expected `required` or `optional` before environment variable name")]
+    MissedEnvRequirement,
+    #[error("Expected environment variable name after `required` or `optional`")]
+    MissedEnvName,
 }
 
 impl From<LexerError> for E {

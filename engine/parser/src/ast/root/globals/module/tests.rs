@@ -10,6 +10,8 @@ test_node_grammar!(
         "// header\nglobal count: num = 0;\n// tail\n",
     ],
     rejects = [
+        "required ENV_A;",
+        "optional ENV_A;",
         "global count: num;",
         "global count = 0;",
         "const count: num;",

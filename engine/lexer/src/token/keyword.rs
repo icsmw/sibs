@@ -31,6 +31,10 @@ pub enum Keyword {
     Globals,
     /// The `envs` import keyword.
     Envs,
+    /// The `required` environment declaration keyword.
+    Required,
+    /// The `optional` environment declaration keyword.
+    Optional,
     /// The `Join` keyword.
     Join,
     /// The `oneof` keyword.
@@ -113,6 +117,8 @@ impl fmt::Display for Keyword {
                 Self::Const => "const".to_owned(),
                 Self::Globals => "globals".to_owned(),
                 Self::Envs => "envs".to_owned(),
+                Self::Required => "required".to_owned(),
+                Self::Optional => "optional".to_owned(),
                 Self::Let => "let".to_owned(),
                 Self::In => "in".to_owned(),
                 Self::OneOf => "oneof".to_owned(),
@@ -150,6 +156,8 @@ impl From<&KeywordId> for Keyword {
             KeywordId::Const => Keyword::Const,
             KeywordId::Globals => Keyword::Globals,
             KeywordId::Envs => Keyword::Envs,
+            KeywordId::Required => Keyword::Required,
+            KeywordId::Optional => Keyword::Optional,
             KeywordId::Let => Keyword::Let,
             KeywordId::In => Keyword::In,
             KeywordId::OneOf => Keyword::OneOf,

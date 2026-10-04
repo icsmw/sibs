@@ -1,5 +1,6 @@
 mod argument_declaration;
 mod closure_declaration;
+mod env_declaration;
 mod function_declaration;
 mod global_declaration;
 mod include_declaration;
@@ -18,6 +19,7 @@ impl InferType for Declaration {
             Declaration::ArgumentDeclaration(n) => n.infer_type(scx),
             Declaration::FunctionDeclaration(n) => n.infer_type(scx),
             Declaration::GlobalDeclaration(n) => n.infer_type(scx),
+            Declaration::EnvDeclaration(n) => n.infer_type(scx),
             Declaration::VariableDeclaration(n) => n.infer_type(scx),
             Declaration::VariableType(n) => n.infer_type(scx),
             Declaration::VariableTypeDeclaration(n) => n.infer_type(scx),
@@ -36,6 +38,7 @@ impl Initialize for Declaration {
             Declaration::ArgumentDeclaration(n) => n.initialize(scx),
             Declaration::FunctionDeclaration(n) => n.initialize(scx),
             Declaration::GlobalDeclaration(n) => n.initialize(scx),
+            Declaration::EnvDeclaration(n) => n.initialize(scx),
             Declaration::VariableDeclaration(n) => n.initialize(scx),
             Declaration::VariableType(n) => n.initialize(scx),
             Declaration::VariableTypeDeclaration(n) => n.initialize(scx),
@@ -54,6 +57,7 @@ impl Finalization for Declaration {
             Declaration::ArgumentDeclaration(n) => n.finalize(scx),
             Declaration::FunctionDeclaration(n) => n.finalize(scx),
             Declaration::GlobalDeclaration(n) => n.finalize(scx),
+            Declaration::EnvDeclaration(n) => n.finalize(scx),
             Declaration::VariableDeclaration(n) => n.finalize(scx),
             Declaration::VariableType(n) => n.finalize(scx),
             Declaration::VariableTypeDeclaration(n) => n.finalize(scx),
@@ -72,6 +76,7 @@ impl SemanticTokensGetter for Declaration {
             Declaration::ArgumentDeclaration(n) => n.get_semantic_tokens(stcx),
             Declaration::FunctionDeclaration(n) => n.get_semantic_tokens(stcx),
             Declaration::GlobalDeclaration(n) => n.get_semantic_tokens(stcx),
+            Declaration::EnvDeclaration(n) => n.get_semantic_tokens(stcx),
             Declaration::VariableDeclaration(n) => n.get_semantic_tokens(stcx),
             Declaration::VariableType(n) => n.get_semantic_tokens(stcx),
             Declaration::VariableTypeDeclaration(n) => n.get_semantic_tokens(stcx),

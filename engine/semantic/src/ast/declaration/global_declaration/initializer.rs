@@ -78,6 +78,7 @@ pub(super) fn validate(node: &LinkedNode, globals: &Globals) -> Result<(), Linke
             | Declaration::FunctionDeclaration(_)
             | Declaration::VariableDeclaration(_)
             | Declaration::GlobalDeclaration(_)
+            | Declaration::EnvDeclaration(_)
             | Declaration::ArgumentDeclaration(_)
             | Declaration::VariableVariants(_)
             | Declaration::VariableType(_)

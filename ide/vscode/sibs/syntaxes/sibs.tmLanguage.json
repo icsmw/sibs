@@ -22,7 +22,7 @@
             "patterns": [
                 {
                     "name": "keyword.control.sibs",
-                    "match": "\\b(component|task|mod|fn|include|let|loop|while|true|false|private|break|Error|join|if|else)\\b"
+                    "match": "\\b(component|task|mod|fn|include|let|required|optional|loop|while|true|false|private|break|Error|join|if|else)\\b"
                 },
                 {
                     "match": "\\b(bool|str|num|Vec)\\b",

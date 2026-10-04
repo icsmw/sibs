@@ -83,31 +83,24 @@ test_semantic_files!(
     }
 );
 
-test_semantic_files!(
+test_semantic_cases!(
     envs_are_strings_without_reading_process_environment,
-    files = {
-        "vars.envs" => "SIBS_TEST_UNSET_ENV_51CBDE;",
-        "vars.sibs" => "const label: str = SIBS_TEST_UNSET_ENV_51CBDE;",
-    },
-    |files| {
+    |keyword: &str| {
+        let files = Files::new();
+        files.write("vars.envs", &format!("{keyword} SIBS_TEST_UNSET_ENV_51CBDE;"));
+        files.write("vars.sibs", "const label: str = SIBS_TEST_UNSET_ENV_51CBDE;");
         let scx = files.analyze("envs from \"vars.envs\"; globals from \"vars.sibs\"; component c() { task run() { label; } };").unwrap();
-        assert_eq!(
-            scx.globals
-                .lookup("SIBS_TEST_UNSET_ENV_51CBDE")
-                .unwrap()
-                .kind,
-            GlobalKind::Environment
-        );
-        assert_eq!(
-            scx.globals
-                .lookup("SIBS_TEST_UNSET_ENV_51CBDE")
-                .unwrap()
-                .binding
-                .ty(),
-            Some(&DeterminedTy::Str.into())
-        );
-        assert!(files.analyze("envs from \"vars.envs\"; component c() { task run() { SIBS_TEST_UNSET_ENV_51CBDE = \"x\"; } };").is_err());
-    }
+        let symbol = scx.globals.lookup("SIBS_TEST_UNSET_ENV_51CBDE").unwrap();
+        assert_eq!(symbol.kind, GlobalKind::Environment);
+        assert_eq!(symbol.binding.ty(), Some(&DeterminedTy::Str.into()));
+        for operator in ["=", "+="] {
+            let source = format!("envs from \"vars.envs\"; component c() {{ task run() {{ SIBS_TEST_UNSET_ENV_51CBDE {operator} \"x\"; }} }};");
+            let error = files.analyze(&source).unwrap_err();
+            assert!(matches!(error.e, E::ImmutableGlobal(_)));
+        }
+    },
+    required => ("required"),
+    optional => ("optional"),
 );
 
 test_semantic_files!(
@@ -126,11 +119,11 @@ test_semantic_files!(
         assert!(files
             .analyze("globals from \"vars.sibs\"; globals from \"other.sibs\";")
             .is_err());
-        files.write("vars.envs", "base;");
+        files.write("vars.envs", "required base;");
         assert!(files
             .analyze("globals from \"vars.sibs\"; envs from \"vars.envs\";")
             .is_err());
-        files.write("vars.envs", "ENV_A; ENV_A;");
+        files.write("vars.envs", "required ENV_A; optional ENV_A;");
         assert!(files.analyze("envs from \"vars.envs\";").is_err());
     }
 );
@@ -250,7 +243,7 @@ test_semantic_files!(
     import_tokens_belong_to_the_importing_source,
     files = {
         "vars.sibs" => "global count: num = 0;",
-        "vars.envs" => "ENV_NAME;",
+        "vars.envs" => "required ENV_NAME;",
     },
     |files| {
         let parser = Parser::new(
@@ -382,8 +375,8 @@ test_semantic_cases!(
 
 test_semantic_cases!(
     env_names_always_produce_immutable_strings,
-    |names: &[&str]| {
-        let source = names.iter().map(|name| format!("{name};")).collect::<String>();
+    |keyword: &str, names: &[&str]| {
+        let source = names.iter().map(|name| format!("{keyword} {name};")).collect::<String>();
         let files = Files::new();
         files.write("envs.sibs", &source);
         let scx = files.analyze("envs from \"envs.sibs\";").unwrap();
@@ -395,9 +388,49 @@ test_semantic_cases!(
             assert!(!scx.globals.is_mutable(name));
         }
     },
-    empty => (&[]),
-    single => (&["ENV_A"]),
-    distinct_names => (&["ENV_A", "ENV_AA", "ENV_B", "ENV_BUILD", "ENV_PATH", "ENV_Z", "ENV_ABCDEFGHIJKL"]),
+    empty => ("required", &[]),
+    required_single => ("required", &["ENV_A"]),
+    optional_single => ("optional", &["ENV_A"]),
+    required_distinct_names => ("required", &["ENV_A", "ENV_AA", "ENV_B", "ENV_BUILD", "ENV_PATH", "ENV_Z", "ENV_ABCDEFGHIJKL"]),
+    optional_distinct_names => ("optional", &["ENV_A", "ENV_B"]),
+);
+
+test_semantic_cases!(
+    env_declarations_keep_keyword_and_name_tokens,
+    |keyword: &str| {
+        let source = format!("{keyword} ENV_NAME;");
+        let mut lexer = lexer::Lexer::new(&source, 0);
+        let parser = Parser::unbound(lexer.read().unwrap().tokens, &lexer.uuid, &source, false);
+        let module = EnvsModule::read(&parser).unwrap().unwrap();
+        let tokens = module.get_semantic_tokens(SemanticTokenContext::Ignored);
+        assert_eq!(tokens.len(), 2);
+        assert!(matches!(tokens[0].token, SemanticToken::Keyword));
+        assert!(matches!(tokens[1].token, SemanticToken::Variable));
+        assert_eq!(tokens[0].extract_by_relative(&source), Some(keyword));
+        assert_eq!(tokens[1].extract_by_relative(&source), Some("ENV_NAME"));
+        assert!(tokens.iter().all(|token| token.position.src == lexer.uuid));
+        let names = module.lookup(&[NodeTarget::Declaration(&[DeclarationId::VariableName])]);
+        assert_eq!(names.len(), 1);
+        assert_eq!(names[0].node.extract::<VariableName>().unwrap().ident, "ENV_NAME");
+    },
+    required => ("required"),
+    optional => ("optional"),
+);
+
+test_semantic_cases!(
+    different_env_declarations_conflict_regardless_of_requirement,
+    |first: &str, second: &str| {
+        let files = Files::new();
+        files.write("first.envs", &format!("{first} ENV_NAME;"));
+        files.write("second.envs", &format!("{second} ENV_NAME;"));
+        assert!(files.analyze("envs from \"first.envs\"; envs from \"second.envs\";").is_err());
+        files.write("first.envs", &format!("{first} ENV_NAME; {second} ENV_NAME;"));
+        assert!(files.analyze("envs from \"first.envs\";").is_err());
+    },
+    required_required => ("required", "required"),
+    required_optional => ("required", "optional"),
+    optional_required => ("optional", "required"),
+    optional_optional => ("optional", "optional"),
 );
 
 test_semantic_cases!(
@@ -405,7 +438,7 @@ test_semantic_cases!(
     |env_first: bool| {
         let files = Files::new();
         files.write("globals.sibs", "global count: num = 2; const label: str = ENV_TEST_ABSENT;");
-        files.write("envs.sibs", "ENV_TEST_ABSENT;");
+        files.write("envs.sibs", "required ENV_TEST_ABSENT;");
         let g = "globals from \"globals.sibs\";";
         let e = "envs from \"envs.sibs\";";
         let source = if env_first { format!("{e}{g}") } else { format!("{g}{e}") };
@@ -425,7 +458,7 @@ test_semantic_cases!(
     |keyword: &str, kind: GlobalKind, env_first: bool| {
         let files = Files::new();
         files.write("values.sibs", &format!("{keyword} label: str = ENV_REPEAT;"));
-        files.write("values.envs", "ENV_REPEAT;");
+        files.write("values.envs", "optional ENV_REPEAT;");
         // Direct paths, aliases and mixed paths; two through five repeated imports.
         for prefixes in [
             &["", ""][..],

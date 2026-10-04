@@ -147,7 +147,8 @@ macro_rules! test_node_grammar {
     (
         $fn_name:ident, $read:path,
         accepts = [$($accepted:literal),* $(,)?],
-        rejects = [$($rejected:literal),* $(,)?] $(,)?
+        rejects = [$($rejected:literal),* $(,)?]
+        $(, errors = [$($source:literal => $error:pat),* $(,)?])? $(,)?
     ) => {
         #[test]
         fn $fn_name() {
@@ -166,6 +167,12 @@ macro_rules! test_node_grammar {
                 let parser = $crate::ast::tests::parser(source);
                 assert!($read(&parser).is_err(), "Expected a syntax error: {source}");
             }
+            $($(
+                let parser = $crate::ast::tests::parser($source);
+                let error = $read(&parser).expect_err("Expected a syntax error");
+                assert!(matches!(error.e, $error), "{}: {error:?}", $source);
+                assert_eq!(error.link.src, parser.src());
+            )*)?
         }
     };
 }

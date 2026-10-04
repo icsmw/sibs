@@ -294,6 +294,8 @@ pub fn keyword(id: KeywordId) -> BoxedStrategy<Keyword> {
         KeywordId::Const => Just(Keyword::Const).boxed(),
         KeywordId::Globals => Just(Keyword::Globals).boxed(),
         KeywordId::Envs => Just(Keyword::Envs).boxed(),
+        KeywordId::Required => Just(Keyword::Required).boxed(),
+        KeywordId::Optional => Just(Keyword::Optional).boxed(),
         KeywordId::Let => Just(Keyword::Let).boxed(),
         KeywordId::In => Just(Keyword::In).boxed(),
         KeywordId::OneOf => Just(Keyword::OneOf).boxed(),

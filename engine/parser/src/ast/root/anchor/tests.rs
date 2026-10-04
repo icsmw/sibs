@@ -6,6 +6,10 @@ test_node_grammar!(
     Anchor::read,
     accepts = [],
     rejects = [
+        "required ENV_A;",
+        "optional ENV_A;",
+        "mod m { required ENV_A; }",
+        "component c() { task t() { optional ENV_A; } }",
         "global count: num = 0;",
         "const count: num = 0;",
         "mod m { global count: num = 0; }",

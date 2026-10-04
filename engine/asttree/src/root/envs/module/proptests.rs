@@ -8,7 +8,7 @@ impl Arbitrary for EnvsModule {
         prop::collection::vec(
             prop_oneof![
                 Comment::arbitrary().prop_map(|n| LinkedNode::from_node(n.into())),
-                VariableName::arbitrary().prop_map(|n| LinkedNode::from_node(n.into()))
+                EnvDeclaration::arbitrary().prop_map(|n| LinkedNode::from_node(n.into()))
             ],
             0..5,
         )

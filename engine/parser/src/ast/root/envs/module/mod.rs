@@ -33,9 +33,9 @@ impl ReadNode<EnvsModule> for EnvsModule {
             }
             let node = LinkedNode::try_read(
                 parser,
-                NodeTarget::Declaration(&[DeclarationId::VariableName]),
+                NodeTarget::Declaration(&[DeclarationId::EnvDeclaration]),
             )?
-            .ok_or_else(|| E::UnrecognizedCode(parser.to_string()).link_until_end(parser))?;
+            .ok_or_else(|| E::MissedEnvRequirement.link_until_end(parser))?;
             if !node.get_md().ppm.is_empty() {
                 return Err(E::UnrecognizedCode(node.to_string()).link(&node));
             }
