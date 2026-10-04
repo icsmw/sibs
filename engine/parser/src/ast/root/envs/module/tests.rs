@@ -9,7 +9,7 @@ test_node_grammar!(
         "required ENV_A; optional ENV_B;",
         "optional ENV_A; required ENV_B;",
         "// header\nrequired ENV_A;\n// tail\n",
-        "optional ENV_A; // comment\nrequired ENV_B;",
+        "optional ENV_A;\n// comment\nrequired ENV_B;",
         "required\nENV_A; optional\nENV_B;",
     ],
     rejects = [
