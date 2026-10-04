@@ -149,6 +149,10 @@ impl ExecutionContext {
             cxs: &self.cxs,
         }
     }
+    /// Global values shared by all contexts of this execution.
+    pub fn globals(&self) -> GlobalAccess<'_> {
+        GlobalAccess { cxs: &self.cxs }
+    }
     pub fn values(&self) -> ValueAccess<'_> {
         ValueAccess {
             owner: &self.owner,

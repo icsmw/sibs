@@ -207,6 +207,15 @@ pub enum E {
 
     #[error("Execution panicked: {0}")]
     ExecutionPanicked(String),
+
+    #[error("Global name conflict: {0}")]
+    GlobalConflict(String),
+    #[error("Cannot assign to immutable global: {0}")]
+    ImmutableGlobal(String),
+    #[error("Environment variable is not defined: {0}")]
+    EnvironmentNotDefined(String),
+    #[error("Environment variable is not valid Unicode: {0}")]
+    EnvironmentNotUnicode(String),
 }
 
 impl From<JobStateError> for E {

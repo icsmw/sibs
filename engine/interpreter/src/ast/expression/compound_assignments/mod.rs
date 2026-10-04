@@ -3,6 +3,34 @@ mod tests;
 
 use crate::*;
 
+fn apply_operator(
+    left: &RtValue,
+    operator: &CompoundAssignmentsOperator,
+    right: &RtValue,
+) -> Result<RtValue, E> {
+    match (left, right) {
+        (RtValue::Num(left), RtValue::Num(right)) => Ok(RtValue::Num(match operator {
+            CompoundAssignmentsOperator::MinusEqual => left - right,
+            CompoundAssignmentsOperator::PlusEqual => left + right,
+            CompoundAssignmentsOperator::SlashEqual => left / right,
+            CompoundAssignmentsOperator::StarEqual => left * right,
+        })),
+        (RtValue::Str(left), RtValue::Str(right)) => match operator {
+            CompoundAssignmentsOperator::PlusEqual => Ok(RtValue::Str(format!("{left}{right}"))),
+            CompoundAssignmentsOperator::MinusEqual
+            | CompoundAssignmentsOperator::SlashEqual
+            | CompoundAssignmentsOperator::StarEqual => Err(E::NotApplicableToTypeOperation),
+        },
+        (RtValue::PathBuf(left), RtValue::PathBuf(right)) => match operator {
+            CompoundAssignmentsOperator::PlusEqual => Ok(RtValue::PathBuf(left.join(right))),
+            CompoundAssignmentsOperator::MinusEqual
+            | CompoundAssignmentsOperator::SlashEqual
+            | CompoundAssignmentsOperator::StarEqual => Err(E::NotApplicableToTypeOperation),
+        },
+        _ => Err(E::InvalidValueType(left.id().to_string())),
+    }
+}
+
 impl Interpret for CompoundAssignments {
     #[boxed]
     fn interpret(&self, env: InterpreterEnvironment) -> RtPinnedResult<'_, LinkedErr<E>> {
@@ -27,75 +55,28 @@ impl Interpret for CompoundAssignments {
             .values()
             .lookup(&variable)
             .await
-            .map_err(|err| LinkedErr::from(err, &self.left))?
-            .ok_or(LinkedErr::from(
-                E::VariableNotFound(variable.clone()),
-                &self.left,
-            ))?;
+            .map_err(|err| LinkedErr::from(err, &self.left))?;
         let right = self.right.interpret(env.clone()).await?;
         chk_ty(&self.left, &right, &rt).await?;
-        match &right {
-            RtValue::Num(vl) => {
-                let RtValue::Num(left) = left.as_ref() else {
-                    return Err(LinkedErr::from(
-                        E::InvalidValueType(right.id().to_string()),
-                        &self.right,
-                    ));
-                };
-                let updated = match op.operator {
-                    CompoundAssignmentsOperator::MinusEqual => left - vl,
-                    CompoundAssignmentsOperator::PlusEqual => left + vl,
-                    CompoundAssignmentsOperator::SlashEqual => left / vl,
-                    CompoundAssignmentsOperator::StarEqual => left * vl,
-                };
-                cx.values()
-                    .update(&variable, RtValue::Num(updated))
-                    .await
-                    .map_err(|err| LinkedErr::from(err, &self.right))?;
-                Ok(RtValue::Num(updated))
-            }
-            RtValue::Str(vl) => {
-                let RtValue::Str(left) = left.as_ref() else {
-                    return Err(LinkedErr::from(
-                        E::InvalidValueType(right.id().to_string()),
-                        &self.right,
-                    ));
-                };
-                let updated = match op.operator {
-                    CompoundAssignmentsOperator::PlusEqual => format!("{left}{vl}"),
-                    _ => {
-                        return Err(LinkedErr::from(E::NotApplicableToTypeOperation, op));
-                    }
-                };
-                cx.values()
-                    .update(&variable, RtValue::Str(updated.clone()))
-                    .await
-                    .map_err(|err| LinkedErr::from(err, &self.right))?;
-                Ok(RtValue::Str(updated))
-            }
-            RtValue::PathBuf(vl) => {
-                let RtValue::PathBuf(left) = left.as_ref() else {
-                    return Err(LinkedErr::from(
-                        E::InvalidValueType(right.id().to_string()),
-                        &self.right,
-                    ));
-                };
-                let updated = match op.operator {
-                    CompoundAssignmentsOperator::PlusEqual => left.join(vl),
-                    _ => {
-                        return Err(LinkedErr::from(E::NotApplicableToTypeOperation, op));
-                    }
-                };
-                cx.values()
-                    .update(&variable, RtValue::PathBuf(updated.clone()))
-                    .await
-                    .map_err(|err| LinkedErr::from(err, &self.right))?;
-                Ok(RtValue::PathBuf(updated))
-            }
-            _ => Err(LinkedErr::from(
-                E::InvalidValueType(right.id().to_string()),
-                &self.right,
-            )),
+        if let Some(left) = left {
+            let updated = apply_operator(&left, &op.operator, &right)
+                .map_err(|err| LinkedErr::from(err, &self.operator))?;
+            cx.values()
+                .update(&variable, updated.clone())
+                .await
+                .map_err(|err| LinkedErr::from(err, &self.left))?;
+            Ok(updated)
+        } else {
+            // The right-hand expression is evaluated once before sending the transformation.
+            let operator = op.operator.clone();
+            let updated = cx
+                .globals()
+                .update(&variable, move |left| {
+                    apply_operator(left, &operator, &right)
+                })
+                .await
+                .map_err(|err| LinkedErr::from(err, &self.left))?;
+            Ok((*updated).clone())
         }
     }
 }

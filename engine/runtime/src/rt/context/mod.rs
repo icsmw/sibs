@@ -1,12 +1,17 @@
 mod api;
+mod globals;
 mod owned;
 mod params;
 mod parent;
 mod scope;
 mod store;
 
+#[cfg(test)]
+mod tests;
+
 use crate::*;
 use api::*;
+pub use globals::*;
 pub use owned::*;
 pub use params::*;
 pub use parent::*;
@@ -24,6 +29,7 @@ impl ExecutionContexts {
         let (tx, mut rx) = unbounded_channel();
         let cwd = cwd.clone();
         spawn(async move {
+            let mut globals = GlobalValues::default();
             let mut stores: HashMap<Uuid, ContextState> = HashMap::new();
             tracing::info!("init demand's listener");
             while let Some(demand) = rx.recv().await {
@@ -229,6 +235,32 @@ impl ExecutionContexts {
                             }
                         }
                     }
+                    Demand::Global(name, command) => match command {
+                        GlobalCommand::Lookup(tx) => {
+                            chk_send_err!(
+                                tx.send(Ok(globals.lookup(&name))),
+                                GlobalCommandId::Lookup
+                            );
+                        }
+                        GlobalCommand::IsRegistered(link, tx) => {
+                            chk_send_err!(
+                                tx.send(Ok(globals.is_registered(&name, &link))),
+                                GlobalCommandId::IsRegistered
+                            );
+                        }
+                        GlobalCommand::Register(ty, mutable, link, value, tx) => {
+                            chk_send_err!(
+                                tx.send(globals.register(name, ty, mutable, link, value)),
+                                GlobalCommandId::Register
+                            );
+                        }
+                        GlobalCommand::Update(transform, tx) => {
+                            chk_send_err!(
+                                tx.send(globals.update(&name, transform)),
+                                GlobalCommandId::Update
+                            );
+                        }
+                    },
                     Demand::Destroy(tx) => {
                         tracing::info!("got shutdown signal");
                         chk_send_err!(tx.send(()), DemandId::Destroy);

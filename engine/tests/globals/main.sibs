@@ -1,0 +1,36 @@
+globals from "values.sibs";
+mod from "workers.sibs";
+include from "included.sibs";
+component globals_test() {
+    task arithmetic() {
+        count += 3;
+        count *= 4;
+        count /= 2;
+        count -= 1;
+        count;
+    }
+    task functions() {
+        workers::bump();
+        let f = |v: num| { count += v; count; };
+        f(3);
+        count;
+    }
+    task strings() { label += "_done"; label; }
+    task arrays() { numbers; }
+    task interpolation() { description; }
+    task booleans() { disabled; }
+    task assignment() { count = 42; count; }
+    task sharing() { :included:bump(); count; }
+    task parallel() {
+        join(:globals_test:add_many(), :globals_test:add_many(), :globals_test:add_many(), :globals_test:add_many());
+        count;
+    }
+    task add_many() {
+        for el in 1..25 { count += 1; };
+        count;
+    }
+    task rhs_once() {
+        count += workers::bump();
+        count;
+    }
+};

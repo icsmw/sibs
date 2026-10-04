@@ -1,0 +1,5 @@
+globals from "./values.sibs";
+fn bump() {
+    count += 1;
+    count;
+};

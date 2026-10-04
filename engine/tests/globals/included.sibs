@@ -1,0 +1,6 @@
+mod nested {
+    globals from "values.sibs";
+};
+component included() {
+    task bump() { count += 10; count; }
+};

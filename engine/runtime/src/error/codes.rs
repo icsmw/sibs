@@ -109,6 +109,10 @@ impl ErrorCode for E {
             Self::RtShutdowning => "00085",
             Self::RtShutdownTimeout(_) => "00086",
             Self::ExecutionPanicked(_) => "00087",
+            Self::GlobalConflict(_) => "00088",
+            Self::ImmutableGlobal(_) => "00089",
+            Self::EnvironmentNotDefined(_) => "00090",
+            Self::EnvironmentNotUnicode(_) => "00091",
         }
     }
     fn src(&self) -> ErrorSource {
@@ -230,6 +234,10 @@ mod test {
                 EId::RtShutdowning => E::RtShutdowning,
                 EId::RtShutdownTimeout => E::RtShutdownTimeout(5000),
                 EId::ExecutionPanicked => E::ExecutionPanicked(String::new()),
+                EId::GlobalConflict => E::GlobalConflict(String::new()),
+                EId::ImmutableGlobal => E::ImmutableGlobal(String::new()),
+                EId::EnvironmentNotDefined => E::EnvironmentNotDefined(String::new()),
+                EId::EnvironmentNotUnicode => E::EnvironmentNotUnicode(String::new()),
             }
         }
     }

@@ -1,4 +1,5 @@
 use crate::*;
+use std::path::PathBuf;
 
 test_value_expectation!(
     compound_assignments_000,
@@ -64,15 +65,74 @@ test_value_expectation!(
     }"#
 );
 
-// test_value_expectation!(
-//     compound_assignments_005,
-//     Block,
-//     RtValue::Str(String::from("HelloHelloHelloHelloHello")),
-//     r#"{
-//         let full = "";
-//         for(el, n) in 0..4 {
-//             full += "Hello";
-//         };
-//         full;
-//     }"#
-// );
+test_value_expectation!(
+    compound_assignments_006,
+    Block,
+    RtValue::Str(String::from("HelloHelloHelloHelloHello")),
+    r#"{
+        let full = "";
+        for(el, n) in 0..4 {
+            full += "Hello";
+        };
+        full;
+    }"#
+);
+
+test_value_expectation!(
+    compound_assignments_007,
+    Block,
+    RtValue::Str(String::from("value: 2")),
+    r#"{
+        let full = "value: ";
+        let n = 2;
+        full += '{n}';
+        full;
+    }"#
+);
+
+#[test]
+fn path_plus_equal_joins_components_without_changing_operands() {
+    let left = RtValue::PathBuf(PathBuf::from("workspace"));
+    let right = RtValue::PathBuf(PathBuf::from("artifacts").join("release"));
+
+    let result =
+        super::apply_operator(&left, &CompoundAssignmentsOperator::PlusEqual, &right).unwrap();
+
+    assert_eq!(
+        result,
+        RtValue::PathBuf(["workspace", "artifacts", "release"].iter().collect())
+    );
+    assert_eq!(left, RtValue::PathBuf(PathBuf::from("workspace")));
+    assert_eq!(
+        right,
+        RtValue::PathBuf(["artifacts", "release"].iter().collect())
+    );
+}
+
+#[test]
+fn path_plus_equal_with_an_absolute_path_replaces_the_left_path() {
+    let left = RtValue::PathBuf(PathBuf::from("workspace"));
+    let right = RtValue::PathBuf(std::env::current_dir().unwrap().join("artifacts"));
+
+    assert_eq!(
+        super::apply_operator(&left, &CompoundAssignmentsOperator::PlusEqual, &right).unwrap(),
+        right
+    );
+}
+
+#[test]
+fn paths_reject_other_compound_operators() {
+    let left = RtValue::PathBuf(PathBuf::from("workspace"));
+    let right = RtValue::PathBuf(PathBuf::from("artifacts"));
+
+    for operator in [
+        CompoundAssignmentsOperator::MinusEqual,
+        CompoundAssignmentsOperator::SlashEqual,
+        CompoundAssignmentsOperator::StarEqual,
+    ] {
+        assert!(matches!(
+            super::apply_operator(&left, &operator, &right),
+            Err(E::NotApplicableToTypeOperation)
+        ));
+    }
+}

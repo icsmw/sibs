@@ -172,6 +172,25 @@ impl RtValue {
             | Self::Skipped => None,
         }
     }
+
+    pub fn is_compatible(&self, ty: &Ty) -> bool {
+        let Some(actual) = self.as_ty() else {
+            return false;
+        };
+        if !ty.reassignable(&actual) {
+            return false;
+        }
+        // as_ty() describes a vector by its first item; validate every item at this boundary.
+        if let (Ty::Determined(DeterminedTy::Vec(Some(element))), RtValue::Vec(values)) = (ty, self)
+        {
+            for value in values {
+                if !value.is_compatible(&Ty::Determined((**element).clone())) {
+                    return false;
+                }
+            }
+        }
+        true
+    }
 }
 
 #[enum_ids::enum_ids(display_variant)]

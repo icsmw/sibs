@@ -29,10 +29,27 @@ pub enum DemandCommand {
     CloseContext(Uuid, oneshot::Sender<()>),
 }
 
+pub type GlobalTransform = Box<dyn FnOnce(&RtValue) -> Result<RtValue, E> + Send>;
+
+#[enum_ids::enum_ids(display)]
+pub enum GlobalCommand {
+    Lookup(oneshot::Sender<Result<Option<Arc<RtValue>>, E>>),
+    IsRegistered(SrcLink, oneshot::Sender<Result<bool, E>>),
+    Register(Ty, bool, SrcLink, RtValue, oneshot::Sender<Result<(), E>>),
+    Update(GlobalTransform, oneshot::Sender<Result<Arc<RtValue>, E>>),
+}
+
+impl std::fmt::Debug for GlobalCommand {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(&self.id(), f)
+    }
+}
+
 #[allow(dead_code)]
 #[derive(Debug)]
 #[enum_ids::enum_ids(display)]
 pub enum Demand {
     Command(Uuid, DemandCommand),
+    Global(String, GlobalCommand),
     Destroy(oneshot::Sender<()>),
 }

@@ -1,0 +1,9 @@
+envs from "build.envs";
+envs from "./build.envs";
+globals from "env_values.sibs";
+component env_test() {
+    task text() { message; }
+    task empty() { SIBS_TEST_GLOBAL_EMPTY; }
+    task interpolation() { wrapped; }
+    task must_not_run() { `this-command-must-never-be-executed`; }
+};

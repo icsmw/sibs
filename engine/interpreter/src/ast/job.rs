@@ -5,7 +5,12 @@ impl NodeJobVisibility for LinkedNode {
         match self.get_node() {
             Node::Root(node) => match node {
                 Root::Component(..) | Root::Task(..) => JobVisibility::Visible,
-                Root::Anchor(..) | Root::Module(..) => JobVisibility::Hidden,
+                Root::GlobalsImport(..)
+                | Root::EnvsImport(..)
+                | Root::GlobalsModule(..)
+                | Root::EnvsModule(..)
+                | Root::Anchor(..)
+                | Root::Module(..) => JobVisibility::Hidden,
             },
             Node::Statement(node) => match node {
                 Statement::Join(..) => JobVisibility::Visible,
@@ -49,7 +54,8 @@ impl NodeJobVisibility for LinkedNode {
                 }
             },
             Node::Declaration(node) => match node {
-                Declaration::IncludeDeclaration(..)
+                Declaration::GlobalDeclaration(..)
+                | Declaration::IncludeDeclaration(..)
                 | Declaration::ModuleDeclaration(..)
                 | Declaration::FunctionDeclaration(..)
                 | Declaration::VariableDeclaration(..)
@@ -85,7 +91,12 @@ impl NodeJobName for LinkedNode {
             Node::Root(inner) => match inner {
                 Root::Component(component) => component.get_name(),
                 Root::Task(task) => task.get_name(),
-                Root::Anchor(..) | Root::Module(..) => node.id().to_string(),
+                Root::GlobalsImport(..)
+                | Root::EnvsImport(..)
+                | Root::GlobalsModule(..)
+                | Root::EnvsModule(..)
+                | Root::Anchor(..)
+                | Root::Module(..) => node.id().to_string(),
             },
             Node::Statement(inner) => match inner {
                 Statement::Join(..) => "joining".to_owned(),
@@ -129,7 +140,8 @@ impl NodeJobName for LinkedNode {
                 }
             },
             Node::Declaration(inner) => match inner {
-                Declaration::IncludeDeclaration(..)
+                Declaration::GlobalDeclaration(..)
+                | Declaration::IncludeDeclaration(..)
                 | Declaration::ModuleDeclaration(..)
                 | Declaration::FunctionDeclaration(..)
                 | Declaration::VariableDeclaration(..)

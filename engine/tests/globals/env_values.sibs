@@ -1,0 +1,2 @@
+const message: str = SIBS_TEST_GLOBAL_TEXT;
+const wrapped: str = 'prefix {message}';

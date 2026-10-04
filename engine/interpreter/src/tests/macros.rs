@@ -131,44 +131,85 @@ macro_rules! test_task_results {
 #[macro_export]
 macro_rules! test_task_results_from_file {
     ($fn_name:ident, $component_name:literal, $task_name:literal, $expectation:expr, $filename:literal) => {
+        $crate::test_task_results_from_file!(
+            $fn_name,
+            $component_name,
+            $task_name,
+            $expectation,
+            $filename,
+            env = []
+        );
+    };
+    ($fn_name:ident, $component_name:literal, $task_name:literal, $expectation:expr, $filename:literal, env = $environment:expr) => {
+        $crate::test_task_execution_from_file!(
+            $fn_name,
+            $component_name,
+            $task_name,
+            $filename,
+            $environment,
+            |result: Result<RtValue, ExecutorError>, ctx: &InterContext| {
+                if let Err(ExecutorError::Execution(err)) = &result {
+                    ctx.get_diagnostics()
+                        .expect("Diagnostics available")
+                        .err(err, &mut std::io::stderr())
+                        .expect("Reporting error");
+                }
+                let value = result.expect("Task completed");
+                assert_eq!(value, $expectation);
+            }
+        );
+    };
+}
+
+#[macro_export]
+macro_rules! test_task_error_from_file {
+    ($fn_name:ident, $component_name:literal, $task_name:literal, $error:pat, $filename:literal, env = $environment:expr) => {
+        $crate::test_task_execution_from_file!(
+            $fn_name,
+            $component_name,
+            $task_name,
+            $filename,
+            $environment,
+            |result: Result<RtValue, ExecutorError>, ctx: &InterContext| {
+                let Err(ExecutorError::Execution(err)) = result else {
+                    panic!("Expected an execution error: {result:?}");
+                };
+                assert!(matches!(err.e, $error), "{err:?}");
+                let mut report = Vec::new();
+                ctx.get_diagnostics()
+                    .expect("Diagnostics available")
+                    .err(&err, &mut report)
+                    .expect("Error is linked to a known source");
+            }
+        );
+    };
+}
+
+#[macro_export]
+macro_rules! test_task_execution_from_file {
+    ($fn_name:ident, $component_name:literal, $task_name:literal, $filename:literal, $environment:expr, $check:expr) => {
         paste::item! {
             #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
             async fn [< test_value_expectation_ $fn_name >]() {
                 use $crate::*;
-                let filepath = std::env::current_dir()
-                    .expect("Current folder")
-                    .join($filename);
+                let name = concat!(module_path!(), "::", stringify!([< test_value_expectation_ $fn_name >]));
+                if $crate::tests::run_with_environment(name, &$environment) { return; }
+                let filepath = std::env::current_dir().expect("Current folder").join($filename);
                 let mut ctx = InterContext::default();
                 let script = Script::from_file(filepath, ScriptOptions::strict(), &mut ctx);
-                if let Err(err) = &script {
-                    eprintln!("{err}");
+                if script.is_err() {
+                    if let Some(diagnostics) = ctx.get_diagnostics() {
+                        for err in diagnostics.errors() {
+                            diagnostics.err(err, &mut std::io::stderr()).expect("Reporting preparation error");
+                        }
+                    }
                 }
                 script.expect("Script is prepared");
                 assert!(ctx.get_diagnostics().expect("Diagnostics available").errors().is_empty());
-                let vl = Executor::new(
-                    ExecutionOptions::new(
-                        $component_name,
-                        $task_name,
-                        std::env::current_dir().expect("Current folder detected"),
-                    ),
-                )
-                .run(&mut ctx)
-                .await;
-                if let Err(err) = &vl {
-                    eprintln!("{err:?}");
-                    if let ExecutorError::Execution(failure) = err {
-                        ctx.get_diagnostics().expect("Diagnostics available")
-                            .err(failure, &mut std::io::stderr()).expect("Reporting error");
-                    }
-                }
-                assert!(vl.is_ok());
-                let vl = vl.unwrap();
-                assert!(
-                    vl == $expectation,
-                    "Values are not equal: {:?} vs {:?}",
-                    vl,
-                    $expectation
-                );
+                let result = Executor::new(ExecutionOptions::new(
+                    $component_name, $task_name, std::env::current_dir().expect("Current folder"),
+                )).run(&mut ctx).await;
+                ($check)(result, &ctx);
             }
         }
     };

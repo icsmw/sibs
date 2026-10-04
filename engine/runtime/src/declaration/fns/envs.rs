@@ -23,10 +23,6 @@ impl FnEnv {
         }
     }
     pub fn from_job(&self, job: Job) -> InterpreterEnvironment {
-        InterpreterEnvironment {
-            rt: self.rt.clone(),
-            cx: self.cx.clone(),
-            job,
-        }
+        InterpreterEnvironment::new(self.rt.clone(), self.cx.clone(), job)
     }
 }

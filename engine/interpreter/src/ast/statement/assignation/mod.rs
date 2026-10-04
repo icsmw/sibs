@@ -18,10 +18,23 @@ impl Interpret for Assignation {
             };
         let vl = self.right.interpret(env).await?;
         chk_ty(&self.left, &vl, &rt).await?;
-        cx.values()
-            .update(&variable, vl)
+        if cx
+            .values()
+            .lookup(&variable)
             .await
-            .map_err(|err| LinkedErr::from(err, &self.right))?;
+            .map_err(|err| LinkedErr::from(err, &self.left))?
+            .is_some()
+        {
+            cx.values()
+                .update(&variable, vl)
+                .await
+                .map_err(|err| LinkedErr::from(err, &self.right))?;
+        } else {
+            cx.globals()
+                .update(&variable, move |_| Ok(vl))
+                .await
+                .map_err(|err| LinkedErr::from(err, &self.left))?;
+        }
         Ok(RtValue::Void)
     }
 }

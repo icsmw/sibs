@@ -1,0 +1,7 @@
+const base: num = 2;
+const numbers: Vec<num> = [base, base + 1];
+const description: str = 'base {base}';
+const enabled: bool = true;
+const disabled: bool = !enabled;
+global count: num = base;
+global label: str = "start";
