@@ -10,6 +10,8 @@ use uuid::Uuid;
 pub enum E {
     #[error("IO error: {0}")]
     IO(String),
+    #[error("Diagnostics error: {0}")]
+    Diagnostics(#[from] diagnostics::DiagnosticsError),
 
     #[error("Fail to read valid scenario from \"{0}\"")]
     FailExtractAnchorNodeFrom(String),

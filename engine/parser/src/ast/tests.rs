@@ -1,3 +1,29 @@
+use crate::*;
+
+pub(super) struct Files(PathBuf);
+impl Files {
+    pub(super) fn new() -> Self {
+        let path = std::env::temp_dir().join(format!("sibs-parser-{}", Uuid::new_v4()));
+        std::fs::create_dir_all(&path).unwrap();
+        Self(path)
+    }
+    pub(super) fn write(&self, name: &str, content: &str) -> PathBuf {
+        let path = self.0.join(name);
+        std::fs::write(&path, content).unwrap();
+        path
+    }
+}
+impl Drop for Files {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.0);
+    }
+}
+
+pub(super) fn parser(source: &str) -> Parser {
+    let mut lexer = Lexer::new(source, 0);
+    Parser::unbound(lexer.read().unwrap().tokens, &lexer.uuid, source, false)
+}
+
 #[macro_export]
 macro_rules! test_selfnode_reading {
     ($element_ref:expr, $exp_count:literal) => {
@@ -75,6 +101,70 @@ macro_rules! test_node_reading {
                     }
                 }
 
+            }
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! test_import_reading {
+    ($import:ident, $body:ident, $keyword:literal) => {
+        paste::item! {
+            proptest! {
+                #![proptest_config(ProptestConfig {
+                    max_shrink_iters: 50,
+                    ..ProptestConfig::with_cases(500)
+                })]
+
+                #[allow(non_snake_case)]
+                #[test]
+                fn [< test_ $import >](body in $body::arbitrary()) {
+                    let content = body.to_string();
+                    let files = $crate::ast::tests::Files::new();
+                    let path = files.write("body.sibs", &content);
+                    let source = format!("{} from {:?}", $keyword, path.to_string_lossy());
+                    let parser = $crate::ast::tests::parser(&source);
+                    let node = $import::read_as_linked(&parser);
+                    if let Err(err) = &node {
+                        let diagnostics: diagnostics::Diagnostics<$crate::ParserError> = parser.try_into().expect("Parser diagnostics are available");
+                        diagnostics.err(err, &mut std::io::stderr()).expect("Reporting error");
+                        eprintln!("fail with:\nErr:{err:?}\n{source}\n{content}\n{}", "=".repeat(100));
+                        panic!("Import could not be parsed");
+                    }
+                    let node = node.unwrap().expect("Import node is recognized");
+                    prop_assert_eq!(node.to_string(), source);
+                    let import = node.extract::<$import>().expect("Expected import node");
+                    prop_assert_eq!(import.root.to_string(), content);
+                    prop_assert!(parser.is_done());
+                }
+            }
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! test_node_grammar {
+    (
+        $fn_name:ident, $read:path,
+        accepts = [$($accepted:literal),* $(,)?],
+        rejects = [$($rejected:literal),* $(,)?] $(,)?
+    ) => {
+        #[test]
+        fn $fn_name() {
+            for source in [$($accepted),*] {
+                let parser = $crate::ast::tests::parser(source);
+                let node = $read(&parser);
+                if let Err(err) = &node {
+                    let diagnostics: diagnostics::Diagnostics<$crate::ParserError> = parser.try_into().expect("Parser diagnostics are available");
+                    diagnostics.err(err, &mut std::io::stderr()).expect("Reporting error");
+                    panic!("Expected valid syntax: {source}\n{err:?}");
+                }
+                assert!(node.unwrap().is_some(), "Node was not recognized: {source}");
+                assert!(parser.is_done(), "Unparsed input remains: {source}");
+            }
+            for source in [$($rejected),*] {
+                let parser = $crate::ast::tests::parser(source);
+                assert!($read(&parser).is_err(), "Expected a syntax error: {source}");
             }
         }
     };

@@ -48,6 +48,9 @@ impl ErrorCode for E {
             Self::TaskArgsNumberDismatch(..) => "00042",
             Self::TypeCannotUsedInContext => "00043",
             Self::InvalidIterationSource => "00044",
+            Self::GlobalConflict(..) => "00045",
+            Self::ImmutableGlobal(..) => "00046",
+            Self::InvalidGlobalInitializer(..) => "00047",
             Self::RtError(err) => err.code(),
         }
     }
@@ -97,6 +100,9 @@ impl ErrorCode for E {
             | Self::TaskArgsNumberDismatch(..)
             | Self::TypeCannotUsedInContext
             | Self::InvalidIterationSource => ErrorSource::Semantic,
+            Self::GlobalConflict(..) => ErrorSource::Semantic,
+            Self::ImmutableGlobal(..) => ErrorSource::Semantic,
+            Self::InvalidGlobalInitializer(..) => ErrorSource::Semantic,
             Self::RtError(err) => err.src(),
         }
     }
@@ -155,6 +161,9 @@ mod test {
                 EId::TaskArgsNumberDismatch => E::TaskArgsNumberDismatch(String::new(), 0, 0),
                 EId::TypeCannotUsedInContext => E::TypeCannotUsedInContext,
                 EId::InvalidIterationSource => E::InvalidIterationSource,
+                EId::GlobalConflict => E::GlobalConflict(String::new()),
+                EId::ImmutableGlobal => E::ImmutableGlobal(String::new()),
+                EId::InvalidGlobalInitializer => E::InvalidGlobalInitializer(String::new()),
                 EId::RtError => E::RtError(RtError::NoCurrentScope),
             }
         }

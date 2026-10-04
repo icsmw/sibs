@@ -1,3 +1,4 @@
+mod error;
 mod errors;
 
 use console::Style;
@@ -5,6 +6,7 @@ use lexer::{Token, Tokens};
 use std::{fmt::Display, io};
 
 use crate::*;
+pub use error::*;
 pub use errors::*;
 
 const REPORT_LN_AROUND: usize = 6;
@@ -59,14 +61,11 @@ impl<E: Display + ErrorCode> Diagnostics<E> {
         &self,
         err: &LinkedErr<T>,
         dest: &mut impl io::Write,
-    ) -> Result<(), io::Error> {
+    ) -> Result<(), DiagnosticsError> {
         let from = err.link.from;
         let to = err.link.to;
         let Some(code_src) = self.sources.get_source(&err.link.src) else {
-            return Err(io::Error::new(
-                io::ErrorKind::NotFound,
-                format!("Fail to get content of {}", err.link.src),
-            ));
+            return Err(DiagnosticsError::NotFound(err.link.src));
         };
         let src = code_src.content()?;
         let num_rate = src.split('\n').count().to_string().len() + 1;
@@ -95,7 +94,7 @@ impl<E: Display + ErrorCode> Diagnostics<E> {
             })
             .collect::<Vec<usize>>();
         if error_lns.is_empty() {
-            return writeln!(dest, "{}", err.e);
+            return writeln!(dest, "{}", err.e).map_err(|e| e.into());
         }
         cursor = 0;
         let error_first_ln = *error_lns.first().unwrap_or(&0);
@@ -139,6 +138,7 @@ impl<E: Display + ErrorCode> Diagnostics<E> {
                 ..report.len().min(error_last_ln + REPORT_LN_AROUND)]
                 .join("\n")
         )
+        .map_err(|e| e.into())
     }
 }
 

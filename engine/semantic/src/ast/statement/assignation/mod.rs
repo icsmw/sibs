@@ -11,11 +11,24 @@ impl InferType for Assignation {
                     &self.left,
                 ));
             };
+        if let Some(variable) = self.left.extract::<Variable>() {
+            if scx.globals.exists(&variable.ident) && !scx.globals.is_mutable(&variable.ident) {
+                return Err(LinkedErr::from(
+                    E::ImmutableGlobal(variable.ident.clone()),
+                    &self.left,
+                ));
+            }
+        }
         let variable_name = variable.ident.to_owned();
         let left = scx
             .tys
             .lookup(&variable_name)
             .map_err(|err| LinkedErr::from(err.into(), &self.left))?
+            .or_else(|| {
+                scx.globals
+                    .lookup(&variable_name)
+                    .map(|symbol| &symbol.binding)
+            })
             .cloned()
             .ok_or(LinkedErr::from(
                 E::VariableIsNotDefined(variable_name.clone()),
@@ -25,10 +38,19 @@ impl InferType for Assignation {
         if matches!(right, Ty::Indeterminate) {
             return Err(LinkedErr::from(E::IndeterminateType, &self.right));
         }
-        let Some(annot) = left.annotated.as_ref() else {
+        let is_global = scx.globals.lookup(&variable_name).is_some();
+        let declared = if is_global {
+            left.ty()
+        } else {
+            left.annotated.as_ref()
+        };
+        let Some(annot) = declared else {
             return Err(LinkedErr::from(E::IndeterminateType, &self.left));
         };
         if annot.reassignable(&right) {
+            if is_global {
+                return Ok(DeterminedTy::Void.into());
+            }
             scx.tys
                 .insert(
                     variable_name,

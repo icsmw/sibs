@@ -5,6 +5,7 @@ impl ConflictResolver<DeclarationId> for DeclarationId {
         match self {
             Self::ModuleDeclaration
             | Self::IncludeDeclaration
+            | Self::GlobalDeclaration
             | Self::VariableDeclaration
             | Self::ArgumentDeclaration
             | Self::FunctionDeclaration

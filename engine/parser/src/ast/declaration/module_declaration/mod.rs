@@ -42,7 +42,7 @@ impl ReadNode<ModuleDeclaration> for ModuleDeclaration {
             LinkedNode::try_oneof(parser, &[NodeTarget::Value(&[ValueId::PrimitiveString])])?
                 .ok_or_else(|| E::MissedModulePath.link_with_token(&sig))?;
         #[cfg(not(test))]
-        let (nodes, name) = {
+        let (nodes, name, source) = {
             let Node::Value(Value::PrimitiveString(filename)) = &filename_node.get_node() else {
                 return Err(E::UnexpectedType(
                     ValueId::PrimitiveString.to_string(),
@@ -60,10 +60,10 @@ impl ReadNode<ModuleDeclaration> for ModuleDeclaration {
             else {
                 return Err(E::FailGetModuleName(filename.inner.clone()).link(&filename_node));
             };
-            (get_mod_inner(&mut inner)?, name)
+            (get_mod_inner(&mut inner)?, name, inner.src())
         };
         #[cfg(test)]
-        let (nodes, name) = { (Vec::new(), String::from("test")) };
+        let (nodes, name, source) = { (Vec::new(), String::from("test"), Uuid::new_v4()) };
         Ok(Some(ModuleDeclaration {
             sig: sig.clone(),
             from: from.clone(),
@@ -71,6 +71,7 @@ impl ReadNode<ModuleDeclaration> for ModuleDeclaration {
             uuid: Uuid::new_v4(),
             name,
             nodes,
+            source,
         }))
     }
 }
@@ -93,7 +94,7 @@ fn get_mod_inner(inner: &mut Parser) -> Result<Vec<LinkedNode>, LinkedErr<E>> {
                     DeclarationId::FunctionDeclaration,
                     DeclarationId::ModuleDeclaration,
                 ]),
-                NodeTarget::Root(&[RootId::Module]),
+                NodeTarget::Root(&[RootId::Module, RootId::GlobalsImport, RootId::EnvsImport]),
             ],
         )?
         else {

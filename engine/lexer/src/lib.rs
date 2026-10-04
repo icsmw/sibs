@@ -321,7 +321,7 @@ pub struct BoundLexer {
 }
 
 impl BoundLexer {
-    pub fn new<P: AsRef<Path>>(filename: P) -> Result<Self, E> {
+    pub fn new<P: AsRef<Path>>(filename: P, source: Uuid) -> Result<Self, E> {
         let filename = filename.as_ref().to_path_buf();
         if !filename.exists() {
             return Err(E::FileNotFound(filename));
@@ -332,6 +332,7 @@ impl BoundLexer {
         let content =
             fs::read_to_string(&filename).map_err(|e| E::FailToReadFile(filename.clone(), e))?;
         let mut lexer = Lexer::new(&content, 0);
+        lexer.uuid = source;
         let tokens = lexer.read()?.tokens;
         Ok(Self {
             filename,
@@ -340,6 +341,7 @@ impl BoundLexer {
             uuid: lexer.uuid,
         })
     }
+
     pub fn inner(self) -> (PathBuf, PathBuf, Vec<Token>, Uuid) {
         (self.filename, self.cwd, self.tokens, self.uuid)
     }

@@ -3,6 +3,7 @@ use crate::*;
 #[derive(Debug)]
 pub struct SemanticCx {
     pub tys: TyStore,
+    pub globals: Globals,
     pub fns: Fns,
     pub tasks: Tasks,
     pub table: TypesTable,
@@ -14,6 +15,7 @@ impl SemanticCx {
     pub fn new(resilience: bool) -> Self {
         Self {
             tys: TyStore::default(),
+            globals: Globals::default(),
             fns: Fns::default(),
             tasks: Tasks::default(),
             table: TypesTable::default(),
@@ -29,7 +31,11 @@ impl SemanticCx {
         name: S,
         caller: &Uuid,
     ) -> Result<Option<FnEntity<'_>>, E> {
-        let uuid = if let Some(ty) = self.tys.lookup(name.as_ref())? {
+        let uuid = if let Some(ty) = self.tys.lookup(name.as_ref())?.or_else(|| {
+            self.globals
+                .lookup(name.as_ref())
+                .map(|symbol| &symbol.binding)
+        }) {
             if let Some(Ty::Determined(DeterminedTy::Closure(uuid, ..))) = &ty.assigned {
                 Some(*uuid)
             } else {

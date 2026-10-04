@@ -1,0 +1,84 @@
+#[cfg(feature = "proptests")]
+mod proptests;
+
+use crate::*;
+use std::fmt;
+
+#[derive(Debug, Clone)]
+pub struct GlobalsImport {
+    pub sig: Token,
+    pub from: Token,
+    pub node: Box<LinkedNode>,
+    pub root: Box<LinkedNode>,
+    pub uuid: Uuid,
+}
+
+impl Diagnostic for GlobalsImport {
+    fn located(&self, src: &Uuid, pos: usize) -> bool {
+        if !self.sig.belongs(src) {
+            false
+        } else {
+            self.get_position().is_in(pos)
+        }
+    }
+    fn get_position(&self) -> Position {
+        Position::new(self.sig.pos.from, self.node.md.link.to())
+    }
+    fn childs(&self) -> Vec<&LinkedNode> {
+        vec![&*self.node, &*self.root]
+    }
+}
+
+impl<'a> Lookup<'a> for GlobalsImport {
+    fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
+        self.node
+            .lookup_inner(self.uuid, trgs)
+            .into_iter()
+            .chain(self.root.lookup_inner(self.uuid, trgs))
+            .collect()
+    }
+}
+
+impl FindMutByUuid for GlobalsImport {
+    fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
+        self.node
+            .find_mut_by_uuid(uuid)
+            .or_else(|| self.root.find_mut_by_uuid(uuid))
+    }
+}
+
+impl SrcLinking for GlobalsImport {
+    fn link(&self) -> SrcLink {
+        src_from::tk_and_node(&self.sig, &self.node)
+    }
+    fn slink(&self) -> SrcLink {
+        self.link()
+    }
+}
+
+impl fmt::Display for GlobalsImport {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} {} {}", self.sig, self.from, self.node)
+    }
+}
+
+impl From<GlobalsImport> for Node {
+    fn from(val: GlobalsImport) -> Self {
+        Node::Root(Root::GlobalsImport(val))
+    }
+}
+
+impl Extract for GlobalsImport {
+    fn extract(node: &Node) -> Option<&Self> {
+        match Root::extract(node)? {
+            Root::GlobalsImport(node) => Some(node),
+            _ => None,
+        }
+    }
+}
+
+impl MetadataContent for GlobalsImport {
+    fn md_includes() -> &'static [MiscellaneousId] {
+        &[MiscellaneousId::Meta, MiscellaneousId::Comment]
+    }
+}

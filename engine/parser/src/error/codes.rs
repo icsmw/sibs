@@ -107,7 +107,7 @@ impl ErrorCode for E {
 
 #[cfg(test)]
 mod test {
-    use std::collections::HashSet;
+    use std::{collections::HashSet, io};
 
     use crate::*;
 

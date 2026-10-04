@@ -67,7 +67,7 @@ pub enum E {
     FileNotFound(String),
     #[error("Exptected type: {0}; but actual is: {1}")]
     UnexpectedType(String, String),
-    #[error("Parent path isn't available; using \"include from ...\" and \"mod from ...\" isn't possible")]
+    #[error("Parent path is unavailable; relative file imports are not possible")]
     NoParentPath,
     #[error("File reading error: {0:?}")]
     FileReading(#[from] std::io::Error),
@@ -206,6 +206,20 @@ pub enum E {
 impl From<LexerError> for E {
     fn from(err: LexerError) -> Self {
         Self::LexerError(err)
+    }
+}
+
+impl From<CodeSourceError> for E {
+    fn from(err: CodeSourceError) -> Self {
+        match err {
+            CodeSourceError::Io(err) => Self::FileReading(err),
+            CodeSourceError::ImportCycle { path, .. } => {
+                Self::MissedExpectation(path.display().to_string(), "acyclic file imports".into())
+            }
+            err @ CodeSourceError::AlreadyImported(_) => {
+                Self::FileReading(io::Error::new(io::ErrorKind::AlreadyExists, err))
+            }
+        }
     }
 }
 

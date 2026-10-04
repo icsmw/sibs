@@ -1,10 +1,14 @@
 mod anchor;
 mod component;
+mod envs;
+mod globals;
 mod module;
 mod task;
 
 pub use anchor::*;
 pub use component::*;
+pub use envs::*;
+pub use globals::*;
 pub use module::*;
 pub use task::*;
 
@@ -16,6 +20,14 @@ use crate::*;
 pub enum Root {
     /// The root document to start parsing
     Anchor(Anchor),
+    /// Import global declarations from a separate file.
+    GlobalsImport(GlobalsImport),
+    /// Import a manifest of environment variable names.
+    EnvsImport(EnvsImport),
+    /// A file containing global and constant declarations.
+    GlobalsModule(GlobalsModule),
+    /// A file containing environment variable names.
+    EnvsModule(EnvsModule),
     /// Functions module
     Module(Module),
     /// component name() { ... }, component name(pwd) { ... }
@@ -27,6 +39,10 @@ pub enum Root {
 impl Identification for Root {
     fn uuid(&self) -> &Uuid {
         match self {
+            Self::GlobalsImport(n) => &n.uuid,
+            Self::EnvsImport(n) => &n.uuid,
+            Self::GlobalsModule(n) => &n.uuid,
+            Self::EnvsModule(n) => &n.uuid,
             Self::Anchor(n) => &n.uuid,
             Self::Module(n) => &n.uuid,
             Self::Component(n) => &n.uuid,
@@ -35,6 +51,10 @@ impl Identification for Root {
     }
     fn ident(&self) -> String {
         match self {
+            Self::GlobalsImport(..) => RootId::GlobalsImport.to_string(),
+            Self::EnvsImport(..) => RootId::EnvsImport.to_string(),
+            Self::GlobalsModule(..) => RootId::GlobalsModule.to_string(),
+            Self::EnvsModule(..) => RootId::EnvsModule.to_string(),
             Self::Anchor(..) => RootId::Anchor.to_string(),
             Self::Module(..) => RootId::Module.to_string(),
             Self::Component(..) => RootId::Component.to_string(),
@@ -46,6 +66,10 @@ impl Identification for Root {
 impl Diagnostic for Root {
     fn located(&self, src: &Uuid, pos: usize) -> bool {
         match self {
+            Self::GlobalsImport(n) => n.located(src, pos),
+            Self::EnvsImport(n) => n.located(src, pos),
+            Self::GlobalsModule(n) => n.located(src, pos),
+            Self::EnvsModule(n) => n.located(src, pos),
             Self::Anchor(n) => n.located(src, pos),
             Self::Module(n) => n.located(src, pos),
             Self::Component(n) => n.located(src, pos),
@@ -54,6 +78,10 @@ impl Diagnostic for Root {
     }
     fn get_position(&self) -> Position {
         match self {
+            Self::GlobalsImport(n) => n.get_position(),
+            Self::EnvsImport(n) => n.get_position(),
+            Self::GlobalsModule(n) => n.get_position(),
+            Self::EnvsModule(n) => n.get_position(),
             Self::Anchor(n) => n.get_position(),
             Self::Module(n) => n.get_position(),
             Self::Component(n) => n.get_position(),
@@ -62,6 +90,10 @@ impl Diagnostic for Root {
     }
     fn childs(&self) -> Vec<&LinkedNode> {
         match self {
+            Self::GlobalsImport(n) => n.childs(),
+            Self::EnvsImport(n) => n.childs(),
+            Self::GlobalsModule(n) => n.childs(),
+            Self::EnvsModule(n) => n.childs(),
             Self::Anchor(n) => n.childs(),
             Self::Module(n) => n.childs(),
             Self::Component(n) => n.childs(),
@@ -73,6 +105,10 @@ impl Diagnostic for Root {
 impl<'a> Lookup<'a> for Root {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         match self {
+            Self::GlobalsImport(n) => n.lookup(trgs),
+            Self::EnvsImport(n) => n.lookup(trgs),
+            Self::GlobalsModule(n) => n.lookup(trgs),
+            Self::EnvsModule(n) => n.lookup(trgs),
             Self::Anchor(n) => n.lookup(trgs),
             Self::Module(n) => n.lookup(trgs),
             Self::Component(n) => n.lookup(trgs),
@@ -84,6 +120,10 @@ impl<'a> Lookup<'a> for Root {
 impl FindMutByUuid for Root {
     fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
         match self {
+            Self::GlobalsImport(n) => n.find_mut_by_uuid(uuid),
+            Self::EnvsImport(n) => n.find_mut_by_uuid(uuid),
+            Self::GlobalsModule(n) => n.find_mut_by_uuid(uuid),
+            Self::EnvsModule(n) => n.find_mut_by_uuid(uuid),
             Self::Anchor(n) => n.find_mut_by_uuid(uuid),
             Self::Module(n) => n.find_mut_by_uuid(uuid),
             Self::Component(n) => n.find_mut_by_uuid(uuid),
@@ -95,6 +135,10 @@ impl FindMutByUuid for Root {
 impl SrcLinking for Root {
     fn link(&self) -> SrcLink {
         match self {
+            Self::GlobalsImport(n) => n.link(),
+            Self::EnvsImport(n) => n.link(),
+            Self::GlobalsModule(n) => n.link(),
+            Self::EnvsModule(n) => n.link(),
             Self::Anchor(n) => n.link(),
             Self::Module(n) => n.link(),
             Self::Component(n) => n.link(),

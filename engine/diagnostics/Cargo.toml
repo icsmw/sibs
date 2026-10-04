@@ -1,20 +1,20 @@
 [package]
-name = "diagnostics"
-version = "0.1.0"
-edition = "2021"
-authors = ["d.astafyev@outlook.com"]
+name        = "diagnostics"
+version     = "0.1.0"
+edition     = "2021"
+authors     = ["d.astafyev@outlook.com"]
 description = ""
-license = "Apache-2.0"
-repository = "https://github.com/icsmw/sibs.git"
-homepage = "https://github.com/icsmw/sibs"
+license     = "Apache-2.0"
+repository  = "https://github.com/icsmw/sibs.git"
+homepage    = "https://github.com/icsmw/sibs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 
 thiserror.workspace = true
-uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }
-console.workspace = true
+uuid                = { workspace = true, features = ["fast-rng", "macro-diagnostics", "v4"] }
+console.workspace   = true
 
-lexer = { path = "../lexer" }
+lexer   = { path = "../lexer" }
 asttree = { path = "../asttree" }

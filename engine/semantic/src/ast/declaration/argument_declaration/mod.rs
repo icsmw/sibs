@@ -10,6 +10,12 @@ impl Initialize for ArgumentDeclaration {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         self.r#type.initialize(scx)?;
         if let Node::Declaration(Declaration::VariableName(variable)) = self.variable.get_node() {
+            if scx.globals.exists(&variable.ident) {
+                return Err(LinkedErr::from(
+                    E::GlobalConflict(format!("local declaration shadows {}", variable.ident)),
+                    &self.variable,
+                ));
+            }
             let ty = self.infer_type(scx)?;
             scx.tys
                 .insert(

@@ -1,5 +1,8 @@
+mod imports;
 #[cfg(test)]
 mod proptests;
+#[cfg(test)]
+mod tests;
 
 use crate::*;
 
@@ -13,6 +16,8 @@ impl Interest for Anchor {
                 | Kind::Keyword(Keyword::Task)
                 | Kind::Keyword(Keyword::Mod)
                 | Kind::Keyword(Keyword::Include)
+                | Kind::Keyword(Keyword::Globals)
+                | Kind::Keyword(Keyword::Envs)
         )
     }
 }
@@ -35,7 +40,13 @@ impl ReadNode<Anchor> for Anchor {
                         DeclarationId::ModuleDeclaration,
                         DeclarationId::IncludeDeclaration,
                     ]),
-                    NodeTarget::Root(&[RootId::Task, RootId::Component, RootId::Module]),
+                    NodeTarget::Root(&[
+                        RootId::Task,
+                        RootId::Component,
+                        RootId::Module,
+                        RootId::GlobalsImport,
+                        RootId::EnvsImport,
+                    ]),
                 ],
             )?
             else {
@@ -46,9 +57,11 @@ impl ReadNode<Anchor> for Anchor {
         if !parser.is_done() {
             return Err(E::UnrecognizedCode(parser.to_string()).link_until_end(parser));
         }
-        Ok(Some(Anchor {
+        let anchor = Anchor {
             nodes,
-            uuid: parser.src,
-        }))
+            uuid: parser.src(),
+        };
+        imports::validate(&anchor)?;
+        Ok(Some(anchor))
     }
 }

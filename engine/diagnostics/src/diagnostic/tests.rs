@@ -11,6 +11,59 @@ enum TestError {
     InvalidExpression,
 }
 
+#[test]
+fn reporting_missing_source_preserves_its_identity() {
+    let error = LinkedErr::unlinked(TestError::UnknownVariable);
+    let diagnostics =
+        Diagnostics::new(CodeSources::default(), Tokens::default(), Errors::default());
+    let result = error.report(&diagnostics, &mut Vec::new());
+    assert!(matches!(result, Err(DiagnosticsError::NotFound(src)) if src == error.link.src));
+}
+
+#[test]
+fn reporting_unreadable_source_preserves_io_error() {
+    let error = LinkedErr::unlinked(TestError::UnknownVariable);
+    let path = std::env::temp_dir().join(format!("sibs-diagnostic-{}", Uuid::new_v4()));
+    std::fs::write(&path, "missing\n").unwrap();
+    let sources = CodeSources::bound(&path, &error.link.src).unwrap();
+    std::fs::remove_file(&path).unwrap();
+    let diagnostics = Diagnostics::new(sources, Tokens::default(), Errors::default());
+    let failure = error.report(&diagnostics, &mut Vec::new()).unwrap_err();
+    assert!(matches!(
+        &failure,
+        DiagnosticsError::CodeSourceError(CodeSourceError::Io(err)) if err.kind() == io::ErrorKind::NotFound
+    ));
+    let source = std::error::Error::source(&failure).unwrap();
+    assert!(source.downcast_ref::<CodeSourceError>().is_some());
+    assert!(std::error::Error::source(source)
+        .unwrap()
+        .downcast_ref::<io::Error>()
+        .is_some());
+}
+
+#[test]
+fn reporting_write_failure_preserves_io_error() {
+    struct BrokenWriter;
+    impl io::Write for BrokenWriter {
+        fn write(&mut self, _buf: &[u8]) -> io::Result<usize> {
+            Err(io::Error::from(io::ErrorKind::BrokenPipe))
+        }
+        fn flush(&mut self) -> io::Result<()> {
+            Ok(())
+        }
+    }
+    let error = LinkedErr::unlinked(TestError::UnknownVariable);
+    let diagnostics = Diagnostics::new(
+        CodeSources::unbound("missing\n", &error.link.src),
+        Tokens::default(),
+        Errors::default(),
+    );
+    assert!(matches!(
+        error.report(&diagnostics, &mut BrokenWriter),
+        Err(DiagnosticsError::Io(err)) if err.kind() == io::ErrorKind::BrokenPipe
+    ));
+}
+
 impl ErrorCode for TestError {
     fn code(&self) -> &'static str {
         match self {

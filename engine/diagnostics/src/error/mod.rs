@@ -9,7 +9,7 @@ use std::{
     io,
 };
 
-use crate::Diagnostics;
+use crate::{Diagnostics, DiagnosticsError};
 
 #[derive(Clone, Debug)]
 pub struct LinkedErr<E: fmt::Display + ErrorCode> {
@@ -22,7 +22,7 @@ impl<E: fmt::Display + ErrorCode> LinkedErr<E> {
         &self,
         diagnostics: &Diagnostics<E>,
         dest: &mut impl io::Write,
-    ) -> Result<(), std::io::Error> {
+    ) -> Result<(), DiagnosticsError> {
         diagnostics.err(self, dest)
     }
     pub fn from<N: SrcLinking>(err: E, n: &N) -> Self {

@@ -97,6 +97,15 @@ pub enum E {
     #[error("Invalid iteration source; available: Range, Vec, Str")]
     InvalidIterationSource,
 
+    #[error("Global name conflict: {0}")]
+    GlobalConflict(String),
+
+    #[error("Cannot assign to immutable global: {0}")]
+    ImmutableGlobal(String),
+
+    #[error("Invalid global initializer: {0}")]
+    InvalidGlobalInitializer(String),
+
     #[error("Runtime error: {0}")]
     RtError(RtError),
 }
@@ -104,5 +113,13 @@ pub enum E {
 impl From<RtError> for E {
     fn from(err: RtError) -> Self {
         Self::RtError(err)
+    }
+}
+
+impl From<GlobalError> for E {
+    fn from(err: GlobalError) -> Self {
+        match err {
+            GlobalError::Conflict { .. } => Self::GlobalConflict(err.to_string()),
+        }
     }
 }

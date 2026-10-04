@@ -47,7 +47,7 @@ impl ReadNode<Module> for Module {
                         DeclarationId::FunctionDeclaration,
                         DeclarationId::ModuleDeclaration,
                     ]),
-                    NodeTarget::Root(&[RootId::Module]),
+                    NodeTarget::Root(&[RootId::Module, RootId::GlobalsImport, RootId::EnvsImport]),
                 ],
             )?
             else {

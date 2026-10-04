@@ -11,6 +11,8 @@ pub struct ModuleDeclaration {
     pub node: Box<LinkedNode>,
     pub name: String,
     pub nodes: Vec<LinkedNode>,
+    /// Identity of the imported source, including an empty module.
+    pub source: Uuid,
     pub uuid: Uuid,
 }
 

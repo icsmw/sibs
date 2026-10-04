@@ -133,7 +133,7 @@ impl Driver {
     }
 
     /// If src is `None` will return content of root file
-    pub fn get_src_content(&self, src: Option<&Uuid>) -> Result<Option<String>, io::Error> {
+    pub fn get_src_content(&self, src: Option<&Uuid>) -> Result<Option<String>, CodeSourceError> {
         let Some(diagnostics) = self.ctx.get_diagnostics() else {
             return Ok(None);
         };

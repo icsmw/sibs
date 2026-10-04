@@ -6,6 +6,11 @@ impl InferType for Variable {
             .tys
             .lookup(&self.ident)
             .map_err(|err| LinkedErr::from(err.into(), self))?
+            .or_else(|| {
+                scx.globals
+                    .lookup(&self.ident)
+                    .map(|symbol| &symbol.binding)
+            })
             .ok_or(LinkedErr::from(
                 E::VariableIsNotDefined(self.ident.clone()),
                 self,
@@ -32,6 +37,11 @@ impl Initialize for Variable {
         scx.tys
             .lookup(&self.ident)
             .map_err(|err| LinkedErr::from(err.into(), self))?
+            .or_else(|| {
+                scx.globals
+                    .lookup(&self.ident)
+                    .map(|symbol| &symbol.binding)
+            })
             .ok_or(LinkedErr::from(
                 E::VariableIsNotDefined(self.ident.clone()),
                 self,

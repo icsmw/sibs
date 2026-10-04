@@ -16,6 +16,11 @@ impl InferType for ArgumentAssignation {
             .tys
             .lookup(&variable_name)
             .map_err(|err| LinkedErr::from(err.into(), &self.left))?
+            .or_else(|| {
+                scx.globals
+                    .lookup(&variable_name)
+                    .map(|symbol| &symbol.binding)
+            })
             .cloned()
             .ok_or(LinkedErr::from(
                 E::VariableIsNotDefined(variable_name.clone()),
@@ -25,10 +30,20 @@ impl InferType for ArgumentAssignation {
         if matches!(right, Ty::Indeterminate) {
             return Err(LinkedErr::from(E::IndeterminateType, &self.right));
         }
-        let Some(annot) = left.annotated.as_ref() else {
+        let is_global = scx.globals.lookup(&variable_name).is_some();
+        let declared = if is_global {
+            left.ty()
+        } else {
+            left.annotated.as_ref()
+        };
+        let Some(annot) = declared else {
             return Err(LinkedErr::from(E::IndeterminateType, &self.left));
         };
         if annot.reassignable(&right) {
+            // A named argument does not create a local copy of a global declaration.
+            if is_global {
+                return Ok(DeterminedTy::Void.into());
+            }
             scx.tys
                 .insert(
                     variable_name,

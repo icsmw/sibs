@@ -1,6 +1,7 @@
 mod argument_declaration;
 mod closure_declaration;
 mod function_declaration;
+mod global_declaration;
 mod include_declaration;
 mod module_declaration;
 mod variable_declaration;
@@ -12,6 +13,7 @@ mod variable_variants;
 pub use argument_declaration::*;
 pub use closure_declaration::*;
 pub use function_declaration::*;
+pub use global_declaration::*;
 pub use include_declaration::*;
 pub use module_declaration::*;
 pub use variable_declaration::*;
@@ -33,6 +35,8 @@ pub enum Declaration {
     FunctionDeclaration(FunctionDeclaration),
     /// let a = 5; etc.
     VariableDeclaration(VariableDeclaration),
+    /// global a: num = 5; const a: num = 5;
+    GlobalDeclaration(GlobalDeclaration),
     /// a: string, a: number, a: string[], a: unknown, a: 1 | 2 | 3, a: "one" | "two" etc.
     ArgumentDeclaration(ArgumentDeclaration),
     /// a: "one" | "two", a: 1 | 2 etc.
@@ -54,6 +58,7 @@ impl Identification for Declaration {
             Self::ModuleDeclaration(n) => &n.uuid,
             Self::ArgumentDeclaration(n) => &n.uuid,
             Self::FunctionDeclaration(n) => &n.uuid,
+            Self::GlobalDeclaration(n) => &n.uuid,
             Self::VariableDeclaration(n) => &n.uuid,
             Self::VariableType(n) => &n.uuid,
             Self::VariableTypeDeclaration(n) => &n.uuid,
@@ -68,6 +73,7 @@ impl Identification for Declaration {
             Self::ModuleDeclaration(..) => DeclarationId::ModuleDeclaration.to_string(),
             Self::ArgumentDeclaration(..) => DeclarationId::ArgumentDeclaration.to_string(),
             Self::FunctionDeclaration(..) => DeclarationId::FunctionDeclaration.to_string(),
+            Self::GlobalDeclaration(..) => DeclarationId::GlobalDeclaration.to_string(),
             Self::VariableDeclaration(..) => DeclarationId::VariableDeclaration.to_string(),
             Self::VariableType(..) => DeclarationId::VariableType.to_string(),
             Self::VariableTypeDeclaration(..) => DeclarationId::VariableTypeDeclaration.to_string(),
@@ -85,6 +91,7 @@ impl Diagnostic for Declaration {
             Self::ModuleDeclaration(n) => n.located(src, pos),
             Self::ArgumentDeclaration(n) => n.located(src, pos),
             Self::FunctionDeclaration(n) => n.located(src, pos),
+            Self::GlobalDeclaration(n) => n.located(src, pos),
             Self::VariableDeclaration(n) => n.located(src, pos),
             Self::VariableType(n) => n.located(src, pos),
             Self::VariableTypeDeclaration(n) => n.located(src, pos),
@@ -99,6 +106,7 @@ impl Diagnostic for Declaration {
             Self::ModuleDeclaration(n) => n.get_position(),
             Self::ArgumentDeclaration(n) => n.get_position(),
             Self::FunctionDeclaration(n) => n.get_position(),
+            Self::GlobalDeclaration(n) => n.get_position(),
             Self::VariableDeclaration(n) => n.get_position(),
             Self::VariableType(n) => n.get_position(),
             Self::VariableTypeDeclaration(n) => n.get_position(),
@@ -113,6 +121,7 @@ impl Diagnostic for Declaration {
             Self::ModuleDeclaration(n) => n.childs(),
             Self::ArgumentDeclaration(n) => n.childs(),
             Self::FunctionDeclaration(n) => n.childs(),
+            Self::GlobalDeclaration(n) => n.childs(),
             Self::VariableDeclaration(n) => n.childs(),
             Self::VariableType(n) => n.childs(),
             Self::VariableTypeDeclaration(n) => n.childs(),
@@ -136,6 +145,7 @@ impl<'a> Lookup<'a> for Declaration {
             Self::ModuleDeclaration(n) => n.lookup(trgs),
             Self::ArgumentDeclaration(n) => n.lookup(trgs),
             Self::FunctionDeclaration(n) => n.lookup(trgs),
+            Self::GlobalDeclaration(n) => n.lookup(trgs),
             Self::VariableDeclaration(n) => n.lookup(trgs),
             Self::VariableType(n) => n.lookup(trgs),
             Self::VariableTypeDeclaration(n) => n.lookup(trgs),
@@ -153,6 +163,7 @@ impl FindMutByUuid for Declaration {
             Self::ModuleDeclaration(n) => n.find_mut_by_uuid(uuid),
             Self::ArgumentDeclaration(n) => n.find_mut_by_uuid(uuid),
             Self::FunctionDeclaration(n) => n.find_mut_by_uuid(uuid),
+            Self::GlobalDeclaration(n) => n.find_mut_by_uuid(uuid),
             Self::VariableDeclaration(n) => n.find_mut_by_uuid(uuid),
             Self::VariableType(n) => n.find_mut_by_uuid(uuid),
             Self::VariableTypeDeclaration(n) => n.find_mut_by_uuid(uuid),
@@ -170,6 +181,7 @@ impl SrcLinking for Declaration {
             Self::ModuleDeclaration(n) => n.link(),
             Self::ArgumentDeclaration(n) => n.link(),
             Self::FunctionDeclaration(n) => n.link(),
+            Self::GlobalDeclaration(n) => n.link(),
             Self::VariableDeclaration(n) => n.link(),
             Self::VariableType(n) => n.link(),
             Self::VariableTypeDeclaration(n) => n.link(),

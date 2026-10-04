@@ -28,7 +28,11 @@ impl ReadNode<CompoundAssignments> for CompoundAssignments {
         let Some(right) = LinkedNode::try_oneof(
             parser,
             &[
-                NodeTarget::Value(&[ValueId::Number]),
+                NodeTarget::Value(&[
+                    ValueId::Number,
+                    ValueId::PrimitiveString,
+                    ValueId::InterpolatedString,
+                ]),
                 NodeTarget::Expression(&[ExpressionId::Variable, ExpressionId::BinaryExpSeq]),
             ],
         )?

@@ -41,6 +41,12 @@ impl Initialize for VariableDeclaration {
                 &self.variable,
             ));
         };
+        if scx.globals.exists(&variable.ident) {
+            return Err(LinkedErr::from(
+                E::GlobalConflict(format!("local declaration shadows {}", variable.ident)),
+                &self.variable,
+            ));
+        }
         if let (Some(n_ty), Some(n_assig)) = (self.r#type.as_ref(), self.assignation.as_ref()) {
             let annot = n_ty.infer_type(scx)?;
             let assig = n_assig.infer_type(scx)?;

@@ -27,6 +27,9 @@ impl Arbitrary for CompoundAssignments {
                     Number::arbitrary()
                         .prop_map(|v| Node::Value(Value::Number(v)))
                         .boxed(),
+                    PrimitiveString::arbitrary()
+                        .prop_map(|v| Node::Value(Value::PrimitiveString(v)))
+                        .boxed(),
                 ])
             } else {
                 prop::strategy::Union::new(vec![
@@ -38,6 +41,12 @@ impl Arbitrary for CompoundAssignments {
                         .boxed(),
                     Number::arbitrary()
                         .prop_map(|v| Node::Value(Value::Number(v)))
+                        .boxed(),
+                    PrimitiveString::arbitrary()
+                        .prop_map(|v| Node::Value(Value::PrimitiveString(v)))
+                        .boxed(),
+                    InterpolatedString::arbitrary_with(deep + 1)
+                        .prop_map(|v| Node::Value(Value::InterpolatedString(v)))
                         .boxed(),
                 ])
             }

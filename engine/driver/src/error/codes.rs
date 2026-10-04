@@ -16,11 +16,13 @@ impl ErrorCode for E {
             Self::ContextError => "00007",
             Self::NotExecutable => "00008",
             Self::UsedContext => "00009",
+            Self::Diagnostics(..) => "00010",
         }
     }
     fn src(&self) -> ErrorSource {
         match self {
             Self::IO(..)
+            | Self::Diagnostics(..)
             | Self::FailExtractAnchorNodeFrom(..)
             | Self::ScriptAlreadyExecuted
             | Self::TaskInsideFuncDeclaration(..)
@@ -48,6 +50,7 @@ mod test {
                 EId::UsedContext => E::UsedContext,
                 EId::NotExecutable => E::NotExecutable,
                 EId::IO => E::IO(String::new()),
+                EId::Diagnostics => E::Diagnostics(DiagnosticsError::NotFound(Uuid::new_v4())),
                 EId::FailExtractAnchorNodeFrom => E::FailExtractAnchorNodeFrom(String::new()),
                 EId::ScriptAlreadyExecuted => E::ScriptAlreadyExecuted,
                 EId::TaskInsideFuncDeclaration => E::TaskInsideFuncDeclaration(Uuid::new_v4()),

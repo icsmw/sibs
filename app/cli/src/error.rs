@@ -10,6 +10,8 @@ pub enum E {
     ScenarioNotFound(String),
     #[error("IO error: {0}")]
     IO(String),
+    #[error("Diagnostics error: {0}")]
+    Diagnostics(#[from] diagnostics::DiagnosticsError),
     #[error("--scenario requires a path to .sibs file")]
     MissedPathWithScenario,
     #[error("No arguments to get task's name")]

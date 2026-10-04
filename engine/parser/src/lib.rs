@@ -22,7 +22,7 @@ use diagnostics::*;
 use lexer::*;
 use std::{
     cell::{Cell, Ref, RefCell},
-    fmt, io,
+    fmt,
     path::{Path, PathBuf},
     rc::Rc,
 };
@@ -31,7 +31,7 @@ use uuid::Uuid;
 #[derive(Debug)]
 pub struct Parser {
     pub tokens: Rc<RefCell<Vec<Token>>>,
-    src: Uuid,
+    source: CodeSourceContext,
     filename: Option<PathBuf>,
     cwd: Option<PathBuf>,
     srcs: Rc<RefCell<CodeSources>>,
@@ -55,7 +55,7 @@ impl Parser {
         Self {
             tokens: Rc::new(RefCell::new(tokens)),
             pos: Cell::new(0),
-            src: *src,
+            source: CodeSourceContext::new(*src),
             filename: None,
             cwd: None,
             srcs: Rc::new(RefCell::new(CodeSources::unbound(content, src))),
@@ -66,14 +66,18 @@ impl Parser {
         }
     }
     pub fn new<P: AsRef<Path>>(filename: P, resilience: bool) -> Result<Self, E> {
-        let (filename, cwd, tokens, src) = BoundLexer::new(filename.as_ref())?.inner();
+        let filename = filename.as_ref().to_path_buf();
+        let cwd = filename.parent().ok_or(E::NoParentPath)?.to_path_buf();
+        let mut srcs = CodeSources::default();
+        let source = srcs.enter_file(&filename, None)?;
+        let (_, _, tokens, _) = BoundLexer::new(&filename, source.source)?.inner();
         let end = tokens.len().saturating_sub(1);
         Ok(Self {
             tokens: Rc::new(RefCell::new(tokens)),
             pos: Cell::new(0),
-            src,
+            source,
             filename: Some(filename.clone()),
-            srcs: Rc::new(RefCell::new(CodeSources::bound(filename, &src)?)),
+            srcs: Rc::new(RefCell::new(srcs)),
             errs: Rc::new(RefCell::new(Errors::default())),
             bindings: Rc::new(RefCell::new(BindingsList::default())),
             cwd: Some(cwd),
@@ -82,17 +86,24 @@ impl Parser {
         })
     }
     pub fn new_child<P: AsRef<Path>>(&self, filename: P) -> Result<Self, E> {
-        let (filename, cwd, tokens, src) = BoundLexer::new(filename.as_ref())?.inner();
-        self.srcs.borrow_mut().add_file_src(&filename, &src)?;
+        let filename = filename.as_ref().to_path_buf();
+        // Keep the importing path for relative imports, including symlink aliases.
+        let cwd = filename.parent().ok_or(E::NoParentPath)?.to_path_buf();
+        let source = self
+            .srcs
+            .borrow_mut()
+            .enter_file(&filename, Some(&self.source))?;
+        let (_, _, tokens, _) = BoundLexer::new(&filename, source.source)?.inner();
         let end = tokens.len().saturating_sub(1);
         Ok(Self {
             tokens: Rc::new(RefCell::new(tokens)),
             pos: Cell::new(0),
-            src,
+            source,
             filename: Some(filename.clone()),
             srcs: self.srcs.clone(),
             errs: self.errs.clone(),
-            bindings: self.bindings.clone(),
+            // Token offsets are local to this file; only subparsers share bindings.
+            bindings: Rc::new(RefCell::new(BindingsList::default())),
             cwd: Some(cwd),
             end,
             resilience: self.resilience,
@@ -125,6 +136,10 @@ impl Parser {
         self.new_child(filename)
     }
 
+    fn src(&self) -> Uuid {
+        self.source.source
+    }
+
     pub fn pos(&self) -> usize {
         self.pos.get()
     }
@@ -133,8 +148,10 @@ impl Parser {
         self.pos.set(pos);
     }
 
-    pub fn get_src_content(&self, src: Option<&Uuid>) -> Result<Option<String>, io::Error> {
-        self.srcs.borrow().get_content(src.unwrap_or(&self.src))
+    pub fn get_src_content(&self, src: Option<&Uuid>) -> Result<Option<String>, CodeSourceError> {
+        self.srcs
+            .borrow()
+            .get_content(src.unwrap_or(&self.source.source))
     }
 
     pub fn flush(&self) -> Result<(), E> {
@@ -150,7 +167,7 @@ impl Parser {
         Self {
             tokens: self.tokens.clone(),
             pos: Cell::new(from),
-            src: self.src,
+            source: self.source.clone(),
             filename: self.filename.clone(),
             srcs: self.srcs.clone(),
             errs: self.errs.clone(),
@@ -304,7 +321,7 @@ impl Parser {
                 .unwrap_or(LinkedPosition::new(
                     TextPosition::default(),
                     TextPosition::default(),
-                    &self.src,
+                    &self.source.source,
                 )),
             e: err,
         }
@@ -317,7 +334,7 @@ impl Parser {
                 .unwrap_or(LinkedPosition::new(
                     TextPosition::default(),
                     TextPosition::default(),
-                    &self.src,
+                    &self.source.source,
                 )),
             e: err,
         }

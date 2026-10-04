@@ -32,6 +32,12 @@ impl Initialize for For {
                 &self.element,
             ));
         };
+        if scx.globals.exists(&el.ident) {
+            return Err(LinkedErr::from(
+                E::GlobalConflict(format!("local declaration shadows {}", el.ident)),
+                el,
+            ));
+        }
         let el_name = el.ident.to_owned();
         scx.tys
             .insert(
@@ -48,6 +54,12 @@ impl Initialize for For {
                     index.get_node(),
                 ));
             };
+            if scx.globals.exists(&el.ident) {
+                return Err(LinkedErr::from(
+                    E::GlobalConflict(format!("local declaration shadows {}", el.ident)),
+                    el,
+                ));
+            }
             let el_name = el.ident.to_owned();
             scx.tys
                 .insert(

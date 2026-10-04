@@ -51,6 +51,7 @@ impl Arbitrary for ModuleDeclaration {
                 node: Box::new(node),
                 name,
                 nodes,
+                source: Uuid::new_v4(),
                 uuid: Uuid::new_v4(),
             })
             .boxed()

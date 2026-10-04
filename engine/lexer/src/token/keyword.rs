@@ -23,6 +23,14 @@ pub enum Keyword {
     Break,
     /// The `let` keyword.
     Let,
+    /// The `global` declaration keyword.
+    Global,
+    /// The `const` declaration keyword.
+    Const,
+    /// The `globals` import keyword.
+    Globals,
+    /// The `envs` import keyword.
+    Envs,
     /// The `Join` keyword.
     Join,
     /// The `oneof` keyword.
@@ -101,6 +109,10 @@ impl fmt::Display for Keyword {
                 Self::Each => "each".to_owned(),
                 Self::Return => "return".to_owned(),
                 Self::Break => "break".to_owned(),
+                Self::Global => "global".to_owned(),
+                Self::Const => "const".to_owned(),
+                Self::Globals => "globals".to_owned(),
+                Self::Envs => "envs".to_owned(),
                 Self::Let => "let".to_owned(),
                 Self::In => "in".to_owned(),
                 Self::OneOf => "oneof".to_owned(),
@@ -134,6 +146,10 @@ impl From<&KeywordId> for Keyword {
             KeywordId::Each => Keyword::Each,
             KeywordId::Return => Keyword::Return,
             KeywordId::Break => Keyword::Break,
+            KeywordId::Global => Keyword::Global,
+            KeywordId::Const => Keyword::Const,
+            KeywordId::Globals => Keyword::Globals,
+            KeywordId::Envs => Keyword::Envs,
             KeywordId::Let => Keyword::Let,
             KeywordId::In => Keyword::In,
             KeywordId::OneOf => Keyword::OneOf,
