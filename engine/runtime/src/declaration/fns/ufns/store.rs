@@ -2,17 +2,26 @@ use crate::*;
 
 #[derive(Debug, Default)]
 pub struct UFns {
-    pub path: Vec<String>,
+    path: Vec<String>,
     /// Each function is stored once, independently of the paths that expose it.
-    pub funcs: HashMap<Uuid, UserFnEntity>,
+    funcs: HashMap<Uuid, UserFnEntity>,
     aliases: HashMap<String, Uuid>,
     /// Collected calls table
     /// * `{ Uuid }` - caller's node uuid;
     /// * `{ Uuid }` - function's uuid;
-    pub links: HashMap<Uuid, Uuid>,
+    links: HashMap<Uuid, Uuid>,
 }
 
 impl UFns {
+    pub fn get_funcs(&self) -> &HashMap<Uuid, UserFnEntity> {
+        &self.funcs
+    }
+    pub fn get_funcs_mut(&mut self) -> &mut HashMap<Uuid, UserFnEntity> {
+        &mut self.funcs
+    }
+    pub fn get_links(&self) -> &HashMap<Uuid, Uuid> {
+        &self.links
+    }
     pub fn enter<S: AsRef<str>>(&mut self, mod_name: S) {
         self.path.push(mod_name.as_ref().to_owned());
     }

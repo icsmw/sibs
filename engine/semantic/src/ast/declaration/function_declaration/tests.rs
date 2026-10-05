@@ -24,15 +24,15 @@ fn shared_function_nodes_have_one_identity_under_multiple_module_paths() {
         scx.fns.ufns.leave();
     }
 
-    assert_eq!(scx.fns.ufns.funcs.len(), 2);
+    assert_eq!(scx.fns.ufns.get_funcs().len(), 2);
     for name in ["helper", "run"] {
         let left = scx.fns.ufns.find(format!("left::code::{name}")).unwrap();
         let right = scx.fns.ufns.find(format!("right::code::{name}")).unwrap();
         assert!(std::ptr::eq(left, right));
     }
     let helper = scx.fns.find("left::code::helper").unwrap();
-    assert_eq!(scx.fns.ufns.links.len(), 1);
-    let caller = scx.fns.ufns.links.keys().next().unwrap();
+    assert_eq!(scx.fns.ufns.get_links().len(), 1);
+    let caller = scx.fns.ufns.get_links().keys().next().unwrap();
     assert_eq!(
         scx.fns.lookup_by_caller(caller).unwrap().uuid(),
         helper.uuid()

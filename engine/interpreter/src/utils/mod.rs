@@ -51,19 +51,17 @@ pub(crate) async fn chk_ty(
 }
 
 fn into_rt_ufns(mut fns: Fns) -> Fns {
-    fns.ufns.funcs = fns
-        .ufns
-        .funcs
-        .into_iter()
+    let funcs = fns.ufns.get_funcs_mut();
+    *funcs = funcs
+        .drain()
         .map(|(k, mut v)| {
             v.body = ufn_into_exec(v.body);
             (k, v)
         })
         .collect();
-    fns.cfns.funcs = fns
-        .cfns
-        .funcs
-        .into_iter()
+    let funcs = fns.cfns.get_funcs_mut();
+    *funcs = funcs
+        .drain()
         .map(|(k, mut v)| {
             v.body = cfn_into_exec(v.body);
             (k, v)

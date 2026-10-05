@@ -10,7 +10,7 @@ pub struct Fns {
 impl Fns {
     pub fn find<S: AsRef<str>>(&self, name: S) -> Option<FnEntity<'_>> {
         self.efns
-            .funcs
+            .get_funcs()
             .get(name.as_ref())
             .map(FnEntity::EFn)
             .or_else(|| self.ufns.find(name.as_ref()).map(FnEntity::UFn))
@@ -23,12 +23,12 @@ impl Fns {
         }
     }
     pub fn lookup_by_caller(&self, caller: &Uuid) -> Option<FnEntity<'_>> {
-        if let Some(uuid) = self.ufns.links.get(caller) {
-            self.ufns.funcs.get(uuid).map(FnEntity::UFn)
-        } else if let Some(name) = self.efns.links.get(caller) {
-            self.efns.funcs.get(name).map(FnEntity::EFn)
-        } else if let Some(uuid) = self.cfns.links.get(caller) {
-            self.cfns.funcs.get(uuid).map(FnEntity::CFn)
+        if let Some(uuid) = self.ufns.get_links().get(caller) {
+            self.ufns.get_funcs().get(uuid).map(FnEntity::UFn)
+        } else if let Some(name) = self.efns.get_links().get(caller) {
+            self.efns.get_funcs().get(name).map(FnEntity::EFn)
+        } else if let Some(uuid) = self.cfns.get_links().get(caller) {
+            self.cfns.get_funcs().get(uuid).map(FnEntity::CFn)
         } else {
             None
         }
@@ -37,7 +37,7 @@ impl Fns {
         self.cfns.lookup(uuid, caller).map(FnEntity::CFn)
     }
     pub fn lookup_closure(&self, uuid: &Uuid) -> Option<FnEntity<'_>> {
-        self.cfns.funcs.get(uuid).map(FnEntity::CFn)
+        self.cfns.get_funcs().get(uuid).map(FnEntity::CFn)
     }
     pub fn lookup_by_inps<S: AsRef<str>>(
         &mut self,

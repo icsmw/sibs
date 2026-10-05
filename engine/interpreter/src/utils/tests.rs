@@ -26,8 +26,8 @@ fn converting_functions_to_executors_preserves_aliases_and_call_targets() {
     scx.fns.lookup("other::code::helper", &second_call).unwrap();
 
     let fns = into_rt_ufns(scx.fns);
-    assert_eq!(fns.ufns.funcs.len(), 1);
-    let entity = &fns.ufns.funcs[&uuid];
+    assert_eq!(fns.ufns.get_funcs().len(), 1);
+    let entity = &fns.ufns.get_funcs()[&uuid];
     assert!(matches!(entity.body, UserFnBody::Executor(..)));
     assert!(std::ptr::eq(fns.ufns.find("code::helper").unwrap(), entity));
     assert!(std::ptr::eq(

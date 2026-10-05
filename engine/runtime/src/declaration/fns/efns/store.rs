@@ -2,14 +2,20 @@ use crate::*;
 
 #[derive(Debug, Default)]
 pub struct EFns {
-    pub funcs: HashMap<String, EmbeddedFnEntity>,
+    funcs: HashMap<String, EmbeddedFnEntity>,
     /// Collected calls table
     /// * `{ Uuid }` - caller's node uuid;
     /// * `{ String }` - function's name;
-    pub links: HashMap<Uuid, String>,
+    links: HashMap<Uuid, String>,
 }
 
 impl EFns {
+    pub fn get_funcs(&self) -> &HashMap<String, EmbeddedFnEntity> {
+        &self.funcs
+    }
+    pub fn get_links(&self) -> &HashMap<Uuid, String> {
+        &self.links
+    }
     pub fn add<S: AsRef<str>>(&mut self, fn_name: S, entity: EmbeddedFnEntity) -> Result<(), E> {
         entity.verify()?;
         if self.funcs.contains_key(fn_name.as_ref()) {

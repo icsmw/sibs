@@ -23,7 +23,7 @@ fn aliases_resolve_to_one_function_and_one_call_target() {
     fns.ufns.enter("code");
     fns.ufns.add("helper", function(uuid)).unwrap();
 
-    assert_eq!(fns.ufns.funcs.len(), 1);
+    assert_eq!(fns.ufns.get_funcs().len(), 1);
     assert!(std::ptr::eq(
         fns.ufns.find("left::code::helper").unwrap(),
         fns.ufns.find("right::code::helper").unwrap(),
@@ -36,7 +36,7 @@ fn aliases_resolve_to_one_function_and_one_call_target() {
     let caller = Uuid::new_v4();
     for path in ["left::code::helper", "right::code::helper", "helper"] {
         assert_eq!(*fns.lookup(path, &caller).unwrap().uuid(), uuid);
-        assert_eq!(fns.ufns.links.get(&caller), Some(&uuid));
+        assert_eq!(fns.ufns.get_links().get(&caller), Some(&uuid));
         assert_eq!(*fns.lookup_by_caller(&caller).unwrap().uuid(), uuid);
     }
 }
@@ -59,7 +59,7 @@ fn registering_the_same_function_preserves_its_body_and_type() {
     fns.enter("right");
     fns.add("helper", function(uuid)).unwrap();
 
-    assert_eq!(fns.funcs.len(), 1);
+    assert_eq!(fns.get_funcs().len(), 1);
     for path in ["left::helper", "right::helper"] {
         let entity = fns.find(path).unwrap();
         assert!(matches!(entity.body, UserFnBody::Executor(..)));
@@ -83,7 +83,7 @@ fn conflicting_aliases_do_not_replace_existing_functions() {
         fns.add("helper", function(second)),
         Err(E::FuncAlreadyRegistered(name)) if name == "helper"
     ));
-    assert_eq!(fns.funcs.len(), 1);
+    assert_eq!(fns.get_funcs().len(), 1);
     fns.enter("other");
     fns.add("helper", function(second)).unwrap();
     fns.leave();
@@ -103,7 +103,7 @@ fn invalid_registrations_do_not_change_the_registry() {
         fns.add("task", function(uuid)),
         Err(E::FnUsesKeyword(..))
     ));
-    assert!(fns.funcs.is_empty());
+    assert!(fns.get_funcs().is_empty());
     assert!(fns.find("task").is_none());
     fns.add("helper", function(uuid)).unwrap();
     assert!(matches!(
@@ -111,7 +111,7 @@ fn invalid_registrations_do_not_change_the_registry() {
         Err(E::FnUsesKeyword(..))
     ));
     assert!(fns.find("task").is_none());
-    assert_eq!(fns.funcs.len(), 1);
+    assert_eq!(fns.get_funcs().len(), 1);
     assert_eq!(fns.find("helper").unwrap().uuid, uuid);
 }
 

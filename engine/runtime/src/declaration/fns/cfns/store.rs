@@ -2,14 +2,23 @@ use crate::*;
 
 #[derive(Debug, Default)]
 pub struct CFns {
-    pub funcs: HashMap<Uuid, ClosureFnEntity>,
+    funcs: HashMap<Uuid, ClosureFnEntity>,
     /// Collected calls table
     /// * `{ Uuid }` - caller's node uuid;
     /// * `{ Uuid }` - closure uuid;
-    pub links: HashMap<Uuid, Uuid>,
+    links: HashMap<Uuid, Uuid>,
 }
 
 impl CFns {
+    pub fn get_funcs(&self) -> &HashMap<Uuid, ClosureFnEntity> {
+        &self.funcs
+    }
+    pub fn get_funcs_mut(&mut self) -> &mut HashMap<Uuid, ClosureFnEntity> {
+        &mut self.funcs
+    }
+    pub fn get_links(&self) -> &HashMap<Uuid, Uuid> {
+        &self.links
+    }
     pub fn add(&mut self, entity: ClosureFnEntity) -> Result<(), E> {
         entity.verify()?;
         if self.funcs.contains_key(&entity.uuid) {
