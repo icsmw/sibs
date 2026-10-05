@@ -46,6 +46,24 @@ impl UFns {
     pub fn find<S: AsRef<str>>(&self, name: S) -> Option<&UserFnEntity> {
         self.funcs.get(self.aliases.get(name.as_ref())?)
     }
+    /// Expose an already initialized function through another module path.
+    pub fn add_alias<S: AsRef<str>>(&mut self, fn_name: S, uuid: &Uuid) -> Result<(), E> {
+        let name = self.fullname(fn_name);
+        let entity = self
+            .funcs
+            .get(uuid)
+            .ok_or_else(|| E::FuncNotFound(name.clone()))?;
+        entity.verify(&name)?;
+        if self
+            .aliases
+            .get(&name)
+            .is_some_and(|previous| previous != uuid)
+        {
+            return Err(E::FuncAlreadyRegistered(name));
+        }
+        self.aliases.insert(name, *uuid);
+        Ok(())
+    }
     pub fn set_result_ty<S: AsRef<str>>(&mut self, fn_name: S, ty: Ty) -> Result<(), E> {
         let name = self.fullname(fn_name);
         let Some(uuid) = self.aliases.get(&name) else {

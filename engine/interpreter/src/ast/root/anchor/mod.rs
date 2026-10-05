@@ -1,15 +1,25 @@
 use crate::*;
+use std::collections::HashSet;
 
 // Follow the owned import tree in source order, without entering executable bodies.
-fn collect_imports<'a>(node: &'a LinkedNode, imports: &mut Vec<&'a LinkedNode>) {
+fn collect_imports<'a>(
+    node: &'a LinkedNode,
+    imports: &mut Vec<&'a LinkedNode>,
+    modules: &mut HashSet<Uuid>,
+) {
     match node.get_node() {
         Node::Root(Root::GlobalsImport(_) | Root::EnvsImport(_)) => imports.push(node),
+        Node::Declaration(Declaration::ModuleDeclaration(module)) => {
+            if modules.insert(module.body.source) {
+                for child in &module.body.nodes {
+                    collect_imports(child, imports, modules);
+                }
+            }
+        }
         Node::Root(Root::Anchor(_) | Root::Module(_))
-        | Node::Declaration(
-            Declaration::ModuleDeclaration(_) | Declaration::IncludeDeclaration(_),
-        ) => {
+        | Node::Declaration(Declaration::IncludeDeclaration(_)) => {
             for child in node.childs() {
-                collect_imports(child, imports);
+                collect_imports(child, imports, modules);
             }
         }
         _ => {}
@@ -28,8 +38,9 @@ impl Interpret for Anchor {
             return Err(LinkedErr::from(E::CompNotFound(rt_params.component), self));
         };
         let mut imports = Vec::new();
+        let mut modules = HashSet::new();
         for node in &self.nodes {
-            collect_imports(node, &mut imports);
+            collect_imports(node, &mut imports, &mut modules);
         }
         for import in imports
             .iter()

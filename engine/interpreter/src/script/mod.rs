@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 mod error;
 mod options;
 mod source;
@@ -114,6 +117,3 @@ impl Script {
         }
     }
 }
-
-#[cfg(test)]
-mod tests;

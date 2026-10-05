@@ -6,12 +6,14 @@ use error::*;
 mod bindings;
 mod conflict;
 mod interest;
+mod modules;
 mod nodes;
 mod paths;
 mod read;
 
 use conflict::*;
 use interest::*;
+use modules::*;
 pub use nodes::*;
 use paths::*;
 pub use read::*;
@@ -35,6 +37,7 @@ pub struct Parser {
     filename: Option<PathBuf>,
     cwd: Option<PathBuf>,
     srcs: Rc<RefCell<CodeSources>>,
+    modules: Rc<RefCell<ModuleStore>>,
     errs: Rc<RefCell<Errors<E>>>,
     bindings: Rc<RefCell<BindingsList>>,
     end: usize,
@@ -59,6 +62,7 @@ impl Parser {
             filename: None,
             cwd: None,
             srcs: Rc::new(RefCell::new(CodeSources::unbound(content, src))),
+            modules: Rc::new(RefCell::new(ModuleStore::default())),
             errs: Rc::new(RefCell::new(Errors::default())),
             bindings: Rc::new(RefCell::new(BindingsList::default())),
             end,
@@ -78,6 +82,7 @@ impl Parser {
             source,
             filename: Some(filename.clone()),
             srcs: Rc::new(RefCell::new(srcs)),
+            modules: Rc::new(RefCell::new(ModuleStore::default())),
             errs: Rc::new(RefCell::new(Errors::default())),
             bindings: Rc::new(RefCell::new(BindingsList::default())),
             cwd: Some(cwd),
@@ -89,10 +94,7 @@ impl Parser {
         let filename = filename.as_ref().to_path_buf();
         // Keep the importing path for relative imports, including symlink aliases.
         let cwd = filename.parent().ok_or(E::NoParentPath)?.to_path_buf();
-        let source = self
-            .srcs
-            .borrow_mut()
-            .enter_file(&filename, Some(&self.source))?;
+        let source = self.source_for_file(&filename)?;
         let (_, _, tokens, _) = BoundLexer::new(&filename, source.source)?.inner();
         let end = tokens.len().saturating_sub(1);
         Ok(Self {
@@ -101,6 +103,7 @@ impl Parser {
             source,
             filename: Some(filename.clone()),
             srcs: self.srcs.clone(),
+            modules: self.modules.clone(),
             errs: self.errs.clone(),
             // Token offsets are local to this file; only subparsers share bindings.
             bindings: Rc::new(RefCell::new(BindingsList::default())),
@@ -115,29 +118,11 @@ impl Parser {
     }
 
     pub fn from_node<N: GetFilename>(&self, node: &N) -> Result<Parser, E> {
-        let mut filename = node.get_filename()?;
-        if filename.is_relative() {
-            filename = self.cwd.as_ref().ok_or(E::NoParentPath)?.join(filename);
-        }
-        if !filename.exists() {
-            return Err(E::FileNotFound(filename.to_string_lossy().to_string()));
-        }
-        self.new_child(filename)
+        self.from_file(node.get_filename()?)
     }
 
     pub fn from_file<P: AsRef<Path>>(&self, filename: P) -> Result<Parser, E> {
-        let mut filename = filename.as_ref().to_path_buf();
-        if filename.is_relative() {
-            filename = self.cwd.as_ref().ok_or(E::NoParentPath)?.join(filename);
-        }
-        if !filename.exists() {
-            return Err(E::FileNotFound(filename.to_string_lossy().to_string()));
-        }
-        self.new_child(filename)
-    }
-
-    fn src(&self) -> Uuid {
-        self.source.source
+        self.new_child(self.resolve_path(filename)?)
     }
 
     pub fn pos(&self) -> usize {
@@ -164,6 +149,44 @@ impl Parser {
         Ok(())
     }
 
+    fn prepare_module<P: AsRef<Path>>(&self, filename: P) -> Result<ModuleLoad, E> {
+        let path = self.resolve_path(filename)?.canonicalize()?;
+        if let Some(body) = self.modules.borrow().get(&path) {
+            // Cached imports still participate in cycle detection.
+            self.source_for_file(&path)?;
+            return Ok(ModuleLoad::Cached(body));
+        }
+        // The canonical path also fixes the base directory of nested module imports.
+        Ok(ModuleLoad::Unparsed {
+            parser: self.new_child(&path)?,
+            path,
+        })
+    }
+
+    /// Resolve a path against this source without changing its symlink context.
+    fn resolve_path<P: AsRef<Path>>(&self, filename: P) -> Result<PathBuf, E> {
+        let mut filename = filename.as_ref().to_path_buf();
+        if filename.is_relative() {
+            filename = self.cwd.as_ref().ok_or(E::NoParentPath)?.join(filename);
+        }
+        if !filename.exists() {
+            return Err(E::FileNotFound(filename.to_string_lossy().to_string()));
+        }
+        Ok(filename)
+    }
+
+    /// Resolve source identity and check the active import chain without lexing.
+    fn source_for_file<P: AsRef<Path>>(&self, filename: P) -> Result<CodeSourceContext, E> {
+        Ok(self
+            .srcs
+            .borrow_mut()
+            .enter_file(filename, Some(&self.source))?)
+    }
+
+    fn src(&self) -> Uuid {
+        self.source.source
+    }
+
     fn inherit(&self, from: usize, to: usize) -> Self {
         Self {
             tokens: self.tokens.clone(),
@@ -171,6 +194,7 @@ impl Parser {
             source: self.source.clone(),
             filename: self.filename.clone(),
             srcs: self.srcs.clone(),
+            modules: self.modules.clone(),
             errs: self.errs.clone(),
             bindings: self.bindings.clone(),
             cwd: self.cwd.clone(),

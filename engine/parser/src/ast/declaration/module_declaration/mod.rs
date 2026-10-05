@@ -1,7 +1,10 @@
 #[cfg(test)]
 mod proptests;
+#[cfg(test)]
+mod tests;
 
 use crate::*;
+use std::sync::Arc;
 
 impl Interest for ModuleDeclaration {
     fn intrested(token: &Token) -> bool {
@@ -42,17 +45,14 @@ impl ReadNode<ModuleDeclaration> for ModuleDeclaration {
             LinkedNode::try_oneof(parser, &[NodeTarget::Value(&[ValueId::PrimitiveString])])?
                 .ok_or_else(|| E::MissedModulePath.link_with_token(&sig))?;
         #[cfg(not(test))]
-        let (nodes, name, source) = {
-            let Node::Value(Value::PrimitiveString(filename)) = &filename_node.get_node() else {
+        let (body, name) = {
+            let Node::Value(Value::PrimitiveString(filename)) = filename_node.get_node() else {
                 return Err(E::UnexpectedType(
                     ValueId::PrimitiveString.to_string(),
                     filename_node.get_node().id().to_string(),
                 )
                 .link(&filename_node));
             };
-            let mut inner = parser
-                .from_file(&filename.inner)
-                .map_err(|e| e.link(&filename_node))?;
             let filepath = PathBuf::from(&filename.inner);
             let Some(name) = filepath
                 .file_stem()
@@ -60,32 +60,56 @@ impl ReadNode<ModuleDeclaration> for ModuleDeclaration {
             else {
                 return Err(E::FailGetModuleName(filename.inner.clone()).link(&filename_node));
             };
-            (get_mod_inner(&mut inner)?, name, inner.src())
+            (read_body(parser, filename)?, name)
         };
         #[cfg(test)]
-        let (nodes, name, source) = { (Vec::new(), String::from("test"), Uuid::new_v4()) };
+        let (body, name) = (
+            Arc::new(ModuleBody {
+                nodes: Vec::new(),
+                source: Uuid::new_v4(),
+            }),
+            String::from("test"),
+        );
         Ok(Some(ModuleDeclaration {
             sig: sig.clone(),
             from: from.clone(),
             node: Box::new(filename_node),
             uuid: Uuid::new_v4(),
             name,
-            nodes,
-            source,
+            body,
         }))
     }
 }
 
-#[cfg(not(test))]
-fn get_mod_inner(inner: &mut Parser) -> Result<Vec<LinkedNode>, LinkedErr<E>> {
+fn read_body(parser: &Parser, filename: &PrimitiveString) -> Result<Arc<ModuleBody>, LinkedErr<E>> {
+    match parser
+        .prepare_module(&filename.inner)
+        .map_err(|err| LinkedErr::from(err, filename))?
+    {
+        ModuleLoad::Unparsed {
+            parser: inner,
+            path,
+        } => {
+            let nodes = read_nodes(&inner)?;
+            inner
+                .flush()
+                .map_err(|err| LinkedErr::from(err, filename))?;
+            let body = Arc::new(ModuleBody {
+                source: inner.src(),
+                nodes,
+            });
+            parser.modules.borrow_mut().insert(path, body.clone());
+            Ok(body)
+        }
+        ModuleLoad::Cached(body) => Ok(body),
+    }
+}
+
+fn read_nodes(inner: &Parser) -> Result<Vec<LinkedNode>, LinkedErr<E>> {
     let mut nodes = Vec::new();
     loop {
-        'semicolons: loop {
-            if inner.is_next(KindId::Semicolon) {
-                let _ = inner.token();
-            } else {
-                break 'semicolons;
-            }
+        while inner.is_next(KindId::Semicolon) {
+            let _ = inner.token();
         }
         let Some(node) = LinkedNode::try_oneof(
             inner,

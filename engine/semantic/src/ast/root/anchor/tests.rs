@@ -267,7 +267,7 @@ test_semantic_files!(
 
 #[cfg(unix)]
 test_semantic_files!(
-    canonical_identity_preserves_working_import_relative_paths,
+    module_dependencies_are_relative_to_the_canonical_source,
     files = {},
     |files| {
         std::fs::create_dir(files.0.join("physical")).unwrap();
@@ -276,12 +276,12 @@ test_semantic_files!(
         files.write("logical/values.sibs", "const logical: num = 1;");
         let module = files.write(
             "physical/library.sibs",
-            "globals from \"values.sibs\"; fn get() { logical; };",
+            "globals from \"values.sibs\"; fn get() { physical; };",
         );
         std::os::unix::fs::symlink(module, files.0.join("logical/library.sibs")).unwrap();
         let scx = files.analyze("mod from \"logical/library.sibs\";").unwrap();
-        assert!(scx.globals.lookup("logical").is_some());
-        assert!(!scx.globals.lookup("physical").is_some());
+        assert!(scx.globals.lookup("physical").is_some());
+        assert!(scx.globals.lookup("logical").is_none());
     }
 );
 

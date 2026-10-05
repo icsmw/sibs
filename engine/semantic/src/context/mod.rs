@@ -1,3 +1,7 @@
+mod modules;
+
+pub use modules::*;
+
 use crate::*;
 
 #[derive(Debug)]
@@ -8,6 +12,7 @@ pub struct SemanticCx {
     pub tasks: Tasks,
     pub table: TypesTable,
     pub errs: Vec<LinkedErr<E>>,
+    pub modules: Modules,
     resilience: bool,
 }
 
@@ -20,6 +25,7 @@ impl SemanticCx {
             tasks: Tasks::default(),
             table: TypesTable::default(),
             errs: Vec::new(),
+            modules: Modules::default(),
             resilience,
         }
     }

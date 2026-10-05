@@ -1,3 +1,5 @@
+mod modules;
+
 use super::*;
 
 #[test]

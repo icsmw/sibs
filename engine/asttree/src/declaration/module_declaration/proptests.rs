@@ -50,8 +50,10 @@ impl Arbitrary for ModuleDeclaration {
                 from: Token::for_test(Kind::Identifier(String::from("from"))),
                 node: Box::new(node),
                 name,
-                nodes,
-                source: Uuid::new_v4(),
+                body: std::sync::Arc::new(ModuleBody {
+                    nodes,
+                    source: Uuid::new_v4(),
+                }),
                 uuid: Uuid::new_v4(),
             })
             .boxed()

@@ -1,8 +1,11 @@
+mod body;
 #[cfg(feature = "proptests")]
 mod proptests;
 
+pub use body::*;
+
 use crate::*;
-use std::fmt;
+use std::{fmt, sync::Arc};
 
 #[derive(Debug, Clone)]
 pub struct ModuleDeclaration {
@@ -10,9 +13,7 @@ pub struct ModuleDeclaration {
     pub from: Token,
     pub node: Box<LinkedNode>,
     pub name: String,
-    pub nodes: Vec<LinkedNode>,
-    /// Identity of the imported source, including an empty module.
-    pub source: Uuid,
+    pub body: Arc<ModuleBody>,
     pub uuid: Uuid,
 }
 
@@ -28,7 +29,7 @@ impl Diagnostic for ModuleDeclaration {
         Position::new(self.sig.pos.from, self.node.md.link.to())
     }
     fn childs(&self) -> Vec<&LinkedNode> {
-        let mut nodes: Vec<&LinkedNode> = self.nodes.iter().collect();
+        let mut nodes: Vec<&LinkedNode> = self.body.nodes.iter().collect();
         nodes.push(&*self.node);
         nodes
     }
