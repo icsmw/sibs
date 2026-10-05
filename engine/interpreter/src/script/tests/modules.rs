@@ -99,7 +99,7 @@ fn repeated_parent_imports_expose_nested_module_paths() {
 #[test]
 fn aliases_still_reject_a_different_function_at_the_same_path() {
     let files = Files::new();
-    files.write("library.sibs", "fn helper() { 12; };");
+    files.write("library.sibs", "fn helper() { 12; }; fn other() { 13; };");
     let source = "mod left { mod from \"library.sibs\"; }; mod right { mod library { fn helper() { 7; }; }; mod from \"library.sibs\"; };";
     let mut ctx = InterContext::default();
     assert!(Script::from_file(
@@ -111,6 +111,79 @@ fn aliases_still_reject_a_different_function_at_the_same_path() {
     assert!(ctx.get_diagnostics().unwrap().errors().iter().any(|err|
         matches!(&err.e, DiagnosticError::Semantic(semantic::SemanticError::FnDeclarationError(message)) if message.contains("right::library::helper"))
     ));
+    assert!(ctx
+        .get_semantic_cx()
+        .unwrap()
+        .fns
+        .find("right::library::other")
+        .is_none());
+}
+
+#[test]
+fn resilient_alias_conflicts_preserve_other_functions_and_module_paths() {
+    let files = Files::new();
+    files.write("shared.sibs", "fn helper() { 1; }; fn other() { 2; };");
+    files.write(
+        "library.sibs",
+        r#"
+        fn helper() { 3; };
+        fn other() { 4; };
+        mod nested { fn helper() { 5; }; fn other() { 6; }; };
+        mod from "shared.sibs";
+        fn after() { 7; };
+        "#,
+    );
+    let source = r#"
+        mod left { mod from "library.sibs"; };
+        mod right {
+            mod library {
+                fn helper() { 8; };
+                mod nested { fn helper() { 9; }; };
+                mod shared { fn helper() { 10; }; };
+            };
+            mod from "library.sibs";
+            fn outside() { 11; };
+        };
+        component comp() {
+            task run() {
+                right::library::other() + right::library::nested::other()
+                    + right::library::shared::other() + right::library::after()
+                    + right::outside();
+            }
+        };
+    "#;
+    let mut ctx = InterContext::default();
+    let result = Script::from_file(
+        files.write("main.sibs", source),
+        ScriptOptions::resilient(),
+        &mut ctx,
+    );
+    assert!(
+        matches!(result, Err(ScriptError::NotExecutable)),
+        "{result:?}"
+    );
+    let errors = ctx.get_diagnostics().unwrap().errors();
+    assert_eq!(errors.len(), 3, "{errors:?}");
+    for suffix in ["helper", "nested::helper", "shared::helper"] {
+        let path = format!("right::library::{suffix}");
+        assert!(errors.iter().any(|err|
+            matches!(&err.e, DiagnosticError::Semantic(semantic::SemanticError::FnDeclarationError(message)) if message.contains(&path))
+        ), "{errors:?}");
+    }
+    let scx = ctx.get_semantic_cx().unwrap();
+    for suffix in ["other", "nested::other", "shared::other", "after"] {
+        assert_eq!(
+            scx.fns
+                .find(format!("left::library::{suffix}"))
+                .unwrap()
+                .uuid(),
+            scx.fns
+                .find(format!("right::library::{suffix}"))
+                .unwrap()
+                .uuid(),
+        );
+    }
+    assert!(scx.fns.find("right::outside").is_some());
 }
 
 #[test]

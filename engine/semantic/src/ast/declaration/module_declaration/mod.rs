@@ -58,38 +58,48 @@ impl Finalization for ModuleDeclaration {
 // types, globals and function bodies retain their original identities.
 fn expose_functions(nodes: &[LinkedNode], scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
     for node in nodes {
-        match node.get_node() {
-            Node::Declaration(Declaration::FunctionDeclaration(function)) => {
-                // In resilient mode a failed declaration may have no entity.
-                if !scx.fns.ufns.get_funcs().contains_key(&function.uuid) {
-                    continue;
+        let result = (|| {
+            match node.get_node() {
+                Node::Declaration(Declaration::FunctionDeclaration(function)) => {
+                    // In resilient mode a failed declaration may have no entity.
+                    if !scx.fns.ufns.get_funcs().contains_key(&function.uuid) {
+                        return Ok(());
+                    }
+                    let name = function
+                        .get_name()
+                        .ok_or_else(|| LinkedErr::from(E::InvalidFnName, function))?;
+                    scx.fns
+                        .ufns
+                        .add_alias(name, &function.uuid)
+                        .map_err(|err| {
+                            LinkedErr::from(E::FnDeclarationError(err.to_string()), function)
+                        })?;
                 }
-                let name = function
-                    .get_name()
-                    .ok_or_else(|| LinkedErr::from(E::InvalidFnName, function))?;
-                scx.fns
-                    .ufns
-                    .add_alias(name, &function.uuid)
-                    .map_err(|err| {
-                        LinkedErr::from(E::FnDeclarationError(err.to_string()), function)
-                    })?;
+                Node::Declaration(Declaration::ModuleDeclaration(module)) => {
+                    scx.fns.ufns.enter(&module.name);
+                    let result = expose_functions(&module.body.nodes, scx);
+                    scx.fns.ufns.leave();
+                    result?;
+                }
+                Node::Root(Root::Module(module)) => {
+                    let name = module
+                        .get_name()
+                        .ok_or_else(|| LinkedErr::from(E::InvalidModuleName, module))?;
+                    scx.fns.ufns.enter(name);
+                    let result = expose_functions(&module.nodes, scx);
+                    scx.fns.ufns.leave();
+                    result?;
+                }
+                _ => {}
             }
-            Node::Declaration(Declaration::ModuleDeclaration(module)) => {
-                scx.fns.ufns.enter(&module.name);
-                let result = expose_functions(&module.body.nodes, scx);
-                scx.fns.ufns.leave();
-                result?;
+            Ok(())
+        })();
+        if let Err(err) = result {
+            if scx.is_resilience() {
+                scx.errs.push(err);
+            } else {
+                return Err(err);
             }
-            Node::Root(Root::Module(module)) => {
-                let name = module
-                    .get_name()
-                    .ok_or_else(|| LinkedErr::from(E::InvalidModuleName, module))?;
-                scx.fns.ufns.enter(name);
-                let result = expose_functions(&module.nodes, scx);
-                scx.fns.ufns.leave();
-                result?;
-            }
-            _ => {}
         }
     }
     Ok(())
