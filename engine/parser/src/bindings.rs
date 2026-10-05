@@ -1,64 +1,93 @@
 use crate::*;
-use std::cell::RefMut;
 
 #[derive(Debug)]
-struct Binding {
+pub(crate) struct Binding {
     owner: Uuid,
     from: usize,
     to: usize,
 }
 
 impl Binding {
-    fn new(owner: Uuid, from: usize, to: usize) -> Self {
-        Self { owner, from, to }
-    }
-    fn bind(&self, tokens: &mut RefMut<Vec<Token>>, rejected: &[Uuid]) {
-        for token in tokens[self.from..self.to].iter_mut() {
-            if let Some((owner, _)) = &token.owner {
-                if rejected.contains(owner) {
-                    token.drop_owner();
-                }
-            }
+    fn bind(&self, tokens: &mut [Token]) {
+        for token in &mut tokens[self.from..self.to] {
             token.set_owner(&self.owner, self.to.saturating_sub(self.from));
         }
     }
 }
 
+/// Pending token ownership for one file, shared by its subparsers.
 #[derive(Default, Debug)]
-pub struct BindingsList {
+pub(crate) struct BindingsList {
     bindings: Vec<Binding>,
-    rejected: Vec<Uuid>,
+    active: usize,
 }
 
 impl BindingsList {
     pub fn add(&mut self, owner: Uuid, from: usize, to: usize) {
-        self.bindings.push(Binding::new(owner, from, to));
+        self.bindings.push(Binding { owner, from, to });
     }
-    pub fn add_rejected(&mut self, uuids: Vec<&Uuid>) {
-        self.rejected
-            .append(&mut uuids.into_iter().copied().collect());
+
+    pub fn append(&mut self, bindings: &mut Vec<Binding>) {
+        self.bindings.append(bindings);
     }
-    pub fn try_flush(&mut self, tokens: Rc<RefCell<Vec<Token>>>) -> Result<bool, E> {
-        let Ok(mut tokens) = tokens.try_borrow_mut() else {
-            // This can happen if some reader is still holding a reference to the tokens.
-            // At the end we will drop all references to the tokens
-            return Ok(false);
-        };
-        self.inner_flush(&mut tokens);
-        Ok(true)
-    }
+
     pub fn flush(&mut self, tokens: Rc<RefCell<Vec<Token>>>) -> Result<(), E> {
+        if self.active != 0 {
+            return Err(E::EarlyFlushCall(
+                "A parsing attempt is still active".into(),
+            ));
+        }
+        if self.bindings.is_empty() {
+            return Ok(());
+        }
         let mut tokens = tokens
             .try_borrow_mut()
             .map_err(|err| E::EarlyFlushCall(err.to_string()))?;
-        self.inner_flush(&mut tokens);
-        self.rejected.clear();
+        for binding in self.bindings.drain(..) {
+            binding.bind(&mut tokens);
+        }
         Ok(())
     }
+}
 
-    fn inner_flush(&mut self, tokens: &mut RefMut<Vec<Token>>) {
-        for binding in self.bindings.drain(..) {
-            binding.bind(tokens, &self.rejected);
+/// A speculative attempt. Dropping it rolls back all nested ownership effects.
+/// Successful candidates take their journal; accepted readers commit to the
+/// enclosing attempt, which can still discard the entire subtree later.
+pub(crate) struct BindingScope {
+    bindings: Rc<RefCell<BindingsList>>,
+    start: usize,
+    committed: bool,
+}
+
+impl BindingScope {
+    pub fn new(bindings: Rc<RefCell<BindingsList>>) -> Self {
+        let start = {
+            let mut list = bindings.borrow_mut();
+            list.active += 1;
+            list.bindings.len()
+        };
+        Self {
+            bindings,
+            start,
+            committed: false,
         }
+    }
+
+    pub fn take(self) -> Vec<Binding> {
+        self.bindings.borrow_mut().bindings.split_off(self.start)
+    }
+
+    pub fn commit(mut self) {
+        self.committed = true;
+    }
+}
+
+impl Drop for BindingScope {
+    fn drop(&mut self) {
+        let mut list = self.bindings.borrow_mut();
+        if !self.committed {
+            list.bindings.truncate(self.start);
+        }
+        list.active = list.active.saturating_sub(1);
     }
 }

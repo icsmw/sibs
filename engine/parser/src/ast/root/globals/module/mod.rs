@@ -13,12 +13,15 @@ impl Interest for GlobalsModule {
 
 impl ReadNode<GlobalsModule> for GlobalsModule {
     fn read_as_linked(parser: &Parser) -> Result<Option<LinkedNode>, LinkedErr<E>> {
-        Ok(Self::read(parser)?.map(|n| {
-            let link = n.link();
-            let mut node = LinkedNode::from_node(n.into());
-            node.get_mut_md().link = link;
-            node
-        }))
+        let bindings = BindingScope::new(parser.bindings.clone());
+        let Some(inner) = Self::read(parser)? else {
+            return Ok(None);
+        };
+        let link = inner.link();
+        let mut node = LinkedNode::from_node(inner.into());
+        node.get_mut_md().link = link;
+        bindings.commit();
+        Ok(Some(node))
     }
 
     fn read(parser: &Parser) -> Result<Option<GlobalsModule>, LinkedErr<E>> {

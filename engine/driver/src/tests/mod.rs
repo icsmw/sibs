@@ -1,3 +1,5 @@
+mod bindings;
+
 use super::*;
 
 #[test]

@@ -1,16 +1,22 @@
 use crate::*;
 use std::fmt::{Debug, Display};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub(crate) struct Candidate<T> {
     pos: usize,
     node: LinkedNode,
     id: T,
+    bindings: Vec<Binding>,
 }
 
 impl<T> Candidate<T> {
-    pub fn new(pos: usize, node: LinkedNode, id: T) -> Self {
-        Self { pos, node, id }
+    pub fn new(pos: usize, node: LinkedNode, id: T, bindings: Vec<Binding>) -> Self {
+        Self {
+            pos,
+            node,
+            id,
+            bindings,
+        }
     }
 
     pub fn abs_position(&self) -> usize {
@@ -32,16 +38,14 @@ impl<T> Candidate<T> {
     pub fn uuid(&self) -> &Uuid {
         self.node.uuid()
     }
-    pub fn get_uuids(&self) -> Vec<&Uuid> {
-        fn collect_uuids<'a>(uuids: &mut Vec<&'a Uuid>, node: &'a LinkedNode) {
-            uuids.push(node.uuid());
-            node.childs()
-                .into_iter()
-                .for_each(|child| collect_uuids(uuids, child));
-        }
-        let mut uuids = Vec::new();
-        collect_uuids(&mut uuids, &self.node);
-        uuids
+    pub fn bind(&mut self, parser: &Parser, from: usize, to: usize) -> Result<(), E> {
+        let mut bindings = parser
+            .bindings
+            .try_borrow_mut()
+            .map_err(|err| E::EarlyFlushCall(err.to_string()))?;
+        bindings.append(&mut self.bindings);
+        bindings.add(*self.uuid(), from, to);
+        Ok(())
     }
 }
 
@@ -67,31 +71,9 @@ impl<T> Default for CandidateList<T> {
 }
 
 impl<T> CandidateList<T> {
-    pub fn add(&mut self, pos: usize, node: LinkedNode, id: T) {
-        self.candidates.push(Candidate::new(pos, node, id));
-    }
-    pub fn get_rejected_uuids(&self, winner: &Candidate<T>) -> Vec<&Uuid> {
+    pub fn add(&mut self, pos: usize, node: LinkedNode, id: T, bindings: Vec<Binding>) {
         self.candidates
-            .iter()
-            .filter(|candidate| candidate.node.uuid() != winner.node.uuid())
-            .flat_map(|candidate| candidate.get_uuids())
-            .collect()
-    }
-    pub fn bind(
-        &self,
-        parser: &Parser,
-        winner: &Candidate<T>,
-        from: usize,
-        to: usize,
-    ) -> Result<(), E> {
-        let mut bindings = parser
-            .bindings
-            .try_borrow_mut()
-            .map_err(|err| E::EarlyFlushCall(err.to_string()))?;
-        bindings.add_rejected(self.get_rejected_uuids(winner).to_vec());
-        bindings.add(*winner.uuid(), from, to);
-        bindings.try_flush(parser.tokens.clone())?;
-        Ok(())
+            .push(Candidate::new(pos, node, id, bindings));
     }
 }
 
@@ -99,50 +81,44 @@ impl<T> CandidateList<T>
 where
     T: Display + Clone + PartialEq + ConflictResolver<T>,
 {
-    pub fn resolve_conflicts(&self) -> Result<Option<Candidate<T>>, LinkedErr<E>> {
-        let Some(candidate) = self
+    pub fn resolve_conflicts(mut self) -> Result<Option<Candidate<T>>, LinkedErr<E>> {
+        let Some((mut winner, candidate)) = self
             .candidates
             .iter()
-            .max_by_key(|candidate| candidate.abs_position())
+            .enumerate()
+            .max_by_key(|(_, candidate)| candidate.abs_position())
         else {
             return Ok(None);
         };
-        let conflicted_list = self
+        let conflicted = self
             .candidates
             .iter()
-            .filter(|conflicted| {
-                conflicted.is_same_position(candidate) && conflicted.id != candidate.id
-            })
-            .cloned()
-            .collect::<Vec<Candidate<T>>>();
-        if conflicted_list.is_empty() {
-            return Ok(Some(candidate.clone()));
-        };
-        let mut candidate = candidate.clone();
+            .enumerate()
+            .filter(|(_, other)| other.is_same_position(candidate) && other.id != candidate.id)
+            .map(|(index, _)| index)
+            .collect::<Vec<_>>();
         let mut ignored = Vec::new();
-        for conflicted in conflicted_list.iter() {
-            if candidate.resolve_conflict(conflicted) == conflicted.id {
-                if ignored.contains(&conflicted.id) {
+        for index in conflicted {
+            let candidate = &self.candidates[winner];
+            let other = &self.candidates[index];
+            if candidate.resolve_conflict(other) == other.id {
+                if ignored.contains(&other.id) {
                     let err = E::NodesAreInConflict(
                         self.candidates
                             .iter()
-                            .filter(|other| candidate.is_same_position(*other))
-                            .map(|conflicted| conflicted.id.to_string())
-                            .collect::<Vec<String>>()
+                            .filter(|other| candidate.is_same_position(other))
+                            .map(|other| other.id.to_string())
+                            .collect::<Vec<_>>()
                             .join(", "),
                     );
-                    return Err(if let Some(first) = self.candidates.first() {
-                        err.link(&first.node)
-                    } else {
-                        err.link(&candidate.node)
-                    });
-                } else {
-                    ignored.push(candidate.id.clone());
-                    candidate = conflicted.clone();
+                    return Err(err.link(&self.candidates[0].node));
                 }
+                ignored.push(candidate.id.clone());
+                winner = index;
             }
         }
-        Ok(Some(candidate))
+        // Move the selected AST and its journal; all losing journals are dropped.
+        Ok(Some(self.candidates.swap_remove(winner)))
     }
 }
 

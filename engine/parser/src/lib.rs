@@ -154,6 +154,7 @@ impl Parser {
             .get_content(src.unwrap_or(&self.source.source))
     }
 
+    /// Apply accepted token ownership after all speculative attempts have closed.
     pub fn flush(&self) -> Result<(), E> {
         let mut bindings = self
             .bindings
@@ -344,6 +345,7 @@ impl Parser {
 impl TryInto<Diagnostics<E>> for Parser {
     type Error = E;
     fn try_into(self) -> Result<Diagnostics<E>, E> {
+        self.flush()?;
         let Parser {
             tokens, srcs, errs, ..
         } = self;

@@ -24,6 +24,7 @@ pub(crate) fn read_and_resolve_nodes(
     let from = parser.pos();
     for target in targets {
         let drop = parser.pin();
+        let bindings = BindingScope::new(parser.bindings.clone());
         if let (Some(node), id) = match target {
             NodeTarget::Statement(ids) => (Statement::try_oneof(parser, ids)?, NodeId::Statement),
             NodeTarget::Expression(ids) => {
@@ -43,16 +44,16 @@ pub(crate) fn read_and_resolve_nodes(
                 NodeId::Miscellaneous,
             ),
         } {
-            candidates.add(parser.pos(), node, id);
+            candidates.add(parser.pos(), node, id, bindings.take());
         }
         drop(parser);
     }
     reset(parser);
-    let Some(candidate) = candidates.resolve_conflicts()? else {
+    let Some(mut candidate) = candidates.resolve_conflicts()? else {
         return Ok(None);
     };
-    candidates
-        .bind(parser, &candidate, from, candidate.pos())
+    candidate
+        .bind(parser, from, candidate.pos())
         .map_err(|err| err.link(candidate.as_node()))?;
     Ok(Some(candidate))
 }

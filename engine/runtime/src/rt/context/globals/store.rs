@@ -33,7 +33,7 @@ impl GlobalValues {
         link: SrcLink,
         value: RtValue,
     ) -> Result<(), E> {
-                if !value.is_compatible(&ty) {
+        if !value.is_compatible(&ty) {
             return Err(E::InvalidValueType(ty.to_string()));
         }
         if let Some(previous) = self.values.get(&name) {

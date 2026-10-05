@@ -4,6 +4,7 @@ use std::fmt::{Debug, Display};
 pub trait ReadNode<T: Clone + Debug + Into<Node>>: Interest + MetadataContent {
     fn read(parser: &Parser) -> Result<Option<T>, LinkedErr<E>>;
     fn read_as_linked(parser: &Parser) -> Result<Option<LinkedNode>, LinkedErr<E>> {
+        let bindings = BindingScope::new(parser.bindings.clone());
         let mut md = Metadata::default();
         md.read_md_before(parser, Self::md_includes())?;
         let Some(tk_from) = parser.next() else {
@@ -26,6 +27,7 @@ pub trait ReadNode<T: Clone + Debug + Into<Node>>: Interest + MetadataContent {
         linked.get_mut_md().link.set_pos(&tk_from, &tk_before_md);
         linked.get_mut_md().link.set_expos(&tk_from, &tk_after_md);
         linked.get_mut_md().merge(md);
+        bindings.commit();
         Ok(Some(linked))
     }
 }
@@ -45,18 +47,19 @@ pub(crate) trait TryRead<
         let from = parser.pos();
         for id in ids {
             let drop = parser.pin();
+            let bindings = BindingScope::new(parser.bindings.clone());
             if let Some(el) = Self::try_read(parser, id.clone())? {
-                candidates.add(parser.pos(), el, id.to_owned());
+                candidates.add(parser.pos(), el, id.to_owned(), bindings.take());
             }
             drop(parser);
         }
         reset(parser);
         match candidates.resolve_conflicts()? {
-            Some(candidate) => {
+            Some(mut candidate) => {
                 let to = candidate.pos();
                 parser.set_pos(to);
-                candidates
-                    .bind(parser, &candidate, from, to)
+                candidate
+                    .bind(parser, from, to)
                     .map_err(|err| LinkedErr::from(err, &candidate.as_node()))?;
                 Ok(Some(candidate.node()))
             }
