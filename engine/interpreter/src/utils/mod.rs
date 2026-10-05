@@ -2,6 +2,9 @@ use crate::*;
 use futures::FutureExt;
 use std::{future::Future, panic::AssertUnwindSafe};
 
+#[cfg(test)]
+mod tests;
+
 pub(crate) async fn catch_execution_panic<F>(
     future: F,
     link: SrcLink,

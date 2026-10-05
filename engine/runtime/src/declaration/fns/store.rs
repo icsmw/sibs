@@ -13,7 +13,7 @@ impl Fns {
             .funcs
             .get(name.as_ref())
             .map(FnEntity::EFn)
-            .or_else(|| self.ufns.funcs.get(name.as_ref()).map(FnEntity::UFn))
+            .or_else(|| self.ufns.find(name.as_ref()).map(FnEntity::UFn))
     }
     pub fn lookup<S: AsRef<str>>(&mut self, name: S, caller: &Uuid) -> Option<FnEntity<'_>> {
         if let Some(entity) = self.ufns.lookup(name.as_ref(), caller) {
@@ -23,8 +23,8 @@ impl Fns {
         }
     }
     pub fn lookup_by_caller(&self, caller: &Uuid) -> Option<FnEntity<'_>> {
-        if let Some(name) = self.ufns.links.get(caller) {
-            self.ufns.funcs.get(name).map(FnEntity::UFn)
+        if let Some(uuid) = self.ufns.links.get(caller) {
+            self.ufns.funcs.get(uuid).map(FnEntity::UFn)
         } else if let Some(name) = self.efns.links.get(caller) {
             self.efns.funcs.get(name).map(FnEntity::EFn)
         } else if let Some(uuid) = self.cfns.links.get(caller) {

@@ -43,7 +43,6 @@ async fn cancelled_function_and_closure_restore_the_callers_scope() {
             UserFnEntity {
                 uuid: Uuid::new_v4(),
                 name: "test".into(),
-                fullname: "test".into(),
                 args,
                 result: Ty::Determined(DeterminedTy::Void),
                 body: UserFnBody::Executor(SrcLink::default(), exec),

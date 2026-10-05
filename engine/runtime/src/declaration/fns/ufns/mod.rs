@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 mod arg;
 mod entity;
 mod store;

@@ -30,7 +30,6 @@ impl Debug for UserFnBody {
 pub struct UserFnEntity {
     pub uuid: Uuid,
     pub name: String,
-    pub fullname: String,
     pub args: Vec<UserFnArgDeclaration>,
     pub result: Ty,
     pub body: UserFnBody,
