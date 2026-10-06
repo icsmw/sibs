@@ -1,5 +1,6 @@
 use super::*;
 use lexer::{Lexer, LinkedPosition, TextPosition, Tokens};
+use test_utils::Files;
 use thiserror::Error;
 use uuid::Uuid;
 
@@ -26,8 +27,8 @@ fn reporting_missing_source_preserves_its_identity() {
 #[test]
 fn reporting_unreadable_source_preserves_io_error() {
     let error = LinkedErr::unlinked(TestError::UnknownVariable);
-    let path = std::env::temp_dir().join(format!("sibs-diagnostic-{}", Uuid::new_v4()));
-    std::fs::write(&path, "missing\n").unwrap();
+    let files = Files::new();
+    let path = files.write("source", "missing\n");
     let sources = CodeSources::bound(&path, &error.link.src).unwrap();
     std::fs::remove_file(&path).unwrap();
     let diagnostics = Diagnostics::new(

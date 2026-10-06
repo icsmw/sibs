@@ -485,6 +485,7 @@ dependencies = [
  "asttree",
  "console",
  "lexer",
+ "test_utils",
  "thiserror 2.0.20",
  "uuid",
 ]
@@ -524,6 +525,7 @@ dependencies = [
  "paste",
  "runtime",
  "semantic",
+ "test_utils",
  "thiserror 2.0.20",
  "tracing",
  "uuid",
@@ -978,6 +980,7 @@ dependencies = [
  "proptest",
  "runtime",
  "semantic",
+ "test_utils",
  "thiserror 2.0.20",
  "tokio",
  "tokio-util",
@@ -1225,6 +1228,7 @@ dependencies = [
  "lexer",
  "paste",
  "proptest",
+ "test_utils",
  "thiserror 2.0.20",
  "tracing",
  "uuid",
@@ -1475,6 +1479,7 @@ dependencies = [
  "regex",
  "serde",
  "terminal_size",
+ "test_utils",
  "thiserror 2.0.20",
  "tokio",
  "tokio-stream",
@@ -1542,6 +1547,7 @@ dependencies = [
  "paste",
  "proptest",
  "runtime",
+ "test_utils",
  "thiserror 2.0.20",
  "tracing",
  "uuid",
@@ -1746,6 +1752,7 @@ name = "test_utils"
 version = "0.1.0"
 dependencies = [
  "rand 0.9.5",
+ "uuid",
 ]
 
 [[package]]

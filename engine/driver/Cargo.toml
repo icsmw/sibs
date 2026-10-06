@@ -28,3 +28,4 @@ interpreter = { path = "../interpreter" }
 
 [dev-dependencies]
 paste.workspace = true
+test_utils = { path = "../tests/test_utils" }

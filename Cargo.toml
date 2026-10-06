@@ -15,7 +15,7 @@ members = [
     "engine/support/docs",
     "engine/support/importer",
     "engine/support/term",
-    "engine/tests/cmds/test_utils",
+    "engine/tests/test_utils",
     "engine/tests/cmds/exit",
     "engine/tests/cmds/noise",
     "app/cli",

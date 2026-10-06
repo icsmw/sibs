@@ -1,28 +1,7 @@
 use super::read_body;
 use crate::*;
 use std::sync::Arc;
-
-struct Files(PathBuf);
-
-impl Files {
-    fn new() -> Self {
-        let dir = std::env::temp_dir().join(format!("sibs-modules-{}", Uuid::new_v4()));
-        std::fs::create_dir_all(&dir).unwrap();
-        Self(dir)
-    }
-
-    fn write(&self, name: &str, content: &str) -> PathBuf {
-        let path = self.0.join(name);
-        std::fs::write(&path, content).unwrap();
-        path
-    }
-}
-
-impl Drop for Files {
-    fn drop(&mut self) {
-        let _ = std::fs::remove_dir_all(&self.0);
-    }
-}
+use test_utils::Files;
 
 fn filename(path: &str) -> PrimitiveString {
     let content = format!("{path:?}");

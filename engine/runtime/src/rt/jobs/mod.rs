@@ -181,12 +181,12 @@ impl RtJobs {
 #[cfg(test)]
 mod path_tests {
     use super::*;
+    use test_utils::Files;
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn actor_path_and_explicit_progress_for_hidden_job() {
-        let dir = std::env::temp_dir().join(format!("sibs-path-{}", Uuid::new_v4()));
-        std::fs::create_dir_all(&dir).unwrap();
-        let jobs = RtJobs::new(&dir).unwrap();
+        let dir = Files::new();
+        let jobs = RtJobs::new(dir.path()).unwrap();
         let parent = jobs
             .create("parent", None, JobVisibility::Visible)
             .await
@@ -225,19 +225,18 @@ mod path_tests {
         parent.cancel().cancelling().await.unwrap();
         parent.cancel().cancelled::<String>(None).await.unwrap();
         jobs.destroy().await.unwrap();
-        std::fs::remove_dir_all(dir).unwrap();
     }
 }
 
 #[cfg(test)]
 mod lifecycle_tests {
     use super::*;
+    use test_utils::Files;
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn rejected_completion_is_returned_without_a_journal_event() {
-        let dir = std::env::temp_dir().join(format!("sibs-lifecycle-{}", Uuid::new_v4()));
-        std::fs::create_dir_all(&dir).unwrap();
-        let jobs = RtJobs::new(&dir).unwrap();
+        let dir = Files::new();
+        let jobs = RtJobs::new(dir.path()).unwrap();
         let parent = jobs
             .create("parent", None, JobVisibility::Hidden)
             .await
@@ -259,7 +258,7 @@ mod lifecycle_tests {
         child.done().failed::<String>(None).await.unwrap();
         parent.done().success::<String>(None).await.unwrap();
         jobs.destroy().await.unwrap();
-        let mut reader = JournalReader::new(&dir).unwrap();
+        let mut reader = JournalReader::new(dir.path()).unwrap();
         let session = *reader.list().keys().next().unwrap();
         let count = reader.open(&session).unwrap().unwrap();
         let records = reader.read(&session, 0, count).unwrap();
@@ -273,36 +272,29 @@ mod lifecycle_tests {
             vec![scheme::EventTy::Started, scheme::EventTy::Success]
         );
         drop(reader);
-        std::fs::remove_dir_all(dir).unwrap();
     }
 }
 
 #[cfg(test)]
 mod shutdown_tests {
     use super::*;
-
-    fn directory() -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("sibs-shutdown-{}", Uuid::new_v4()));
-        std::fs::create_dir_all(&dir).unwrap();
-        dir
-    }
+    use test_utils::Files;
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn empty_tree_shuts_down_without_waiting_for_timeout() {
-        let dir = directory();
-        let jobs = RtJobs::new(&dir).unwrap();
+        let dir = Files::new();
+        let jobs = RtJobs::new(dir.path()).unwrap();
         tokio::time::timeout(Duration::from_secs(2), async {
             jobs.destroy().await.unwrap();
         })
         .await
         .unwrap();
-        std::fs::remove_dir_all(dir).unwrap();
     }
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn shutdown_waits_for_terminal_states_and_keeps_servicing_updates() {
-        let dir = directory();
-        let jobs = RtJobs::new(&dir).unwrap();
+        let dir = Files::new();
+        let jobs = RtJobs::new(dir.path()).unwrap();
         let parent = jobs
             .create("parent", None, JobVisibility::Hidden)
             .await
@@ -355,7 +347,7 @@ mod shutdown_tests {
         .unwrap();
 
         // The completion receiver must include journal shutdown and its final records.
-        let mut reader = JournalReader::new(&dir).unwrap();
+        let mut reader = JournalReader::new(dir.path()).unwrap();
         let session = *reader.list().keys().next().unwrap();
         let count = reader.open(&session).unwrap().unwrap();
         let records = reader.read(&session, 0, count).unwrap();
@@ -363,13 +355,12 @@ mod shutdown_tests {
             .iter()
             .any(|r| r.uuid == parent.identity().uuid() && r.event == scheme::EventTy::Cancelled));
         drop(reader);
-        std::fs::remove_dir_all(dir).unwrap();
     }
 
     #[tokio::test]
     async fn child_creation_reports_cancellation_when_shutdown_wins() {
-        let dir = directory();
-        let jobs = RtJobs::new(&dir).unwrap();
+        let dir = Files::new();
+        let jobs = RtJobs::new(dir.path()).unwrap();
         let parent = jobs
             .create("parent", None, JobVisibility::Hidden)
             .await
@@ -392,13 +383,12 @@ mod shutdown_tests {
         })
         .await
         .unwrap();
-        std::fs::remove_dir_all(dir).unwrap();
     }
 
     #[tokio::test]
     async fn child_creation_keeps_the_child_when_creation_wins() {
-        let dir = directory();
-        let jobs = RtJobs::new(&dir).unwrap();
+        let dir = Files::new();
+        let jobs = RtJobs::new(dir.path()).unwrap();
         let parent = jobs
             .create("parent", None, JobVisibility::Hidden)
             .await
@@ -427,13 +417,12 @@ mod shutdown_tests {
         })
         .await
         .unwrap();
-        std::fs::remove_dir_all(dir).unwrap();
     }
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn unfinished_job_returns_timeout() {
-        let dir = directory();
-        let jobs = RtJobs::new(&dir).unwrap();
+        let dir = Files::new();
+        let jobs = RtJobs::new(dir.path()).unwrap();
         let job = jobs
             .create("unfinished", None, JobVisibility::Hidden)
             .await
@@ -447,6 +436,5 @@ mod shutdown_tests {
             matches!(result, Err(E::JobsShutdownTimeout(ms)) if ms == SHUTDOWN_TIMEOUT.as_millis())
         );
         assert!(job.cancel().is_cancelled());
-        std::fs::remove_dir_all(dir).unwrap();
     }
 }

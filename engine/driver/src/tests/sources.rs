@@ -1,26 +1,5 @@
 use super::*;
-
-struct Files(PathBuf);
-
-impl Files {
-    fn new() -> Self {
-        let path = std::env::temp_dir().join(format!("sibs-driver-sources-{}", Uuid::new_v4()));
-        std::fs::create_dir_all(&path).unwrap();
-        Self(path)
-    }
-
-    fn write(&self, name: &str, content: &str) -> PathBuf {
-        let path = self.0.join(name);
-        std::fs::write(&path, content).unwrap();
-        path
-    }
-}
-
-impl Drop for Files {
-    fn drop(&mut self) {
-        let _ = std::fs::remove_dir_all(&self.0);
-    }
-}
+use test_utils::Files;
 
 fn source(driver: &Driver, content: &str) -> Uuid {
     *driver

@@ -1,42 +1,20 @@
 use super::*;
-use std::{path::PathBuf, sync::Arc};
+use std::sync::Arc;
+use test_utils::Files;
 
-struct Files(PathBuf);
-
-impl Files {
-    fn new() -> Self {
-        let dir = std::env::temp_dir().join(format!("sibs-module-script-{}", Uuid::new_v4()));
-        std::fs::create_dir_all(&dir).unwrap();
-        Self(dir)
-    }
-
-    fn write(&self, name: &str, content: &str) -> PathBuf {
-        let path = self.0.join(name);
-        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-        std::fs::write(&path, content).unwrap();
-        path
-    }
-
-    fn prepare(&self, source: &str) -> InterContext {
-        let mut ctx = InterContext::default();
-        let result = Script::from_file(
-            self.write("main.sibs", source),
-            ScriptOptions::strict(),
-            &mut ctx,
-        );
-        assert!(
-            result.is_ok(),
-            "{result:?}: {:?}",
-            ctx.get_diagnostics().map(|d| d.errors())
-        );
-        ctx
-    }
-}
-
-impl Drop for Files {
-    fn drop(&mut self) {
-        let _ = std::fs::remove_dir_all(&self.0);
-    }
+fn prepare(files: &Files, source: &str) -> InterContext {
+    let mut ctx = InterContext::default();
+    let result = Script::from_file(
+        files.write("main.sibs", source),
+        ScriptOptions::strict(),
+        &mut ctx,
+    );
+    assert!(
+        result.is_ok(),
+        "{result:?}: {:?}",
+        ctx.get_diagnostics().map(|d| d.errors())
+    );
+    ctx
 }
 
 #[tokio::test]
@@ -45,7 +23,7 @@ async fn repeated_imports_share_functions_scopes_and_closures() {
     files.write("shared.sibs", "fn helper(n: num) { n + 1; }; fn run(n: num) { let cb = |v: num| { helper(v); }; cb(n); helper(n); };");
     files.write("left.sibs", "mod from \"shared.sibs\";");
     files.write("right.sibs", "mod from \"shared.sibs\";");
-    let mut ctx = files.prepare("mod from \"left.sibs\"; mod from \"right.sibs\"; component comp() { task run() { left::shared::run(5) + right::shared::run(6); } };");
+    let mut ctx = prepare(&files, "mod from \"left.sibs\"; mod from \"right.sibs\"; component comp() { task run() { left::shared::run(5) + right::shared::run(6); } };");
     let anchor = ctx.get_anchor_inner().unwrap();
     let left = anchor.nodes[0].extract::<ModuleDeclaration>().unwrap();
     let right = anchor.nodes[1].extract::<ModuleDeclaration>().unwrap();
@@ -64,7 +42,7 @@ async fn repeated_imports_share_functions_scopes_and_closures() {
     assert!(scx.tys.get_scope(&shared_left.body.source).is_some());
     assert!(scx.tys.get_scope(&shared_left.uuid).is_none());
     assert!(scx.tys.get_scope(&shared_right.uuid).is_none());
-    let value = Executor::new(ExecutionOptions::new("comp", "run", &files.0))
+    let value = Executor::new(ExecutionOptions::new("comp", "run", files.path()))
         .run(&mut ctx)
         .await
         .unwrap();
@@ -79,7 +57,7 @@ fn repeated_parent_imports_expose_nested_module_paths() {
         "library.sibs",
         "mod nested { fn helper() { 7; }; }; mod from \"shared.sibs\";",
     );
-    let ctx = files.prepare("mod left { mod from \"library.sibs\"; }; mod right { mod from \"library.sibs\"; }; component comp() { task run() { left::library::nested::helper() + right::library::shared::helper(); } };");
+    let ctx = prepare(&files, "mod left { mod from \"library.sibs\"; }; mod right { mod from \"library.sibs\"; }; component comp() { task run() { left::library::nested::helper() + right::library::shared::helper(); } };");
     let scx = ctx.get_semantic_cx().unwrap();
     assert_eq!(scx.fns.ufns.get_funcs().len(), 2);
     for suffix in ["nested::helper", "shared::helper"] {
@@ -219,7 +197,7 @@ fn includes_keep_the_common_component_namespace() {
 fn repeated_empty_imports_share_a_body_and_keep_import_identities() {
     let files = Files::new();
     files.write("empty.sibs", "");
-    let ctx = files.prepare("mod from \"empty.sibs\"; mod from \"./empty.sibs\"; component comp() { task run() { true; } };");
+    let ctx = prepare(&files, "mod from \"empty.sibs\"; mod from \"./empty.sibs\"; component comp() { task run() { true; } };");
     let anchor = ctx.get_anchor_inner().unwrap();
     let first = anchor.nodes[0].extract::<ModuleDeclaration>().unwrap();
     let second = anchor.nodes[1].extract::<ModuleDeclaration>().unwrap();
@@ -260,8 +238,8 @@ fn symlink_imports_share_a_body_and_resolve_dependencies_from_its_directory() {
     let files = Files::new();
     let library = files.write("real/library.sibs", "mod from \"dependency.sibs\";");
     files.write("real/dependency.sibs", "fn helper() { 12; };");
-    std::os::unix::fs::symlink(library, files.0.join("alias.sibs")).unwrap();
-    let ctx = files.prepare("mod from \"alias.sibs\"; mod from \"real/library.sibs\"; component comp() { task run() { alias::dependency::helper() + library::dependency::helper(); } };");
+    std::os::unix::fs::symlink(library, files.path().join("alias.sibs")).unwrap();
+    let ctx = prepare(&files, "mod from \"alias.sibs\"; mod from \"real/library.sibs\"; component comp() { task run() { alias::dependency::helper() + library::dependency::helper(); } };");
     let anchor = ctx.get_anchor_inner().unwrap();
     let first = anchor.nodes[0].extract::<ModuleDeclaration>().unwrap();
     let second = anchor.nodes[1].extract::<ModuleDeclaration>().unwrap();

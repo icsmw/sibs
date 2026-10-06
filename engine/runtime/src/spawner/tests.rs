@@ -2,52 +2,41 @@ use super::*;
 #[cfg(unix)]
 use tokio::time::Duration;
 
-struct TestDir(PathBuf);
-impl TestDir {
-    fn new() -> Self {
-        let path = std::env::temp_dir().join(format!("sibs-spawner-{}", Uuid::new_v4()));
-        std::fs::create_dir_all(&path).unwrap();
-        Self(path)
-    }
-    fn events(&self, alias: &str) -> Vec<scheme::EventTy> {
-        let mut reader = JournalReader::new(&self.0).unwrap();
-        let sessions = reader.list();
-        let session = sessions.keys().next().unwrap();
-        let count = reader.open(session).unwrap().unwrap();
-        let records = reader.read(session, 0, count).unwrap();
-        let id = records
-            .iter()
-            .find(|r| r.event == scheme::EventTy::Started && r.msg == alias)
-            .unwrap()
-            .uuid;
-        records
-            .into_iter()
-            .filter(|r| r.uuid == id && r.event != scheme::EventTy::Log)
-            .map(|r| r.event)
-            .collect()
-    }
-}
-impl Drop for TestDir {
-    fn drop(&mut self) {
-        let _ = std::fs::remove_dir_all(&self.0);
-    }
+use test_utils::Files;
+
+fn events(files: &Files, alias: &str) -> Vec<scheme::EventTy> {
+    let mut reader = JournalReader::new(files.path()).unwrap();
+    let sessions = reader.list();
+    let session = sessions.keys().next().unwrap();
+    let count = reader.open(session).unwrap().unwrap();
+    let records = reader.read(session, 0, count).unwrap();
+    let id = records
+        .iter()
+        .find(|r| r.event == scheme::EventTy::Started && r.msg == alias)
+        .unwrap()
+        .uuid;
+    records
+        .into_iter()
+        .filter(|r| r.uuid == id && r.event != scheme::EventTy::Log)
+        .map(|r| r.event)
+        .collect()
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn setup_failure_finishes_the_job() {
-    let dir = TestDir::new();
-    let jobs = RtJobs::new(&dir.0).unwrap();
+    let dir = Files::new();
+    let jobs = RtJobs::new(dir.path()).unwrap();
     let job = jobs
         .create("root", None, JobVisibility::Visible)
         .await
         .unwrap();
     let cmd = dir
-        .0
+        .path()
         .join("missing-executable")
         .to_string_lossy()
         .to_string();
     assert!(matches!(
-        SpawnerBuilder::new(&cmd, &dir.0, job.clone())
+        SpawnerBuilder::new(&cmd, dir.path(), job.clone())
             .await
             .unwrap()
             .spawn()
@@ -59,7 +48,7 @@ async fn setup_failure_finishes_the_job() {
     job.cancel().cancelled::<String>(None).await.unwrap();
     jobs.destroy().await.unwrap();
     assert_eq!(
-        dir.events(&cmd),
+        events(&dir, &cmd),
         vec![scheme::EventTy::Started, scheme::EventTy::Failed]
     );
 }
@@ -68,19 +57,19 @@ async fn setup_failure_finishes_the_job() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn inherited_cancellation_finishes_the_process_job() {
     use tokio::time::{sleep, timeout, Duration};
-    let dir = TestDir::new();
+    let dir = Files::new();
     std::fs::write(
-        dir.0.join("wait.sh"),
+        dir.path().join("wait.sh"),
         "printf ready > ready\nexec sleep 60\n",
     )
     .unwrap();
-    let jobs = RtJobs::new(&dir.0).unwrap();
+    let jobs = RtJobs::new(dir.path()).unwrap();
     let job = jobs
         .create("root", None, JobVisibility::Visible)
         .await
         .unwrap();
     let process_job = job.clone();
-    let cwd = dir.0.clone();
+    let cwd = dir.path().to_path_buf();
     let process = tokio::spawn(async move {
         SpawnerBuilder::new("/bin/sh wait.sh", cwd, process_job)
             .await?
@@ -88,7 +77,7 @@ async fn inherited_cancellation_finishes_the_process_job() {
             .await
     });
     timeout(Duration::from_secs(5), async {
-        while !dir.0.join("ready").exists() {
+        while !dir.path().join("ready").exists() {
             sleep(Duration::from_millis(5)).await;
         }
     })
@@ -105,7 +94,7 @@ async fn inherited_cancellation_finishes_the_process_job() {
     job.cancel().cancelled::<String>(None).await.unwrap();
     jobs.destroy().await.unwrap();
     assert_eq!(
-        dir.events("/bin/sh"),
+        events(&dir, "/bin/sh"),
         vec![
             scheme::EventTy::Started,
             scheme::EventTy::Cancelling,
@@ -116,8 +105,8 @@ async fn inherited_cancellation_finishes_the_process_job() {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn cancellation_transition_is_strict_and_preserves_completion() {
-    let dir = TestDir::new();
-    let jobs = RtJobs::new(&dir.0).unwrap();
+    let dir = Files::new();
+    let jobs = RtJobs::new(dir.path()).unwrap();
     let parent = jobs
         .create("parent", None, JobVisibility::Hidden)
         .await
@@ -150,7 +139,7 @@ async fn cancellation_transition_is_strict_and_preserves_completion() {
     parent.done().success::<String>(None).await.unwrap();
     jobs.destroy().await.unwrap();
     assert_eq!(
-        dir.events("parent"),
+        events(&dir, "parent"),
         vec![
             scheme::EventTy::Started,
             scheme::EventTy::Cancelling,
@@ -158,7 +147,7 @@ async fn cancellation_transition_is_strict_and_preserves_completion() {
         ]
     );
     assert_eq!(
-        dir.events("child"),
+        events(&dir, "child"),
         vec![scheme::EventTy::Started, scheme::EventTy::Success]
     );
 }
@@ -166,34 +155,34 @@ async fn cancellation_transition_is_strict_and_preserves_completion() {
 #[cfg(unix)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn cancelled_parent_does_not_launch_a_command() {
-    let dir = TestDir::new();
-    std::fs::write(dir.0.join("side-effect.sh"), "touch launched\n").unwrap();
-    let jobs = RtJobs::new(&dir.0).unwrap();
+    let dir = Files::new();
+    std::fs::write(dir.path().join("side-effect.sh"), "touch launched\n").unwrap();
+    let jobs = RtJobs::new(dir.path()).unwrap();
     let job = jobs
         .create("root", None, JobVisibility::Hidden)
         .await
         .unwrap();
     job.cancel().cancelling().await.unwrap();
     assert!(matches!(
-        SpawnerBuilder::new("/bin/sh side-effect.sh", &dir.0, job.clone()).await,
+        SpawnerBuilder::new("/bin/sh side-effect.sh", dir.path(), job.clone()).await,
         Err(E::Cancelled)
     ));
-    assert!(!dir.0.join("launched").exists());
+    assert!(!dir.path().join("launched").exists());
     job.cancel().cancelled::<String>(None).await.unwrap();
     jobs.destroy().await.unwrap();
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn empty_command_is_rejected_before_creating_a_job() {
-    let dir = TestDir::new();
-    let jobs = RtJobs::new(&dir.0).unwrap();
+    let dir = Files::new();
+    let jobs = RtJobs::new(dir.path()).unwrap();
     let parent = jobs
         .create("parent", None, JobVisibility::Hidden)
         .await
         .unwrap();
     parent.start().started(Some("parent")).await.unwrap();
     assert!(matches!(
-        SpawnerBuilder::new("   ", &dir.0, parent.clone()).await,
+        SpawnerBuilder::new("   ", dir.path(), parent.clone()).await,
         Err(E::SpawnEmptyCommand)
     ));
     parent
@@ -207,9 +196,9 @@ async fn empty_command_is_rejected_before_creating_a_job() {
 #[cfg(unix)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn stdin_is_closed_before_draining_stdout_and_stderr() {
-    let dir = TestDir::new();
+    let dir = Files::new();
     std::fs::write(
-        dir.0.join("stdin.sh"),
+        dir.path().join("stdin.sh"),
         "cat
 printf 'stdout\n'
 printf 'stderr\n' >&2
@@ -217,7 +206,7 @@ exit 7
 ",
     )
     .unwrap();
-    let jobs = RtJobs::new(&dir.0).unwrap();
+    let jobs = RtJobs::new(dir.path()).unwrap();
     let parent = jobs
         .create("parent", None, JobVisibility::Hidden)
         .await
@@ -225,7 +214,7 @@ exit 7
     parent.start().started(Some("parent")).await.unwrap();
     let result = tokio::time::timeout(
         Duration::from_secs(5),
-        SpawnerBuilder::new("/bin/sh stdin.sh", &dir.0, parent.clone())
+        SpawnerBuilder::new("/bin/sh stdin.sh", dir.path(), parent.clone())
             .await
             .unwrap()
             .spawn(),
@@ -241,7 +230,7 @@ exit 7
     parent.done().success::<String>(None).await.unwrap();
     jobs.destroy().await.unwrap();
     assert_eq!(
-        dir.events("/bin/sh"),
+        events(&dir, "/bin/sh"),
         vec![scheme::EventTy::Started, scheme::EventTy::Failed]
     );
 }
@@ -249,14 +238,16 @@ exit 7
 #[cfg(unix)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn shutdown_accepts_an_already_finished_process() {
-    let dir = TestDir::new();
-    let jobs = RtJobs::new(&dir.0).unwrap();
+    let dir = Files::new();
+    let jobs = RtJobs::new(dir.path()).unwrap();
     let job = jobs
         .create("process", None, JobVisibility::Hidden)
         .await
         .unwrap();
     job.start().started::<String>(None).await.unwrap();
-    let mut spawner = Spawn::default().cmd("/bin/true".into()).cwd(dir.0.clone());
+    let mut spawner = Spawn::default()
+        .cmd("/bin/true".into())
+        .cwd(dir.path().to_path_buf());
     assert!(matches!(
         spawner
             .spawn(

@@ -1,4 +1,4 @@
-use crate::tests::{analyze_globals, Files};
+use crate::tests::{analyze, analyze_globals, Files};
 use crate::*;
 use parser::{Parser, ReadNode, TryReadOneOf};
 
@@ -8,7 +8,7 @@ test_semantic_files!(
         "globals.sibs" => "const later: num = 2; const base: num = later; global count: num = base + 1;",
     },
     |files| {
-        let scx = files.analyze("globals from \"globals.sibs\";").unwrap();
+        let scx = analyze(&files, "globals from \"globals.sibs\";").unwrap();
         assert_eq!(
             scx.globals.lookup("count").unwrap().binding.ty(),
             Some(&DeterminedTy::Num.into())
@@ -39,7 +39,7 @@ test_semantic_files!(invalid_initializers_are_rejected, files = {}, |files| {
     ] {
         files.write("globals.sibs", source);
         assert!(
-            files.analyze("globals from \"globals.sibs\";").is_err(),
+            analyze(&files, "globals from \"globals.sibs\";").is_err(),
             "{source}"
         );
     }
@@ -53,7 +53,7 @@ test_semantic_files!(
         "component.sibs" => "component other() { task run() { count = 2; count; } };",
     },
     |files| {
-        let scx = files.analyze("globals from \"vars.sibs\"; mod from \"math.sibs\"; include from \"component.sibs\"; component c() { task run() { let f = |unused: num| { count; }; count += 1; count; } };").unwrap();
+        let scx = analyze(&files, "globals from \"vars.sibs\"; mod from \"math.sibs\"; include from \"component.sibs\"; component c() { task run() { let f = |unused: num| { count; }; count += 1; count; } };").unwrap();
         assert_eq!(scx.globals.iter().count(), 2);
     }
 );
@@ -72,13 +72,13 @@ test_semantic_files!(
         ] {
             let source =
                 format!("globals from \"vars.sibs\"; component c() {{ task run() {{ {body} }} }};");
-            assert!(files.analyze(&source).is_err(), "{body}");
+            assert!(analyze(&files, &source).is_err(), "{body}");
         }
         for source in [
             "globals from \"vars.sibs\"; mod m { fn f(count: num) { count; } };",
             "globals from \"vars.sibs\"; component c() { task run(count: num) { count; } };",
         ] {
-            assert!(files.analyze(source).is_err(), "{source}");
+            assert!(analyze(&files, source).is_err(), "{source}");
         }
     }
 );
@@ -89,13 +89,13 @@ test_semantic_cases!(
         let files = Files::new();
         files.write("vars.envs", &format!("{keyword} SIBS_TEST_UNSET_ENV_51CBDE;"));
         files.write("vars.sibs", "const label: str = SIBS_TEST_UNSET_ENV_51CBDE;");
-        let scx = files.analyze("envs from \"vars.envs\"; globals from \"vars.sibs\"; component c() { task run() { label; } };").unwrap();
+        let scx = analyze(&files, "envs from \"vars.envs\"; globals from \"vars.sibs\"; component c() { task run() { label; } };").unwrap();
         let symbol = scx.globals.lookup("SIBS_TEST_UNSET_ENV_51CBDE").unwrap();
         assert_eq!(symbol.kind, GlobalKind::Environment);
         assert_eq!(symbol.binding.ty(), Some(&DeterminedTy::Str.into()));
         for operator in ["=", "+="] {
             let source = format!("envs from \"vars.envs\"; component c() {{ task run() {{ SIBS_TEST_UNSET_ENV_51CBDE {operator} \"x\"; }} }};");
-            let error = files.analyze(&source).unwrap_err();
+            let error = analyze(&files, &source).unwrap_err();
             assert!(matches!(error.e, E::ImmutableGlobal(_)));
         }
     },
@@ -110,21 +110,18 @@ test_semantic_files!(
         "other.sibs" => "const base: num = 2;",
     },
     |files| {
-        let scx = files
-            .analyze(
+        let scx = analyze(&files,
                 "globals from \"vars.sibs\"; mod m { globals from \"./vars.sibs\"; fn f() { base; } };",
             )
             .unwrap();
         assert_eq!(scx.globals.iter().count(), 1);
-        assert!(files
-            .analyze("globals from \"vars.sibs\"; globals from \"other.sibs\";")
+        assert!(analyze(&files, "globals from \"vars.sibs\"; globals from \"other.sibs\";")
             .is_err());
         files.write("vars.envs", "required base;");
-        assert!(files
-            .analyze("globals from \"vars.sibs\"; envs from \"vars.envs\";")
+        assert!(analyze(&files, "globals from \"vars.sibs\"; envs from \"vars.envs\";")
             .is_err());
         files.write("vars.envs", "required ENV_A; optional ENV_A;");
-        assert!(files.analyze("envs from \"vars.envs\";").is_err());
+        assert!(analyze(&files, "envs from \"vars.envs\";").is_err());
     }
 );
 
@@ -135,8 +132,7 @@ test_semantic_files!(
         "b.sibs" => "const second: num = first;",
     },
     |files| {
-        let error = files
-            .analyze("globals from \"a.sibs\"; globals from \"b.sibs\";")
+        let error = analyze(&files, "globals from \"a.sibs\"; globals from \"b.sibs\";")
             .unwrap_err();
         assert!(matches!(error.e, E::VariableIsNotDefined(name) if name == "second"));
     }
@@ -204,7 +200,7 @@ test_semantic_files!(
         "globals.sibs" => "const self_ref: num = self_ref;",
     },
     |files| {
-        let error = files.analyze("globals from \"globals.sibs\";").unwrap_err();
+        let error = analyze(&files, "globals from \"globals.sibs\";").unwrap_err();
         assert!(matches!(error.e, E::VariableIsNotDefined(name) if name == "self_ref"));
     }
 );
@@ -215,9 +211,8 @@ test_semantic_files!(
         "vars.sibs" => "global count: num = 0;",
     },
     |files| {
-        assert!(files.analyze("globals from \"vars.sibs\"; component c() { task run() { count = 1; count = \"wrong\"; } };").is_err());
-        assert!(files
-            .analyze(
+        assert!(analyze(&files, "globals from \"vars.sibs\"; component c() { task run() { count = 1; count = \"wrong\"; } };").is_err());
+        assert!(analyze(&files,
                 "globals from \"vars.sibs\"; component c() { task run() { let wrong = \"wrong\"; count += wrong; } };"
             )
             .is_err());
@@ -232,8 +227,7 @@ test_semantic_files!(
         "right.sibs" => "globals from \"./vars.sibs\"; fn get() { base; };",
     },
     |files| {
-        let scx = files
-            .analyze("mod from \"left.sibs\"; mod from \"right.sibs\";")
+        let scx = analyze(&files, "mod from \"left.sibs\"; mod from \"right.sibs\";")
             .unwrap();
         assert_eq!(scx.globals.iter().count(), 1);
     }
@@ -270,16 +264,16 @@ test_semantic_files!(
     module_dependencies_are_relative_to_the_canonical_source,
     files = {},
     |files| {
-        std::fs::create_dir(files.0.join("physical")).unwrap();
-        std::fs::create_dir(files.0.join("logical")).unwrap();
+        std::fs::create_dir(files.path().join("physical")).unwrap();
+        std::fs::create_dir(files.path().join("logical")).unwrap();
         files.write("physical/values.sibs", "const physical: num = 1;");
         files.write("logical/values.sibs", "const logical: num = 1;");
         let module = files.write(
             "physical/library.sibs",
             "globals from \"values.sibs\"; fn get() { physical; };",
         );
-        std::os::unix::fs::symlink(module, files.0.join("logical/library.sibs")).unwrap();
-        let scx = files.analyze("mod from \"logical/library.sibs\";").unwrap();
+        std::os::unix::fs::symlink(module, files.path().join("logical/library.sibs")).unwrap();
+        let scx = analyze(&files, "mod from \"logical/library.sibs\";").unwrap();
         assert!(scx.globals.lookup("physical").is_some());
         assert!(scx.globals.lookup("logical").is_none());
     }
@@ -309,7 +303,7 @@ test_semantic_cases!(
         let files = Files::new();
         files.write("values.sibs", &format!("{keyword} value: num = 0;"));
         let source = format!("globals from \"values.sibs\"; component c() {{ task run() {{ value {operator} 7; }} }};");
-        let result = files.analyze(&source);
+        let result = analyze(&files, &source);
         if mutable {
             assert!(result.is_ok(), "{result:?}");
         } else {
@@ -379,7 +373,7 @@ test_semantic_cases!(
         let source = names.iter().map(|name| format!("{keyword} {name};")).collect::<String>();
         let files = Files::new();
         files.write("envs.sibs", &source);
-        let scx = files.analyze("envs from \"envs.sibs\";").unwrap();
+        let scx = analyze(&files, "envs from \"envs.sibs\";").unwrap();
         assert_eq!(scx.globals.iter().count(), names.len());
         for name in names {
             let symbol = scx.globals.lookup(name).unwrap();
@@ -423,9 +417,9 @@ test_semantic_cases!(
         let files = Files::new();
         files.write("first.envs", &format!("{first} ENV_NAME;"));
         files.write("second.envs", &format!("{second} ENV_NAME;"));
-        assert!(files.analyze("envs from \"first.envs\"; envs from \"second.envs\";").is_err());
+        assert!(analyze(&files, "envs from \"first.envs\"; envs from \"second.envs\";").is_err());
         files.write("first.envs", &format!("{first} ENV_NAME; {second} ENV_NAME;"));
-        assert!(files.analyze("envs from \"first.envs\";").is_err());
+        assert!(analyze(&files, "envs from \"first.envs\";").is_err());
     },
     required_required => ("required", "required"),
     required_optional => ("required", "optional"),
@@ -442,7 +436,7 @@ test_semantic_cases!(
         let g = "globals from \"globals.sibs\";";
         let e = "envs from \"envs.sibs\";";
         let source = if env_first { format!("{e}{g}") } else { format!("{g}{e}") };
-        let result = files.analyze(&source);
+        let result = analyze(&files, &source);
         if env_first {
             assert!(result.is_ok(), "{result:?}");
         } else {
@@ -473,7 +467,7 @@ test_semantic_cases!(
                 let e = format!("envs from \"{prefix}values.envs\";");
                 source.push_str(&if env_first { format!("{e}{g}") } else { format!("{g}{e}") });
             }
-            let scx = files.analyze(&source).unwrap();
+            let scx = analyze(&files, &source).unwrap();
             assert_eq!(scx.globals.iter().count(), 2, "{source}");
             for name in ["label", "ENV_REPEAT"] {
                 let symbol = scx.globals.lookup(name).unwrap();
@@ -503,7 +497,7 @@ test_semantic_cases!(
             let next = if i + 1 < depth { format!("include from \"level{}.sibs\";", i + 1) } else { String::new() };
             files.write(&format!("level{i}.sibs"), &if globals_first { format!("{g}{next}") } else { format!("{next}{g}") });
         }
-        let result = files.analyze("include from \"level0.sibs\"; component c() { task run() { v0; } };");
+        let result = analyze(&files, "include from \"level0.sibs\"; component c() { task run() { v0; } };");
         if cycle || (globals_first && depth > 1) {
             assert!(matches!(result.unwrap_err().e, E::VariableIsNotDefined(_)));
         } else {
@@ -543,7 +537,7 @@ test_semantic_cases!(
         files.write("closure.sibs", "mod m { fn read() { let f = |unused: num| { value; }; } };");
         let import = "globals from \"values.sibs\";";
         let source = if import_first { format!("{import}{body}") } else { format!("{body}{import}") };
-        let result = files.analyze(&source);
+        let result = analyze(&files, &source);
         if import_first {
             assert!(result.is_ok(), "{result:?}");
         } else {

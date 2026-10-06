@@ -30,3 +30,4 @@ lexer = { path = "../lexer", features = ["proptests"] }
 asttree = { path = "../asttree", features = ["proptests"] }
 proptest.workspace = true
 paste.workspace = true
+test_utils = { path = "../tests/test_utils" }

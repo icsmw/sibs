@@ -1,3 +1,7 @@
+mod files;
+
+pub use files::Files;
+
 use rand::{distr::Alphanumeric, Rng};
 use std::env;
 

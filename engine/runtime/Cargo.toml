@@ -42,3 +42,6 @@ diagnostics = { path = "../diagnostics" }
 lexer       = { path = "../lexer" }
 common      = { path = "../common" }
 parser      = { path = "../parser" }
+
+[dev-dependencies]
+test_utils = { path = "../tests/test_utils" }
