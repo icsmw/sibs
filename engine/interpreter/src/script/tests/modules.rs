@@ -25,10 +25,10 @@ async fn repeated_imports_share_functions_scopes_and_closures() {
     files.write("right.sibs", "mod from \"shared.sibs\";");
     let mut ctx = prepare(&files, "mod from \"left.sibs\"; mod from \"right.sibs\"; component comp() { task run() { left::shared::run(5) + right::shared::run(6); } };");
     let anchor = ctx.get_anchor_inner().unwrap();
-    let left = anchor.nodes[0].extract::<ModuleDeclaration>().unwrap();
-    let right = anchor.nodes[1].extract::<ModuleDeclaration>().unwrap();
-    let shared_left = left.body.nodes[0].extract::<ModuleDeclaration>().unwrap();
-    let shared_right = right.body.nodes[0].extract::<ModuleDeclaration>().unwrap();
+    let left = anchor.nodes[0].extract::<ModuleImport>().unwrap();
+    let right = anchor.nodes[1].extract::<ModuleImport>().unwrap();
+    let shared_left = left.body.nodes[0].extract::<ModuleImport>().unwrap();
+    let shared_right = right.body.nodes[0].extract::<ModuleImport>().unwrap();
     assert_ne!(shared_left.uuid, shared_right.uuid);
     assert!(Arc::ptr_eq(&shared_left.body, &shared_right.body));
     let scx = ctx.get_semantic_cx().unwrap();
@@ -199,8 +199,8 @@ fn repeated_empty_imports_share_a_body_and_keep_import_identities() {
     files.write("empty.sibs", "");
     let ctx = prepare(&files, "mod from \"empty.sibs\"; mod from \"./empty.sibs\"; component comp() { task run() { true; } };");
     let anchor = ctx.get_anchor_inner().unwrap();
-    let first = anchor.nodes[0].extract::<ModuleDeclaration>().unwrap();
-    let second = anchor.nodes[1].extract::<ModuleDeclaration>().unwrap();
+    let first = anchor.nodes[0].extract::<ModuleImport>().unwrap();
+    let second = anchor.nodes[1].extract::<ModuleImport>().unwrap();
     assert_ne!(first.uuid, second.uuid);
     assert!(Arc::ptr_eq(&first.body, &second.body));
     assert!(first.body.nodes.is_empty());
@@ -241,8 +241,8 @@ fn symlink_imports_share_a_body_and_resolve_dependencies_from_its_directory() {
     std::os::unix::fs::symlink(library, files.path().join("alias.sibs")).unwrap();
     let ctx = prepare(&files, "mod from \"alias.sibs\"; mod from \"real/library.sibs\"; component comp() { task run() { alias::dependency::helper() + library::dependency::helper(); } };");
     let anchor = ctx.get_anchor_inner().unwrap();
-    let first = anchor.nodes[0].extract::<ModuleDeclaration>().unwrap();
-    let second = anchor.nodes[1].extract::<ModuleDeclaration>().unwrap();
+    let first = anchor.nodes[0].extract::<ModuleImport>().unwrap();
+    let second = anchor.nodes[1].extract::<ModuleImport>().unwrap();
     assert!(Arc::ptr_eq(&first.body, &second.body));
     assert_eq!(ctx.get_semantic_cx().unwrap().fns.ufns.get_funcs().len(), 1);
 }

@@ -1,12 +1,14 @@
 mod conflict;
 mod env_declaration;
+mod envs_import;
 mod global_declaration;
+mod globals_import;
 
 mod argument_declaration;
 mod closure_declaration;
 mod function_declaration;
 mod include_declaration;
-mod module_declaration;
+mod module_import;
 mod variable_declaration;
 mod variable_name;
 mod variable_type;
@@ -24,7 +26,9 @@ impl AsVec<DeclarationId> for DeclarationId {
 impl TryRead<Declaration, DeclarationId> for Declaration {
     fn try_read(parser: &Parser, id: DeclarationId) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         Ok(match id {
-            DeclarationId::ModuleDeclaration => ModuleDeclaration::read_as_linked(parser)?,
+            DeclarationId::GlobalsImport => GlobalsImport::read_as_linked(parser)?,
+            DeclarationId::EnvsImport => EnvsImport::read_as_linked(parser)?,
+            DeclarationId::ModuleImport => ModuleImport::read_as_linked(parser)?,
             DeclarationId::IncludeDeclaration => IncludeDeclaration::read_as_linked(parser)?,
             DeclarationId::FunctionDeclaration => FunctionDeclaration::read_as_linked(parser)?,
             DeclarationId::GlobalDeclaration => GlobalDeclaration::read_as_linked(parser)?,

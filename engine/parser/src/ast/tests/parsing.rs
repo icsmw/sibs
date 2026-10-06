@@ -98,7 +98,10 @@ macro_rules! test_import_reading {
                     let path = files.write("body.sibs", &content);
                     let source = format!("{} from {:?}", $keyword, path.to_string_lossy());
                     let parser = $crate::ast::tests::parser(&source);
-                    let node = $import::read_as_linked(&parser);
+                    let node = LinkedNode::try_read(
+                        &parser,
+                        NodeTarget::Declaration(&[DeclarationId::$import]),
+                    );
                     if let Err(err) = &node {
                         let diagnostics: diagnostics::Diagnostics<$crate::ParserError> = parser.try_into().expect("Parser diagnostics are available");
                         diagnostics.err(err, &mut std::io::stderr()).expect("Reporting error");

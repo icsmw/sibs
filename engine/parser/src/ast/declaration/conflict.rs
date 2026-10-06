@@ -3,7 +3,9 @@ use crate::*;
 impl ConflictResolver<DeclarationId> for DeclarationId {
     fn resolve_conflict(&self, id: &DeclarationId) -> DeclarationId {
         match self {
-            Self::ModuleDeclaration
+            Self::GlobalsImport
+            | Self::EnvsImport
+            | Self::ModuleImport
             | Self::IncludeDeclaration
             | Self::GlobalDeclaration
             | Self::EnvDeclaration

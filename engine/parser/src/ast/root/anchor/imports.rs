@@ -26,14 +26,16 @@ pub(super) fn validate(anchor: &Anchor) -> Result<(), LinkedErr<E>> {
         modules: &mut HashSet<Uuid>,
     ) -> Result<(), LinkedErr<E>> {
         let imported = match node.get_node() {
-            Node::Root(Root::GlobalsImport(n)) => {
+            Node::Declaration(Declaration::GlobalsImport(n)) => {
                 Some((*n.root.uuid(), FileKind::Globals, &n.node))
             }
-            Node::Root(Root::EnvsImport(n)) => Some((*n.root.uuid(), FileKind::Envs, &n.node)),
+            Node::Declaration(Declaration::EnvsImport(n)) => {
+                Some((*n.root.uuid(), FileKind::Envs, &n.node))
+            }
             Node::Declaration(Declaration::IncludeDeclaration(n)) => {
                 Some((*n.root.uuid(), FileKind::Working, &n.node))
             }
-            Node::Declaration(Declaration::ModuleDeclaration(n)) => {
+            Node::Declaration(Declaration::ModuleImport(n)) => {
                 Some((n.body.source, FileKind::Working, &n.node))
             }
             _ => None,
@@ -49,7 +51,7 @@ pub(super) fn validate(anchor: &Anchor) -> Result<(), LinkedErr<E>> {
                 }
             }
         }
-        if let Some(module) = node.extract::<ModuleDeclaration>() {
+        if let Some(module) = node.extract::<ModuleImport>() {
             if !modules.insert(module.body.source) {
                 return Ok(());
             }

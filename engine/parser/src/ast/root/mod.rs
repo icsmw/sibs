@@ -18,8 +18,6 @@ impl AsVec<RootId> for RootId {
 impl TryRead<Root, RootId> for Root {
     fn try_read(parser: &Parser, id: RootId) -> Result<Option<LinkedNode>, LinkedErr<E>> {
         Ok(match id {
-            RootId::GlobalsImport => GlobalsImport::read_as_linked(parser)?,
-            RootId::EnvsImport => EnvsImport::read_as_linked(parser)?,
             RootId::GlobalsModule => GlobalsModule::read_as_linked(parser)?,
             RootId::EnvsModule => EnvsModule::read_as_linked(parser)?,
             RootId::Anchor => Anchor::read_as_linked(parser)?,

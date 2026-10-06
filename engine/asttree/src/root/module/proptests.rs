@@ -24,8 +24,8 @@ impl Arbitrary for Module {
                             .prop_map(move |n| (n, deep + 1))
                             .prop_flat_map(LinkedNode::arbitrary_with)
                             .boxed(),
-                        ModuleDeclaration::arbitrary_with(deep + 1)
-                            .prop_map(Declaration::ModuleDeclaration)
+                        ModuleImport::arbitrary_with(deep + 1)
+                            .prop_map(Declaration::ModuleImport)
                             .prop_map(Node::Declaration)
                             .prop_map(move |n| (n, deep + 1))
                             .prop_flat_map(LinkedNode::arbitrary_with)
@@ -43,8 +43,8 @@ impl Arbitrary for Module {
                             .prop_map(move |n| (n, deep + 1))
                             .prop_flat_map(LinkedNode::arbitrary_with)
                             .boxed(),
-                        ModuleDeclaration::arbitrary_with(deep + 1)
-                            .prop_map(Declaration::ModuleDeclaration)
+                        ModuleImport::arbitrary_with(deep + 1)
+                            .prop_map(Declaration::ModuleImport)
                             .prop_map(Node::Declaration)
                             .prop_map(move |n| (n, deep + 1))
                             .prop_flat_map(LinkedNode::arbitrary_with)

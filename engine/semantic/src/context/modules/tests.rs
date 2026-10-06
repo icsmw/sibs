@@ -16,11 +16,11 @@ fn shared_body_analysis_is_local_to_the_context_and_does_not_repeat_finalization
     .unwrap();
     let node = LinkedNode::try_read(
         &parser,
-        NodeTarget::Declaration(&[DeclarationId::ModuleDeclaration]),
+        NodeTarget::Declaration(&[DeclarationId::ModuleImport]),
     )
     .unwrap()
     .unwrap();
-    let source = node.extract::<ModuleDeclaration>().unwrap().body.source;
+    let source = node.extract::<ModuleImport>().unwrap().body.source;
 
     // Both contexts analyze exactly the same AST and shared module body.
     for _ in 0..2 {

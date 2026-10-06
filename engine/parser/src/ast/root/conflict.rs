@@ -5,8 +5,6 @@ impl ConflictResolver<RootId> for RootId {
         match self {
             Self::Component
             | Self::Task
-            | Self::GlobalsImport
-            | Self::EnvsImport
             | Self::GlobalsModule
             | Self::EnvsModule
             | Self::Anchor

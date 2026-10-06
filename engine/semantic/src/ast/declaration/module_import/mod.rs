@@ -1,12 +1,12 @@
 use crate::*;
 
-impl InferType for ModuleDeclaration {
+impl InferType for ModuleImport {
     fn infer_type(&self, _scx: &mut SemanticCx) -> Result<Ty, LinkedErr<E>> {
         Ok(DeterminedTy::Void.into())
     }
 }
 
-impl Initialize for ModuleDeclaration {
+impl Initialize for ModuleImport {
     fn initialize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         scx.tys
             .open(&self.body.source)
@@ -30,7 +30,7 @@ impl Initialize for ModuleDeclaration {
     }
 }
 
-impl Finalization for ModuleDeclaration {
+impl Finalization for ModuleImport {
     fn finalize(&self, scx: &mut SemanticCx) -> Result<(), LinkedErr<E>> {
         if scx.modules.is_finalized(&self.body.source) {
             return Ok(());
@@ -75,7 +75,7 @@ fn expose_functions(nodes: &[LinkedNode], scx: &mut SemanticCx) -> Result<(), Li
                             LinkedErr::from(E::FnDeclarationError(err.to_string()), function)
                         })?;
                 }
-                Node::Declaration(Declaration::ModuleDeclaration(module)) => {
+                Node::Declaration(Declaration::ModuleImport(module)) => {
                     scx.fns.ufns.enter(&module.name);
                     let result = expose_functions(&module.body.nodes, scx);
                     scx.fns.ufns.leave();
@@ -105,7 +105,7 @@ fn expose_functions(nodes: &[LinkedNode], scx: &mut SemanticCx) -> Result<(), Li
     Ok(())
 }
 
-impl SemanticTokensGetter for ModuleDeclaration {
+impl SemanticTokensGetter for ModuleImport {
     fn get_semantic_tokens(&self, stcx: SemanticTokenContext) -> Vec<LinkedSemanticToken> {
         let mut tokens = vec![
             LinkedSemanticToken::from_token(&self.sig, SemanticToken::Keyword),

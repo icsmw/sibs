@@ -8,8 +8,10 @@ fn collect_imports<'a>(
     modules: &mut HashSet<Uuid>,
 ) {
     match node.get_node() {
-        Node::Root(Root::GlobalsImport(_) | Root::EnvsImport(_)) => imports.push(node),
-        Node::Declaration(Declaration::ModuleDeclaration(module)) => {
+        Node::Declaration(Declaration::GlobalsImport(_) | Declaration::EnvsImport(_)) => {
+            imports.push(node)
+        }
+        Node::Declaration(Declaration::ModuleImport(module)) => {
             if modules.insert(module.body.source) {
                 for child in &module.body.nodes {
                     collect_imports(child, imports, modules);

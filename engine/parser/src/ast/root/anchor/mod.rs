@@ -37,16 +37,12 @@ impl ReadNode<Anchor> for Anchor {
                 parser,
                 &[
                     NodeTarget::Declaration(&[
-                        DeclarationId::ModuleDeclaration,
+                        DeclarationId::ModuleImport,
+                        DeclarationId::GlobalsImport,
+                        DeclarationId::EnvsImport,
                         DeclarationId::IncludeDeclaration,
                     ]),
-                    NodeTarget::Root(&[
-                        RootId::Task,
-                        RootId::Component,
-                        RootId::Module,
-                        RootId::GlobalsImport,
-                        RootId::EnvsImport,
-                    ]),
+                    NodeTarget::Root(&[RootId::Task, RootId::Component, RootId::Module]),
                 ],
             )?
             else {

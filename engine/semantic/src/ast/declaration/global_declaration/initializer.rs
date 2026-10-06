@@ -74,7 +74,9 @@ pub(super) fn validate(node: &LinkedNode, globals: &Globals) -> Result<(), Linke
         )
         | Node::Declaration(
             Declaration::IncludeDeclaration(_)
-            | Declaration::ModuleDeclaration(_)
+            | Declaration::GlobalsImport(_)
+            | Declaration::EnvsImport(_)
+            | Declaration::ModuleImport(_)
             | Declaration::FunctionDeclaration(_)
             | Declaration::VariableDeclaration(_)
             | Declaration::GlobalDeclaration(_)
@@ -88,8 +90,6 @@ pub(super) fn validate(node: &LinkedNode, globals: &Globals) -> Result<(), Linke
         )
         | Node::Root(
             Root::Anchor(_)
-            | Root::GlobalsImport(_)
-            | Root::EnvsImport(_)
             | Root::GlobalsModule(_)
             | Root::EnvsModule(_)
             | Root::Module(_)

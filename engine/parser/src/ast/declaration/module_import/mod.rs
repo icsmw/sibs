@@ -6,13 +6,13 @@ mod tests;
 use crate::*;
 use std::sync::Arc;
 
-impl Interest for ModuleDeclaration {
+impl Interest for ModuleImport {
     fn intrested(token: &Token) -> bool {
         matches!(token.kind, Kind::Keyword(Keyword::Mod))
     }
 }
 
-impl GetFilename for ModuleDeclaration {
+impl GetFilename for ModuleImport {
     fn get_filename(&self) -> Result<PathBuf, E> {
         let Node::Value(Value::PrimitiveString(val)) = self.node.get_node() else {
             return Err(E::UnexpectedType(
@@ -24,8 +24,8 @@ impl GetFilename for ModuleDeclaration {
     }
 }
 
-impl ReadNode<ModuleDeclaration> for ModuleDeclaration {
-    fn read(parser: &Parser) -> Result<Option<ModuleDeclaration>, LinkedErr<E>> {
+impl ReadNode<ModuleImport> for ModuleImport {
+    fn read(parser: &Parser) -> Result<Option<ModuleImport>, LinkedErr<E>> {
         let Some(sig) = parser.token() else {
             return Ok(None);
         };
@@ -70,7 +70,7 @@ impl ReadNode<ModuleDeclaration> for ModuleDeclaration {
             }),
             String::from("test"),
         );
-        Ok(Some(ModuleDeclaration {
+        Ok(Some(ModuleImport {
             sig: sig.clone(),
             from: from.clone(),
             node: Box::new(filename_node),
@@ -116,9 +116,11 @@ fn read_nodes(inner: &Parser) -> Result<Vec<LinkedNode>, LinkedErr<E>> {
             &[
                 NodeTarget::Declaration(&[
                     DeclarationId::FunctionDeclaration,
-                    DeclarationId::ModuleDeclaration,
+                    DeclarationId::ModuleImport,
+                    DeclarationId::GlobalsImport,
+                    DeclarationId::EnvsImport,
                 ]),
-                NodeTarget::Root(&[RootId::Module, RootId::GlobalsImport, RootId::EnvsImport]),
+                NodeTarget::Root(&[RootId::Module]),
             ],
         )?
         else {

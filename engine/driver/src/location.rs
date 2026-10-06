@@ -67,7 +67,7 @@ impl Location {
                         return Err(E::TaskInsideFuncDeclaration(*node.uuid()));
                     }
                 }
-                Node::Declaration(Declaration::ModuleDeclaration(module)) => {
+                Node::Declaration(Declaration::ModuleImport(module)) => {
                     scope.get_or_insert(module.body.source);
                     mods.insert(0, module.name.clone());
                 }

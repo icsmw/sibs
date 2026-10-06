@@ -1,10 +1,12 @@
 mod argument_declaration;
 mod closure_declaration;
 mod env_declaration;
+mod envs_import;
 mod function_declaration;
 mod global_declaration;
+mod globals_import;
 mod include_declaration;
-mod module_declaration;
+mod module_import;
 mod variable_declaration;
 mod variable_name;
 mod variable_type;
@@ -14,10 +16,12 @@ mod variable_variants;
 pub use argument_declaration::*;
 pub use closure_declaration::*;
 pub use env_declaration::*;
+pub use envs_import::*;
 pub use function_declaration::*;
 pub use global_declaration::*;
+pub use globals_import::*;
 pub use include_declaration::*;
-pub use module_declaration::*;
+pub use module_import::*;
 pub use variable_declaration::*;
 pub use variable_name::*;
 pub use variable_type::*;
@@ -29,10 +33,14 @@ use crate::*;
 #[enum_ids::enum_ids(derive = "Debug, PartialEq, Clone", display, display_from_value)]
 #[derive(Debug, Clone)]
 pub enum Declaration {
+    /// Import global declarations from a separate file.
+    GlobalsImport(GlobalsImport),
+    /// Import a manifest of environment variable names.
+    EnvsImport(EnvsImport),
     /// include "path_to_scenario"
     IncludeDeclaration(IncludeDeclaration),
-    /// mod "path_to_module"
-    ModuleDeclaration(ModuleDeclaration),
+    /// mod from "path_to_module"
+    ModuleImport(ModuleImport),
     /// fn name() { ... }; fn name(a, b) { ... }; etc.
     FunctionDeclaration(FunctionDeclaration),
     /// let a = 5; etc.
@@ -59,7 +67,9 @@ impl Identification for Declaration {
     fn uuid(&self) -> &Uuid {
         match self {
             Self::IncludeDeclaration(n) => &n.uuid,
-            Self::ModuleDeclaration(n) => &n.uuid,
+            Self::GlobalsImport(n) => &n.uuid,
+            Self::EnvsImport(n) => &n.uuid,
+            Self::ModuleImport(n) => &n.uuid,
             Self::ArgumentDeclaration(n) => &n.uuid,
             Self::FunctionDeclaration(n) => &n.uuid,
             Self::GlobalDeclaration(n) => &n.uuid,
@@ -75,7 +85,9 @@ impl Identification for Declaration {
     fn ident(&self) -> String {
         match self {
             Self::IncludeDeclaration(..) => DeclarationId::IncludeDeclaration.to_string(),
-            Self::ModuleDeclaration(..) => DeclarationId::ModuleDeclaration.to_string(),
+            Self::GlobalsImport(..) => DeclarationId::GlobalsImport.to_string(),
+            Self::EnvsImport(..) => DeclarationId::EnvsImport.to_string(),
+            Self::ModuleImport(..) => DeclarationId::ModuleImport.to_string(),
             Self::ArgumentDeclaration(..) => DeclarationId::ArgumentDeclaration.to_string(),
             Self::FunctionDeclaration(..) => DeclarationId::FunctionDeclaration.to_string(),
             Self::GlobalDeclaration(..) => DeclarationId::GlobalDeclaration.to_string(),
@@ -94,7 +106,9 @@ impl Diagnostic for Declaration {
     fn located(&self, src: &Uuid, pos: usize) -> bool {
         match self {
             Self::IncludeDeclaration(n) => n.located(src, pos),
-            Self::ModuleDeclaration(n) => n.located(src, pos),
+            Self::GlobalsImport(n) => n.located(src, pos),
+            Self::EnvsImport(n) => n.located(src, pos),
+            Self::ModuleImport(n) => n.located(src, pos),
             Self::ArgumentDeclaration(n) => n.located(src, pos),
             Self::FunctionDeclaration(n) => n.located(src, pos),
             Self::GlobalDeclaration(n) => n.located(src, pos),
@@ -110,7 +124,9 @@ impl Diagnostic for Declaration {
     fn get_position(&self) -> Position {
         match self {
             Self::IncludeDeclaration(n) => n.get_position(),
-            Self::ModuleDeclaration(n) => n.get_position(),
+            Self::GlobalsImport(n) => n.get_position(),
+            Self::EnvsImport(n) => n.get_position(),
+            Self::ModuleImport(n) => n.get_position(),
             Self::ArgumentDeclaration(n) => n.get_position(),
             Self::FunctionDeclaration(n) => n.get_position(),
             Self::GlobalDeclaration(n) => n.get_position(),
@@ -126,7 +142,9 @@ impl Diagnostic for Declaration {
     fn childs(&self) -> Vec<&LinkedNode> {
         match self {
             Self::IncludeDeclaration(n) => n.childs(),
-            Self::ModuleDeclaration(n) => n.childs(),
+            Self::GlobalsImport(n) => n.childs(),
+            Self::EnvsImport(n) => n.childs(),
+            Self::ModuleImport(n) => n.childs(),
             Self::ArgumentDeclaration(n) => n.childs(),
             Self::FunctionDeclaration(n) => n.childs(),
             Self::GlobalDeclaration(n) => n.childs(),
@@ -151,7 +169,9 @@ impl<'a> Lookup<'a> for Declaration {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         match self {
             Self::IncludeDeclaration(n) => n.lookup(trgs),
-            Self::ModuleDeclaration(n) => n.lookup(trgs),
+            Self::GlobalsImport(n) => n.lookup(trgs),
+            Self::EnvsImport(n) => n.lookup(trgs),
+            Self::ModuleImport(n) => n.lookup(trgs),
             Self::ArgumentDeclaration(n) => n.lookup(trgs),
             Self::FunctionDeclaration(n) => n.lookup(trgs),
             Self::GlobalDeclaration(n) => n.lookup(trgs),
@@ -170,7 +190,9 @@ impl FindMutByUuid for Declaration {
     fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
         match self {
             Self::IncludeDeclaration(n) => n.find_mut_by_uuid(uuid),
-            Self::ModuleDeclaration(n) => n.find_mut_by_uuid(uuid),
+            Self::GlobalsImport(n) => n.find_mut_by_uuid(uuid),
+            Self::EnvsImport(n) => n.find_mut_by_uuid(uuid),
+            Self::ModuleImport(n) => n.find_mut_by_uuid(uuid),
             Self::ArgumentDeclaration(n) => n.find_mut_by_uuid(uuid),
             Self::FunctionDeclaration(n) => n.find_mut_by_uuid(uuid),
             Self::GlobalDeclaration(n) => n.find_mut_by_uuid(uuid),
@@ -189,7 +211,9 @@ impl SrcLinking for Declaration {
     fn link(&self) -> SrcLink {
         match self {
             Self::IncludeDeclaration(n) => n.link(),
-            Self::ModuleDeclaration(n) => n.link(),
+            Self::GlobalsImport(n) => n.link(),
+            Self::EnvsImport(n) => n.link(),
+            Self::ModuleImport(n) => n.link(),
             Self::ArgumentDeclaration(n) => n.link(),
             Self::FunctionDeclaration(n) => n.link(),
             Self::GlobalDeclaration(n) => n.link(),

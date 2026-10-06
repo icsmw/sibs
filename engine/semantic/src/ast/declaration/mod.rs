@@ -1,10 +1,12 @@
 mod argument_declaration;
 mod closure_declaration;
 mod env_declaration;
+mod envs_import;
 mod function_declaration;
 mod global_declaration;
+mod globals_import;
 mod include_declaration;
-mod module_declaration;
+mod module_import;
 mod variable_declaration;
 mod variable_name;
 mod variable_type;
@@ -25,7 +27,9 @@ impl InferType for Declaration {
             Declaration::VariableTypeDeclaration(n) => n.infer_type(scx),
             Declaration::VariableVariants(n) => n.infer_type(scx),
             Declaration::VariableName(n) => n.infer_type(scx),
-            Declaration::ModuleDeclaration(n) => n.infer_type(scx),
+            Declaration::GlobalsImport(n) => n.infer_type(scx),
+            Declaration::EnvsImport(n) => n.infer_type(scx),
+            Declaration::ModuleImport(n) => n.infer_type(scx),
             Declaration::IncludeDeclaration(n) => n.infer_type(scx),
             Declaration::ClosureDeclaration(n) => n.infer_type(scx),
         }
@@ -44,7 +48,9 @@ impl Initialize for Declaration {
             Declaration::VariableTypeDeclaration(n) => n.initialize(scx),
             Declaration::VariableVariants(n) => n.initialize(scx),
             Declaration::VariableName(n) => n.initialize(scx),
-            Declaration::ModuleDeclaration(n) => n.initialize(scx),
+            Declaration::GlobalsImport(n) => n.initialize(scx),
+            Declaration::EnvsImport(n) => n.initialize(scx),
+            Declaration::ModuleImport(n) => n.initialize(scx),
             Declaration::IncludeDeclaration(n) => n.initialize(scx),
             Declaration::ClosureDeclaration(n) => n.initialize(scx),
         }
@@ -63,7 +69,9 @@ impl Finalization for Declaration {
             Declaration::VariableTypeDeclaration(n) => n.finalize(scx),
             Declaration::VariableVariants(n) => n.finalize(scx),
             Declaration::VariableName(n) => n.finalize(scx),
-            Declaration::ModuleDeclaration(n) => n.finalize(scx),
+            Declaration::GlobalsImport(n) => n.finalize(scx),
+            Declaration::EnvsImport(n) => n.finalize(scx),
+            Declaration::ModuleImport(n) => n.finalize(scx),
             Declaration::IncludeDeclaration(n) => n.finalize(scx),
             Declaration::ClosureDeclaration(n) => n.finalize(scx),
         }
@@ -82,7 +90,9 @@ impl SemanticTokensGetter for Declaration {
             Declaration::VariableTypeDeclaration(n) => n.get_semantic_tokens(stcx),
             Declaration::VariableVariants(n) => n.get_semantic_tokens(stcx),
             Declaration::VariableName(n) => n.get_semantic_tokens(stcx),
-            Declaration::ModuleDeclaration(n) => n.get_semantic_tokens(stcx),
+            Declaration::GlobalsImport(n) => n.get_semantic_tokens(stcx),
+            Declaration::EnvsImport(n) => n.get_semantic_tokens(stcx),
+            Declaration::ModuleImport(n) => n.get_semantic_tokens(stcx),
             Declaration::IncludeDeclaration(n) => n.get_semantic_tokens(stcx),
             Declaration::ClosureDeclaration(n) => n.get_semantic_tokens(stcx),
         }

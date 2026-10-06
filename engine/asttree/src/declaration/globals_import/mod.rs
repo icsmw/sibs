@@ -5,7 +5,7 @@ use crate::*;
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub struct EnvsImport {
+pub struct GlobalsImport {
     pub sig: Token,
     pub from: Token,
     pub node: Box<LinkedNode>,
@@ -13,7 +13,7 @@ pub struct EnvsImport {
     pub uuid: Uuid,
 }
 
-impl Diagnostic for EnvsImport {
+impl Diagnostic for GlobalsImport {
     fn located(&self, src: &Uuid, pos: usize) -> bool {
         if !self.sig.belongs(src) {
             false
@@ -29,7 +29,7 @@ impl Diagnostic for EnvsImport {
     }
 }
 
-impl<'a> Lookup<'a> for EnvsImport {
+impl<'a> Lookup<'a> for GlobalsImport {
     fn lookup(&'a self, trgs: &[NodeTarget]) -> Vec<FoundNode<'a>> {
         self.node
             .lookup_inner(self.uuid, trgs)
@@ -39,7 +39,7 @@ impl<'a> Lookup<'a> for EnvsImport {
     }
 }
 
-impl FindMutByUuid for EnvsImport {
+impl FindMutByUuid for GlobalsImport {
     fn find_mut_by_uuid(&mut self, uuid: &Uuid) -> Option<&mut LinkedNode> {
         self.node
             .find_mut_by_uuid(uuid)
@@ -47,7 +47,7 @@ impl FindMutByUuid for EnvsImport {
     }
 }
 
-impl SrcLinking for EnvsImport {
+impl SrcLinking for GlobalsImport {
     fn link(&self) -> SrcLink {
         src_from::tk_and_node(&self.sig, &self.node)
     }
@@ -56,28 +56,28 @@ impl SrcLinking for EnvsImport {
     }
 }
 
-impl fmt::Display for EnvsImport {
+impl fmt::Display for GlobalsImport {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} {} {}", self.sig, self.from, self.node)
     }
 }
 
-impl From<EnvsImport> for Node {
-    fn from(val: EnvsImport) -> Self {
-        Node::Root(Root::EnvsImport(val))
+impl From<GlobalsImport> for Node {
+    fn from(val: GlobalsImport) -> Self {
+        Node::Declaration(Declaration::GlobalsImport(val))
     }
 }
 
-impl Extract for EnvsImport {
+impl Extract for GlobalsImport {
     fn extract(node: &Node) -> Option<&Self> {
-        match Root::extract(node)? {
-            Root::EnvsImport(node) => Some(node),
+        match Declaration::extract(node)? {
+            Declaration::GlobalsImport(node) => Some(node),
             _ => None,
         }
     }
 }
 
-impl MetadataContent for EnvsImport {
+impl MetadataContent for GlobalsImport {
     fn md_includes() -> &'static [MiscellaneousId] {
         &[MiscellaneousId::Meta, MiscellaneousId::Comment]
     }

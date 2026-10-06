@@ -5,9 +5,7 @@ impl NodeJobVisibility for LinkedNode {
         match self.get_node() {
             Node::Root(node) => match node {
                 Root::Component(..) | Root::Task(..) => JobVisibility::Visible,
-                Root::GlobalsImport(..)
-                | Root::EnvsImport(..)
-                | Root::GlobalsModule(..)
+                Root::GlobalsModule(..)
                 | Root::EnvsModule(..)
                 | Root::Anchor(..)
                 | Root::Module(..) => JobVisibility::Hidden,
@@ -57,7 +55,9 @@ impl NodeJobVisibility for LinkedNode {
                 Declaration::GlobalDeclaration(..)
                 | Declaration::EnvDeclaration(..)
                 | Declaration::IncludeDeclaration(..)
-                | Declaration::ModuleDeclaration(..)
+                | Declaration::GlobalsImport(..)
+                | Declaration::EnvsImport(..)
+                | Declaration::ModuleImport(..)
                 | Declaration::FunctionDeclaration(..)
                 | Declaration::VariableDeclaration(..)
                 | Declaration::ArgumentDeclaration(..)
@@ -92,9 +92,7 @@ impl NodeJobName for LinkedNode {
             Node::Root(inner) => match inner {
                 Root::Component(component) => component.get_name(),
                 Root::Task(task) => task.get_name(),
-                Root::GlobalsImport(..)
-                | Root::EnvsImport(..)
-                | Root::GlobalsModule(..)
+                Root::GlobalsModule(..)
                 | Root::EnvsModule(..)
                 | Root::Anchor(..)
                 | Root::Module(..) => node.id().to_string(),
@@ -144,7 +142,9 @@ impl NodeJobName for LinkedNode {
                 Declaration::GlobalDeclaration(..)
                 | Declaration::EnvDeclaration(..)
                 | Declaration::IncludeDeclaration(..)
-                | Declaration::ModuleDeclaration(..)
+                | Declaration::GlobalsImport(..)
+                | Declaration::EnvsImport(..)
+                | Declaration::ModuleImport(..)
                 | Declaration::FunctionDeclaration(..)
                 | Declaration::VariableDeclaration(..)
                 | Declaration::ArgumentDeclaration(..)

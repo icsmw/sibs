@@ -1,10 +1,12 @@
 mod argument_declaration;
 mod closure_declaration;
 mod env_declaration;
+mod envs_import;
 mod function_declaration;
 mod global_declaration;
+mod globals_import;
 mod include_declaration;
-mod module_declaration;
+mod module_import;
 mod variable_declaration;
 mod variable_name;
 mod variable_type;
@@ -26,7 +28,9 @@ impl Interpret for Declaration {
             Declaration::VariableTypeDeclaration(n) => n.interpret(env),
             Declaration::VariableVariants(n) => n.interpret(env),
             Declaration::VariableName(n) => n.interpret(env),
-            Declaration::ModuleDeclaration(n) => n.interpret(env),
+            Declaration::GlobalsImport(n) => n.interpret(env),
+            Declaration::EnvsImport(n) => n.interpret(env),
+            Declaration::ModuleImport(n) => n.interpret(env),
             Declaration::IncludeDeclaration(n) => n.interpret(env),
         }
     }

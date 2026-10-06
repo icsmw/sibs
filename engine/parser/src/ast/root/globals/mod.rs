@@ -1,2 +1,56 @@
-mod import;
-mod module;
+#[cfg(test)]
+mod proptests;
+#[cfg(test)]
+mod tests;
+
+use crate::*;
+
+impl Interest for GlobalsModule {
+    fn intrested(_token: &Token) -> bool {
+        true
+    }
+}
+
+impl ReadNode<GlobalsModule> for GlobalsModule {
+    fn read_as_linked(parser: &Parser) -> Result<Option<LinkedNode>, LinkedErr<E>> {
+        let bindings = BindingScope::new(parser.bindings.clone());
+        let Some(inner) = Self::read(parser)? else {
+            return Ok(None);
+        };
+        let link = inner.link();
+        let mut node = LinkedNode::from_node(inner.into());
+        node.get_mut_md().link = link;
+        bindings.commit();
+        Ok(Some(node))
+    }
+
+    fn read(parser: &Parser) -> Result<Option<GlobalsModule>, LinkedErr<E>> {
+        let mut nodes = Vec::new();
+        while !parser.is_done() {
+            if let Some(comment) = LinkedNode::try_read(
+                parser,
+                NodeTarget::Miscellaneous(&[MiscellaneousId::Comment]),
+            )? {
+                nodes.push(comment);
+                continue;
+            }
+            let node = LinkedNode::try_read(
+                parser,
+                NodeTarget::Declaration(&[DeclarationId::GlobalDeclaration]),
+            )?
+            .ok_or_else(|| E::UnrecognizedCode(parser.to_string()).link_until_end(parser))?;
+            if !node.get_md().ppm.is_empty() {
+                return Err(E::UnrecognizedCode(node.to_string()).link(&node));
+            }
+            if !parser.is_next(KindId::Semicolon) {
+                return Err(E::MissedSemicolon.link(&node));
+            }
+            let _ = parser.token();
+            nodes.push(node);
+        }
+        Ok(Some(GlobalsModule {
+            nodes,
+            uuid: parser.src(),
+        }))
+    }
+}

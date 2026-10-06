@@ -15,8 +15,8 @@ impl Arbitrary for Anchor {
                     .prop_map(move |n| (n, deep + 1))
                     .prop_flat_map(LinkedNode::arbitrary_with)
                     .boxed(),
-                ModuleDeclaration::arbitrary()
-                    .prop_map(Declaration::ModuleDeclaration)
+                ModuleImport::arbitrary()
+                    .prop_map(Declaration::ModuleImport)
                     .prop_map(Node::Declaration)
                     .prop_map(move |n| (n, deep + 1))
                     .prop_flat_map(LinkedNode::arbitrary_with)
