@@ -2,9 +2,8 @@ mod efns;
 mod macros;
 
 mod cancellation;
-mod panics;
-
 mod globals;
+mod panics;
 
 // Change only the child process environment; tests in this process remain independent.
 pub(crate) fn run_with_environment(

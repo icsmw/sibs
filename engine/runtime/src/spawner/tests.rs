@@ -58,11 +58,7 @@ async fn setup_failure_finishes_the_job() {
 async fn inherited_cancellation_finishes_the_process_job() {
     use tokio::time::{sleep, timeout, Duration};
     let dir = Files::new();
-    std::fs::write(
-        dir.path().join("wait.sh"),
-        "printf ready > ready\nexec sleep 60\n",
-    )
-    .unwrap();
+    dir.write("wait.sh", "printf ready > ready\nexec sleep 60\n");
     let jobs = RtJobs::new(dir.path()).unwrap();
     let job = jobs
         .create("root", None, JobVisibility::Visible)
@@ -156,7 +152,7 @@ async fn cancellation_transition_is_strict_and_preserves_completion() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn cancelled_parent_does_not_launch_a_command() {
     let dir = Files::new();
-    std::fs::write(dir.path().join("side-effect.sh"), "touch launched\n").unwrap();
+    dir.write("side-effect.sh", "touch launched\n");
     let jobs = RtJobs::new(dir.path()).unwrap();
     let job = jobs
         .create("root", None, JobVisibility::Hidden)
@@ -197,15 +193,14 @@ async fn empty_command_is_rejected_before_creating_a_job() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn stdin_is_closed_before_draining_stdout_and_stderr() {
     let dir = Files::new();
-    std::fs::write(
-        dir.path().join("stdin.sh"),
+    dir.write(
+        "stdin.sh",
         "cat
 printf 'stdout\n'
 printf 'stderr\n' >&2
 exit 7
 ",
-    )
-    .unwrap();
+    );
     let jobs = RtJobs::new(dir.path()).unwrap();
     let parent = jobs
         .create("parent", None, JobVisibility::Hidden)
