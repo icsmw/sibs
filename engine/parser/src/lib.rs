@@ -10,6 +10,7 @@ mod modules;
 mod nodes;
 mod paths;
 mod read;
+mod tokens;
 
 use conflict::*;
 use interest::*;
@@ -17,6 +18,7 @@ use modules::*;
 pub use nodes::*;
 use paths::*;
 pub use read::*;
+use tokens::RcTokenStore;
 
 use asttree::*;
 use bindings::*;
@@ -32,7 +34,8 @@ use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct Parser {
-    pub tokens: Rc<RefCell<Vec<Token>>>,
+    pub tokens: Rc<RefCell<Tokens>>,
+    token_store: Rc<RefCell<RcTokenStore>>,
     source: CodeSourceContext,
     filename: Option<PathBuf>,
     cwd: Option<PathBuf>,
@@ -55,8 +58,11 @@ impl Parser {
         resilience: bool,
     ) -> Self {
         let end = tokens.len().saturating_sub(1);
+        let tokens = Rc::new(RefCell::new(Tokens::with(tokens)));
+        let token_store = RcTokenStore::new(*src, tokens.clone());
         Self {
-            tokens: Rc::new(RefCell::new(tokens)),
+            tokens,
+            token_store: Rc::new(RefCell::new(token_store)),
             pos: Cell::new(0),
             source: CodeSourceContext::new(*src),
             filename: None,
@@ -76,8 +82,11 @@ impl Parser {
         let source = srcs.enter_file(&filename, None)?;
         let (_, _, tokens, _) = BoundLexer::new(&filename, source.source)?.inner();
         let end = tokens.len().saturating_sub(1);
+        let tokens = Rc::new(RefCell::new(Tokens::with(tokens)));
+        let token_store = RcTokenStore::new(source.source, tokens.clone());
         Ok(Self {
-            tokens: Rc::new(RefCell::new(tokens)),
+            tokens,
+            token_store: Rc::new(RefCell::new(token_store)),
             pos: Cell::new(0),
             source,
             filename: Some(filename.clone()),
@@ -97,8 +106,13 @@ impl Parser {
         let source = self.source_for_file(&filename)?;
         let (_, _, tokens, _) = BoundLexer::new(&filename, source.source)?.inner();
         let end = tokens.len().saturating_sub(1);
+        let tokens = Rc::new(RefCell::new(Tokens::with(tokens)));
+        self.token_store
+            .borrow_mut()
+            .register(source.source, tokens.clone());
         Ok(Self {
-            tokens: Rc::new(RefCell::new(tokens)),
+            tokens,
+            token_store: self.token_store.clone(),
             pos: Cell::new(0),
             source,
             filename: Some(filename.clone()),
@@ -190,6 +204,7 @@ impl Parser {
     fn inherit(&self, from: usize, to: usize) -> Self {
         Self {
             tokens: self.tokens.clone(),
+            token_store: self.token_store.clone(),
             pos: Cell::new(from),
             source: self.source.clone(),
             filename: self.filename.clone(),
@@ -198,65 +213,44 @@ impl Parser {
             errs: self.errs.clone(),
             bindings: self.bindings.clone(),
             cwd: self.cwd.clone(),
-            end: to.min(self.tokens.borrow().len() - 1),
+            end: to.min(self.tokens.borrow().count().saturating_sub(1)),
             resilience: self.resilience,
         }
     }
 
     fn next_token_pos(&self) -> Option<usize> {
-        let mut pos = self.pos();
-        while let Some(tk) = self.tokens.borrow().get(pos) {
-            if pos > self.end {
-                return None;
-            }
-            if !matches!(
-                tk.id(),
-                KindId::Whitespace
-                    | KindId::BOF
-                    | KindId::EOF
-                    | KindId::LF
-                    | KindId::CR
-                    | KindId::CRLF
-            ) {
-                return Some(pos);
-            }
-            pos += 1;
-        }
-        None
+        self.tokens.borrow().next_token_pos(self.pos(), self.end)
     }
 
     fn token(&self) -> Option<Ref<'_, Token>> {
         let pos = self.next_token_pos()?;
         self.pos.set(pos + 1);
         let tokens_ref = self.tokens.borrow();
-        Some(Ref::map(tokens_ref, |vec| &vec[pos]))
+        Some(Ref::map(tokens_ref, |tokens| &tokens.tokens[pos]))
     }
 
     fn current(&self) -> Option<Ref<'_, Token>> {
-        let tokens_ref = self.tokens.borrow();
-        let index = self.pos();
-        let token_ref = tokens_ref.get(index).or_else(|| tokens_ref.get(self.end))?;
-        let idx = tokens_ref
-            .iter()
-            .position(|tk| std::ptr::eq(tk, token_ref))?;
-        Some(Ref::map(tokens_ref, move |vec| &vec[idx]))
+        let tokens = self.tokens.borrow();
+        let index = if self.pos() < tokens.count() {
+            self.pos()
+        } else {
+            self.end
+        };
+        if index >= tokens.count() {
+            return None;
+        }
+        Some(Ref::map(tokens, |tokens| &tokens.tokens[index]))
     }
 
     fn until_end(&self) -> Option<(Ref<'_, Token>, Ref<'_, Token>)> {
-        let tokens_ref = self.tokens.borrow();
-        let pos = self.pos().min(self.end);
-        let from_index = tokens_ref
-            .get(pos)
-            .or_else(|| tokens_ref.get(self.end))
-            .and_then(|tk| tokens_ref.iter().position(|x| std::ptr::eq(x, tk)))?;
-
-        let (from_ref, to_ref) = Ref::map_split(tokens_ref, move |vec| {
-            let from = &vec[from_index];
-            let to = &vec[self.end];
-            (from, to)
-        });
-
-        Some((from_ref, to_ref))
+        let tokens = self.tokens.borrow();
+        if self.end >= tokens.count() {
+            return None;
+        }
+        let from = self.pos().min(self.end);
+        Some(Ref::map_split(tokens, |tokens| {
+            (&tokens.tokens[from], &tokens.tokens[self.end])
+        }))
     }
 
     fn tokens(&self, nm: usize) -> Option<Vec<Ref<'_, Token>>> {
@@ -283,7 +277,7 @@ impl Parser {
     fn next(&self) -> Option<Ref<'_, Token>> {
         let tokens = self.tokens.borrow();
         let pos = self.next_token_pos()?;
-        Some(Ref::map(tokens, |tokens| &tokens[pos]))
+        Some(Ref::map(tokens, |tokens| &tokens.tokens[pos]))
     }
 
     fn pin(&self) -> impl Fn(&Parser) -> usize {
@@ -371,11 +365,17 @@ impl TryInto<Diagnostics<E>> for Parser {
     fn try_into(self) -> Result<Diagnostics<E>, E> {
         self.flush()?;
         let Parser {
-            tokens, srcs, errs, ..
+            tokens,
+            token_store,
+            srcs,
+            errs,
+            ..
         } = self;
-        let tokens = Rc::try_unwrap(tokens)
+        drop(tokens);
+        let tokens = Rc::try_unwrap(token_store)
             .map_err(|_| E::BorrowError)?
-            .into_inner();
+            .into_inner()
+            .try_into()?;
         let sources = Rc::try_unwrap(srcs)
             .map_err(|_| E::BorrowError)?
             .into_inner();
@@ -383,7 +383,7 @@ impl TryInto<Diagnostics<E>> for Parser {
             .map_err(|_| E::BorrowError)?
             .into_inner();
 
-        Ok(Diagnostics::new(sources, Tokens::with(tokens), errors))
+        Ok(Diagnostics::new(sources, tokens, errors))
     }
 }
 
@@ -392,7 +392,7 @@ impl fmt::Display for Parser {
         write!(
             f,
             "{}",
-            self.tokens.borrow()[self.pos().min(self.end)..=self.end]
+            self.tokens.borrow().tokens[self.pos().min(self.end)..=self.end]
                 .iter()
                 .map(|n| n.to_string())
                 .collect::<Vec<String>>()

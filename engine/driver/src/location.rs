@@ -29,6 +29,7 @@ pub enum Ownership {
 #[derive(Debug)]
 pub struct Location {
     pub ownership: Ownership,
+    scope: Option<Uuid>,
     pub blocks: Vec<Uuid>,
     /// Location in modules
     pub mods: Vec<String>,
@@ -53,6 +54,7 @@ impl Location {
         let mut blocks = Vec::new();
         let mut mods = Vec::new();
         let mut ownership = None;
+        let mut scope = None;
         for node in tree.iter().rev() {
             match node.get_node() {
                 Node::Statement(Statement::Block(..)) => {
@@ -65,7 +67,12 @@ impl Location {
                         return Err(E::TaskInsideFuncDeclaration(*node.uuid()));
                     }
                 }
+                Node::Declaration(Declaration::ModuleDeclaration(module)) => {
+                    scope.get_or_insert(module.body.source);
+                    mods.insert(0, module.name.clone());
+                }
                 Node::Root(Root::Module(module)) => {
+                    scope.get_or_insert(module.uuid);
                     if let Some(name) = module.get_name() {
                         mods.insert(0, name.to_owned());
                     }
@@ -144,6 +151,7 @@ impl Location {
         locator.drop();
         Ok(ownership.map(|ownership| Location {
             ownership,
+            scope,
             idx,
             blocks,
             mods,
@@ -154,6 +162,9 @@ impl Location {
     }
 
     pub fn get_scx_uuid(&self) -> &Uuid {
+        if let Some(scope) = &self.scope {
+            return scope;
+        }
         match &self.ownership {
             Ownership::Task(uuid) => uuid,
             Ownership::Function(_, Some(uuid)) => uuid,

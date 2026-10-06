@@ -1,4 +1,5 @@
 mod bindings;
+mod sources;
 
 use super::*;
 
@@ -76,13 +77,7 @@ fn reading_again_replaces_sources_and_errors() {
     );
     driver.read().unwrap();
     assert!(driver.errors().unwrap().next().is_some());
-    let old_src = driver
-        .ctx
-        .get_diagnostics()
-        .unwrap()
-        .get_token(0)
-        .unwrap()
-        .src;
+    let old_src = *driver.ctx.get_diagnostics().unwrap().tokens().root();
 
     let content = "component next() { task run() { true; } };";
     driver.src = CodeSrc::Text(content.to_owned());

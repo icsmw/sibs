@@ -2,7 +2,7 @@ mod error;
 mod errors;
 
 use console::Style;
-use lexer::{Token, Tokens};
+use lexer::TokenStore;
 use std::{fmt::Display, io};
 
 use crate::*;
@@ -14,12 +14,12 @@ const REPORT_LN_AROUND: usize = 6;
 #[derive(Debug)]
 pub struct Diagnostics<E: Display + ErrorCode> {
     sources: CodeSources,
-    tokens: Tokens,
+    tokens: TokenStore,
     errors: Errors<E>,
 }
 
 impl<E: Display + ErrorCode> Diagnostics<E> {
-    pub fn new(sources: CodeSources, tokens: Tokens, errors: Errors<E>) -> Self {
+    pub fn new(sources: CodeSources, tokens: TokenStore, errors: Errors<E>) -> Self {
         Self {
             sources,
             tokens,
@@ -41,13 +41,10 @@ impl<E: Display + ErrorCode> Diagnostics<E> {
             errors: errors.transform(map),
         }
     }
-    pub fn get_token(&self, idx: isize) -> Option<&Token> {
-        self.tokens.get(idx)
+    pub fn tokens(&self) -> &TokenStore {
+        &self.tokens
     }
 
-    pub fn get_token_by_pos(&self, pos: usize) -> Option<(&Token, usize)> {
-        self.tokens.get_by_pos(pos)
-    }
     pub fn push_err(&mut self, err: LinkedErr<E>) {
         self.errors.push(err);
     }

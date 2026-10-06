@@ -40,12 +40,11 @@ fn recovery_keeps_only_owners_from_the_final_ast() {
     let mut ids = HashSet::new();
     owners(driver.ctx.get_anchor().unwrap(), &mut ids);
     let diagnostics = driver.ctx.get_diagnostics().unwrap();
-    let mut index = 0;
-    while let Some(token) = diagnostics.get_token(index) {
+    let store = diagnostics.tokens();
+    for token in store.get(store.root()).unwrap().iter() {
         if let Some((owner, _)) = token.owner {
             assert!(ids.contains(&owner), "Orphan owner for {token}");
         }
-        index += 1;
     }
     let signature = driver
         .signature(source.rfind("12").unwrap(), None)

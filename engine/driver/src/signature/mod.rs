@@ -34,7 +34,10 @@ impl Signature {
             Node::Expression(Expression::FunctionCall(node)) => {
                 let scx = scx?;
                 let name = node.get_name();
-                let func = scx.fns.find(&name)?;
+                let func = scx
+                    .fns
+                    .lookup_by_caller(&node.uuid)
+                    .or_else(|| scx.fns.find(&name))?;
                 let active = node
                     .args
                     .iter()

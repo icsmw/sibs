@@ -31,7 +31,7 @@ impl BindingsList {
         self.bindings.append(bindings);
     }
 
-    pub fn flush(&mut self, tokens: Rc<RefCell<Vec<Token>>>) -> Result<(), E> {
+    pub fn flush(&mut self, tokens: Rc<RefCell<Tokens>>) -> Result<(), E> {
         if self.active != 0 {
             return Err(E::EarlyFlushCall(
                 "A parsing attempt is still active".into(),
@@ -44,7 +44,7 @@ impl BindingsList {
             .try_borrow_mut()
             .map_err(|err| E::EarlyFlushCall(err.to_string()))?;
         for binding in self.bindings.drain(..) {
-            binding.bind(&mut tokens);
+            binding.bind(&mut tokens.tokens);
         }
         Ok(())
     }

@@ -60,6 +60,7 @@ impl ReadNode<IncludeDeclaration> for IncludeDeclaration {
             if !inner.is_done() {
                 return Err(E::UnrecognizedCode(inner.to_string()).link_until_end(&inner));
             }
+            inner.flush().map_err(|err| err.link(&filename_node))?;
             root
         };
         #[cfg(test)]

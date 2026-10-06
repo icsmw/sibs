@@ -33,9 +33,25 @@ impl<'a> Iterator for ErrorsIterator<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         let err = self.errors.next()?;
         let link = &err.link;
+        let idx = self
+            .ctx
+            .get_diagnostics()
+            .and_then(|diagnostics| diagnostics.tokens().get(&link.src))
+            .map(|tokens| {
+                tokens
+                    .get_by_pos(link.from.abs)
+                    .map(|(_, idx)| idx)
+                    .or_else(|| {
+                        tokens
+                            .iter()
+                            .position(|token| token.pos.from.abs >= link.from.abs)
+                    })
+                    .unwrap_or(tokens.count())
+            })
+            .unwrap_or(0);
         Some(ErrorLocator::new(
             err,
-            LocationIterator::new(link.src, link.from.abs, self.ctx),
+            LocationIterator::new(link.src, idx, self.ctx),
         ))
     }
 }

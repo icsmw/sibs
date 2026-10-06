@@ -129,13 +129,12 @@ fn diagnostics_finalize_owners_from_the_accepted_ast_only() {
         // Conversion must apply the journal even without an explicit flush.
         let diagnostics: Diagnostics<E> = parser.try_into().unwrap();
         let mut owned = 0;
-        let mut index = 0;
-        while let Some(token) = diagnostics.get_token(index) {
+        let store = diagnostics.tokens();
+        for token in store.get(store.root()).unwrap().iter() {
             if let Some((owner, _)) = token.owner {
                 assert!(ids.contains(&owner), "Orphan owner for {token} in {source}");
                 owned += 1;
             }
-            index += 1;
         }
         assert!(owned > 0);
     }

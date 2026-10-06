@@ -103,4 +103,19 @@ impl Tokens {
         let index = self.tokens.iter().position(|tk| tk.pos.is_in(pos))?;
         Some((&self.tokens[index], index))
     }
+
+    /// Find the next significant token within an inclusive parser boundary.
+    pub fn next_token_pos(&self, from: usize, end: usize) -> Option<usize> {
+        (from..self.count().min(end.saturating_add(1))).find(|&pos| {
+            !matches!(
+                self.tokens[pos].id(),
+                KindId::Whitespace
+                    | KindId::BOF
+                    | KindId::EOF
+                    | KindId::LF
+                    | KindId::CR
+                    | KindId::CRLF
+            )
+        })
+    }
 }

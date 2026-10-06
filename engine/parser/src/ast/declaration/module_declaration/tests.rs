@@ -43,22 +43,37 @@ fn loading_reuses_the_body_without_reading_changed_contents() {
     assert!(Arc::ptr_eq(&first, &second));
     assert_eq!(first.nodes.len(), 1);
     assert!(read_body(&Parser::new(root, false).unwrap(), &filename("code.sibs")).is_err());
-    let _: Diagnostics<ParserError> = parser.try_into().unwrap();
+    let diagnostics: Diagnostics<ParserError> = parser.try_into().unwrap();
+    let store = diagnostics.tokens();
+    assert_eq!(store.iter().count(), 2);
+    assert!(store
+        .get(&first.source)
+        .unwrap()
+        .iter()
+        .any(|token| token.to_string() == "12"));
     assert!(first.nodes[0].extract::<FunctionDeclaration>().is_some());
 }
 
 #[test]
-fn failed_loads_are_not_cached_and_empty_modules_have_an_identity() {
+fn a_new_parse_can_load_a_fixed_empty_module() {
     let files = Files::new();
-    let parser = Parser::new(files.write("main.sibs", ""), false).unwrap();
+    let root = files.write("main.sibs", "");
+    let parser = Parser::new(&root, false).unwrap();
     files.write("code.sibs", "fn broken(");
     assert!(read_body(&parser, &filename("code.sibs")).is_err());
+    drop(parser);
     files.write("code.sibs", "");
+    let parser = Parser::new(root, false).unwrap();
     let first = read_body(&parser, &filename("code.sibs")).unwrap();
     let second = read_body(&parser, &filename("./code.sibs")).unwrap();
     assert!(first.nodes.is_empty());
     assert!(Arc::ptr_eq(&first, &second));
     assert_ne!(first.source, parser.src());
+    let diagnostics: Diagnostics<ParserError> = parser.try_into().unwrap();
+    let tokens = diagnostics.tokens().get(&first.source).unwrap();
+    assert!(tokens
+        .iter()
+        .all(|token| matches!(token.id(), KindId::BOF | KindId::EOF)));
 }
 
 #[test]

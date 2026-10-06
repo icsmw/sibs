@@ -7,6 +7,7 @@ mod length;
 mod link;
 mod position;
 mod read;
+mod store;
 mod tokens;
 
 pub(crate) use conflict::*;
@@ -17,6 +18,7 @@ pub(crate) use length::*;
 pub use link::*;
 pub use position::*;
 pub(crate) use read::*;
+pub use store::*;
 pub use tokens::*;
 
 use std::{cmp::PartialEq, fmt};

@@ -30,17 +30,13 @@ pub(crate) use locator::*;
 
 pub use error::E as DriverError;
 
-fn find_node<'a>(
-    nodes: Vec<&'a LinkedNode>,
-    _src: &Uuid,
-    token: &'a Token,
-) -> Option<&'a LinkedNode> {
+fn find_node<'a>(nodes: Vec<&'a LinkedNode>, token: &'a Token) -> Option<&'a LinkedNode> {
     let (owner, ..) = token.owner.as_ref()?;
     if let Some(found) = nodes.iter().find(|n| n.uuid() == owner) {
         Some(found)
     } else {
         for node in nodes.iter() {
-            if let Some(found) = find_node(node.childs(), _src, token) {
+            if let Some(found) = find_node(node.childs(), token) {
                 return Some(found);
             }
         }
@@ -52,29 +48,33 @@ fn get_ownership_tree<'a>(
     nodes: Vec<&'a LinkedNode>,
     src: &Uuid,
     pos: usize,
+    owner: Option<&Uuid>,
 ) -> Vec<&'a LinkedNode> {
-    fn fill<'a>(
-        list: &mut Vec<&'a LinkedNode>,
+    fn path<'a>(
         nodes: Vec<&'a LinkedNode>,
         src: &Uuid,
         pos: usize,
-    ) {
-        list.extend(
-            nodes
-                .iter()
-                .filter(|n| n.get_node().located(src, pos))
-                .copied()
-                .collect::<Vec<&'a LinkedNode>>(),
-        );
-        for node in nodes.into_iter() {
-            if !node.childs().is_empty() {
-                fill(list, node.childs(), src, pos);
+        owner: Option<&Uuid>,
+    ) -> Option<Vec<&'a LinkedNode>> {
+        for node in nodes {
+            if owner.is_some_and(|owner| node.uuid() == owner) {
+                return Some(vec![node]);
+            }
+            if let Some(mut children) = path(node.childs(), src, pos, owner) {
+                children.insert(0, node);
+                return Some(children);
+            }
+            if owner.is_none() && node.get_node().located(src, pos) {
+                return Some(vec![node]);
             }
         }
+        None
     }
-    let mut collected = Vec::new();
-    fill(&mut collected, nodes, src, pos);
-    collected
+    // A shared body can have multiple import paths. Follow one occurrence,
+    // matching the selected token owner, instead of merging unrelated branches.
+    path(nodes.clone(), src, pos, owner)
+        .or_else(|| path(nodes, src, pos, None))
+        .unwrap_or_default()
 }
 
 pub enum CodeSrc {
@@ -137,9 +137,7 @@ impl Driver {
         let Some(diagnostics) = self.ctx.get_diagnostics() else {
             return Ok(None);
         };
-        let Some(src) = src.or_else(|| diagnostics.get_token(0).map(|token| &token.src)) else {
-            return Ok(None);
-        };
+        let src = src.unwrap_or(diagnostics.tokens().root());
         diagnostics.sources().get_content(src)
     }
 
@@ -159,13 +157,10 @@ impl Driver {
     }
 
     pub fn locator(&self, idx: usize, src: Option<Uuid>) -> Option<LocationIterator<'_>> {
-        let anchor = self.ctx.get_anchor()?.extract::<Anchor>()?;
-        self.ctx.get_diagnostics()?;
-        Some(LocationIterator::new(
-            src.unwrap_or(anchor.uuid),
-            idx,
-            &self.ctx,
-        ))
+        let store = self.tokens()?;
+        let source = src.unwrap_or(*store.root());
+        store.get(&source)?;
+        Some(LocationIterator::new(source, idx, &self.ctx))
     }
 
     pub fn signature(&self, pos: usize, src: Option<Uuid>) -> Option<Signature> {
@@ -203,12 +198,21 @@ impl Driver {
     pub fn find_node(&self, pos: usize, src: Option<Uuid>) -> Option<&LinkedNode> {
         let (token, _idx) = self.find_token(pos, src)?;
         let anchor = self.ctx.get_anchor()?;
-        find_node(anchor.childs(), &src.unwrap_or(*anchor.uuid()), token)
+        find_node(vec![anchor], token)
     }
 
-    pub fn find_token(&self, pos: usize, _src: Option<Uuid>) -> Option<(&Token, usize)> {
-        // TODO: consider SRC
-        self.ctx.get_diagnostics()?.get_token_by_pos(pos)
+    /// All lexed sources, with one token stream per source UUID.
+    pub fn tokens(&self) -> Option<&TokenStore> {
+        Some(self.ctx.get_diagnostics()?.tokens())
+    }
+
+    /// Find a token by byte position in a source (the root when omitted).
+    /// The returned index is local to that source.
+    pub fn find_token(&self, pos: usize, src: Option<Uuid>) -> Option<(&Token, usize)> {
+        let store = self.tokens()?;
+        store
+            .get(src.as_ref().unwrap_or(store.root()))?
+            .get_by_pos(pos)
     }
 
     pub fn print_errs(&self) -> Result<(), E> {

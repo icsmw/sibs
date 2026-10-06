@@ -1,5 +1,5 @@
 use super::*;
-use lexer::{Lexer, LinkedPosition, TextPosition};
+use lexer::{Lexer, LinkedPosition, TextPosition, Tokens};
 use thiserror::Error;
 use uuid::Uuid;
 
@@ -14,8 +14,11 @@ enum TestError {
 #[test]
 fn reporting_missing_source_preserves_its_identity() {
     let error = LinkedErr::unlinked(TestError::UnknownVariable);
-    let diagnostics =
-        Diagnostics::new(CodeSources::default(), Tokens::default(), Errors::default());
+    let diagnostics = Diagnostics::new(
+        CodeSources::default(),
+        TokenStore::new(error.link.src, Tokens::default()),
+        Errors::default(),
+    );
     let result = error.report(&diagnostics, &mut Vec::new());
     assert!(matches!(result, Err(DiagnosticsError::NotFound(src)) if src == error.link.src));
 }
@@ -27,7 +30,11 @@ fn reporting_unreadable_source_preserves_io_error() {
     std::fs::write(&path, "missing\n").unwrap();
     let sources = CodeSources::bound(&path, &error.link.src).unwrap();
     std::fs::remove_file(&path).unwrap();
-    let diagnostics = Diagnostics::new(sources, Tokens::default(), Errors::default());
+    let diagnostics = Diagnostics::new(
+        sources,
+        TokenStore::new(error.link.src, Tokens::default()),
+        Errors::default(),
+    );
     let failure = error.report(&diagnostics, &mut Vec::new()).unwrap_err();
     assert!(matches!(
         &failure,
@@ -55,7 +62,7 @@ fn reporting_write_failure_preserves_io_error() {
     let error = LinkedErr::unlinked(TestError::UnknownVariable);
     let diagnostics = Diagnostics::new(
         CodeSources::unbound("missing\n", &error.link.src),
-        Tokens::default(),
+        TokenStore::new(error.link.src, Tokens::default()),
         Errors::default(),
     );
     assert!(matches!(
@@ -172,7 +179,7 @@ fn reports_single_line_error_with_source_and_marker() {
     errors.push(err);
     let diagnostics = Diagnostics::new(
         CodeSources::unbound(content, &src),
-        Tokens::default(),
+        TokenStore::new(src, Tokens::default()),
         errors,
     );
     let mut output = Vec::new();
@@ -209,7 +216,7 @@ fn reports_multiline_error_with_all_affected_lines() {
     errors.push(err);
     let diagnostics = Diagnostics::new(
         CodeSources::unbound(content, &src),
-        Tokens::default(),
+        TokenStore::new(src, Tokens::default()),
         errors,
     );
     let mut output = Vec::new();
@@ -238,7 +245,7 @@ fn transforming_errors_preserves_sources_tokens_and_positions() {
     errors.push(err);
     let diagnostics = Diagnostics::new(
         CodeSources::unbound(content, &lexer.uuid),
-        Tokens::with(tokens),
+        TokenStore::new(lexer.uuid, Tokens::with(tokens)),
         errors,
     );
     let diagnostics =
@@ -249,6 +256,7 @@ fn transforming_errors_preserves_sources_tokens_and_positions() {
     assert!(matches!(err.e, TestError::InvalidExpression));
     assert_eq!(err.link.src, lexer.uuid);
     assert_eq!(err.link.from.abs, position);
+    assert_eq!(diagnostics.tokens().root(), &lexer.uuid);
     assert_eq!(
         diagnostics
             .sources()
@@ -259,7 +267,10 @@ fn transforming_errors_preserves_sources_tokens_and_positions() {
     );
     assert_eq!(
         diagnostics
-            .get_token_by_pos(position)
+            .tokens()
+            .get(&lexer.uuid)
+            .unwrap()
+            .get_by_pos(position)
             .unwrap()
             .0
             .to_string(),

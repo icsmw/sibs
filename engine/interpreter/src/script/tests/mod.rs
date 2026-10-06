@@ -28,7 +28,7 @@ fn rejects_reuse_of_prepared_context_without_changing_it() {
     let content = "component original() { task run() { true; } };";
     let mut ctx = InterContext::default();
     Script::from_text(content, ScriptOptions::strict(), &mut ctx).unwrap();
-    let source = ctx.get_diagnostics().unwrap().get_token(0).unwrap().src;
+    let source = *ctx.get_diagnostics().unwrap().tokens().root();
     let anchor = ctx.get_anchor_inner().unwrap().uuid;
 
     for replacement in [
@@ -43,7 +43,7 @@ fn rejects_reuse_of_prepared_context_without_changing_it() {
         assert_eq!(ctx.get_anchor_inner().unwrap().uuid, anchor);
         assert!(ctx.get_semantic_cx().is_some());
         let diagnostics = ctx.get_diagnostics().unwrap();
-        assert_eq!(diagnostics.get_token(0).unwrap().src, source);
+        assert_eq!(*diagnostics.tokens().root(), source);
         assert!(diagnostics.errors().is_empty());
         assert_eq!(
             diagnostics
@@ -68,7 +68,7 @@ fn rejects_reuse_of_context_with_only_diagnostics() {
         assert!(ctx.get_anchor().is_none());
         assert!(ctx.get_semantic_cx().is_none());
         let diagnostics = ctx.get_diagnostics().unwrap();
-        let source = diagnostics.get_token(0).unwrap().src;
+        let source = *diagnostics.tokens().root();
         let error_count = diagnostics.errors().len();
 
         let result = Script::from_text(
@@ -83,7 +83,7 @@ fn rejects_reuse_of_context_with_only_diagnostics() {
         assert!(ctx.get_anchor().is_none());
         assert!(ctx.get_semantic_cx().is_none());
         let diagnostics = ctx.get_diagnostics().unwrap();
-        assert_eq!(diagnostics.get_token(0).unwrap().src, source);
+        assert_eq!(*diagnostics.tokens().root(), source);
         assert_eq!(diagnostics.errors().len(), error_count);
         assert_eq!(
             diagnostics
