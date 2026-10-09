@@ -12,13 +12,14 @@ impl InferType for CompoundAssignments {
                 &self.operator,
             ));
         };
-        if let Some(variable) = self.left.extract::<Variable>() {
-            if scx.globals.exists(&variable.ident) && !scx.globals.is_mutable(&variable.ident) {
-                return Err(LinkedErr::from(
-                    E::ImmutableGlobal(variable.ident.clone()),
-                    &self.left,
-                ));
-            }
+        if let Some(variable) = self.left.extract::<Variable>()
+            && scx.globals.exists(&variable.ident)
+            && !scx.globals.is_mutable(&variable.ident)
+        {
+            return Err(LinkedErr::from(
+                E::ImmutableGlobal(variable.ident.clone()),
+                &self.left,
+            ));
         }
         let left = self.left.infer_type(scx)?;
         let right = self.right.infer_type(scx)?;

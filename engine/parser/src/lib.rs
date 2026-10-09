@@ -280,7 +280,7 @@ impl Parser {
         Some(Ref::map(tokens, |tokens| &tokens.tokens[pos]))
     }
 
-    fn pin(&self) -> impl Fn(&Parser) -> usize {
+    fn pin(&self) -> impl Fn(&Parser) -> usize + use<> {
         let pos = self.pos();
         move |parser: &Parser| {
             let to_restore = parser.pos();

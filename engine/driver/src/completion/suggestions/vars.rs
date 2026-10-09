@@ -31,12 +31,11 @@ pub fn collect(
         } else {
             None
         };
-        if let (Some(completion_match), Some(target_ty)) = (completion_match.as_mut(), ty) {
-            if let Some(ty) = ty_entity.ty() {
-                if !ty.compatible(target_ty) {
-                    completion_match.suppress();
-                }
-            }
+        if let (Some(completion_match), Some(target_ty)) = (completion_match.as_mut(), ty)
+            && let Some(ty) = ty_entity.ty()
+            && !ty.compatible(target_ty)
+        {
+            completion_match.suppress();
         }
         if let Some(completion_match) = completion_match {
             suggestions.push(completion_match);

@@ -147,10 +147,10 @@ impl Read for Token {
             }
             KindId::Identifier => {
                 let ident = lx.read_identifier();
-                if let Some(ch) = ident.chars().next() {
-                    if ch.is_numeric() {
-                        return Ok(None);
-                    }
+                if let Some(ch) = ident.chars().next()
+                    && ch.is_numeric()
+                {
+                    return Ok(None);
                 }
                 Ok(if ident.is_empty() {
                     None

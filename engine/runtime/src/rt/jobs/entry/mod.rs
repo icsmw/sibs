@@ -160,17 +160,17 @@ impl JobEntry {
         self.state.would_update(self.identity.uuid(), &state)?;
 
         // Validate the transition without committing it or triggering sensors.
-        if state.is_finished() {
-            if let Some(child) = nested(self) {
-                return Err(JobStateError::UnfinishedDescendant {
-                    parent: self.identity.uuid(),
-                    current: self.state.clone(),
-                    requested: state.clone(),
-                    child: child.identity.uuid(),
-                    child_state: child.state.clone(),
-                }
-                .into());
+        if state.is_finished()
+            && let Some(child) = nested(self)
+        {
+            return Err(JobStateError::UnfinishedDescendant {
+                parent: self.identity.uuid(),
+                current: self.state.clone(),
+                requested: state.clone(),
+                child: child.identity.uuid(),
+                child_state: child.state.clone(),
             }
+            .into());
         }
 
         self.state.update(self.identity.uuid(), state)?;

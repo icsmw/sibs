@@ -159,10 +159,10 @@ pub fn kind(id: KindId) -> BoxedStrategy<Kind> {
         KindId::Identifier => "[a-z][a-z0-9]*"
             .prop_map(String::from)
             .prop_filter("conflicts", |s| {
-                if let Some(ch) = s.chars().next() {
-                    if ch.is_numeric() {
-                        return false;
-                    }
+                if let Some(ch) = s.chars().next()
+                    && ch.is_numeric()
+                {
+                    return false;
                 }
                 !KeywordId::as_vec()
                     .into_iter()

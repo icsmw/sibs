@@ -65,10 +65,10 @@ impl ReadNode<Task> for Task {
             ])],
         )? {
             args.push(arg);
-            if let Some(tk) = inner.token() {
-                if !matches!(tk.kind, Kind::Comma) {
-                    return Err(E::MissedComma.link_with_token(&tk));
-                }
+            if let Some(tk) = inner.token()
+                && !matches!(tk.kind, Kind::Comma)
+            {
+                return Err(E::MissedComma.link_with_token(&tk));
             }
         }
         if !inner.is_done() {

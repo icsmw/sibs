@@ -51,10 +51,10 @@ impl UserFnEntity {
             {
                 return Err(E::MultipleRepeatedFnArgsDeclared);
             }
-            if let Some(last) = self.args.last() {
-                if !matches!(last.ty, Ty::Repeated(..)) {
-                    return Err(E::NotLastRepeatedFnArg);
-                }
+            if let Some(last) = self.args.last()
+                && !matches!(last.ty, Ty::Repeated(..))
+            {
+                return Err(E::NotLastRepeatedFnArg);
             }
         }
         if let Some(keyword) = fullname

@@ -40,21 +40,20 @@ pub(super) fn validate(anchor: &Anchor) -> Result<(), LinkedErr<E>> {
             }
             _ => None,
         };
-        if let Some((source, kind, path)) = imported {
-            if let Some(previous) = files.insert(source, kind) {
-                if previous != kind {
-                    return Err(E::MissedExpectation(
-                        path.to_string(),
-                        format!("{} file, not {}", previous.name(), kind.name()),
-                    )
-                    .link(path.as_ref()));
-                }
-            }
+        if let Some((source, kind, path)) = imported
+            && let Some(previous) = files.insert(source, kind)
+            && previous != kind
+        {
+            return Err(E::MissedExpectation(
+                path.to_string(),
+                format!("{} file, not {}", previous.name(), kind.name()),
+            )
+            .link(path.as_ref()));
         }
-        if let Some(module) = node.extract::<ModuleImport>() {
-            if !modules.insert(module.body.source) {
-                return Ok(());
-            }
+        if let Some(module) = node.extract::<ModuleImport>()
+            && !modules.insert(module.body.source)
+        {
+            return Ok(());
         }
         for child in node.childs() {
             visit(child, files, modules)?;

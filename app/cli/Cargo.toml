@@ -1,41 +1,41 @@
 [package]
-name = "cli"
-version = "0.1.0"
-edition = "2021"
-authors = ["d.astafyev@outlook.com"]
+name        = "cli"
+version     = "0.1.0"
+edition     = "2024"
+authors     = ["d.astafyev@outlook.com"]
 description = ""
-license = "Apache-2.0"
-repository = "https://github.com/icsmw/sibs.git"
-homepage = "https://github.com/icsmw/sibs"
+license     = "Apache-2.0"
+repository  = "https://github.com/icsmw/sibs.git"
+homepage    = "https://github.com/icsmw/sibs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 
-enum_ids.workspace = true
-thiserror.workspace = true
-uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }
-tokio.workspace = true
-tracing.workspace = true
-tracing-subscriber = { workspace = true,  features = ["fmt", "env-filter"] }
+enum_ids.workspace         = true
+thiserror.workspace        = true
+uuid                       = { workspace = true, features = ["fast-rng", "macro-diagnostics", "v4"] }
+tokio.workspace            = true
+tracing.workspace          = true
+tracing-subscriber         = { workspace = true, features = ["fmt", "env-filter"] }
 tracing-appender.workspace = true
-chrono.workspace = true
+chrono.workspace           = true
 
 scenario = { path = "../scenario" }
-lsp = { path = "../lsp" }
+lsp      = { path = "../lsp" }
 
 driver = { path = "../../engine/driver" }
 
-asttree = { path = "../../engine/asttree" }
+asttree     = { path = "../../engine/asttree" }
 diagnostics = { path = "../../engine/diagnostics" }
-semantic = { path = "../../engine/semantic" }
-lexer = { path = "../../engine/lexer" }
-common = { path = "../../engine/common" }
-parser = { path = "../../engine/parser" }
+semantic    = { path = "../../engine/semantic" }
+lexer       = { path = "../../engine/lexer" }
+common      = { path = "../../engine/common" }
+parser      = { path = "../../engine/parser" }
 interpreter = { path = "../../engine/interpreter" }
-runtime = { path = "../../engine/runtime" }
-functions = { path = "../../engine/functions" }
-boxed = { path = "../../engine/support/boxed" }
-term = { path = "../../engine/support/term" }
+runtime     = { path = "../../engine/runtime" }
+functions   = { path = "../../engine/functions" }
+boxed       = { path = "../../engine/support/boxed" }
+term        = { path = "../../engine/support/term" }
 
 [dev-dependencies]

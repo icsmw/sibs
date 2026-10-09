@@ -1,3 +1,6 @@
+// Diagnostic names describe the problem, including in the generated EId enum.
+#![allow(clippy::enum_variant_names)]
+
 mod codes;
 
 use enum_ids::enum_ids;

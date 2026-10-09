@@ -11,13 +11,14 @@ impl InferType for Assignation {
                     &self.left,
                 ));
             };
-        if let Some(variable) = self.left.extract::<Variable>() {
-            if scx.globals.exists(&variable.ident) && !scx.globals.is_mutable(&variable.ident) {
-                return Err(LinkedErr::from(
-                    E::ImmutableGlobal(variable.ident.clone()),
-                    &self.left,
-                ));
-            }
+        if let Some(variable) = self.left.extract::<Variable>()
+            && scx.globals.exists(&variable.ident)
+            && !scx.globals.is_mutable(&variable.ident)
+        {
+            return Err(LinkedErr::from(
+                E::ImmutableGlobal(variable.ident.clone()),
+                &self.left,
+            ));
         }
         let variable_name = variable.ident.to_owned();
         let left = scx

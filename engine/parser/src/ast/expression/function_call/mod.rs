@@ -28,15 +28,14 @@ impl ReadNode<FunctionCall> for FunctionCall {
                 if parser.is_next(KindId::LeftParen) {
                     break;
                 }
-                if let Some(tks) = parser.tokens(2) {
-                    if tks
+                if let Some(tks) = parser.tokens(2)
+                    && tks
                         .into_iter()
                         .filter(|tk| tk.id() == KindId::Colon)
                         .count()
                         == 2
-                    {
-                        continue;
-                    }
+                {
+                    continue;
                 }
             }
             return Ok(None);

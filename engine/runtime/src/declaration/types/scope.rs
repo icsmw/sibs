@@ -21,11 +21,11 @@ impl TyScope {
         }
     }
     pub fn insert<S: AsRef<str>>(&mut self, name: S, edt: TypeEntity) -> Result<(), E> {
-        if let Some(uuid) = self.location.last() {
-            if let Some(sc) = self.levels.get_mut(uuid) {
-                sc.insert(name.as_ref().to_owned(), edt);
-                return Ok(());
-            }
+        if let Some(uuid) = self.location.last()
+            && let Some(sc) = self.levels.get_mut(uuid)
+        {
+            sc.insert(name.as_ref().to_owned(), edt);
+            return Ok(());
         }
         Err(E::NoCurrentContextLevel)
     }

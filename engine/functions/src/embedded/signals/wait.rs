@@ -34,14 +34,13 @@ pub fn executor(env: FnEnv) -> RtPinnedResult<'static, LinkedErr<E>> {
         .wait_signal(key)
         .await
         .map_err(|err| LinkedErr::by_link(err, (&caller).into()))?
+        && !tk.is_cancelled()
     {
-        if !tk.is_cancelled() {
-            let cancel = env.job.cancel();
-            tokio::select! {
-                _ = tk.cancelled() => {}
-                _ = cancel.cancellation() => {
-                    return Err(LinkedErr::by_link(E::Cancelled, (&caller).into()));
-                }
+        let cancel = env.job.cancel();
+        tokio::select! {
+            _ = tk.cancelled() => {}
+            _ = cancel.cancellation() => {
+                return Err(LinkedErr::by_link(E::Cancelled, (&caller).into()));
             }
         }
     }

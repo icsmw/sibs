@@ -233,7 +233,7 @@ impl<'a> Lexer<'a> {
     /// # Returns
     ///
     /// * A closure that takes a mutable reference to a `Lexer` and restores its position.
-    pub(crate) fn pin(&mut self) -> impl Fn(&mut Lexer) -> usize {
+    pub(crate) fn pin(&mut self) -> impl Fn(&mut Lexer) -> usize + use<> {
         let pos = self.pos;
         let ln = self.ln;
         let column = self.column;

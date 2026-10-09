@@ -57,20 +57,20 @@ impl ReadNode<BinaryExpSeq> for BinaryExpSeq {
             }
             collected.push(node);
         }
-        if let Some(node) = collected.last() {
-            if matches!(node.get_node(), Node::Expression(Expression::BinaryOp(..))) {
-                return Err(E::MissedBinaryArgument.link(node));
-            }
+        if let Some(node) = collected.last()
+            && matches!(node.get_node(), Node::Expression(Expression::BinaryOp(..)))
+        {
+            return Err(E::MissedBinaryArgument.link(node));
         }
         let mut index = None;
         let mut finish = false;
         while !finish {
             for (n, node) in collected.iter().enumerate() {
-                if let Node::Expression(Expression::BinaryOp(op)) = &node.get_node() {
-                    if matches!(op.operator, BinaryOperator::Slash | BinaryOperator::Star) {
-                        index = Some(n);
-                        break;
-                    }
+                if let Node::Expression(Expression::BinaryOp(op)) = &node.get_node()
+                    && matches!(op.operator, BinaryOperator::Slash | BinaryOperator::Star)
+                {
+                    index = Some(n);
+                    break;
                 }
             }
             if let Some(n) = index.take() {

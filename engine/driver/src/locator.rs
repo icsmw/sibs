@@ -81,7 +81,7 @@ impl<'a> LocationIterator<'a> {
         }
     }
 
-    pub fn pin(&self) -> impl Fn(&mut LocationIterator) {
+    pub fn pin(&self) -> impl Fn(&mut LocationIterator) + use<> {
         let idx = self.idx;
         move |loc: &mut LocationIterator| {
             loc.idx = idx;
@@ -145,17 +145,16 @@ impl<'a> LocationIterator<'a> {
         let mut tokens = Vec::new();
         loop {
             let token = stream.get(self.idx)?;
-            if let Some(node) = find_node(vec![anchor], token) {
-                if self
+            if let Some(node) = find_node(vec![anchor], token)
+                && self
                     .recent
                     .as_ref()
                     .map(|recent| recent != node.uuid())
                     .unwrap_or(true)
-                {
-                    tokens.push(token);
-                    self.recent = Some(*node.uuid());
-                    return Some(NodeStep::new(tokens, node));
-                }
+            {
+                tokens.push(token);
+                self.recent = Some(*node.uuid());
+                return Some(NodeStep::new(tokens, node));
             }
             tokens.push(token);
             self.idx -= 1;
@@ -168,17 +167,16 @@ impl<'a> LocationIterator<'a> {
         let mut tokens = Vec::new();
         loop {
             let token = stream.get(self.idx)?;
-            if let Some(node) = find_node(vec![anchor], token) {
-                if self
+            if let Some(node) = find_node(vec![anchor], token)
+                && self
                     .recent
                     .as_ref()
                     .map(|recent| recent != node.uuid())
                     .unwrap_or(true)
-                {
-                    tokens.push(token);
-                    self.recent = Some(*node.uuid());
-                    return Some(NodeStep::new(tokens, node));
-                }
+            {
+                tokens.push(token);
+                self.recent = Some(*node.uuid());
+                return Some(NodeStep::new(tokens, node));
             }
             tokens.push(token);
             self.idx += 1;

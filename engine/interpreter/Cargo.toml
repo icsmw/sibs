@@ -1,39 +1,38 @@
 [package]
-name = "interpreter"
-version = "0.1.0"
-edition = "2021"
-authors = ["d.astafyev@outlook.com"]
+name        = "interpreter"
+version     = "0.1.0"
+edition     = "2024"
+authors     = ["d.astafyev@outlook.com"]
 description = ""
-license = "Apache-2.0"
-repository = "https://github.com/icsmw/sibs.git"
-homepage = "https://github.com/icsmw/sibs"
+license     = "Apache-2.0"
+repository  = "https://github.com/icsmw/sibs.git"
+homepage    = "https://github.com/icsmw/sibs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tokio-util.workspace = true
-tokio.workspace = true
-enum_ids.workspace = true
-thiserror.workspace = true
-uuid = { workspace = true , features = ["fast-rng", "macro-diagnostics", "v4"] }
-tracing.workspace = true
-tracing-subscriber.workspace = true
-futures.workspace = true
+tokio-util.workspace         = true
+tokio.workspace              = true
+enum_ids.workspace           = true
+thiserror.workspace          = true
+uuid                         = { workspace = true, features = ["fast-rng", "macro-diagnostics", "v4"] }
+tracing.workspace            = true
+futures.workspace            = true
 
-asttree = { path = "../asttree" }
+asttree     = { path = "../asttree" }
 diagnostics = { path = "../diagnostics" }
-semantic = { path = "../semantic" }
-lint = { path = "../lint" }
-lexer = { path = "../lexer" }
-common = { path = "../common" }
-parser = { path = "../parser" }
-runtime = { path = "../runtime" }
-functions = { path = "../functions" }
-boxed = { path = "../support/boxed" }
+semantic    = { path = "../semantic" }
+lint        = { path = "../lint" }
+lexer       = { path = "../lexer" }
+common      = { path = "../common" }
+parser      = { path = "../parser" }
+runtime     = { path = "../runtime" }
+functions   = { path = "../functions" }
+boxed       = { path = "../support/boxed" }
 
 [dev-dependencies]
-lexer = { path = "../lexer", features = ["proptests"] }
-asttree = { path = "../asttree", features = ["proptests"] }
+lexer              = { path = "../lexer", features = ["proptests"] }
+asttree            = { path = "../asttree", features = ["proptests"] }
 proptest.workspace = true
-paste.workspace = true
-test_utils = { path = "../tests/test_utils" }
+paste.workspace    = true
+test_utils         = { path = "../tests/test_utils" }

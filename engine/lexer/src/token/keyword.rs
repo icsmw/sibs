@@ -70,17 +70,21 @@ pub enum Keyword {
 impl TryFrom<String> for Keyword {
     type Error = ();
     fn try_from(value: String) -> Result<Self, <Keyword as TryFrom<String>>::Error> {
-        KeywordId::as_vec()
-            .into_iter()
-            .find(|kw| Into::<Keyword>::into(kw).to_string() == value)
-            .map(|kw| Into::<Keyword>::into(&kw))
-            .ok_or(())
+        value.parse()
     }
 }
 
 impl TryFrom<&str> for Keyword {
     type Error = ();
     fn try_from(value: &str) -> Result<Self, <Keyword as TryFrom<&str>>::Error> {
+        value.parse()
+    }
+}
+
+impl std::str::FromStr for Keyword {
+    type Err = ();
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
         KeywordId::as_vec()
             .into_iter()
             .find(|kw| Into::<Keyword>::into(kw).to_string() == value)

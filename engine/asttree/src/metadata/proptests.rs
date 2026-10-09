@@ -69,35 +69,35 @@ use proptest::prelude::*;
 fn resolve_meta(node: &mut Node, md: &mut Metadata) {
     match node {
         // Processing meta
-        Node::Expression(Expression::BinaryExp(ref mut n)) => {
+        Node::Expression(Expression::BinaryExp(n)) => {
             md.take_meta(&mut n.left);
         }
-        Node::Expression(Expression::BinaryExpSeq(ref mut n)) => {
+        Node::Expression(Expression::BinaryExpSeq(n)) => {
             if let Some(n) = n.nodes.first_mut() {
                 md.take_meta(n);
             }
         }
-        Node::Expression(Expression::Comparison(ref mut n)) => {
+        Node::Expression(Expression::Comparison(n)) => {
             md.take_meta(&mut n.left);
         }
-        Node::Expression(Expression::ComparisonSeq(ref mut n)) => {
+        Node::Expression(Expression::ComparisonSeq(n)) => {
             if let Some(n) = n.nodes.first_mut() {
                 md.take_meta(n);
             }
         }
-        Node::Expression(Expression::Range(ref mut n)) => {
+        Node::Expression(Expression::Range(n)) => {
             md.take_meta(&mut n.left);
         }
-        Node::Expression(Expression::CompoundAssignments(ref mut n)) => {
+        Node::Expression(Expression::CompoundAssignments(n)) => {
             md.take_meta(&mut n.left);
         }
-        Node::Statement(Statement::Assignation(ref mut n)) => {
+        Node::Statement(Statement::Assignation(n)) => {
             md.take_meta(&mut n.left);
         }
-        Node::Statement(Statement::Optional(ref mut n)) => {
+        Node::Statement(Statement::Optional(n)) => {
             md.take_meta(&mut n.comparison);
         }
-        Node::Declaration(Declaration::ArgumentDeclaration(ref mut n)) => {
+        Node::Declaration(Declaration::ArgumentDeclaration(n)) => {
             md.take_meta(&mut n.variable);
         }
         _ => {}

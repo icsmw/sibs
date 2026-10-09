@@ -23,11 +23,11 @@ impl ValueScopes {
         }
     }
     pub fn insert<S: AsRef<str>>(&mut self, name: S, vl: RtValue) -> Result<(), E> {
-        if let Some(uuid) = self.location.last() {
-            if let Some(sc) = self.levels.get_mut(uuid) {
-                sc.insert(name.as_ref().to_owned(), Arc::new(vl));
-                return Ok(());
-            }
+        if let Some(uuid) = self.location.last()
+            && let Some(sc) = self.levels.get_mut(uuid)
+        {
+            sc.insert(name.as_ref().to_owned(), Arc::new(vl));
+            return Ok(());
         }
         Err(E::NoCurrentContextLevel)
     }

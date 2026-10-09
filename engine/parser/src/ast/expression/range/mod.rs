@@ -24,10 +24,10 @@ impl ReadNode<Range> for Range {
         else {
             return Ok(None);
         };
-        if let Some(tk) = parser.token() {
-            if !matches!(tk.kind, Kind::DotDot) {
-                return Ok(None);
-            }
+        if let Some(tk) = parser.token()
+            && !matches!(tk.kind, Kind::DotDot)
+        {
+            return Ok(None);
         }
         let Some(right) = LinkedNode::try_oneof(
             parser,

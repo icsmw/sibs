@@ -68,13 +68,12 @@ impl Scenario {
         let mut filename: Option<PathBuf> = None;
         for entry in read_dir(location)? {
             let entry = entry?.path();
-            if entry.is_file() {
-                if let Some(ext) = entry.extension() {
-                    if ext.to_string_lossy().to_lowercase() == SIBS_SCENARIO_EXT {
-                        filename = Some(entry);
-                        break;
-                    }
-                }
+            if entry.is_file()
+                && let Some(ext) = entry.extension()
+                && ext.to_string_lossy().to_lowercase() == SIBS_SCENARIO_EXT
+            {
+                filename = Some(entry);
+                break;
             }
         }
         if let Some(filename) = filename.take() {

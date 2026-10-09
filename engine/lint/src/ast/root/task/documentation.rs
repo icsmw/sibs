@@ -65,24 +65,25 @@ pub(super) fn documented_arguments(markdown: &str) -> HashSet<Cow<'_, str>> {
                 parents.push(tag.to_end());
             }
             Event::End(tag) => {
-                if matches!(tag, TagEnd::Heading(_)) && parents.len() == 1 {
-                    if let Some((level, title)) = heading.take() {
-                        if title.trim() == "Arguments" {
-                            section = Some(level);
-                        } else if section.is_some_and(|parent| level <= parent) {
-                            section = None;
-                        }
+                if matches!(tag, TagEnd::Heading(_))
+                    && parents.len() == 1
+                    && let Some((level, title)) = heading.take()
+                {
+                    if title.trim() == "Arguments" {
+                        section = Some(level);
+                    } else if section.is_some_and(|parent| level <= parent) {
+                        section = None;
                     }
                 }
-                if tag == TagEnd::Item && parents.len() == 2 {
-                    if let Some(ArgumentItem {
+                if tag == TagEnd::Item
+                    && parents.len() == 2
+                    && let Some(ArgumentItem {
                         name: Some(name),
                         has_description: true,
                         ..
                     }) = item.take()
-                    {
-                        documented.insert(name);
-                    }
+                {
+                    documented.insert(name);
                 }
                 parents.pop();
             }
