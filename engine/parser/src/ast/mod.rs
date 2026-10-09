@@ -87,7 +87,7 @@ impl TryReadOneOf<LinkedNode, NodeTarget<'_>> for LinkedNode {
                 origin(parser);
                 let mut errs = parser.errs.borrow_mut();
                 return Err(errs
-                    .take_first()
+                    .take_first_error()
                     .unwrap_or(LinkedErr::unlinked(E::Unlinked)));
             }
             shifted = parser.pin();

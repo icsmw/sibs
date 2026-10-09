@@ -48,8 +48,15 @@ impl<E: Display + ErrorCode> Diagnostics<E> {
     pub fn push_err(&mut self, err: LinkedErr<E>) {
         self.errors.push(err);
     }
+    /// All collected diagnostics, including warnings, in reporting order.
     pub fn errors(&self) -> &[LinkedErr<E>] {
         self.errors.slice()
+    }
+    pub fn has_errors(&self) -> bool {
+        self.errors.has_errors()
+    }
+    pub fn has_warnings(&self) -> bool {
+        self.errors.has_warnings()
     }
     pub fn sources(&self) -> &CodeSources {
         &self.sources
@@ -91,12 +98,16 @@ impl<E: Display + ErrorCode> Diagnostics<E> {
             })
             .collect::<Vec<usize>>();
         if error_lns.is_empty() {
-            return writeln!(dest, "{}", err.e).map_err(|e| e.into());
+            return writeln!(dest, "{}: {}", err.severity, err.e).map_err(|e| e.into());
         }
         cursor = 0;
         let error_first_ln = *error_lns.first().unwrap_or(&0);
         let error_last_ln = *error_lns.last().unwrap_or(&0);
-        let style = Style::new().red().bold();
+        let style = match err.severity {
+            Severity::Error => Style::new().red().bold(),
+            Severity::Warning => Style::new().yellow().bold(),
+        };
+        let message = format!("{}: {}", err.severity, err.e);
         let report = src
             .split('\n')
             .enumerate()
@@ -112,12 +123,17 @@ impl<E: Display + ErrorCode> Diagnostics<E> {
                             "{}{filler}│ {ln}\n{offset}{}\n{offset}{}\n",
                             i + 1,
                             style.apply_to("^".repeat(to.abs - from.abs)),
-                            err.e
+                            message
                         )
                     } else if error_last_ln != i {
                         format!("{}{filler}{} {ln}", i + 1, style.apply_to(">"))
                     } else {
-                        format!("{}{filler}{} {ln}\n{}\n", i + 1, style.apply_to(">"), err.e)
+                        format!(
+                            "{}{filler}{} {ln}\n{}\n",
+                            i + 1,
+                            style.apply_to(">"),
+                            message
+                        )
                     }
                 } else {
                     format!("{}{filler}│ {ln}", i + 1)

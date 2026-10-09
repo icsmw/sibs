@@ -26,12 +26,17 @@ impl Diagnostic for RootMeta {
 }
 
 impl RootMeta {
+    /// Preserves Markdown whitespace and literal doc markers inside the text.
+    pub fn as_doc_str(&self) -> &str {
+        let Kind::RootMeta(content) = &self.token.kind else {
+            return "";
+        };
+        let content = content.strip_suffix('\r').unwrap_or(content);
+        content.strip_prefix(' ').unwrap_or(content)
+    }
+
     pub fn as_trimmed_string(&self) -> String {
-        self.token
-            .to_string()
-            .replacen("//!", "", 1)
-            .trim()
-            .to_owned()
+        self.as_doc_str().trim().to_owned()
     }
 }
 

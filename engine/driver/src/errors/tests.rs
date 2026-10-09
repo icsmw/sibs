@@ -1,11 +1,36 @@
 use super::*;
 
 #[test]
+fn warnings_are_located_and_do_not_invalidate_scripts() {
+    let content = "component comp() { task run() { true; } };";
+    let mut driver = Driver::unbound(content, false);
+    driver.read().unwrap();
+    assert!(driver.is_valid());
+    let warnings = driver.errors().unwrap().collect::<Vec<_>>();
+    assert_eq!(warnings.len(), 2);
+    for warning in warnings {
+        assert_eq!(warning.err.severity, Severity::Warning);
+        assert!(!warning
+            .locator
+            .get_ownership_tree(warning.err.link.from.abs)
+            .is_empty());
+    }
+    for content in ["", "component comp() { task run() { missing(); } };"] {
+        let mut driver = Driver::unbound(content, true);
+        driver.read().unwrap();
+        assert!(!driver.is_valid());
+    }
+}
+
+#[test]
 fn resilient_analysis_reports_unknown_function_once() {
     let mut driver = Driver::unbound("component comp() { task run() { missing(); } };", true);
     driver.read().unwrap();
 
-    let mut errors = driver.errors().unwrap();
+    let mut errors = driver
+        .errors()
+        .unwrap()
+        .filter(|err| err.err.severity == diagnostics::Severity::Error);
     let error = errors.next().expect("unknown function is reported");
     assert!(matches!(
         &error.err.e,
@@ -22,7 +47,10 @@ fn resilient_analysis_reports_unknown_variable_once() {
     );
     driver.read().unwrap();
 
-    let mut errors = driver.errors().unwrap();
+    let mut errors = driver
+        .errors()
+        .unwrap()
+        .filter(|err| err.err.severity == diagnostics::Severity::Error);
     let error = errors.next().expect("unknown variable is reported");
     assert!(matches!(
         &error.err.e,
@@ -77,7 +105,11 @@ fn exposes_semantic_diagnostics_after_strict_failure() {
     let mut driver = Driver::unbound(content, false);
     assert!(matches!(driver.read(), Err(E::NotExecutable)));
 
-    let errors = driver.errors().unwrap().collect::<Vec<_>>();
+    let errors = driver
+        .errors()
+        .unwrap()
+        .filter(|err| err.err.severity == diagnostics::Severity::Error)
+        .collect::<Vec<_>>();
     assert_eq!(errors.len(), 1);
     let error = &errors[0];
     assert!(matches!(error.err.e, DiagnosticError::Semantic(_)));

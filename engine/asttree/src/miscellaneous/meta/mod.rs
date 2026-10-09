@@ -26,8 +26,18 @@ impl Diagnostic for Meta {
 }
 
 impl Meta {
+    /// Documentation text without the marker and one optional formatting space.
+    /// Markdown indentation and trailing spaces remain significant.
+    pub fn as_doc_str(&self) -> &str {
+        let Kind::Meta(content) = &self.token.kind else {
+            return "";
+        };
+        let content = content.strip_suffix('\r').unwrap_or(content);
+        content.strip_prefix(' ').unwrap_or(content)
+    }
+
     pub fn as_trimmed_string(&self) -> String {
-        self.token.to_string().replace("///", "").trim().to_owned()
+        self.as_doc_str().trim().to_owned()
     }
 }
 

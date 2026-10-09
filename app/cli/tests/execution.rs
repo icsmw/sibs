@@ -11,7 +11,11 @@ fn runs_and_reports_scripts_through_cli() {
 /// Component documentation
 component demo() {
     /// Echo documentation
+    ///
+    /// # Arguments
+    /// * `message` - Message to print.
     task echo(message: str) { print(message); };
+    /// Creates a marker in the working directory.
     task cwd() { `touch cwd-marker`; };
 };"#,
     )
@@ -87,5 +91,45 @@ component demo() {
     }
     assert!(scenario_dir.join("cwd-marker").is_file());
     assert!(!root.join("cwd-marker").exists());
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn warnings_do_not_block_execution_or_help_and_stay_on_stderr() {
+    let root = std::env::temp_dir().join(format!("sibs-cli-warnings-{}", uuid::Uuid::new_v4()));
+    fs::create_dir_all(&root).unwrap();
+    let path = root.join("scenario.sibs");
+    fs::write(
+        &path,
+        "component demo() { task echo(message: str) { print(message); } };",
+    )
+    .unwrap();
+    for args in [
+        vec!["demo", "echo", "EXECUTED_WITH_WARNINGS"],
+        vec!["--help"],
+        vec!["demo", "--help"],
+        vec!["demo", "echo", "--help"],
+    ] {
+        let output = Command::new(env!("CARGO_BIN_EXE_cli"))
+            .current_dir(&root)
+            .arg("--scenario")
+            .arg(&path)
+            .args(&args)
+            .output()
+            .unwrap();
+        let stdout = String::from_utf8(output.stdout).unwrap();
+        let stderr = String::from_utf8(output.stderr).unwrap();
+        assert!(output.status.success(), "{args:?}: {stdout}\n{stderr}");
+        assert_eq!(stderr.matches("warning:").count(), 2, "{stderr}");
+        assert!(stderr.contains("Component \"demo\" has no documentation"));
+        assert!(stderr.contains("Task \"echo\" has no documentation"));
+        assert!(!stdout.contains("warning:"));
+        if args.contains(&"--help") {
+            assert!(stdout.contains("echo"));
+            assert!(!stdout.contains("EXECUTED_WITH_WARNINGS"));
+        } else {
+            assert!(stdout.contains("EXECUTED_WITH_WARNINGS"));
+        }
+    }
     fs::remove_dir_all(root).unwrap();
 }

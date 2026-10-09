@@ -52,14 +52,16 @@ impl Metadata {
     }
 
     pub fn lines(&self) -> Vec<String> {
-        self.meta
-            .iter()
-            .filter_map(|n| match &n.node {
-                Node::Miscellaneous(Miscellaneous::Meta(mn)) => Some(mn.as_trimmed_string()),
-                Node::Miscellaneous(Miscellaneous::RootMeta(mn)) => Some(mn.as_trimmed_string()),
-                _ => None,
-            })
-            .collect()
+        self.doc_lines().map(str::to_owned).collect()
+    }
+
+    /// Borrows documentation lines, preserving Markdown whitespace.
+    pub fn doc_lines(&self) -> impl Iterator<Item = &str> {
+        self.meta.iter().filter_map(|n| match &n.node {
+            Node::Miscellaneous(Miscellaneous::Meta(mn)) => Some(mn.as_doc_str()),
+            Node::Miscellaneous(Miscellaneous::RootMeta(mn)) => Some(mn.as_doc_str()),
+            _ => None,
+        })
     }
 
     #[cfg(feature = "proptests")]

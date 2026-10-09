@@ -11,7 +11,7 @@ pub struct SemanticCx {
     pub fns: Fns,
     pub tasks: Tasks,
     pub table: TypesTable,
-    pub errs: Vec<LinkedErr<E>>,
+    pub errs: Errors<E>,
     pub modules: Modules,
     resilience: bool,
 }
@@ -24,13 +24,17 @@ impl SemanticCx {
             fns: Fns::default(),
             tasks: Tasks::default(),
             table: TypesTable::default(),
-            errs: Vec::new(),
+            errs: Errors::default(),
             modules: Modules::default(),
             resilience,
         }
     }
     pub fn is_resilience(&self) -> bool {
         self.resilience
+    }
+    /// Records a diagnostic without changing control flow, in either analysis mode.
+    pub fn report(&mut self, diagnostic: LinkedErr<E>) {
+        self.errs.push(diagnostic);
     }
     pub fn lookup_fn<S: AsRef<str>>(
         &mut self,

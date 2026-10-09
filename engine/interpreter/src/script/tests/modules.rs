@@ -140,7 +140,13 @@ fn resilient_alias_conflicts_preserve_other_functions_and_module_paths() {
         matches!(result, Err(ScriptError::NotExecutable)),
         "{result:?}"
     );
-    let errors = ctx.get_diagnostics().unwrap().errors();
+    let errors = ctx
+        .get_diagnostics()
+        .unwrap()
+        .errors()
+        .iter()
+        .filter(|err| err.severity == diagnostics::Severity::Error)
+        .collect::<Vec<_>>();
     assert_eq!(errors.len(), 3, "{errors:?}");
     for suffix in ["helper", "nested::helper", "shared::helper"] {
         let path = format!("right::library::{suffix}");
@@ -181,7 +187,13 @@ fn includes_keep_the_common_component_namespace() {
         &mut ctx,
     )
     .is_err());
-    let errors = ctx.get_diagnostics().unwrap().errors();
+    let errors = ctx
+        .get_diagnostics()
+        .unwrap()
+        .errors()
+        .iter()
+        .filter(|err| err.severity == diagnostics::Severity::Error)
+        .collect::<Vec<_>>();
     assert!(
         errors.iter().any(|err| matches!(
             &err.e,

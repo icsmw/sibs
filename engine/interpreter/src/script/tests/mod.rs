@@ -1,4 +1,5 @@
 mod modules;
+mod warnings;
 
 use super::*;
 
@@ -19,7 +20,7 @@ fn prepares_context_for_valid_script() {
             .get_component("comp")
             .is_some());
         assert!(ctx.get_semantic_cx().is_some());
-        assert!(ctx.get_diagnostics().unwrap().errors().is_empty());
+        assert!(!ctx.get_diagnostics().unwrap().has_errors());
     }
 }
 
@@ -44,7 +45,7 @@ fn rejects_reuse_of_prepared_context_without_changing_it() {
         assert!(ctx.get_semantic_cx().is_some());
         let diagnostics = ctx.get_diagnostics().unwrap();
         assert_eq!(*diagnostics.tokens().root(), source);
-        assert!(diagnostics.errors().is_empty());
+        assert!(!diagnostics.has_errors());
         assert_eq!(
             diagnostics
                 .sources()
@@ -108,7 +109,11 @@ fn resilient_collects_semantic_errors_and_preserves_analysis() {
     );
 
     let diagnostics = ctx.get_diagnostics().unwrap();
-    let errors = diagnostics.errors();
+    let errors = diagnostics
+        .errors()
+        .iter()
+        .filter(|err| err.severity == diagnostics::Severity::Error)
+        .collect::<Vec<_>>();
     assert_eq!(errors.len(), 2, "{errors:?}");
     assert!(errors
         .iter()
@@ -143,7 +148,13 @@ fn recovered_parsing_errors_make_script_not_executable() {
     );
     assert!(ctx.get_anchor().is_some());
     assert!(ctx.get_semantic_cx().is_some());
-    let errors = ctx.get_diagnostics().unwrap().errors();
+    let errors = ctx
+        .get_diagnostics()
+        .unwrap()
+        .errors()
+        .iter()
+        .filter(|err| err.severity == diagnostics::Severity::Error)
+        .collect::<Vec<_>>();
     assert!(!errors.is_empty());
     assert!(errors
         .iter()
@@ -161,7 +172,13 @@ fn strict_stops_at_first_semantic_error_and_keeps_diagnostics() {
         matches!(result, Err(ScriptError::NotExecutable)),
         "{result:?}"
     );
-    let errors = ctx.get_diagnostics().unwrap().errors();
+    let errors = ctx
+        .get_diagnostics()
+        .unwrap()
+        .errors()
+        .iter()
+        .filter(|err| err.severity == diagnostics::Severity::Error)
+        .collect::<Vec<_>>();
     assert_eq!(errors.len(), 1, "{errors:?}");
     assert!(matches!(errors[0].e, DiagnosticError::Semantic(_)));
     assert!(errors[0].link.to.abs <= content.find("let second").unwrap());
@@ -182,7 +199,11 @@ fn parsing_failure_keeps_diagnostics_without_anchor() {
     assert!(ctx.get_anchor().is_none());
     assert!(ctx.get_semantic_cx().is_none());
     let diagnostics = ctx.get_diagnostics().unwrap();
-    let errors = diagnostics.errors();
+    let errors = diagnostics
+        .errors()
+        .iter()
+        .filter(|err| err.severity == diagnostics::Severity::Error)
+        .collect::<Vec<_>>();
     assert_eq!(errors.len(), 1);
     assert!(matches!(errors[0].e, DiagnosticError::Parser(_)));
     assert_eq!(

@@ -87,30 +87,40 @@ impl Script {
             unreachable!("Diagnostics has been setted")
         };
 
+        // AST-only checks are independent of semantic failures and run once for
+        // all consumers of preparation (execution, CLI help and the IDE driver).
+        for diagnostic in lint::check(anchor).drain() {
+            diagnostics.push_err(DiagnosticError::from_lint_err(diagnostic));
+        }
+
         functions::register(&mut scx.fns.efns)?;
 
-        if let Err(err) = anchor.initialize(scx) {
-            diagnostics.push_err(DiagnosticError::from_semantic_err(err));
-            if !options.resilience {
-                return Err(ScriptError::NotExecutable);
+        let analysis = (|| {
+            if let Err(err) = anchor.initialize(scx) {
+                diagnostics.push_err(DiagnosticError::from_semantic_err(err));
+                if !options.resilience {
+                    return Err(ScriptError::NotExecutable);
+                }
             }
-        }
-        if let Err(err) = anchor.infer_type(scx) {
-            diagnostics.push_err(DiagnosticError::from_semantic_err(err));
-            if !options.resilience {
-                return Err(ScriptError::NotExecutable);
+            if let Err(err) = anchor.infer_type(scx) {
+                diagnostics.push_err(DiagnosticError::from_semantic_err(err));
+                if !options.resilience {
+                    return Err(ScriptError::NotExecutable);
+                }
             }
-        }
-        if let Err(err) = anchor.finalize(scx) {
-            diagnostics.push_err(DiagnosticError::from_semantic_err(err));
-            if !options.resilience {
-                return Err(ScriptError::NotExecutable);
+            if let Err(err) = anchor.finalize(scx) {
+                diagnostics.push_err(DiagnosticError::from_semantic_err(err));
+                if !options.resilience {
+                    return Err(ScriptError::NotExecutable);
+                }
             }
-        }
-        for err in scx.errs.drain(..) {
+            Ok(())
+        })();
+        for err in scx.errs.drain() {
             diagnostics.push_err(DiagnosticError::from_semantic_err(err));
         }
-        if diagnostics.errors().is_empty() {
+        analysis?;
+        if !diagnostics.has_errors() {
             Ok(())
         } else {
             Err(ScriptError::NotExecutable)

@@ -149,11 +149,8 @@ impl Driver {
     }
 
     pub fn is_valid(&self) -> bool {
-        self.ctx.get_anchor().is_none()
-            || self
-                .ctx
-                .get_diagnostics()
-                .is_some_and(|d| !d.errors().is_empty())
+        self.ctx.get_anchor().is_some()
+            && self.ctx.get_diagnostics().is_some_and(|d| !d.has_errors())
     }
 
     pub fn locator(&self, idx: usize, src: Option<Uuid>) -> Option<LocationIterator<'_>> {
@@ -190,6 +187,7 @@ impl Driver {
         ))
     }
 
+    /// All located diagnostics, including warnings.
     pub fn errors(&self) -> Option<ErrorsIterator<'_>> {
         let diagnostics = self.ctx.get_diagnostics()?;
         Some(ErrorsIterator::new(diagnostics.errors(), &self.ctx))

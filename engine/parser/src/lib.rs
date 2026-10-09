@@ -343,6 +343,7 @@ impl Parser {
                     &self.source.source,
                 )),
             e: err,
+            severity: Severity::Error,
         }
     }
     fn err_until_end(&self, err: E) -> LinkedErr<E> {
@@ -356,6 +357,7 @@ impl Parser {
                     &self.source.source,
                 )),
             e: err,
+            severity: Severity::Error,
         }
     }
 }

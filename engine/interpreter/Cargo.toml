@@ -23,6 +23,7 @@ futures.workspace = true
 asttree = { path = "../asttree" }
 diagnostics = { path = "../diagnostics" }
 semantic = { path = "../semantic" }
+lint = { path = "../lint" }
 lexer = { path = "../lexer" }
 common = { path = "../common" }
 parser = { path = "../parser" }

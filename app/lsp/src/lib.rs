@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 mod semantic;
 
 use diagnostics::ErrorCode;
@@ -115,7 +118,10 @@ impl Backend {
                         },
                     },
                     code: Some(NumberOrString::String(err.err.e.formattable())),
-                    severity: Some(DiagnosticSeverity::ERROR),
+                    severity: Some(match err.err.severity {
+                        diagnostics::Severity::Error => DiagnosticSeverity::ERROR,
+                        diagnostics::Severity::Warning => DiagnosticSeverity::WARNING,
+                    }),
                     message: err.err.to_string(),
                     ..Default::default()
                 }

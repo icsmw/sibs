@@ -82,7 +82,14 @@ fn reading_again_replaces_sources_and_errors() {
     let content = "component next() { task run() { true; } };";
     driver.src = CodeSrc::Text(content.to_owned());
     driver.read().unwrap();
-    assert_eq!(driver.errors().unwrap().count(), 0);
+    assert_eq!(
+        driver
+            .errors()
+            .unwrap()
+            .filter(|err| err.err.severity == diagnostics::Severity::Error)
+            .count(),
+        0
+    );
     assert!(driver
         .ctx
         .get_anchor_inner()

@@ -13,6 +13,52 @@ enum TestError {
 }
 
 #[test]
+fn severity_survives_mapping_and_warnings_do_not_block() {
+    let warning = LinkedErr::unlinked(TestError::UnknownVariable).warning();
+    let source = warning.link.src;
+    let mut errors = Errors::default();
+    errors.push(warning.map(|_| TestError::InvalidExpression));
+    errors.push(LinkedErr::unlinked(TestError::InvalidExpression).warning());
+    assert_eq!(errors.slice().len(), 1);
+    assert_eq!(errors.slice()[0].link.src, source);
+    assert!(!errors.is_empty());
+    assert!(!errors.has_errors());
+    assert!(errors.has_warnings());
+    assert!(errors.take_first_error().is_none());
+
+    // The same location and code at a different severity must remain distinct.
+    errors.push(LinkedErr::unlinked(TestError::InvalidExpression));
+    assert_eq!(errors.slice().len(), 2);
+    assert!(errors.has_errors());
+    assert_eq!(errors.take_first_error().unwrap().severity, Severity::Error);
+    assert!(!errors.has_errors());
+    let mut errors = errors.transform(|err| err.map(|_| TestError::UnknownVariable));
+    assert_eq!(errors.slice()[0].severity, Severity::Warning);
+    assert_eq!(errors.drain().len(), 1);
+    assert!(!errors.has_warnings());
+    errors.push(LinkedErr::unlinked(TestError::UnknownVariable).warning());
+    assert_eq!(errors.slice().len(), 1);
+}
+
+#[test]
+fn warning_report_identifies_severity_without_color() {
+    let content = "component";
+    let mut lexer = Lexer::new(content, 0);
+    let tokens = lexer.read().unwrap().tokens;
+    let warning = LinkedErr::token(TestError::UnknownVariable, &tokens[0]).warning();
+    let diagnostics = Diagnostics::new(
+        CodeSources::unbound(content, &lexer.uuid),
+        TokenStore::new(lexer.uuid, Tokens::with(tokens)),
+        Errors::default(),
+    );
+    let mut output = Vec::new();
+    warning.report(&diagnostics, &mut output).unwrap();
+    assert!(String::from_utf8(output)
+        .unwrap()
+        .contains("warning: Unknown variable"));
+}
+
+#[test]
 fn reporting_missing_source_preserves_its_identity() {
     let error = LinkedErr::unlinked(TestError::UnknownVariable);
     let diagnostics = Diagnostics::new(

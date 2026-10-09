@@ -264,9 +264,6 @@ impl E {
         LinkedErr::from(self, node)
     }
     pub fn from(self, link: &SrcLink) -> LinkedErr<E> {
-        LinkedErr {
-            e: self,
-            link: link.into(),
-        }
+        LinkedErr::by_link(self, link.into())
     }
 }

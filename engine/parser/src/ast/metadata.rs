@@ -125,4 +125,51 @@ mod tests {
         assert!(node.get_md().meta.is_empty());
         assert!(parser.is_done());
     }
+
+    #[test]
+    fn documentation_preserves_markdown_whitespace_and_literal_markers() {
+        for newline in ["\n", "\r\n"] {
+            let source = [
+                "//! Script with literal //! and ///.",
+                "//!",
+                "//!     indented root code  ",
+                "/// Component with literal /// and //!.",
+                "///",
+                "///     indented item code  ",
+                "///\tcode after a tab",
+                "component comp() { task run() { true; } };",
+            ]
+            .join(newline);
+            let parser = parser(&source);
+            let root = LinkedNode::try_read(&parser, NodeTarget::Root(&[RootId::Anchor]))
+                .unwrap()
+                .unwrap();
+            assert_eq!(
+                root.get_md().lines(),
+                [
+                    "Script with literal //! and ///.",
+                    "",
+                    "    indented root code  ",
+                ]
+            );
+            let component = root
+                .extract::<Anchor>()
+                .unwrap()
+                .get_component("comp")
+                .unwrap();
+            assert_eq!(
+                component.get_md().lines(),
+                [
+                    "Component with literal /// and //!.",
+                    "",
+                    "    indented item code  ",
+                    "\tcode after a tab",
+                ]
+            );
+            assert_eq!(
+                component.get_md().doc_lines().collect::<Vec<_>>(),
+                component.get_md().lines()
+            );
+        }
+    }
 }

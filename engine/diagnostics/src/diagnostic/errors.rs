@@ -5,6 +5,7 @@ use crate::*;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ErrorStamp {
+    severity: Severity,
     code: &'static str,
     source: ErrorSource,
     src: Uuid,
@@ -15,6 +16,7 @@ pub struct ErrorStamp {
 impl<E: Display + ErrorCode> From<&LinkedErr<E>> for ErrorStamp {
     fn from(err: &LinkedErr<E>) -> Self {
         ErrorStamp {
+            severity: err.severity,
             code: err.e.code(),
             source: err.e.src(),
             src: err.link.src,
@@ -45,6 +47,25 @@ impl<E: Display + ErrorCode> Errors<E> {
             self.stamps.remove(&ErrorStamp::from(&err));
             Some(err)
         }
+    }
+    pub fn take_first_error(&mut self) -> Option<LinkedErr<E>> {
+        let index = self
+            .errors
+            .iter()
+            .position(|err| err.severity == Severity::Error)?;
+        let err = self.errors.remove(index);
+        self.stamps.remove(&ErrorStamp::from(&err));
+        Some(err)
+    }
+    pub fn has_errors(&self) -> bool {
+        self.errors
+            .iter()
+            .any(|err| err.severity == Severity::Error)
+    }
+    pub fn has_warnings(&self) -> bool {
+        self.errors
+            .iter()
+            .any(|err| err.severity == Severity::Warning)
     }
     pub fn slice(&self) -> &[LinkedErr<E>] {
         &self.errors

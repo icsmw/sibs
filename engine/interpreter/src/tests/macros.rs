@@ -98,7 +98,7 @@ macro_rules! test_task_results {
                     eprintln!("{err}");
                 }
                 script.expect("Script is prepared");
-                assert!(ctx.get_diagnostics().expect("Diagnostics available").errors().is_empty());
+                assert!(!ctx.get_diagnostics().expect("Diagnostics available").has_errors());
                 let vl = Executor::new(
                     ExecutionOptions::new(
                         $component_name,
@@ -205,7 +205,7 @@ macro_rules! test_task_execution_from_file {
                     }
                 }
                 script.expect("Script is prepared");
-                assert!(ctx.get_diagnostics().expect("Diagnostics available").errors().is_empty());
+                assert!(!ctx.get_diagnostics().expect("Diagnostics available").has_errors());
                 let result = Executor::new(ExecutionOptions::new(
                     $component_name, $task_name, std::env::current_dir().expect("Current folder"),
                 )).run(&mut ctx).await;

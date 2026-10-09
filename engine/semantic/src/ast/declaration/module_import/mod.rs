@@ -96,7 +96,7 @@ fn expose_functions(nodes: &[LinkedNode], scx: &mut SemanticCx) -> Result<(), Li
         })();
         if let Err(err) = result {
             if scx.is_resilience() {
-                scx.errs.push(err);
+                scx.report(err);
             } else {
                 return Err(err);
             }

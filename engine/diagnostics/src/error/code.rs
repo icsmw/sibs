@@ -4,6 +4,7 @@ use std::fmt;
 pub enum ErrorSource {
     Parser,
     Semantic,
+    Lint,
     Runtime,
     Driver,
 }
@@ -18,6 +19,7 @@ impl fmt::Display for ErrorSource {
                 Self::Parser => "PA",
                 Self::Runtime => "RT",
                 Self::Semantic => "SE",
+                Self::Lint => "LI",
             }
         )
     }
